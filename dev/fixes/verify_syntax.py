@@ -5,7 +5,7 @@ import ast
 def check_syntax():
     error_count = 0
     total_files = 0
-    
+
     for root, dirs, files in os.walk('intellicrack'):
         for file in files:
             if file.endswith('.py'):
@@ -21,12 +21,12 @@ def check_syntax():
                     print(f"Unicode error in {filepath}")
                 except Exception as e:
                     print(f"Other error in {filepath}: {e}")
-    
+
     print(f"\nSummary:")
     print(f"Total Python files: {total_files}")
     print(f"Files with syntax errors: {error_count}")
     print(f"Files fixed: {total_files - error_count}")
-    
+
     if error_count == 0:
         print("🎉 ALL SYNTAX ERRORS FIXED!")
     else:

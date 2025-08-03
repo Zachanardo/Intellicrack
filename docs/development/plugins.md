@@ -34,7 +34,7 @@ from typing import Dict, Any
 
 class MyPlugin(PluginBase):
     """Example plugin for custom analysis"""
-    
+
     def __init__(self):
         super().__init__()
         self.name = "My Custom Plugin"
@@ -42,28 +42,28 @@ class MyPlugin(PluginBase):
         self.author = "Your Name"
         self.description = "Custom analysis plugin"
         self.enabled = True
-    
+
     def initialize(self) -> bool:
         """Called when plugin is loaded"""
         self.logger.info(f"Initializing {self.name}")
         return True
-    
+
     def run(self, binary_data: bytes, **kwargs) -> Dict[str, Any]:
         """Main plugin execution"""
         results = {
             "status": "success",
             "findings": []
         }
-        
+
         # Your analysis logic here
         if b"MZ" in binary_data[:2]:
             results["findings"].append({
                 "type": "file_format",
                 "value": "PE executable detected"
             })
-        
+
         return results
-    
+
     def cleanup(self):
         """Called when plugin is unloaded"""
         self.logger.info(f"Cleaning up {self.name}")
@@ -81,10 +81,10 @@ class VulnerabilityScanner(PluginBase):
         super().__init__()
         self.name = "Custom Vulnerability Scanner"
         self.category = "analysis"
-    
+
     def analyze_function(self, func_data: bytes, func_addr: int) -> list:
         vulnerabilities = []
-        
+
         # Check for unsafe functions
         unsafe_calls = [b"strcpy", b"gets", b"sprintf"]
         for call in unsafe_calls:
@@ -95,7 +95,7 @@ class VulnerabilityScanner(PluginBase):
                     "address": func_addr,
                     "severity": "high"
                 })
-        
+
         return vulnerabilities
 ```
 
@@ -109,16 +109,16 @@ class AutoPatcher(PluginBase):
         super().__init__()
         self.name = "License Check Remover"
         self.category = "patching"
-    
+
     def find_patterns(self, binary_data: bytes) -> list:
         patterns = []
-        
+
         # Common license check patterns
         license_patterns = [
             (b"\x83\xF8\x01\x75", b"\x83\xF8\x01\xEB"),  # cmp eax,1; jnz -> jmp
             (b"\x85\xC0\x74", b"\x85\xC0\xEB"),          # test eax,eax; jz -> jmp
         ]
-        
+
         for pattern, replacement in license_patterns:
             offset = 0
             while True:
@@ -132,7 +132,7 @@ class AutoPatcher(PluginBase):
                     "description": "Potential license check"
                 })
                 offset = pos + 1
-        
+
         return patterns
 ```
 
@@ -148,18 +148,18 @@ class CustomUIPlugin(PluginBase):
         super().__init__()
         self.name = "Custom Analysis Panel"
         self.category = "ui"
-    
+
     def create_widget(self, parent=None) -> QWidget:
         widget = QWidget(parent)
         layout = QVBoxLayout()
-        
+
         analyze_btn = QPushButton("Run Custom Analysis")
         analyze_btn.clicked.connect(self.on_analyze)
         layout.addWidget(analyze_btn)
-        
+
         widget.setLayout(layout)
         return widget
-    
+
     def on_analyze(self):
         # Trigger custom analysis
         self.emit_signal("analysis_requested", {"type": "custom"})
@@ -176,7 +176,7 @@ class ProtocolAnalyzer(PluginBase):
         self.name = "Custom Protocol Analyzer"
         self.category = "network"
         self.protocols = {}
-    
+
     def analyze_packet(self, packet_data: bytes) -> dict:
         # Custom protocol detection
         if packet_data.startswith(b"CUSTOM"):
@@ -198,22 +198,22 @@ class PluginBase:
     def initialize(self) -> bool
     def run(self, binary_data: bytes, **kwargs) -> dict
     def cleanup(self)
-    
+
     # Analysis helpers
     def get_binary_info(self, path: str) -> dict
     def disassemble(self, data: bytes, arch: str) -> list
     def find_strings(self, data: bytes, min_length: int) -> list
-    
+
     # UI integration
     def create_widget(self, parent) -> QWidget
     def show_dialog(self, title: str, message: str)
     def get_user_input(self, prompt: str) -> str
-    
+
     # Data access
     def read_config(self, key: str) -> Any
     def write_config(self, key: str, value: Any)
     def get_temp_dir(self) -> str
-    
+
     # Signals
     def emit_signal(self, signal: str, data: dict)
     def connect_signal(self, signal: str, handler: callable)
@@ -229,7 +229,7 @@ def initialize(self):
     self.connect_signal("file_loaded", self.on_file_loaded)
     self.connect_signal("analysis_complete", self.on_analysis_done)
     self.connect_signal("patch_applied", self.on_patch_applied)
-    
+
 def on_file_loaded(self, data):
     self.logger.info(f"File loaded: {data['path']}")
     # React to file loading
@@ -246,11 +246,11 @@ Create dynamic instrumentation scripts:
 {
     name: "Function Call Tracer",
     description: "Traces specific function calls",
-    
+
     onAttach: function(pid) {
         console.log("Attached to process: " + pid);
     },
-    
+
     run: function() {
         // Hook Windows API
         Interceptor.attach(Module.findExportByName("kernel32.dll", "CreateFileW"), {
@@ -298,14 +298,14 @@ class MLPredictor(PluginBase):
         super().__init__()
         self.name = "ML Vulnerability Predictor"
         self.model = None
-    
+
     def initialize(self):
         # Load pre-trained model
         import joblib
         model_path = self.get_resource_path("model.pkl")
         self.model = joblib.load(model_path)
         return True
-    
+
     def predict_vulnerability(self, func_features: dict) -> float:
         # Extract features
         features = [
@@ -314,7 +314,7 @@ class MLPredictor(PluginBase):
             func_features.get("stack_size", 0),
             len(func_features.get("called_functions", []))
         ]
-        
+
         # Predict vulnerability probability
         prob = self.model.predict_proba([features])[0][1]
         return prob
@@ -363,7 +363,7 @@ class ConfigurablePlugin(PluginBase):
                 "description": "Enable deep scanning"
             }
         }
-    
+
     def run(self, binary_data: bytes, **kwargs):
         sensitivity = self.get_config("sensitivity")
         deep_scan = self.get_config("deep_scan")
@@ -410,7 +410,7 @@ class ComprehensiveLicenseBypasser(PluginBase):
         self.name = "Comprehensive License Bypasser"
         self.version = "2.0.0"
         self.patterns = self.load_patterns()
-    
+
     def load_patterns(self):
         return {
             "trial_check": [
@@ -424,10 +424,10 @@ class ComprehensiveLicenseBypasser(PluginBase):
                 (b"connect", "patch_network_check"),
             ]
         }
-    
+
     def run(self, binary_data: bytes, **kwargs):
         patches = []
-        
+
         for category, patterns in self.patterns.items():
             for pattern in patterns:
                 if isinstance(pattern[1], bytes):
@@ -439,7 +439,7 @@ class ComprehensiveLicenseBypasser(PluginBase):
                     # Complex patch
                     method = getattr(self, pattern[1])
                     patches.extend(method(binary_data, pattern[0]))
-        
+
         return {
             "status": "success",
             "patches": patches,
@@ -454,14 +454,14 @@ class BinaryDiffer(PluginBase):
     def __init__(self):
         super().__init__()
         self.name = "Binary Difference Analyzer"
-    
+
     def compare_binaries(self, bin1: bytes, bin2: bytes):
         import difflib
-        
+
         # Basic diff
         matcher = difflib.SequenceMatcher(None, bin1, bin2)
         changes = []
-        
+
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
             if tag != 'equal':
                 changes.append({
@@ -473,7 +473,7 @@ class BinaryDiffer(PluginBase):
                     "data1": bin1[i1:i2].hex(),
                     "data2": bin2[j1:j2].hex()
                 })
-        
+
         return {
             "similarity": matcher.ratio(),
             "changes": changes,
@@ -505,12 +505,12 @@ class TestMyPlugin(unittest.TestCase):
     def setUp(self):
         self.plugin = MyPlugin()
         self.plugin.initialize()
-    
+
     def test_basic_analysis(self):
         test_data = b"MZ\x90\x00\x03"
         result = self.plugin.run(test_data)
         self.assertEqual(result["status"], "success")
-    
+
     def tearDown(self):
         self.plugin.cleanup()
 ```
@@ -542,4 +542,3 @@ my-plugin/
     "entry_point": "MyPlugin"
 }
 ```
-

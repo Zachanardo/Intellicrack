@@ -43,6 +43,7 @@ except ImportError:
         """
         return logging.getLogger(name)
 
+
 logger = get_logger(__name__)
 
 
@@ -98,14 +99,14 @@ class LLMAnalysisWorker(QRunnable):
                 result = {"success": True, "suggestions": response}
 
             else:
-                result = {"success": False,
-                          "error": f"Unknown operation: {self.operation}"}
+                result = {"success": False, "error": f"Unknown operation: {self.operation}"}
 
             self.signals.result.emit(result)
 
         except Exception as e:
             logger.error("Exception in llm_handler: %s", e)
             import traceback
+
             self.signals.error.emit((type(e), e, traceback.format_exc()))
         finally:
             self.signals.finished.emit()
@@ -281,30 +282,36 @@ class LLMHandler(QObject):
         """Handle context registration completion"""
         if result["success"]:
             logger.info("Protection analysis context registered with LLM")
-            self.llm_result_ready.emit({
-                "type": "context_registered",
-                "context": result["context"],
-            })
+            self.llm_result_ready.emit(
+                {
+                    "type": "context_registered",
+                    "context": result["context"],
+                }
+            )
         else:
             self.llm_error.emit(result.get("error", "Unknown error"))
 
     def _on_summary_ready(self, result: dict):
         """Handle summary generation completion"""
         if result["success"]:
-            self.llm_result_ready.emit({
-                "type": "summary",
-                "content": result["summary"],
-            })
+            self.llm_result_ready.emit(
+                {
+                    "type": "summary",
+                    "content": result["summary"],
+                }
+            )
         else:
             self.llm_error.emit(result.get("error", "Unknown error"))
 
     def _on_bypass_suggestions_ready(self, result: dict):
         """Handle bypass suggestions completion"""
         if result["success"]:
-            self.llm_result_ready.emit({
-                "type": "bypass_suggestions",
-                "content": result["suggestions"],
-            })
+            self.llm_result_ready.emit(
+                {
+                    "type": "bypass_suggestions",
+                    "content": result["suggestions"],
+                }
+            )
         else:
             self.llm_error.emit(result.get("error", "Unknown error"))
 

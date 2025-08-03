@@ -37,8 +37,7 @@ from PyQt6.QtWidgets import (
 class QEMUTestDialog(QDialog):
     """Dialog asking user if they want to test script in QEMU first."""
 
-    def __init__(self, script_type: str, target_binary: str,
-                 script_preview: str = "", parent=None):
+    def __init__(self, script_type: str, target_binary: str, script_preview: str = "", parent=None):
         """Initialize the QEMUTestDialog with default values."""
         super().__init__(parent)
         self.script_type = script_type
@@ -61,9 +60,13 @@ class QEMUTestDialog(QDialog):
 
         # Warning icon
         icon_label = QLabel()
-        icon_label.setPixmap(self.style().standardPixmap(
-            self.style().SP_MessageBoxWarning,
-        ).scaled(48, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        icon_label.setPixmap(
+            self.style()
+            .standardPixmap(
+                self.style().SP_MessageBoxWarning,
+            )
+            .scaled(48, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        )
         header_layout.addWidget(icon_label)
 
         # Warning text

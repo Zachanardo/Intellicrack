@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import functools
 import inspect
 import logging
@@ -68,6 +67,7 @@ def log_function_call(func: F) -> F:
     """
     # Thread-local storage to prevent recursion
     import threading
+
     _local = threading.local()
 
     @functools.wraps(func)
@@ -81,14 +81,17 @@ def log_function_call(func: F) -> F:
         func_name = func.__qualname__
 
         # Skip logging for certain problematic functions
-        if any(_skip in func_name for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]):
+        if any(
+            _skip in func_name
+            for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]
+        ):
             return func(*args, **kwargs)
 
         try:
             _local.in_logger = True
             # Log function call with arguments
             arg_names = inspect.getfullargspec(func).args
-            arg_values = args[:len(arg_names)]
+            arg_values = args[: len(arg_names)]
 
             # Safely represent arguments to avoid issues with large objects
             def safe_repr(obj, max_len=100):
@@ -102,7 +105,10 @@ def log_function_call(func: F) -> F:
                     logger.error("Error in logger: %s", e)
                     return "<repr_failed>"
 
-            arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values, strict=False)]
+            arg_strs = [
+                f"{name}={safe_repr(value)}"
+                for name, value in zip(arg_names, arg_values, strict=False)
+            ]
             if kwargs:
                 arg_strs += [f"{k}={safe_repr(v)}" for k, v in kwargs.items()]
 
@@ -123,6 +129,7 @@ def log_function_call(func: F) -> F:
 
     # Support async functions
     if inspect.iscoroutinefunction(func):
+
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             # Check if we're already in a logging call to prevent recursion
@@ -132,13 +139,16 @@ def log_function_call(func: F) -> F:
             func_name = func.__qualname__
 
             # Skip logging for certain problematic functions
-            if any(_skip in func_name for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]):
+            if any(
+                _skip in func_name
+                for _skip in ["__str__", "__repr__", "as_posix", "getline", "getlines"]
+            ):
                 return await func(*args, **kwargs)
 
             try:
                 _local.in_logger = True
                 arg_names = inspect.getfullargspec(func).args
-                arg_values = args[:len(arg_names)]
+                arg_values = args[: len(arg_names)]
 
                 # Use the same safe_repr function for async too
                 def safe_repr(obj, max_len=100):
@@ -152,7 +162,10 @@ def log_function_call(func: F) -> F:
                         logger.error("Error in logger: %s", e)
                         return "<repr_failed>"
 
-                arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values, strict=False)]
+                arg_strs = [
+                    f"{name}={safe_repr(value)}"
+                    for name, value in zip(arg_names, arg_values, strict=False)
+                ]
                 if kwargs:
                     arg_strs += [f"{k}={safe_repr(v)}" for k, v in kwargs.items()]
 
@@ -170,6 +183,7 @@ def log_function_call(func: F) -> F:
                 raise
             finally:
                 _local.in_logger = False
+
         return async_wrapper
 
     return wrapper
@@ -191,8 +205,12 @@ def log_all_methods(cls):
     return cls
 
 
-def setup_logger(name: str = "Intellicrack", level: int = logging.INFO,
-                 log_file: str = None, format_string: str = None) -> logging.Logger:
+def setup_logger(
+    name: str = "Intellicrack",
+    level: int = logging.INFO,
+    log_file: str = None,
+    format_string: str = None,
+) -> logging.Logger:
     """Set up a logger with the specified configuration.
 
     Args:
@@ -251,8 +269,12 @@ def get_logger(name: str = None) -> logging.Logger:
     return logging.getLogger(name)
 
 
-def configure_logging(level: int = logging.INFO, log_file: str = None,
-                     format_string: str = None, enable_comprehensive: bool = False):
+def configure_logging(
+    level: int = logging.INFO,
+    log_file: str = None,
+    format_string: str = None,
+    enable_comprehensive: bool = False,
+):
     """Configure logging for the entire application.
 
     Args:
@@ -272,9 +294,14 @@ def configure_logging(level: int = logging.INFO, log_file: str = None,
         setup_logger("Intellicrack", logging.DEBUG, log_file, comprehensive_format)
         logging.debug("Comprehensive logging enabled with detailed function tracking")
 
-def setup_logging(level: str = "INFO", log_file: str = None,
-                  enable_rotation: bool = True, max_bytes: int = 10485760,
-                  backup_count: int = 5) -> None:
+
+def setup_logging(
+    level: str = "INFO",
+    log_file: str = None,
+    enable_rotation: bool = True,
+    max_bytes: int = 10485760,
+    backup_count: int = 5,
+) -> None:
     """Set up logging for the application with optional log rotation.
 
     Args:
@@ -307,6 +334,7 @@ def setup_logging(level: str = "INFO", log_file: str = None,
     if log_file:
         if enable_rotation:
             from logging.handlers import RotatingFileHandler
+
             file_handler = RotatingFileHandler(
                 log_file,
                 maxBytes=max_bytes,
@@ -327,9 +355,13 @@ def setup_logging(level: str = "INFO", log_file: str = None,
     )
 
 
-def setup_persistent_logging(log_dir: str = None, log_name: str = "intellicrack",
-                            enable_rotation: bool = True, max_bytes: int = 10485760,
-                            backup_count: int = 5) -> str:
+def setup_persistent_logging(
+    log_dir: str = None,
+    log_name: str = "intellicrack",
+    enable_rotation: bool = True,
+    max_bytes: int = 10485760,
+    backup_count: int = 5,
+) -> str:
     """Set up persistent logging with automatic rotation.
 
     Args:
@@ -349,6 +381,7 @@ def setup_persistent_logging(log_dir: str = None, log_name: str = "intellicrack"
     # Default log directory
     if log_dir is None:
         from intellicrack.utils.core.plugin_paths import get_logs_dir
+
         log_dir = str(get_logs_dir())
 
     # Create log directory if it doesn't exist

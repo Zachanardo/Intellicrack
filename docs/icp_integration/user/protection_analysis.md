@@ -7,7 +7,7 @@ The Protection Analysis tab provides advanced protection detection capabilities 
 The Protection Analysis tab is your primary interface for detecting and analyzing binary protection schemes. It automatically triggers when you open files in Intellicrack and provides detailed information about:
 
 - **Packers**: UPX, PECompact, ASPack, and other compression tools
-- **Protectors**: VMProtect, Themida, Obsidium, and commercial protection systems  
+- **Protectors**: VMProtect, Themida, Obsidium, and commercial protection systems
 - **Cryptors**: Encryption and obfuscation mechanisms
 - **License Systems**: DRM, dongles, and license validation
 - **Anti-Analysis**: Anti-debugging and VM detection techniques
@@ -79,7 +79,7 @@ Choose the appropriate scan mode based on your analysis needs:
 **Quick Reference:**
 ```
 NORMAL     → Fast analysis for triage
-DEEP       → Thorough detection for research  
+DEEP       → Thorough detection for research
 HEURISTIC  → Behavioral pattern detection
 AGGRESSIVE → Maximum coverage analysis
 ALL        → Complete comprehensive scan

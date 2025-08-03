@@ -18,33 +18,33 @@ def test_theme_application():
         from PyQt6.QtCore import Qt
         from PyQt6.QtGui import QPalette, QColor
         print("   ✓ Qt imported")
-        
+
         print("2. Creating QApplication...")
         app = QApplication(sys.argv)
         print("   ✓ QApplication created")
-        
+
         print("3. Creating QMainWindow...")
         window = QMainWindow()
         print("   ✓ QMainWindow created")
-        
+
         print("4. Setting Fusion style...")
         app.setStyle("Fusion")
         print("   ✓ Fusion style set")
-        
+
         print("5. Creating dark palette...")
         dark_palette = QPalette()
         print("   ✓ QPalette created")
-        
+
         print("6. Setting palette colors...")
         dark_palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
         dark_palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
         dark_palette.setColor(QPalette.ColorRole.Base, QColor(25, 25, 25))
         print("   ✓ Colors set")
-        
+
         print("7. Applying palette...")
         app.setPalette(dark_palette)
         print("   ✓ Palette applied")
-        
+
         print("8. Setting stylesheet...")
         app.setStyleSheet("""
             QWidget {
@@ -53,22 +53,22 @@ def test_theme_application():
             }
         """)
         print("   ✓ Stylesheet applied")
-        
+
         print("9. Showing window...")
         window.show()
         print("   ✓ Window shown")
-        
+
         print("10. Processing events...")
         app.processEvents()
         print("   ✓ Events processed")
-        
+
         print("11. Closing...")
         window.close()
         app.quit()
         print("   ✓ Closed")
-        
+
         return 0
-        
+
     except Exception as e:
         print(f"   ✗ Error: {e}")
         import traceback

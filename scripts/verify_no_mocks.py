@@ -15,7 +15,6 @@ MOCK_PATTERNS = [
     r"from\s+mock\s+import",
     r"import\s+unittest\.mock",
     r"import\s+mock",
-
     # Mock creation
     r"Mock\s*\(",
     r"MagicMock\s*\(",
@@ -23,7 +22,6 @@ MOCK_PATTERNS = [
     r"AsyncMock\s*\(",
     r"patch\s*\(",
     r"@patch",
-
     # Mock configuration
     r"return_value\s*=",
     r"side_effect\s*=",
@@ -31,19 +29,16 @@ MOCK_PATTERNS = [
     r"\.assert_not_called",
     r"\.assert_any_call",
     r"\.call_count",
-
     # Fake data indicators
     r"fake_[a-zA-Z_]+\s*=",
     r"dummy_[a-zA-Z_]+\s*=",
     r"mock_[a-zA-Z_]+\s*=",
     r"placeholder_[a-zA-Z_]+\s*=",
-
     # Common test doubles
     r"class\s+Fake[A-Z]",
     r"class\s+Mock[A-Z]",
     r"class\s+Stub[A-Z]",
     r"class\s+Dummy[A-Z]",
-
     # Hardcoded test data
     r'["\']test123["\']',
     r'["\']example\.com["\']',

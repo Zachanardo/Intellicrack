@@ -42,6 +42,7 @@ try:
         snapshot_download,
     )
     from huggingface_hub.utils import RepositoryNotFoundError
+
     HAS_HF_HUB = True
 except ImportError as e:
     logger.error("Import error in model_download_manager: %s", e)
@@ -55,6 +56,7 @@ except ImportError as e:
 
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError as e:
     logger.error("Import error in model_download_manager: %s", e)
@@ -120,8 +122,7 @@ class ModelDownloadManager:
         self.metadata = self._load_metadata()
 
         if not HAS_HF_HUB:
-            logger.warning(
-                "huggingface_hub not available - download functionality limited")
+            logger.warning("huggingface_hub not available - download functionality limited")
 
         # Initialize API
         self.api = HfApi(token=self.token) if HAS_HF_HUB else None
@@ -178,14 +179,16 @@ class ModelDownloadManager:
                 filters["library_name"] = library
 
             # Search models
-            models = list(list_models(
-                search=query,
-                filter=filters,
-                limit=limit,
-                sort=sort,
-                direction=-1,  # Descending
-                token=self.token,
-            ))
+            models = list(
+                list_models(
+                    search=query,
+                    filter=filters,
+                    limit=limit,
+                    sort=sort,
+                    direction=-1,  # Descending
+                    token=self.token,
+                )
+            )
 
             # Convert to ModelInfo
             results = []
@@ -238,8 +241,7 @@ class ModelDownloadManager:
                         if file.rfilename.endswith((".bin", ".safetensors", ".pt", ".pth")):
                             model_size = (model_size or 0) + file.size
             except Exception as e:
-                logger.debug(
-                    f"Could not calculate model size for {model.modelId}: {e}")
+                logger.debug(f"Could not calculate model size for {model.modelId}: {e}")
 
             info = ModelInfo(
                 model_id=model.modelId,
@@ -396,8 +398,7 @@ class ModelDownloadManager:
             # Note: huggingface_hub snapshot_download doesn't directly support progress callbacks
             # so we'll call progress_hook with a start notification
             if progress_callback:
-                progress_hook({"downloaded": 0, "total": 0,
-                              "percentage": 0, "filename": model_id})
+                progress_hook({"downloaded": 0, "total": 0, "percentage": 0, "filename": model_id})
             local_path = snapshot_download(
                 repo_id=model_id,
                 revision=revision,
@@ -406,8 +407,7 @@ class ModelDownloadManager:
                 local_dir_use_symlinks=False,
                 token=self.token,
                 allow_patterns=allow_patterns,
-                ignore_patterns=ignore_patterns or [
-                    "*.md", "*.txt", ".gitattributes"],
+                ignore_patterns=ignore_patterns or ["*.md", "*.txt", ".gitattributes"],
             )
 
             # Update metadata
@@ -415,9 +415,8 @@ class ModelDownloadManager:
                 "path": str(local_path),
                 "downloaded_at": datetime.now().isoformat(),
                 "revision": revision,
-                "size_mb": sum(
-                    f.stat().st_size for f in Path(local_path).rglob("*") if f.is_file()
-                ) / (1024 * 1024),
+                "size_mb": sum(f.stat().st_size for f in Path(local_path).rglob("*") if f.is_file())
+                / (1024 * 1024),
             }
             self._save_metadata()
 
@@ -512,9 +511,9 @@ class ModelDownloadManager:
             if model_dir.is_dir() and model_dir.name not in ["downloads", "tmp"]:
                 model_id = model_dir.name.replace("_", "/", 1)
                 if model_id not in cached_models:
-                    size_mb = sum(
-                        f.stat().st_size for f in model_dir.rglob("*") if f.is_file()
-                    ) / (1024 * 1024)
+                    size_mb = sum(f.stat().st_size for f in model_dir.rglob("*") if f.is_file()) / (
+                        1024 * 1024
+                    )
                     cached_models[model_id] = {
                         "path": str(model_dir),
                         "size_mb": size_mb,
@@ -679,8 +678,7 @@ class ModelDownloadManager:
             results["errors"].append("No model weight files found")
 
         # Check tokenizer files
-        tokenizer_files = ["tokenizer_config.json",
-                           "tokenizer.json", "vocab.json"]
+        tokenizer_files = ["tokenizer_config.json", "tokenizer.json", "vocab.json"]
         has_tokenizer = False
         for file in tokenizer_files:
             if (model_path / file).exists():

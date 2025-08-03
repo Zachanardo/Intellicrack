@@ -45,7 +45,7 @@ class ExportWorker(QThread):
     """Worker thread for export operations"""
 
     export_completed = pyqtSignal(bool, str)  # success, message
-    progress_update = pyqtSignal(int, str)    # progress, status
+    progress_update = pyqtSignal(int, str)  # progress, status
 
     def __init__(self, export_config: dict[str, Any]):
         """Initialize the ExportWorker with default values."""
@@ -123,9 +123,15 @@ class ExportWorker(QThread):
             if hasattr(icp_data, "__dict__"):
                 # Convert analysis object to dict
                 icp_dict = {
-                    "is_protected": icp_data.is_protected if hasattr(icp_data, "is_protected") else False,
-                    "file_type": icp_data.file_type if hasattr(icp_data, "file_type") else "Unknown",
-                    "architecture": icp_data.architecture if hasattr(icp_data, "architecture") else "Unknown",
+                    "is_protected": icp_data.is_protected
+                    if hasattr(icp_data, "is_protected")
+                    else False,
+                    "file_type": icp_data.file_type
+                    if hasattr(icp_data, "file_type")
+                    else "Unknown",
+                    "architecture": icp_data.architecture
+                    if hasattr(icp_data, "architecture")
+                    else "Unknown",
                     "detections": [],
                 }
 
@@ -134,7 +140,9 @@ class ExportWorker(QThread):
                         det_dict = {
                             "name": detection.name if hasattr(detection, "name") else "Unknown",
                             "type": detection.type if hasattr(detection, "type") else "Unknown",
-                            "confidence": detection.confidence if hasattr(detection, "confidence") else 0.0,
+                            "confidence": detection.confidence
+                            if hasattr(detection, "confidence")
+                            else 0.0,
                             "version": detection.version if hasattr(detection, "version") else "",
                         }
                         icp_dict["detections"].append(det_dict)
@@ -174,10 +182,17 @@ class ExportWorker(QThread):
         rows = []
 
         # Add header
-        rows.append([
-            "Detection Name", "Type", "Confidence", "Version",
-            "File Type", "Architecture", "Protected",
-        ])
+        rows.append(
+            [
+                "Detection Name",
+                "Type",
+                "Confidence",
+                "Version",
+                "File Type",
+                "Architecture",
+                "Protected",
+            ]
+        )
 
         # Extract detection data
         if "icp_analysis" in results:
@@ -189,15 +204,17 @@ class ExportWorker(QThread):
 
             if hasattr(icp_data, "all_detections"):
                 for detection in icp_data.all_detections:
-                    rows.append([
-                        getattr(detection, "name", "Unknown"),
-                        getattr(detection, "type", "Unknown"),
-                        f"{getattr(detection, 'confidence', 0.0):.2%}",
-                        getattr(detection, "version", ""),
-                        file_type,
-                        architecture,
-                        str(is_protected),
-                    ])
+                    rows.append(
+                        [
+                            getattr(detection, "name", "Unknown"),
+                            getattr(detection, "type", "Unknown"),
+                            f"{getattr(detection, 'confidence', 0.0):.2%}",
+                            getattr(detection, "version", ""),
+                            file_type,
+                            architecture,
+                            str(is_protected),
+                        ]
+                    )
 
         self.progress_update.emit(70, "Writing CSV file...")
 
@@ -215,7 +232,9 @@ class ExportWorker(QThread):
             from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
         except ImportError as e:
             self.logger.error("Import error in export_dialog: %s", e)
-            raise ImportError("ReportLab is required for PDF export. Install with: pip install reportlab")
+            raise ImportError(
+                "ReportLab is required for PDF export. Install with: pip install reportlab"
+            )
 
         self.progress_update.emit(30, "Building PDF report...")
 
@@ -243,7 +262,11 @@ class ExportWorker(QThread):
         story.append(Spacer(1, 20))
 
         # Metadata
-        story.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles["Normal"]))
+        story.append(
+            Paragraph(
+                f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles["Normal"]
+            )
+        )
         story.append(Spacer(1, 20))
 
         # File Information
@@ -254,16 +277,20 @@ class ExportWorker(QThread):
             for key, value in results["file_info"].items():
                 file_data.append([key.replace("_", " ").title(), str(value)])
 
-            file_table = Table(file_data, colWidths=[2*inch, 3*inch])
-            file_table.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, -1), colors.lightgrey),
-                ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
-                ("FONTSIZE", (0, 0), (-1, -1), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
-                ("GRID", (0, 0), (-1, -1), 1, colors.black),
-            ]))
+            file_table = Table(file_data, colWidths=[2 * inch, 3 * inch])
+            file_table.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, -1), colors.lightgrey),
+                        ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+                        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                        ("FONTSIZE", (0, 0), (-1, -1), 10),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                    ]
+                )
+            )
 
             story.append(file_table)
             story.append(Spacer(1, 20))
@@ -291,24 +318,32 @@ class ExportWorker(QThread):
                 detection_data = [["Name", "Type", "Confidence", "Version"]]
 
                 for detection in icp_data.all_detections:
-                    detection_data.append([
-                        getattr(detection, "name", "Unknown"),
-                        getattr(detection, "type", "Unknown"),
-                        f"{getattr(detection, 'confidence', 0.0):.1%}",
-                        getattr(detection, "version", "N/A"),
-                    ])
+                    detection_data.append(
+                        [
+                            getattr(detection, "name", "Unknown"),
+                            getattr(detection, "type", "Unknown"),
+                            f"{getattr(detection, 'confidence', 0.0):.1%}",
+                            getattr(detection, "version", "N/A"),
+                        ]
+                    )
 
-                detection_table = Table(detection_data, colWidths=[2*inch, 1.5*inch, 1*inch, 1*inch])
-                detection_table.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, 0), 12),
-                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black),
-                ]))
+                detection_table = Table(
+                    detection_data, colWidths=[2 * inch, 1.5 * inch, 1 * inch, 1 * inch]
+                )
+                detection_table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTSIZE", (0, 0), (-1, 0), 12),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                        ]
+                    )
+                )
 
                 story.append(detection_table)
 
@@ -465,6 +500,7 @@ class ExportDialog(QDialog):
         self.export_prefs = {}
         try:
             from ...config import get_config
+
             config = get_config()
             self.export_prefs = {
                 "format": config.get("export.default_format", "json"),
@@ -613,7 +649,9 @@ class ExportDialog(QDialog):
         self.page_format_combo = QComboBox()
         self.page_format_combo.addItems(["A4", "Letter"])
         self.page_format_combo.setCurrentText(self.export_prefs.get("page_format", "A4"))
-        self.page_format_combo.setToolTip("Choose page size for PDF export:\nA4: International standard (210×297mm)\nLetter: US standard (8.5×11 inches)")
+        self.page_format_combo.setToolTip(
+            "Choose page size for PDF export:\nA4: International standard (210×297mm)\nLetter: US standard (8.5×11 inches)"
+        )
         page_format_layout.addWidget(self.page_format_combo)
 
         page_format_layout.addStretch()
@@ -737,7 +775,9 @@ class ExportDialog(QDialog):
 </intellicrack_analysis>"""
 
             elif preview_format == "csv":
-                preview_text = "Detection Name,Type,Confidence,Version,File Type,Architecture,Protected\n"
+                preview_text = (
+                    "Detection Name,Type,Confidence,Version,File Type,Architecture,Protected\n"
+                )
                 if "icp_analysis" in filtered_results:
                     icp_data = filtered_results["icp_analysis"]
                     if hasattr(icp_data, "all_detections"):
@@ -830,6 +870,7 @@ class ExportDialog(QDialog):
         # Save export preferences to config
         try:
             from ...config import get_config
+
             config = get_config()
             export_prefs = {
                 "export.default_format": selected_format,

@@ -3,6 +3,7 @@
 This module provides the main analysis interface for binary analysis,
 vulnerability detection, and security assessment capabilities.
 """
+
 import os
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -138,7 +139,9 @@ class AnalysisTab(BaseTab):
         depth_layout = QVBoxLayout(depth_group)
 
         self.analysis_depth_combo = QComboBox()
-        self.analysis_depth_combo.addItems(["Quick Scan", "Standard", "Deep Analysis", "Comprehensive"])
+        self.analysis_depth_combo.addItems(
+            ["Quick Scan", "Standard", "Deep Analysis", "Comprehensive"]
+        )
         self.analysis_depth_combo.setCurrentText("Standard")
 
         depth_layout.addWidget(QLabel("Depth Level:"))
@@ -422,7 +425,9 @@ class AnalysisTab(BaseTab):
         # Text results display
         self.results_display = QTextEdit()
         self.results_display.setReadOnly(True)
-        self.results_display.setText("No analysis results available. Select a binary and start analysis.")
+        self.results_display.setText(
+            "No analysis results available. Select a binary and start analysis."
+        )
         self.results_tabs.addTab(self.results_display, "Analysis Results")
 
         # Hex view tab (initially empty)
@@ -445,6 +450,7 @@ class AnalysisTab(BaseTab):
 
         # Create entropy visualization widget
         from intellicrack.ui.widgets.entropy_visualizer import EntropyVisualizer
+
         self.entropy_visualizer = EntropyVisualizer()
         entropy_layout.addWidget(self.entropy_visualizer)
 
@@ -504,6 +510,7 @@ class AnalysisTab(BaseTab):
         """Start static analysis only"""
         if not self.current_binary:
             from PyQt6.QtWidgets import QMessageBox
+
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
 
@@ -514,21 +521,25 @@ class AnalysisTab(BaseTab):
 
         # Submit static analysis task to TaskManager
         if self.task_manager and self.app_context:
+
             def run_static_analysis(task=None):
                 try:
                     # Notify start of analysis
                     if self.app_context:
-                        self.app_context.start_analysis("static_analysis", {
-                            "binary": self.current_binary,
-                            "options": {
-                                "disassembly": self.disassembly_cb.isChecked(),
-                                "strings": self.string_analysis_cb.isChecked(),
-                                "imports": self.imports_analysis_cb.isChecked(),
-                                "entropy": self.entropy_analysis_cb.isChecked(),
-                                "signatures": self.signature_analysis_cb.isChecked(),
-                                "depth": self.analysis_depth_combo.currentText(),
+                        self.app_context.start_analysis(
+                            "static_analysis",
+                            {
+                                "binary": self.current_binary,
+                                "options": {
+                                    "disassembly": self.disassembly_cb.isChecked(),
+                                    "strings": self.string_analysis_cb.isChecked(),
+                                    "imports": self.imports_analysis_cb.isChecked(),
+                                    "entropy": self.entropy_analysis_cb.isChecked(),
+                                    "signatures": self.signature_analysis_cb.isChecked(),
+                                    "depth": self.analysis_depth_combo.currentText(),
+                                },
                             },
-                        })
+                        )
 
                     # Determine which phases to run based on options
                     phases = [
@@ -578,10 +589,14 @@ class AnalysisTab(BaseTab):
 
                         if self.string_analysis_cb.isChecked() and "strings" in static_data:
                             strings = static_data.get("strings", [])
-                            suspicious_strings = [s for s in strings if any(
-                                keyword in s.get("string", "").lower()
-                                for keyword in ["password", "key", "token", "secret", "api"]
-                            )]
+                            suspicious_strings = [
+                                s
+                                for s in strings
+                                if any(
+                                    keyword in s.get("string", "").lower()
+                                    for keyword in ["password", "key", "token", "secret", "api"]
+                                )
+                            ]
                             analysis_result["strings"] = {
                                 "total": len(strings),
                                 "suspicious": suspicious_strings[:10],  # Limit to first 10
@@ -598,7 +613,9 @@ class AnalysisTab(BaseTab):
                         entropy_data = result.results.get("entropy_analysis", {})
                         analysis_result["entropy"] = {
                             "overall": entropy_data.get("overall_entropy", 0),
-                            "high_entropy_sections": len(entropy_data.get("high_entropy_chunks", [])),
+                            "high_entropy_sections": len(
+                                entropy_data.get("high_entropy_chunks", [])
+                            ),
                         }
 
                     if AnalysisPhase.PATTERN_MATCHING in result.phases_completed:
@@ -624,6 +641,7 @@ class AnalysisTab(BaseTab):
 
                 except Exception as e:
                     import traceback
+
                     self.log_activity(f"Analysis error: {e!s}", is_error=True)
                     if self.app_context:
                         self.app_context.fail_analysis("static_analysis", str(e))
@@ -649,6 +667,7 @@ class AnalysisTab(BaseTab):
         """Detect binary protections"""
         if not self.current_binary:
             from PyQt6.QtWidgets import QMessageBox
+
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
 
@@ -657,6 +676,7 @@ class AnalysisTab(BaseTab):
 
         # Submit protection detection task to TaskManager
         if self.task_manager and self.app_context:
+
             def run_protection_detection(task=None):
                 try:
                     # Import protection modules
@@ -664,16 +684,19 @@ class AnalysisTab(BaseTab):
 
                     # Notify start of analysis
                     if self.app_context:
-                        self.app_context.start_analysis("protection_detection", {
-                            "binary": self.current_binary,
-                            "options": {
-                                "packer_detection": self.packer_detection_cb.isChecked(),
-                                "obfuscation_detection": self.obfuscation_detection_cb.isChecked(),
-                                "anti_debug_detection": self.anti_debug_detection_cb.isChecked(),
-                                "vm_detection": self.vm_detection_cb.isChecked(),
-                                "license_check_detection": self.license_check_detection_cb.isChecked(),
+                        self.app_context.start_analysis(
+                            "protection_detection",
+                            {
+                                "binary": self.current_binary,
+                                "options": {
+                                    "packer_detection": self.packer_detection_cb.isChecked(),
+                                    "obfuscation_detection": self.obfuscation_detection_cb.isChecked(),
+                                    "anti_debug_detection": self.anti_debug_detection_cb.isChecked(),
+                                    "vm_detection": self.vm_detection_cb.isChecked(),
+                                    "license_check_detection": self.license_check_detection_cb.isChecked(),
+                                },
                             },
-                        })
+                        )
 
                     # Get unified protection engine
                     engine = get_unified_engine()
@@ -706,7 +729,9 @@ class AnalysisTab(BaseTab):
 
                     # Store results in AppContext
                     if self.app_context:
-                        self.app_context.set_analysis_results("protection_detection", formatted_results)
+                        self.app_context.set_analysis_results(
+                            "protection_detection", formatted_results
+                        )
 
                     if task:
                         task.emit_progress(100, "Protection detection complete")
@@ -736,6 +761,7 @@ class AnalysisTab(BaseTab):
         """Start dynamic monitoring"""
         if not self.current_binary:
             from PyQt6.QtWidgets import QMessageBox
+
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
 
@@ -744,6 +770,7 @@ class AnalysisTab(BaseTab):
 
         # Submit dynamic analysis task to TaskManager
         if self.task_manager and self.app_context:
+
             def run_dynamic_analysis(task=None):
                 try:
                     # Get monitoring options
@@ -757,10 +784,13 @@ class AnalysisTab(BaseTab):
 
                     # Notify start of analysis
                     if self.app_context:
-                        self.app_context.start_analysis("dynamic_analysis", {
-                            "binary": self.current_binary,
-                            "options": options,
-                        })
+                        self.app_context.start_analysis(
+                            "dynamic_analysis",
+                            {
+                                "binary": self.current_binary,
+                                "options": options,
+                            },
+                        )
 
                     # Update progress
                     if task:
@@ -800,10 +830,14 @@ class AnalysisTab(BaseTab):
                             analysis_result["memory_access"] = dynamic_data.get("memory_access", [])
 
                         if options["file_monitoring"]:
-                            analysis_result["file_operations"] = dynamic_data.get("file_operations", [])
+                            analysis_result["file_operations"] = dynamic_data.get(
+                                "file_operations", []
+                            )
 
                         if options["network_monitoring"]:
-                            analysis_result["network_activity"] = dynamic_data.get("network_activity", [])
+                            analysis_result["network_activity"] = dynamic_data.get(
+                                "network_activity", []
+                            )
 
                     if task:
                         task.emit_progress(100, "Dynamic analysis complete")
@@ -816,6 +850,7 @@ class AnalysisTab(BaseTab):
 
                 except Exception as e:
                     import traceback
+
                     self.log_activity(f"Dynamic analysis error: {e!s}", is_error=True)
                     if self.app_context:
                         self.app_context.fail_analysis("dynamic_analysis", str(e))
@@ -858,6 +893,7 @@ class AnalysisTab(BaseTab):
         """Open hex viewer for current binary"""
         if not self.current_binary:
             from PyQt6.QtWidgets import QMessageBox
+
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return
 
@@ -882,16 +918,21 @@ class AnalysisTab(BaseTab):
         except ImportError as e:
             self.log_activity(f"Hex viewer not available: {e!s}")
             from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.warning(self, "Error", "Hex viewer module not available. Please check installation.")
+
+            QMessageBox.warning(
+                self, "Error", "Hex viewer module not available. Please check installation."
+            )
         except Exception as e:
             self.log_activity(f"Error opening hex viewer: {e!s}")
             from PyQt6.QtWidgets import QMessageBox
+
             QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {e!s}")
 
     def embed_hex_viewer(self):
         """Embed hex viewer in the results panel"""
         if not self.current_binary:
             from PyQt6.QtWidgets import QMessageBox
+
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return
 
@@ -957,6 +998,7 @@ class AnalysisTab(BaseTab):
             framework = self.hooking_framework_combo.currentText()
 
             if self.task_manager:
+
                 def attach_process(task=None):
                     try:
                         if task:
@@ -1036,10 +1078,10 @@ class AnalysisTab(BaseTab):
         """Update the current binary being analyzed"""
         self.current_binary = binary_path
         import os
+
         binary_name = os.path.basename(binary_path)
         self.results_display.setText(f"Binary loaded: {binary_name}\nReady for analysis.")
         self.log_activity(f"Analysis tab updated for binary: {binary_name}")
-
 
     # AppContext signal handlers
     def on_binary_loaded(self, binary_path: str):

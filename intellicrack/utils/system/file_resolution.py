@@ -36,6 +36,7 @@ if IS_WINDOWS:
         import pythoncom
         import win32com.client
         from win32com.shell import shell, shellcon
+
         HAS_WIN32 = True
     except ImportError as e:
         logger.error("Import error in file_resolution: %s", e)
@@ -49,8 +50,14 @@ else:
 class FileTypeInfo:
     """Information about a file type and its analysis capabilities."""
 
-    def __init__(self, extension: str, description: str, category: str,
-                 supported: bool = True, analyzer_hint: str = None):
+    def __init__(
+        self,
+        extension: str,
+        description: str,
+        category: str,
+        supported: bool = True,
+        analyzer_hint: str = None,
+    ):
         """Initialize file type information.
 
         Args:
@@ -80,49 +87,45 @@ class FileResolver:
         ".scr": FileTypeInfo(".scr", "Windows Screen Saver", "executable", True, "pe"),
         ".cpl": FileTypeInfo(".cpl", "Control Panel Item", "executable", True, "pe"),
         ".ocx": FileTypeInfo(".ocx", "ActiveX Control", "library", True, "pe"),
-
         # Windows Shortcuts and Links
         ".lnk": FileTypeInfo(".lnk", "Windows Shortcut", "shortcut", True, "shortcut"),
         ".url": FileTypeInfo(".url", "Internet Shortcut", "shortcut", True, "url"),
-
         # Windows Installers
         ".msi": FileTypeInfo(".msi", "Windows Installer Package", "installer", True, "msi"),
         ".msp": FileTypeInfo(".msp", "Windows Installer Patch", "installer", True, "msi"),
         ".msm": FileTypeInfo(".msm", "Windows Installer Merge Module", "installer", True, "msi"),
         ".cab": FileTypeInfo(".cab", "Cabinet Archive", "archive", True, "cabinet"),
-
         # Linux/Unix Executables
         ".so": FileTypeInfo(".so", "Shared Object Library", "library", True, "elf"),
         ".o": FileTypeInfo(".o", "Object File", "object", True, "elf"),
         ".a": FileTypeInfo(".a", "Static Library Archive", "library", True, "ar"),
-
         # Linux Packages
         ".deb": FileTypeInfo(".deb", "Debian Package", "installer", True, "deb"),
         ".rpm": FileTypeInfo(".rpm", "Red Hat Package", "installer", True, "rpm"),
         ".snap": FileTypeInfo(".snap", "Snap Package", "installer", True, "snap"),
         ".flatpak": FileTypeInfo(".flatpak", "Flatpak Package", "installer", True, "flatpak"),
         ".appimage": FileTypeInfo(".appimage", "AppImage Package", "installer", True, "appimage"),
-
         # macOS Executables and Packages
-        ".app": FileTypeInfo(".app", "macOS Application Bundle", "executable", True, "macho_bundle"),
+        ".app": FileTypeInfo(
+            ".app", "macOS Application Bundle", "executable", True, "macho_bundle"
+        ),
         ".dylib": FileTypeInfo(".dylib", "macOS Dynamic Library", "library", True, "macho"),
         ".bundle": FileTypeInfo(".bundle", "macOS Bundle", "library", True, "macho_bundle"),
-        ".framework": FileTypeInfo(".framework", "macOS Framework", "library", True, "macho_framework"),
+        ".framework": FileTypeInfo(
+            ".framework", "macOS Framework", "library", True, "macho_framework"
+        ),
         ".pkg": FileTypeInfo(".pkg", "macOS Installer Package", "installer", True, "pkg"),
         ".dmg": FileTypeInfo(".dmg", "macOS Disk Image", "installer", True, "dmg"),
-
         # Cross-platform formats
         ".dat": FileTypeInfo(".dat", "Data File", "data", True, "generic"),
         ".img": FileTypeInfo(".img", "Disk Image", "image", True, "generic"),
         ".iso": FileTypeInfo(".iso", "ISO Disk Image", "image", True, "iso"),
-
         # Archive formats
         ".zip": FileTypeInfo(".zip", "ZIP Archive", "archive", True, "zip"),
         ".rar": FileTypeInfo(".rar", "RAR Archive", "archive", True, "rar"),
         ".7z": FileTypeInfo(".7z", "7-Zip Archive", "archive", True, "7z"),
         ".tar": FileTypeInfo(".tar", "TAR Archive", "archive", True, "tar"),
         ".gz": FileTypeInfo(".gz", "GZip Archive", "archive", True, "gzip"),
-
         # Firmware and embedded
         ".bin": FileTypeInfo(".bin", "Firmware Binary", "firmware", True, "firmware"),
         ".hex": FileTypeInfo(".hex", "Intel HEX File", "firmware", True, "intel_hex"),
@@ -198,12 +201,18 @@ class FileResolver:
         # Check if it's a directory (like .app bundles)
         if file_path.is_dir():
             if extension == ".app":
-                return self.FILE_TYPES.get(".app", FileTypeInfo(extension, "Unknown Directory", "directory"))
+                return self.FILE_TYPES.get(
+                    ".app", FileTypeInfo(extension, "Unknown Directory", "directory")
+                )
             if extension == ".framework":
-                return self.FILE_TYPES.get(".framework", FileTypeInfo(extension, "Framework Directory", "directory"))
+                return self.FILE_TYPES.get(
+                    ".framework", FileTypeInfo(extension, "Framework Directory", "directory")
+                )
             return FileTypeInfo(extension, "Directory", "directory", False)
 
-        return self.FILE_TYPES.get(extension, FileTypeInfo(extension, "Unknown File Type", "unknown", False))
+        return self.FILE_TYPES.get(
+            extension, FileTypeInfo(extension, "Unknown File Type", "unknown", False)
+        )
 
     def get_supported_file_filters(self) -> str:
         """Generate Qt file dialog filter string for all supported types."""
@@ -317,9 +326,11 @@ class FileResolver:
             # Check for alias resource fork or extended attributes
             # This is a simplified check - real alias detection is more complex
             import subprocess
+
             result = subprocess.run(
                 ["file", str(file_path)],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=5,
             )
@@ -347,7 +358,8 @@ class FileResolver:
 
             result = subprocess.run(
                 ["osascript", "-e", script],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=10,
             )
@@ -457,9 +469,11 @@ class FileResolver:
 
             # Get file command output
             import subprocess
+
             result = subprocess.run(
                 ["file", str(file_path)],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=5,
             )
@@ -480,14 +494,19 @@ class FileResolver:
             # Check for Mach-O format
             with open(file_path, "rb") as f:
                 magic = f.read(4)
-                if magic in [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe",
-                           b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"]:
+                if magic in [
+                    b"\xfe\xed\xfa\xce",
+                    b"\xce\xfa\xed\xfe",
+                    b"\xfe\xed\xfa\xcf",
+                    b"\xcf\xfa\xed\xfe",
+                ]:
                     metadata["is_macho"] = True
                     metadata["format_hint"] = "macho"
 
             # Get extended attributes
             try:
                 import xattr
+
                 attrs = list(xattr.xattr(file_path))
                 if attrs:
                     metadata["extended_attributes"] = attrs

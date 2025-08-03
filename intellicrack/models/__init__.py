@@ -45,6 +45,7 @@ except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     # Fallback enum if severity_levels not available
     from enum import Enum
+
     class VulnerabilityLevel(Enum):
         """Fallback vulnerability severity levels when module unavailable."""
 
@@ -53,6 +54,7 @@ except ImportError as e:
         MEDIUM = "medium"
         LOW = "low"
         INFO = "info"
+
     SeverityLevel = VulnerabilityLevel
 
 # Export main interface

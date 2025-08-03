@@ -12,7 +12,7 @@ print("🔍 Processing placeholder findings with 100% accuracy guarantee...")
 # High-confidence classification rules
 HIGH_CONFIDENCE_EXPLOIT_PATTERNS = [
     r'fake[_\s]*hwid',
-    r'fake[_\s]*hardware[_\s]*id', 
+    r'fake[_\s]*hardware[_\s]*id',
     r'fake[_\s]*license[_\s]*server',
     r'fake[_\s]*license[_\s]*response',
     r'mock[_\s]*server[_\s]*response'
@@ -20,7 +20,7 @@ HIGH_CONFIDENCE_EXPLOIT_PATTERNS = [
 
 HIGH_CONFIDENCE_MISSING_PATTERNS = [
     r'TODO',
-    r'FIXME', 
+    r'FIXME',
     r'NotImplementedError',
     r'raise NotImplementedError',
     r'pass\s*#.*implement'
@@ -29,22 +29,22 @@ HIGH_CONFIDENCE_MISSING_PATTERNS = [
 def classify_finding(file_path, line_num, pattern_type, code_snippet):
     """Classify a finding with confidence score"""
     import re
-    
+
     # Check exploit simulation patterns
     for pattern in HIGH_CONFIDENCE_EXPLOIT_PATTERNS:
         if re.search(pattern, code_snippet, re.IGNORECASE):
             return ('exploit_simulation', 0.95, f"Matches exploit pattern: {pattern}")
-    
-    # Check missing implementation patterns  
+
+    # Check missing implementation patterns
     for pattern in HIGH_CONFIDENCE_MISSING_PATTERNS:
         if re.search(pattern, code_snippet, re.IGNORECASE):
             return ('missing_implementation', 0.95, f"Matches missing impl pattern: {pattern}")
-    
+
     # Context-based classification
     if 'exploitation' in file_path.lower() or 'bypass' in file_path.lower():
         if pattern_type in ['fake', 'mock', 'stub']:
             return ('exploit_simulation', 0.8, f"{pattern_type} in exploitation context")
-    
+
     # Default to manual review
     return ('needs_review', 0.5, "Requires manual verification")
 
@@ -64,19 +64,19 @@ needs_review = []
 
 for finding in sample_findings:
     classification, confidence, reason = classify_finding(
-        finding['file_path'], 
+        finding['file_path'],
         finding['line_number'],
-        finding['pattern_type'], 
+        finding['pattern_type'],
         finding['code_snippet']
     )
-    
+
     result = {
         **finding,
         'classification': classification,
         'confidence': confidence,
         'reason': reason
     }
-    
+
     if confidence >= 0.9 and classification == 'exploit_simulation':
         exploit_simulations.append(result)
     elif confidence >= 0.9 and classification == 'missing_implementation':
@@ -94,7 +94,7 @@ with open('FINAL_EXPLOIT_SIMULATIONS.txt', 'w') as f:
     for finding in exploit_simulations:
         f.write(f"{finding['file_path']}:{finding['line_number']} - {finding['pattern_type']}: {finding['code_snippet']}\n")
 
-# Write missing implementations  
+# Write missing implementations
 with open('FINAL_MISSING_IMPLEMENTATIONS.txt', 'w') as f:
     f.write("# Missing Implementations That Need Fixing\n")
     f.write("# These are actual bugs/incomplete features\n\n")
@@ -105,7 +105,7 @@ with open('FINAL_MISSING_IMPLEMENTATIONS.txt', 'w') as f:
 with open('ALL_PROCESSED_FINDINGS.json', 'w') as f:
     json.dump({
         'exploit_simulations': exploit_simulations,
-        'missing_implementations': missing_implementations, 
+        'missing_implementations': missing_implementations,
         'needs_review': needs_review
     }, f, indent=2)
 

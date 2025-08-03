@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 try:
     import aiohttp
     from aiohttp import ClientTimeout
+
     HAS_AIOHTTP = True
 except ImportError as e:
     logger.error("Import error in api_client: %s", e)
@@ -35,7 +36,9 @@ class APIClient:
         self.base_url = base_url or get_secret("API_BASE_URL", "https://api.intellicrack.com")
         self.timeout = int(get_secret("API_TIMEOUT", "60"))
         self.retry_attempts = int(get_secret("API_RETRY_ATTEMPTS", "3"))
-        self.retry_delay = int(get_secret("API_RETRY_DELAY", "1000")) / 1000  # Convert ms to seconds
+        self.retry_delay = (
+            int(get_secret("API_RETRY_DELAY", "1000")) / 1000
+        )  # Convert ms to seconds
         self.session = None
 
     async def __aenter__(self):
@@ -51,9 +54,13 @@ class APIClient:
         if self.session and HAS_AIOHTTP:
             await self.session.close()
 
-    async def fetch(self, endpoint: str, method: str = "GET",
-                   data: dict[str, Any] | None = None,
-                   headers: dict[str, str] | None = None) -> dict[str, Any]:
+    async def fetch(
+        self,
+        endpoint: str,
+        method: str = "GET",
+        data: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         """Fetch data from API endpoint with retry logic and error handling.
 
         Args:
@@ -139,8 +146,9 @@ class APIClient:
         raise RuntimeError("Max retry attempts exceeded")
 
 
-async def make_api_call(endpoint: str, method: str = "GET",
-                       data: dict[str, Any] | None = None) -> dict[str, Any]:
+async def make_api_call(
+    endpoint: str, method: str = "GET", data: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Convenience function for making API calls.
 
     Args:
@@ -157,8 +165,9 @@ async def make_api_call(endpoint: str, method: str = "GET",
 
 
 # Synchronous wrapper for compatibility
-def sync_api_call(endpoint: str, method: str = "GET",
-                  data: dict[str, Any] | None = None) -> dict[str, Any]:
+def sync_api_call(
+    endpoint: str, method: str = "GET", data: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Synchronous wrapper for API calls.
 
     Args:

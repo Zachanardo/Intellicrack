@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import time
 from typing import Any
@@ -331,7 +330,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
             stats["timestamp"] = time.time()
             self.stats_history.append(stats)
             if len(self.stats_history) > self.max_history:
-                self.stats_history = self.stats_history[-self.max_history:]
+                self.stats_history = self.stats_history[-self.max_history :]
 
             # Update overview tab
             self.update_overview_tab(stats)
@@ -391,6 +390,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         # System memory (would need psutil integration)
         try:
             import psutil
+
             memory = psutil.virtual_memory()
             self.system_memory_label.setText(f"{memory.percent:.1f}%")
             self.system_memory_progress.setValue(int(memory.percent))

@@ -27,6 +27,7 @@ from PyQt6.QtGui import QFont, QFontDatabase
 
 logger = logging.getLogger(__name__)
 
+
 class FontManager:
     """Manages custom font loading and configuration for the application."""
 
@@ -106,8 +107,10 @@ class FontManager:
         # Ultimate fallback
         return QFont("sans-serif", size)
 
+
 # Global font manager instance
 _font_manager = None
+
 
 def get_font_manager():
     """Get or create the global font manager"""

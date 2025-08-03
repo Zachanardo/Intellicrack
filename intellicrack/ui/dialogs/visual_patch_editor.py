@@ -1,4 +1,5 @@
 """Visual patch editor dialog for graphical binary patching."""
+
 import os
 from typing import Any
 
@@ -45,10 +46,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
 try:
     import pefile
+
     HAS_PEFILE = True
 except ImportError as e:
     logger.error("Import error in visual_patch_editor: %s", e)
@@ -56,6 +56,7 @@ except ImportError as e:
 
 try:
     from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+
     HAS_CAPSTONE = True
 except ImportError as e:
     logger.error("Import error in visual_patch_editor: %s", e)
@@ -302,7 +303,9 @@ class VisualPatchEditorDialog(QDialog):
                 address = int(address_text)
         except ValueError as e:
             logger.error("Value error in visual_patch_editor: %s", e)
-            QMessageBox.warning(self, "Invalid Address", "Please enter a valid hexadecimal address.")
+            QMessageBox.warning(
+                self, "Invalid Address", "Please enter a valid hexadecimal address."
+            )
             return
 
         # Validate bytes
@@ -354,8 +357,11 @@ class VisualPatchEditorDialog(QDialog):
             # Get section containing address
             section = None
             for _s in pe.sections:
-                if (_s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase <
-                    _s.VirtualAddress + _s.Misc_VirtualSize):
+                if (
+                    _s.VirtualAddress
+                    <= address - pe.OPTIONAL_HEADER.ImageBase
+                    < _s.VirtualAddress + _s.Misc_VirtualSize
+                ):
                     section = _s
                     break
 
@@ -364,7 +370,12 @@ class VisualPatchEditorDialog(QDialog):
                 return
 
             # Calculate file offset
-            offset = address - pe.OPTIONAL_HEADER.ImageBase - section.VirtualAddress + section.PointerToRawData
+            offset = (
+                address
+                - pe.OPTIONAL_HEADER.ImageBase
+                - section.VirtualAddress
+                + section.PointerToRawData
+            )
 
             # Read bytes from file
             with open(self.binary_path, "rb") as f:
@@ -404,8 +415,11 @@ class VisualPatchEditorDialog(QDialog):
             # Get section containing address
             section = None
             for _s in pe.sections:
-                if (_s.VirtualAddress <= address - pe.OPTIONAL_HEADER.ImageBase <
-                    _s.VirtualAddress + _s.Misc_VirtualSize):
+                if (
+                    _s.VirtualAddress
+                    <= address - pe.OPTIONAL_HEADER.ImageBase
+                    < _s.VirtualAddress + _s.Misc_VirtualSize
+                ):
                     section = _s
                     break
 
@@ -415,7 +429,12 @@ class VisualPatchEditorDialog(QDialog):
                 return
 
             # Calculate file offset
-            offset = address - pe.OPTIONAL_HEADER.ImageBase - section.VirtualAddress + section.PointerToRawData
+            offset = (
+                address
+                - pe.OPTIONAL_HEADER.ImageBase
+                - section.VirtualAddress
+                + section.PointerToRawData
+            )
 
             # Read original bytes
             with open(self.binary_path, "rb") as f:
@@ -532,7 +551,9 @@ class VisualPatchEditorDialog(QDialog):
             elif not new_bytes:
                 validation_results.append(f"Patch {i+1}: No bytes to patch")
             else:
-                validation_results.append(f"Patch {i+1}: Valid (0x{address:X}, {len(new_bytes)} bytes)")
+                validation_results.append(
+                    f"Patch {i+1}: Valid (0x{address:X}, {len(new_bytes)} bytes)"
+                )
 
         # Show results
         self.show_test_results(validation_results)
@@ -580,7 +601,9 @@ class VisualPatchEditorDialog(QDialog):
         return self.patches != self.original_patches
 
 
-def create_visual_patch_editor(binary_path: str, patches: list[dict[str, Any]], parent=None) -> VisualPatchEditorDialog:
+def create_visual_patch_editor(
+    binary_path: str, patches: list[dict[str, Any]], parent=None
+) -> VisualPatchEditorDialog:
     """Factory function to create a VisualPatchEditorDialog.
 
     Args:

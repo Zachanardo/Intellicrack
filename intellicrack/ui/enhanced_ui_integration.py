@@ -213,10 +213,16 @@ class EnhancedAnalysisDashboard(QWidget):
         controls_layout = QHBoxLayout()
 
         self.viz_type_combo = QComboBox()
-        self.viz_type_combo.addItems([
-            "Call Graph", "Control Flow Graph", "Function Complexity",
-            "Vulnerability Heatmap", "String Distribution", "Import Analysis",
-        ])
+        self.viz_type_combo.addItems(
+            [
+                "Call Graph",
+                "Control Flow Graph",
+                "Function Complexity",
+                "Vulnerability Heatmap",
+                "String Distribution",
+                "Import Analysis",
+            ]
+        )
         self.viz_type_combo.currentTextChanged.connect(self._update_visualization)
 
         controls_layout.addWidget(QLabel("Visualization:"))
@@ -252,10 +258,15 @@ class EnhancedAnalysisDashboard(QWidget):
         controls_layout = QHBoxLayout()
 
         self.report_template_combo = QComboBox()
-        self.report_template_combo.addItems([
-            "Comprehensive Analysis", "Vulnerability Assessment",
-            "License Analysis", "Executive Summary", "Technical Details",
-        ])
+        self.report_template_combo.addItems(
+            [
+                "Comprehensive Analysis",
+                "Vulnerability Assessment",
+                "License Analysis",
+                "Executive Summary",
+                "Technical Details",
+            ]
+        )
 
         controls_layout.addWidget(QLabel("Template:"))
         controls_layout.addWidget(self.report_template_combo)
@@ -316,6 +327,7 @@ class EnhancedAnalysisDashboard(QWidget):
     def _get_timestamp(self) -> str:
         """Get current timestamp"""
         from datetime import datetime
+
         return datetime.now().strftime("%H:%M:%S")
 
     def set_analysis_status(self, status: str, color: str = "#27ae60"):
@@ -339,7 +351,10 @@ class EnhancedAnalysisDashboard(QWidget):
     def _load_report(self):
         """Load existing report"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Load Report", "", "JSON Files (*.json);;All Files (*)",
+            self,
+            "Load Report",
+            "",
+            "JSON Files (*.json);;All Files (*)",
         )
         if file_path:
             self.add_activity(f"Loaded report: {os.path.basename(file_path)}")
@@ -368,13 +383,18 @@ class EnhancedAnalysisDashboard(QWidget):
     def _generate_report(self):
         """Generate report based on template"""
         template = self.report_template_combo.currentText()
-        self.report_editor.setText(f"# {template}\n\nReport generated at {self._get_timestamp()}\n\nNo analysis data available yet.")
+        self.report_editor.setText(
+            f"# {template}\n\nReport generated at {self._get_timestamp()}\n\nNo analysis data available yet."
+        )
         self.add_activity(f"Generated {template} report")
 
     def _save_report(self):
         """Save current report"""
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Report", "", "Text Files (*.txt);;All Files (*)",
+            self,
+            "Save Report",
+            "",
+            "Text Files (*.txt);;All Files (*)",
         )
         if file_path:
             with open(file_path, "w", encoding="utf-8") as f:
@@ -552,7 +572,10 @@ class EnhancedMainWindow(QMainWindow):
     def _open_file(self):
         """Open binary file"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open Binary File", "", "All Files (*)",
+            self,
+            "Open Binary File",
+            "",
+            "All Files (*)",
         )
 
         if file_path:
@@ -603,6 +626,7 @@ class EnhancedMainWindow(QMainWindow):
 
         try:
             from .widgets.hex_viewer import show_hex_viewer
+
             show_hex_viewer(self.binary_path)
             self.dashboard.add_activity("Opened hex viewer")
         except ImportError as e:
@@ -611,12 +635,15 @@ class EnhancedMainWindow(QMainWindow):
 
     def _show_about(self):
         """Show about dialog"""
-        QMessageBox.about(self, "About Intellicrack",
+        QMessageBox.about(
+            self,
+            "About Intellicrack",
             "Intellicrack - Advanced Binary Analysis Framework\n\n"
             "Version 2.0 with Enhanced Radare2 Integration\n"
             "Copyright (C) 2025 Zachary Flint\n\n"
             "A comprehensive binary analysis tool with AI integration,\n"
-            "vulnerability detection, and automated bypass generation.")
+            "vulnerability detection, and automated bypass generation.",
+        )
 
 
 def create_enhanced_application():

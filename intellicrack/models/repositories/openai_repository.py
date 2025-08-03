@@ -32,18 +32,21 @@ from .interface import ModelInfo
 # Set up logging
 logger = logging.getLogger(__name__)
 
+
 class OpenAIRepository(APIRepositoryBase):
     """Repository implementation for OpenAI's API."""
 
-    def __init__(self,
-                 repository_name: str = "openai",
-                 api_endpoint: str = "https://api.openai.com/v1",
-                 api_key: str = "",
-                 timeout: int = 60,
-                 proxy: str = "",
-                 rate_limit_config: RateLimitConfig | None = None,
-                 cache_config: dict[str, Any] | None = None,
-                 download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads")):
+    def __init__(
+        self,
+        repository_name: str = "openai",
+        api_endpoint: str = "https://api.openai.com/v1",
+        api_key: str = "",
+        timeout: int = 60,
+        proxy: str = "",
+        rate_limit_config: RateLimitConfig | None = None,
+        cache_config: dict[str, Any] | None = None,
+        download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads"),
+    ):
         """Initialize the OpenAI repository.
 
         Args:
@@ -113,7 +116,9 @@ class OpenAIRepository(APIRepositoryBase):
                 model_id = model_data.get("id")
 
                 # For most API usage we'll only care about chat and embedding models
-                if not (model_id.startswith("gpt-") or "embedding" in model_id or model_id == "dall-e-3"):
+                if not (
+                    model_id.startswith("gpt-") or "embedding" in model_id or model_id == "dall-e-3"
+                ):
                     continue
 
                 # Get detailed model info
@@ -200,5 +205,7 @@ class OpenAIRepository(APIRepositoryBase):
             Always returns (False, "OpenAI doesn't support model downloads")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning(
+            f"Download requested for {model_id} to {destination_path}, but not supported"
+        )
         return False, "OpenAI doesn't support model downloads for this model"

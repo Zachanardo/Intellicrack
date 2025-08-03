@@ -92,7 +92,7 @@ class H:
     def digest(self): return self._h.digest()
     def hexdigest(self): return self._h.hexdigest()
 def keccak_224(d=None): h = H(SHA3_224.new()); return h.update(d) if d else h
-def keccak_256(d=None): h = H(SHA3_256.new()); return h.update(d) if d else h  
+def keccak_256(d=None): h = H(SHA3_256.new()); return h.update(d) if d else h
 def keccak_384(d=None): h = H(SHA3_384.new()); return h.update(d) if d else h
 def keccak_512(d=None): h = H(SHA3_512.new()); return h.update(d) if d else h
 sha3_224 = keccak_224

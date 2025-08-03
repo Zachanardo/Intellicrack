@@ -1,4 +1,5 @@
 """UI helper utilities for common interface operations."""
+
 from intellicrack.logger import logger
 
 """
@@ -36,12 +37,13 @@ def check_binary_path_and_warn(app_instance):
     if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
         try:
             from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.warning(app_instance, "No File Selected",
-                              "Please select a program first.")
+
+            QMessageBox.warning(app_instance, "No File Selected", "Please select a program first.")
         except ImportError as e:
             logger.error("Import error in ui_helpers: %s", e)
         return False
     return True
+
 
 def emit_log_message(app_instance, message):
     """Emit log message if app instance supports it.
@@ -54,12 +56,14 @@ def emit_log_message(app_instance, message):
     if hasattr(app_instance, "update_output") and hasattr(app_instance.update_output, "emit"):
         try:
             from ..utils.logger import log_message
+
             app_instance.update_output.emit(log_message(message))
         except ImportError as e:
             logger.error("Import error in ui_helpers: %s", e)
             app_instance.update_output.emit(message)
     elif hasattr(app_instance, "update_output"):
         app_instance.update_output.emit(message)
+
 
 def show_file_dialog(parent, title, file_filter="HTML Files (*.html);;All Files (*)"):
     """Show file save dialog and return filename.
@@ -75,11 +79,13 @@ def show_file_dialog(parent, title, file_filter="HTML Files (*.html);;All Files 
     """
     try:
         from PyQt6.QtWidgets import QFileDialog
+
         filename, _ = QFileDialog.getSaveFileName(parent, title, "", file_filter)
         return filename if filename else ""
     except ImportError as e:
         logger.error("Import error in ui_helpers: %s", e)
         return ""
+
 
 def ask_yes_no_question(parent, title, question):
     """Show yes/no question dialog.
@@ -95,13 +101,20 @@ def ask_yes_no_question(parent, title, question):
     """
     try:
         from PyQt6.QtWidgets import QMessageBox
-        return QMessageBox.question(
-            parent, title, question,
-            QMessageBox.Yes | QMessageBox.No,
-        ) == QMessageBox.Yes
+
+        return (
+            QMessageBox.question(
+                parent,
+                title,
+                question,
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            == QMessageBox.Yes
+        )
     except ImportError as e:
         logger.error("Import error in ui_helpers: %s", e)
         return False
+
 
 def generate_exploit_payload_common(payload_type, target_path="target_software"):
     """Generate exploit payload of specified type.
@@ -141,6 +154,7 @@ def generate_exploit_payload_common(payload_type, target_path="target_software")
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in ui_helpers: %s", e)
         return {"error": str(e)}
+
 
 def generate_exploit_strategy_common(binary_path, vulnerability_type="buffer_overflow"):
     """Generate exploit strategy for given binary and vulnerability type.

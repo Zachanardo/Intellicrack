@@ -20,14 +20,14 @@ echo Testing Python launch... > "%LOG%" 2>&1
 if exist ".venv_windows\Scripts\python.exe" (
     echo Using venv Python...
     echo Using venv Python... >> "%LOG%" 2>&1
-    
+
     REM Run in a way that won't crash the console
     start /wait "" cmd /k ".venv_windows\Scripts\python.exe launch_intellicrack.py >> %LOG% 2>&1 & echo. & echo Exit code: %ERRORLEVEL% >> %LOG% & echo. & echo CHECK LOG FILE: %LOG% & pause & exit"
 ) else (
     echo Using system Python...
     echo Using system Python... >> "%LOG%" 2>&1
-    
-    REM Run in a way that won't crash the console  
+
+    REM Run in a way that won't crash the console
     start /wait "" cmd /k "python launch_intellicrack.py >> %LOG% 2>&1 & echo. & echo Exit code: %ERRORLEVEL% >> %LOG% & echo. & echo CHECK LOG FILE: %LOG% & pause & exit"
 )
 

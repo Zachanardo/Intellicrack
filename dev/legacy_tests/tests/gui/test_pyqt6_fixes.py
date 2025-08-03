@@ -8,7 +8,7 @@ print("Testing PyQt6 compatibility fixes...")
 try:
     from PyQt6.QtCore import Qt
     print("✓ Qt imported successfully")
-    
+
     # Test Qt.Orientation
     try:
         horizontal = Qt.Orientation.Horizontal
@@ -16,21 +16,21 @@ try:
         print("✓ Qt.Orientation.Horizontal and .Vertical work")
     except AttributeError as e:
         print(f"✗ Qt.Orientation error: {e}")
-    
+
     # Test Qt.WindowType
     try:
         stay_on_top = Qt.WindowType.WindowStaysOnTopHint
         print("✓ Qt.WindowType.WindowStaysOnTopHint works")
     except AttributeError as e:
         print(f"✗ Qt.WindowType error: {e}")
-    
+
     # Test Qt.AlignmentFlag
     try:
         align_center = Qt.AlignmentFlag.AlignCenter
         print("✓ Qt.AlignmentFlag.AlignCenter works")
     except AttributeError as e:
         print(f"✗ Qt.AlignmentFlag error: {e}")
-        
+
 except ImportError as e:
     print(f"✗ Failed to import Qt: {e}")
 

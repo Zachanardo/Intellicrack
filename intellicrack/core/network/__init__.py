@@ -3,6 +3,7 @@
 This package contains networking components for communication protocols,
 C2 infrastructure, and network-based analysis capabilities.
 """
+
 from intellicrack.logger import logger
 
 """

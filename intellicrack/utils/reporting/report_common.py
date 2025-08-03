@@ -143,6 +143,7 @@ def handle_pyqt6_report_generation(app, report_type, generator):
     try:
         # Check if PyQt6 is available
         import importlib.util
+
         PYQT6_AVAILABLE = importlib.util.find_spec("PyQt6") is not None
     except ImportError as e:
         logger.error("Import error in report_common: %s", e)

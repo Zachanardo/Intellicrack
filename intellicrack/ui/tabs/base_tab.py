@@ -3,6 +3,7 @@
 This module provides the base tab class that other tabs inherit from,
 providing common functionality and interface structure.
 """
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget

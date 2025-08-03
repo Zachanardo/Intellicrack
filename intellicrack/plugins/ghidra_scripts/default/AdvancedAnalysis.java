@@ -252,7 +252,7 @@ public class AdvancedAnalysis extends GhidraScript {
                 try {
                     // More sophisticated complexity metrics
                     complexity += currentFunction.getBody().getNumAddresses();
-                    
+
                     // Check instruction count
                     InstructionIterator instrIter = getInstructions(currentFunction.getBody(), true);
                     int instrCount = 0;
@@ -261,7 +261,7 @@ public class AdvancedAnalysis extends GhidraScript {
                         instrCount++;
                     }
                     complexity += instrCount > 0 ? 10 : 0;
-                    
+
                     // Add basic block complexity
                     try {
                         AddressSetView body = currentFunction.getBody();
@@ -469,7 +469,7 @@ public class AdvancedAnalysis extends GhidraScript {
                         while (instructions.hasNext() && !monitor.isCancelled()) {
                             Instruction instr = instructions.next();
                             String mnemonic = instr.getMnemonicString();
-                            
+
                             // Look for conditional jumps that could be license checks
                             if (mnemonic.startsWith("J") && !mnemonic.equals("JMP")) {
                                 println("    Potential patch location: " + instr.getAddress());

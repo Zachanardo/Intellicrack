@@ -29,6 +29,7 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
+
 def analyze_pe_imports(pe, target_apis: dict[str, list[str]]) -> dict[str, list[str]]:
     """Analyze PE imports for specific API categories.
 
@@ -41,7 +42,9 @@ def analyze_pe_imports(pe, target_apis: dict[str, list[str]]) -> dict[str, list[
 
     """
     from ..network_api_common import analyze_network_apis
+
     return analyze_network_apis(pe, target_apis)
+
 
 def get_pe_sections_info(pe) -> list[dict]:
     """Extract PE section information.
@@ -67,6 +70,7 @@ def get_pe_sections_info(pe) -> list[dict]:
 
     return sections
 
+
 def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image | None:
     """Extract icon from PE file.
 
@@ -80,6 +84,7 @@ def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image
     """
     try:
         import pefile
+
         pe = pefile.PE(pe_path)
 
         # Find .rsrc section
@@ -105,6 +110,7 @@ def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image
     except Exception as e:
         logger.error(f"Error extracting PE icon: {e}")
         return None
+
 
 def extract_icon_from_resources(pe) -> bytes | None:
     """Extract icon data from PE resources.
@@ -134,7 +140,7 @@ def extract_icon_from_resources(pe) -> bytes | None:
                             for resource_lang in resource_id.directory.entries:
                                 data_rva = resource_lang.data.struct.OffsetToData
                                 size = resource_lang.data.struct.Size
-                                data = pe.get_memory_mapped_image()[data_rva:data_rva+size]
+                                data = pe.get_memory_mapped_image()[data_rva : data_rva + size]
                                 icon_groups[resource_id.id] = data
 
                 elif resource_type.id == RT_ICON:
@@ -144,7 +150,7 @@ def extract_icon_from_resources(pe) -> bytes | None:
                             for resource_lang in resource_id.directory.entries:
                                 data_rva = resource_lang.data.struct.OffsetToData
                                 size = resource_lang.data.struct.Size
-                                data = pe.get_memory_mapped_image()[data_rva:data_rva+size]
+                                data = pe.get_memory_mapped_image()[data_rva : data_rva + size]
                                 icons[resource_id.id] = data
 
         # Parse icon group to find best icon
@@ -166,7 +172,8 @@ def extract_icon_from_resources(pe) -> bytes | None:
                 if offset + 14 <= len(group_data):
                     # GRPICONDIRENTRY structure
                     width, height, colors, _, planes, bits, size, icon_id = struct.unpack(
-                        "<BBBBHHIH", group_data[offset:offset+14],
+                        "<BBBBHHIH",
+                        group_data[offset : offset + 14],
                     )
                     offset += 14
 
@@ -187,6 +194,7 @@ def extract_icon_from_resources(pe) -> bytes | None:
     except Exception as e:
         logger.error(f"Error extracting icon from resources: {e}")
         return None
+
 
 def create_image_from_icon_data(icon_data: bytes) -> Image.Image | None:
     """Create PIL Image from icon data.
@@ -250,6 +258,7 @@ def create_image_from_icon_data(icon_data: bytes) -> Image.Image | None:
         logger.error(f"Error creating image from icon data: {e}")
         return None
 
+
 def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
     """Extract all icons from PE file.
 
@@ -287,13 +296,17 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
                                 try:
                                     data_rva = resource_lang.data.struct.OffsetToData
                                     size = resource_lang.data.struct.Size
-                                    icon_data = pe.get_memory_mapped_image()[data_rva:data_rva+size]
+                                    icon_data = pe.get_memory_mapped_image()[
+                                        data_rva : data_rva + size
+                                    ]
 
                                     # Create image from icon data
                                     icon_image = create_image_from_icon_data(icon_data)
                                     if icon_image:
                                         # Save icon
-                                        icon_path = os.path.join(output_dir, f"{base_name}_icon_{icon_index}.png")
+                                        icon_path = os.path.join(
+                                            output_dir, f"{base_name}_icon_{icon_index}.png"
+                                        )
                                         icon_image.save(icon_path, format="PNG")
                                         saved_icons.append(icon_path)
                                         icon_index += 1
@@ -311,6 +324,7 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
     except Exception as e:
         logger.error(f"Error extracting all PE icons: {e}")
         return saved_icons
+
 
 def get_pe_icon_info(pe_path: str) -> dict[str, any]:
     """Get information about icons in PE file.
@@ -332,6 +346,7 @@ def get_pe_icon_info(pe_path: str) -> dict[str, any]:
 
     try:
         import pefile
+
         pe = pefile.PE(pe_path)
 
         RT_ICON = 3

@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 
 # Set up package logger
@@ -131,8 +130,7 @@ except ImportError as e:
 try:
     from .vulnerability_research_integration import VulnerabilityResearchAI
 except ImportError as e:
-    logger.warning(
-        "Failed to import vulnerability_research_integration: %s", e)
+    logger.warning("Failed to import vulnerability_research_integration: %s", e)
     VulnerabilityResearchAI = None
 
 try:
@@ -309,6 +307,7 @@ except ImportError as e:
 
 try:
     from .qemu_test_manager import QEMUTestManager
+
     QemuTestManager = QEMUTestManager  # For backward compatibility
 except ImportError as e:
     logger.warning("Failed to import qemu_test_manager: %s", e)
@@ -358,9 +357,7 @@ __all__ = [
     "analyze_with_ai",
     "get_ai_suggestions",
     "explain_code",
-
     # ML predictor removed - using LLM-only approach
-
     # From model_manager_module
     "ModelManager",
     "ModelBackend",
@@ -372,7 +369,6 @@ __all__ = [
     "save_model",
     "list_available_models",
     "configure_ai_provider",
-
     # From orchestrator (Agentic AI System)
     "AIOrchestrator",
     "AISharedContext",
@@ -383,7 +379,6 @@ __all__ = [
     "AnalysisComplexity",
     "get_orchestrator",
     "shutdown_orchestrator",
-
     # From coordination_layer (Intelligent Coordination)
     "AICoordinationLayer",
     "AnalysisRequest",
@@ -391,16 +386,13 @@ __all__ = [
     "AnalysisStrategy",
     "quick_vulnerability_scan",
     "comprehensive_analysis",
-
     # From ai_assistant_enhanced
     "IntellicrackAIAssistant",
     "Tool",
     "ToolCategory",
-
     # From exploitation modules
     "VulnerabilityResearchAI",
     "ExploitationOrchestrator",
-
     # From advanced AI system components
     "AILearningEngine",
     "LearningRecord",
@@ -434,7 +426,6 @@ __all__ = [
     "ExploitChain",
     "ChainComplexity",
     "exploit_chain_builder",
-
     # From AI script generation system
     "AIScriptGenerator",
     "ScriptType",
@@ -462,7 +453,6 @@ __all__ = [
     "optimize_ai_performance",
     "get_performance_recommendations",
     "benchmark_ai_optimizations",
-
     # From llm_backends (GGUF and API Support)
     "LLMManager",
     "LLMBackend",
@@ -476,7 +466,6 @@ __all__ = [
     "create_anthropic_config",
     "create_gguf_config",
     "create_ollama_config",
-
     # From parsing_utils
     "ResponseLineParser",
 ]

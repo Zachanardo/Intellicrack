@@ -26,14 +26,14 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
 
         Listing listing = currentProgram.getListing();
         FunctionIterator functions = listing.getFunctions(true);
-        
+
         // Iterate over all functions.
         while (functions.hasNext() && !monitor.isCancelled()) {
             Function func = functions.next();
             String funcName = func.getName().toLowerCase();
             boolean isSuspect = funcName.contains("license") || funcName.contains("trial") ||
                                 funcName.contains("serial")  || funcName.contains("activation");
-            
+
             // Decompile function for high-level view.
             String decompiledSnippet = "";
             DecompileResults decompResults = decompInterface.decompileFunction(func, 60, monitor);
@@ -45,14 +45,14 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
                 // Take a snippet (first 300 characters).
                 decompiledSnippet = decompiledCode.substring(0, Math.min(300, decompiledCode.length()));
             }
-            
+
             if (isSuspect) {
                 // Create a map to store function analysis data.
                 Map<String, Object> funcData = new LinkedHashMap<>();
                 funcData.put("function_name", func.getName());
                 funcData.put("entry_point", func.getEntryPoint().toString());
                 funcData.put("decompiled_snippet", decompiledSnippet);
-                
+
                 // Cross-reference: collect addresses that call this function.
                 List<String> xrefs = new ArrayList<>();
                 ReferenceIterator refs = currentProgram.getReferenceManager().getReferencesTo(func.getEntryPoint());
@@ -61,7 +61,7 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
                     xrefs.add(ref.getFromAddress().toString());
                 }
                 funcData.put("xrefs", xrefs);
-                
+
                 // Basic P-code analysis: count INT_EQUAL operations.
                 int intEqualCount = 0;
                 InstructionIterator instIter = listing.getInstructions(func.getBody(), true);
@@ -77,12 +77,12 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
                     }
                 }
                 funcData.put("int_equal_count", intEqualCount);
-                
+
                 // Add function data to the results list.
                 flaggedFunctions.add(funcData);
             }
         }
-        
+
         // Optional: Generate a simple CFG for flagged functions and add summary info.
         // Here we create a summary string for each flagged function's CFG.
         for (Map<String, Object> funcData : flaggedFunctions) {
@@ -110,13 +110,13 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
                 // If CFG analysis fails, skip adding CFG info.
             }
         }
-        
+
         // Build JSON output manually.
         String jsonOutput = buildJson(flaggedFunctions);
         println(jsonOutput);
         decompInterface.dispose();
     }
-    
+
     /**
      * Helper method to build a JSON string from the list of flagged functions.
      * This is a very simple JSON builder and assumes that no string requires special escaping.

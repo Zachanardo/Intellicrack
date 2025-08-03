@@ -35,8 +35,7 @@ Cuckoo, VMRay, Joe Sandbox, and others.
 
 
 class SandboxDetector(BaseDetector):
-    """Comprehensive sandbox detection using behavioral and environmental checks.
-    """
+    """Comprehensive sandbox detection using behavioral and environmental checks."""
 
     def __init__(self):
         """Initialize the sandbox detector with detection methods and signatures."""
@@ -59,7 +58,11 @@ class SandboxDetector(BaseDetector):
         # Known sandbox signatures
         self.sandbox_signatures = {
             "cuckoo": {
-                "files": [os.path.join(os.environ.get("SystemDrive", "C:"), "analyzer"), os.path.join(os.environ.get("SystemDrive", "C:"), "sandbox"), "/tmp/.cuckoo-*"],
+                "files": [
+                    os.path.join(os.environ.get("SystemDrive", "C:"), "analyzer"),
+                    os.path.join(os.environ.get("SystemDrive", "C:"), "sandbox"),
+                    "/tmp/.cuckoo-*",
+                ],
                 "processes": ["python.exe", "analyzer.py"],
                 "network": ["192.168.56.0/24"],  # Common Cuckoo network
                 "artifacts": ["cuckoo", "analyzer", "auxiliary"],
@@ -140,9 +143,13 @@ class SandboxDetector(BaseDetector):
                 results["sandbox_type"] = self._identify_sandbox_type(results["detections"])
 
             # Calculate evasion difficulty
-            results["evasion_difficulty"] = self._calculate_evasion_difficulty(results["detections"])
+            results["evasion_difficulty"] = self._calculate_evasion_difficulty(
+                results["detections"]
+            )
 
-            self.logger.info(f"Sandbox detection complete: {results['is_sandbox']} (confidence: {results['confidence']:.2f})")
+            self.logger.info(
+                f"Sandbox detection complete: {results['is_sandbox']} (confidence: {results['confidence']:.2f})"
+            )
             return results
 
         except Exception as e:
@@ -158,8 +165,17 @@ class SandboxDetector(BaseDetector):
             username = os.environ.get("USERNAME", os.environ.get("USER", "")).lower()
             details["username"] = username
 
-            suspicious_users = ["sandbox", "malware", "virus", "maltest", "test",
-                              "john", "user", "analyst", "analysis"]
+            suspicious_users = [
+                "sandbox",
+                "malware",
+                "virus",
+                "maltest",
+                "test",
+                "john",
+                "user",
+                "analyst",
+                "analysis",
+            ]
             if any(user in username for user in suspicious_users):
                 details["suspicious_env"].append(f"username: {username}")
 
@@ -170,19 +186,34 @@ class SandboxDetector(BaseDetector):
             # Get suspicious computer names from environment or use defaults
             suspicious_computers_env = os.environ.get("SANDBOX_SUSPICIOUS_COMPUTERS", "")
             if suspicious_computers_env:
-                suspicious_computers = [name.strip().lower() for name in suspicious_computers_env.split(",")]
+                suspicious_computers = [
+                    name.strip().lower() for name in suspicious_computers_env.split(",")
+                ]
             else:
-                suspicious_computers = ["sandbox", "malware", "virus", "test", "vmware",
-                                      "virtualbox", "qemu", "analysis"]
+                suspicious_computers = [
+                    "sandbox",
+                    "malware",
+                    "virus",
+                    "test",
+                    "vmware",
+                    "virtualbox",
+                    "qemu",
+                    "analysis",
+                ]
             if any(comp in computername for comp in suspicious_computers):
                 details["suspicious_env"].append(f"computername: {computername}")
 
             # Check for sandbox-specific environment variables
             sandbox_env_vars = [
-                "CUCKOO", "CUCKOO_ROOT", "CUCKOO_ANALYSIS",
-                "VMRAY", "VMRAY_ANALYSIS",
-                "JOEBOX", "JOESANDBOX",
-                "SANDBOX", "SANDBOXIE",
+                "CUCKOO",
+                "CUCKOO_ROOT",
+                "CUCKOO_ANALYSIS",
+                "VMRAY",
+                "VMRAY_ANALYSIS",
+                "JOEBOX",
+                "JOESANDBOX",
+                "SANDBOX",
+                "SANDBOXIE",
             ]
 
             for var in sandbox_env_vars:
@@ -255,6 +286,7 @@ class SandboxDetector(BaseDetector):
             if platform.system() == "Windows":
                 try:
                     import psutil
+
                     mem = psutil.virtual_memory()
                     total_gb = mem.total / (1024**3)
                     if total_gb < 4:
@@ -279,7 +311,10 @@ class SandboxDetector(BaseDetector):
                 free_bytes = ctypes.c_ulonglong(0)
                 total_bytes = ctypes.c_ulonglong(0)
                 ctypes.windll.kernel32.GetDiskFreeSpaceExW(
-                    "C:\\", ctypes.byref(free_bytes), ctypes.byref(total_bytes), None,
+                    "C:\\",
+                    ctypes.byref(free_bytes),
+                    ctypes.byref(total_bytes),
+                    None,
                 )
                 total_gb = total_bytes.value / (1024**3)
                 if total_gb < 60:
@@ -306,7 +341,9 @@ class SandboxDetector(BaseDetector):
         try:
             # Check network connections
             if platform.system() == "Windows":
-                result = subprocess.run(["netstat", "-an"], check=False, capture_output=True, text=True)
+                result = subprocess.run(
+                    ["netstat", "-an"], check=False, capture_output=True, text=True
+                )
             else:
                 result = subprocess.run(["ss", "-an"], check=False, capture_output=True, text=True)
 
@@ -324,7 +361,9 @@ class SandboxDetector(BaseDetector):
                 for sandbox_type, sigs in self.sandbox_signatures.items():
                     for network in sigs.get("network", []):
                         if self._ip_in_network(local_ip, network):
-                            details["network_anomalies"].append(f"Sandbox network: {network} ({sandbox_type})")
+                            details["network_anomalies"].append(
+                                f"Sandbox network: {network} ({sandbox_type})"
+                            )
 
             except Exception as e:
                 self.logger.debug(f"Error checking network configuration: {e}")
@@ -364,19 +403,23 @@ class SandboxDetector(BaseDetector):
         try:
             # Check recently used files (Windows)
             if platform.system() == "Windows":
-                recent_path = os.path.join(os.environ["APPDATA"],
-                                         "Microsoft\\Windows\\Recent")
+                recent_path = os.path.join(os.environ["APPDATA"], "Microsoft\\Windows\\Recent")
                 if os.path.exists(recent_path):
                     recent_files = os.listdir(recent_path)
                     if len(recent_files) < 5:
-                        details["interaction_signs"].append(f"Few recent files: {len(recent_files)}")
+                        details["interaction_signs"].append(
+                            f"Few recent files: {len(recent_files)}"
+                        )
 
             # Check browser history/cookies
             browser_paths = {
-                "chrome": os.path.join(os.environ.get("LOCALAPPDATA", ""),
-                                     "Google\\Chrome\\User Data\\Default\\History"),
-                "firefox": os.path.join(os.environ.get("APPDATA", ""),
-                                      "Mozilla\\Firefox\\Profiles"),
+                "chrome": os.path.join(
+                    os.environ.get("LOCALAPPDATA", ""),
+                    "Google\\Chrome\\User Data\\Default\\History",
+                ),
+                "firefox": os.path.join(
+                    os.environ.get("APPDATA", ""), "Mozilla\\Firefox\\Profiles"
+                ),
             }
 
             browser_found = False
@@ -392,8 +435,14 @@ class SandboxDetector(BaseDetector):
                 details["found_browsers"] = found_browsers
 
             # Check for running user applications
-            user_apps = ["chrome.exe", "firefox.exe", "outlook.exe", "spotify.exe",
-                        "discord.exe", "slack.exe"]
+            user_apps = [
+                "chrome.exe",
+                "firefox.exe",
+                "outlook.exe",
+                "spotify.exe",
+                "discord.exe",
+                "slack.exe",
+            ]
 
             if platform.system() == "Windows":
                 result = subprocess.run(["tasklist"], check=False, capture_output=True, text=True)
@@ -466,9 +515,15 @@ class SandboxDetector(BaseDetector):
         try:
             # Check for monitoring processes
             monitoring_processes = [
-                "procmon.exe", "procexp.exe", "apimonitor.exe",
-                "wireshark.exe", "tcpdump", "strace", "ltrace",
-                "sysmon.exe", "autoruns.exe",
+                "procmon.exe",
+                "procexp.exe",
+                "apimonitor.exe",
+                "wireshark.exe",
+                "tcpdump",
+                "strace",
+                "ltrace",
+                "sysmon.exe",
+                "autoruns.exe",
             ]
 
             # Use base class method to get process list
@@ -482,8 +537,16 @@ class SandboxDetector(BaseDetector):
             if platform.system() == "Windows":
                 try:
                     # Check for sandbox monitoring processes
-                    sandbox_processes = ["procmon", "dbgview", "filemon", "regmon",
-                                       "wireshark", "tcpdump", "netmon", "apimonitor"]
+                    sandbox_processes = [
+                        "procmon",
+                        "dbgview",
+                        "filemon",
+                        "regmon",
+                        "wireshark",
+                        "tcpdump",
+                        "netmon",
+                        "apimonitor",
+                    ]
 
                     for proc in sandbox_processes:
                         if proc in processes or any(proc in p for p in process_list):
@@ -491,6 +554,7 @@ class SandboxDetector(BaseDetector):
 
                     # Check current process for suspicious DLLs
                     import psutil
+
                     current_proc = psutil.Process()
 
                     suspicious_dlls = ["hook", "inject", "monitor", "sandbox", "api"]
@@ -618,9 +682,11 @@ class SandboxDetector(BaseDetector):
                             """Mock POINT structure for Windows API compatibility."""
 
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
+
                         wintypes.POINT = MockPOINT
                 except (ImportError, AttributeError) as e:
                     self.logger.error("Error in sandbox_detector: %s", e)
+
                     # Fallback if wintypes is not available
                     class MockWintypes:
                         """Mock wintypes implementation for compatibility."""
@@ -629,7 +695,9 @@ class SandboxDetector(BaseDetector):
                             """Mock POINT structure definition."""
 
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
+
                     from types import SimpleNamespace
+
                     wintypes = SimpleNamespace()
                     wintypes.POINT = MockWintypes.POINT
 
@@ -675,6 +743,7 @@ class SandboxDetector(BaseDetector):
         """Check if IP is in network range."""
         try:
             import ipaddress
+
             return ipaddress.ip_address(ip) in ipaddress.ip_network(network)
         except:
             # Simple check for common cases

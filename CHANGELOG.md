@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed F405 linting errors by replacing star imports with explicit imports across multiple modules
 - Resolved import resolution issues in utils/additional_runners.py
 - Fixed import resolution in utils/analysis/__init__.py
-- Fixed import resolution in utils/config.py  
+- Fixed import resolution in utils/config.py
 - Fixed import resolution in utils/core/__init__.py
 - Fixed import resolution in utils/exploit_common.py
 - Fixed import resolution in utils/ghidra_script_manager.py
@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Comprehensive code implementation across all modules with real functionality
 - Full implementation of 33+ advanced security research functions
-- Enhanced AI integration with multiple LLM backend support  
+- Enhanced AI integration with multiple LLM backend support
 - Advanced binary analysis capabilities with radare2 integration
 - Sophisticated protection detection and bypass mechanisms
 - ML-based vulnerability prediction and analysis

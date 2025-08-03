@@ -51,7 +51,7 @@ PECompact
 ├── Indicators: Modified entry points, compressed sections
 └── Analysis Impact: Medium complexity
 
-ASPack  
+ASPack
 ├── Purpose: Commercial software protection
 ├── Characteristics: Encryption + compression
 ├── Indicators: Encrypted code sections, anti-debug
@@ -78,7 +78,7 @@ Custom Packers
 ```
 Virtual Machine Protectors
 ├── VMProtect: Code virtualization and mutation
-├── Themida: Anti-debugging + virtualization  
+├── Themida: Anti-debugging + virtualization
 ├── Obsidium: Lightweight VM protection
 └── Code Virtualizer: Professional VM protection
 
@@ -90,7 +90,7 @@ Anti-Debugging Protectors
 
 Control Flow Protection
 ├── Control flow flattening
-├── Opaque predicates  
+├── Opaque predicates
 ├── Bogus control flow
 └── Call stack manipulation
 
@@ -187,7 +187,7 @@ Resource Encryption
 
 [CRYPTOR] Custom encryption algorithm
 ├── Analysis: Unknown cipher
-├── Complexity: Very High  
+├── Complexity: Very High
 ├── Tools: Cryptanalysis, reverse engineering
 └── Time: Days to weeks
 ```
@@ -368,7 +368,7 @@ Example Result:
 File: advanced_malware.exe
 ├── Is Packed: YES
 ├── Is Protected: YES
-├── Detections: 
+├── Detections:
 │   ├── [PACKER] Custom packer
 │   ├── [PROTECTOR] Themida 3.x
 │   ├── [CRYPTOR] String encryption
@@ -601,7 +601,7 @@ Comprehensive Protection → Advanced Techniques
 ```
 UPX → upx -d (built-in unpacker)
 PECompact → PECompact unpacker
-ASPack → ASPack unpacker  
+ASPack → ASPack unpacker
 Custom → Manual unpacking, debugging tools
 ```
 

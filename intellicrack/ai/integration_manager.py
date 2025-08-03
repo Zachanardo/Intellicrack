@@ -57,10 +57,8 @@ except ImportError:
 
         def test_script_in_vm(self, script, target_binary, vm_config=None):
             """Fallback method for QEMU script testing."""
-            logger.warning(
-                "QEMU testing not available, using fallback simulation")
-            logger.info(
-                f"Would test script on {target_binary} with config: {vm_config}")
+            logger.warning("QEMU testing not available, using fallback simulation")
+            logger.info(f"Would test script on {target_binary} with config: {vm_config}")
 
             # Analyze script content for basic validation
             script_info = {}
@@ -178,8 +176,7 @@ class IntegrationManager:
             thread.start()
             self.worker_threads.append(thread)
 
-        logger.info(
-            f"Integration manager started with {self.max_workers} workers")
+        logger.info(f"Integration manager started with {self.max_workers} workers")
 
     def stop(self):
         """Stop the integration manager."""
@@ -296,8 +293,7 @@ class IntegrationManager:
         request_data = task.input_data["request"]
 
         # Create modification request
-        request = self.code_modifier.create_modification_request(
-            **request_data)
+        request = self.code_modifier.create_modification_request(**request_data)
 
         # Analyze and generate changes
         changes = self.code_modifier.analyze_modification_request(request)
@@ -323,8 +319,7 @@ class IntegrationManager:
         vm_config = task.input_data.get("vm_config", {})
 
         # Test script in QEMU
-        results = self.qemu_manager.test_script_in_vm(
-            script, target_binary, vm_config)
+        results = self.qemu_manager.test_script_in_vm(script, target_binary, vm_config)
 
         return results
 
@@ -386,8 +381,14 @@ class IntegrationManager:
         # Default: return first result
         return list(results.values())[0]
 
-    def create_task(self, task_type: str, description: str, input_data: dict[str, Any],
-                    dependencies: list[str] = None, priority: int = 1) -> str:
+    def create_task(
+        self,
+        task_type: str,
+        description: str,
+        input_data: dict[str, Any],
+        dependencies: list[str] = None,
+        priority: int = 1,
+    ) -> str:
         """Create a new integration task."""
         task_id = f"{task_type}_{int(time.time() * 1000)}"
 
@@ -454,8 +455,7 @@ class IntegrationManager:
                 return self.completed_tasks[task_id]
 
             if timeout and time.time() - start_time > timeout:
-                raise TimeoutError(
-                    f"Task {task_id} did not complete within {timeout} seconds")
+                raise TimeoutError(f"Task {task_id} did not complete within {timeout} seconds")
 
             time.sleep(0.1)
 
@@ -487,7 +487,8 @@ class IntegrationManager:
 
             if timeout and time.time() - start_time > timeout:
                 raise TimeoutError(
-                    f"Workflow {workflow_id} did not complete within {timeout} seconds")
+                    f"Workflow {workflow_id} did not complete within {timeout} seconds"
+                )
 
             time.sleep(0.1)
 
@@ -551,9 +552,15 @@ class IntegrationManager:
             task_ids = list(workflow["tasks"].keys())
 
             completed = sum(
-                1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "completed")
+                1
+                for tid in task_ids
+                if tid in self.completed_tasks and self.completed_tasks[tid].status == "completed"
+            )
             failed = sum(
-                1 for tid in task_ids if tid in self.completed_tasks and self.completed_tasks[tid].status == "failed")
+                1
+                for tid in task_ids
+                if tid in self.completed_tasks and self.completed_tasks[tid].status == "failed"
+            )
             running = sum(1 for tid in task_ids if tid in self.active_tasks)
             pending = len(task_ids) - completed - failed - running
 
@@ -601,7 +608,9 @@ class IntegrationManager:
             except Exception as e:
                 logger.error(f"Error in event handler: {e}")
 
-    def create_bypass_workflow(self, target_binary: str, bypass_type: str = "license_validation") -> str:
+    def create_bypass_workflow(
+        self, target_binary: str, bypass_type: str = "license_validation"
+    ) -> str:
         """Create a complete bypass workflow."""
         workflow_def = {
             "name": "Complete Bypass Workflow",
@@ -715,11 +724,11 @@ class IntegrationManager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         if exc_type:
-            logger.error(
-                f"Integration manager exiting due to {exc_type.__name__}: {exc_val}")
+            logger.error(f"Integration manager exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
                 logger.debug(
-                    f"Exception traceback available: {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                    f"Exception traceback available: {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
+                )
         self.stop()
         return False  # Don't suppress exceptions
 

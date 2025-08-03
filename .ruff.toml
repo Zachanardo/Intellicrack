@@ -10,15 +10,15 @@ exclude = [
     "test/",
     "**/test_*.py",
     "**/tests/*.py",
-    
+
     # Development directories
     "dev/",
     "development/",
-    
+
     # Version control
     ".git/",
     ".gitignore",
-    
+
     # Virtual environments
     ".venv/",
     ".venv_windows/",
@@ -26,7 +26,7 @@ exclude = [
     "venv/",
     "env/",
     "mamba_env/",
-    
+
     # Build and distribution
     "build/",
     "dist/",
@@ -34,30 +34,30 @@ exclude = [
     "__pycache__/",
     "*.pyc",
     "*.pyo",
-    
+
     # IDE and editor files
     ".vscode/",
     ".idea/",
     "*.swp",
     "*.swo",
     "*~",
-    
+
     # Documentation
     "docs/",
     "documentation/",
-    
+
     # Third-party tools
     "tools/",
     "ghidra/",
-    
+
     # Cache directories
     ".ruff_cache/",
     ".mypy_cache/",
     ".pytest_cache/",
-    
+
     # Jupyter notebooks
     "*.ipynb",
-    
+
     # Configuration files
     "setup.py",
     "setup.cfg",

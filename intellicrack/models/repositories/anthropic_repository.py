@@ -32,18 +32,21 @@ from .interface import ModelInfo
 # Set up logging
 logger = logging.getLogger(__name__)
 
+
 class AnthropicRepository(APIRepositoryBase):
     """Repository implementation for Anthropic's API."""
 
-    def __init__(self,
-                 repository_name: str = "anthropic",
-                 api_endpoint: str = "https://api.anthropic.com",
-                 api_key: str = "",
-                 timeout: int = 60,
-                 proxy: str = "",
-                 rate_limit_config: RateLimitConfig | None = None,
-                 cache_config: dict[str, Any] | None = None,
-                 download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads")):
+    def __init__(
+        self,
+        repository_name: str = "anthropic",
+        api_endpoint: str = "https://api.anthropic.com",
+        api_key: str = "",
+        timeout: int = 60,
+        proxy: str = "",
+        rate_limit_config: RateLimitConfig | None = None,
+        cache_config: dict[str, Any] | None = None,
+        download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads"),
+    ):
         """Initialize the Anthropic repository.
 
         Args:
@@ -84,8 +87,7 @@ class AnthropicRepository(APIRepositoryBase):
         success, _, error_message = self._make_request(
             endpoint="v1/models",
             method="GET",
-            headers={"x-api-key": self.api_key,
-                    "anthropic-version": "2023-06-01"},
+            headers={"x-api-key": self.api_key, "anthropic-version": "2023-06-01"},
             use_cache=False,
         )
 
@@ -103,8 +105,7 @@ class AnthropicRepository(APIRepositoryBase):
         success, data, error_message = self._make_request(
             endpoint="v1/models",
             method="GET",
-            headers={"x-api-key": self.api_key,
-                    "anthropic-version": "2023-06-01"},
+            headers={"x-api-key": self.api_key, "anthropic-version": "2023-06-01"},
         )
 
         if not success:
@@ -142,8 +143,7 @@ class AnthropicRepository(APIRepositoryBase):
         success, data, error_message = self._make_request(
             endpoint="v1/models",
             method="GET",
-            headers={"x-api-key": self.api_key,
-                    "anthropic-version": "2023-06-01"},
+            headers={"x-api-key": self.api_key, "anthropic-version": "2023-06-01"},
         )
 
         if not success:
@@ -214,5 +214,7 @@ class AnthropicRepository(APIRepositoryBase):
             Always returns (False, "Anthropic doesn't support model downloads")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning(
+            f"Download requested for {model_id} to {destination_path}, but not supported"
+        )
         return False, "Anthropic doesn't support model downloads"

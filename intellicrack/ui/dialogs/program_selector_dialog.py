@@ -59,6 +59,7 @@ else:
     # Fallback definitions when PyQt is not available
     QThread = object
     QTimer = object
+
     def pyqtSignal(*args):
         return lambda x: x
 
@@ -93,8 +94,9 @@ class ProgramDiscoveryThread(QThread):
                     if self.should_stop:
                         break
 
-                    self.discovery_progress.emit(f"Scanning {path}...",
-                                               int((i / len(self.search_paths)) * 100))
+                    self.discovery_progress.emit(
+                        f"Scanning {path}...", int((i / len(self.search_paths)) * 100)
+                    )
 
                     programs = self.discovery_engine.discover_programs_from_path(path)
                     for program in programs:
@@ -183,7 +185,9 @@ class ProgramSelectorDialog(QDialog):
         self.full_scan_btn = QPushButton("Full System Scan")
 
         if HAS_PYQT:
-            self.select_file_btn.setIcon(self.style().standardIcon(QStyle.SP_FileDialogDetailedView))
+            self.select_file_btn.setIcon(
+                self.style().standardIcon(QStyle.SP_FileDialogDetailedView)
+            )
             self.scan_desktop_btn.setIcon(self.style().standardIcon(QStyle.SP_DesktopIcon))
             self.full_scan_btn.setIcon(self.style().standardIcon(QStyle.SP_ComputerIcon))
 
@@ -216,7 +220,9 @@ class ProgramSelectorDialog(QDialog):
         # Programs table
         self.programs_table = QTableWidget()
         self.programs_table.setColumnCount(4)
-        self.programs_table.setHorizontalHeaderLabels(["Program Name", "Version", "Publisher", "Path"])
+        self.programs_table.setHorizontalHeaderLabels(
+            ["Program Name", "Version", "Publisher", "Path"]
+        )
 
         if HAS_PYQT:
             header = self.programs_table.horizontalHeader()
@@ -252,7 +258,9 @@ class ProgramSelectorDialog(QDialog):
         self.folder_path_label = QLabel("No program selected")
         self.folder_path_label.setWordWrap(True)
         if HAS_PYQT:
-            self.folder_path_label.setStyleSheet("QLabel { background-color: #f0f0f0; padding: 5px; }")
+            self.folder_path_label.setStyleSheet(
+                "QLabel { background-color: #f0f0f0; padding: 5px; }"
+            )
         folder_path_layout.addWidget(self.folder_path_label)
         folder_layout.addLayout(folder_path_layout)
 
@@ -422,27 +430,33 @@ class ProgramSelectorDialog(QDialog):
             # Windows desktop paths
             user_profile = os.environ.get("USERPROFILE", "")
             if user_profile:
-                desktop_paths.extend([
-                    os.path.join(user_profile, "Desktop"),
-                    os.path.join(user_profile, "OneDrive", "Desktop"),
-                    r"C:\Users\Public\Desktop",
-                ])
+                desktop_paths.extend(
+                    [
+                        os.path.join(user_profile, "Desktop"),
+                        os.path.join(user_profile, "OneDrive", "Desktop"),
+                        r"C:\Users\Public\Desktop",
+                    ]
+                )
         elif sys.platform.startswith("linux"):
             # Linux desktop paths
             home = os.environ.get("HOME", "")
             if home:
-                desktop_paths.extend([
-                    os.path.join(home, "Desktop"),
-                    os.path.join(home, ".local", "share", "applications"),
-                ])
+                desktop_paths.extend(
+                    [
+                        os.path.join(home, "Desktop"),
+                        os.path.join(home, ".local", "share", "applications"),
+                    ]
+                )
         elif sys.platform.startswith("darwin"):
             # macOS desktop paths
             home = os.environ.get("HOME", "")
             if home:
-                desktop_paths.extend([
-                    os.path.join(home, "Desktop"),
-                    "/Applications",
-                ])
+                desktop_paths.extend(
+                    [
+                        os.path.join(home, "Desktop"),
+                        "/Applications",
+                    ]
+                )
 
         # Filter to existing paths
         return [path for path in desktop_paths if os.path.exists(path)]
@@ -484,9 +498,15 @@ class ProgramSelectorDialog(QDialog):
         name_item.setData(Qt.UserRole, program_dict)
         self.programs_table.setItem(row, 0, name_item)
 
-        self.programs_table.setItem(row, 1, QTableWidgetItem(program_dict.get("version", "Unknown")))
-        self.programs_table.setItem(row, 2, QTableWidgetItem(program_dict.get("publisher", "Unknown")))
-        self.programs_table.setItem(row, 3, QTableWidgetItem(program_dict.get("install_location", "Unknown")))
+        self.programs_table.setItem(
+            row, 1, QTableWidgetItem(program_dict.get("version", "Unknown"))
+        )
+        self.programs_table.setItem(
+            row, 2, QTableWidgetItem(program_dict.get("publisher", "Unknown"))
+        )
+        self.programs_table.setItem(
+            row, 3, QTableWidgetItem(program_dict.get("install_location", "Unknown"))
+        )
 
     def update_discovery_progress(self, message, progress):
         """Update discovery progress."""
@@ -561,138 +581,351 @@ Description: {program_data.get('description', 'No description available')}"""
             # Comprehensive licensing patterns - from obvious to highly obscure
             licensing_patterns = {
                 # Obvious licensing files
-                "license": 10, "licence": 10, "eula": 10, "terms": 9, "agreement": 9,
-                "copyright": 8, "legal": 8, "rights": 8, "disclaimer": 7,
-
+                "license": 10,
+                "licence": 10,
+                "eula": 10,
+                "terms": 9,
+                "agreement": 9,
+                "copyright": 8,
+                "legal": 8,
+                "rights": 8,
+                "disclaimer": 7,
                 # Activation and protection
-                "activation": 9, "serial": 9, "key": 8, "keyfile": 8, "keystore": 8,
-                "authenticate": 7, "auth": 7, "register": 7, "registration": 8,
-                "unlock": 7, "unlocker": 8, "crack": 9, "patch": 8, "keygen": 9,
-
+                "activation": 9,
+                "serial": 9,
+                "key": 8,
+                "keyfile": 8,
+                "keystore": 8,
+                "authenticate": 7,
+                "auth": 7,
+                "register": 7,
+                "registration": 8,
+                "unlock": 7,
+                "unlocker": 8,
+                "crack": 9,
+                "patch": 8,
+                "keygen": 9,
                 # Commercial licensing terms
-                "commercial": 7, "proprietary": 7, "subscription": 6, "trial": 6,
-                "demo": 5, "evaluation": 6, "eval": 6, "beta": 4, "alpha": 4,
-
+                "commercial": 7,
+                "proprietary": 7,
+                "subscription": 6,
+                "trial": 6,
+                "demo": 5,
+                "evaluation": 6,
+                "eval": 6,
+                "beta": 4,
+                "alpha": 4,
                 # Legal and compliance
-                "compliance": 6, "policy": 5, "privacy": 5, "gdpr": 6, "dmca": 7,
-                "takedown": 6, "notice": 5, "attribution": 6, "credits": 5,
-
+                "compliance": 6,
+                "policy": 5,
+                "privacy": 5,
+                "gdpr": 6,
+                "dmca": 7,
+                "takedown": 6,
+                "notice": 5,
+                "attribution": 6,
+                "credits": 5,
                 # Software protection schemes
-                "dongle": 8, "hasp": 8, "sentinel": 8, "flexlm": 8, "rlm": 8,
-                "safenet": 8, "wibu": 8, "codemeter": 8, "reprise": 8,
-                "macrovision": 7, "installshield": 6, "nalpeiron": 7,
-
+                "dongle": 8,
+                "hasp": 8,
+                "sentinel": 8,
+                "flexlm": 8,
+                "rlm": 8,
+                "safenet": 8,
+                "wibu": 8,
+                "codemeter": 8,
+                "reprise": 8,
+                "macrovision": 7,
+                "installshield": 6,
+                "nalpeiron": 7,
                 # Obscure protection files
-                "lic": 8, "dat": 6, "bin": 5, "db": 5, "cfg": 5, "conf": 5,
-                "ini": 5, "reg": 6, "xml": 5, "json": 4, "sig": 7, "cert": 7,
-                "crt": 7, "pem": 6, "p7b": 6, "p12": 6, "pfx": 6,
-
+                "lic": 8,
+                "dat": 6,
+                "bin": 5,
+                "db": 5,
+                "cfg": 5,
+                "conf": 5,
+                "ini": 5,
+                "reg": 6,
+                "xml": 5,
+                "json": 4,
+                "sig": 7,
+                "cert": 7,
+                "crt": 7,
+                "pem": 6,
+                "p7b": 6,
+                "p12": 6,
+                "pfx": 6,
                 # Company-specific patterns
-                "adobe": 7, "autodesk": 7, "microsoft": 6, "oracle": 6,
-                "vmware": 7, "citrix": 7, "symantec": 7, "mcafee": 7,
-                "norton": 7, "kaspersky": 7, "eset": 7, "avast": 6,
-
+                "adobe": 7,
+                "autodesk": 7,
+                "microsoft": 6,
+                "oracle": 6,
+                "vmware": 7,
+                "citrix": 7,
+                "symantec": 7,
+                "mcafee": 7,
+                "norton": 7,
+                "kaspersky": 7,
+                "eset": 7,
+                "avast": 6,
                 # Hidden/encoded files
-                "hidden": 6, "encoded": 6, "encrypted": 7, "obfuscated": 7,
-                "protected": 7, "secured": 6, "locked": 6, "vault": 7,
-
+                "hidden": 6,
+                "encoded": 6,
+                "encrypted": 7,
+                "obfuscated": 7,
+                "protected": 7,
+                "secured": 6,
+                "locked": 6,
+                "vault": 7,
                 # License server related
-                "server": 5, "daemon": 6, "service": 5, "client": 4,
-                "manager": 5, "admin": 5, "control": 5, "monitor": 5,
-
+                "server": 5,
+                "daemon": 6,
+                "service": 5,
+                "client": 4,
+                "manager": 5,
+                "admin": 5,
+                "control": 5,
+                "monitor": 5,
                 # File integrity and validation
-                "checksum": 6, "hash": 6, "md5": 6, "sha1": 6, "sha256": 6,
-                "crc": 6, "verify": 6, "validate": 6, "integrity": 6,
-
+                "checksum": 6,
+                "hash": 6,
+                "md5": 6,
+                "sha1": 6,
+                "sha256": 6,
+                "crc": 6,
+                "verify": 6,
+                "validate": 6,
+                "integrity": 6,
                 # Backup and recovery
-                "backup": 5, "recovery": 5, "restore": 5, "emergency": 6,
-                "rescue": 6, "safe": 5, "secure": 6,
-
+                "backup": 5,
+                "recovery": 5,
+                "restore": 5,
+                "emergency": 6,
+                "rescue": 6,
+                "safe": 5,
+                "secure": 6,
                 # Version and update control
-                "version": 4, "update": 4, "software_patch": 6, "hotfix": 5,
-                "upgrade": 5, "migration": 5, "transfer": 5,
-
+                "version": 4,
+                "update": 4,
+                "software_patch": 6,
+                "hotfix": 5,
+                "upgrade": 5,
+                "migration": 5,
+                "transfer": 5,
                 # Obscure extensions and patterns
-                "token": 7, "ticket": 6, "voucher": 6, "permit": 7,
-                "grant": 6, "allow": 5, "deny": 6, "block": 6,
-                "whitelist": 6, "blacklist": 6, "filter": 5,
-
+                "token": 7,
+                "ticket": 6,
+                "voucher": 6,
+                "permit": 7,
+                "grant": 6,
+                "allow": 5,
+                "deny": 6,
+                "block": 6,
+                "whitelist": 6,
+                "blacklist": 6,
+                "filter": 5,
                 # Network licensing
-                "network": 5, "floating": 6, "concurrent": 6, "node": 5,
-                "seat": 6, "user": 4, "machine": 5, "hardware_binding": 5,
-
+                "network": 5,
+                "floating": 6,
+                "concurrent": 6,
+                "node": 5,
+                "seat": 6,
+                "user": 4,
+                "machine": 5,
+                "hardware_binding": 5,
                 # Cryptographic elements
-                "rsa": 6, "dsa": 6, "ecc": 6, "aes": 6, "des": 6,
-                "blowfish": 6, "twofish": 6, "serpent": 6,
-
+                "rsa": 6,
+                "dsa": 6,
+                "ecc": 6,
+                "aes": 6,
+                "des": 6,
+                "blowfish": 6,
+                "twofish": 6,
+                "serpent": 6,
                 # File naming conventions
-                "readme": 4, "install": 4, "setup": 4, "config": 4,
-                "settings": 4, "options": 4, "preferences": 4,
-
+                "readme": 4,
+                "install": 4,
+                "setup": 4,
+                "config": 4,
+                "settings": 4,
+                "options": 4,
+                "preferences": 4,
                 # Suspicious/crack-related terms
-                "nfo": 7, "diz": 6, "scene": 6, "release": 5,
-                "team": 4, "group": 4, "crew": 5, "union": 5,
-                "force": 5, "revenge": 6, "paradox": 6, "prophet": 6,
-
+                "nfo": 7,
+                "diz": 6,
+                "scene": 6,
+                "release": 5,
+                "team": 4,
+                "group": 4,
+                "crew": 5,
+                "union": 5,
+                "force": 5,
+                "revenge": 6,
+                "paradox": 6,
+                "prophet": 6,
                 # Database and storage
-                "sqlite": 5, "mysql": 5, "postgres": 5, "oracle_db": 6,
-                "access": 5, "firebird": 5, "derby": 5,
-
+                "sqlite": 5,
+                "mysql": 5,
+                "postgres": 5,
+                "oracle_db": 6,
+                "access": 5,
+                "firebird": 5,
+                "derby": 5,
                 # Virtualization and sandboxing
-                "virtual": 5, "sandbox": 6, "container": 5, "docker": 5,
-                "vm": 5, "hyperv": 5, "xen": 5, "kvm": 5,
-
+                "virtual": 5,
+                "sandbox": 6,
+                "container": 5,
+                "docker": 5,
+                "vm": 5,
+                "hyperv": 5,
+                "xen": 5,
+                "kvm": 5,
                 # Hardware fingerprinting
-                "fingerprint": 7, "hwid": 7, "hardware": 6, "bios": 6,
-                "uefi": 6, "tpm": 7, "smartcard": 7, "usb": 6,
-
+                "fingerprint": 7,
+                "hwid": 7,
+                "hardware": 6,
+                "bios": 6,
+                "uefi": 6,
+                "tpm": 7,
+                "smartcard": 7,
+                "usb": 6,
                 # Time-based licensing
-                "expire": 7, "expiry": 7, "timeout": 6, "timer": 6,
-                "countdown": 6, "deadline": 6, "schedule": 5,
-
+                "expire": 7,
+                "expiry": 7,
+                "timeout": 6,
+                "timer": 6,
+                "countdown": 6,
+                "deadline": 6,
+                "schedule": 5,
                 # Custom extensions that might hide licensing
-                "x": 4, "z": 4, "tmp": 5, "temp": 5, "bak": 5,
-                "old": 4, "new": 4, "orig": 5, "copy": 4,
-
+                "x": 4,
+                "z": 4,
+                "tmp": 5,
+                "temp": 5,
+                "bak": 5,
+                "old": 4,
+                "new": 4,
+                "orig": 5,
+                "copy": 4,
                 # Vendor-specific file patterns
-                "flexera": 7, "installaware": 6, "wise": 6, "inno": 6,
-                "nsis": 6, "wix": 6, "msi": 6, "msm": 6, "msp": 6,
+                "flexera": 7,
+                "installaware": 6,
+                "wise": 6,
+                "inno": 6,
+                "nsis": 6,
+                "wix": 6,
+                "msi": 6,
+                "msm": 6,
+                "msp": 6,
             }
 
             # Comprehensive file extensions
             extensions = [
                 # Text formats
-                ".txt", ".rtf", ".doc", ".docx", ".pdf", ".html", ".htm", ".xml",
-                ".json", ".yaml", ".yml", ".ini", ".cfg", ".conf", ".properties",
-
+                ".txt",
+                ".rtf",
+                ".doc",
+                ".docx",
+                ".pdf",
+                ".html",
+                ".htm",
+                ".xml",
+                ".json",
+                ".yaml",
+                ".yml",
+                ".ini",
+                ".cfg",
+                ".conf",
+                ".properties",
                 # Binary formats
-                ".dll", ".exe", ".sys", ".ocx", ".ax", ".cpl", ".scr",
-                ".bin", ".dat", ".db", ".sqlite", ".mdb", ".accdb",
-
+                ".dll",
+                ".exe",
+                ".sys",
+                ".ocx",
+                ".ax",
+                ".cpl",
+                ".scr",
+                ".bin",
+                ".dat",
+                ".db",
+                ".sqlite",
+                ".mdb",
+                ".accdb",
                 # Certificate and key files
-                ".cer", ".crt", ".der", ".pem", ".p7b", ".p7c", ".p12", ".pfx",
-                ".key", ".pub", ".sig", ".csr", ".jks", ".keystore",
-
+                ".cer",
+                ".crt",
+                ".der",
+                ".pem",
+                ".p7b",
+                ".p7c",
+                ".p12",
+                ".pfx",
+                ".key",
+                ".pub",
+                ".sig",
+                ".csr",
+                ".jks",
+                ".keystore",
                 # Archive formats (might contain licensing)
-                ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz",
-                ".cab", ".msi", ".pkg", ".deb", ".rpm",
-
+                ".zip",
+                ".rar",
+                ".7z",
+                ".tar",
+                ".gz",
+                ".bz2",
+                ".xz",
+                ".cab",
+                ".msi",
+                ".pkg",
+                ".deb",
+                ".rpm",
                 # Image formats (sometimes contain embedded licensing)
-                ".bmp", ".jpg", ".jpeg", ".png", ".gif", ".tiff", ".ico",
-
+                ".bmp",
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".gif",
+                ".tiff",
+                ".ico",
                 # Script and code files
-                ".bat", ".cmd", ".ps1", ".vbs", ".js", ".py", ".pl", ".sh",
-                ".reg", ".inf", ".cat", ".manifest",
-
+                ".bat",
+                ".cmd",
+                ".ps1",
+                ".vbs",
+                ".js",
+                ".py",
+                ".pl",
+                ".sh",
+                ".reg",
+                ".inf",
+                ".cat",
+                ".manifest",
                 # Data files
-                ".csv", ".tsv", ".log", ".out", ".dump", ".trace",
-
+                ".csv",
+                ".tsv",
+                ".log",
+                ".out",
+                ".dump",
+                ".trace",
                 # Licensing-specific extensions
-                ".lic", ".license", ".key", ".dat", ".bin", ".token",
-                ".permit", ".grant", ".auth", ".unlock", ".crack",
-
+                ".lic",
+                ".license",
+                ".key",
+                ".dat",
+                ".bin",
+                ".token",
+                ".permit",
+                ".grant",
+                ".auth",
+                ".unlock",
+                ".crack",
                 # Hidden or no extension
-                "", ".", ".hidden", ".sys", ".tmp",
+                "",
+                ".",
+                ".hidden",
+                ".sys",
+                ".tmp",
             ]
 
             # Search for licensing-related files with advanced detection
@@ -715,11 +948,12 @@ Description: {program_data.get('description', 'No description available')}"""
 
                     # Check filename patterns (including stem and full name)
                     for pattern, pattern_priority in licensing_patterns.items():
-                        if (pattern in file_lower or
-                            pattern in file_stem or
-                            file_lower.startswith(pattern) or
-                            file_lower.endswith(pattern)):
-
+                        if (
+                            pattern in file_lower
+                            or pattern in file_stem
+                            or file_lower.startswith(pattern)
+                            or file_lower.endswith(pattern)
+                        ):
                             matched_patterns.append((pattern, pattern_priority))
                             if pattern_priority > max_priority:
                                 max_priority = pattern_priority
@@ -727,11 +961,25 @@ Description: {program_data.get('description', 'No description available')}"""
                                 # Categorize based on pattern type
                                 if pattern in ["license", "licence", "eula", "terms", "agreement"]:
                                     best_file_type = "License"
-                                elif pattern in ["activation", "serial", "key", "keyfile", "keystore", "auth"]:
+                                elif pattern in [
+                                    "activation",
+                                    "serial",
+                                    "key",
+                                    "keyfile",
+                                    "keystore",
+                                    "auth",
+                                ]:
                                     best_file_type = "Activation"
                                 elif pattern in ["crack", "patch", "keygen", "unlocker"]:
                                     best_file_type = "Bypass"
-                                elif pattern in ["dongle", "hasp", "sentinel", "flexlm", "safenet", "wibu"]:
+                                elif pattern in [
+                                    "dongle",
+                                    "hasp",
+                                    "sentinel",
+                                    "flexlm",
+                                    "safenet",
+                                    "wibu",
+                                ]:
                                     best_file_type = "Protection"
                                 elif pattern in ["cert", "crt", "pem", "sig", "token"]:
                                     best_file_type = "Certificate"
@@ -790,7 +1038,9 @@ Description: {program_data.get('description', 'No description available')}"""
                     # Boost priority for files in certain directories
                     dir_boost = 0
                     root_lower = root.lower()
-                    if any(term in root_lower for term in ["license", "legal", "key", "crack", "patch"]):
+                    if any(
+                        term in root_lower for term in ["license", "legal", "key", "crack", "patch"]
+                    ):
                         dir_boost = 2
                     elif any(term in root_lower for term in ["bin", "data", "config"]):
                         dir_boost = 1
@@ -917,6 +1167,7 @@ def show_program_selector(parent=None):
     if dialog.exec() == QDialog.Accepted:
         return dialog.get_selected_program_data()
     return None
+
 
 # Backward compatibility alias
 show_smart_program_selector = show_program_selector

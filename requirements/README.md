@@ -5,7 +5,7 @@ This directory contains the dependency management files for Intellicrack.
 ## Files
 
 - **pyproject.toml** - Main project configuration with dependencies for Linux/WSL
-- **pyproject_wsl.toml** - WSL-specific project configuration  
+- **pyproject_wsl.toml** - WSL-specific project configuration
 - **requirements.txt** - Pip-installable requirements (generated from pyproject.toml)
 - **requirements_windows.txt** - Windows-specific requirements
 - **requirements.lock** - Locked dependencies (pip format)

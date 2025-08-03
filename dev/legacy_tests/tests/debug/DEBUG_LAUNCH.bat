@@ -32,7 +32,7 @@ if exist ".venv_windows\Scripts\python.exe" (
     )
     echo Python basic test: PASSED
     echo.
-    
+
     echo =================================================================
     echo STEP 2: Testing PyQt5 import
     echo =================================================================
@@ -43,7 +43,7 @@ if exist ".venv_windows\Scripts\python.exe" (
         goto :error
     )
     echo.
-    
+
     echo =================================================================
     echo STEP 3: Testing Intellicrack imports
     echo =================================================================
@@ -54,7 +54,7 @@ if exist ".venv_windows\Scripts\python.exe" (
         goto :error
     )
     echo.
-    
+
     echo =================================================================
     echo STEP 4: Launching Intellicrack (clean output)
     echo =================================================================

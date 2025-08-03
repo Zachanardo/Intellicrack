@@ -35,19 +35,19 @@ def test_license_pattern_analysis():
     print("=" * 60)
     print("License Pattern Analysis Integration Test")
     print("=" * 60)
-    
+
     # Initialize the analyzer
     analyzer = ProtectionAnalyzerTool()
-    
+
     # Test file path (you can change this to test with a real binary)
     test_file = "/path/to/test/binary.exe"  # Replace with actual binary path
-    
+
     # Check if test file exists
     if not os.path.exists(test_file):
         print(f"\nTest file not found: {test_file}")
         print("Please update the test_file path to point to a real binary file.")
         print("\nDemonstrating with mock analysis...")
-        
+
         # For demonstration, let's show what the output would look like
         mock_result = {
             "success": True,
@@ -90,16 +90,16 @@ def test_license_pattern_analysis():
                 }
             }
         }
-        
+
         print_analysis_results(mock_result)
         return
-    
+
     # Perform actual analysis
     print(f"\nAnalyzing: {test_file}")
     print("This may take a moment...")
-    
+
     result = analyzer.analyze(test_file, detailed=True)
-    
+
     if result.get("success"):
         print_analysis_results(result)
     else:
@@ -111,77 +111,77 @@ def print_analysis_results(result):
     print("\n" + "-" * 60)
     print("ANALYSIS RESULTS")
     print("-" * 60)
-    
+
     # File info
     file_info = result.get("file_info", {})
     print(f"\nFile: {file_info.get('name', 'Unknown')}")
     print(f"Size: {file_info.get('size_human', 'Unknown')}")
-    
+
     # Protection analysis
     protection = result.get("protection_analysis", {})
     print(f"\nLicensing Schemes Detected: {protection.get('total_licensing_schemes', 0)}")
-    
+
     if protection.get("detections", {}).get("LICENSE"):
         print("\nLicense Protections:")
         for lic in protection["detections"]["LICENSE"]:
             print(f"  - {lic['name']} (Confidence: {lic['confidence']}%)")
-    
+
     # License pattern analysis
     license_analysis = result.get("license_pattern_analysis", {})
     if license_analysis and not license_analysis.get("error"):
         print("\n" + "-" * 40)
         print("LICENSE PATTERN ANALYSIS")
         print("-" * 40)
-        
+
         print(f"\nLicense Type: {license_analysis.get('license_type', 'Unknown')}")
         print(f"Confidence: {license_analysis.get('confidence', 0) * 100:.0f}%")
-        
+
         patterns = license_analysis.get("patterns_found", [])
         if patterns:
             print(f"\nPatterns Found ({len(patterns)}):")
             for pattern in patterns[:5]:  # Show first 5
                 print(f"  - {pattern}")
-        
+
         suggestions = license_analysis.get("bypass_suggestions", [])
         if suggestions:
             print("\nBypass Suggestions:")
             for suggestion in suggestions:
                 print(f"  - {suggestion}")
-        
+
         context = license_analysis.get("protection_context", {})
         if context:
             print("\nProtection Context:")
             print(f"  - Network APIs: {'Yes' if context.get('has_network_apis') else 'No'}")
             print(f"  - Crypto APIs: {'Yes' if context.get('has_crypto_apis') else 'No'}")
             print(f"  - Registry APIs: {'Yes' if context.get('has_registry_apis') else 'No'}")
-            
+
             license_files = context.get("likely_license_files", [])
             if license_files:
                 print("  - Likely License Files:")
                 for file in license_files[:3]:
                     print(f"    * {file}")
-    
+
     # AI Complex Analysis
     ai_analysis = result.get("ai_complex_analysis", {})
     if ai_analysis and not ai_analysis.get("error"):
         print("\n" + "-" * 40)
         print("AI-ENHANCED ANALYSIS")
         print("-" * 40)
-        
+
         print(f"\nConfidence: {ai_analysis.get('confidence', 0) * 100:.0f}%")
-        
+
         findings = ai_analysis.get("findings", [])
         if findings:
             print("\nKey Findings:")
             for finding in findings[:3]:
                 print(f"  - {finding}")
-        
+
         recommendations = ai_analysis.get("recommendations", [])
         if recommendations:
             print("\nAI Recommendations:")
             for rec in recommendations[:3]:
                 print(f"  - {rec}")
-    
+
     print("\n" + "=" * 60)
 
 

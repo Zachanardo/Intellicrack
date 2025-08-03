@@ -1,9 +1,11 @@
-"""Window sizing utilities for responsive UI design
-"""
+"""Window sizing utilities for responsive UI design"""
+
 from PyQt6.QtWidgets import QApplication
 
 
-def get_default_window_size(width_percentage=0.8, height_percentage=0.8, min_width=800, min_height=600):
+def get_default_window_size(
+    width_percentage=0.8, height_percentage=0.8, min_width=800, min_height=600
+):
     """Calculate appropriate window size based on screen dimensions
 
     Args:

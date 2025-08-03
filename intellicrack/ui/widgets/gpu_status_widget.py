@@ -3,6 +3,7 @@
 This module provides a widget for displaying GPU usage, memory,
 and compute capabilities in the system monitoring interface.
 """
+
 import subprocess
 from typing import Any
 
@@ -95,9 +96,13 @@ class GPUMonitorWorker(QObject):
         try:
             # Run nvidia-smi command
             result = subprocess.run(
-                ["nvidia-smi", "--query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total,power.draw",
-                 "--format=csv,noheader,nounits"],
-                check=False, capture_output=True,
+                [
+                    "nvidia-smi",
+                    "--query-gpu=index,name,temperature.gpu,utilization.gpu,memory.used,memory.total,power.draw",
+                    "--format=csv,noheader,nounits",
+                ],
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=5,
             )
@@ -108,16 +113,18 @@ class GPUMonitorWorker(QObject):
                     if line:
                         parts = [p.strip() for p in line.split(",")]
                         if len(parts) >= 7:
-                            gpus.append({
-                                "vendor": "NVIDIA",
-                                "index": int(parts[0]),
-                                "name": parts[1],
-                                "temperature": float(parts[2]) if parts[2] != "[N/A]" else 0,
-                                "utilization": float(parts[3]) if parts[3] != "[N/A]" else 0,
-                                "memory_used": float(parts[4]) if parts[4] != "[N/A]" else 0,
-                                "memory_total": float(parts[5]) if parts[5] != "[N/A]" else 0,
-                                "power": float(parts[6]) if parts[6] != "[N/A]" else 0,
-                            })
+                            gpus.append(
+                                {
+                                    "vendor": "NVIDIA",
+                                    "index": int(parts[0]),
+                                    "name": parts[1],
+                                    "temperature": float(parts[2]) if parts[2] != "[N/A]" else 0,
+                                    "utilization": float(parts[3]) if parts[3] != "[N/A]" else 0,
+                                    "memory_used": float(parts[4]) if parts[4] != "[N/A]" else 0,
+                                    "memory_total": float(parts[5]) if parts[5] != "[N/A]" else 0,
+                                    "power": float(parts[6]) if parts[6] != "[N/A]" else 0,
+                                }
+                            )
         except (subprocess.SubprocessError, FileNotFoundError):
             pass
 
@@ -130,20 +137,23 @@ class GPUMonitorWorker(QObject):
             # Check if Intel GPU tools are available
             # This is a simplified example - real implementation would use Intel GPU tools
             import wmi
+
             c = wmi.WMI()
 
             for gpu in c.Win32_VideoController():
                 if "Intel" in gpu.Name and ("Arc" in gpu.Name or "Xe" in gpu.Name):
-                    gpus.append({
-                        "vendor": "Intel",
-                        "index": 0,
-                        "name": gpu.Name,
-                        "temperature": 0,  # Intel doesn't easily expose temperature
-                        "utilization": 0,  # Would need Intel GPU tools
-                        "memory_used": 0,
-                        "memory_total": gpu.AdapterRAM / (1024**3) if gpu.AdapterRAM else 0,
-                        "power": 0,
-                    })
+                    gpus.append(
+                        {
+                            "vendor": "Intel",
+                            "index": 0,
+                            "name": gpu.Name,
+                            "temperature": 0,  # Intel doesn't easily expose temperature
+                            "utilization": 0,  # Would need Intel GPU tools
+                            "memory_used": 0,
+                            "memory_total": gpu.AdapterRAM / (1024**3) if gpu.AdapterRAM else 0,
+                            "power": 0,
+                        }
+                    )
         except:
             pass
 

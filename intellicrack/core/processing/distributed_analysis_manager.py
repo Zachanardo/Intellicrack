@@ -1,4 +1,5 @@
 """Distributed analysis manager for coordinating multi-node analysis tasks."""
+
 import logging
 import os
 from typing import Any
@@ -27,9 +28,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
 try:
     from ..processing.docker_container import DockerContainer
+
     HAS_DOCKER = True
 except ImportError as e:
     logger.error("Import error in distributed_analysis_manager: %s", e)
@@ -37,6 +38,7 @@ except ImportError as e:
 
 try:
     from ..processing.qemu_emulator import QEMUSystemEmulator
+
     HAS_QEMU = True
 except ImportError as e:
     logger.error("Import error in distributed_analysis_manager: %s", e)
@@ -85,14 +87,16 @@ class DistributedAnalysisManager:
         if vm_type == "qemu":
             try:
                 vm = QEMUSystemEmulator(self.binary_path, architecture=arch)
-                self.vms.append({
-                    "id": vm_id,
-                    "type": vm_type,
-                    "arch": arch,
-                    "memory_mb": memory_mb,
-                    "instance": vm,
-                    "status": "created",
-                })
+                self.vms.append(
+                    {
+                        "id": vm_id,
+                        "type": vm_type,
+                        "arch": arch,
+                        "memory_mb": memory_mb,
+                        "instance": vm,
+                        "status": "created",
+                    }
+                )
                 self.logger.info("Added QEMU VM (ID: %s, Arch: %s)", vm_id, arch)
                 return vm_id
             except (OSError, ValueError, RuntimeError) as e:
@@ -122,13 +126,15 @@ class DistributedAnalysisManager:
         if container_type == "docker":
             try:
                 instance = DockerContainer(self.binary_path, image)
-                self.containers.append({
-                    "id": container_id,
-                    "type": container_type,
-                    "image": image,
-                    "instance": instance,
-                    "status": "created",
-                })
+                self.containers.append(
+                    {
+                        "id": container_id,
+                        "type": container_type,
+                        "image": image,
+                        "instance": instance,
+                        "status": "created",
+                    }
+                )
                 self.logger.info("Added Docker container (ID: %s, Image: %s)", container_id, image)
                 return container_id
             except (OSError, ValueError, RuntimeError) as e:
@@ -223,28 +229,34 @@ class DistributedAnalysisManager:
                     # Compare snapshots
                     diff = _vm["instance"].compare_snapshots("pre_analysis", "post_analysis")
 
-                    results["vms"].append({
-                        "vm_id": _vm["id"],
-                        "arch": _vm["arch"],
-                        "output": output,
-                        "diff": diff,
-                        "status": "completed",
-                    })
+                    results["vms"].append(
+                        {
+                            "vm_id": _vm["id"],
+                            "arch": _vm["arch"],
+                            "output": output,
+                            "diff": diff,
+                            "status": "completed",
+                        }
+                    )
 
                 except (OSError, ValueError, RuntimeError) as e:
                     self.logger.error(f"Error analyzing VM {_vm['id']}: {e}")
-                    results["vms"].append({
-                        "vm_id": _vm["id"],
-                        "arch": _vm["arch"],
-                        "output": f"Error: {e}",
-                        "diff": {},
-                        "status": "error",
-                    })
+                    results["vms"].append(
+                        {
+                            "vm_id": _vm["id"],
+                            "arch": _vm["arch"],
+                            "output": f"Error: {e}",
+                            "diff": {},
+                            "status": "error",
+                        }
+                    )
 
         # Run analysis on containers
         for _container in self.containers:
             if _container["status"] == "running":
-                self.logger.info(f"Running {analysis_type} analysis on container {_container['id']}...")
+                self.logger.info(
+                    f"Running {analysis_type} analysis on container {_container['id']}..."
+                )
 
                 try:
                     # Create pre-analysis snapshot
@@ -254,7 +266,8 @@ class DistributedAnalysisManager:
                     if self.binary_path:
                         binary_name = os.path.basename(self.binary_path)
                         copy_result = _container["instance"].copy_file_to_container(
-                            self.binary_path, f"/tmp/{binary_name}",
+                            self.binary_path,
+                            f"/tmp/{binary_name}",
                         )
 
                         if copy_result:
@@ -274,25 +287,29 @@ class DistributedAnalysisManager:
                     diff = _container["instance"].compare_snapshots("pre_analysis", "post_analysis")
                     artifacts = _container["instance"].collect_analysis_artifacts()
 
-                    results["containers"].append({
-                        "container_id": _container["id"],
-                        "image": _container["image"],
-                        "output": output,
-                        "diff": diff,
-                        "artifacts": artifacts,
-                        "status": "completed",
-                    })
+                    results["containers"].append(
+                        {
+                            "container_id": _container["id"],
+                            "image": _container["image"],
+                            "output": output,
+                            "diff": diff,
+                            "artifacts": artifacts,
+                            "status": "completed",
+                        }
+                    )
 
                 except (OSError, ValueError, RuntimeError) as e:
                     self.logger.error(f"Error analyzing container {_container['id']}: {e}")
-                    results["containers"].append({
-                        "container_id": _container["id"],
-                        "image": _container["image"],
-                        "output": f"Error: {e}",
-                        "diff": {},
-                        "artifacts": [],
-                        "status": "error",
-                    })
+                    results["containers"].append(
+                        {
+                            "container_id": _container["id"],
+                            "image": _container["image"],
+                            "output": f"Error: {e}",
+                            "diff": {},
+                            "artifacts": [],
+                            "status": "error",
+                        }
+                    )
 
         # Generate summary
         running_vms = [_vm for _vm in self.vms if _vm["status"] == "running"]
@@ -302,8 +319,12 @@ class DistributedAnalysisManager:
             "vms_analyzed": len(running_vms),
             "containers_analyzed": len(running_containers),
             "total_nodes": len(self.vms) + len(self.containers),
-            "successful_vm_analyses": len([_r for _r in results["vms"] if _r["status"] == "completed"]),
-            "successful_container_analyses": len([_r for _r in results["containers"] if _r["status"] == "completed"]),
+            "successful_vm_analyses": len(
+                [_r for _r in results["vms"] if _r["status"] == "completed"]
+            ),
+            "successful_container_analyses": len(
+                [_r for _r in results["containers"] if _r["status"] == "completed"]
+            ),
             "analysis_type": analysis_type,
         }
 
@@ -402,7 +423,8 @@ class DistributedAnalysisManager:
                     "status": vm["status"],
                     "tasks": vm.get("tasks", []),
                 }
-                for vm in self.vms],
+                for vm in self.vms
+            ],
             "containers": [
                 {
                     "id": container["id"],
@@ -411,7 +433,8 @@ class DistributedAnalysisManager:
                     "status": container["status"],
                     "tasks": container.get("tasks", []),
                 }
-                for container in self.containers],
+                for container in self.containers
+            ],
         }
 
     def cleanup(self) -> None:

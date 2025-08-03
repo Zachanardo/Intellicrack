@@ -24,15 +24,17 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def run_ghidra_plugin(ghidra_path: str,
-                     project_dir: str,
-                     project_name: str,
-                     binary_path: str,
-                     script_dir: str,
-                     script_name: str,
-                     app: Any = None,
-                     overwrite: bool = True,
-                     timeout: int = 300) -> tuple[int, str, str]:
+def run_ghidra_plugin(
+    ghidra_path: str,
+    project_dir: str,
+    project_name: str,
+    binary_path: str,
+    script_dir: str,
+    script_name: str,
+    app: Any = None,
+    overwrite: bool = True,
+    timeout: int = 300,
+) -> tuple[int, str, str]:
     """Run a Ghidra plugin script on a binary.
 
     Args:
@@ -116,12 +118,14 @@ def run_ghidra_plugin(ghidra_path: str,
         return 1, "", error_msg
 
 
-def _build_ghidra_command(ghidra_path: str,
-                         project_dir: str,
-                         project_name: str,
-                         binary_path: str,
-                         script_path: str,
-                         overwrite: bool = True) -> list[str]:
+def _build_ghidra_command(
+    ghidra_path: str,
+    project_dir: str,
+    project_name: str,
+    binary_path: str,
+    script_path: str,
+    overwrite: bool = True,
+) -> list[str]:
     """Build the Ghidra command line."""
     command = [ghidra_path]
 
@@ -811,6 +815,7 @@ def cleanup_ghidra_project(project_dir: str, project_name: str) -> bool:
                     os.remove(file_path)
                 elif os.path.isdir(file_path):
                     import shutil
+
                     shutil.rmtree(file_path)
 
         # Remove directory if empty

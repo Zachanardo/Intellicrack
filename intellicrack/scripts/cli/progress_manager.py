@@ -153,8 +153,9 @@ class ProgressManager:
             # Store task ID for progress tracking
             self.task_ids[analysis_type] = task_id
 
-    def update_progress(self, task_name: str, current: int, total: int,
-                       speed: float | None = None) -> None:
+    def update_progress(
+        self, task_name: str, current: int, total: int, speed: float | None = None
+    ) -> None:
         """Update progress for a specific task"""
         with self._lock:
             if task_name in self.tasks:
@@ -173,8 +174,7 @@ class ProgressManager:
                         )
                         break
 
-    def complete_task(self, task_name: str, success: bool = True,
-                     error: str | None = None) -> None:
+    def complete_task(self, task_name: str, success: bool = True, error: str | None = None) -> None:
         """Mark a task as completed"""
         with self._lock:
             if task_name in self.tasks:
@@ -265,12 +265,14 @@ class MultiStageProgress:
 
     def add_stage(self, name: str, steps: list[str]) -> None:
         """Add a new stage with multiple steps"""
-        self.stages.append({
-            "name": name,
-            "steps": steps,
-            "current_step": 0,
-            "completed": False,
-        })
+        self.stages.append(
+            {
+                "name": name,
+                "steps": steps,
+                "current_step": 0,
+                "completed": False,
+            }
+        )
 
     def start(self) -> None:
         """Start the multi-stage progress display"""
@@ -282,7 +284,6 @@ class MultiStageProgress:
             TimeElapsedColumn(),
             console=self.console,
         ) as progress:
-
             # Create main task
             main_task = progress.add_task(
                 "[cyan]Overall Progress",
@@ -336,6 +337,7 @@ def demo_progress():
 
     # Use a real binary for demonstration
     import sys
+
     binary_path = sys.executable  # Use Python executable as demo binary
 
     analysis_types = [
@@ -372,15 +374,21 @@ def demo_progress():
                     # Perform real operations
                     if step_name == "Computing hashes":
                         with open(binary_path, "rb") as f:
-                            data = f.read(1024*1024)  # Read first MB
+                            data = f.read(1024 * 1024)  # Read first MB
                             hashlib.md5(data).hexdigest()
                             hashlib.sha256(data).hexdigest()
 
                     elif step_name == "Extracting strings":
                         # Real string extraction
-                        cmd = ["strings", binary_path] if sys.platform != "win32" else ["findstr", "/r", "[a-zA-Z]", binary_path]
+                        cmd = (
+                            ["strings", binary_path]
+                            if sys.platform != "win32"
+                            else ["findstr", "/r", "[a-zA-Z]", binary_path]
+                        )
                         try:
-                            result = subprocess.run(cmd, check=False, capture_output=True, timeout=5)
+                            result = subprocess.run(
+                                cmd, check=False, capture_output=True, timeout=5
+                            )
                             len(result.stdout.decode("utf-8", errors="ignore").split("\n"))
                         except:
                             pass
@@ -388,7 +396,7 @@ def demo_progress():
                     # Update progress based on real work
                     current_progress += weight
                     progress_percent = int((current_progress / total_weight) * 100)
-                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight*2)
+                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight * 2)
                     time.sleep(0.1)  # Small delay for visibility
 
                 pm.complete_task(analysis_type, success=True)
@@ -421,7 +429,7 @@ def demo_progress():
 
                     current_progress += weight
                     progress_percent = int((current_progress / total_weight) * 100)
-                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight*1.5)
+                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight * 1.5)
                     time.sleep(0.15)
 
                 pm.complete_task(analysis_type, success=True)
@@ -463,7 +471,7 @@ def demo_progress():
                 for _pattern_name, weight in license_patterns:
                     current_progress += weight
                     progress_percent = int((current_progress / total_weight) * 100)
-                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight*3)
+                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight * 3)
                     time.sleep(0.1)
 
                 pm.complete_task(analysis_type, success=True)
@@ -485,9 +493,10 @@ def demo_progress():
                     if check_name == "Extracting URLs/IPs":
                         # Real URL/IP extraction from binary
                         import re
+
                         try:
                             with open(binary_path, "rb") as f:
-                                data = f.read(1024*1024)
+                                data = f.read(1024 * 1024)
                                 # Look for IP patterns
                                 ip_pattern = rb"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
                                 re.findall(ip_pattern, data)
@@ -496,7 +505,7 @@ def demo_progress():
 
                     current_progress += weight
                     progress_percent = int((current_progress / total_weight) * 100)
-                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight*2)
+                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight * 2)
                     time.sleep(0.15)
 
                 pm.complete_task(analysis_type, success=True)
@@ -511,25 +520,34 @@ def demo_progress():
     console.print("\n[bold]2. Multi-Stage Operation:[/bold]")
     multi_progress = MultiStageProgress(console)
 
-    multi_progress.add_stage("Preprocessing", [
-        "Loading binary",
-        "Parsing headers",
-        "Extracting sections",
-        "Building symbol table",
-    ])
+    multi_progress.add_stage(
+        "Preprocessing",
+        [
+            "Loading binary",
+            "Parsing headers",
+            "Extracting sections",
+            "Building symbol table",
+        ],
+    )
 
-    multi_progress.add_stage("Analysis", [
-        "Control flow analysis",
-        "Data flow analysis",
-        "Vulnerability detection",
-        "Pattern matching",
-    ])
+    multi_progress.add_stage(
+        "Analysis",
+        [
+            "Control flow analysis",
+            "Data flow analysis",
+            "Vulnerability detection",
+            "Pattern matching",
+        ],
+    )
 
-    multi_progress.add_stage("Reporting", [
-        "Generating report",
-        "Creating visualizations",
-        "Exporting results",
-    ])
+    multi_progress.add_stage(
+        "Reporting",
+        [
+            "Generating report",
+            "Creating visualizations",
+            "Exporting results",
+        ],
+    )
 
     multi_progress.start()
 

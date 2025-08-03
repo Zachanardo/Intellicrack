@@ -46,8 +46,25 @@ int main(int argc, char *argv[]) {
 
     # Try to compile (Windows with MinGW or MSVC)
     compile_commands = [
-        ["gcc", "-o", str(output_path), str(src_path), "-fno-stack-protector", "-z", "execstack", "-no-pie"],
-        ["cl", "/Fe:" + str(output_path), str(src_path), "/GS-", "/link", "/DYNAMICBASE:NO", "/NXCOMPAT:NO"],
+        [
+            "gcc",
+            "-o",
+            str(output_path),
+            str(src_path),
+            "-fno-stack-protector",
+            "-z",
+            "execstack",
+            "-no-pie",
+        ],
+        [
+            "cl",
+            "/Fe:" + str(output_path),
+            str(src_path),
+            "/GS-",
+            "/link",
+            "/DYNAMICBASE:NO",
+            "/NXCOMPAT:NO",
+        ],
     ]
 
     compiled = False
@@ -385,7 +402,7 @@ def create_precompiled_vulnerable_binary(output_path: Path, vuln_type: str) -> N
 
     # Add vulnerability marker
     marker_offset = 0x1000
-    pe_data[marker_offset:marker_offset+32] = f"VULN_{vuln_type.upper()}\x00".encode()[:32]
+    pe_data[marker_offset : marker_offset + 32] = f"VULN_{vuln_type.upper()}\x00".encode()[:32]
 
     # Add some vulnerable patterns based on type
     if vuln_type == "buffer_overflow":

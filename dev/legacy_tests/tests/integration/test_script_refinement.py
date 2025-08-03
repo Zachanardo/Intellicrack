@@ -120,7 +120,7 @@ Java.perform(function() {
 
         for (var i = 0; i < classes.length; i++) {
             var className = classes[i];
-            if (className.toLowerCase().includes("license") || 
+            if (className.toLowerCase().includes("license") ||
                 className.toLowerCase().includes("validation") ||
                 className.toLowerCase().includes("check")) {
                 licenseClasses.push(className);

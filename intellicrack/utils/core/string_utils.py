@@ -19,8 +19,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
 def format_bytes(size_bytes: int) -> str:
     """Format byte size in human readable format."""
     if size_bytes < 1024:

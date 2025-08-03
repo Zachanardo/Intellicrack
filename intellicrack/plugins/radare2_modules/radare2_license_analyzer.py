@@ -54,10 +54,10 @@ class LicenseType(Enum):
 class ProtectionLevel(Enum):
     """License protection complexity levels"""
 
-    BASIC = 1      # Simple checks, easily bypassable
-    MODERATE = 2   # Some obfuscation, multiple checks
-    ADVANCED = 3   # Strong crypto, anti-debug
-    EXTREME = 4    # VM protection, custom crypto
+    BASIC = 1  # Simple checks, easily bypassable
+    MODERATE = 2  # Some obfuscation, multiple checks
+    ADVANCED = 3  # Strong crypto, anti-debug
+    EXTREME = 4  # VM protection, custom crypto
 
 
 @dataclass
@@ -103,7 +103,6 @@ class R2LicenseAnalyzer:
             "crack": -0.9,  # Negative weight for anti-crack
             "patch": -0.8,
         },
-
         # String patterns
         "strings": {
             "Invalid license": 0.95,
@@ -123,7 +122,6 @@ class R2LicenseAnalyzer:
             "HKEY_LOCAL_MACHINE": 0.7,
             "Software\\": 0.6,
         },
-
         # API patterns
         "apis": {
             "RegOpenKeyEx": 0.7,
@@ -141,7 +139,6 @@ class R2LicenseAnalyzer:
             "ReadFile": 0.6,
             "IsDebuggerPresent": 0.7,
         },
-
         # Crypto patterns
         "crypto": {
             "MD5": 0.8,
@@ -452,8 +449,7 @@ class R2LicenseAnalyzer:
 
             # Calculate cyclomatic complexity
             num_blocks = len(blocks)
-            num_edges = sum(len(b.get("jump", [])) + len(b.get("fail", []))
-                           for b in blocks)
+            num_edges = sum(len(b.get("jump", [])) + len(b.get("fail", [])) for b in blocks)
 
             complexity = num_edges - num_blocks + 2
 
@@ -474,8 +470,11 @@ class R2LicenseAnalyzer:
             return False
 
         # Look for multiple return paths
-        return_blocks = [b for b in blocks if b.get("ninstr", 0) > 0 and
-                        any("ret" in str(b.get("disasm", "")) for b in blocks)]
+        return_blocks = [
+            b
+            for b in blocks
+            if b.get("ninstr", 0) > 0 and any("ret" in str(b.get("disasm", "")) for b in blocks)
+        ]
 
         # License functions often have multiple returns (success/failure)
         return len(return_blocks) >= 2
@@ -486,10 +485,10 @@ class R2LicenseAnalyzer:
 
         # Search for crypto constants
         crypto_constants = {
-            "MD5": [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476],
-            "SHA1": [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0],
-            "SHA256": [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a],
-            "AES_SBOX": [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5],
+            "MD5": [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476],
+            "SHA1": [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0],
+            "SHA256": [0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A],
+            "AES_SBOX": [0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5],
         }
 
         for name, constants in crypto_constants.items():
@@ -498,8 +497,9 @@ class R2LicenseAnalyzer:
         # Update license functions with crypto info
         for lic_func in self.license_functions:
             for _crypto_type, locations in self.crypto_locations.items():
-                if any(lic_func.address <= loc <= lic_func.address + lic_func.size
-                      for loc in locations):
+                if any(
+                    lic_func.address <= loc <= lic_func.address + lic_func.size for loc in locations
+                ):
                     lic_func.type = LicenseType.CRYPTO_SIGNATURE
                     lic_func.protection_level = ProtectionLevel.ADVANCED
                     lic_func.confidence = min(1.0, lic_func.confidence * 1.3)
@@ -511,7 +511,7 @@ class R2LicenseAnalyzer:
             search_patterns = [
                 f"{const:08x}",  # Hex
                 struct.pack("<I", const).hex(),  # Little endian
-                struct.pack(">I", const).hex(),   # Big endian
+                struct.pack(">I", const).hex(),  # Big endian
             ]
 
             for pattern in search_patterns:
@@ -609,7 +609,7 @@ class R2LicenseAnalyzer:
             score = self._neural_network_score(features)
 
             # Combine with existing confidence
-            lic_func.confidence = (lic_func.confidence * 0.7 + score * 0.3)
+            lic_func.confidence = lic_func.confidence * 0.7 + score * 0.3
 
     def _extract_ml_features(self, lic_func: LicenseFunction) -> dict[str, float]:
         """Extract features for ML scoring"""
@@ -649,7 +649,9 @@ class R2LicenseAnalyzer:
             strategies = []
 
             # Basic patching strategies
-            strategies.append(f"Patch at 0x{lic_func.address:x}: Change conditional jump to unconditional")
+            strategies.append(
+                f"Patch at 0x{lic_func.address:x}: Change conditional jump to unconditional"
+            )
             strategies.append(f"NOP critical validation code at 0x{lic_func.address:x}")
 
             # Type-specific strategies
@@ -822,23 +824,32 @@ class R2LicenseAnalyzer:
             patch_addr, patch_bytes = self._find_patch_location(lic_func)
 
             if patch_addr:
-                patches.append({
-                    "address": patch_addr,
-                    "original": patch_bytes,
-                    "patched": b"\x90" * len(patch_bytes),  # NOP
-                    "function": lic_func.name,
-                })
+                patches.append(
+                    {
+                        "address": patch_addr,
+                        "original": patch_bytes,
+                        "patched": b"\x90" * len(patch_bytes),  # NOP
+                        "function": lic_func.name,
+                    }
+                )
 
         print(f"\nGenerated {len(patches)} patches")
 
         # Save patches
         with open("patches.json", "w") as f:
-            json.dump([{
-                "address": f"0x{p['address']:x}",
-                "original": p["original"].hex(),
-                "patched": p["patched"].hex(),
-                "function": p["function"],
-            } for p in patches], f, indent=2)
+            json.dump(
+                [
+                    {
+                        "address": f"0x{p['address']:x}",
+                        "original": p["original"].hex(),
+                        "patched": p["patched"].hex(),
+                        "function": p["function"],
+                    }
+                    for p in patches
+                ],
+                f,
+                indent=2,
+            )
 
     def _find_patch_location(self, lic_func: LicenseFunction) -> tuple[int | None, bytes | None]:
         """Find optimal patch location"""
@@ -857,13 +868,13 @@ class R2LicenseAnalyzer:
                 0x74: 2,  # JE
                 0x75: 2,  # JNE
                 0x84: 6,  # JE (long)
-                0x85: 6,   # JNE (long)
+                0x85: 6,  # JNE (long)
             }
 
             for i, byte in enumerate(func_bytes):
                 if byte in jump_opcodes:
                     size = jump_opcodes[byte]
-                    return lic_func.address + i, bytes(func_bytes[i:i+size])
+                    return lic_func.address + i, bytes(func_bytes[i : i + size])
 
         return None, None
 

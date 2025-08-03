@@ -26,7 +26,9 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int = 100) -> dict[str, Any]:
+def capture_with_scapy(
+    interface: str = "any", filter_str: str = "", count: int = 100
+) -> dict[str, Any]:
     """Capture network packets using Scapy for real-time traffic analysis.
 
     Args:
@@ -48,6 +50,7 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
     dns_queries = []
 
     try:
+
         def packet_handler(packet):
             """Process captured packets in real-time"""
             packet_info = {
@@ -90,14 +93,27 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
                 try:
                     payload = bytes(packet[Raw].load)
                     license_keywords = [
-                        b"license", b"activation", b"serial", b"key", b"auth",
-                        b"validate", b"register", b"subscription", b"trial",
-                        b"flexlm", b"rlm", b"hasp", b"sentinel", b"wibu",
+                        b"license",
+                        b"activation",
+                        b"serial",
+                        b"key",
+                        b"auth",
+                        b"validate",
+                        b"register",
+                        b"subscription",
+                        b"trial",
+                        b"flexlm",
+                        b"rlm",
+                        b"hasp",
+                        b"sentinel",
+                        b"wibu",
                     ]
                     if any(keyword in payload.lower() for keyword in license_keywords):
                         packet_info["license_related"] = True
                         if "dst_ip" in packet_info:
-                            license_servers.add((packet_info["dst_ip"], packet_info.get("dst_port", 0)))
+                            license_servers.add(
+                                (packet_info["dst_ip"], packet_info.get("dst_port", 0))
+                            )
 
                         # Extract potential license data
                         packet_info["license_indicators"] = []
@@ -216,18 +232,22 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                 src = getattr(packet.ip, "src", "unknown")
                 dst = getattr(packet.ip, "dst", "unknown")
                 conv_key = f"{src} -> {dst}"
-                packet_summary["conversations"][conv_key] = packet_summary["conversations"].get(conv_key, 0) + 1
+                packet_summary["conversations"][conv_key] = (
+                    packet_summary["conversations"].get(conv_key, 0) + 1
+                )
 
                 # Check for license server communication
                 if hasattr(packet, "tcp"):
                     port = int(getattr(packet.tcp, "dstport", 0))
                     if port in license_ports:
-                        packet_summary["license_traffic"].append({
-                            "src": src,
-                            "dst": dst,
-                            "port": port,
-                            "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
-                        })
+                        packet_summary["license_traffic"].append(
+                            {
+                                "src": src,
+                                "dst": dst,
+                                "port": port,
+                                "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
+                            }
+                        )
 
             # Extract DNS queries
             if hasattr(packet, "dns") and hasattr(packet.dns, "qry_name"):
@@ -235,13 +255,23 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                 packet_summary["dns_queries"].append(dns_name)
 
                 # Check for license-related domains
-                license_domains = ["flexera", "flexlm", "rlm", "reprise", "sentinel", "hasp", "wibu"]
+                license_domains = [
+                    "flexera",
+                    "flexlm",
+                    "rlm",
+                    "reprise",
+                    "sentinel",
+                    "hasp",
+                    "wibu",
+                ]
                 if any(domain in dns_name.lower() for domain in license_domains):
-                    packet_summary["license_traffic"].append({
-                        "type": "DNS",
-                        "query": dns_name,
-                        "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
-                    })
+                    packet_summary["license_traffic"].append(
+                        {
+                            "type": "DNS",
+                            "query": dns_name,
+                            "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
+                        }
+                    )
 
             # Extract HTTP requests
             if hasattr(packet, "http"):
@@ -255,12 +285,17 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
                     packet_summary["http_requests"].append(http_info)
 
                     # Check for license-related HTTP traffic
-                    if any(keyword in http_info["uri"].lower() for keyword in ["license", "activate", "validate"]):
-                        packet_summary["license_traffic"].append({
-                            "type": "HTTP",
-                            "details": http_info,
-                            "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
-                        })
+                    if any(
+                        keyword in http_info["uri"].lower()
+                        for keyword in ["license", "activate", "validate"]
+                    ):
+                        packet_summary["license_traffic"].append(
+                            {
+                                "type": "HTTP",
+                                "details": http_info,
+                                "timestamp": getattr(packet, "sniff_timestamp", "unknown"),
+                            }
+                        )
 
             # Extract TLS handshakes
             if hasattr(packet, "tls") and hasattr(packet.tls, "handshake"):
@@ -272,12 +307,18 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
             if hasattr(packet, "tcp"):
                 dstport = int(getattr(packet.tcp, "dstport", 0))
                 if dstport in suspicious_ports:
-                    packet_summary["suspicious_ports"].append({
-                        "port": dstport,
-                        "src": getattr(packet.ip, "src", "unknown") if hasattr(packet, "ip") else "unknown",
-                        "dst": getattr(packet.ip, "dst", "unknown") if hasattr(packet, "ip") else "unknown",
-                        "flags": str(getattr(packet.tcp, "flags", "unknown")),
-                    })
+                    packet_summary["suspicious_ports"].append(
+                        {
+                            "port": dstport,
+                            "src": getattr(packet.ip, "src", "unknown")
+                            if hasattr(packet, "ip")
+                            else "unknown",
+                            "dst": getattr(packet.ip, "dst", "unknown")
+                            if hasattr(packet, "ip")
+                            else "unknown",
+                            "flags": str(getattr(packet.tcp, "flags", "unknown")),
+                        }
+                    )
 
         cap.close()
 
@@ -375,12 +416,14 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
 
                             # Check for port scanning (SYN without data)
                             if tcp.flags & dpkt.tcp.TH_SYN and not tcp.data:
-                                packet_stats["port_scan_indicators"].append({
-                                    "src": src_ip,
-                                    "dst": dst_ip,
-                                    "port": tcp.dport,
-                                    "timestamp": timestamp,
-                                })
+                                packet_stats["port_scan_indicators"].append(
+                                    {
+                                        "src": src_ip,
+                                        "dst": dst_ip,
+                                        "port": tcp.dport,
+                                        "timestamp": timestamp,
+                                    }
+                                )
 
                         elif isinstance(ip.data, dpkt.udp.UDP):
                             udp = ip.data
@@ -398,7 +441,9 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
                                         for question in dns.qd:
                                             queried_domain = question.name
                                             if queried_domain and len(queried_domain) > 1:
-                                                logger.debug(f"DNS query detected: {queried_domain}")
+                                                logger.debug(
+                                                    f"DNS query detected: {queried_domain}"
+                                                )
                                 except:
                                     pass
 
@@ -420,12 +465,14 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
         for conn, data in connection_data.items():
             if data["bytes"] > 10 * 1024 * 1024:  # More than 10MB
                 duration = data.get("end_time", data["start_time"]) - data["start_time"]
-                packet_stats["data_exfiltration_suspects"].append({
-                    "connection": conn,
-                    "bytes": data["bytes"],
-                    "duration": duration,
-                    "rate_mbps": (data["bytes"] * 8 / 1024 / 1024) / max(duration, 1),
-                })
+                packet_stats["data_exfiltration_suspects"].append(
+                    {
+                        "connection": conn,
+                        "bytes": data["bytes"],
+                        "duration": duration,
+                        "rate_mbps": (data["bytes"] * 8 / 1024 / 1024) / max(duration, 1),
+                    }
+                )
 
         # Convert set to count for JSON serialization
         packet_stats["unique_connections"] = len(packet_stats["unique_connections"])

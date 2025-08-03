@@ -54,38 +54,38 @@ class DIEAnalysisTool:
                 "properties": {
                     "file_path": {
                         "type": "string",
-                        "description": "Path to the binary file to analyze"
+                        "description": "Path to the binary file to analyze",
                     },
                     "scan_mode": {
                         "type": "string",
                         "enum": ["normal", "deep", "heuristic", "all"],
                         "description": "Scan mode: normal (fast), deep (thorough), heuristic (AI-based), all (comprehensive)",
-                        "default": "deep"
+                        "default": "deep",
                     },
                     "extract_strings": {
                         "type": "boolean",
                         "description": "Extract and analyze suspicious strings",
-                        "default": True
+                        "default": True,
                     },
                     "analyze_entropy": {
                         "type": "boolean",
                         "description": "Perform entropy analysis to detect packing/encryption",
-                        "default": True
+                        "default": True,
                     },
                     "check_certificates": {
                         "type": "boolean",
                         "description": "Extract and verify digital certificates",
-                        "default": True
+                        "default": True,
                     },
                     "export_format": {
                         "type": "string",
                         "enum": ["json", "text", "yara"],
                         "description": "Output format for results",
-                        "default": "json"
-                    }
+                        "default": "json",
+                    },
                 },
-                "required": ["file_path"]
-            }
+                "required": ["file_path"],
+            },
         }
 
     def execute(self, **kwargs) -> Dict[str, Any]:
@@ -100,10 +100,7 @@ class DIEAnalysisTool:
         """
         file_path = kwargs.get("file_path")
         if not file_path or not os.path.exists(file_path):
-            return {
-                "success": False,
-                "error": f"File not found: {file_path}"
-            }
+            return {"success": False, "error": f"File not found: {file_path}"}
 
         # Get parameters
         scan_mode_str = kwargs.get("scan_mode", "deep")
@@ -127,7 +124,7 @@ class DIEAnalysisTool:
                 file_path=file_path,
                 scan_mode=scan_mode,
                 enable_heuristic=scan_mode in [ScanMode.HEURISTIC, ScanMode.ALL],
-                extract_strings=extract_strings
+                extract_strings=extract_strings,
             )
 
             # Build result
@@ -140,7 +137,7 @@ class DIEAnalysisTool:
                 "is_protected": analysis.is_protected,
                 "protections": self._format_protections(analysis),
                 "bypass_recommendations": self._generate_bypass_recommendations(analysis),
-                "from_cache": False
+                "from_cache": False,
             }
 
             # Add entropy analysis if requested
@@ -159,17 +156,13 @@ class DIEAnalysisTool:
             if analysis.import_hash:
                 result["import_hash"] = {
                     "imphash": analysis.import_hash.imphash,
-                    "imphash_sorted": analysis.import_hash.imphash_sorted
+                    "imphash_sorted": analysis.import_hash.imphash_sorted,
                 }
 
             # Add heuristic detections
             if analysis.heuristic_detections:
                 result["heuristic_detections"] = [
-                    {
-                        "name": det.name,
-                        "type": det.type.value,
-                        "confidence": det.confidence
-                    }
+                    {"name": det.name, "type": det.type.value, "confidence": det.confidence}
                     for det in analysis.heuristic_detections
                 ]
 
@@ -177,44 +170,47 @@ class DIEAnalysisTool:
             has_license_protection = False
             if analysis.detections:
                 for detection in analysis.detections:
-                    if detection.type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
+                    if detection.type in [
+                        ProtectionType.LICENSE,
+                        ProtectionType.DONGLE,
+                        ProtectionType.DRM,
+                    ]:
                         has_license_protection = True
                         break
 
             # Run license pattern analysis if relevant
             if has_license_protection or self._should_analyze_license_patterns(analysis):
                 license_patterns = self._analyze_license_patterns_for_llm(file_path, analysis)
-                if license_patterns and not license_patterns.get('error'):
+                if license_patterns and not license_patterns.get("error"):
                     result["license_pattern_analysis"] = license_patterns
 
             # Run AI-enhanced complex binary analysis
             try:
                 # Prepare ML results from protection analysis
-                ml_results = {
-                    "confidence": result.get("confidence", 0.0),
-                    "predictions": []
-                }
+                ml_results = {"confidence": result.get("confidence", 0.0), "predictions": []}
 
                 # Convert protection detections to ML predictions format
                 if result.get("protections"):
                     for protection in result["protections"]:
-                        ml_results["predictions"].append({
-                            "name": protection.get("name", "Unknown"),
-                            "type": protection.get("type", "unknown"),
-                            "confidence": protection.get("confidence", 0.0),
-                            "category": protection.get("category", "unknown")
-                        })
+                        ml_results["predictions"].append(
+                            {
+                                "name": protection.get("name", "Unknown"),
+                                "type": protection.get("type", "unknown"),
+                                "confidence": protection.get("confidence", 0.0),
+                                "category": protection.get("category", "unknown"),
+                            }
+                        )
 
                 # Run AI complex analysis
                 ai_analysis = self.ai_assistant.analyze_binary_complex(file_path, ml_results)
 
                 # Add AI analysis to results
-                if ai_analysis and not ai_analysis.get('error'):
+                if ai_analysis and not ai_analysis.get("error"):
                     result["ai_complex_analysis"] = {
                         "confidence": ai_analysis.get("confidence", 0.0),
                         "findings": ai_analysis.get("findings", []),
                         "recommendations": ai_analysis.get("recommendations", []),
-                        "ml_integration": ai_analysis.get("ml_integration", {})
+                        "ml_integration": ai_analysis.get("ml_integration", {}),
                     }
 
                     # Merge AI recommendations with existing bypass recommendations
@@ -227,10 +223,7 @@ class DIEAnalysisTool:
 
             except Exception as e:
                 logger.warning(f"AI complex analysis failed: {e}")
-                result["ai_complex_analysis"] = {
-                    "error": str(e),
-                    "confidence": 0.0
-                }
+                result["ai_complex_analysis"] = {"error": str(e), "confidence": 0.0}
 
             # Handle export formats
             if export_format == "yara":
@@ -245,10 +238,7 @@ class DIEAnalysisTool:
 
         except Exception as e:
             logger.error(f"DIE analysis error: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _format_protections(self, analysis: AdvancedProtectionAnalysis) -> List[Dict[str, Any]]:
         """Format protection detections for LLM consumption"""
@@ -259,7 +249,7 @@ class DIEAnalysisTool:
                 "name": detection.name,
                 "type": detection.type.value,
                 "confidence": detection.confidence,
-                "category": self._categorize_protection(detection.type)
+                "category": self._categorize_protection(detection.type),
             }
 
             if detection.version:
@@ -285,11 +275,13 @@ class DIEAnalysisTool:
             ProtectionType.ANTIDUMP: "anti_dumping",
             ProtectionType.ANTIVM: "anti_virtualization",
             ProtectionType.DONGLE: "hardware_protection",
-            ProtectionType.UNKNOWN: "unknown"
+            ProtectionType.UNKNOWN: "unknown",
         }
         return categories.get(protection_type, "unknown")
 
-    def _generate_bypass_recommendations(self, analysis: AdvancedProtectionAnalysis) -> Dict[str, List[str]]:
+    def _generate_bypass_recommendations(
+        self, analysis: AdvancedProtectionAnalysis
+    ) -> Dict[str, List[str]]:
         """Generate bypass recommendations based on detections"""
         recommendations = {}
 
@@ -309,38 +301,38 @@ class DIEAnalysisTool:
                 "Use unpacking tools (UPX, PEiD)",
                 "Dump process memory after unpacking",
                 "Set breakpoint at OEP (Original Entry Point)",
-                "Use Scylla for import reconstruction"
+                "Use Scylla for import reconstruction",
             ],
             ProtectionType.PROTECTOR: [
                 "Identify and bypass anti-debug checks",
                 "Use kernel-mode debugger",
                 "Patch integrity checks",
-                "Use hardware breakpoints"
+                "Use hardware breakpoints",
             ],
             ProtectionType.LICENSE: [
                 "Locate license validation routines",
                 "Patch conditional jumps",
                 "Generate valid license keys",
-                "Emulate license server responses"
+                "Emulate license server responses",
             ],
             ProtectionType.DRM: [
                 "Identify DRM initialization",
                 "Hook DRM API calls",
                 "Bypass online verification",
-                "Extract decryption keys"
+                "Extract decryption keys",
             ],
             ProtectionType.ANTIDEBUG: [
                 "Use ScyllaHide plugin",
                 "Patch IsDebuggerPresent checks",
                 "Hide debugger with TitanHide",
-                "Use timing attack mitigation"
+                "Use timing attack mitigation",
             ],
             ProtectionType.DONGLE: [
                 "Emulate dongle responses",
                 "Identify dongle communication protocol",
                 "Create virtual dongle driver",
-                "Patch dongle check routines"
-            ]
+                "Patch dongle check routines",
+            ],
         }
         return methods.get(protection_type, ["Manual analysis required"])
 
@@ -352,7 +344,7 @@ class DIEAnalysisTool:
             "encrypted_sections": [],
             "average_entropy": 0.0,
             "max_entropy": 0.0,
-            "packing_likelihood": "low"
+            "packing_likelihood": "low",
         }
 
         total_entropy = 0.0
@@ -362,7 +354,7 @@ class DIEAnalysisTool:
                 "offset": hex(info.offset),
                 "size": info.size,
                 "entropy": round(info.entropy, 3),
-                "status": "normal"
+                "status": "normal",
             }
 
             if info.encrypted:
@@ -401,7 +393,7 @@ class DIEAnalysisTool:
                 "issuer": cert.issuer,
                 "valid": cert.is_valid,
                 "trusted": cert.is_trusted,
-                "algorithm": cert.algorithm
+                "algorithm": cert.algorithm,
             }
 
             if cert.valid_from:
@@ -420,7 +412,7 @@ class DIEAnalysisTool:
                 "value": s.value[:100],  # Limit length
                 "offset": hex(s.offset) if s.offset else "unknown",
                 "encoding": s.encoding,
-                "category": self._categorize_string(s.value)
+                "category": self._categorize_string(s.value),
             }
             for s in strings[:50]  # Limit to top 50
         ]
@@ -505,17 +497,13 @@ class DIEAnalysisTool:
             "analyzed": 0,
             "errors": 0,
             "protections_found": 0,
-            "files": {}
+            "files": {},
         }
 
         mode = ScanMode[scan_mode.upper()]
 
         # Use batch analysis from detector
-        batch_results = self.detector.batch_analyze(
-            file_paths,
-            max_workers=4,
-            scan_mode=mode
-        )
+        batch_results = self.detector.batch_analyze(file_paths, max_workers=4, scan_mode=mode)
 
         for file_path, analysis in batch_results.items():
             if analysis.file_type != "Error":
@@ -526,13 +514,11 @@ class DIEAnalysisTool:
                 results["files"][file_path] = {
                     "type": analysis.file_type,
                     "protected": bool(analysis.detections),
-                    "protections": [d.name for d in analysis.detections]
+                    "protections": [d.name for d in analysis.detections],
                 }
             else:
                 results["errors"] += 1
-                results["files"][file_path] = {
-                    "error": "Analysis failed"
-                }
+                results["files"][file_path] = {"error": "Analysis failed"}
 
         return results
 
@@ -558,7 +544,7 @@ class DIEAnalysisTool:
             "same_protections": [],
             "unique_to_file1": [],
             "unique_to_file2": [],
-            "similarity_score": 0.0
+            "similarity_score": 0.0,
         }
 
         # Get protection names
@@ -587,40 +573,58 @@ class DIEAnalysisTool:
     def _should_analyze_license_patterns(self, analysis: AdvancedProtectionAnalysis) -> bool:
         """Determine if license pattern analysis would be beneficial"""
         # Check for license-related imports
-        if hasattr(analysis, 'imports') and analysis.imports:
-            license_imports = ['license', 'serial', 'activation', 'key', 'hasp', 'sentinel', 'flexlm']
+        if hasattr(analysis, "imports") and analysis.imports:
+            license_imports = [
+                "license",
+                "serial",
+                "activation",
+                "key",
+                "hasp",
+                "sentinel",
+                "flexlm",
+            ]
             for import_dll in analysis.imports:
                 if any(keyword in import_dll.lower() for keyword in license_imports):
                     return True
 
         # Check if it's a commercial application
         if analysis.compiler:
-            commercial_compilers = ['visual c++', 'visual studio', 'delphi', 'borland']
+            commercial_compilers = ["visual c++", "visual studio", "delphi", "borland"]
             if any(comp in analysis.compiler.lower() for comp in commercial_compilers):
                 return True
 
         # Check for suspicious strings related to licensing
         if analysis.suspicious_strings:
             for string_info in analysis.suspicious_strings:
-                if any(keyword in string_info.value.lower() for keyword in ['license', 'serial', 'key']):
+                if any(
+                    keyword in string_info.value.lower() for keyword in ["license", "serial", "key"]
+                ):
                     return True
 
         return False
 
-    def _analyze_license_patterns_for_llm(self, file_path: str, analysis: AdvancedProtectionAnalysis) -> Dict[str, Any]:
+    def _analyze_license_patterns_for_llm(
+        self, file_path: str, analysis: AdvancedProtectionAnalysis
+    ) -> Dict[str, Any]:
         """Analyze license patterns for LLM consumption"""
         try:
             # Prepare input data for AI license analysis
-            input_data = {
-                "patterns": [],
-                "strings": [],
-                "binary_path": file_path
-            }
+            input_data = {"patterns": [], "strings": [], "binary_path": file_path}
 
             # Extract relevant strings from analysis
             if analysis.suspicious_strings:
-                license_keywords = ['license', 'serial', 'key', 'activation', 'trial',
-                                  'expire', 'register', 'unlock', 'demo', 'evaluation']
+                license_keywords = [
+                    "license",
+                    "serial",
+                    "key",
+                    "activation",
+                    "trial",
+                    "expire",
+                    "register",
+                    "unlock",
+                    "demo",
+                    "evaluation",
+                ]
                 for string_info in analysis.suspicious_strings:
                     if any(keyword in string_info.value.lower() for keyword in license_keywords):
                         input_data["strings"].append(string_info.value)
@@ -630,31 +634,36 @@ class DIEAnalysisTool:
             # Add detection patterns
             if analysis.detections:
                 for detection in analysis.detections:
-                    if detection.type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
-                        input_data["patterns"].append({
-                            "name": detection.name,
-                            "type": detection.type.value,
-                            "version": detection.version,
-                            "confidence": detection.confidence
-                        })
+                    if detection.type in [
+                        ProtectionType.LICENSE,
+                        ProtectionType.DONGLE,
+                        ProtectionType.DRM,
+                    ]:
+                        input_data["patterns"].append(
+                            {
+                                "name": detection.name,
+                                "type": detection.type.value,
+                                "version": detection.version,
+                                "confidence": detection.confidence,
+                            }
+                        )
 
             # Call AI assistant's license pattern analysis
             license_analysis = self.ai_assistant.analyze_license_patterns(input_data)
 
             # Enhance with additional context
-            if license_analysis and not license_analysis.get('error'):
+            if license_analysis and not license_analysis.get("error"):
                 # Add import context
                 license_analysis["import_context"] = {
                     "has_network_apis": self._check_for_network_apis(analysis),
                     "has_crypto_apis": self._check_for_crypto_apis(analysis),
-                    "has_registry_apis": self._check_for_registry_apis(analysis)
+                    "has_registry_apis": self._check_for_registry_apis(analysis),
                 }
 
                 # Add protection-specific recommendations
                 if license_analysis.get("license_type") != "unknown":
                     license_analysis["llm_guidance"] = self._get_license_llm_guidance(
-                        license_analysis["license_type"],
-                        analysis.detections
+                        license_analysis["license_type"], analysis.detections
                     )
 
             return license_analysis
@@ -665,23 +674,23 @@ class DIEAnalysisTool:
 
     def _check_for_network_apis(self, analysis: AdvancedProtectionAnalysis) -> bool:
         """Check if network APIs are imported"""
-        if not hasattr(analysis, 'imports') or not analysis.imports:
+        if not hasattr(analysis, "imports") or not analysis.imports:
             return False
-        network_dlls = ['ws2_32.dll', 'winhttp.dll', 'wininet.dll']
+        network_dlls = ["ws2_32.dll", "winhttp.dll", "wininet.dll"]
         return any(dll in analysis.imports for dll in network_dlls)
 
     def _check_for_crypto_apis(self, analysis: AdvancedProtectionAnalysis) -> bool:
         """Check if crypto APIs are imported"""
-        if not hasattr(analysis, 'imports') or not analysis.imports:
+        if not hasattr(analysis, "imports") or not analysis.imports:
             return False
-        crypto_dlls = ['crypt32.dll', 'advapi32.dll', 'bcrypt.dll']
+        crypto_dlls = ["crypt32.dll", "advapi32.dll", "bcrypt.dll"]
         return any(dll in analysis.imports for dll in crypto_dlls)
 
     def _check_for_registry_apis(self, analysis: AdvancedProtectionAnalysis) -> bool:
         """Check if registry APIs are imported"""
-        if not hasattr(analysis, 'imports') or not analysis.imports:
+        if not hasattr(analysis, "imports") or not analysis.imports:
             return False
-        return 'advapi32.dll' in analysis.imports
+        return "advapi32.dll" in analysis.imports
 
     def _get_license_llm_guidance(self, license_type: str, detections: List[Any]) -> str:
         """Get LLM-specific guidance for license analysis"""
@@ -706,7 +715,9 @@ class DIEAnalysisTool:
                 elif "hasp" in name_lower:
                     guidance += " HASP detected: Monitor hasp_login calls and feature ID checks."
                 elif "codemeter" in name_lower:
-                    guidance += " CodeMeter detected: Analyze CmContainer access and license queries."
+                    guidance += (
+                        " CodeMeter detected: Analyze CmContainer access and license queries."
+                    )
 
         return guidance
 

@@ -96,14 +96,23 @@ class VMContext:
         if not self.registers:
             # Initialize x86 registers
             self.registers = {
-                "EAX": 0, "EBX": 0, "ECX": 0, "EDX": 0,
-                "ESI": 0, "EDI": 0, "ESP": 0x1000, "EBP": 0x1000,
+                "EAX": 0,
+                "EBX": 0,
+                "ECX": 0,
+                "EDX": 0,
+                "ESI": 0,
+                "EDI": 0,
+                "ESP": 0x1000,
+                "EBP": 0x1000,
                 "EIP": 0,
             }
 
         if not self.flags:
             self.flags = {
-                "ZF": False, "CF": False, "SF": False, "OF": False,
+                "ZF": False,
+                "CF": False,
+                "SF": False,
+                "OF": False,
             }
 
 
@@ -119,16 +128,16 @@ class VMProtectHandler:
         # Version signatures
         signatures = {
             ProtectionType.VMPROTECT_1X: [
-                b"\x60\x8B\x04\x24\x8B\x4C\x24\x04",  # Version 1.x signature
-                b"\x55\x8B\xEC\x60\x8B\x45\x08",
+                b"\x60\x8b\x04\x24\x8b\x4c\x24\x04",  # Version 1.x signature
+                b"\x55\x8b\xec\x60\x8b\x45\x08",
             ],
             ProtectionType.VMPROTECT_2X: [
-                b"\x68\x00\x00\x00\x00\x8F\x04\x24",  # Version 2.x signature
-                b"\x8B\x44\x24\x04\x50\x8B\x44\x24\x08",
+                b"\x68\x00\x00\x00\x00\x8f\x04\x24",  # Version 2.x signature
+                b"\x8b\x44\x24\x04\x50\x8b\x44\x24\x08",
             ],
             ProtectionType.VMPROTECT_3X: [
-                b"\x8B\x44\x24\x04\x8B\x4C\x24\x08",  # Version 3.x signature
-                b"\x48\x8B\x44\x24\x08\x48\x8B\x4C\x24\x10",
+                b"\x8b\x44\x24\x04\x8b\x4c\x24\x08",  # Version 3.x signature
+                b"\x48\x8b\x44\x24\x08\x48\x8b\x4c\x24\x10",
             ],
         }
 
@@ -140,8 +149,7 @@ class VMProtectHandler:
 
         return ProtectionType.UNKNOWN_VM
 
-    def decrypt_vm_code(self, encrypted_data: bytes, key: bytes,
-                       version: ProtectionType) -> bytes:
+    def decrypt_vm_code(self, encrypted_data: bytes, key: bytes, version: ProtectionType) -> bytes:
         """Decrypt VMProtect VM code"""
         if version in self.key_schedules:
             key_schedule = self.key_schedules[version](key)
@@ -158,13 +166,13 @@ class VMProtectHandler:
             if i < 4:
                 schedule.append(key_ints[i])
             else:
-                temp = schedule[i-1]
+                temp = schedule[i - 1]
                 if i % 4 == 0:
                     # RotWord and SubBytes
                     temp = ((temp << 8) | (temp >> 24)) & 0xFFFFFFFF
                     temp ^= 0x01000000 << ((i // 4) - 1)
 
-                schedule.append(schedule[i-4] ^ temp)
+                schedule.append(schedule[i - 4] ^ temp)
 
         return schedule
 
@@ -178,13 +186,13 @@ class VMProtectHandler:
             if i < 8:
                 schedule.append(key_ints[i])
             else:
-                temp = schedule[i-1]
+                temp = schedule[i - 1]
                 if i % 8 == 0:
                     temp = self._complex_transform(temp, i)
                 elif i % 8 == 4:
                     temp = self._substitute_bytes(temp)
 
-                schedule.append(schedule[i-8] ^ temp)
+                schedule.append(schedule[i - 8] ^ temp)
 
         return schedule
 
@@ -196,11 +204,11 @@ class VMProtectHandler:
         # Initialize with SHA-256 like expansion
         for i in range(64):
             if i < 16:
-                w = struct.unpack("<I", key_data[i*4:(i+1)*4])[0]
+                w = struct.unpack("<I", key_data[i * 4 : (i + 1) * 4])[0]
             else:
-                s0 = self._sigma0(schedule[i-15])
-                s1 = self._sigma1(schedule[i-2])
-                w = (schedule[i-16] + s0 + schedule[i-7] + s1) & 0xFFFFFFFF
+                s0 = self._sigma0(schedule[i - 15])
+                s1 = self._sigma1(schedule[i - 2])
+                w = (schedule[i - 16] + s0 + schedule[i - 7] + s1) & 0xFFFFFFFF
 
             schedule.append(w)
 
@@ -219,7 +227,24 @@ class VMProtectHandler:
 
     def _substitute_bytes(self, value: int) -> int:
         """Byte substitution (simplified S-Box)"""
-        sbox = [0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76]
+        sbox = [
+            0x63,
+            0x7C,
+            0x77,
+            0x7B,
+            0xF2,
+            0x6B,
+            0x6F,
+            0xC5,
+            0x30,
+            0x01,
+            0x67,
+            0x2B,
+            0xFE,
+            0xD7,
+            0xAB,
+            0x76,
+        ]
 
         result = 0
         for i in range(4):
@@ -231,18 +256,22 @@ class VMProtectHandler:
 
     def _sigma0(self, value: int) -> int:
         """SHA-256 sigma0 function"""
-        return (((value >> 7) | (value << 25)) ^ ((value >> 18) | (value << 14)) ^ (value >> 3)) & 0xFFFFFFFF
+        return (
+            ((value >> 7) | (value << 25)) ^ ((value >> 18) | (value << 14)) ^ (value >> 3)
+        ) & 0xFFFFFFFF
 
     def _sigma1(self, value: int) -> int:
         """SHA-256 sigma1 function"""
-        return (((value >> 17) | (value << 15)) ^ ((value >> 19) | (value << 13)) ^ (value >> 10)) & 0xFFFFFFFF
+        return (
+            ((value >> 17) | (value << 15)) ^ ((value >> 19) | (value << 13)) ^ (value >> 10)
+        ) & 0xFFFFFFFF
 
     def _decrypt_with_schedule(self, data: bytes, key_schedule: list[int]) -> bytes:
         """Decrypt data using key schedule"""
         result = bytearray()
 
         for i in range(0, len(data), 16):
-            block = data[i:i+16]
+            block = data[i : i + 16]
             if len(block) < 16:
                 block = block.ljust(16, b"\x00")
 
@@ -280,7 +309,24 @@ class VMProtectHandler:
 
     def _inverse_substitute_bytes_block(self, state: list[int]) -> list[int]:
         """Inverse S-Box substitution for block"""
-        inv_sbox = [0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38, 0xBF, 0x40, 0xA3, 0x9E, 0x81, 0xF3, 0xD7, 0xFB]
+        inv_sbox = [
+            0x52,
+            0x09,
+            0x6A,
+            0xD5,
+            0x30,
+            0x36,
+            0xA5,
+            0x38,
+            0xBF,
+            0x40,
+            0xA3,
+            0x9E,
+            0x81,
+            0xF3,
+            0xD7,
+            0xFB,
+        ]
 
         result = []
         for word in state:
@@ -351,7 +397,7 @@ class VMEmulator:
         """Setup Unicorn engine"""
         # Map memory
         self.uc.mem_map(0x400000, 2 * 1024 * 1024)  # 2MB for code
-        self.uc.mem_map(0x600000, 1024 * 1024)      # 1MB for stack
+        self.uc.mem_map(0x600000, 1024 * 1024)  # 1MB for stack
 
         # Set stack pointer
         self.uc.reg_write(x86_const.UC_X86_REG_ESP, 0x600000 + 1024 * 1024 - 0x1000)
@@ -380,12 +426,12 @@ class VMEmulator:
 
         if vm_type in [VMInstructionType.MEMORY, VMInstructionType.ARITHMETIC]:
             if offset + 4 < len(vm_data):
-                operand = struct.unpack("<I", vm_data[offset+1:offset+5])[0]
+                operand = struct.unpack("<I", vm_data[offset + 1 : offset + 5])[0]
                 operands.append(operand)
                 size = 5
         elif vm_type == VMInstructionType.CONTROL_FLOW:
             if offset + 4 < len(vm_data):
-                target = struct.unpack("<I", vm_data[offset+1:offset+5])[0]
+                target = struct.unpack("<I", vm_data[offset + 1 : offset + 5])[0]
                 operands.append(target)
                 size = 5
 
@@ -457,8 +503,8 @@ class VMEmulator:
         self.context.stack.append(result)
 
         # Update flags
-        self.context.flags["ZF"] = (result == 0)
-        self.context.flags["SF"] = ((result & 0x80000000) != 0)
+        self.context.flags["ZF"] = result == 0
+        self.context.flags["SF"] = (result & 0x80000000) != 0
 
         return True
 
@@ -571,29 +617,29 @@ class VMAnalyzer:
         """Load VM detection patterns"""
         return {
             ProtectionType.VMPROTECT_1X: [
-                b"\x60\x8B\x04\x24",  # VM entry pattern
-                b"\x8B\x4C\x24\x04\x8B\x54\x24\x08",
-                b"\x55\x8B\xEC\x60",
+                b"\x60\x8b\x04\x24",  # VM entry pattern
+                b"\x8b\x4c\x24\x04\x8b\x54\x24\x08",
+                b"\x55\x8b\xec\x60",
             ],
             ProtectionType.VMPROTECT_2X: [
-                b"\x68\x00\x00\x00\x00\x8F\x04\x24",
-                b"\x8B\x44\x24\x04\x50",
-                b"\x8B\x44\x24\x08\x8B\x4C\x24\x0C",
+                b"\x68\x00\x00\x00\x00\x8f\x04\x24",
+                b"\x8b\x44\x24\x04\x50",
+                b"\x8b\x44\x24\x08\x8b\x4c\x24\x0c",
             ],
             ProtectionType.VMPROTECT_3X: [
-                b"\x8B\x44\x24\x04\x8B\x4C\x24\x08",
-                b"\x48\x8B\x44\x24\x08",
-                b"\x48\x8B\x4C\x24\x10",
+                b"\x8b\x44\x24\x04\x8b\x4c\x24\x08",
+                b"\x48\x8b\x44\x24\x08",
+                b"\x48\x8b\x4c\x24\x10",
             ],
             ProtectionType.THEMIDA: [
-                b"\x55\x8B\xEC\x83\xEC\x10\x53\x56\x57",
-                b"\x60\x9C\x33\xC0\x50\x9C",
-                b"\x8B\x45\x08\x8B\x4D\x0C",
+                b"\x55\x8b\xec\x83\xec\x10\x53\x56\x57",
+                b"\x60\x9c\x33\xc0\x50\x9c",
+                b"\x8b\x45\x08\x8b\x4d\x0c",
             ],
             ProtectionType.CODE_VIRTUALIZER: [
-                b"\x55\x8B\xEC\x81\xEC\x00\x04\x00\x00",
-                b"\x60\x9C\x33\xDB\x53",
-                b"\x8B\x45\x08\x8B\x55\x0C",
+                b"\x55\x8b\xec\x81\xec\x00\x04\x00\x00",
+                b"\x60\x9c\x33\xdb\x53",
+                b"\x8b\x45\x08\x8b\x55\x0c",
             ],
         }
 
@@ -634,8 +680,9 @@ class VMAnalyzer:
 
         return entropy
 
-    def find_vm_entry_points(self, binary_data: bytes,
-                           protection_type: ProtectionType) -> list[int]:
+    def find_vm_entry_points(
+        self, binary_data: bytes, protection_type: ProtectionType
+    ) -> list[int]:
         """Find VM entry points"""
         entry_points = []
         patterns = self.patterns.get(protection_type, [])
@@ -652,8 +699,7 @@ class VMAnalyzer:
 
         return entry_points
 
-    def analyze_vm_structure(self, vm_data: bytes,
-                           entry_point: int) -> dict[str, Any]:
+    def analyze_vm_structure(self, vm_data: bytes, entry_point: int) -> dict[str, Any]:
         """Analyze VM structure"""
         analysis = {
             "entry_point": entry_point,
@@ -690,14 +736,13 @@ class VMAnalyzer:
         for i in range(entry_point, min(entry_point + 0x1000, len(vm_data) - 4)):
             # Look for table of addresses
             if i + 64 < len(vm_data):
-                potential_table = vm_data[i:i+64]
+                potential_table = vm_data[i : i + 64]
 
                 # Check if it looks like a table of 32-bit addresses
                 addresses = struct.unpack("<16I", potential_table)
 
                 # Heuristic: addresses should be in reasonable range
-                valid_addresses = sum(1 for addr in addresses
-                                    if 0x400000 <= addr <= 0x800000)
+                valid_addresses = sum(1 for addr in addresses if 0x400000 <= addr <= 0x800000)
 
                 if valid_addresses >= 12:  # At least 75% valid
                     return i
@@ -719,13 +764,15 @@ class VMAnalyzer:
             if section_end > section_start:
                 section_data = vm_data[section_start:section_end]
 
-                sections.append({
-                    "offset": section_start,
-                    "size": section_end - section_start,
-                    "data": section_data,
-                    "entropy": self._calculate_entropy(section_data),
-                    "type": self._classify_section(section_data),
-                })
+                sections.append(
+                    {
+                        "offset": section_start,
+                        "size": section_end - section_start,
+                        "data": section_data,
+                        "entropy": self._calculate_entropy(section_data),
+                        "type": self._classify_section(section_data),
+                    }
+                )
 
                 current_offset = section_end
             else:
@@ -746,7 +793,7 @@ class VMAnalyzer:
         # Simple heuristic: end at null bytes or repeated patterns
         for i in range(start_offset + 0x100, end_offset, 0x10):
             if i + 16 <= len(vm_data):
-                chunk = vm_data[i:i+16]
+                chunk = vm_data[i : i + 16]
 
                 # Check for null section
                 if chunk == b"\x00" * 16:
@@ -829,14 +876,18 @@ class VMProtectionUnwrapper:
         finally:
             self.stats["files_processed"] += 1
 
-    def _unwrap_vm_sections(self, binary_data: bytes, vm_analysis: dict[str, Any],
-                          protection_type: ProtectionType) -> list[bytes]:
+    def _unwrap_vm_sections(
+        self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType
+    ) -> list[bytes]:
         """Unwrap VM sections"""
         unwrapped_sections = []
 
         # Get appropriate handler
-        if protection_type in [ProtectionType.VMPROTECT_1X, ProtectionType.VMPROTECT_2X,
-                              ProtectionType.VMPROTECT_3X]:
+        if protection_type in [
+            ProtectionType.VMPROTECT_1X,
+            ProtectionType.VMPROTECT_2X,
+            ProtectionType.VMPROTECT_3X,
+        ]:
             handler = VMProtectHandler()
         elif protection_type == ProtectionType.THEMIDA:
             handler = ThemidaHandler()
@@ -864,8 +915,9 @@ class VMProtectionUnwrapper:
 
         return unwrapped_sections
 
-    def _extract_encryption_key(self, binary_data: bytes, vm_analysis: dict[str, Any],
-                               protection_type: ProtectionType) -> bytes:
+    def _extract_encryption_key(
+        self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType
+    ) -> bytes:
         """Extract encryption key from binary"""
         # This is a simplified key extraction
         # Real implementation would use more sophisticated techniques
@@ -880,7 +932,7 @@ class VMProtectionUnwrapper:
 
         # Look for 16-byte or 32-byte aligned data
         for i in range(search_start, search_end - 32, 4):
-            candidate = binary_data[i:i+32]
+            candidate = binary_data[i : i + 32]
 
             # Heuristic: key should have good entropy
             entropy = self.analyzer._calculate_entropy(candidate)
@@ -892,11 +944,12 @@ class VMProtectionUnwrapper:
             return key_candidates[0]
 
         # Fallback: use hash of entry point area
-        fallback_data = binary_data[entry_point:entry_point+64]
+        fallback_data = binary_data[entry_point : entry_point + 64]
         return hashlib.sha256(fallback_data).digest()
 
-    def _reconstruct_original_code(self, unwrapped_sections: list[bytes],
-                                 vm_analysis: dict[str, Any]) -> bytes:
+    def _reconstruct_original_code(
+        self, unwrapped_sections: list[bytes], vm_analysis: dict[str, Any]
+    ) -> bytes:
         """Reconstruct original x86 code from VM sections"""
         reconstructed = bytearray()
 
@@ -1057,11 +1110,13 @@ class VMProtectionUnwrapper:
 
             except Exception as e:
                 self.logger.error(f"Error processing {file_path}: {e}")
-                results.append({
-                    "input_file": str(file_path),
-                    "success": False,
-                    "error": str(e),
-                })
+                results.append(
+                    {
+                        "input_file": str(file_path),
+                        "success": False,
+                        "error": str(e),
+                    }
+                )
 
         # Summary
         successful = sum(1 for r in results if r.get("success"))

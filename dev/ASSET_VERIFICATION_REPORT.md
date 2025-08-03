@@ -54,7 +54,7 @@ The application uses `get_resource_path()` from `intellicrack/utils/resource_hel
 1. **Missing Assets Referenced in Code**
    - `binary_icon.png` referenced in main_app.py (line 21612)
      - Actual file is `binary-file-icon.png` (with hyphens)
-   
+
 2. **Asset Path Consistency**
    - Most code uses forward slashes in paths
    - Windows compatibility handled by get_resource_path()

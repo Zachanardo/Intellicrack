@@ -113,7 +113,7 @@ print(f"Python: {sys.version}")
 if torch.xpu.is_available():
     print(f"\n✓ XPU is available!")
     print(f"Device count: {torch.xpu.device_count()}")
-    
+
     for i in range(torch.xpu.device_count()):
         props = torch.xpu.get_device_properties(i)
         print(f"\nDevice {i}: {props.name}")
@@ -166,7 +166,7 @@ mamba install -c intel intel-opencl-rt intel-sycl-rt tbb umf tcmlib
 
 ## Important Notes
 
-1. **Package Manager Priority**: 
+1. **Package Manager Priority**:
    - Use `uv pip` for Python packages
    - Use `mamba` for system libraries and Intel runtime components
 
@@ -182,7 +182,7 @@ mamba install -c intel intel-opencl-rt intel-sycl-rt tbb umf tcmlib
    ```python
    # Enable large memory allocations
    os.environ["UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS"] = "1"
-   
+
    # Use IPEX optimization for inference
    model.eval()
    model = ipex.optimize(model)

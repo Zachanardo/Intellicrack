@@ -36,12 +36,12 @@ from PyQt6.QtWidgets import (
 
 
 class UILayoutHelpers:
-    """Shared UI layout helper functions for consistent dialog creation.
-    """
+    """Shared UI layout helper functions for consistent dialog creation."""
 
     @staticmethod
-    def create_tabbed_dialog_layout(dialog, window_title: str, size: tuple[int, int] = (1000, 700),
-                                   is_modal: bool = False) -> tuple[QVBoxLayout, QTabWidget]:
+    def create_tabbed_dialog_layout(
+        dialog, window_title: str, size: tuple[int, int] = (1000, 700), is_modal: bool = False
+    ) -> tuple[QVBoxLayout, QTabWidget]:
         """Create a standard tabbed dialog layout structure.
 
         Args:
@@ -70,8 +70,9 @@ class UILayoutHelpers:
         return main_layout, tab_widget
 
     @staticmethod
-    def create_dialog_buttons(button_specs: list[tuple[str, Callable, bool]],
-                             layout: QVBoxLayout) -> list[QPushButton]:
+    def create_dialog_buttons(
+        button_specs: list[tuple[str, Callable, bool]], layout: QVBoxLayout
+    ) -> list[QPushButton]:
         """Create standard dialog buttons with consistent layout.
 
         Args:
@@ -108,9 +109,11 @@ class UILayoutHelpers:
         return buttons
 
     @staticmethod
-    def create_file_browse_widget(placeholder_text: str = "",
-                                 browse_callback: Callable | None = None,
-                                 browse_text: str = "Browse...") -> tuple[QHBoxLayout, QLineEdit, QPushButton]:
+    def create_file_browse_widget(
+        placeholder_text: str = "",
+        browse_callback: Callable | None = None,
+        browse_text: str = "Browse...",
+    ) -> tuple[QHBoxLayout, QLineEdit, QPushButton]:
         """Create a file browse widget with line edit and browse button.
 
         Args:
@@ -138,7 +141,9 @@ class UILayoutHelpers:
         return layout, line_edit, browse_btn
 
     @staticmethod
-    def create_config_group(title: str, use_form_layout: bool = True) -> tuple[QGroupBox, QVBoxLayout]:
+    def create_config_group(
+        title: str, use_form_layout: bool = True
+    ) -> tuple[QGroupBox, QVBoxLayout]:
         """Create a configuration group box with appropriate layout.
 
         Args:
@@ -193,8 +198,9 @@ class UILayoutHelpers:
             layout.addWidget(widget)
 
     @staticmethod
-    def create_tabs_from_specs(tab_widget: QTabWidget,
-                              tab_specs: list[tuple[str, QWidget]]) -> None:
+    def create_tabs_from_specs(
+        tab_widget: QTabWidget, tab_specs: list[tuple[str, QWidget]]
+    ) -> None:
         """Add multiple tabs to a tab widget from specifications.
 
         Args:

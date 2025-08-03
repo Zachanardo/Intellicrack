@@ -18,10 +18,10 @@
 
 /**
  * Advanced Time Bomb Defuser with .NET & Network Time Support
- * 
+ *
  * Comprehensive time manipulation including .NET DateTime, network time protocols,
  * certificate validation, and per-process time isolation.
- * 
+ *
  * Author: Intellicrack Framework
  * Version: 3.0.0
  * License: GPL v3
@@ -31,7 +31,7 @@
     name: "Advanced Time Bomb Defuser",
     description: "Comprehensive time manipulation with .NET and network time support",
     version: "3.0.0",
-    
+
     // Configuration
     config: {
         // Time settings
@@ -41,11 +41,11 @@
             rate: 0.1,  // 1 day passes every 10 days real time
             maxDrift: 86400000  // Max 1 day drift from target
         },
-        
+
         // Per-process settings
         processTimeMap: {},
         processIsolation: true,
-        
+
         // Network time blocking
         blockNetworkTime: true,
         ntpServers: [
@@ -53,7 +53,7 @@
             "time.google.com", "time.cloudflare.com", "time.facebook.com",
             "ntp.ubuntu.com", "time.apple.com", "time.microsoft.com"
         ],
-        
+
         // Certificate validation
         spoofCertificateDates: true,
         certOverride: {
@@ -61,7 +61,7 @@
             notAfter: new Date("2099-12-31T23:59:59Z")
         }
     },
-    
+
     // Runtime state
     hooks: {},
     startTime: Date.now(),
@@ -72,30 +72,30 @@
         certsPatched: 0,
         dotNetCalls: 0
     },
-    
+
     run: function() {
         send({
             type: "status",
             target: "time_bomb_defuser_advanced",
             action: "initializing_time_manipulation"
         });
-        
+
         // Core time hooks
         this.hookSystemTime();
         this.hookFileTime();
         this.hookTickCount();
         this.hookPerformanceCounter();
-        
+
         // Advanced hooks
         this.hookDotNetDateTime();
         this.hookNetworkTime();
         this.hookCertificateValidation();
         this.hookTimezones();
         this.hookCRTTime();
-        
+
         // Process tracking
         this.setupProcessTracking();
-        
+
         send({
             type: "status",
             target: "time_bomb_defuser_advanced",
@@ -103,32 +103,32 @@
         });
         this.startProgressionTimer();
     },
-    
+
     // Get spoofed time for current process
     getSpoofedTime: function() {
         var processName = Process.enumerateModules()[0].name;
         var processTime = this.config.processTimeMap[processName];
-        
+
         if (processTime) {
             return new Date(processTime);
         }
-        
+
         // Calculate progressed time if enabled
         if (this.config.timeProgression.enabled) {
             var elapsed = Date.now() - this.startTime;
             var progression = elapsed * this.config.timeProgression.rate;
-            
+
             // Limit drift
             if (progression > this.config.timeProgression.maxDrift) {
                 progression = this.config.timeProgression.maxDrift;
             }
-            
+
             return new Date(this.config.targetDate.getTime() + progression);
         }
-        
+
         return this.config.targetDate;
     },
-    
+
     // Convert Date to SYSTEMTIME structure
     dateToSystemTime: function(date, ptr) {
         ptr.writeU16(date.getUTCFullYear());        // wYear
@@ -140,7 +140,7 @@
         ptr.add(12).writeU16(date.getUTCSeconds());  // wSecond
         ptr.add(14).writeU16(date.getUTCMilliseconds()); // wMilliseconds
     },
-    
+
     // Convert Date to FILETIME
     dateToFileTime: function(date) {
         // FILETIME is 100-nanosecond intervals since Jan 1, 1601
@@ -148,11 +148,11 @@
         var ticks = (date.getTime() + EPOCH_DIFFERENCE) * 10000;
         return ticks;
     },
-    
+
     // Hook system time functions
     hookSystemTime: function() {
         var self = this;
-        
+
         // GetSystemTime
         var getSystemTime = Module.findExportByName("kernel32.dll", "GetSystemTime");
         if (getSystemTime) {
@@ -174,7 +174,7 @@
                 action: "hooked_get_system_time"
             });
         }
-        
+
         // GetLocalTime
         var getLocalTime = Module.findExportByName("kernel32.dll", "GetLocalTime");
         if (getLocalTime) {
@@ -199,7 +199,7 @@
                 action: "hooked_get_local_time"
             });
         }
-        
+
         // GetSystemTimeAsFileTime
         var getSystemTimeAsFileTime = Module.findExportByName("kernel32.dll", "GetSystemTimeAsFileTime");
         if (getSystemTimeAsFileTime) {
@@ -223,11 +223,11 @@
             });
         }
     },
-    
+
     // Hook file time functions
     hookFileTime: function() {
         var self = this;
-        
+
         // GetFileTime
         var getFileTime = Module.findExportByName("kernel32.dll", "GetFileTime");
         if (getFileTime) {
@@ -241,7 +241,7 @@
                     if (retval.toInt32() !== 0) {
                         var spoofedTime = self.getSpoofedTime();
                         var filetime = self.dateToFileTime(spoofedTime);
-                        
+
                         if (this.creationTime && !this.creationTime.isNull()) {
                             this.creationTime.writeU64(filetime);
                         }
@@ -251,7 +251,7 @@
                         if (this.lastWriteTime && !this.lastWriteTime.isNull()) {
                             this.lastWriteTime.writeU64(filetime);
                         }
-                        
+
                         self.statistics.timeCalls++;
                     }
                 }
@@ -262,7 +262,7 @@
                 action: "hooked_get_file_time"
             });
         }
-        
+
         // FindFirstFile (contains file times)
         ["FindFirstFileW", "FindFirstFileExW"].forEach(function(api) {
             var func = Module.findExportByName("kernel32.dll", api);
@@ -275,7 +275,7 @@
                             if (findData && !findData.isNull()) {
                                 var spoofedTime = self.getSpoofedTime();
                                 var filetime = self.dateToFileTime(spoofedTime);
-                                
+
                                 // Offsets in WIN32_FIND_DATA
                                 findData.add(20).writeU64(filetime);  // ftCreationTime
                                 findData.add(28).writeU64(filetime);  // ftLastAccessTime
@@ -293,14 +293,14 @@
             }
         });
     },
-    
+
     // Hook tick count functions
     hookTickCount: function() {
         var self = this;
-        
+
         // Calculate base tick count
         var baseTickCount = Math.floor(Math.random() * 3600000); // Random 0-1 hour
-        
+
         // GetTickCount
         var getTickCount = Module.findExportByName("kernel32.dll", "GetTickCount");
         if (getTickCount) {
@@ -316,7 +316,7 @@
                 action: "hooked_get_tick_count"
             });
         }
-        
+
         // GetTickCount64
         var getTickCount64 = Module.findExportByName("kernel32.dll", "GetTickCount64");
         if (getTickCount64) {
@@ -333,17 +333,17 @@
             });
         }
     },
-    
+
     // Hook performance counter
     hookPerformanceCounter: function() {
         var self = this;
-        
+
         // QueryPerformanceCounter
         var queryPerformanceCounter = Module.findExportByName("kernel32.dll", "QueryPerformanceCounter");
         if (queryPerformanceCounter) {
             var baseCounter = Math.floor(Math.random() * 1000000000);
             var frequency = 10000000; // 10 MHz
-            
+
             Interceptor.attach(queryPerformanceCounter, {
                 onEnter: function(args) {
                     this.counter = args[0];
@@ -358,7 +358,7 @@
                     retval.replace(1); // Always succeed
                 }
             });
-            
+
             // QueryPerformanceFrequency
             var queryPerformanceFrequency = Module.findExportByName("kernel32.dll", "QueryPerformanceFrequency");
             if (queryPerformanceFrequency) {
@@ -374,7 +374,7 @@
                     }
                 });
             }
-            
+
             send({
                 type: "info",
                 target: "time_bomb_defuser_advanced",
@@ -382,11 +382,11 @@
             });
         }
     },
-    
+
     // Hook .NET DateTime
     hookDotNetDateTime: function() {
         var self = this;
-        
+
         // Find CLR module
         var clrModule = null;
         Process.enumerateModules().forEach(function(module) {
@@ -395,7 +395,7 @@
                 clrModule = module;
             }
         });
-        
+
         if (!clrModule) {
             send({
                 type: "warning",
@@ -404,13 +404,13 @@
             });
             return;
         }
-        
+
         // Hook DateTime.Now getter
         try {
             // Pattern for DateTime.get_Now
             var pattern = "48 8B C4 48 89 58 ?? 48 89 70 ?? 48 89 78 ?? 55 48 8D 68";
             var matches = Memory.scanSync(clrModule.base, clrModule.size, pattern);
-            
+
             if (matches.length > 0) {
                 Interceptor.attach(matches[0].address, {
                     onLeave: function(retval) {
@@ -418,10 +418,10 @@
                         var spoofedTime = self.getSpoofedTime();
                         var dotNetEpoch = new Date("0001-01-01T00:00:00Z");
                         var ticks = (spoofedTime.getTime() - dotNetEpoch.getTime()) * 10000;
-                        
+
                         // Set DateTime kind flags (UTC)
                         ticks |= 0x4000000000000000;
-                        
+
                         retval.replace(ptr(ticks));
                         self.statistics.dotNetCalls++;
                     }
@@ -432,21 +432,21 @@
                     action: "hooked_dotnet_datetime_now"
                 });
             }
-            
+
             // Hook DateTime.UtcNow
             pattern = "48 8B C4 48 89 58 ?? 48 89 68 ?? 48 89 70 ?? 48 89 78 ?? 41 54";
             matches = Memory.scanSync(clrModule.base, clrModule.size, pattern);
-            
+
             if (matches.length > 0) {
                 Interceptor.attach(matches[0].address, {
                     onLeave: function(retval) {
                         var spoofedTime = self.getSpoofedTime();
                         var dotNetEpoch = new Date("0001-01-01T00:00:00Z");
                         var ticks = (spoofedTime.getTime() - dotNetEpoch.getTime()) * 10000;
-                        
+
                         // Set DateTime kind flags (UTC)
                         ticks |= 0x8000000000000000;
-                        
+
                         retval.replace(ptr(ticks));
                         self.statistics.dotNetCalls++;
                     }
@@ -457,7 +457,7 @@
                     action: "hooked_dotnet_datetime_utcnow"
                 });
             }
-            
+
         } catch(e) {
             send({
                 type: "error",
@@ -467,20 +467,20 @@
             });
         }
     },
-    
+
     // Hook network time protocols
     hookNetworkTime: function() {
         var self = this;
-        
+
         if (!this.config.blockNetworkTime) return;
-        
+
         // Hook getaddrinfo to block NTP server resolution
         var getaddrinfo = Module.findExportByName("ws2_32.dll", "getaddrinfo");
         if (getaddrinfo) {
             Interceptor.attach(getaddrinfo, {
                 onEnter: function(args) {
                     var hostname = args[0].readUtf8String();
-                    
+
                     // Check if it's an NTP server
                     for (var i = 0; i < self.config.ntpServers.length; i++) {
                         if (hostname && hostname.toLowerCase().indexOf(self.config.ntpServers[i]) !== -1) {
@@ -503,7 +503,7 @@
                 }
             });
         }
-        
+
         // Hook connect to block NTP port (123)
         var connect = Module.findExportByName("ws2_32.dll", "connect");
         if (connect) {
@@ -512,11 +512,11 @@
                     var sockaddr = args[1];
                     if (sockaddr && !sockaddr.isNull()) {
                         var family = sockaddr.readU16();
-                        
+
                         if (family === 2) { // AF_INET
                             var port = sockaddr.add(2).readU16();
                             port = ((port & 0xFF) << 8) | ((port & 0xFF00) >> 8); // ntohs
-                            
+
                             if (port === 123) { // NTP port
                                 send({
                                     type: "bypass",
@@ -537,7 +537,7 @@
                 }
             });
         }
-        
+
         // Hook WinHttpOpen to block time sync services
         var winHttpOpen = Module.findExportByName("winhttp.dll", "WinHttpOpen");
         if (winHttpOpen) {
@@ -562,20 +562,20 @@
                 }
             });
         }
-        
+
         send({
             type: "info",
             target: "time_bomb_defuser_advanced",
             action: "network_time_blocking_configured"
         });
     },
-    
+
     // Hook certificate validation
     hookCertificateValidation: function() {
         var self = this;
-        
+
         if (!this.config.spoofCertificateDates) return;
-        
+
         // CertVerifyTimeValidity
         var certVerifyTimeValidity = Module.findExportByName("crypt32.dll", "CertVerifyTimeValidity");
         if (certVerifyTimeValidity) {
@@ -589,7 +589,7 @@
                 action: "hooked_cert_verify_time_validity"
             });
         }
-        
+
         // CertGetCertificateChain
         var certGetCertificateChain = Module.findExportByName("crypt32.dll", "CertGetCertificateChain");
         if (certGetCertificateChain) {
@@ -609,7 +609,7 @@
                 action: "hooked_cert_get_certificate_chain"
             });
         }
-        
+
         // Hook SSL/TLS certificate verification in schannel
         var initializeSecurityContext = Module.findExportByName("secur32.dll", "InitializeSecurityContextW");
         if (initializeSecurityContext) {
@@ -625,11 +625,11 @@
             });
         }
     },
-    
+
     // Hook timezone functions
     hookTimezones: function() {
         var self = this;
-        
+
         // GetTimeZoneInformation
         var getTimeZoneInformation = Module.findExportByName("kernel32.dll", "GetTimeZoneInformation");
         if (getTimeZoneInformation) {
@@ -651,7 +651,7 @@
                 action: "hooked_get_time_zone_information"
             });
         }
-        
+
         // GetDynamicTimeZoneInformation
         var getDynamicTimeZoneInformation = Module.findExportByName("kernel32.dll", "GetDynamicTimeZoneInformation");
         if (getDynamicTimeZoneInformation) {
@@ -668,20 +668,20 @@
             });
         }
     },
-    
+
     // Hook CRT time functions
     hookCRTTime: function() {
         var self = this;
-        
+
         // time()
         var timeFunc = Module.findExportByName("msvcrt.dll", "time");
         if (!timeFunc) timeFunc = Module.findExportByName("ucrtbase.dll", "time");
-        
+
         if (timeFunc) {
             Interceptor.replace(timeFunc, new NativeCallback(function(timer) {
                 var spoofedTime = self.getSpoofedTime();
                 var unixTime = Math.floor(spoofedTime.getTime() / 1000);
-                
+
                 if (timer && !timer.isNull()) {
                     if (Process.arch === 'x64') {
                         timer.writeU64(unixTime);
@@ -689,7 +689,7 @@
                         timer.writeU32(unixTime);
                     }
                 }
-                
+
                 self.statistics.timeCalls++;
                 return unixTime;
             }, Process.arch === 'x64' ? 'uint64' : 'uint32', ['pointer']));
@@ -699,20 +699,20 @@
                 action: "hooked_time_function"
             });
         }
-        
+
         // _time64()
         var time64Func = Module.findExportByName("msvcrt.dll", "_time64");
         if (!time64Func) time64Func = Module.findExportByName("ucrtbase.dll", "_time64");
-        
+
         if (time64Func) {
             Interceptor.replace(time64Func, new NativeCallback(function(timer) {
                 var spoofedTime = self.getSpoofedTime();
                 var unixTime = Math.floor(spoofedTime.getTime() / 1000);
-                
+
                 if (timer && !timer.isNull()) {
                     timer.writeU64(unixTime);
                 }
-                
+
                 self.statistics.timeCalls++;
                 return unixTime;
             }, 'uint64', ['pointer']));
@@ -722,19 +722,19 @@
                 action: "hooked_time64_function"
             });
         }
-        
+
         // localtime() and gmtime()
         ["localtime", "gmtime", "_localtime64", "_gmtime64"].forEach(function(func) {
             var timeFunc = Module.findExportByName("msvcrt.dll", func);
             if (!timeFunc) timeFunc = Module.findExportByName("ucrtbase.dll", func);
-            
+
             if (timeFunc) {
                 Interceptor.attach(timeFunc, {
                     onEnter: function(args) {
                         // Modify input time to our spoofed time
                         var spoofedTime = self.getSpoofedTime();
                         var unixTime = Math.floor(spoofedTime.getTime() / 1000);
-                        
+
                         if (func.includes("64")) {
                             args[0] = ptr(unixTime);
                         } else {
@@ -751,12 +751,12 @@
             }
         });
     },
-    
+
     // Setup process tracking
     setupProcessTracking: function() {
         var self = this;
         var processName = Process.enumerateModules()[0].name;
-        
+
         // Initialize process start time
         if (!this.processStartTimes[processName]) {
             this.processStartTimes[processName] = Date.now();
@@ -767,7 +767,7 @@
                 process_name: processName
             });
         }
-        
+
         // Hook process creation to track child processes
         var createProcess = Module.findExportByName("kernel32.dll", "CreateProcessW");
         if (createProcess) {
@@ -796,21 +796,21 @@
             });
         }
     },
-    
+
     // Start time progression timer
     startProgressionTimer: function() {
         var self = this;
-        
+
         setInterval(function() {
             // Update process-specific times
             for (var process in self.processStartTimes) {
                 var elapsed = Date.now() - self.processStartTimes[process];
                 var progressed = elapsed * self.config.timeProgression.rate;
-                
-                self.config.processTimeMap[process] = 
+
+                self.config.processTimeMap[process] =
                     self.config.targetDate.getTime() + progressed;
             }
-            
+
             // Log statistics
             send({
                 type: "summary",
@@ -823,7 +823,7 @@
                     dotnet_calls: self.statistics.dotNetCalls
                 }
             });
-                      
+
         }, 60000); // Every minute
     }
 }

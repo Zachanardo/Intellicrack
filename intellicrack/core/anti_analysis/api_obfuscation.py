@@ -31,8 +31,7 @@ API monitoring and hooking.
 
 
 class APIObfuscator:
-    """Obfuscate API calls to evade monitoring and analysis.
-    """
+    """Obfuscate API calls to evade monitoring and analysis."""
 
     def __init__(self):
         """Initialize the API obfuscation system."""
@@ -146,6 +145,7 @@ class APIObfuscator:
         """Normal API resolution using GetProcAddress."""
         try:
             import platform
+
             if platform.system() != "Windows":
                 return None
 
@@ -170,6 +170,7 @@ class APIObfuscator:
         """Resolve API by hash value using advanced anti-analysis techniques."""
         try:
             import platform
+
             if platform.system() != "Windows":
                 return None
 
@@ -213,16 +214,22 @@ class APIObfuscator:
                 return None
 
             if num_names > num_functions:
-                self.logger.warning(f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption")
+                self.logger.warning(
+                    f"DLL {dll_name} has more names ({num_names}) than functions ({num_functions}) - possible corruption"
+                )
                 return None
 
             # Check for suspiciously large export tables (possible anti-analysis)
             if num_functions > 10000:
-                self.logger.warning(f"DLL {dll_name} has unusually large export table ({num_functions} functions) - possible anti-analysis technique")
+                self.logger.warning(
+                    f"DLL {dll_name} has unusually large export table ({num_functions} functions) - possible anti-analysis technique"
+                )
 
             # Validate that we have named exports to search through
             if num_names == 0:
-                self.logger.info(f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)")
+                self.logger.info(
+                    f"DLL {dll_name} has {num_functions} functions but no named exports (ordinal-only)"
+                )
                 return None
 
             names_array = h_module + names_rva
@@ -261,6 +268,7 @@ class APIObfuscator:
         """Resolve API by ordinal number with anti-analysis evasion."""
         try:
             import platform
+
             if platform.system() != "Windows":
                 return None
 
@@ -422,7 +430,7 @@ class APIObfuscator:
 
     def _fnv1a_hash(self, string: str) -> int:
         """FNV-1a hash algorithm for API obfuscation."""
-        hash_value = 0x811c9dc5  # FNV offset basis
+        hash_value = 0x811C9DC5  # FNV offset basis
         for char in string:
             hash_value ^= ord(char)
             hash_value *= 0x01000193  # FNV prime
@@ -432,6 +440,7 @@ class APIObfuscator:
     def _crc32_hash(self, string: str) -> int:
         """CRC32 hash for API name obfuscation."""
         import zlib
+
         return zlib.crc32(string.encode("ascii")) & 0xFFFFFFFF
 
     def _custom_hash(self, string: str) -> int:
@@ -439,7 +448,7 @@ class APIObfuscator:
         hash_value = 0
         for i, char in enumerate(string):
             hash_value = ((hash_value << 3) ^ (hash_value >> 5)) + ord(char)
-            hash_value = (hash_value * 0x9e3779b9) ^ (i << 16)
+            hash_value = (hash_value * 0x9E3779B9) ^ (i << 16)
             hash_value &= 0xFFFFFFFF
         return hash_value
 
@@ -664,7 +673,9 @@ if (p{api_name}) {{
                     key = f"{hash_type}_{hash_value}"
                     self.api_hash_db[key] = (dll_name, api_name)
 
-            self.logger.info(f"Loaded {len(common_apis)} API entries with {len(self.api_hash_db)} hash mappings")
+            self.logger.info(
+                f"Loaded {len(common_apis)} API entries with {len(self.api_hash_db)} hash mappings"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to load API databases: {e}")

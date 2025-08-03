@@ -129,7 +129,7 @@ class CustomAnalysisWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setup_ui()
-    
+
     def setup_ui(self):
         # Use widget factory for consistent styling
         layout = WidgetFactory.create_vertical_layout()
@@ -147,12 +147,12 @@ class CustomDialog(QDialog):
         self.setWindowTitle("Custom Dialog")
         self.setup_ui()
         self.load_settings()
-    
+
     def setup_ui(self):
         layout = QVBoxLayout()
         # Add UI elements
         self.setLayout(layout)
-    
+
     def accept(self):
         self.save_settings()
         super().accept()
@@ -191,10 +191,10 @@ class MyWidget(QWidget):
         super().__init__()
         self.event_handler = EventHandler(self)
         self.setup_events()
-    
+
     def setup_events(self):
         self.event_handler.connect_button(
-            self.analyze_button, 
+            self.analyze_button,
             self.start_analysis
         )
 ```
@@ -205,7 +205,7 @@ from PyQt6.QtCore import pyqtSignal
 
 class AnalysisWidget(QWidget):
     analysis_completed = pyqtSignal(dict)
-    
+
     def finish_analysis(self, results):
         self.analysis_completed.emit(results)
 ```
@@ -220,7 +220,7 @@ class PluginWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.plugin_editor = PluginEditor(self)
-        
+
     def load_plugin(self, plugin_path):
         self.plugin_editor.load_plugin_file(plugin_path)
 ```
@@ -233,7 +233,7 @@ class UIPlugin(PluginBase):
     def create_widget(self, parent):
         """Create plugin-specific widget"""
         return MyPluginWidget(parent)
-    
+
     def get_menu_actions(self):
         """Return menu actions for this plugin"""
         return [
@@ -264,7 +264,7 @@ class MainWindow(QMainWindow):
         settings = QSettings()
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("windowState", self.saveState())
-    
+
     def restore_state(self):
         settings = QSettings()
         self.restoreGeometry(settings.value("geometry", b""))
@@ -290,13 +290,13 @@ from PyQt6.QtCore import QThread, pyqtSignal
 class AnalysisThread(QThread):
     progress_updated = pyqtSignal(int)
     analysis_completed = pyqtSignal(dict)
-    
+
     def run(self):
         # Long-running analysis
         for i in range(100):
             # Do work
             self.progress_updated.emit(i)
-        
+
         self.analysis_completed.emit(results)
 ```
 
@@ -323,7 +323,7 @@ from PyQt6.QtCore import Qt
 class TestAnalysisWidget(unittest.TestCase):
     def setUp(self):
         self.widget = AnalysisWidget()
-    
+
     def test_button_click(self):
         # Simulate button click
         QTest.mouseClick(self.widget.analyze_button, Qt.LeftButton)

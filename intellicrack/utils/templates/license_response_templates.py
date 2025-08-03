@@ -1,4 +1,5 @@
 """License response templates for generating valid license responses."""
+
 from intellicrack.logger import logger
 
 """
@@ -83,6 +84,7 @@ def get_adobe_response_templates():
     # Real product validation - check for actual Adobe installations
     detected_products = []
     import os
+
     adobe_paths = [
         (r"C:\Program Files\Adobe\Adobe Photoshop", "PHSP", "Photoshop"),
         (r"C:\Program Files\Adobe\Adobe Illustrator", "ILST", "Illustrator"),
@@ -129,6 +131,7 @@ def get_adobe_response_templates():
         """,
     }
 
+
 def get_autodesk_response_templates():
     """Get Autodesk response templates with real validation logic."""
     import datetime
@@ -141,7 +144,9 @@ def get_autodesk_response_templates():
 
     # Generate realistic user info
     username = getpass.getuser()
-    machine_hash = hashlib.sha256(f"{username}_{os.environ.get('COMPUTERNAME', 'unknown')}".encode()).hexdigest()[:16]
+    machine_hash = hashlib.sha256(
+        f"{username}_{os.environ.get('COMPUTERNAME', 'unknown')}".encode()
+    ).hexdigest()[:16]
 
     # Check for actual Autodesk installations
     detected_products = []
@@ -175,10 +180,12 @@ def get_autodesk_response_templates():
 
     # Calculate expiry based on license type
     if license_type == "NETWORK":
-        expiry_date = current_time + datetime.timedelta(days=365)  # Network licenses typically annual
+        expiry_date = current_time + datetime.timedelta(
+            days=365
+        )  # Network licenses typically annual
         user_type = "PREMIUM"
     else:
-        expiry_date = current_time + datetime.timedelta(days=30)   # Trial licenses
+        expiry_date = current_time + datetime.timedelta(days=30)  # Trial licenses
         user_type = "TRIAL"
 
     return {
@@ -201,6 +208,7 @@ def get_autodesk_response_templates():
         },
     }
 
+
 def get_jetbrains_response_templates():
     """Get JetBrains response templates with real validation logic."""
     import datetime
@@ -211,6 +219,7 @@ def get_jetbrains_response_templates():
 
     # Generate realistic license ID
     import secrets
+
     license_id = str(secrets.randbelow(9999999999 - 1000000000) + 1000000000)
 
     # Check for actual JetBrains installations
@@ -232,7 +241,10 @@ def get_jetbrains_response_templates():
         if path and os.path.exists(path.replace("%USERNAME%", os.environ.get("USERNAME", "user"))):
             # Check for license files
             license_indicators = [
-                "idea.key", "license.key", ".license", "jb-license.txt",
+                "idea.key",
+                "license.key",
+                ".license",
+                "jb-license.txt",
             ]
             install_path = path.replace("%USERNAME%", os.environ.get("USERNAME", "user"))
 
@@ -249,8 +261,12 @@ def get_jetbrains_response_templates():
     if os.path.exists(user_jetbrains_path):
         try:
             for item in os.listdir(user_jetbrains_path):
-                if "IntelliJ" in item and ("II", "IntelliJ IDEA") not in [(p["code"], p["name"]) for p in detected_products]:
-                    detected_products.append({"code": "II", "name": "IntelliJ IDEA", "status": "TRIAL"})
+                if "IntelliJ" in item and ("II", "IntelliJ IDEA") not in [
+                    (p["code"], p["name"]) for p in detected_products
+                ]:
+                    detected_products.append(
+                        {"code": "II", "name": "IntelliJ IDEA", "status": "TRIAL"}
+                    )
         except (OSError, PermissionError) as e:
             logger.error("Error in license_response_templates: %s", e)
 
@@ -285,6 +301,7 @@ def get_jetbrains_response_templates():
         },
     }
 
+
 def get_microsoft_response_templates():
     """Get Microsoft response templates with real validation logic."""
     import datetime
@@ -308,20 +325,36 @@ def get_microsoft_response_templates():
                 # Use slmgr to check Windows activation
                 result = subprocess.run(
                     ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/xpr"],
-                    capture_output=True, text=True, timeout=30, check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    check=False,
                 )
 
                 if result.returncode == 0:
                     output = result.stdout.lower()
                     if "permanently activated" in output:
-                        detected_products.append({"id": "WINPRO", "name": f"Windows {platform.release()}", "status": "ACTIVATED"})
+                        detected_products.append(
+                            {
+                                "id": "WINPRO",
+                                "name": f"Windows {platform.release()}",
+                                "status": "ACTIVATED",
+                            }
+                        )
                         license_status = "licensed"
                     elif "grace period" in output:
-                        detected_products.append({"id": "WINPRO", "name": f"Windows {platform.release()}", "status": "GRACE"})
+                        detected_products.append(
+                            {
+                                "id": "WINPRO",
+                                "name": f"Windows {platform.release()}",
+                                "status": "GRACE",
+                            }
+                        )
                         license_status = "grace_period"
                         # Extract grace period days if possible
                         try:
                             import re
+
                             grace_match = re.search(r"(\d+)\s+day", output)
                             if grace_match:
                                 grace_period_days = int(grace_match.group(1))
@@ -329,12 +362,20 @@ def get_microsoft_response_templates():
                             logger.error("Error in license_response_templates: %s", e)
                             grace_period_days = 30  # Default grace period
                     else:
-                        detected_products.append({"id": "WINPRO", "name": f"Windows {platform.release()}", "status": "TRIAL"})
+                        detected_products.append(
+                            {
+                                "id": "WINPRO",
+                                "name": f"Windows {platform.release()}",
+                                "status": "TRIAL",
+                            }
+                        )
 
             except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as e:
                 logger.error("Error in license_response_templates: %s", e)
                 # Windows activation check failed
-                detected_products.append({"id": "WINPRO", "name": f"Windows {platform.release()}", "status": "UNKNOWN"})
+                detected_products.append(
+                    {"id": "WINPRO", "name": f"Windows {platform.release()}", "status": "UNKNOWN"}
+                )
                 error_code = 1
                 error_message = "Unable to check Windows activation status"
 
@@ -363,9 +404,15 @@ def get_microsoft_response_templates():
                             try:
                                 result = subprocess.run(
                                     ["cscript", "//nologo", ospp_path, "/dstatus"],
-                                    capture_output=True, text=True, timeout=30, check=False,
+                                    capture_output=True,
+                                    text=True,
+                                    timeout=30,
+                                    check=False,
                                 )
-                                if result.returncode == 0 and "license status: ---licensed---" in result.stdout.lower():
+                                if (
+                                    result.returncode == 0
+                                    and "license status: ---licensed---" in result.stdout.lower()
+                                ):
                                     office_licensed = True
                                     break
                             except (subprocess.TimeoutExpired, OSError) as e:
@@ -376,7 +423,9 @@ def get_microsoft_response_templates():
                     if not any(p["id"] == product_id for p in detected_products):
                         detected_products.append({"id": product_id, "name": name, "status": status})
                         if office_licensed and license_status != "licensed":
-                            license_status = "licensed" if license_status == "unlicensed" else license_status
+                            license_status = (
+                                "licensed" if license_status == "unlicensed" else license_status
+                            )
 
                 except (OSError, subprocess.SubprocessError) as e:
                     logger.error("Error in license_response_templates: %s", e)
@@ -421,6 +470,7 @@ def get_microsoft_response_templates():
         },
     }
 
+
 def get_generic_response_templates():
     """Get generic response templates with real validation logic."""
     import datetime
@@ -432,7 +482,9 @@ def get_generic_response_templates():
     current_time = datetime.datetime.now()
 
     # Generate machine-specific validation
-    machine_info = f"{platform.system()}_{platform.machine()}_{os.environ.get('COMPUTERNAME', 'unknown')}"
+    machine_info = (
+        f"{platform.system()}_{platform.machine()}_{os.environ.get('COMPUTERNAME', 'unknown')}"
+    )
     machine_hash = hashlib.sha256(machine_info.encode()).hexdigest()[:16]
 
     # Basic license validity check based on system characteristics
@@ -452,7 +504,7 @@ def get_generic_response_templates():
     elif passed_checks >= 2:
         license_status = "trial"
         status = "success"
-        expiry_days = 30   # Trial license
+        expiry_days = 30  # Trial license
         message = "Trial license activated"
     else:
         license_status = "invalid"
@@ -492,6 +544,7 @@ def get_generic_response_templates():
             </response>
         """,
     }
+
 
 def get_all_response_templates():
     """Get all response templates organized by service."""

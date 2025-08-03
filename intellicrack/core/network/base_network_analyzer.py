@@ -35,9 +35,12 @@ class BaseNetworkAnalyzer:
         """Initialize the base network analyzer with logging."""
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def create_packet_handler(self, scapy_module: Any,
-                            is_running_check: Callable[[], bool],
-                            process_packet_func: Callable[[Any, Any, Any], None]) -> Callable:
+    def create_packet_handler(
+        self,
+        scapy_module: Any,
+        is_running_check: Callable[[], bool],
+        process_packet_func: Callable[[Any, Any, Any], None],
+    ) -> Callable:
         """Create a packet handler function with common functionality.
 
         Args:
@@ -49,6 +52,7 @@ class BaseNetworkAnalyzer:
             Packet handler function
 
         """
+
         def packet_handler(packet):
             """Process each captured packet."""
             if not is_running_check():

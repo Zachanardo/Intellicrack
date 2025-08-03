@@ -1,4 +1,5 @@
 """Plugin path management utilities for locating and managing plugin directories."""
+
 from intellicrack.logger import logger
 
 """
@@ -140,6 +141,7 @@ def get_config_dir() -> Path:
     """
     try:
         from intellicrack.core.config_manager import get_config
+
         config = get_config()
         return config.config_dir
     except ImportError as e:
@@ -159,6 +161,7 @@ def get_main_config_file() -> Path:
     """
     try:
         from intellicrack.core.config_manager import get_config
+
         config = get_config()
         return config.config_file
     except ImportError as e:
@@ -378,8 +381,7 @@ def get_path_info() -> dict[str, str]:
 
 
 def ensure_directories_exist() -> None:
-    """Ensure all required directories exist, creating them if necessary.
-    """
+    """Ensure all required directories exist, creating them if necessary."""
     directories = [
         get_scripts_dir(),
         get_frida_scripts_dir(),

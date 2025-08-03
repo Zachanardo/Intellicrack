@@ -34,6 +34,7 @@ def has_logger_import(lines: list[str]) -> tuple[bool, str]:
             return True, "logger"
     return False, ""
 
+
 def get_logger_for_context(lines: list[str], line_num: int) -> str:
     """Determine the appropriate logger based on context."""
     # Check if we're in a class method
@@ -48,6 +49,7 @@ def get_logger_for_context(lines: list[str], line_num: int) -> str:
 
     # Default to module logger
     return "logger"
+
 
 def fix_exception_blocks(file_path: Path) -> tuple[bool, int]:
     """Fix exception blocks without logger calls."""
@@ -163,6 +165,7 @@ def fix_exception_blocks(file_path: Path) -> tuple[bool, int]:
 
     return False, 0
 
+
 def main():
     """Main function to fix S110 violations."""
     if len(sys.argv) > 1:
@@ -199,6 +202,7 @@ def main():
                     print("  No violations found")
             else:
                 print(f"\nFile not found: {file_path}")
+
 
 if __name__ == "__main__":
     main()

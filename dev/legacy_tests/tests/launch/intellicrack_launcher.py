@@ -32,37 +32,37 @@ def signal_handler(sig, frame):
 def main():
     """Launch Intellicrack with proper error handling."""
     signal.signal(signal.SIGINT, signal_handler)
-    
+
     try:
         logger.info("Starting Intellicrack...")
         logger.info("Intel Arc B580 compatibility mode enabled")
-        
+
         # Try to import and run the main application
         try:
             from intellicrack.main import main
             logger.info("Main module imported successfully")
-            
+
             result = main()
             logger.info(f"Application exited with code: {result}")
             return result
-            
+
         except ImportError as e:
             logger.error(f"Failed to import main module: {e}")
-            
+
             # Fallback to minimal UI
             logger.info("Attempting minimal UI fallback...")
             from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget
             from PyQt6.QtCore import Qt
-            
+
             app = QApplication(sys.argv)
-            
+
             window = QMainWindow()
             window.setWindowTitle("Intellicrack - Recovery Mode")
             window.setGeometry(100, 100, 800, 600)
-            
+
             central = QWidget()
             layout = QVBoxLayout(central)
-            
+
             label = QLabel("""
 <h1>Intellicrack - Recovery Mode</h1>
 <p>The application encountered an error during startup.</p>
@@ -71,24 +71,24 @@ def main():
             """)
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(label)
-            
+
             window.setCentralWidget(central)
             window.show()
-            
+
             return app.exec()
-            
+
     except Exception as e:
         logger.error(f"Critical error: {e}")
         import traceback
         traceback.print_exc()
-        
+
         # Show error dialog if possible
         try:
             from PyQt6.QtWidgets import QApplication, QMessageBox
-            
+
             if not QApplication.instance():
                 app = QApplication(sys.argv)
-            
+
             QMessageBox.critical(
                 None,
                 "Intellicrack Error",
@@ -96,7 +96,7 @@ def main():
             )
         except:
             pass
-        
+
         return 1
 
 if __name__ == "__main__":

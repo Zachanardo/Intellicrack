@@ -1,4 +1,5 @@
 """Hex viewer widget for binary file analysis."""
+
 import math
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -18,7 +19,7 @@ class HexViewerWidget(QWidget):
     """Professional hex viewer widget with editing capabilities."""
 
     selection_changed = pyqtSignal(int, int)  # start, end offsets
-    data_modified = pyqtSignal(int, bytes)    # offset, new_data
+    data_modified = pyqtSignal(int, bytes)  # offset, new_data
 
     def __init__(self, parent=None):
         """Initialize hex viewer widget with binary data visualization and editing capabilities."""
@@ -250,16 +251,24 @@ class HexDisplay(QWidget):
                 byte_val = self.hex_viewer.data[byte_offset]
 
                 # Highlight selection
-                if (self.hex_viewer.selection_start <= byte_offset < self.hex_viewer.selection_end):
-                    painter.fillRect(x, y - self.char_height + 3,
-                                   2 * self.char_width, self.char_height,
-                                   QColor(100, 150, 255))
+                if self.hex_viewer.selection_start <= byte_offset < self.hex_viewer.selection_end:
+                    painter.fillRect(
+                        x,
+                        y - self.char_height + 3,
+                        2 * self.char_width,
+                        self.char_height,
+                        QColor(100, 150, 255),
+                    )
 
                 # Highlight cursor
                 if byte_offset == self.hex_viewer.cursor_pos:
-                    painter.fillRect(x, y - self.char_height + 3,
-                                   2 * self.char_width, self.char_height,
-                                   QColor(255, 200, 100))
+                    painter.fillRect(
+                        x,
+                        y - self.char_height + 3,
+                        2 * self.char_width,
+                        self.char_height,
+                        QColor(255, 200, 100),
+                    )
 
                 painter.setPen(Qt.GlobalColor.black)
                 painter.drawText(x, y, f"{byte_val:02X}")
@@ -276,10 +285,14 @@ class HexDisplay(QWidget):
                 ascii_char = chr(byte_val) if 32 <= byte_val <= 126 else "."
 
                 # Highlight selection
-                if (self.hex_viewer.selection_start <= byte_offset < self.hex_viewer.selection_end):
-                    painter.fillRect(x, y - self.char_height + 3,
-                                   self.char_width, self.char_height,
-                                   QColor(100, 150, 255))
+                if self.hex_viewer.selection_start <= byte_offset < self.hex_viewer.selection_end:
+                    painter.fillRect(
+                        x,
+                        y - self.char_height + 3,
+                        self.char_width,
+                        self.char_height,
+                        QColor(100, 150, 255),
+                    )
 
                 painter.setPen(Qt.GlobalColor.black)
                 painter.drawText(x, y, ascii_char)
@@ -325,26 +338,36 @@ class HexDisplay(QWidget):
         if key == Qt.Key.Key_Left:
             self.hex_viewer.cursor_pos = max(0, self.hex_viewer.cursor_pos - 1)
         elif key == Qt.Key.Key_Right:
-            self.hex_viewer.cursor_pos = min(len(self.hex_viewer.data) - 1,
-                                           self.hex_viewer.cursor_pos + 1)
+            self.hex_viewer.cursor_pos = min(
+                len(self.hex_viewer.data) - 1, self.hex_viewer.cursor_pos + 1
+            )
         elif key == Qt.Key.Key_Up:
-            self.hex_viewer.cursor_pos = max(0,
-                                           self.hex_viewer.cursor_pos - self.hex_viewer.bytes_per_line)
+            self.hex_viewer.cursor_pos = max(
+                0, self.hex_viewer.cursor_pos - self.hex_viewer.bytes_per_line
+            )
         elif key == Qt.Key.Key_Down:
-            self.hex_viewer.cursor_pos = min(len(self.hex_viewer.data) - 1,
-                                           self.hex_viewer.cursor_pos + self.hex_viewer.bytes_per_line)
+            self.hex_viewer.cursor_pos = min(
+                len(self.hex_viewer.data) - 1,
+                self.hex_viewer.cursor_pos + self.hex_viewer.bytes_per_line,
+            )
         elif key == Qt.Key.Key_Home:
             if modifiers & Qt.KeyboardModifier.ControlModifier:
                 self.hex_viewer.cursor_pos = 0
             else:
-                line_start = (self.hex_viewer.cursor_pos // self.hex_viewer.bytes_per_line) * self.hex_viewer.bytes_per_line
+                line_start = (
+                    self.hex_viewer.cursor_pos // self.hex_viewer.bytes_per_line
+                ) * self.hex_viewer.bytes_per_line
                 self.hex_viewer.cursor_pos = line_start
         elif key == Qt.Key.Key_End:
             if modifiers & Qt.KeyboardModifier.ControlModifier:
                 self.hex_viewer.cursor_pos = len(self.hex_viewer.data) - 1
             else:
-                line_start = (self.hex_viewer.cursor_pos // self.hex_viewer.bytes_per_line) * self.hex_viewer.bytes_per_line
-                line_end = min(line_start + self.hex_viewer.bytes_per_line - 1, len(self.hex_viewer.data) - 1)
+                line_start = (
+                    self.hex_viewer.cursor_pos // self.hex_viewer.bytes_per_line
+                ) * self.hex_viewer.bytes_per_line
+                line_end = min(
+                    line_start + self.hex_viewer.bytes_per_line - 1, len(self.hex_viewer.data) - 1
+                )
                 self.hex_viewer.cursor_pos = line_end
 
         # Editing (if enabled)
@@ -401,5 +424,6 @@ class HexDisplay(QWidget):
         self.hex_viewer.data_modified.emit(self.hex_viewer.cursor_pos, bytes([new_byte]))
 
         # Advance cursor
-        self.hex_viewer.cursor_pos = min(len(self.hex_viewer.data) - 1,
-                                       self.hex_viewer.cursor_pos + 1)
+        self.hex_viewer.cursor_pos = min(
+            len(self.hex_viewer.data) - 1, self.hex_viewer.cursor_pos + 1
+        )

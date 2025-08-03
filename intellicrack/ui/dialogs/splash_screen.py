@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import os
 
@@ -62,8 +61,11 @@ class SplashScreen(QSplashScreen):
             font.setPointSize(12)
             font.setBold(False)
             painter.setFont(font)
-            painter.drawText(pixmap.rect().adjusted(0, 50, 0, 0), Qt.AlignmentFlag.AlignCenter,
-                           "Advanced Binary Analysis Suite")
+            painter.drawText(
+                pixmap.rect().adjusted(0, 50, 0, 0),
+                Qt.AlignmentFlag.AlignCenter,
+                "Advanced Binary Analysis Suite",
+            )
             painter.end()
 
         super().__init__(pixmap)
@@ -72,6 +74,7 @@ class SplashScreen(QSplashScreen):
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setGeometry(50, pixmap.height() - 50, pixmap.width() - 100, 20)
         from ..style_utils import get_splash_progress_bar_style
+
         self.progress_bar.setStyleSheet(get_splash_progress_bar_style())
 
         # Status label

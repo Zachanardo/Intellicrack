@@ -42,6 +42,7 @@ UPLOAD_DIR = DATA_DIR / "c2_uploads"
 DOWNLOAD_DIR = DATA_DIR / "c2_downloads"
 DB_PATH = DATA_DIR / "c2_sessions.db"
 
+
 def migrate_resource_if_needed(old_path: str, new_path: Path):
     """Checks for a resource at the old path. If found, moves it to the new path.
     Logs a warning about the migration.
@@ -157,7 +158,11 @@ class SessionManager:
     def __init__(self, db_path: str = None):
         """Initialize the session manager with database and directory configuration."""
         self.db_path = db_path or os.path.join(
-            os.path.dirname(__file__), "..", "..", "data", "sessions.db",
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "data",
+            "sessions.db",
         )
         self.logger = logging.getLogger(__name__)
 
@@ -281,7 +286,9 @@ class SessionManager:
 
             # Update statistics
             self.stats["total_sessions"] += 1
-            self.stats["active_sessions"] = len([s for s in self.sessions.values() if s.status == "active"])
+            self.stats["active_sessions"] = len(
+                [s for s in self.sessions.values() if s.status == "active"]
+            )
 
             # Persist to database
             await self._persist_session(session)
@@ -320,7 +327,9 @@ class SessionManager:
                 self.session_history.append(session.to_dict())
 
                 # Update statistics
-                self.stats["active_sessions"] = len([s for s in self.sessions.values() if s.status == "active"])
+                self.stats["active_sessions"] = len(
+                    [s for s in self.sessions.values() if s.status == "active"]
+                )
 
                 # Persist change
                 await self._persist_session(session)
@@ -350,7 +359,9 @@ class SessionManager:
         except Exception as e:
             self.logger.error(f"Failed to update session info: {e}")
 
-    async def create_task(self, session_id: str, task_type: str, task_data: dict[str, Any]) -> dict[str, Any]:
+    async def create_task(
+        self, session_id: str, task_type: str, task_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Create a new task for a session."""
         try:
             task_id = str(uuid.uuid4())
@@ -450,6 +461,7 @@ class SessionManager:
 
             # Calculate file hash
             import hashlib
+
             file_hash = hashlib.sha256(file_data).hexdigest()
 
             # Store file info
@@ -515,17 +527,21 @@ class SessionManager:
         """Get session manager statistics."""
         try:
             # Update active session count
-            self.stats["active_sessions"] = len([s for s in self.sessions.values() if s.status == "active"])
+            self.stats["active_sessions"] = len(
+                [s for s in self.sessions.values() if s.status == "active"]
+            )
 
             # Add detailed statistics
             detailed_stats = self.stats.copy()
-            detailed_stats.update({
-                "session_history_count": len(self.session_history),
-                "pending_task_count": sum(len(tasks) for tasks in self.pending_tasks.values()),
-                "task_result_count": len(self.task_results),
-                "average_session_uptime": self._calculate_average_uptime(),
-                "most_active_session": self._get_most_active_session(),
-            })
+            detailed_stats.update(
+                {
+                    "session_history_count": len(self.session_history),
+                    "pending_task_count": sum(len(tasks) for tasks in self.pending_tasks.values()),
+                    "task_result_count": len(self.task_results),
+                    "average_session_uptime": self._calculate_average_uptime(),
+                    "most_active_session": self._get_most_active_session(),
+                }
+            )
 
             return detailed_stats
 
@@ -540,8 +556,7 @@ class SessionManager:
                 return 0.0
 
             total_uptime = sum(
-                time.time() - session.created_at
-                for session in self.sessions.values()
+                time.time() - session.created_at for session in self.sessions.values()
             )
 
             return total_uptime / len(self.sessions)
@@ -596,21 +611,24 @@ class SessionManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO sessions
                 (session_id, connection_info, client_info, capabilities,
                  created_at, last_seen, status, stats)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                session.session_id,
-                json.dumps(session.connection_info),
-                json.dumps(session.client_info),
-                json.dumps(session.capabilities),
-                session.created_at,
-                session.last_seen,
-                session.status,
-                json.dumps(session.stats),
-            ))
+            """,
+                (
+                    session.session_id,
+                    json.dumps(session.connection_info),
+                    json.dumps(session.client_info),
+                    json.dumps(session.capabilities),
+                    session.created_at,
+                    session.last_seen,
+                    session.status,
+                    json.dumps(session.stats),
+                ),
+            )
 
             conn.commit()
             conn.close()
@@ -624,18 +642,21 @@ class SessionManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO tasks
                 (task_id, session_id, task_type, task_data, status, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
-            """, (
-                task["task_id"],
-                task["session_id"],
-                task["type"],
-                json.dumps(task["data"]),
-                task["status"],
-                task["created_at"],
-            ))
+            """,
+                (
+                    task["task_id"],
+                    task["session_id"],
+                    task["type"],
+                    json.dumps(task["data"]),
+                    task["status"],
+                    task["created_at"],
+                ),
+            )
 
             conn.commit()
             conn.close()
@@ -649,9 +670,12 @@ class SessionManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE tasks SET status = ? WHERE task_id = ?
-            """, (status, task_id))
+            """,
+                (status, task_id),
+            )
 
             conn.commit()
             conn.close()
@@ -665,11 +689,14 @@ class SessionManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE tasks
                 SET status = ?, result = ?, completed_at = ?
                 WHERE task_id = ?
-            """, (status, json.dumps(result), time.time(), task_id))
+            """,
+                (status, json.dumps(result), time.time(), task_id),
+            )
 
             conn.commit()
             conn.close()
@@ -683,21 +710,24 @@ class SessionManager:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO files
                 (file_id, session_id, filename, file_path, file_size,
                  file_hash, upload_time, file_type)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                file_info["file_id"],
-                file_info["session_id"],
-                file_info["filename"],
-                file_info["file_path"],
-                file_info["file_size"],
-                file_info["file_hash"],
-                file_info["upload_time"],
-                file_info["file_type"],
-            ))
+            """,
+                (
+                    file_info["file_id"],
+                    file_info["session_id"],
+                    file_info["filename"],
+                    file_info["file_path"],
+                    file_info["file_size"],
+                    file_info["file_hash"],
+                    file_info["upload_time"],
+                    file_info["file_type"],
+                ),
+            )
 
             conn.commit()
             conn.close()
@@ -758,8 +788,14 @@ class SessionManager:
 
             export_data = {
                 "session": session.to_dict(),
-                "tasks": [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in task_rows],
-                "files": [dict(zip([col[0] for col in cursor.description], row, strict=False)) for row in file_rows],
+                "tasks": [
+                    dict(zip([col[0] for col in cursor.description], row, strict=False))
+                    for row in task_rows
+                ],
+                "files": [
+                    dict(zip([col[0] for col in cursor.description], row, strict=False))
+                    for row in file_rows
+                ],
                 "export_time": time.time(),
             }
 

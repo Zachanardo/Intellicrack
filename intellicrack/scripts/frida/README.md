@@ -86,7 +86,7 @@ send({
 
 // Success messages
 send({
-    type: "success", 
+    type: "success",
     target: "script_name",
     action: "bypass_applied",
     data: { method: "api_hook", target_function: "LicenseCheck" }
@@ -95,7 +95,7 @@ send({
 // Error messages
 send({
     type: "error",
-    target: "script_name", 
+    target: "script_name",
     action: "operation_failed",
     data: { error: "Target function not found" }
 });
@@ -166,11 +166,11 @@ Scripts can be executed manually via:
     name: "Script Name",
     description: "Script description",
     version: "2.0.0",
-    
+
     config: {
         // Configuration options
     },
-    
+
     // Script implementation
     main: function() {
         // Script logic

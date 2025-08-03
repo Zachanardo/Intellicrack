@@ -38,9 +38,9 @@ class BaseDetector(ABC):
         self.logger = logging.getLogger("IntellicrackLogger.AntiAnalysis")
         self.detection_methods = {}
 
-    def run_detection_loop(self,
-                          aggressive: bool = False,
-                          aggressive_methods: list[str] = None) -> dict[str, Any]:
+    def run_detection_loop(
+        self, aggressive: bool = False, aggressive_methods: list[str] = None
+    ) -> dict[str, Any]:
         """Run the detection loop for all configured methods.
 
         Args:
@@ -143,9 +143,12 @@ class BaseDetector(ABC):
             self.logger.debug(f"Error getting process list: {e}")
             return "", []
 
-    def calculate_detection_score(self, detections: dict[str, Any],
-                                strong_methods: list[str],
-                                medium_methods: list[str] = None) -> int:
+    def calculate_detection_score(
+        self,
+        detections: dict[str, Any],
+        strong_methods: list[str],
+        medium_methods: list[str] = None,
+    ) -> int:
         """Calculate detection score based on method difficulty.
 
         Args:

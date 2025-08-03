@@ -84,7 +84,9 @@ class R2BypassGenerator:
                 result["keygen_algorithms"] = self._generate_keygen_algorithms(license_analysis)
 
                 # Generate registry modifications
-                result["registry_modifications"] = self._generate_registry_modifications(license_analysis)
+                result["registry_modifications"] = self._generate_registry_modifications(
+                    license_analysis
+                )
 
                 # Generate file modifications
                 result["file_modifications"] = self._generate_file_modifications(license_analysis)
@@ -131,9 +133,12 @@ class R2BypassGenerator:
             # Get functions that might be license-related
             functions = r2.get_functions()
             license_functions = [
-                f for f in functions
-                if any(keyword in f.get("name", "").lower()
-                      for keyword in ["license", "valid", "check", "trial", "register", "activ"])
+                f
+                for f in functions
+                if any(
+                    keyword in f.get("name", "").lower()
+                    for keyword in ["license", "valid", "check", "trial", "register", "activ"]
+                )
             ]
 
             # Analyze each license function
@@ -167,7 +172,9 @@ class R2BypassGenerator:
 
         return analysis
 
-    def _extract_validation_logic(self, decompiled: dict[str, Any], func: dict[str, Any]) -> dict[str, Any]:
+    def _extract_validation_logic(
+        self, decompiled: dict[str, Any], func: dict[str, Any]
+    ) -> dict[str, Any]:
         """Extract license validation logic from decompiled function."""
         validation_info = {
             "function": func,
@@ -223,11 +230,13 @@ class R2BypassGenerator:
         bypass_points = []
         for pattern in license_patterns:
             if pattern.get("type") == "license_validation":
-                bypass_points.append({
-                    "line_number": pattern.get("line_number"),
-                    "instruction": pattern.get("line"),
-                    "bypass_method": self._suggest_bypass_method(pattern),
-                })
+                bypass_points.append(
+                    {
+                        "line_number": pattern.get("line_number"),
+                        "instruction": pattern.get("line"),
+                        "bypass_method": self._suggest_bypass_method(pattern),
+                    }
+                )
 
         validation_info["bypass_points"] = bypass_points
 
@@ -248,19 +257,22 @@ class R2BypassGenerator:
         ]
 
         import re
+
         lines = pseudocode.split("\n")
 
         for i, line in enumerate(lines):
             for pattern in crypto_patterns:
                 matches = re.findall(pattern, line, re.IGNORECASE)
                 for match in matches:
-                    crypto_ops.append({
-                        "line_number": i + 1,
-                        "operation": match,
-                        "full_line": line.strip(),
-                        "algorithm": self._identify_crypto_algorithm(match),
-                        "purpose": self._identify_crypto_purpose(line),
-                    })
+                    crypto_ops.append(
+                        {
+                            "line_number": i + 1,
+                            "operation": match,
+                            "full_line": line.strip(),
+                            "algorithm": self._identify_crypto_algorithm(match),
+                            "purpose": self._identify_crypto_purpose(line),
+                        }
+                    )
 
         return crypto_ops
 
@@ -271,8 +283,17 @@ class R2BypassGenerator:
         try:
             # Search for license-related strings
             license_keywords = [
-                "license", "serial", "key", "activation", "registration",
-                "trial", "demo", "expire", "valid", "invalid", "piracy",
+                "license",
+                "serial",
+                "key",
+                "activation",
+                "registration",
+                "trial",
+                "demo",
+                "expire",
+                "valid",
+                "invalid",
+                "piracy",
             ]
 
             for keyword in license_keywords:
@@ -284,13 +305,17 @@ class R2BypassGenerator:
                             if addr:
                                 string_content = r2._execute_command(f"ps @ {hex(addr)}")
                                 if string_content:
-                                    patterns.append({
-                                        "keyword": keyword,
-                                        "address": hex(addr),
-                                        "content": string_content.strip(),
-                                        "context": "license_string",
-                                        "bypass_potential": self._assess_string_bypass_potential(string_content),
-                                    })
+                                    patterns.append(
+                                        {
+                                            "keyword": keyword,
+                                            "address": hex(addr),
+                                            "content": string_content.strip(),
+                                            "context": "license_string",
+                                            "bypass_potential": self._assess_string_bypass_potential(
+                                                string_content
+                                            ),
+                                        }
+                                    )
                 except R2Exception as e:
                     logger.error("R2Exception in radare2_bypass_generator: %s", e)
                     continue
@@ -320,43 +345,61 @@ class R2BypassGenerator:
 
                     # Registry operations
                     if any(reg_api in api_name for reg_api in ["regopen", "regquery", "regset"]):
-                        api_analysis["registry_operations"].append({
-                            "api": imp,
-                            "purpose": "license_storage",
-                            "bypass_method": "registry_redirection",
-                        })
+                        api_analysis["registry_operations"].append(
+                            {
+                                "api": imp,
+                                "purpose": "license_storage",
+                                "bypass_method": "registry_redirection",
+                            }
+                        )
 
                     # File operations
-                    elif any(file_api in api_name for file_api in ["createfile", "readfile", "writefile"]):
-                        api_analysis["file_operations"].append({
-                            "api": imp,
-                            "purpose": "license_file_access",
-                            "bypass_method": "file_redirection",
-                        })
+                    elif any(
+                        file_api in api_name for file_api in ["createfile", "readfile", "writefile"]
+                    ):
+                        api_analysis["file_operations"].append(
+                            {
+                                "api": imp,
+                                "purpose": "license_file_access",
+                                "bypass_method": "file_redirection",
+                            }
+                        )
 
                     # Network operations
-                    elif any(net_api in api_name for net_api in ["internetopen", "httpopen", "connect"]):
-                        api_analysis["network_operations"].append({
-                            "api": imp,
-                            "purpose": "online_validation",
-                            "bypass_method": "network_blocking",
-                        })
+                    elif any(
+                        net_api in api_name for net_api in ["internetopen", "httpopen", "connect"]
+                    ):
+                        api_analysis["network_operations"].append(
+                            {
+                                "api": imp,
+                                "purpose": "online_validation",
+                                "bypass_method": "network_blocking",
+                            }
+                        )
 
                     # Time checks
-                    elif any(time_api in api_name for time_api in ["getsystemtime", "getlocaltime"]):
-                        api_analysis["time_checks"].append({
-                            "api": imp,
-                            "purpose": "trial_expiration",
-                            "bypass_method": "time_manipulation",
-                        })
+                    elif any(
+                        time_api in api_name for time_api in ["getsystemtime", "getlocaltime"]
+                    ):
+                        api_analysis["time_checks"].append(
+                            {
+                                "api": imp,
+                                "purpose": "trial_expiration",
+                                "bypass_method": "time_manipulation",
+                            }
+                        )
 
                     # Hardware checks
-                    elif any(hw_api in api_name for hw_api in ["getvolumeinformation", "getcomputername"]):
-                        api_analysis["hardware_checks"].append({
-                            "api": imp,
-                            "purpose": "hardware_fingerprint",
-                            "bypass_method": "hardware_spoofing",
-                        })
+                    elif any(
+                        hw_api in api_name for hw_api in ["getvolumeinformation", "getcomputername"]
+                    ):
+                        api_analysis["hardware_checks"].append(
+                            {
+                                "api": imp,
+                                "purpose": "hardware_fingerprint",
+                                "bypass_method": "hardware_spoofing",
+                            }
+                        )
 
         except R2Exception as e:
             logger.error("R2Exception in radare2_bypass_generator: %s", e)
@@ -392,54 +435,68 @@ class R2BypassGenerator:
             validation_type = func_info.get("validation_type", "unknown")
 
             if validation_type == "simple":
-                strategies.append({
-                    "strategy": "Direct Patching",
-                    "description": "Patch validation checks to always return success",
-                    "success_rate": 0.95,
-                    "difficulty": "easy",
-                    "implementation": self._generate_direct_patch_implementation(func_info),
-                })
+                strategies.append(
+                    {
+                        "strategy": "Direct Patching",
+                        "description": "Patch validation checks to always return success",
+                        "success_rate": 0.95,
+                        "difficulty": "easy",
+                        "implementation": self._generate_direct_patch_implementation(func_info),
+                    }
+                )
 
             elif validation_type == "cryptographic":
-                strategies.append({
-                    "strategy": "Crypto Bypass",
-                    "description": "Bypass cryptographic validation",
-                    "success_rate": 0.7,
-                    "difficulty": "medium",
-                    "implementation": self._generate_crypto_bypass_implementation(func_info),
-                })
+                strategies.append(
+                    {
+                        "strategy": "Crypto Bypass",
+                        "description": "Bypass cryptographic validation",
+                        "success_rate": 0.7,
+                        "difficulty": "medium",
+                        "implementation": self._generate_crypto_bypass_implementation(func_info),
+                    }
+                )
 
             elif validation_type == "online":
-                strategies.append({
-                    "strategy": "Network Interception",
-                    "description": "Intercept and modify network validation",
-                    "success_rate": 0.8,
-                    "difficulty": "medium",
-                    "implementation": self._generate_network_bypass_implementation(func_info),
-                })
+                strategies.append(
+                    {
+                        "strategy": "Network Interception",
+                        "description": "Intercept and modify network validation",
+                        "success_rate": 0.8,
+                        "difficulty": "medium",
+                        "implementation": self._generate_network_bypass_implementation(func_info),
+                    }
+                )
 
             elif validation_type == "time_based":
-                strategies.append({
-                    "strategy": "Time Manipulation",
-                    "description": "Manipulate system time checks",
-                    "success_rate": 0.9,
-                    "difficulty": "easy",
-                    "implementation": self._generate_time_bypass_implementation(func_info),
-                })
+                strategies.append(
+                    {
+                        "strategy": "Time Manipulation",
+                        "description": "Manipulate system time checks",
+                        "success_rate": 0.9,
+                        "difficulty": "easy",
+                        "implementation": self._generate_time_bypass_implementation(func_info),
+                    }
+                )
 
         # Add registry-based strategies
         if license_analysis.get("registry_operations"):
-            strategies.append({
-                "strategy": "Registry Manipulation",
-                "description": "Modify registry entries for license validation",
-                "success_rate": 0.85,
-                "difficulty": "easy",
-                "implementation": self._generate_registry_bypass_implementation(license_analysis),
-            })
+            strategies.append(
+                {
+                    "strategy": "Registry Manipulation",
+                    "description": "Modify registry entries for license validation",
+                    "success_rate": 0.85,
+                    "difficulty": "easy",
+                    "implementation": self._generate_registry_bypass_implementation(
+                        license_analysis
+                    ),
+                }
+            )
 
         return strategies
 
-    def _generate_automated_patches(self, r2, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
+    def _generate_automated_patches(
+        self, r2, license_analysis: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Generate automated binary patches."""
         patches = []
 
@@ -476,41 +533,51 @@ class R2BypassGenerator:
 
         return keygens
 
-    def _generate_registry_modifications(self, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
+    def _generate_registry_modifications(
+        self, license_analysis: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Generate registry modification instructions."""
         modifications = []
 
         registry_ops = license_analysis.get("registry_operations", [])
 
         for reg_op in registry_ops:
-            modifications.append({
-                "operation": "create_key",
-                "registry_path": self._predict_registry_path(reg_op),
-                "value_name": "License",
-                "value_data": self._generate_license_value(),
-                "value_type": "REG_SZ",
-                "description": "Create fake license registry entry",
-            })
+            modifications.append(
+                {
+                    "operation": "create_key",
+                    "registry_path": self._predict_registry_path(reg_op),
+                    "value_name": "License",
+                    "value_data": self._generate_license_value(),
+                    "value_type": "REG_SZ",
+                    "description": "Create fake license registry entry",
+                }
+            )
 
         return modifications
 
-    def _generate_file_modifications(self, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
+    def _generate_file_modifications(
+        self, license_analysis: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Generate file modification instructions."""
         modifications = []
 
         file_ops = license_analysis.get("file_operations", [])
 
         for file_op in file_ops:
-            modifications.append({
-                "operation": "create_file",
-                "file_path": self._predict_license_file_path(file_op),
-                "content": self._generate_license_file_content(),
-                "description": "Create fake license file",
-            })
+            modifications.append(
+                {
+                    "operation": "create_file",
+                    "file_path": self._predict_license_file_path(file_op),
+                    "content": self._generate_license_file_content(),
+                    "description": "Create fake license file",
+                }
+            )
 
         return modifications
 
-    def _generate_memory_patches(self, r2, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
+    def _generate_memory_patches(
+        self, r2, license_analysis: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Generate runtime memory patches."""
         patches = []
 
@@ -520,13 +587,15 @@ class R2BypassGenerator:
             func_addr = func_info["function"].get("offset", 0)
 
             if func_addr:
-                patches.append({
-                    "type": "memory_patch",
-                    "address": hex(func_addr),
-                    "original_bytes": self._get_original_bytes(r2, func_addr),
-                    "patch_bytes": self._generate_patch_bytes(func_info),
-                    "description": f'Runtime patch for {func_info["function"]["name"]}',
-                })
+                patches.append(
+                    {
+                        "type": "memory_patch",
+                        "address": hex(func_addr),
+                        "original_bytes": self._get_original_bytes(r2, func_addr),
+                        "patch_bytes": self._generate_patch_bytes(func_info),
+                        "description": f'Runtime patch for {func_info["function"]["name"]}',
+                    }
+                )
 
         return patches
 
@@ -537,26 +606,32 @@ class R2BypassGenerator:
         # Registry API hooks
         registry_ops = license_analysis.get("registry_operations", [])
         for reg_op in registry_ops:
-            hooks.append({
-                "api": reg_op["api"]["name"],
-                "hook_type": "registry_redirect",
-                "implementation": self._generate_registry_hook_code(reg_op),
-                "description": "Hook registry access for license validation",
-            })
+            hooks.append(
+                {
+                    "api": reg_op["api"]["name"],
+                    "hook_type": "registry_redirect",
+                    "implementation": self._generate_registry_hook_code(reg_op),
+                    "description": "Hook registry access for license validation",
+                }
+            )
 
         # File API hooks
         file_ops = license_analysis.get("file_operations", [])
         for file_op in file_ops:
-            hooks.append({
-                "api": file_op["api"]["name"],
-                "hook_type": "file_redirect",
-                "implementation": self._generate_file_hook_code(file_op),
-                "description": "Hook file access for license validation",
-            })
+            hooks.append(
+                {
+                    "api": file_op["api"]["name"],
+                    "hook_type": "file_redirect",
+                    "implementation": self._generate_file_hook_code(file_op),
+                    "description": "Hook file access for license validation",
+                }
+            )
 
         return hooks
 
-    def _generate_validation_bypasses(self, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
+    def _generate_validation_bypasses(
+        self, license_analysis: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Generate validation bypass techniques."""
         bypasses = []
 
@@ -691,7 +766,9 @@ class R2BypassGenerator:
             "tools": "API hooking or system time manipulation",
         }
 
-    def _generate_registry_bypass_implementation(self, license_analysis: dict[str, Any]) -> dict[str, str]:
+    def _generate_registry_bypass_implementation(
+        self, license_analysis: dict[str, Any]
+    ) -> dict[str, str]:
         """Generate registry bypass implementation based on license analysis."""
         # Extract registry-related patterns from license analysis
         registry_patterns = license_analysis.get("registry_patterns", [])
@@ -727,12 +804,16 @@ class R2BypassGenerator:
             "target": f"Registry operations in {target_hive}",
             "patch_type": "registry_redirection",
             "scope": scope,
-            "instructions": "; ".join(specific_instructions) if specific_instructions else "Create fake registry entries or redirect registry access",
+            "instructions": "; ".join(specific_instructions)
+            if specific_instructions
+            else "Create fake registry entries or redirect registry access",
             "tools": "Registry editor or API hooking",
             "confidence": len(registry_patterns) * 0.2 + len(license_keys) * 0.15,
         }
 
-    def _create_binary_patch(self, r2, func_info: dict[str, Any], bypass_point: dict[str, Any]) -> dict[str, Any] | None:
+    def _create_binary_patch(
+        self, r2, func_info: dict[str, Any], bypass_point: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """Create binary patch for bypass point."""
         func_addr = func_info["function"].get("offset", 0)
         if not func_addr:
@@ -830,17 +911,23 @@ class R2BypassGenerator:
         # Analyze operation to predict likely license path
         if "license" in reg_key.lower() or "license" in reg_value.lower():
             if "HKLM" in reg_key or access_type == "system_write":
-                return rf'HKEY_LOCAL_MACHINE\Software\{reg_op.get("app_name", "UnknownApp")}\License'
+                return (
+                    rf'HKEY_LOCAL_MACHINE\Software\{reg_op.get("app_name", "UnknownApp")}\License'
+                )
             return rf'HKEY_CURRENT_USER\Software\{reg_op.get("app_name", "UnknownApp")}\License'
 
-        if any(keyword in reg_key.lower() or keyword in reg_value.lower()
-                for keyword in ["serial", "key", "activation"]):
+        if any(
+            keyword in reg_key.lower() or keyword in reg_value.lower()
+            for keyword in ["serial", "key", "activation"]
+        ):
             if data_type == "binary" or "encrypted" in str(reg_op):
                 return rf'HKEY_LOCAL_MACHINE\Software\{reg_op.get("app_name", "UnknownApp")}\Registration\Key'
             return rf'HKEY_CURRENT_USER\Software\{reg_op.get("app_name", "UnknownApp")}\Serial'
 
-        if any(keyword in reg_key.lower() or keyword in reg_value.lower()
-                for keyword in ["trial", "expire", "date"]):
+        if any(
+            keyword in reg_key.lower() or keyword in reg_value.lower()
+            for keyword in ["trial", "expire", "date"]
+        ):
             return rf'HKEY_CURRENT_USER\Software\{reg_op.get("app_name", "UnknownApp")}\TrialInfo'
 
         # Default based on access pattern
@@ -863,7 +950,9 @@ class R2BypassGenerator:
         # Generate realistic license key format
         segments = []
         for _ in range(4):
-            segment = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+            segment = "".join(
+                secrets.choice(string.ascii_uppercase + string.digits) for _ in range(4)
+            )
             segments.append(segment)
 
         return "-".join(segments)
@@ -1133,35 +1222,45 @@ HANDLE WINAPI HookedCreateFile(LPCSTR lpFileName, {additional_params}) {{
 
         # Customize indicators based on bypass method
         if method == "direct_patching" or bypass_method == "direct_patching":
-            indicators.extend([
-                "Patched binary executes without errors",
-                "License check functions return success",
-                "No integrity check failures",
-            ])
+            indicators.extend(
+                [
+                    "Patched binary executes without errors",
+                    "License check functions return success",
+                    "No integrity check failures",
+                ]
+            )
         elif method == "registry_manipulation":
-            indicators.extend([
-                "Registry keys contain valid license data",
-                "License validation reads fake registry values",
-                "No registry access denied errors",
-            ])
+            indicators.extend(
+                [
+                    "Registry keys contain valid license data",
+                    "License validation reads fake registry values",
+                    "No registry access denied errors",
+                ]
+            )
         elif method == "crypto_bypass":
-            indicators.extend([
-                "Cryptographic checks return valid results",
-                "Key validation functions bypassed",
-                "No encryption/decryption errors",
-            ])
+            indicators.extend(
+                [
+                    "Cryptographic checks return valid results",
+                    "Key validation functions bypassed",
+                    "No encryption/decryption errors",
+                ]
+            )
         elif method == "network_interception":
-            indicators.extend([
-                "Network license checks return positive response",
-                "Offline activation successful",
-                "No network connectivity errors",
-            ])
+            indicators.extend(
+                [
+                    "Network license checks return positive response",
+                    "Offline activation successful",
+                    "No network connectivity errors",
+                ]
+            )
         elif method == "time_manipulation":
-            indicators.extend([
-                "Trial period appears unlimited",
-                "Expiration dates modified successfully",
-                "System time changes not detected",
-            ])
+            indicators.extend(
+                [
+                    "Trial period appears unlimited",
+                    "Expiration dates modified successfully",
+                    "System time changes not detected",
+                ]
+            )
 
         # Add target-specific indicators
         if target_type == "license_check":
@@ -1172,12 +1271,14 @@ HANDLE WINAPI HookedCreateFile(LPCSTR lpFileName, {additional_params}) {{
             indicators.append("Software appears fully activated")
 
         # Always add general success indicators
-        indicators.extend([
-            "Full functionality available",
-            "No trial limitations",
-            "No expiration warnings",
-            "Professional/registered version features accessible",
-        ])
+        indicators.extend(
+            [
+                "Full functionality available",
+                "No trial limitations",
+                "No expiration warnings",
+                "Professional/registered version features accessible",
+            ]
+        )
 
         return list(set(indicators))  # Remove duplicates
 
@@ -1293,7 +1394,9 @@ def generate_key():
             best_strategy = max(strategies, key=lambda x: x.get("success_rate", 0))
 
             guide["recommended_approach"] = best_strategy.get("strategy", "Unknown")
-            guide["step_by_step_guide"] = best_strategy.get("implementation", {}).get("instructions", "").split(". ")
+            guide["step_by_step_guide"] = (
+                best_strategy.get("implementation", {}).get("instructions", "").split(". ")
+            )
             guide["tools_needed"] = [best_strategy.get("implementation", {}).get("tools", "")]
             guide["difficulty_level"] = best_strategy.get("difficulty", "medium")
             guide["success_probability"] = best_strategy.get("success_rate", 0.5)
@@ -1305,7 +1408,8 @@ def generate_key():
                     "success_rate": s.get("success_rate", 0),
                     "difficulty": s.get("difficulty", "medium"),
                 }
-                for s in strategies if s != best_strategy
+                for s in strategies
+                if s != best_strategy
             ]
 
         return guide
@@ -1345,61 +1449,85 @@ def generate_key():
             method = strategy.get("strategy", "")
 
             if method == "direct_patching":
-                technical_risks.extend([
-                    "Binary integrity check failures",
-                    "Code section corruption",
-                    "Digital signature invalidation",
-                ])
-                detection_risks.extend([
-                    "Hash-based detection",
-                    "Binary diff detection",
-                ])
-                mitigation_strategies.extend([
-                    "Use stealthy patching techniques",
-                    "Preserve digital signatures when possible",
-                ])
+                technical_risks.extend(
+                    [
+                        "Binary integrity check failures",
+                        "Code section corruption",
+                        "Digital signature invalidation",
+                    ]
+                )
+                detection_risks.extend(
+                    [
+                        "Hash-based detection",
+                        "Binary diff detection",
+                    ]
+                )
+                mitigation_strategies.extend(
+                    [
+                        "Use stealthy patching techniques",
+                        "Preserve digital signatures when possible",
+                    ]
+                )
 
             elif method == "registry_manipulation":
-                technical_risks.extend([
-                    "Registry corruption",
-                    "Permission denied errors",
-                ])
-                detection_risks.extend([
-                    "Registry monitoring detection",
-                    "Unusual registry access patterns",
-                ])
-                mitigation_strategies.extend([
-                    "Use registry redirection",
-                    "Clear registry traces after testing",
-                ])
+                technical_risks.extend(
+                    [
+                        "Registry corruption",
+                        "Permission denied errors",
+                    ]
+                )
+                detection_risks.extend(
+                    [
+                        "Registry monitoring detection",
+                        "Unusual registry access patterns",
+                    ]
+                )
+                mitigation_strategies.extend(
+                    [
+                        "Use registry redirection",
+                        "Clear registry traces after testing",
+                    ]
+                )
 
             elif method == "crypto_bypass":
-                technical_risks.extend([
-                    "Cryptographic validation failures",
-                    "Key generation errors",
-                ])
-                detection_risks.extend([
-                    "Crypto API monitoring",
-                    "Invalid key pattern detection",
-                ])
-                mitigation_strategies.extend([
-                    "Use hardware-based key generation",
-                    "Implement realistic crypto patterns",
-                ])
+                technical_risks.extend(
+                    [
+                        "Cryptographic validation failures",
+                        "Key generation errors",
+                    ]
+                )
+                detection_risks.extend(
+                    [
+                        "Crypto API monitoring",
+                        "Invalid key pattern detection",
+                    ]
+                )
+                mitigation_strategies.extend(
+                    [
+                        "Use hardware-based key generation",
+                        "Implement realistic crypto patterns",
+                    ]
+                )
 
             elif method == "network_interception":
-                technical_risks.extend([
-                    "Network connectivity issues",
-                    "SSL/TLS validation failures",
-                ])
-                detection_risks.extend([
-                    "Network traffic analysis",
-                    "Server-side validation bypass detection",
-                ])
-                mitigation_strategies.extend([
-                    "Use proxy servers",
-                    "Implement realistic network responses",
-                ])
+                technical_risks.extend(
+                    [
+                        "Network connectivity issues",
+                        "SSL/TLS validation failures",
+                    ]
+                )
+                detection_risks.extend(
+                    [
+                        "Network traffic analysis",
+                        "Server-side validation bypass detection",
+                    ]
+                )
+                mitigation_strategies.extend(
+                    [
+                        "Use proxy servers",
+                        "Implement realistic network responses",
+                    ]
+                )
 
         # Adjust risks based on protection mechanisms found
         if mechanisms.get("crypto_operations"):

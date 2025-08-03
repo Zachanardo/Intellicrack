@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import os
 import re
@@ -84,11 +83,40 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
         keyword_format.setFontWeight(QFont.Bold)
 
         keywords = [
-            "and", "as", "assert", "break", "class", "continue", "def",
-            "del", "elif", "else", "except", "exec", "finally", "for",
-            "from", "global", "if", "import", "in", "is", "lambda",
-            "not", "or", "pass", "print", "raise", "return", "try",
-            "while", "with", "yield", "True", "False", "None",
+            "and",
+            "as",
+            "assert",
+            "break",
+            "class",
+            "continue",
+            "def",
+            "del",
+            "elif",
+            "else",
+            "except",
+            "exec",
+            "finally",
+            "for",
+            "from",
+            "global",
+            "if",
+            "import",
+            "in",
+            "is",
+            "lambda",
+            "not",
+            "or",
+            "pass",
+            "print",
+            "raise",
+            "return",
+            "try",
+            "while",
+            "with",
+            "yield",
+            "True",
+            "False",
+            "None",
         ]
 
         for _keyword in keywords:
@@ -223,7 +251,9 @@ class FindReplaceDialog(QDialog):
     def replace_all(self):
         """Replace all occurrences."""
         if self.text_editor and hasattr(self.text_editor, "replace_all_text"):
-            count = self.text_editor.replace_all_text(self.find_edit.text(), self.replace_edit.text())
+            count = self.text_editor.replace_all_text(
+                self.find_edit.text(), self.replace_edit.text()
+            )
             if HAS_PYQT:
                 QMessageBox.information(self, "Replace All", f"Replaced {count} occurrences")
 
@@ -595,15 +625,17 @@ class TextEditorDialog(QDialog):
         layout.addWidget(format_label)
 
         format_combo = QComboBox()
-        format_combo.addItems([
-            "HTML (.html)",
-            "PDF (.pdf)",
-            "Rich Text Format (.rtf)",
-            "Markdown (.md)",
-            "Plain Text (.txt)",
-            "CSV (.csv)",
-            "JSON (.json)",
-        ])
+        format_combo.addItems(
+            [
+                "HTML (.html)",
+                "PDF (.pdf)",
+                "Rich Text Format (.rtf)",
+                "Markdown (.md)",
+                "Plain Text (.txt)",
+                "CSV (.csv)",
+                "JSON (.json)",
+            ]
+        )
         layout.addWidget(format_combo)
 
         # Options
@@ -632,12 +664,14 @@ class TextEditorDialog(QDialog):
         export_dialog.setLayout(layout)
 
         # Connect buttons
-        export_btn.clicked.connect(lambda: self._perform_export(
-            format_combo.currentText(),
-            include_highlighting.isChecked(),
-            include_line_numbers.isChecked(),
-            export_dialog,
-        ))
+        export_btn.clicked.connect(
+            lambda: self._perform_export(
+                format_combo.currentText(),
+                include_highlighting.isChecked(),
+                include_line_numbers.isChecked(),
+                export_dialog,
+            )
+        )
         cancel_btn.clicked.connect(export_dialog.reject)
 
         export_dialog.exec()
@@ -690,7 +724,9 @@ class TextEditorDialog(QDialog):
                 with open(file_path, "w", encoding="utf-8") as f:
                     if include_line_numbers:
                         lines = content.split("\n")
-                        numbered_content = "\n".join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
+                        numbered_content = "\n".join(
+                            f"{i+1:4d}: {line}" for i, line in enumerate(lines)
+                        )
                         f.write(numbered_content)
                     else:
                         f.write(content)
@@ -776,8 +812,11 @@ class TextEditorDialog(QDialog):
 
         except ImportError:
             # Fallback if PyQt6.QtPrintSupport is not available
-            QMessageBox.warning(self, "PDF Export",
-                               "PDF export requires PyQt6.QtPrintSupport. Saving as text instead.")
+            QMessageBox.warning(
+                self,
+                "PDF Export",
+                "PDF export requires PyQt6.QtPrintSupport. Saving as text instead.",
+            )
             with open(file_path.replace(".pdf", ".txt"), "w", encoding="utf-8") as f:
                 f.write(content)
 
@@ -804,9 +843,15 @@ class TextEditorDialog(QDialog):
         if self.file_path:
             ext = os.path.splitext(self.file_path)[1].lower()
             lang_map = {
-                ".py": "python", ".js": "javascript", ".java": "java",
-                ".cpp": "cpp", ".c": "c", ".cs": "csharp",
-                ".html": "html", ".css": "css", ".json": "json",
+                ".py": "python",
+                ".js": "javascript",
+                ".java": "java",
+                ".cpp": "cpp",
+                ".c": "c",
+                ".cs": "csharp",
+                ".html": "html",
+                ".css": "css",
+                ".json": "json",
             }
             lang = lang_map.get(ext, "")
 
@@ -855,22 +900,30 @@ class TextEditorDialog(QDialog):
         content = self._escape_html(content)
 
         # Python keywords
-        keywords = r"\b(and|as|assert|break|class|continue|def|del|elif|else|except|" \
-                  r"finally|for|from|global|if|import|in|is|lambda|not|or|pass|raise|" \
-                  r"return|try|while|with|yield|None|True|False)\b"
+        keywords = (
+            r"\b(and|as|assert|break|class|continue|def|del|elif|else|except|"
+            r"finally|for|from|global|if|import|in|is|lambda|not|or|pass|raise|"
+            r"return|try|while|with|yield|None|True|False)\b"
+        )
 
         # Apply highlighting
         content = re.sub(keywords, r'<span class="keyword">\1</span>', content)
-        content = re.sub(r"#.*$", lambda m: f'<span class="comment">{m.group()}</span>', content, flags=re.MULTILINE)
-        content = re.sub(r'"[^"]*"|\'[^\']*\'', lambda m: f'<span class="string">{m.group()}</span>', content)
+        content = re.sub(
+            r"#.*$",
+            lambda m: f'<span class="comment">{m.group()}</span>',
+            content,
+            flags=re.MULTILINE,
+        )
+        content = re.sub(
+            r'"[^"]*"|\'[^\']*\'', lambda m: f'<span class="string">{m.group()}</span>', content
+        )
         content = re.sub(r"\b\d+\b", lambda m: f'<span class="number">{m.group()}</span>', content)
         content = re.sub(r"\bdef\s+(\w+)", r'def <span class="function">\1</span>', content)
 
         if include_line_numbers:
             lines = content.split("\n")
             content = "\n".join(
-                f'<span class="line-number">{i+1:4d}:</span> {line}'
-                for i, line in enumerate(lines)
+                f'<span class="line-number">{i+1:4d}:</span> {line}' for i, line in enumerate(lines)
             )
 
         return content

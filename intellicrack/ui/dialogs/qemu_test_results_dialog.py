@@ -74,8 +74,14 @@ class QEMUExecutionThread(QThread):
     progress_update = pyqtSignal(int, str)
     execution_complete = pyqtSignal(TestResults)
 
-    def __init__(self, qemu_manager: QEMUTestManager, snapshot_id: str,
-                 script_content: str, binary_path: str, script_type: str):
+    def __init__(
+        self,
+        qemu_manager: QEMUTestManager,
+        snapshot_id: str,
+        script_content: str,
+        binary_path: str,
+        script_type: str,
+    ):
         """Initialize the QEMUExecutionThread with default values."""
         super().__init__()
         self.qemu_manager = qemu_manager
@@ -156,19 +162,23 @@ class QEMUExecutionThread(QThread):
                 # Extract real memory addresses
                 addr_match = re.search(r"at (0x[0-9a-fA-F]+)", line)
                 if addr_match:
-                    memory_changes.append({
-                        "type": "discovery",
-                        "address": addr_match.group(1),
-                        "description": line,
-                    })
+                    memory_changes.append(
+                        {
+                            "type": "discovery",
+                            "address": addr_match.group(1),
+                            "description": line,
+                        }
+                    )
 
             elif "Patched" in line or "Hooked" in line:
                 # Extract patching/hooking info
-                api_calls.append({
-                    "type": "hook",
-                    "description": line,
-                    "timestamp": datetime.now().isoformat(),
-                })
+                api_calls.append(
+                    {
+                        "type": "hook",
+                        "description": line,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
             elif "WARNING" in line or "Warning" in line:
                 warnings.append(line)
@@ -189,7 +199,7 @@ class QEMUExecutionThread(QThread):
             memory_changes=memory_changes,
             api_calls=api_calls,
             network_activity=[],  # Could be enhanced with network monitoring
-            file_operations=[],   # Could be enhanced with file monitoring
+            file_operations=[],  # Could be enhanced with file monitoring
             process_state=process_state,
             exit_code=result.exit_code,
         )
@@ -431,7 +441,9 @@ class QEMUTestResultsDialog(QDialog):
         stats_item = QTreeWidgetItem(["Statistics", ""])
         stats_item.addChild(QTreeWidgetItem(["Memory Changes", str(len(results.memory_changes))]))
         stats_item.addChild(QTreeWidgetItem(["API Calls", str(len(results.api_calls))]))
-        stats_item.addChild(QTreeWidgetItem(["Network Activity", str(len(results.network_activity))]))
+        stats_item.addChild(
+            QTreeWidgetItem(["Network Activity", str(len(results.network_activity))])
+        )
         stats_item.addChild(QTreeWidgetItem(["File Operations", str(len(results.file_operations))]))
         self.analysis_tree.addTopLevelItem(stats_item)
 
@@ -442,12 +454,14 @@ class QEMUTestResultsDialog(QDialog):
         self.memory_tree.clear()
 
         for change in results.memory_changes:
-            item = QTreeWidgetItem([
-                change.get("address", "Unknown"),
-                change.get("original", "N/A"),
-                change.get("patched", "N/A"),
-                change.get("description", ""),
-            ])
+            item = QTreeWidgetItem(
+                [
+                    change.get("address", "Unknown"),
+                    change.get("original", "N/A"),
+                    change.get("patched", "N/A"),
+                    change.get("description", ""),
+                ]
+            )
             self.memory_tree.addTopLevelItem(item)
 
     def _populate_api_calls(self, results: TestResults):
@@ -455,12 +469,14 @@ class QEMUTestResultsDialog(QDialog):
         self.api_tree.clear()
 
         for call in results.api_calls:
-            item = QTreeWidgetItem([
-                call.get("timestamp", "N/A"),
-                call.get("api", "Unknown"),
-                call.get("parameters", ""),
-                call.get("result", ""),
-            ])
+            item = QTreeWidgetItem(
+                [
+                    call.get("timestamp", "N/A"),
+                    call.get("api", "Unknown"),
+                    call.get("parameters", ""),
+                    call.get("result", ""),
+                ]
+            )
             self.api_tree.addTopLevelItem(item)
 
     def run_on_host(self):
@@ -498,8 +514,10 @@ class QEMUTestResultsDialog(QDialog):
 
         # Save to file
         from PyQt6.QtWidgets import QFileDialog
+
         filename, _ = QFileDialog.getSaveFileName(
-            self, "Export Test Results",
+            self,
+            "Export Test Results",
             f"qemu_test_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
             "JSON Files (*.json)",
         )

@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import json
 import logging
 import math
@@ -33,6 +32,7 @@ logger = logging.getLogger("Intellicrack.HexView.AI")
 # Import LLM backend support
 try:
     from ..ai.llm_backends import LLMMessage, get_llm_manager
+
     LLM_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in ai_bridge: %s", e)
@@ -59,9 +59,15 @@ class BinaryContextBuilder:
     def __init__(self):
         """Initialize the binary context builder."""
 
-    def build_context(self, binary_data: bytes, offset: int, size: int,
-                     include_entropy: bool = True, include_strings: bool = True,
-                     include_structure_hints: bool = True) -> dict[str, Any]:
+    def build_context(
+        self,
+        binary_data: bytes,
+        offset: int,
+        size: int,
+        include_entropy: bool = True,
+        include_strings: bool = True,
+        include_structure_hints: bool = True,
+    ) -> dict[str, Any]:
         """Build a rich context dictionary for the given binary data.
 
         Args:
@@ -161,15 +167,17 @@ class BinaryContextBuilder:
         segments = []
 
         for i in range(0, len(data), block_size):
-            block = data[i:i + block_size]
+            block = data[i : i + block_size]
             entropy = self._calculate_entropy(block)
 
-            segments.append({
-                "offset": i,
-                "size": len(block),
-                "entropy": entropy,
-                "high_entropy": entropy > 7.0,
-            })
+            segments.append(
+                {
+                    "offset": i,
+                    "size": len(block),
+                    "entropy": entropy,
+                    "high_entropy": entropy > 7.0,
+                }
+            )
 
         return segments
 
@@ -191,12 +199,14 @@ class BinaryContextBuilder:
         for match in ascii_pattern.finditer(data):
             try:
                 string_value = match.group(0).decode("ascii")
-                strings.append({
-                    "offset": match.start(),
-                    "size": len(match.group(0)),
-                    "value": string_value,
-                    "encoding": "ASCII",
-                })
+                strings.append(
+                    {
+                        "offset": match.start(),
+                        "size": len(match.group(0)),
+                        "value": string_value,
+                        "encoding": "ASCII",
+                    }
+                )
             except (UnicodeDecodeError, ValueError) as e:
                 logger.error("Error in ai_bridge: %s", e)
 
@@ -207,8 +217,12 @@ class BinaryContextBuilder:
 
         for i in range(0, len(data) - 1, 2):
             if i + 1 < len(data):
-                char_val = data[i] | (data[i+1] << 8)
-                if 32 <= char_val <= 126 or char_val in (9, 10, 13):  # ASCII or whitespace in Unicode
+                char_val = data[i] | (data[i + 1] << 8)
+                if 32 <= char_val <= 126 or char_val in (
+                    9,
+                    10,
+                    13,
+                ):  # ASCII or whitespace in Unicode
                     if not in_utf16:
                         utf16_start = i
                         in_utf16 = True
@@ -218,12 +232,14 @@ class BinaryContextBuilder:
                     if len(utf16_chars) >= min_length:
                         try:
                             string_value = "".join(chr(c) for c in utf16_chars)
-                            strings.append({
-                                "offset": utf16_start,
-                                "size": len(utf16_chars) * 2,
-                                "value": string_value,
-                                "encoding": "UTF-16LE",
-                            })
+                            strings.append(
+                                {
+                                    "offset": utf16_start,
+                                    "size": len(utf16_chars) * 2,
+                                    "value": string_value,
+                                    "encoding": "UTF-16LE",
+                                }
+                            )
                         except (ValueError, OverflowError) as e:
                             logger.error("Error in ai_bridge: %s", e)
                     utf16_chars = []
@@ -232,12 +248,14 @@ class BinaryContextBuilder:
                     if in_utf16 and len(utf16_chars) >= min_length:
                         try:
                             string_value = "".join(chr(c) for c in utf16_chars)
-                            strings.append({
-                                "offset": utf16_start,
-                                "size": len(utf16_chars) * 2,
-                                "value": string_value,
-                                "encoding": "UTF-16LE",
-                            })
+                            strings.append(
+                                {
+                                    "offset": utf16_start,
+                                    "size": len(utf16_chars) * 2,
+                                    "value": string_value,
+                                    "encoding": "UTF-16LE",
+                                }
+                            )
                         except (ValueError, OverflowError) as e:
                             logger.error("Error in ai_bridge: %s", e)
                     utf16_chars = []
@@ -260,28 +278,30 @@ class BinaryContextBuilder:
         # Check for common file signatures
         file_signatures = {
             b"MZ": "PE/DOS Executable",
-            b"\x7FELF": "ELF Executable",
-            b"\xCA\xFE\xBA\xBE": "Mach-O Binary (32-bit)",
-            b"\xCF\xFA\xED\xFE": "Mach-O Binary (64-bit)",
+            b"\x7fELF": "ELF Executable",
+            b"\xca\xfe\xba\xbe": "Mach-O Binary (32-bit)",
+            b"\xcf\xfa\xed\xfe": "Mach-O Binary (64-bit)",
             b"PK\x03\x04": "ZIP Archive",
-            b"\xFF\xD8\xFF": "JPEG Image",
+            b"\xff\xd8\xff": "JPEG Image",
             b"\x89PNG": "PNG Image",
             b"GIF8": "GIF Image",
             b"%PDF": "PDF Document",
             b"{\r\n": "JSON Data",
             b"{\n": "JSON Data",
             b"<?xml": "XML Data",
-            b"\x1F\x8B\x08": "GZIP Data",
+            b"\x1f\x8b\x08": "GZIP Data",
         }
 
         for signature, file_type in file_signatures.items():
             if data.startswith(signature):
-                hints.append({
-                    "offset": 0,
-                    "type": "file_signature",
-                    "value": signature.hex(),
-                    "description": file_type,
-                })
+                hints.append(
+                    {
+                        "offset": 0,
+                        "type": "file_signature",
+                        "value": signature.hex(),
+                        "description": file_type,
+                    }
+                )
                 break
 
         # Look for potential headers or structures
@@ -290,26 +310,30 @@ class BinaryContextBuilder:
         for i in range(min(len(data) - 4, 16)):
             # Check if there's a 16-bit or 32-bit length prefix
             if i + 2 < len(data):
-                length_16 = struct.unpack("<H", data[i:i+2])[0]
+                length_16 = struct.unpack("<H", data[i : i + 2])[0]
                 if length_16 > 0 and i + 2 + length_16 <= len(data) and length_16 < 1024:
-                    hints.append({
-                        "offset": i,
-                        "type": "length_prefix",
-                        "size": 2,
-                        "value": length_16,
-                        "description": f"Possible 16-bit length prefix ({length_16} bytes)",
-                    })
+                    hints.append(
+                        {
+                            "offset": i,
+                            "type": "length_prefix",
+                            "size": 2,
+                            "value": length_16,
+                            "description": f"Possible 16-bit length prefix ({length_16} bytes)",
+                        }
+                    )
 
             if i + 4 < len(data):
-                length_32 = struct.unpack("<I", data[i:i+4])[0]
+                length_32 = struct.unpack("<I", data[i : i + 4])[0]
                 if length_32 > 0 and i + 4 + length_32 <= len(data) and length_32 < 10240:
-                    hints.append({
-                        "offset": i,
-                        "type": "length_prefix",
-                        "size": 4,
-                        "value": length_32,
-                        "description": f"Possible 32-bit length prefix ({length_32} bytes)",
-                    })
+                    hints.append(
+                        {
+                            "offset": i,
+                            "type": "length_prefix",
+                            "size": 4,
+                            "value": length_32,
+                            "description": f"Possible 32-bit length prefix ({length_32} bytes)",
+                        }
+                    )
 
         # Check for potential arrays/tables
         repeating_patterns = self._detect_repeating_patterns(data)
@@ -336,26 +360,28 @@ class BinaryContextBuilder:
 
             # Check for repeating pattern of fixed length
             for i in range(0, len(data) - pattern_len * 3, pattern_len):
-                pattern = data[i:i+pattern_len]
+                pattern = data[i : i + pattern_len]
                 is_repeating = True
                 repeat_count = 1
 
                 for j in range(i + pattern_len, min(i + pattern_len * 10, len(data)), pattern_len):
-                    if data[j:j+pattern_len] != pattern:
+                    if data[j : j + pattern_len] != pattern:
                         is_repeating = False
                         break
                     repeat_count += 1
 
                 if is_repeating and repeat_count >= 3:
-                    patterns.append({
-                        "offset": i,
-                        "type": "repeating_pattern",
-                        "pattern_size": pattern_len,
-                        "repeat_count": repeat_count,
-                        "total_size": pattern_len * repeat_count,
-                        "pattern": pattern.hex(),
-                        "description": f"Repeating pattern of {pattern_len} bytes, repeated {repeat_count} times",
-                    })
+                    patterns.append(
+                        {
+                            "offset": i,
+                            "type": "repeating_pattern",
+                            "pattern_size": pattern_len,
+                            "repeat_count": repeat_count,
+                            "total_size": pattern_len * repeat_count,
+                            "pattern": pattern.hex(),
+                            "description": f"Repeating pattern of {pattern_len} bytes, repeated {repeat_count} times",
+                        }
+                    )
 
                     # Skip ahead
                     i += pattern_len * repeat_count - 1
@@ -415,6 +441,7 @@ class BinaryContextBuilder:
             # Check if it's a reasonable Unix timestamp (between 1970 and 2100)
             if 0 < uint32 < 4102444800:
                 import datetime
+
                 try:
                     result["unix_timestamp"] = datetime.datetime.fromtimestamp(uint32).isoformat()
                 except (ValueError, OSError, OverflowError) as e:
@@ -428,8 +455,11 @@ class BinaryContextBuilder:
                     unix_time = (uint64 - 116444736000000000) // 10000000
                     if unix_time < 4102444800:  # Before 2100
                         import datetime
+
                         try:
-                            result["windows_filetime"] = datetime.datetime.fromtimestamp(unix_time).isoformat()
+                            result["windows_filetime"] = datetime.datetime.fromtimestamp(
+                                unix_time
+                            ).isoformat()
                         except (ValueError, OSError, OverflowError) as e:
                             logger.error("Error in ai_bridge: %s", e)
 
@@ -474,8 +504,9 @@ class AIBinaryBridge:
 
         logger.info("AIBinaryBridge initialized")
 
-    def analyze_binary_region(self, binary_data: bytes, offset: int, size: int,
-                             query: str | None = None) -> dict[str, Any]:
+    def analyze_binary_region(
+        self, binary_data: bytes, offset: int, size: int, query: str | None = None
+    ) -> dict[str, Any]:
         """Analyze a region of binary data with AI assistance.
 
         Args:
@@ -490,7 +521,9 @@ class AIBinaryBridge:
         """
         # Build context for the AI
         context = self.context_builder.build_context(
-            binary_data, offset, size,
+            binary_data,
+            offset,
+            size,
             include_entropy=True,
             include_strings=True,
             include_structure_hints=True,
@@ -504,11 +537,16 @@ class AIBinaryBridge:
             try:
                 # Use LLM backend for analysis
                 messages = [
-                    LLMMessage(role="system", content="You are an autonomous binary analysis expert specialized in reverse engineering and malware analysis."),
+                    LLMMessage(
+                        role="system",
+                        content="You are an autonomous binary analysis expert specialized in reverse engineering and malware analysis.",
+                    ),
                     LLMMessage(role="user", content=prompt),
                 ]
                 llm_response = self.llm_manager.chat(messages)
-                response = llm_response.content if llm_response else self._real_ai_analysis(context, query)
+                response = (
+                    llm_response.content if llm_response else self._real_ai_analysis(context, query)
+                )
             except Exception as e:
                 logger.warning("LLM analysis failed: %s - using fallback", e)
                 response = self._real_ai_analysis(context, query)
@@ -524,8 +562,9 @@ class AIBinaryBridge:
 
         return result
 
-    def suggest_edits(self, binary_data: bytes, offset: int, size: int,
-                     edit_intent: str) -> dict[str, Any]:
+    def suggest_edits(
+        self, binary_data: bytes, offset: int, size: int, edit_intent: str
+    ) -> dict[str, Any]:
         """Suggest binary edits based on natural language intent.
 
         Args:
@@ -540,7 +579,9 @@ class AIBinaryBridge:
         """
         # Build context for the AI
         context = self.context_builder.build_context(
-            binary_data, offset, size,
+            binary_data,
+            offset,
+            size,
             include_entropy=True,
             include_strings=True,
             include_structure_hints=True,
@@ -554,11 +595,18 @@ class AIBinaryBridge:
             try:
                 # Use LLM backend for edit suggestions
                 messages = [
-                    LLMMessage(role="system", content="You are an autonomous binary editing expert that autonomously modifies binary files. Provide precise hex edit suggestions with comprehensive explanations and execute complete editing workflows."),
+                    LLMMessage(
+                        role="system",
+                        content="You are an autonomous binary editing expert that autonomously modifies binary files. Provide precise hex edit suggestions with comprehensive explanations and execute complete editing workflows.",
+                    ),
                     LLMMessage(role="user", content=prompt),
                 ]
                 llm_response = self.llm_manager.chat(messages)
-                response = llm_response.content if llm_response else self._real_ai_edit_analysis(context, edit_intent)
+                response = (
+                    llm_response.content
+                    if llm_response
+                    else self._real_ai_edit_analysis(context, edit_intent)
+                )
             except Exception as e:
                 logger.warning("LLM edit suggestion failed: %s - using fallback", e)
                 response = self._real_ai_edit_analysis(context, edit_intent)
@@ -574,8 +622,13 @@ class AIBinaryBridge:
 
         return result
 
-    def identify_patterns(self, binary_data: bytes, offset: int, size: int,
-                         known_patterns: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    def identify_patterns(
+        self,
+        binary_data: bytes,
+        offset: int,
+        size: int,
+        known_patterns: list[dict[str, Any]] | None = None,
+    ) -> list[dict[str, Any]]:
         """Identify known patterns in binary data.
 
         Args:
@@ -590,7 +643,9 @@ class AIBinaryBridge:
         """
         # Build context for the AI
         context = self.context_builder.build_context(
-            binary_data, offset, size,
+            binary_data,
+            offset,
+            size,
             include_entropy=True,
             include_strings=True,
             include_structure_hints=True,
@@ -604,11 +659,18 @@ class AIBinaryBridge:
             try:
                 # Use LLM backend for pattern identification
                 messages = [
-                    LLMMessage(role="system", content="You are an autonomous pattern recognition expert for binary analysis. Autonomously identify known data structures, file formats, and binary patterns with comprehensive analysis."),
+                    LLMMessage(
+                        role="system",
+                        content="You are an autonomous pattern recognition expert for binary analysis. Autonomously identify known data structures, file formats, and binary patterns with comprehensive analysis.",
+                    ),
                     LLMMessage(role="user", content=prompt),
                 ]
                 llm_response = self.llm_manager.chat(messages)
-                response = llm_response.content if llm_response else self._real_ai_pattern_analysis(context, known_patterns)
+                response = (
+                    llm_response.content
+                    if llm_response
+                    else self._real_ai_pattern_analysis(context, known_patterns)
+                )
             except Exception as e:
                 logger.warning("LLM pattern identification failed: %s - using fallback", e)
                 response = self._real_ai_pattern_analysis(context, known_patterns)
@@ -624,8 +686,9 @@ class AIBinaryBridge:
 
         return patterns
 
-    def search_binary_semantic(self, binary_data: bytes, query: str,
-                              start_offset: int = 0, end_offset: int | None = None) -> list[dict[str, Any]]:
+    def search_binary_semantic(
+        self, binary_data: bytes, query: str, start_offset: int = 0, end_offset: int | None = None
+    ) -> list[dict[str, Any]]:
         """Search binary data based on semantic meaning.
 
         Args:
@@ -655,7 +718,9 @@ class AIBinaryBridge:
 
             # Build context for the AI
             context = self.context_builder.build_context(
-                chunk_data, chunk_start, len(chunk_data),
+                chunk_data,
+                chunk_start,
+                len(chunk_data),
                 include_entropy=True,
                 include_strings=True,
                 include_structure_hints=True,
@@ -669,11 +734,18 @@ class AIBinaryBridge:
                 try:
                     # Use LLM backend for semantic search
                     messages = [
-                        LLMMessage(role="system", content="You are an autonomous semantic binary analysis expert. Autonomously find specific data patterns, structures, or content based on natural language descriptions with comprehensive analysis workflows."),
+                        LLMMessage(
+                            role="system",
+                            content="You are an autonomous semantic binary analysis expert. Autonomously find specific data patterns, structures, or content based on natural language descriptions with comprehensive analysis workflows.",
+                        ),
                         LLMMessage(role="user", content=prompt),
                     ]
                     llm_response = self.llm_manager.chat(messages)
-                    response = llm_response.content if llm_response else self._real_ai_search_analysis(context, query)
+                    response = (
+                        llm_response.content
+                        if llm_response
+                        else self._real_ai_search_analysis(context, query)
+                    )
                 except Exception as e:
                     logger.warning("LLM semantic search failed: %s - using fallback", e)
                     response = self._real_ai_search_analysis(context, query)
@@ -730,7 +802,9 @@ class AIBinaryBridge:
             ascii_representation=context["ascii_representation"],
             strings_info=self._format_strings_for_prompt(context.get("strings", [])),
             structure_hints=self._format_hints_for_prompt(context.get("structure_hints", [])),
-            interpretations=self._format_interpretations_for_prompt(context.get("interpretations", {})),
+            interpretations=self._format_interpretations_for_prompt(
+                context.get("interpretations", {})
+            ),
         )
 
         if query:
@@ -794,7 +868,9 @@ class AIBinaryBridge:
             ascii_representation=context["ascii_representation"],
             strings_info=self._format_strings_for_prompt(context.get("strings", [])),
             structure_hints=self._format_hints_for_prompt(context.get("structure_hints", [])),
-            interpretations=self._format_interpretations_for_prompt(context.get("interpretations", {})),
+            interpretations=self._format_interpretations_for_prompt(
+                context.get("interpretations", {})
+            ),
         )
 
         prompt += """
@@ -815,8 +891,9 @@ class AIBinaryBridge:
 
         return prompt
 
-    def _build_pattern_prompt(self, context: dict[str, Any],
-                             known_patterns: list[dict[str, Any]] | None) -> str:
+    def _build_pattern_prompt(
+        self, context: dict[str, Any], known_patterns: list[dict[str, Any]] | None
+    ) -> str:
         """Build prompt for AI pattern identification."""
         prompt = """
         # Binary Pattern Identification
@@ -922,7 +999,9 @@ class AIBinaryBridge:
 
         result = ""
         for s in strings[:10]:  # Limit to 10 strings
-            result += f"- Offset {s['offset']}: '{s['value']}' ({s['encoding']}, {s['size']} bytes)\n"
+            result += (
+                f"- Offset {s['offset']}: '{s['value']}' ({s['encoding']}, {s['size']} bytes)\n"
+            )
 
         if len(strings) > 10:
             result += f"- ... and {len(strings) - 10} more strings\n"
@@ -939,11 +1018,15 @@ class AIBinaryBridge:
             if hint["type"] == "file_signature":
                 result += f"- File signature at offset {hint['offset']}: {hint['description']}\n"
             elif hint["type"] == "length_prefix":
-                result += f"- Possible length prefix at offset {hint['offset']}: {hint['description']}\n"
+                result += (
+                    f"- Possible length prefix at offset {hint['offset']}: {hint['description']}\n"
+                )
             elif hint["type"] == "repeating_pattern":
                 result += f"- Repeating pattern at offset {hint['offset']}: {hint['description']}\n"
             else:
-                result += f"- {hint['type']} at offset {hint['offset']}: {hint.get('description', '')}\n"
+                result += (
+                    f"- {hint['type']} at offset {hint['offset']}: {hint.get('description', '')}\n"
+                )
 
         return result
 
@@ -994,7 +1077,9 @@ class AIBinaryBridge:
 
         return result
 
-    def _parse_analysis_response(self, response: str, binary_data: bytes, offset: int) -> dict[str, Any]:
+    def _parse_analysis_response(
+        self, response: str, binary_data: bytes, offset: int
+    ) -> dict[str, Any]:
         """Parse the AI response for binary analysis."""
         _binary_data = binary_data  # Store for potential future use
         try:
@@ -1037,7 +1122,9 @@ class AIBinaryBridge:
                 "summary": f"Error parsing AI response: {e}",
             }
 
-    def _parse_edit_response(self, response: str, binary_data: bytes, offset: int) -> dict[str, Any]:
+    def _parse_edit_response(
+        self, response: str, binary_data: bytes, offset: int
+    ) -> dict[str, Any]:
         """Parse the AI response for edit suggestions."""
         _binary_data = binary_data  # Store for potential future use
         try:
@@ -1059,7 +1146,9 @@ class AIBinaryBridge:
             # Convert hex strings to bytes
             if "original_bytes" in result:
                 try:
-                    result["original_bytes_raw"] = bytes.fromhex(result["original_bytes"].replace(" ", ""))
+                    result["original_bytes_raw"] = bytes.fromhex(
+                        result["original_bytes"].replace(" ", "")
+                    )
                 except ValueError as e:
                     logger.error("Value error in ai_bridge: %s", e)
                     result["original_bytes_raw"] = b""
@@ -1085,7 +1174,9 @@ class AIBinaryBridge:
                 "consequences": "Unknown",
             }
 
-    def _parse_pattern_response(self, response: str, binary_data: bytes, offset: int) -> list[dict[str, Any]]:
+    def _parse_pattern_response(
+        self, response: str, binary_data: bytes, offset: int
+    ) -> list[dict[str, Any]]:
         """Parse the AI response for pattern identification."""
         _binary_data = binary_data  # Store for potential future use
         try:
@@ -1114,7 +1205,9 @@ class AIBinaryBridge:
             logger.error("Error parsing pattern response: %s", e)
             return []
 
-    def _parse_search_response(self, response: str, binary_data: bytes, offset: int) -> list[dict[str, Any]]:
+    def _parse_search_response(
+        self, response: str, binary_data: bytes, offset: int
+    ) -> list[dict[str, Any]]:
         """Parse the AI response for semantic search."""
         _binary_data = binary_data  # Store for potential future use
         try:
@@ -1171,37 +1264,47 @@ class AIBinaryBridge:
             if binary_data:
                 # Real vulnerability analysis
                 try:
-                    vuln_results = vuln_engine.analyze_binary(binary_data[offset:offset+size])
+                    vuln_results = vuln_engine.analyze_binary(binary_data[offset : offset + size])
                     for vuln in vuln_results.get("vulnerabilities", []):
-                        anomalies.append({
-                            "start_offset": offset + vuln.get("offset", 0),
-                            "end_offset": offset + vuln.get("offset", 0) + vuln.get("size", 4),
-                            "description": vuln.get("description", "Potential vulnerability"),
-                            "severity": vuln.get("severity", "medium"),
-                            "vulnerability_type": vuln.get("type", "unknown"),
-                            "exploit_potential": vuln.get("exploitable", False),
-                        })
+                        anomalies.append(
+                            {
+                                "start_offset": offset + vuln.get("offset", 0),
+                                "end_offset": offset + vuln.get("offset", 0) + vuln.get("size", 4),
+                                "description": vuln.get("description", "Potential vulnerability"),
+                                "severity": vuln.get("severity", "medium"),
+                                "vulnerability_type": vuln.get("type", "unknown"),
+                                "exploit_potential": vuln.get("exploitable", False),
+                            }
+                        )
                 except Exception:
                     pass
 
                 # Real binary pattern analysis
                 try:
-                    pattern_results = binary_analyzer.detect_patterns(binary_data[offset:offset+size])
+                    pattern_results = binary_analyzer.detect_patterns(
+                        binary_data[offset : offset + size]
+                    )
                     for pattern in pattern_results.get("patterns", []):
-                        patterns.append({
-                            "start_offset": offset + pattern.get("offset", 0),
-                            "end_offset": offset + pattern.get("offset", 0) + pattern.get("size", 1),
-                            "pattern_type": pattern.get("type", "unknown"),
-                            "description": pattern.get("description", "Detected pattern"),
-                            "confidence": pattern.get("confidence", 0.5),
-                            "details": pattern.get("details", ""),
-                        })
+                        patterns.append(
+                            {
+                                "start_offset": offset + pattern.get("offset", 0),
+                                "end_offset": offset
+                                + pattern.get("offset", 0)
+                                + pattern.get("size", 1),
+                                "pattern_type": pattern.get("type", "unknown"),
+                                "description": pattern.get("description", "Detected pattern"),
+                                "confidence": pattern.get("confidence", 0.5),
+                                "details": pattern.get("details", ""),
+                            }
+                        )
                 except Exception:
                     pass
 
                 # Real structure analysis
                 try:
-                    structure_results = binary_analyzer.analyze_structure(binary_data[offset:offset+size])
+                    structure_results = binary_analyzer.analyze_structure(
+                        binary_data[offset : offset + size]
+                    )
                     structure_analysis = {
                         "format": structure_results.get("format", "unknown"),
                         "architecture": structure_results.get("architecture", "unknown"),
@@ -1215,7 +1318,9 @@ class AIBinaryBridge:
 
                 # Real string analysis with security assessment
                 try:
-                    string_results = binary_analyzer.extract_strings(binary_data[offset:offset+size])
+                    string_results = binary_analyzer.extract_strings(
+                        binary_data[offset : offset + size]
+                    )
                     suspicious_strings = []
 
                     for string_info in string_results.get("strings", []):
@@ -1252,20 +1357,24 @@ class AIBinaryBridge:
 
                 # Generate real recommendations based on analysis
                 if suspicious_strings:
-                    recommendations.append({
-                        "type": "security",
-                        "priority": "high",
-                        "action": f"Investigate {len(suspicious_strings)} suspicious strings that may indicate malicious functionality",
-                    })
+                    recommendations.append(
+                        {
+                            "type": "security",
+                            "priority": "high",
+                            "action": f"Investigate {len(suspicious_strings)} suspicious strings that may indicate malicious functionality",
+                        }
+                    )
 
                 if len(anomalies) > 0:
                     high_severity = sum(1 for a in anomalies if a.get("severity") == "high")
                     if high_severity > 0:
-                        recommendations.append({
-                            "type": "vulnerability",
-                            "priority": "critical",
-                            "action": f"Address {high_severity} high-severity vulnerabilities found in binary",
-                        })
+                        recommendations.append(
+                            {
+                                "type": "vulnerability",
+                                "priority": "critical",
+                                "action": f"Address {high_severity} high-severity vulnerabilities found in binary",
+                            }
+                        )
 
                 # Determine data meaning from real analysis
                 data_meaning = structure_analysis.get("format", "Unknown binary data")
@@ -1287,12 +1396,18 @@ class AIBinaryBridge:
                     "anomalies": anomalies,
                     "structure": structure_analysis,
                     "security_assessment": {
-                        "risk_level": "critical" if any(a.get("severity") == "high" for a in anomalies) else
-                                    "high" if suspicious_strings else
-                                    "medium" if anomalies else "low",
+                        "risk_level": "critical"
+                        if any(a.get("severity") == "high" for a in anomalies)
+                        else "high"
+                        if suspicious_strings
+                        else "medium"
+                        if anomalies
+                        else "low",
                         "suspicious_indicators": len(suspicious_strings),
                         "anomaly_count": len(anomalies),
-                        "vulnerability_count": len([a for a in anomalies if a.get("vulnerability_type")]),
+                        "vulnerability_count": len(
+                            [a for a in anomalies if a.get("vulnerability_type")]
+                        ),
                     },
                     "recommendations": recommendations,
                     "summary": f"Vulnerability analysis of {size} bytes identified {len(patterns)} patterns, {len(anomalies)} potential issues, and {len(suspicious_strings)} security indicators.",
@@ -1307,20 +1422,26 @@ class AIBinaryBridge:
 
         # Enhanced fallback analysis (better than mock)
         query_lower = query.lower() if query else ""
-        is_security_focused = any(word in query_lower for word in ["security", "vulnerability", "exploit", "malware"])
-        is_structure_focused = any(word in query_lower for word in ["structure", "format", "header", "metadata"])
+        is_security_focused = any(
+            word in query_lower for word in ["security", "vulnerability", "exploit", "malware"]
+        )
+        is_structure_focused = any(
+            word in query_lower for word in ["structure", "format", "header", "metadata"]
+        )
 
         # Check for file signatures
         for _hint in context.get("structure_hints", []):
             if _hint["type"] == "file_signature":
-                patterns.append({
-                    "start_offset": _hint["offset"],
-                    "end_offset": _hint["offset"] + len(bytes.fromhex(_hint["value"])),
-                    "pattern_type": "file_signature",
-                    "description": _hint["description"],
-                    "confidence": 0.95,
-                    "details": f"Magic bytes: {_hint['value']}",
-                })
+                patterns.append(
+                    {
+                        "start_offset": _hint["offset"],
+                        "end_offset": _hint["offset"] + len(bytes.fromhex(_hint["value"])),
+                        "pattern_type": "file_signature",
+                        "description": _hint["description"],
+                        "confidence": 0.95,
+                        "details": f"Magic bytes: {_hint['value']}",
+                    }
+                )
 
         # Check for high entropy regions
         for _segment in context.get("entropy_segments", []):
@@ -1335,7 +1456,9 @@ class AIBinaryBridge:
                 # Add security implications if security-focused
                 if is_security_focused:
                     if _segment["entropy"] > 7.8:
-                        anomaly["security_implication"] = "Possible encrypted/compressed content or packed executable"
+                        anomaly["security_implication"] = (
+                            "Possible encrypted/compressed content or packed executable"
+                        )
                     else:
                         anomaly["security_implication"] = "Moderately obfuscated data"
 
@@ -1354,7 +1477,10 @@ class AIBinaryBridge:
 
             # Check for suspicious patterns in strings
             value_lower = _string["value"].lower()
-            if any(susp in value_lower for susp in ["password", "key", "token", "secret", "admin", "root"]):
+            if any(
+                susp in value_lower
+                for susp in ["password", "key", "token", "secret", "admin", "root"]
+            ):
                 pattern["security_flag"] = "credential_related"
                 suspicious_strings.append(_string["value"])
             elif any(susp in value_lower for susp in [".exe", ".dll", "cmd", "powershell", "bash"]):
@@ -1402,25 +1528,31 @@ class AIBinaryBridge:
 
         # Generate recommendations based on analysis
         if suspicious_strings:
-            recommendations.append({
-                "type": "security",
-                "priority": "high",
-                "action": f"Review suspicious strings found: {', '.join(suspicious_strings[:3])}{'...' if len(suspicious_strings) > 3 else ''}",
-            })
+            recommendations.append(
+                {
+                    "type": "security",
+                    "priority": "high",
+                    "action": f"Review suspicious strings found: {', '.join(suspicious_strings[:3])}{'...' if len(suspicious_strings) > 3 else ''}",
+                }
+            )
 
         if any(a["severity"] == "medium" for a in anomalies):
-            recommendations.append({
-                "type": "analysis",
-                "priority": "medium",
-                "action": "Investigate high entropy regions for possible encryption or packing",
-            })
+            recommendations.append(
+                {
+                    "type": "analysis",
+                    "priority": "medium",
+                    "action": "Investigate high entropy regions for possible encryption or packing",
+                }
+            )
 
         if is_structure_focused and structure_analysis.get("format") == "unknown":
-            recommendations.append({
-                "type": "structure",
-                "priority": "low",
-                "action": "Unable to determine file format from header - may need deeper analysis",
-            })
+            recommendations.append(
+                {
+                    "type": "structure",
+                    "priority": "low",
+                    "action": "Unable to determine file format from header - may need deeper analysis",
+                }
+            )
 
         # Create comprehensive analysis response
         analysis_response = {
@@ -1438,7 +1570,9 @@ class AIBinaryBridge:
             },
             "recommendations": recommendations,
             "summary": f"Analysis of {context['size']} bytes identified as {data_meaning}. Found {len(patterns)} patterns, {len(anomalies)} anomalies, and {len(suspicious_strings)} suspicious indicators.",
-            "confidence": self._calculate_analysis_confidence(patterns, anomalies, suspicious_strings),
+            "confidence": self._calculate_analysis_confidence(
+                patterns, anomalies, suspicious_strings
+            ),
         }
 
         return json.dumps(analysis_response, indent=2)
@@ -1465,37 +1599,45 @@ class AIBinaryBridge:
             if binary_data and len(binary_data) > offset:
                 # Real edit analysis based on intent
                 try:
-                    edit_results = exploit_utils.analyze_edit_opportunities(binary_data[offset:offset+size], edit_intent)
+                    edit_results = exploit_utils.analyze_edit_opportunities(
+                        binary_data[offset : offset + size], edit_intent
+                    )
                     for edit in edit_results.get("edits", []):
-                        edit_suggestions.append({
-                            "edit_type": edit.get("type", "unknown"),
-                            "offset": offset + edit.get("offset", 0),
-                            "original_bytes": edit.get("original_bytes", ""),
-                            "new_bytes": edit.get("new_bytes", ""),
-                            "explanation": edit.get("explanation", "Binary modification"),
-                            "consequences": edit.get("consequences", "Unknown effects"),
-                            "confidence": edit.get("confidence", 0.5),
-                            "risk_level": edit.get("risk_level", "medium"),
-                        })
+                        edit_suggestions.append(
+                            {
+                                "edit_type": edit.get("type", "unknown"),
+                                "offset": offset + edit.get("offset", 0),
+                                "original_bytes": edit.get("original_bytes", ""),
+                                "new_bytes": edit.get("new_bytes", ""),
+                                "explanation": edit.get("explanation", "Binary modification"),
+                                "consequences": edit.get("consequences", "Unknown effects"),
+                                "confidence": edit.get("confidence", 0.5),
+                                "risk_level": edit.get("risk_level", "medium"),
+                            }
+                        )
                 except Exception:
                     pass
 
                 # If no specific edits found, use vulnerability-based suggestions
                 if not edit_suggestions:
                     try:
-                        vuln_results = vuln_engine.analyze_binary(binary_data[offset:offset+size])
+                        vuln_results = vuln_engine.analyze_binary(
+                            binary_data[offset : offset + size]
+                        )
                         for vuln in vuln_results.get("vulnerabilities", []):
                             if vuln.get("exploitable", False):
-                                edit_suggestions.append({
-                                    "edit_type": "vulnerability_patch",
-                                    "offset": offset + vuln.get("offset", 0),
-                                    "original_bytes": vuln.get("vulnerable_bytes", ""),
-                                    "new_bytes": vuln.get("patch_bytes", ""),
-                                    "explanation": f"Patch {vuln.get('type', 'vulnerability')}: {vuln.get('description', '')}",
-                                    "consequences": f"Addresses {vuln.get('severity', 'unknown')} severity vulnerability",
-                                    "confidence": vuln.get("confidence", 0.7),
-                                    "risk_level": vuln.get("severity", "medium"),
-                                })
+                                edit_suggestions.append(
+                                    {
+                                        "edit_type": "vulnerability_patch",
+                                        "offset": offset + vuln.get("offset", 0),
+                                        "original_bytes": vuln.get("vulnerable_bytes", ""),
+                                        "new_bytes": vuln.get("patch_bytes", ""),
+                                        "explanation": f"Patch {vuln.get('type', 'vulnerability')}: {vuln.get('description', '')}",
+                                        "consequences": f"Addresses {vuln.get('severity', 'unknown')} severity vulnerability",
+                                        "confidence": vuln.get("confidence", 0.7),
+                                        "risk_level": vuln.get("severity", "medium"),
+                                    }
+                                )
                     except Exception:
                         pass
 
@@ -1510,15 +1652,19 @@ class AIBinaryBridge:
                 # License check removal suggestion
                 for pattern in context.get("patterns", []):
                     if pattern.get("pattern_type") == "license_check":
-                        edit_suggestions.append({
-                            "edit_type": "nop_instruction",
-                            "offset": pattern["start_offset"],
-                            "original_bytes": pattern.get("bytes", "75 0E"),  # Example: JNE instruction
-                            "new_bytes": "90 90",  # NOP NOP
-                            "explanation": "Replace conditional jump with NOP instructions to bypass check",
-                            "consequences": "May bypass license validation - use only for legitimate testing",
-                            "confidence": 0.85,
-                        })
+                        edit_suggestions.append(
+                            {
+                                "edit_type": "nop_instruction",
+                                "offset": pattern["start_offset"],
+                                "original_bytes": pattern.get(
+                                    "bytes", "75 0E"
+                                ),  # Example: JNE instruction
+                                "new_bytes": "90 90",  # NOP NOP
+                                "explanation": "Replace conditional jump with NOP instructions to bypass check",
+                                "consequences": "May bypass license validation - use only for legitimate testing",
+                                "confidence": 0.85,
+                            }
+                        )
 
             elif "string" in intent_lower:
                 # String modification suggestions
@@ -1541,7 +1687,9 @@ class AIBinaryBridge:
                     break
 
             if target_string:
-                original_bytes = " ".join(f"{_b:02X}" for _b in target_string["value"].encode(target_string["encoding"]))
+                original_bytes = " ".join(
+                    f"{_b:02X}" for _b in target_string["value"].encode(target_string["encoding"])
+                )
 
                 # Determine replacement based on string content
                 if "error" in target_string["value"].lower():
@@ -1553,7 +1701,9 @@ class AIBinaryBridge:
                 else:
                     new_value = "Modified"
 
-                new_bytes = " ".join(f"{_b:02X}" for _b in new_value.encode(target_string["encoding"]))
+                new_bytes = " ".join(
+                    f"{_b:02X}" for _b in new_value.encode(target_string["encoding"])
+                )
 
                 # Pad or truncate to match original length
                 orig_len = len(target_string["value"])
@@ -1562,23 +1712,29 @@ class AIBinaryBridge:
                     # Pad with spaces
                     padding = " " * (orig_len - new_len)
                     new_value += padding
-                    new_bytes = " ".join(f"{_b:02X}" for _b in new_value.encode(target_string["encoding"]))
+                    new_bytes = " ".join(
+                        f"{_b:02X}" for _b in new_value.encode(target_string["encoding"])
+                    )
                 elif new_len > orig_len:
                     # Truncate
                     new_value = new_value[:orig_len]
-                    new_bytes = " ".join(f"{_b:02X}" for _b in new_value.encode(target_string["encoding"]))
+                    new_bytes = " ".join(
+                        f"{_b:02X}" for _b in new_value.encode(target_string["encoding"])
+                    )
 
-                edit_suggestions.append({
-                    "edit_type": "string_replace",
-                    "offset": target_string["offset"],
-                    "original_bytes": original_bytes,
-                    "new_bytes": new_bytes,
-                    "original_string": target_string["value"],
-                    "new_string": new_value,
-                    "explanation": f"Replace '{target_string['value']}' with '{new_value}'",
-                    "consequences": "Changes displayed text - may affect program logic if string is used for comparisons",
-                    "confidence": 0.9,
-                })
+                edit_suggestions.append(
+                    {
+                        "edit_type": "string_replace",
+                        "offset": target_string["offset"],
+                        "original_bytes": original_bytes,
+                        "new_bytes": new_bytes,
+                        "original_string": target_string["value"],
+                        "new_string": new_value,
+                        "explanation": f"Replace '{target_string['value']}' with '{new_value}'",
+                        "consequences": "Changes displayed text - may affect program logic if string is used for comparisons",
+                        "confidence": 0.9,
+                    }
+                )
 
         elif "patch" in intent_lower or "fix" in intent_lower:
             # Generic patching suggestions based on file type
@@ -1586,15 +1742,17 @@ class AIBinaryBridge:
 
             if hex_data.startswith("4D5A"):  # PE file
                 # Suggest PE header modifications
-                edit_suggestions.append({
-                    "edit_type": "header_modification",
-                    "offset": 0x3C,  # PE header offset location
-                    "original_bytes": "F0 00 00 00",  # Example
-                    "new_bytes": "F0 00 00 00",  # Keep same
-                    "explanation": "PE header offset - no modification suggested",
-                    "consequences": "Modifying PE headers can corrupt the executable",
-                    "confidence": 0.3,
-                })
+                edit_suggestions.append(
+                    {
+                        "edit_type": "header_modification",
+                        "offset": 0x3C,  # PE header offset location
+                        "original_bytes": "F0 00 00 00",  # Example
+                        "new_bytes": "F0 00 00 00",  # Keep same
+                        "explanation": "PE header offset - no modification suggested",
+                        "consequences": "Modifying PE headers can corrupt the executable",
+                        "confidence": 0.3,
+                    }
+                )
 
         elif "zero" in intent_lower or "null" in intent_lower:
             # Zeroing suggestions
@@ -1614,46 +1772,54 @@ class AIBinaryBridge:
             # Get original bytes
             original_hex = context.get("hex_representation", "").replace(" ", "")
             byte_offset = offset * 2  # Each byte is 2 hex chars
-            original_bytes = " ".join(original_hex[byte_offset + i:byte_offset + i + 2]
-                                    for i in range(0, min(length * 2, len(original_hex) - byte_offset), 2))
+            original_bytes = " ".join(
+                original_hex[byte_offset + i : byte_offset + i + 2]
+                for i in range(0, min(length * 2, len(original_hex) - byte_offset), 2)
+            )
 
-            edit_suggestions.append({
-                "edit_type": "zero_fill",
-                "offset": offset,
-                "original_bytes": original_bytes or "XX XX XX XX XX XX XX XX",
-                "new_bytes": " ".join(["00"] * length),
-                "explanation": f"Zero out {length} bytes at offset 0x{offset:X}",
-                "consequences": "May corrupt data structures or cause crashes if critical data is zeroed",
-                "confidence": 0.7,
-            })
+            edit_suggestions.append(
+                {
+                    "edit_type": "zero_fill",
+                    "offset": offset,
+                    "original_bytes": original_bytes or "XX XX XX XX XX XX XX XX",
+                    "new_bytes": " ".join(["00"] * length),
+                    "explanation": f"Zero out {length} bytes at offset 0x{offset:X}",
+                    "consequences": "May corrupt data structures or cause crashes if critical data is zeroed",
+                    "confidence": 0.7,
+                }
+            )
 
         # If no specific suggestions, provide a generic one
         if not edit_suggestions:
             # Generic edit based on first interesting pattern
             for _hint in context.get("structure_hints", []):
                 if _hint["type"] == "instruction":
-                    edit_suggestions.append({
-                        "edit_type": "instruction_patch",
-                        "offset": _hint["offset"],
-                        "original_bytes": _hint.get("bytes", "XX XX"),
-                        "new_bytes": "90 90",  # NOP
-                        "explanation": f"Replace {_hint.get('mnemonic', 'instruction')} with NOP",
-                        "consequences": "Alters program flow - test thoroughly",
-                        "confidence": 0.6,
-                    })
+                    edit_suggestions.append(
+                        {
+                            "edit_type": "instruction_patch",
+                            "offset": _hint["offset"],
+                            "original_bytes": _hint.get("bytes", "XX XX"),
+                            "new_bytes": "90 90",  # NOP
+                            "explanation": f"Replace {_hint.get('mnemonic', 'instruction')} with NOP",
+                            "consequences": "Alters program flow - test thoroughly",
+                            "confidence": 0.6,
+                        }
+                    )
                     break
 
         # Still no suggestions? Provide a safe default
         if not edit_suggestions:
-            edit_suggestions.append({
-                "edit_type": "no_edit_suggested",
-                "offset": 0,
-                "original_bytes": context.get("hex_representation", "XX XX XX XX")[:11],
-                "new_bytes": context.get("hex_representation", "XX XX XX XX")[:11],
-                "explanation": "No specific edit identified from intent - please be more specific",
-                "consequences": "No changes suggested",
-                "confidence": 0.1,
-            })
+            edit_suggestions.append(
+                {
+                    "edit_type": "no_edit_suggested",
+                    "offset": 0,
+                    "original_bytes": context.get("hex_representation", "XX XX XX XX")[:11],
+                    "new_bytes": context.get("hex_representation", "XX XX XX XX")[:11],
+                    "explanation": "No specific edit identified from intent - please be more specific",
+                    "consequences": "No changes suggested",
+                    "confidence": 0.1,
+                }
+            )
 
         # Create comprehensive response
         analysis_response = {
@@ -1665,17 +1831,22 @@ class AIBinaryBridge:
                 "Test modifications in a safe environment",
             ],
             "metadata": {
-                "file_type": "executable" if context.get("hex_representation", "").startswith("4D5A") else "binary",
+                "file_type": "executable"
+                if context.get("hex_representation", "").startswith("4D5A")
+                else "binary",
                 "total_suggestions": len(edit_suggestions),
-                "highest_confidence": max(s["confidence"] for s in edit_suggestions) if edit_suggestions else 0,
+                "highest_confidence": max(s["confidence"] for s in edit_suggestions)
+                if edit_suggestions
+                else 0,
                 "analysis_confidence": self._calculate_edit_confidence(edit_suggestions, context),
             },
         }
 
         return json.dumps(analysis_response, indent=2)
 
-    def _real_ai_pattern_analysis(self, context: dict[str, Any],
-                                known_patterns: list[dict[str, Any]] | None) -> str:
+    def _real_ai_pattern_analysis(
+        self, context: dict[str, Any], known_patterns: list[dict[str, Any]] | None
+    ) -> str:
         """Generate real AI response for pattern identification using comprehensive analysis."""
         patterns = []
         pattern_categories = {
@@ -1696,15 +1867,17 @@ class AIBinaryBridge:
 
                 if pattern_hex and pattern_hex in hex_data:
                     idx = hex_data.find(pattern_hex) // 2  # Convert hex position to byte offset
-                    patterns.append({
-                        "pattern_name": kp.get("name", "Unknown Pattern"),
-                        "pattern_type": kp.get("type", "custom"),
-                        "start_offset": idx,
-                        "end_offset": idx + len(pattern_hex) // 2,
-                        "confidence": 0.9,
-                        "explanation": kp.get("description", "Known pattern match"),
-                        "metadata": kp.get("metadata", {}),
-                    })
+                    patterns.append(
+                        {
+                            "pattern_name": kp.get("name", "Unknown Pattern"),
+                            "pattern_type": kp.get("type", "custom"),
+                            "start_offset": idx,
+                            "end_offset": idx + len(pattern_hex) // 2,
+                            "confidence": 0.9,
+                            "explanation": kp.get("description", "Known pattern match"),
+                            "metadata": kp.get("metadata", {}),
+                        }
+                    )
 
         # Check for file signatures
         for _hint in context.get("structure_hints", []):
@@ -1750,10 +1923,16 @@ class AIBinaryBridge:
             pe_offset_hex = hex_data[120:128]  # e_lfanew at offset 0x3C
             if len(pe_offset_hex) == 8:
                 # Convert little-endian hex to offset
-                pe_offset = int(pe_offset_hex[6:8] + pe_offset_hex[4:6] + pe_offset_hex[2:4] + pe_offset_hex[0:2], 16)
+                pe_offset = int(
+                    pe_offset_hex[6:8]
+                    + pe_offset_hex[4:6]
+                    + pe_offset_hex[2:4]
+                    + pe_offset_hex[0:2],
+                    16,
+                )
                 if pe_offset < len(hex_data) // 2:
                     pe_sig_offset = pe_offset * 2
-                    if hex_data[pe_sig_offset:pe_sig_offset+8] == "50450000":  # "PE\0\0"
+                    if hex_data[pe_sig_offset : pe_sig_offset + 8] == "50450000":  # "PE\0\0"
                         pattern = {
                             "pattern_name": "PE Header",
                             "pattern_type": "executable",
@@ -1791,7 +1970,11 @@ class AIBinaryBridge:
 
         # ZIP/JAR/APK detection
         elif "504B0304" in hex_data or "504B0506" in hex_data:
-            idx = hex_data.find("504B0304") // 2 if "504B0304" in hex_data else hex_data.find("504B0506") // 2
+            idx = (
+                hex_data.find("504B0304") // 2
+                if "504B0304" in hex_data
+                else hex_data.find("504B0506") // 2
+            )
             pattern = {
                 "pattern_name": "ZIP Archive",
                 "pattern_type": "compression",
@@ -1835,7 +2018,15 @@ class AIBinaryBridge:
                 pattern_categories["protocol"].append(pattern)
 
         # License/protection patterns
-        license_keywords = ["license", "trial", "expire", "registration", "serial", "crack", "patch"]
+        license_keywords = [
+            "license",
+            "trial",
+            "expire",
+            "registration",
+            "serial",
+            "crack",
+            "patch",
+        ]
         for _string in context.get("strings", []):
             value_lower = _string["value"].lower()
             if any(keyword in value_lower for keyword in license_keywords):
@@ -1863,9 +2054,13 @@ class AIBinaryBridge:
         if pattern_categories["executable"]:
             insights.append("Executable code structures detected")
         if pattern_categories["cryptographic"]:
-            insights.append(f"{len(pattern_categories['cryptographic'])} encrypted/compressed regions found")
+            insights.append(
+                f"{len(pattern_categories['cryptographic'])} encrypted/compressed regions found"
+            )
         if pattern_categories["protocol"]:
-            protocols = ", ".join(set(p["metadata"]["protocol"] for p in pattern_categories["protocol"]))
+            protocols = ", ".join(
+                set(p["metadata"]["protocol"] for p in pattern_categories["protocol"])
+            )
             insights.append(f"Network protocols detected: {protocols}")
 
         # Create comprehensive response
@@ -1874,17 +2069,23 @@ class AIBinaryBridge:
             "pattern_summary": {
                 "total_patterns": len(patterns),
                 "by_type": {k: len(v) for k, v in pattern_categories.items() if v},
-                "confidence_average": sum(p["confidence"] for p in patterns) / len(patterns) if patterns else 0,
+                "confidence_average": sum(p["confidence"] for p in patterns) / len(patterns)
+                if patterns
+                else 0,
             },
             "insights": insights,
             "recommendations": [
                 "Examine high-confidence patterns first",
                 "Cross-reference with known file format specifications",
                 "Use pattern offsets to navigate to interesting regions",
-            ] if patterns else ["No significant patterns detected - try different analysis approaches"],
+            ]
+            if patterns
+            else ["No significant patterns detected - try different analysis approaches"],
             "analysis_metadata": {
                 "analysis_confidence": self._calculate_pattern_confidence(patterns, context),
-                "pattern_coverage": len(patterns) / max(1, len(known_patterns)) if known_patterns else 1.0,
+                "pattern_coverage": len(patterns) / max(1, len(known_patterns))
+                if known_patterns
+                else 1.0,
             },
         }
 
@@ -1927,41 +2128,50 @@ class AIBinaryBridge:
                 matching_terms = sum(1 for term in query_terms if term in value_lower)
                 if matching_terms > 0:
                     relevance = min(0.95, 0.3 + (matching_terms * 0.2))
-                elif any(intent_keyword in value_lower for intent in search_intents
-                        for intent_keyword in search_contexts.get(intent, [])):
+                elif any(
+                    intent_keyword in value_lower
+                    for intent in search_intents
+                    for intent_keyword in search_contexts.get(intent, [])
+                ):
                     relevance = 0.6
 
                 if relevance > 0.3:
-                    matches.append({
-                        "start_offset": _string["offset"],
-                        "end_offset": _string["offset"] + _string["size"],
-                        "relevance_score": relevance,
-                        "match_type": "string",
-                        "preview": _string["value"][:50] + "..." if len(_string["value"]) > 50 else _string["value"],
-                        "explanation": f"{_string['encoding']} string matching query terms",
-                        "metadata": {
-                            "encoding": _string["encoding"],
-                            "length": _string["size"],
-                        },
-                    })
+                    matches.append(
+                        {
+                            "start_offset": _string["offset"],
+                            "end_offset": _string["offset"] + _string["size"],
+                            "relevance_score": relevance,
+                            "match_type": "string",
+                            "preview": _string["value"][:50] + "..."
+                            if len(_string["value"]) > 50
+                            else _string["value"],
+                            "explanation": f"{_string['encoding']} string matching query terms",
+                            "metadata": {
+                                "encoding": _string["encoding"],
+                                "length": _string["size"],
+                            },
+                        }
+                    )
 
         if "crypto" in search_intents:
             # Find high entropy regions
             for _segment in context.get("entropy_segments", []):
                 if _segment.get("high_entropy", False):
                     relevance = min(0.9, 0.5 + (_segment["entropy"] - 7.0) * 0.4)
-                    matches.append({
-                        "start_offset": _segment["offset"],
-                        "end_offset": _segment["offset"] + _segment["size"],
-                        "relevance_score": relevance,
-                        "match_type": "cryptographic",
-                        "preview": f"High entropy region ({_segment['size']} bytes)",
-                        "explanation": f"Possible encrypted/compressed data (entropy: {_segment['entropy']:.2f})",
-                        "metadata": {
-                            "entropy": _segment["entropy"],
-                            "size": _segment["size"],
-                        },
-                    })
+                    matches.append(
+                        {
+                            "start_offset": _segment["offset"],
+                            "end_offset": _segment["offset"] + _segment["size"],
+                            "relevance_score": relevance,
+                            "match_type": "cryptographic",
+                            "preview": f"High entropy region ({_segment['size']} bytes)",
+                            "explanation": f"Possible encrypted/compressed data (entropy: {_segment['entropy']:.2f})",
+                            "metadata": {
+                                "entropy": _segment["entropy"],
+                                "size": _segment["size"],
+                            },
+                        }
+                    )
 
         if "network" in search_intents:
             # Look for network-related patterns
@@ -1978,88 +2188,108 @@ class AIBinaryBridge:
             for pattern_name, pattern_hex in network_patterns.items():
                 if pattern_hex.lower() in hex_data.lower():
                     idx = hex_data.lower().find(pattern_hex.lower()) // 2
-                    matches.append({
-                        "start_offset": idx,
-                        "end_offset": idx + len(pattern_hex) // 2,
-                        "relevance_score": 0.85,
-                        "match_type": "network",
-                        "preview": pattern_name,
-                        "explanation": f"Network protocol identifier: {pattern_name}",
-                        "metadata": {
-                            "protocol": pattern_name.replace("://", ""),
-                        },
-                    })
+                    matches.append(
+                        {
+                            "start_offset": idx,
+                            "end_offset": idx + len(pattern_hex) // 2,
+                            "relevance_score": 0.85,
+                            "match_type": "network",
+                            "preview": pattern_name,
+                            "explanation": f"Network protocol identifier: {pattern_name}",
+                            "metadata": {
+                                "protocol": pattern_name.replace("://", ""),
+                            },
+                        }
+                    )
 
             # Look for IP address patterns in strings
             ip_pattern = re.compile(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b")
             for _string in context.get("strings", []):
                 if ip_pattern.search(_string["value"]):
-                    matches.append({
-                        "start_offset": _string["offset"],
-                        "end_offset": _string["offset"] + _string["size"],
-                        "relevance_score": 0.8,
-                        "match_type": "network",
-                        "preview": _string["value"],
-                        "explanation": "Contains IP address pattern",
-                        "metadata": {
-                            "string_type": "ip_address",
-                        },
-                    })
+                    matches.append(
+                        {
+                            "start_offset": _string["offset"],
+                            "end_offset": _string["offset"] + _string["size"],
+                            "relevance_score": 0.8,
+                            "match_type": "network",
+                            "preview": _string["value"],
+                            "explanation": "Contains IP address pattern",
+                            "metadata": {
+                                "string_type": "ip_address",
+                            },
+                        }
+                    )
 
         if "binary" in search_intents:
             # Look for instruction patterns
             for _hint in context.get("structure_hints", []):
                 if _hint["type"] == "instruction":
                     relevance = 0.7
-                    if any(term in _hint.get("mnemonic", "").lower() for term in query_lower.split()):
+                    if any(
+                        term in _hint.get("mnemonic", "").lower() for term in query_lower.split()
+                    ):
                         relevance = 0.9
-                    matches.append({
-                        "start_offset": _hint["offset"],
-                        "end_offset": _hint["offset"] + _hint.get("size", 1),
-                        "relevance_score": relevance,
-                        "match_type": "instruction",
-                        "preview": _hint.get("mnemonic", "Unknown instruction"),
-                        "explanation": f"Assembly instruction: {_hint.get('description', 'No description')}",
-                        "metadata": {
-                            "opcode": _hint.get("value", ""),
-                            "mnemonic": _hint.get("mnemonic", ""),
-                        },
-                    })
+                    matches.append(
+                        {
+                            "start_offset": _hint["offset"],
+                            "end_offset": _hint["offset"] + _hint.get("size", 1),
+                            "relevance_score": relevance,
+                            "match_type": "instruction",
+                            "preview": _hint.get("mnemonic", "Unknown instruction"),
+                            "explanation": f"Assembly instruction: {_hint.get('description', 'No description')}",
+                            "metadata": {
+                                "opcode": _hint.get("value", ""),
+                                "mnemonic": _hint.get("mnemonic", ""),
+                            },
+                        }
+                    )
 
         if "license" in search_intents:
             # License-related search
-            license_keywords = ["license", "serial", "key", "registration", "trial", "expire", "activate"]
+            license_keywords = [
+                "license",
+                "serial",
+                "key",
+                "registration",
+                "trial",
+                "expire",
+                "activate",
+            ]
             for _string in context.get("strings", []):
                 value_lower = _string["value"].lower()
                 if any(keyword in value_lower for keyword in license_keywords):
-                    matches.append({
-                        "start_offset": _string["offset"],
-                        "end_offset": _string["offset"] + _string["size"],
-                        "relevance_score": 0.9,
-                        "match_type": "license",
-                        "preview": _string["value"],
-                        "explanation": "License/protection related string",
-                        "metadata": {
-                            "protection_type": "string_check",
-                        },
-                    })
+                    matches.append(
+                        {
+                            "start_offset": _string["offset"],
+                            "end_offset": _string["offset"] + _string["size"],
+                            "relevance_score": 0.9,
+                            "match_type": "license",
+                            "preview": _string["value"],
+                            "explanation": "License/protection related string",
+                            "metadata": {
+                                "protection_type": "string_check",
+                            },
+                        }
+                    )
 
         if "security" in search_intents:
             # Security-related patterns
             vuln_patterns = ["strcpy", "sprintf", "gets", "scanf", "%s", "%n"]
             for _string in context.get("strings", []):
                 if any(pattern in _string["value"] for pattern in vuln_patterns):
-                    matches.append({
-                        "start_offset": _string["offset"],
-                        "end_offset": _string["offset"] + _string["size"],
-                        "relevance_score": 0.85,
-                        "match_type": "security",
-                        "preview": _string["value"],
-                        "explanation": "Potentially vulnerable function or format string",
-                        "metadata": {
-                            "vulnerability_type": "unsafe_function",
-                        },
-                    })
+                    matches.append(
+                        {
+                            "start_offset": _string["offset"],
+                            "end_offset": _string["offset"] + _string["size"],
+                            "relevance_score": 0.85,
+                            "match_type": "security",
+                            "preview": _string["value"],
+                            "explanation": "Potentially vulnerable function or format string",
+                            "metadata": {
+                                "vulnerability_type": "unsafe_function",
+                            },
+                        }
+                    )
 
         # Sort by relevance score
         matches.sort(key=lambda m: m["relevance_score"], reverse=True)
@@ -2081,10 +2311,14 @@ class AIBinaryBridge:
         # Generate insights
         insights = []
         if top_matches:
-            insights.append(f"Found {len(matches)} potential matches across {len(set(m['match_type'] for m in matches))} categories")
+            insights.append(
+                f"Found {len(matches)} potential matches across {len(set(m['match_type'] for m in matches))} categories"
+            )
             if any(m["relevance_score"] > 0.9 for m in top_matches):
                 insights.append("High-confidence matches found - review these first")
-            if "license" in search_intents and any(m["match_type"] == "license" for m in top_matches):
+            if "license" in search_intents and any(
+                m["match_type"] == "license" for m in top_matches
+            ):
                 insights.append("License-related content detected - useful for protection analysis")
         else:
             insights.append("No direct matches found - try broadening search terms")
@@ -2098,7 +2332,9 @@ class AIBinaryBridge:
                 "Use offset values to navigate directly to matches",
                 "Combine with pattern analysis for deeper understanding",
                 "Export high-relevance matches for further investigation",
-            ] if top_matches else [
+            ]
+            if top_matches
+            else [
                 "Try more specific search terms",
                 "Check if the data type matches your search intent",
                 "Use pattern analysis to discover content structure first",
@@ -2112,7 +2348,9 @@ class AIBinaryBridge:
 
         return json.dumps(search_results, indent=2)
 
-    def _calculate_analysis_confidence(self, patterns: list[dict], anomalies: list[dict], suspicious_strings: list[str]) -> float:
+    def _calculate_analysis_confidence(
+        self, patterns: list[dict], anomalies: list[dict], suspicious_strings: list[str]
+    ) -> float:
         """Calculate confidence score for analysis results."""
         confidence = 0.5  # Base confidence
 
@@ -2120,7 +2358,11 @@ class AIBinaryBridge:
         if patterns:
             confidence += min(0.2, len(patterns) * 0.05)
             # Higher confidence for known protection patterns
-            protection_patterns = [p for p in patterns if p.get("pattern_type") in ["license_check", "anti_debug", "encryption"]]
+            protection_patterns = [
+                p
+                for p in patterns
+                if p.get("pattern_type") in ["license_check", "anti_debug", "encryption"]
+            ]
             if protection_patterns:
                 confidence += min(0.2, len(protection_patterns) * 0.1)
 
@@ -2133,7 +2375,9 @@ class AIBinaryBridge:
             confidence += min(0.15, len(suspicious_strings) * 0.03)
             # Higher confidence for specific keywords
             critical_keywords = ["license", "trial", "expired", "debug", "crack"]
-            critical_found = sum(1 for s in suspicious_strings if any(k in s.lower() for k in critical_keywords))
+            critical_found = sum(
+                1 for s in suspicious_strings if any(k in s.lower() for k in critical_keywords)
+            )
             if critical_found:
                 confidence += min(0.1, critical_found * 0.05)
 
@@ -2145,14 +2389,20 @@ class AIBinaryBridge:
             return 0.1
 
         # Average confidence of individual suggestions
-        avg_confidence = sum(s.get("confidence", 0.5) for s in edit_suggestions) / len(edit_suggestions)
+        avg_confidence = sum(s.get("confidence", 0.5) for s in edit_suggestions) / len(
+            edit_suggestions
+        )
 
         # Adjust based on context
         confidence = avg_confidence
 
         # Higher confidence if we have good pattern matches in context
         if context.get("patterns"):
-            relevant_patterns = [p for p in context["patterns"] if p.get("pattern_type") in ["license_check", "anti_debug"]]
+            relevant_patterns = [
+                p
+                for p in context["patterns"]
+                if p.get("pattern_type") in ["license_check", "anti_debug"]
+            ]
             if relevant_patterns:
                 confidence = min(1.0, confidence + 0.1)
 
@@ -2269,7 +2519,9 @@ class AIBinaryBridge:
 
             # Build context
             context = self.context_builder.build_context(
-                data, 0, len(data),
+                data,
+                0,
+                len(data),
                 include_entropy=True,
                 include_strings=True,
                 include_structure_hints=True,
@@ -2299,6 +2551,7 @@ class AIBinaryBridge:
 
 
 # AI tool functions for _Intellicrack integration
+
 
 def wrapper_ai_binary_analyze(app_instance, parameters):
     """AI tool wrapper for analyzing binary data.
@@ -2339,7 +2592,9 @@ def wrapper_ai_binary_analyze(app_instance, parameters):
         query = parameters.get("query", "")
 
         # Initialize AI bridge
-        ai_bridge = AIBinaryBridge(app_instance.model_manager if hasattr(app_instance, "model_manager") else None)
+        ai_bridge = AIBinaryBridge(
+            app_instance.model_manager if hasattr(app_instance, "model_manager") else None
+        )
 
         # Analyze the data
         result = ai_bridge.analyze_binary_region(data, offset, len(data), query)
@@ -2392,7 +2647,9 @@ def wrapper_ai_binary_pattern_search(app_instance, parameters):
         max_size = min(max_size, file_size - start_offset)
 
         # Initialize AI bridge
-        ai_bridge = AIBinaryBridge(app_instance.model_manager if hasattr(app_instance, "model_manager") else None)
+        ai_bridge = AIBinaryBridge(
+            app_instance.model_manager if hasattr(app_instance, "model_manager") else None
+        )
 
         # Read the file in chunks and search
         chunk_size = 1024 * 1024  # 1 MB chunks
@@ -2405,7 +2662,9 @@ def wrapper_ai_binary_pattern_search(app_instance, parameters):
                 data = f.read(min(chunk_size, start_offset + max_size - _offset))
 
                 # Search for pattern
-                chunk_results = ai_bridge.search_binary_semantic(data, pattern_description, 0, len(data))
+                chunk_results = ai_bridge.search_binary_semantic(
+                    data, pattern_description, 0, len(data)
+                )
 
                 # Adjust offsets to be relative to file
                 for _result in chunk_results:
@@ -2416,7 +2675,9 @@ def wrapper_ai_binary_pattern_search(app_instance, parameters):
 
                 # Limit to top 10 results
                 if len(results) >= 10:
-                    results = sorted(results, key=lambda r: r.get("relevance_score", 0), reverse=True)[:10]
+                    results = sorted(
+                        results, key=lambda r: r.get("relevance_score", 0), reverse=True
+                    )[:10]
                     break
 
         return {"results": results, "count": len(results)}
@@ -2466,7 +2727,9 @@ def wrapper_ai_binary_edit_suggest(app_instance, parameters):
             data = f.read(size)
 
         # Initialize AI bridge
-        ai_bridge = AIBinaryBridge(app_instance.model_manager if hasattr(app_instance, "model_manager") else None)
+        ai_bridge = AIBinaryBridge(
+            app_instance.model_manager if hasattr(app_instance, "model_manager") else None
+        )
 
         # Get edit suggestions
         result = ai_bridge.suggest_edits(data, offset, len(data), edit_intent)

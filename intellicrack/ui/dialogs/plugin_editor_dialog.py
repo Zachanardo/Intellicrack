@@ -1,4 +1,3 @@
-
 """Plugin Editor Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
@@ -188,14 +187,16 @@ class PluginEditorDialog(QDialog):
         api_layout = QVBoxLayout(api_group)
 
         self.api_list = QListWidget()
-        self.api_list.addItems([
-            "Plugin Base Class",
-            "Binary Analysis API",
-            "Patching API",
-            "Network API",
-            "Frida API",
-            "Ghidra API",
-        ])
+        self.api_list.addItems(
+            [
+                "Plugin Base Class",
+                "Binary Analysis API",
+                "Patching API",
+                "Network API",
+                "Frida API",
+                "Ghidra API",
+            ]
+        )
         self.api_list.currentItemChanged.connect(self.show_api_docs)
         api_layout.addWidget(self.api_list)
 
@@ -257,7 +258,6 @@ class MyPlugin:
         return {'status': 'success', 'results': []}
                 </pre>
             """,
-
             "Binary Analysis API": """
                 <h2>Binary Analysis API</h2>
                 <p>APIs for analyzing binary files.</p>
@@ -283,7 +283,6 @@ def run(self, binary_path, options=None):
             print(f"Found license import: {imp}")
                 </pre>
             """,
-
             "Frida API": """
                 <h2>Frida API</h2>
                 <p>APIs for runtime instrumentation with Frida.</p>
@@ -352,9 +351,12 @@ Process.enumerateModules().forEach(function(module) {
     def browse_test_file(self):
         """Browse for test file"""
         from PyQt6.QtWidgets import QFileDialog
+
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Test Binary",
-            "", "Executable Files (*.exe *.dll *.so);;All Files (*.*)",
+            self,
+            "Select Test Binary",
+            "",
+            "Executable Files (*.exe *.dll *.so);;All Files (*.*)",
         )
         if file_path:
             self.test_file_edit.setText(file_path)
@@ -388,7 +390,8 @@ Process.enumerateModules().forEach(function(module) {
         except ImportError as e:
             self.logger.error("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
-                self, "Not Available",
+                self,
+                "Not Available",
                 "Debugger not available.\nPlease check installation.",
             )
 
@@ -470,7 +473,8 @@ Process.enumerateModules().forEach(function(module) {
         except ImportError as e:
             self.logger.error("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
-                self, "Not Available",
+                self,
+                "Not Available",
                 "Test generator not available.\nPlease check installation.",
             )
 
@@ -489,6 +493,7 @@ Process.enumerateModules().forEach(function(module) {
         except ImportError as e:
             self.logger.error("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
-                self, "Not Available",
+                self,
+                "Not Available",
                 "CI/CD pipeline not available.\nPlease check installation.",
             )

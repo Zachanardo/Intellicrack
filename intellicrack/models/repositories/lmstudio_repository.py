@@ -32,18 +32,21 @@ from .interface import ModelInfo
 # Set up logging
 logger = logging.getLogger(__name__)
 
+
 class LMStudioRepository(APIRepositoryBase):
     """Repository implementation for LMStudio's API."""
 
-    def __init__(self,
-                 repository_name: str = "lmstudio",
-                 api_endpoint: str = "http://localhost:1234/v1",
-                 api_key: str = "",
-                 timeout: int = 60,
-                 proxy: str = "",
-                 rate_limit_config: RateLimitConfig | None = None,
-                 cache_config: dict[str, Any] | None = None,
-                 download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads")):
+    def __init__(
+        self,
+        repository_name: str = "lmstudio",
+        api_endpoint: str = "http://localhost:1234/v1",
+        api_key: str = "",
+        timeout: int = 60,
+        proxy: str = "",
+        rate_limit_config: RateLimitConfig | None = None,
+        cache_config: dict[str, Any] | None = None,
+        download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads"),
+    ):
         """Initialize the LMStudio repository.
 
         Args:
@@ -207,5 +210,7 @@ class LMStudioRepository(APIRepositoryBase):
             Always returns (False, "LMStudio doesn't support model downloads through API")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning(
+            f"Download requested for {model_id} to {destination_path}, but not supported"
+        )
         return False, "LMStudio doesn't support model downloads through API"

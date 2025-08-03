@@ -33,6 +33,7 @@ from .local_repository import LocalFileRepository
 # Set up logging
 logger = logging.getLogger(__name__)
 
+
 class RepositoryFactory:
     """Factory for creating model repositories."""
 
@@ -40,7 +41,9 @@ class RepositoryFactory:
     _repository_types: dict[str, type[ModelRepositoryInterface]] = {}
 
     @classmethod
-    def register_repository_type(cls, type_name: str, repository_class: type[ModelRepositoryInterface]):
+    def register_repository_type(
+        cls, type_name: str, repository_class: type[ModelRepositoryInterface]
+    ):
         """Register a repository type.
 
         Args:
@@ -99,7 +102,9 @@ class RepositoryFactory:
                 cache_config = config.get("cache", {})
 
                 # Get download directory
-                download_dir = config.get("download_directory", os.path.join(os.path.dirname(__file__), "..", "downloads"))
+                download_dir = config.get(
+                    "download_directory", os.path.join(os.path.dirname(__file__), "..", "downloads")
+                )
 
                 return repo_class(
                     repository_name=repository_name,

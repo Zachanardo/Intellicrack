@@ -38,6 +38,7 @@ try:
         QMessageBox,
         QPushButton,
     )
+
     HAS_PYQT = True
 except ImportError as e:
     logger.error("Import error in ui_common: %s", e)
@@ -66,12 +67,15 @@ def ask_open_report(parent: Any, report_path: str) -> bool:
         return False
 
     try:
-        open_report = QMessageBox.question(
-            parent,
-            "Open Report",
-            "Do you want to open the report?",
-            QMessageBox.Yes | QMessageBox.No,
-        ) == QMessageBox.Yes
+        open_report = (
+            QMessageBox.question(
+                parent,
+                "Open Report",
+                "Do you want to open the report?",
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            == QMessageBox.Yes
+        )
 
         if open_report:
             webbrowser.open(f"file://{os.path.abspath(report_path)}")
@@ -85,9 +89,12 @@ def ask_open_report(parent: Any, report_path: str) -> bool:
     return False
 
 
-def get_save_filename(parent: Any, caption: str = "Save File",
-                     filter_str: str = "HTML Files (*.html);;All Files (*.*)",
-                     default_suffix: str = ".html") -> str | None:
+def get_save_filename(
+    parent: Any,
+    caption: str = "Save File",
+    filter_str: str = "HTML Files (*.html);;All Files (*.*)",
+    default_suffix: str = ".html",
+) -> str | None:
     """Show file save dialog and get filename.
 
     Args:
@@ -105,7 +112,10 @@ def get_save_filename(parent: Any, caption: str = "Save File",
 
     try:
         filename, _ = QFileDialog.getSaveFileName(
-            parent, caption, "", filter_str,
+            parent,
+            caption,
+            "",
+            filter_str,
         )
 
         if filename and default_suffix:
@@ -120,10 +130,12 @@ def get_save_filename(parent: Any, caption: str = "Save File",
         return None
 
 
-def create_binary_selection_header(parent_layout: Any,
-                                 binary_path: str = "",
-                                 show_label: bool = True,
-                                 extra_buttons: list[tuple[str, Callable]] | None = None) -> dict:
+def create_binary_selection_header(
+    parent_layout: Any,
+    binary_path: str = "",
+    show_label: bool = True,
+    extra_buttons: list[tuple[str, Callable]] | None = None,
+) -> dict:
     """Create a standard binary selection header widget.
 
     Args:
@@ -166,6 +178,7 @@ def create_binary_selection_header(parent_layout: Any,
     # Add any extra buttons
     if extra_buttons:
         from .ui_button_common import add_extra_buttons
+
         buttons = add_extra_buttons(header_layout, extra_buttons, widgets)
         widgets["extra_buttons"].update(buttons)
 

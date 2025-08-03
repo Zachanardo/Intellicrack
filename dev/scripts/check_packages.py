@@ -10,7 +10,7 @@ print("\nChecking package versions:")
 
 for package in packages:
     try:
-        result = subprocess.run([sys.executable, '-m', 'pip', 'show', package], 
+        result = subprocess.run([sys.executable, '-m', 'pip', 'show', package],
                               capture_output=True, text=True)
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')

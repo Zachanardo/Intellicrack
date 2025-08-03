@@ -1,4 +1,5 @@
 """Adobe automatic injector interface for the main UI."""
+
 import os
 import time
 
@@ -30,9 +31,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
 try:
     import frida  # pylint: disable=import-error
+
     HAS_FRIDA = True
 except ImportError as e:
     logger.error("Import error in adobe_full_auto_injector: %s", e)
@@ -40,12 +41,12 @@ except ImportError as e:
     frida = None
 
 
-
 FRIDA_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "adobe_bypass_frida.js")
 
 # Using shared ADOBE_PROCESSES from constants module
 
 injected = set()
+
 
 def inject(target_name):
     """Inject Frida script into the specified Adobe process.
@@ -70,6 +71,7 @@ def inject(target_name):
         logger.error("Error in adobe_full_auto_injector: %s", e)
         # Silent fail to remain stealthy
 
+
 def get_running_adobe_apps():
     """Get list of currently running Adobe applications that haven't been injected yet.
 
@@ -91,6 +93,7 @@ def get_running_adobe_apps():
             continue
     return running
 
+
 def monitor_loop():
     """Continuously monitor for Adobe applications and inject them as they appear.
 
@@ -102,6 +105,7 @@ def monitor_loop():
         for _proc in active:
             inject(_proc)
         time.sleep(2)
+
 
 if __name__ == "__main__":
     monitor_loop()

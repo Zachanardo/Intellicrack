@@ -30,7 +30,7 @@ class ScriptGenerationTool:
     def _load_frida_templates(self) -> Dict[str, str]:
         """Load Frida script templates"""
         return {
-            "hook_function": '''// Hook function: {function_name}
+            "hook_function": """// Hook function: {function_name}
 Java.perform(function() {{
     var targetClass = Java.use("{class_name}");
     targetClass.{function_name}.implementation = function({args}) {{
@@ -40,9 +40,8 @@ Java.perform(function() {{
         console.log("[*] {function_name} returned: " + result);
         return result;
     }};
-}});''',
-
-            "trace_api": '''// Trace API calls
+}});""",
+            "trace_api": """// Trace API calls
 Interceptor.attach(Module.findExportByName({module}, "{function}"), {{
     onEnter: function(args) {{
         console.log("[+] {function} called");
@@ -51,23 +50,20 @@ Interceptor.attach(Module.findExportByName({module}, "{function}"), {{
     onLeave: function(retval) {{
         console.log("[+] {function} returned: " + retval);
     }}
-}});''',
-
-            "bypass_protection": '''// Bypass {protection_type} protection
+}});""",
+            "bypass_protection": """// Bypass {protection_type} protection
 var bypass_{protection_type} = function() {{
     {bypass_code}
 }};
 
 // Execute bypass
-setImmediate(bypass_{protection_type});''',
-
-            "memory_patch": '''// Patch memory at address
+setImmediate(bypass_{protection_type});""",
+            "memory_patch": """// Patch memory at address
 var addr = ptr("{address}");
 Memory.protect(addr, {size}, 'rwx');
 {patch_code}
-console.log("[*] Memory patched at " + addr);''',
-
-            "ssl_pinning_bypass": '''// SSL Pinning Bypass
+console.log("[*] Memory patched at " + addr);""",
+            "ssl_pinning_bypass": """// SSL Pinning Bypass
 Java.perform(function() {{
     var array_list = Java.use("java.util.ArrayList");
     var ApiClient = Java.use('com.android.org.conscrypt.TrustManagerImpl');
@@ -76,7 +72,7 @@ Java.perform(function() {{
         console.log('[*] Bypassing SSL Pinning');
         return array_list.$new();
     }};
-}});'''
+}});""",
         }
 
     def _load_ghidra_templates(self) -> Dict[str, str]:
@@ -100,7 +96,6 @@ def analyze_functions():
         {analysis_code}
 
 analyze_functions()''',
-
             "patch_bytes": '''# Patch bytes at address
 # @author LLM
 # @category Patching
@@ -126,7 +121,6 @@ def patch_at_address(address, patch_bytes):
 
 # Apply patches
 {patch_calls}''',
-
             "find_crypto": '''# Find cryptographic functions
 # @author LLM
 # @category Crypto
@@ -154,7 +148,6 @@ def find_crypto_functions():
 # Run analysis
 crypto_functions = find_crypto_functions()
 print(f"\\nFound {{len(crypto_functions)}} potential crypto functions")''',
-
             "deobfuscate": '''# Deobfuscate strings
 # @author LLM
 # @category Deobfuscation
@@ -180,7 +173,7 @@ def deobfuscate_strings():
     # Deobfuscation logic
     {deobfuscation_code}
 
-deobfuscate_strings()'''
+deobfuscate_strings()''',
         }
 
     def get_tool_definition(self) -> Dict[str, Any]:
@@ -194,28 +187,22 @@ deobfuscate_strings()'''
                     "script_type": {
                         "type": "string",
                         "enum": ["frida", "ghidra"],
-                        "description": "Type of script to generate"
+                        "description": "Type of script to generate",
                     },
-                    "target": {
-                        "type": "string",
-                        "description": "Target binary or process name"
-                    },
-                    "task": {
-                        "type": "string",
-                        "description": "Task description for the script"
-                    },
+                    "target": {"type": "string", "description": "Target binary or process name"},
+                    "task": {"type": "string", "description": "Task description for the script"},
                     "protection_info": {
                         "type": "object",
-                        "description": "Optional protection information from DIE analysis"
+                        "description": "Optional protection information from DIE analysis",
                     },
                     "custom_requirements": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "Additional custom requirements for the script"
-                    }
+                        "description": "Additional custom requirements for the script",
+                    },
                 },
-                "required": ["script_type", "target", "task"]
-            }
+                "required": ["script_type", "target", "task"],
+            },
         }
 
     def execute(self, **kwargs) -> Dict[str, Any]:
@@ -228,14 +215,15 @@ deobfuscate_strings()'''
 
         try:
             if script_type == "frida":
-                script = self._generate_frida_script(target, task, protection_info, custom_requirements)
+                script = self._generate_frida_script(
+                    target, task, protection_info, custom_requirements
+                )
             elif script_type == "ghidra":
-                script = self._generate_ghidra_script(target, task, protection_info, custom_requirements)
+                script = self._generate_ghidra_script(
+                    target, task, protection_info, custom_requirements
+                )
             else:
-                return {
-                    "success": False,
-                    "error": f"Unknown script type: {script_type}"
-                }
+                return {"success": False, "error": f"Unknown script type: {script_type}"}
 
             return {
                 "success": True,
@@ -243,17 +231,16 @@ deobfuscate_strings()'''
                 "target": target,
                 "task": task,
                 "script": script,
-                "language": "javascript" if script_type == "frida" else "python"
+                "language": "javascript" if script_type == "frida" else "python",
             }
 
         except Exception as e:
             logger.error(f"Script generation error: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
-    def _generate_frida_script(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
+    def _generate_frida_script(
+        self, target: str, task: str, protection_info: Dict, requirements: List[str]
+    ) -> str:
         """Generate Frida script"""
         task_lower = task.lower()
 
@@ -271,7 +258,9 @@ deobfuscate_strings()'''
         else:
             return self._generate_frida_custom(target, task, protection_info, requirements)
 
-    def _generate_frida_hook(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
+    def _generate_frida_hook(
+        self, target: str, task: str, protection_info: Dict, requirements: List[str]
+    ) -> str:
         """Generate Frida hook script based on detected protections"""
         script_parts = []
 
@@ -285,33 +274,35 @@ deobfuscate_strings()'''
         # Generate protection-specific hooks based on protection_info
         if protection_info:
             for protection_type, details in protection_info.items():
-                if protection_type.lower() in ['vmprotect', 'themida', 'upx', 'aspack']:
+                if protection_type.lower() in ["vmprotect", "themida", "upx", "aspack"]:
                     script_parts.append(f"// Hooks for {protection_type} protection")
                     script_parts.append(f"// Details: {details}")
                     script_parts.append(self._generate_packer_hooks(protection_type))
 
-                elif protection_type.lower() in ['licensing', 'trial', 'serial']:
+                elif protection_type.lower() in ["licensing", "trial", "serial"]:
                     script_parts.append(f"// License/trial bypass hooks for {protection_type}")
                     script_parts.append(self._generate_license_hooks(details))
 
-                elif protection_type.lower() in ['anti_debug', 'anti_vm']:
+                elif protection_type.lower() in ["anti_debug", "anti_vm"]:
                     script_parts.append(f"// Anti-analysis bypass for {protection_type}")
                     script_parts.append(self._generate_anti_analysis_hooks(protection_type))
 
         # Determine if Java or native
         if ".apk" in target.lower() or "android" in task.lower():
             # Java hook
-            script_parts.append(self.frida_templates["hook_function"].format(
-                class_name="com.example.TargetClass",
-                function_name="targetMethod",
-                args="arg1, arg2",
-                log_args="console.log('arg1: ' + arg1 + ', arg2: ' + arg2);"
-            ))
+            script_parts.append(
+                self.frida_templates["hook_function"].format(
+                    class_name="com.example.TargetClass",
+                    function_name="targetMethod",
+                    args="arg1, arg2",
+                    log_args="console.log('arg1: ' + arg1 + ', arg2: ' + arg2);",
+                )
+            )
         else:
             # Native hook - target specific functions based on protection info
             target_functions = self._get_target_functions_from_protection(protection_info)
 
-            script_parts.append(f'''// Hook native functions based on protection analysis
+            script_parts.append(f"""// Hook native functions based on protection analysis
 var targetModule = Process.enumerateModules().filter(function(m) {{
     return m.name.toLowerCase().indexOf('{target.lower()}') !== -1;
 }})[0];
@@ -342,7 +333,7 @@ if (targetModule) {{
             }});
         }}
     }});
-}}''')
+}}""")
 
         # Add custom requirements
         if requirements:
@@ -352,7 +343,9 @@ if (targetModule) {{
 
         return "\n".join(script_parts)
 
-    def _generate_frida_trace(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
+    def _generate_frida_trace(
+        self, target: str, task: str, protection_info: Dict, requirements: List[str]
+    ) -> str:
         """Generate Frida trace script based on protection analysis"""
         script_parts = []
 
@@ -368,33 +361,33 @@ if (targetModule) {{
         # Add protection-specific tracing
         if protection_info:
             for protection_type, _details in protection_info.items():
-                if protection_type.lower() in ['licensing', 'trial', 'serial']:
+                if protection_type.lower() in ["licensing", "trial", "serial"]:
                     script_parts.append("// License-related API tracing")
                     license_apis = [
                         ("kernel32.dll", "GetVolumeInformationW"),
                         ("kernel32.dll", "GetSystemInfo"),
                         ("wininet.dll", "InternetOpenW"),
-                        ("wininet.dll", "HttpSendRequestW")
+                        ("wininet.dll", "HttpSendRequestW"),
                     ]
                     apis_to_trace.extend(license_apis)
 
-                elif protection_type.lower() in ['anti_debug', 'anti_vm']:
+                elif protection_type.lower() in ["anti_debug", "anti_vm"]:
                     script_parts.append("// Anti-analysis API tracing")
                     debug_apis = [
                         ("kernel32.dll", "IsDebuggerPresent"),
                         ("kernel32.dll", "CheckRemoteDebuggerPresent"),
                         ("ntdll.dll", "NtQueryInformationProcess"),
-                        ("kernel32.dll", "GetSystemFirmwareTable")
+                        ("kernel32.dll", "GetSystemFirmwareTable"),
                     ]
                     apis_to_trace.extend(debug_apis)
 
-                elif protection_type.lower() in ['packing', 'upx', 'vmprotect']:
+                elif protection_type.lower() in ["packing", "upx", "vmprotect"]:
                     script_parts.append("// Unpacking/protection API tracing")
                     packer_apis = [
                         ("kernel32.dll", "VirtualAlloc"),
                         ("kernel32.dll", "VirtualProtect"),
                         ("kernel32.dll", "WriteProcessMemory"),
-                        ("ntdll.dll", "NtMapViewOfSection")
+                        ("ntdll.dll", "NtMapViewOfSection"),
                     ]
                     apis_to_trace.extend(packer_apis)
 
@@ -402,42 +395,52 @@ if (targetModule) {{
         apis_to_trace = list(set(apis_to_trace))
 
         for module, func in apis_to_trace:
-            script_parts.append(self.frida_templates["trace_api"].format(
-                module=f'"{module}"' if module else "null",
-                function=func,
-                arg_logging='''        console.log("  arg0: " + args[0]);
-        console.log("  arg1: " + args[1]);'''
-            ))
+            script_parts.append(
+                self.frida_templates["trace_api"].format(
+                    module=f'"{module}"' if module else "null",
+                    function=func,
+                    arg_logging="""        console.log("  arg0: " + args[0]);
+        console.log("  arg1: " + args[1]);""",
+                )
+            )
             script_parts.append("")
 
         # Add custom requirement-based tracing
         if requirements:
             script_parts.append("// Custom requirement-based API tracing")
             for req in requirements:
-                if any(keyword in req.lower() for keyword in ['network', 'socket', 'http']):
-                    apis_to_trace.extend([
-                        ("ws2_32.dll", "WSAStartup"),
-                        ("wininet.dll", "InternetConnectW"),
-                        ("winhttp.dll", "WinHttpConnect")
-                    ])
-                elif any(keyword in req.lower() for keyword in ['crypto', 'encrypt', 'hash']):
-                    apis_to_trace.extend([
-                        ("advapi32.dll", "CryptCreateHash"),
-                        ("advapi32.dll", "CryptEncrypt"),
-                        ("bcrypt.dll", "BCryptGenerateSymmetricKey")
-                    ])
-                elif any(keyword in req.lower() for keyword in ['registry', 'reg']):
-                    apis_to_trace.extend([
-                        ("advapi32.dll", "RegCreateKeyExW"),
-                        ("advapi32.dll", "RegDeleteKeyExW"),
-                        ("advapi32.dll", "RegSetValueExW")
-                    ])
-                elif any(keyword in req.lower() for keyword in ['process', 'thread']):
-                    apis_to_trace.extend([
-                        ("kernel32.dll", "CreateProcessW"),
-                        ("kernel32.dll", "CreateThread"),
-                        ("kernel32.dll", "TerminateProcess")
-                    ])
+                if any(keyword in req.lower() for keyword in ["network", "socket", "http"]):
+                    apis_to_trace.extend(
+                        [
+                            ("ws2_32.dll", "WSAStartup"),
+                            ("wininet.dll", "InternetConnectW"),
+                            ("winhttp.dll", "WinHttpConnect"),
+                        ]
+                    )
+                elif any(keyword in req.lower() for keyword in ["crypto", "encrypt", "hash"]):
+                    apis_to_trace.extend(
+                        [
+                            ("advapi32.dll", "CryptCreateHash"),
+                            ("advapi32.dll", "CryptEncrypt"),
+                            ("bcrypt.dll", "BCryptGenerateSymmetricKey"),
+                        ]
+                    )
+                elif any(keyword in req.lower() for keyword in ["registry", "reg"]):
+                    apis_to_trace.extend(
+                        [
+                            ("advapi32.dll", "RegCreateKeyExW"),
+                            ("advapi32.dll", "RegDeleteKeyExW"),
+                            ("advapi32.dll", "RegSetValueExW"),
+                        ]
+                    )
+                elif any(keyword in req.lower() for keyword in ["process", "thread"]):
+                    apis_to_trace.extend(
+                        [
+                            ("kernel32.dll", "CreateProcessW"),
+                            ("kernel32.dll", "CreateThread"),
+                            ("kernel32.dll", "TerminateProcess"),
+                        ]
+                    )
 
                 script_parts.append(f"// Requirement: {req}")
 
@@ -453,28 +456,30 @@ if (targetModule) {{
             ("kernel32.dll", "CreateFileW"),
             ("kernel32.dll", "ReadFile"),
             ("kernel32.dll", "WriteFile"),
-            ("user32.dll", "MessageBoxW")
+            ("user32.dll", "MessageBoxW"),
         ]
 
         # Add protection-specific APIs
         if protection_info:
             protections = protection_info.keys()
-            if any('network' in p.lower() for p in protections):
-                base_apis.extend([
-                    ("ws2_32.dll", "connect"),
-                    ("ws2_32.dll", "send"),
-                    ("ws2_32.dll", "recv")
-                ])
-            if any('registry' in p.lower() for p in protections):
-                base_apis.extend([
-                    ("advapi32.dll", "RegOpenKeyExW"),
-                    ("advapi32.dll", "RegQueryValueExW"),
-                    ("advapi32.dll", "RegSetValueExW")
-                ])
+            if any("network" in p.lower() for p in protections):
+                base_apis.extend(
+                    [("ws2_32.dll", "connect"), ("ws2_32.dll", "send"), ("ws2_32.dll", "recv")]
+                )
+            if any("registry" in p.lower() for p in protections):
+                base_apis.extend(
+                    [
+                        ("advapi32.dll", "RegOpenKeyExW"),
+                        ("advapi32.dll", "RegQueryValueExW"),
+                        ("advapi32.dll", "RegSetValueExW"),
+                    ]
+                )
 
         return base_apis
 
-    def _generate_frida_bypass(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
+    def _generate_frida_bypass(
+        self, target: str, task: str, protection_info: Dict, requirements: List[str]
+    ) -> str:
         """Generate Frida bypass script"""
         script_parts = []
 
@@ -488,7 +493,7 @@ if (targetModule) {{
 
         # Anti-debug bypass
         if any("debug" in str(p).lower() for p in protections) or "debug" in task.lower():
-            bypass_code_parts.append('''    // Bypass IsDebuggerPresent
+            bypass_code_parts.append("""    // Bypass IsDebuggerPresent
     var isDebuggerPresent = Module.findExportByName("kernel32.dll", "IsDebuggerPresent");
     Interceptor.attach(isDebuggerPresent, {
         onLeave: function(retval) {
@@ -506,11 +511,11 @@ if (targetModule) {{
             this.pDebuggerPresent.writeU8(0);
             retval.replace(1);
         }
-    });''')
+    });""")
 
         # License check bypass
         if any("license" in str(p).lower() for p in protections) or "license" in task.lower():
-            bypass_code_parts.append('''    // Bypass license checks
+            bypass_code_parts.append("""    // Bypass license checks
     var modules = Process.enumerateModules();
     modules.forEach(function(module) {
         var exports = module.enumerateExports();
@@ -526,14 +531,14 @@ if (targetModule) {{
                 });
             }
         });
-    });''')
+    });""")
 
         # Add requirement-specific bypasses
         if requirements:
             script_parts.append("\n// Custom requirement-based bypasses")
             for req in requirements:
-                if any(keyword in req.lower() for keyword in ['trial', 'demo', 'evaluation']):
-                    bypass_code_parts.append('''    // Bypass trial/demo restrictions
+                if any(keyword in req.lower() for keyword in ["trial", "demo", "evaluation"]):
+                    bypass_code_parts.append("""    // Bypass trial/demo restrictions
     var trialFunctions = ["GetTrialDays", "IsTrialExpired", "CheckDemoMode"];
     trialFunctions.forEach(function(funcName) {
         var func = Module.findExportByName(null, funcName);
@@ -544,9 +549,9 @@ if (targetModule) {{
                 }
             });
         }
-    });''')
-                elif any(keyword in req.lower() for keyword in ['nag', 'reminder', 'popup']):
-                    bypass_code_parts.append('''    // Bypass nag screens and popups
+    });""")
+                elif any(keyword in req.lower() for keyword in ["nag", "reminder", "popup"]):
+                    bypass_code_parts.append("""    // Bypass nag screens and popups
     var uiFunctions = ["MessageBoxW", "MessageBoxA", "ShowWindow"];
     uiFunctions.forEach(function(funcName) {
         var func = Module.findExportByName("user32.dll", funcName);
@@ -569,9 +574,9 @@ if (targetModule) {{
                 }
             });
         }
-    });''')
-                elif any(keyword in req.lower() for keyword in ['time', 'date', 'expiry']):
-                    bypass_code_parts.append('''    // Bypass time/date based restrictions
+    });""")
+                elif any(keyword in req.lower() for keyword in ["time", "date", "expiry"]):
+                    bypass_code_parts.append("""    // Bypass time/date based restrictions
     var timeFunctions = ["GetSystemTime", "GetLocalTime", "GetFileTime"];
     timeFunctions.forEach(function(funcName) {
         var func = Module.findExportByName("kernel32.dll", funcName);
@@ -583,18 +588,19 @@ if (targetModule) {{
                 }
             });
         }
-    });''')
+    });""")
 
                 script_parts.append(f"// Custom requirement: {req}")
 
         if bypass_code_parts:
-            script_parts.append(self.frida_templates["bypass_protection"].format(
-                protection_type="generic",
-                bypass_code="\n".join(bypass_code_parts)
-            ))
+            script_parts.append(
+                self.frida_templates["bypass_protection"].format(
+                    protection_type="generic", bypass_code="\n".join(bypass_code_parts)
+                )
+            )
         else:
             # Generic bypass
-            script_parts.append('''// Generic protection bypass
+            script_parts.append("""// Generic protection bypass
 var targetAddr = ptr("0x00401000"); // Update with actual address
 Interceptor.attach(targetAddr, {
     onEnter: function(args) {
@@ -604,11 +610,13 @@ Interceptor.attach(targetAddr, {
         console.log("[*] Bypassing protection check");
         retval.replace(1); // Force success
     }
-});''')
+});""")
 
         return "\n".join(script_parts)
 
-    def _generate_frida_patch(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
+    def _generate_frida_patch(
+        self, target: str, task: str, protection_info: Dict, requirements: List[str]
+    ) -> str:
         """Generate Frida memory patch script"""
         script_parts = []
 
@@ -623,46 +631,46 @@ Interceptor.attach(targetAddr, {
 
         if protection_info:
             for protection_type, _details in protection_info.items():
-                if protection_type.lower() in ['anti_debug', 'debugger']:
-                    patch_code_parts.append('''    // Patch anti-debug checks
+                if protection_type.lower() in ["anti_debug", "debugger"]:
+                    patch_code_parts.append("""    // Patch anti-debug checks
     var antiDebugOpcodes = [0x33, 0xC0, 0xC3]; // xor eax, eax; ret
     antiDebugOpcodes.forEach(function(opcode, index) {
         addr.add(index).writeU8(opcode);
     });
-    console.log("[*] Patched anti-debug at " + addr);''')
+    console.log("[*] Patched anti-debug at " + addr);""")
 
-                elif protection_type.lower() in ['license', 'trial', 'registration']:
-                    patch_code_parts.append('''    // Patch license/trial checks
+                elif protection_type.lower() in ["license", "trial", "registration"]:
+                    patch_code_parts.append("""    // Patch license/trial checks
     var licenseBypassOpcodes = [0xB8, 0x01, 0x00, 0x00, 0x00, 0xC3]; // mov eax, 1; ret
     licenseBypassOpcodes.forEach(function(opcode, index) {
         addr.add(index).writeU8(opcode);
     });
-    console.log("[*] Patched license check at " + addr);''')
+    console.log("[*] Patched license check at " + addr);""")
 
-                elif protection_type.lower() in ['integrity', 'checksum', 'crc']:
-                    patch_code_parts.append('''    // Patch integrity/checksum verification
+                elif protection_type.lower() in ["integrity", "checksum", "crc"]:
+                    patch_code_parts.append("""    // Patch integrity/checksum verification
     var integrityBypassOpcodes = [0x90, 0x90, 0x90, 0x90, 0x90]; // NOP sled
     integrityBypassOpcodes.forEach(function(opcode, index) {
         addr.add(index).writeU8(opcode);
     });
-    console.log("[*] Patched integrity check at " + addr);''')
+    console.log("[*] Patched integrity check at " + addr);""")
 
         # Add requirements-based patches
         if requirements:
             script_parts.append("// Custom requirement-based patches")
             for req in requirements:
-                if any(keyword in req.lower() for keyword in ['jmp', 'jump', 'branch']):
-                    patch_code_parts.append('''    // Patch conditional jumps (requirement-based)
+                if any(keyword in req.lower() for keyword in ["jmp", "jump", "branch"]):
+                    patch_code_parts.append("""    // Patch conditional jumps (requirement-based)
     var jumpPatchOpcodes = [0xEB]; // JMP short (unconditional)
     jumpPatchOpcodes.forEach(function(opcode, index) {
         addr.add(index).writeU8(opcode);
-    });''')
-                elif any(keyword in req.lower() for keyword in ['call', 'function']):
-                    patch_code_parts.append('''    // Patch function calls (requirement-based)
+    });""")
+                elif any(keyword in req.lower() for keyword in ["call", "function"]):
+                    patch_code_parts.append("""    // Patch function calls (requirement-based)
     var callPatchOpcodes = [0x90, 0x90, 0x90, 0x90, 0x90]; // NOP out call
     callPatchOpcodes.forEach(function(opcode, index) {
         addr.add(index).writeU8(opcode);
-    });''')
+    });""")
 
                 script_parts.append(f"// Requirement: {req}")
 
@@ -671,20 +679,24 @@ Interceptor.attach(targetAddr, {
             patch_code = "\n".join(patch_code_parts)
         else:
             # Default patch code
-            patch_code = '''    var opcodes = [0x90, 0x90, 0x90, 0x90, 0x90]; // NOP sled
+            patch_code = """    var opcodes = [0x90, 0x90, 0x90, 0x90, 0x90]; // NOP sled
     opcodes.forEach(function(opcode, index) {
         addr.add(index).writeU8(opcode);
-    });'''
+    });"""
 
-        script_parts.append(self.frida_templates["memory_patch"].format(
-            address="0x00401000",  # Example address
-            size=5,
-            patch_code=patch_code
-        ))
+        script_parts.append(
+            self.frida_templates["memory_patch"].format(
+                address="0x00401000",  # Example address
+                size=5,
+                patch_code=patch_code,
+            )
+        )
 
         return "\n".join(script_parts)
 
-    def _generate_frida_custom(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
+    def _generate_frida_custom(
+        self, target: str, task: str, protection_info: Dict, requirements: List[str]
+    ) -> str:
         """Generate custom Frida script"""
         script_parts = []
 
@@ -699,15 +711,15 @@ Interceptor.attach(targetAddr, {
 
         if protection_info:
             for protection_type in protection_info.keys():
-                if protection_type.lower() in ['anti_debug', 'debugger']:
+                if protection_type.lower() in ["anti_debug", "debugger"]:
                     patterns.extend(["debug", "debugger", "isdebuggerpresent"])
-                elif protection_type.lower() in ['anti_vm', 'virtual']:
+                elif protection_type.lower() in ["anti_vm", "virtual"]:
                     patterns.extend(["vm", "virtual", "vbox", "vmware"])
-                elif protection_type.lower() in ['packing', 'upx', 'compression']:
+                elif protection_type.lower() in ["packing", "upx", "compression"]:
                     patterns.extend(["unpack", "decompress", "expand"])
-                elif protection_type.lower() in ['encryption', 'crypto']:
+                elif protection_type.lower() in ["encryption", "crypto"]:
                     patterns.extend(["crypt", "encrypt", "decrypt", "cipher"])
-                elif protection_type.lower() in ['obfuscation', 'obfuscate']:
+                elif protection_type.lower() in ["obfuscation", "obfuscate"]:
                     patterns.extend(["obfus", "scramble", "encode"])
 
         # Remove duplicates and convert to JavaScript array format
@@ -716,17 +728,17 @@ Interceptor.attach(targetAddr, {
         # Add requirements-based patterns
         if requirements:
             for req in requirements:
-                if any(keyword in req.lower() for keyword in ['network', 'http', 'socket']):
+                if any(keyword in req.lower() for keyword in ["network", "http", "socket"]):
                     patterns.extend(["connect", "send", "recv", "http", "socket"])
-                elif any(keyword in req.lower() for keyword in ['file', 'io', 'disk']):
+                elif any(keyword in req.lower() for keyword in ["file", "io", "disk"]):
                     patterns.extend(["file", "read", "write", "open", "close"])
-                elif any(keyword in req.lower() for keyword in ['memory', 'alloc', 'heap']):
+                elif any(keyword in req.lower() for keyword in ["memory", "alloc", "heap"]):
                     patterns.extend(["alloc", "malloc", "free", "heap"])
 
         patterns_js = str(patterns).replace("'", '"')
 
         # Basic structure with protection-aware patterns
-        script_parts.append(f'''// Main script logic
+        script_parts.append(f"""// Main script logic
 console.log("[*] Script loaded for: " + Process.enumerateModules()[0].name);
 console.log("[*] Protection-aware patterns: {patterns_js}");
 
@@ -760,11 +772,13 @@ Process.enumerateModules().forEach(function(module) {{
             }});
         }});
     }}
-}});''')
+}});""")
 
         return "\n".join(script_parts)
 
-    def _generate_ghidra_script(self, target: str, task: str, protection_info: Dict, requirements: List[str]) -> str:
+    def _generate_ghidra_script(
+        self, target: str, task: str, protection_info: Dict, requirements: List[str]
+    ) -> str:
         """Generate Ghidra script"""
         # Import here to avoid circular imports
         from ...scripting.ghidra_generator import GhidraScriptGenerator
@@ -777,7 +791,7 @@ Process.enumerateModules().forEach(function(module) {{
             "task": task,
             "protections": protection_info.get("protections", []),
             "file_type": protection_info.get("file_type", "PE"),
-            "requirements": requirements
+            "requirements": requirements,
         }
 
         # Generate script based on task
@@ -792,8 +806,8 @@ Process.enumerateModules().forEach(function(module) {{
 
     def _generate_packer_hooks(self, protection_type: str) -> str:
         """Generate hooks specific to packers/protectors"""
-        if protection_type.lower() == 'upx':
-            return '''
+        if protection_type.lower() == "upx":
+            return """
 // UPX unpacking hooks
 var upxEntryPoint = Module.findBaseAddress("main_module").add(0x1000);
 Interceptor.attach(upxEntryPoint, {
@@ -815,9 +829,9 @@ if (decompress) {
             console.log("[+] UPX decompression started");
         }
     });
-}'''
-        elif protection_type.lower() == 'vmprotect':
-            return '''
+}"""
+        elif protection_type.lower() == "vmprotect":
+            return """
 // VMProtect VM entry hooks
 var vmEntryPoints = Module.enumerateSymbols().filter(s => s.name.indexOf("vm_") !== -1);
 vmEntryPoints.forEach(function(symbol) {
@@ -841,9 +855,9 @@ Process.enumerateRanges('r-x').forEach(function(range) {
             console.log("[+] Found potential VM handler at: " + address);
         }
     });
-});'''
-        elif protection_type.lower() == 'themida':
-            return '''
+});"""
+        elif protection_type.lower() == "themida":
+            return """
 // Themida/WinLicense hooks
 var themidaChecks = ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "OutputDebugString"];
 themidaChecks.forEach(function(funcName) {
@@ -876,9 +890,9 @@ Interceptor.attach(virtualProtect, {
             args[2] = ptr(0x40); // PAGE_EXECUTE_READWRITE
         }
     }
-});'''
-        elif protection_type.lower() == 'aspack':
-            return '''
+});"""
+        elif protection_type.lower() == "aspack":
+            return """
 // ASPack unpacking hooks
 var aspackOEP = null;
 var virtualAlloc = Module.findExportByName("kernel32.dll", "VirtualAlloc");
@@ -902,9 +916,9 @@ Interceptor.attach(loadLibrary, {
             console.log("[+] ASPack loading: " + lib);
         }
     }
-});'''
-        elif protection_type.lower() == 'mpress':
-            return '''
+});"""
+        elif protection_type.lower() == "mpress":
+            return """
 // MPRESS unpacking hooks
 var mpressDecrypt = Module.findExportByName(null, "decrypt");
 if (mpressDecrypt) {
@@ -928,9 +942,9 @@ if (rtlDecompressBuffer) {
             console.log("[+] MPRESS decompression, format: " + args[0]);
         }
     });
-}'''
-        elif protection_type.lower() == 'enigma':
-            return '''
+}"""
+        elif protection_type.lower() == "enigma":
+            return """
 // Enigma Protector hooks
 var enigmaChecks = ["CheckSum", "CRC32", "VerifySignature"];
 enigmaChecks.forEach(function(funcName) {
@@ -954,9 +968,9 @@ if (regCheck) {
             retval.replace(1);
         }
     });
-}'''
-        elif protection_type.lower() == 'armadillo':
-            return '''
+}"""
+        elif protection_type.lower() == "armadillo":
+            return """
 // Armadillo protection hooks
 var armadilloAPIs = ["GetSystemTime", "GetLocalTime", "GetTickCount"];
 armadilloAPIs.forEach(function(funcName) {
@@ -981,9 +995,9 @@ if (rtlMoveMemory) {
             }
         }
     });
-}'''
-        elif protection_type.lower() == 'obsidium':
-            return '''
+}"""
+        elif protection_type.lower() == "obsidium":
+            return """
 // Obsidium protection hooks
 var obsidiumChecks = Module.enumerateExports("obsidium.dll");
 obsidiumChecks.forEach(function(exp) {
@@ -1011,9 +1025,9 @@ Interceptor.attach(ntQueryInfoProcess, {
             retval.replace(0);
         }
     }
-});'''
+});"""
         else:
-            return f'''
+            return f"""
 // Generic packer hooks for {protection_type}
 var suspiciousFuncs = ["unpack", "decrypt", "decompress", "decode"];
 Process.enumerateModules().forEach(function(module) {{
@@ -1045,7 +1059,7 @@ if (virtualAlloc) {{
             }}
         }}
     }});
-}}'''
+}}"""
 
     def _generate_license_hooks(self, details: str) -> str:
         """Generate license/trial bypass hooks based on protection details"""
@@ -1055,20 +1069,22 @@ if (virtualAlloc) {{
         # Add detail-specific functions if details contain hints
         if details and isinstance(details, str):
             details_lower = details.lower()
-            if 'trial' in details_lower:
+            if "trial" in details_lower:
                 base_functions.extend(["GetTrialDays", "IsTrialValid", "TrialCheck"])
-            if 'serial' in details_lower or 'key' in details_lower:
+            if "serial" in details_lower or "key" in details_lower:
                 base_functions.extend(["ValidateSerial", "CheckSerialKey", "VerifyProductKey"])
-            if 'online' in details_lower or 'server' in details_lower:
-                base_functions.extend(["ConnectLicenseServer", "ValidateOnline", "CheckServerLicense"])
-            if 'hardware' in details_lower or 'hwid' in details_lower:
+            if "online" in details_lower or "server" in details_lower:
+                base_functions.extend(
+                    ["ConnectLicenseServer", "ValidateOnline", "CheckServerLicense"]
+                )
+            if "hardware" in details_lower or "hwid" in details_lower:
                 base_functions.extend(["GetHardwareID", "CheckHWID", "ValidateFingerprint"])
 
         # Remove duplicates
         functions_list = list(set(base_functions))
         functions_js = str(functions_list).replace("'", '"')
 
-        return f'''
+        return f"""
 // License check bypass hooks (based on details: {details})
 var licenseCheckFunctions = {functions_js};
 licenseCheckFunctions.forEach(function(funcName) {{
@@ -1081,12 +1097,12 @@ licenseCheckFunctions.forEach(function(funcName) {{
             }}
         }});
     }}
-}});'''
+}});"""
 
     def _generate_anti_analysis_hooks(self, protection_type: str) -> str:
         """Generate anti-analysis bypass hooks"""
-        if protection_type.lower() == 'anti_debug':
-            return '''
+        if protection_type.lower() == "anti_debug":
+            return """
 // Anti-debug bypass
 var antiDebugFunctions = ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess"];
 antiDebugFunctions.forEach(function(funcName) {
@@ -1107,9 +1123,9 @@ debugFlags.forEach(function(offset) {
     var addr = peb.add(offset);
     Memory.protect(addr, 1, 'rw-');
     addr.writeU8(0);
-});'''
-        elif protection_type.lower() == 'anti_vm':
-            return '''
+});"""
+        elif protection_type.lower() == "anti_vm":
+            return """
 // Anti-VM bypass
 var antiVmChecks = ["GetSystemFirmwareTable", "GetAdaptersInfo", "RegQueryValueEx"];
 antiVmChecks.forEach(function(funcName) {
@@ -1142,9 +1158,9 @@ if (regQueryValueEx) {
             }
         }
     });
-}'''
-        elif protection_type.lower() == 'anti_attach':
-            return '''
+}"""
+        elif protection_type.lower() == "anti_attach":
+            return """
 // Anti-attach bypass
 var ptrace = Module.findExportByName(null, "ptrace");
 if (ptrace) {
@@ -1171,9 +1187,9 @@ if (ntSetInformationThread) {
             }
         }
     });
-}'''
-        elif protection_type.lower() == 'anti_dump':
-            return '''
+}"""
+        elif protection_type.lower() == "anti_dump":
+            return """
 // Anti-dump bypass
 var virtualProtect = Module.findExportByName("kernel32.dll", "VirtualProtect");
 if (virtualProtect) {
@@ -1200,9 +1216,9 @@ if (virtualAlloc) {
             }
         }
     });
-}'''
-        elif protection_type.lower() == 'anti_tamper':
-            return '''
+}"""
+        elif protection_type.lower() == "anti_tamper":
+            return """
 // Anti-tamper bypass
 var crcChecks = ["VerifySignature", "CheckIntegrity", "ValidateChecksum", "CalculateCRC"];
 crcChecks.forEach(function(funcName) {
@@ -1228,9 +1244,9 @@ hashFuncs.forEach(function(funcName) {
             }
         });
     }
-});'''
-        elif protection_type.lower() == 'timing_check':
-            return '''
+});"""
+        elif protection_type.lower() == "timing_check":
+            return """
 // Timing check bypass
 var rdtsc = Module.findExportByName(null, "__rdtsc");
 var lastTime = 0;
@@ -1264,9 +1280,9 @@ timingFuncs.forEach(function(funcName) {
             }
         });
     }
-});'''
-        elif protection_type.lower() == 'anti_sandbox':
-            return '''
+});"""
+        elif protection_type.lower() == "anti_sandbox":
+            return """
 // Anti-sandbox bypass
 var sandboxFiles = ["sbiedll.dll", "dbghelp.dll", "api_log.dll", "dir_watch.dll"];
 var getModuleHandle = Module.findExportByName("kernel32.dll", "GetModuleHandleA");
@@ -1298,9 +1314,9 @@ if (createToolhelp32Snapshot) {
             }
         }
     });
-}'''
+}"""
         else:
-            return f'''
+            return f"""
 // Generic anti-analysis hooks for {protection_type}
 var suspiciousFuncs = ["detect", "check", "verify", "protect", "guard"];
 Process.enumerateModules().forEach(function(module) {{
@@ -1318,22 +1334,22 @@ Process.enumerateModules().forEach(function(module) {{
             }}
         }});
     }});
-}});'''
+}});"""
 
     def _get_target_functions_from_protection(self, protection_info: Dict) -> str:
         """Get JavaScript array of target function names based on protection info"""
-        target_funcs = ['check', 'verify', 'validate', 'license', 'trial', 'serial']
+        target_funcs = ["check", "verify", "validate", "license", "trial", "serial"]
 
         if protection_info:
             for protection_type in protection_info.keys():
-                if 'license' in protection_type.lower():
-                    target_funcs.extend(['getlicense', 'checklicense', 'validatelicense'])
-                elif 'trial' in protection_type.lower():
-                    target_funcs.extend(['istrial', 'trialexpired', 'daysleft'])
-                elif 'debug' in protection_type.lower():
-                    target_funcs.extend(['isdebugger', 'debugger', 'antidebug'])
-                elif 'vm' in protection_type.lower():
-                    target_funcs.extend(['vm', 'virtual', 'sandbox'])
+                if "license" in protection_type.lower():
+                    target_funcs.extend(["getlicense", "checklicense", "validatelicense"])
+                elif "trial" in protection_type.lower():
+                    target_funcs.extend(["istrial", "trialexpired", "daysleft"])
+                elif "debug" in protection_type.lower():
+                    target_funcs.extend(["isdebugger", "debugger", "antidebug"])
+                elif "vm" in protection_type.lower():
+                    target_funcs.extend(["vm", "virtual", "sandbox"])
 
         return str(target_funcs).replace("'", '"')  # Convert to JavaScript array format
 

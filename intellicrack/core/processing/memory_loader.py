@@ -1,4 +1,5 @@
 """Memory loader for loading binary data into memory for analysis."""
+
 import logging
 import math
 import mmap
@@ -30,9 +31,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError as e:
     logger.error("Import error in memory_loader: %s", e)
@@ -156,7 +157,9 @@ class MemoryOptimizedBinaryLoader:
             self.logger.error("Error reading chunk: %s", e)
             return None
 
-    def read_section(self, section_name: str, section_offset: int, section_size: int) -> bytes | None:
+    def read_section(
+        self, section_name: str, section_offset: int, section_size: int
+    ) -> bytes | None:
         """Read a section from the file with caching.
 
         Args:
@@ -297,6 +300,7 @@ class MemoryOptimizedBinaryLoader:
 
         """
         from ...utils.core.string_utils import format_bytes
+
         return format_bytes(size_bytes)
 
     def __enter__(self):
@@ -308,7 +312,9 @@ class MemoryOptimizedBinaryLoader:
         if exc_type:
             self.logger.error(f"Memory loader exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                self.logger.debug(
+                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
+                )
         self.close()
 
     def __del__(self):
@@ -316,7 +322,9 @@ class MemoryOptimizedBinaryLoader:
         self.close()
 
 
-def create_memory_loader(chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024) -> MemoryOptimizedBinaryLoader:
+def create_memory_loader(
+    chunk_size: int = 1024 * 1024, max_memory: int = 1024 * 1024 * 1024
+) -> MemoryOptimizedBinaryLoader:
     """Factory function to create a MemoryOptimizedBinaryLoader.
 
     Args:

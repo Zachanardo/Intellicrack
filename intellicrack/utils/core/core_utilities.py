@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import json
 import logging
 import sys
@@ -47,6 +46,7 @@ def main(args: list[str] | None = None):
 
     # Parse command line arguments
     import argparse
+
     parser = argparse.ArgumentParser(
         description="Intellicrack - Advanced Binary Analysis and Security Research Tool",
     )
@@ -507,7 +507,9 @@ def retrieve_few_shot_examples(task_type: str, count: int = 5) -> list[dict[str,
     return task_examples[:count]
 
 
-def deep_runtime_monitoring(target_process: str, monitoring_config: dict[str, Any] | None = None) -> dict[str, Any]:
+def deep_runtime_monitoring(
+    target_process: str, monitoring_config: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Perform deep runtime monitoring of a target process.
 
     This function wraps the implementation in dynamic_analyzer.py

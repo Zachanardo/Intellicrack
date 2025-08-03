@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import mmap
 import os
@@ -37,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
+
     PYQT6_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in large_file_handler: %s", e)
@@ -57,31 +57,31 @@ __all__ = [
 class MemoryStrategy(Enum):
     """Memory mapping strategies for different file sizes."""
 
-    DIRECT_LOAD = "direct_load"        # < 100MB: Load entirely into memory
-    MEMORY_MAP = "memory_map"          # 100MB - 1GB: Use memory mapping
-    STREAMING = "streaming"            # > 1GB: Stream with minimal memory
-    HYBRID = "hybrid"                  # Adaptive strategy
+    DIRECT_LOAD = "direct_load"  # < 100MB: Load entirely into memory
+    MEMORY_MAP = "memory_map"  # 100MB - 1GB: Use memory mapping
+    STREAMING = "streaming"  # > 1GB: Stream with minimal memory
+    HYBRID = "hybrid"  # Adaptive strategy
 
 
 class LoadingStrategy(Enum):
     """File loading strategies."""
 
-    IMMEDIATE = "immediate"            # Load everything immediately
-    PROGRESSIVE = "progressive"        # Load sections as needed
-    BACKGROUND = "background"          # Load in background thread
-    ON_DEMAND = "on_demand"           # Load only when requested
+    IMMEDIATE = "immediate"  # Load everything immediately
+    PROGRESSIVE = "progressive"  # Load sections as needed
+    BACKGROUND = "background"  # Load in background thread
+    ON_DEMAND = "on_demand"  # Load only when requested
 
 
 @dataclass
 class MemoryConfig:
     """Configuration for memory usage."""
 
-    max_memory_mb: int = 500           # Maximum memory usage in MB
-    chunk_size_mb: int = 10            # Chunk size in MB
-    cache_size_mb: int = 100           # Cache size in MB
-    memory_threshold: float = 0.8      # Memory usage threshold (80%)
-    enable_compression: bool = False    # Enable chunk compression
-    prefetch_chunks: int = 2           # Number of chunks to prefetch
+    max_memory_mb: int = 500  # Maximum memory usage in MB
+    chunk_size_mb: int = 10  # Chunk size in MB
+    cache_size_mb: int = 100  # Cache size in MB
+    memory_threshold: float = 0.8  # Memory usage threshold (80%)
+    enable_compression: bool = False  # Enable chunk compression
+    prefetch_chunks: int = 2  # Number of chunks to prefetch
 
 
 @dataclass
@@ -111,8 +111,7 @@ class FileCache:
         with self.lock:
             # Check if we have a region that contains this data
             for region_offset, region in self.regions.items():
-                if (region_offset <= offset and
-                    region_offset + region.size >= offset + size):
+                if region_offset <= offset and region_offset + region.size >= offset + size:
                     # Move to end (most recently used)
                     self.regions.move_to_end(region_offset)
                     region.last_accessed = time.time()
@@ -128,8 +127,7 @@ class FileCache:
             max_bytes = self.config.cache_size_mb * 1024 * 1024
 
             # Evict old regions if necessary
-            while (self.total_memory + region_size > max_bytes and
-                   len(self.regions) > 0):
+            while self.total_memory + region_size > max_bytes and len(self.regions) > 0:
                 self._evict_oldest()
 
             # Add the new region
@@ -138,8 +136,10 @@ class FileCache:
             region.last_accessed = time.time()
             region.ref_count = 1
 
-            logger.debug(f"Cached region: offset=0x{region.offset:X}, size={region.size}, "
-                        f"total_memory={self.total_memory / (1024*1024):.1f}MB")
+            logger.debug(
+                f"Cached region: offset=0x{region.offset:X}, size={region.size}, "
+                f"total_memory={self.total_memory / (1024*1024):.1f}MB"
+            )
             return True
 
     def _evict_oldest(self):
@@ -248,7 +248,9 @@ class MemoryMonitor:
                     # Get current memory usage
                     process = psutil.Process()
                     memory_info = process.memory_info()
-                    _ = memory_info.rss / (1024 * 1024)  # Memory in MB not used in current implementation
+                    _ = memory_info.rss / (
+                        1024 * 1024
+                    )  # Memory in MB not used in current implementation
 
                     # Get system memory
                     system_memory = psutil.virtual_memory()
@@ -335,7 +337,9 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
                             if self.region_loaded:
                                 self.region_loaded.emit(region)
 
-                            logger.debug(f"Background loaded: offset=0x{offset:X}, size={len(data)}")
+                            logger.debug(
+                                f"Background loaded: offset=0x{offset:X}, size={len(data)}"
+                            )
 
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("Background load error: %s", e)
@@ -522,7 +526,7 @@ class LargeFileHandler:
             return self._read_streaming(offset, size)
 
         try:
-            return self.mmap_file[offset:offset + size]
+            return self.mmap_file[offset : offset + size]
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Memory map read error: %s", e)
             return self._read_streaming(offset, size)
@@ -578,10 +582,11 @@ class LargeFileHandler:
 
     def _prefetch_chunks(self, next_offset: int):
         """Prefetch chunks for better performance."""
-        if (self.config.prefetch_chunks > 0 and
-            self.background_loader and
-            self.loading_strategy == LoadingStrategy.PROGRESSIVE):
-
+        if (
+            self.config.prefetch_chunks > 0
+            and self.background_loader
+            and self.loading_strategy == LoadingStrategy.PROGRESSIVE
+        ):
             chunk_size = self.config.chunk_size_mb * 1024 * 1024
 
             for i in range(self.config.prefetch_chunks):
@@ -606,8 +611,10 @@ class LargeFileHandler:
             if cache_stats["utilization"] > 0.9:
                 self.cache.clear()
 
-            logger.warning(f"Memory pressure detected: {memory_usage:.1%}, "
-                         f"reduced cache from {old_size}MB to {self.config.cache_size_mb}MB")
+            logger.warning(
+                f"Memory pressure detected: {memory_usage:.1%}, "
+                f"reduced cache from {old_size}MB to {self.config.cache_size_mb}MB"
+            )
 
     def _periodic_cleanup(self):
         """Periodic cleanup of cache and resources."""
@@ -615,7 +622,8 @@ class LargeFileHandler:
             # Clean old access patterns
             current_time = time.time()
             self.access_patterns = [
-                p for p in self.access_patterns
+                p
+                for p in self.access_patterns
                 if current_time - p[2] < 300  # Keep last 5 minutes
             ]
 
@@ -649,7 +657,10 @@ class LargeFileHandler:
             "cache_stats": cache_stats,
             "access_patterns": len(self.access_patterns),
             "sequential_ratio": sequential_ratio,
-            "background_loader_active": self.background_loader is not None and self.background_loader.isAlive() if hasattr(self.background_loader, "isAlive") else False,
+            "background_loader_active": self.background_loader is not None
+            and self.background_loader.isAlive()
+            if hasattr(self.background_loader, "isAlive")
+            else False,
         }
 
     def _calculate_sequential_ratio(self, patterns: list[tuple[int, int, float]]) -> float:
@@ -661,7 +672,7 @@ class LargeFileHandler:
         total_count = len(patterns) - 1
 
         for i in range(1, len(patterns)):
-            prev_offset, prev_size, _ = patterns[i-1]
+            prev_offset, prev_size, _ = patterns[i - 1]
             curr_offset, _, _ = patterns[i]
 
             # Consider sequential if current offset is close to previous end

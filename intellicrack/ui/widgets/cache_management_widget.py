@@ -308,6 +308,7 @@ class CacheManagementWidget(QWidget):
         # Add AI coordination layer performance statistics if available
         try:
             from PyQt6.QtWidgets import QApplication
+
             main_window = None
             for widget in QApplication.allWidgets():
                 if hasattr(widget, "ai_coordinator") and widget.ai_coordinator:
@@ -327,8 +328,12 @@ class CacheManagementWidget(QWidget):
                 details.append(f"Average LLM Time: {ai_stats.get('avg_llm_time', 0):.2f}s")
                 details.append("Components Available:")
                 components = ai_stats.get("components_available", {})
-                details.append(f"  - ML Predictor: {'Yes' if components.get('ml_predictor', False) else 'No'}")
-                details.append(f"  - Model Manager: {'Yes' if components.get('model_manager', False) else 'No'}")
+                details.append(
+                    f"  - ML Predictor: {'Yes' if components.get('ml_predictor', False) else 'No'}"
+                )
+                details.append(
+                    f"  - Model Manager: {'Yes' if components.get('model_manager', False) else 'No'}"
+                )
         except Exception as e:
             logger.debug(f"Could not retrieve AI coordination stats: {e}")
 
@@ -337,11 +342,13 @@ class CacheManagementWidget(QWidget):
 
         if oldest > 0:
             import datetime
+
             oldest_date = datetime.datetime.fromtimestamp(oldest).strftime("%Y-%m-%d %H:%M:%S")
             details.append(f"Oldest Entry: {oldest_date}")
 
         if newest > 0:
             import datetime
+
             newest_date = datetime.datetime.fromtimestamp(newest).strftime("%Y-%m-%d %H:%M:%S")
             details.append(f"Newest Entry: {newest_date}")
 
@@ -407,6 +414,7 @@ class CacheManagementWidget(QWidget):
                 # Also clear AI coordination layer cache if available
                 try:
                     from PyQt6.QtWidgets import QApplication
+
                     main_window = None
                     for widget in QApplication.allWidgets():
                         if hasattr(widget, "ai_coordinator") and widget.ai_coordinator:

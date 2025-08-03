@@ -32,18 +32,21 @@ from .interface import ModelInfo
 # Set up logging
 logger = logging.getLogger(__name__)
 
+
 class OpenRouterRepository(APIRepositoryBase):
     """Repository implementation for OpenRouter's API."""
 
-    def __init__(self,
-                 repository_name: str = "openrouter",
-                 api_endpoint: str = "https://openrouter.ai/api",
-                 api_key: str = "",
-                 timeout: int = 60,
-                 proxy: str = "",
-                 rate_limit_config: RateLimitConfig | None = None,
-                 cache_config: dict[str, Any] | None = None,
-                 download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads")):
+    def __init__(
+        self,
+        repository_name: str = "openrouter",
+        api_endpoint: str = "https://openrouter.ai/api",
+        api_key: str = "",
+        timeout: int = 60,
+        proxy: str = "",
+        rate_limit_config: RateLimitConfig | None = None,
+        cache_config: dict[str, Any] | None = None,
+        download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads"),
+    ):
         """Initialize the OpenRouter repository.
 
         Args:
@@ -217,5 +220,7 @@ class OpenRouterRepository(APIRepositoryBase):
             Always returns (False, "OpenRouter doesn't support model downloads")
 
         """
-        self.logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        self.logger.warning(
+            f"Download requested for {model_id} to {destination_path}, but not supported"
+        )
         return False, "OpenRouter doesn't support model downloads"

@@ -18,10 +18,10 @@
 
 /**
  * .NET Bypass Suite
- * 
+ *
  * Comprehensive .NET framework and .NET Core bypass techniques for
  * license verification, obfuscation, and runtime protection mechanisms.
- * 
+ *
  * Author: Intellicrack Framework
  * Version: 1.0.0
  * License: GPL v3
@@ -31,7 +31,7 @@
     name: ".NET Bypass Suite",
     description: "Advanced .NET runtime manipulation and protection bypass",
     version: "1.0.0",
-    
+
     // Configuration
     config: {
         // Target .NET versions
@@ -45,7 +45,7 @@
                 versions: ["2.1", "3.1", "5.0", "6.0", "7.0", "8.0"]
             }
         },
-        
+
         // Protection systems to bypass
         protections: {
             obfuscators: {
@@ -72,7 +72,7 @@
                 runtime: true
             }
         },
-        
+
         // Method hooks
         hooks: {
             reflection: true,
@@ -82,7 +82,7 @@
             debugger: true
         }
     },
-    
+
     // Runtime state
     clrModule: null,
     monoModule: null,
@@ -96,17 +96,17 @@
         checksumsBypassed: 0,
         debuggerChecksDisabled: 0
     },
-    
+
     run: function() {
         send({
             type: "status",
             target: "dotnet_bypass_suite",
             action: "starting_dotnet_bypass_suite"
         });
-        
+
         // Detect CLR version
         this.detectCLR();
-        
+
         // Hook based on runtime
         if (this.clrModule) {
             this.hookDotNetFramework();
@@ -117,12 +117,12 @@
         if (this.isCoreCLR) {
             this.hookDotNetCore();
         }
-        
+
         // Hook common protection mechanisms
         this.hookAntiTamper();
         this.hookLicenseChecks();
         this.hookObfuscatorRuntime();
-        
+
         send({
             type: "status",
             target: "dotnet_bypass_suite",
@@ -130,14 +130,14 @@
             methods_hooked: this.stats.methodsHooked
         });
     },
-    
+
     // Detect CLR type and version
     detectCLR: function() {
         var self = this;
-        
+
         Process.enumerateModules().forEach(function(module) {
             var name = module.name.toLowerCase();
-            
+
             if (name.includes("clr.dll")) {
                 self.clrModule = module;
                 self.isCoreCLR = false;
@@ -167,34 +167,34 @@
             }
         });
     },
-    
+
     // Hook .NET Framework
     hookDotNetFramework: function() {
         var self = this;
-        
+
         // Hook assembly loading
         this.hookAssemblyLoad();
-        
+
         // Hook JIT compilation
         this.hookJITCompilation();
-        
+
         // Hook metadata access
         this.hookMetadataAPIs();
-        
+
         // Hook string decryption
         this.hookStringDecryption();
-        
+
         // Hook reflection APIs
         this.hookReflectionAPIs();
-        
+
         // Hook security APIs
         this.hookSecurityAPIs();
     },
-    
+
     // Hook assembly loading
     hookAssemblyLoad: function() {
         var self = this;
-        
+
         // Assembly::Load
         var assemblyLoad = Module.findExportByName(this.clrModule.name, "Assembly_Load");
         if (!assemblyLoad) {
@@ -205,7 +205,7 @@
                 assemblyLoad = matches[0].address;
             }
         }
-        
+
         if (assemblyLoad) {
             Interceptor.attach(assemblyLoad, {
                 onEnter: function(args) {
@@ -223,7 +223,7 @@
             });
             this.stats.methodsHooked++;
         }
-        
+
         // AppDomain::LoadAssembly
         var appDomainLoad = Module.findExportByName(this.clrModule.name, "AppDomain_LoadAssembly");
         if (appDomainLoad) {
@@ -252,11 +252,11 @@
             this.stats.methodsHooked++;
         }
     },
-    
+
     // Process loaded assembly
     processLoadedAssembly: function(assembly) {
         var self = this;
-        
+
         // Get assembly name
         var getNameMethod = this.findMethodInVTable(assembly, "GetName");
         if (getNameMethod) {
@@ -268,36 +268,36 @@
                 assembly_name: name.readUtf16String()
             });
         }
-        
+
         // Check for known protections
         this.checkForProtections(assembly);
-        
+
         // Patch anti-tamper checks
         this.patchAntiTamperChecks(assembly);
     },
-    
+
     // Hook JIT compilation
     hookJITCompilation: function() {
         var self = this;
-        
+
         // getJit
         var getJit = Module.findExportByName(this.clrModule.name, "getJit");
         if (getJit) {
             var jitInterface = new NativeFunction(getJit, 'pointer', [])();
-            
+
             if (jitInterface) {
                 // Hook compileMethod
                 var compileMethodOffset = this.isCoreCLR ? 0x0 : 0x28; // Offset in vtable
                 var compileMethod = jitInterface.readPointer().add(compileMethodOffset).readPointer();
-                
+
                 Interceptor.attach(compileMethod, {
                     onEnter: function(args) {
                         var methodInfo = args[2];
-                        
+
                         if (methodInfo && !methodInfo.isNull()) {
                             var methodDef = methodInfo.add(0x8).readPointer();
                             var methodName = self.getMethodName(methodDef);
-                            
+
                             // Check for license-related methods
                             if (methodName && self.isLicenseMethod(methodName)) {
                                 send({
@@ -327,11 +327,11 @@
             }
         }
     },
-    
+
     // Hook metadata APIs
     hookMetadataAPIs: function() {
         var self = this;
-        
+
         // MetaDataGetDispenser
         var getDispenser = Module.findExportByName(this.clrModule.name, "MetaDataGetDispenser");
         if (getDispenser) {
@@ -346,27 +346,27 @@
             this.stats.methodsHooked++;
         }
     },
-    
+
     // Hook metadata dispenser
     hookMetadataDispenser: function(dispenser) {
         var self = this;
-        
+
         // Hook OpenScope to intercept assembly metadata access
         var vtable = dispenser.readPointer();
         var openScope = vtable.add(0x18).readPointer(); // IMetaDataDispenser::OpenScope
-        
+
         Interceptor.attach(openScope, {
             onEnter: function(args) {
                 var filename = args[1].readUtf16String();
                 var openFlags = args[2].toInt32();
-                
+
                 send({
                     type: "info",
                     target: "dotnet_bypass_suite",
                     action: "opening_metadata_scope",
                     filename: filename
                 });
-                
+
                 // Check if it's a protected assembly
                 if (self.isProtectedAssembly(filename)) {
                     // Force read/write access
@@ -375,11 +375,11 @@
             }
         });
     },
-    
+
     // Hook string decryption
     hookStringDecryption: function() {
         var self = this;
-        
+
         // Common obfuscator string decryption patterns
         var patterns = [
             // Dotfuscator pattern
@@ -389,10 +389,10 @@
             // ConfuserEx pattern
             "28 ?? ?? ?? ?? 02 7B ?? ?? ?? ?? 2C"
         ];
-        
+
         patterns.forEach(function(pattern) {
             var matches = Memory.scanSync(self.clrModule.base, self.clrModule.size, pattern);
-            
+
             matches.forEach(function(match) {
                 Interceptor.attach(match.address, {
                     onLeave: function(retval) {
@@ -406,11 +406,11 @@
                                         action: "decrypted_license_string",
                                         decrypted_string: decrypted
                                     });
-                                    
+
                                     // Replace with valid license
                                     var validLicense = self.generateValidLicense(decrypted);
                                     retval.writeUtf16String(validLicense);
-                                    
+
                                     self.stats.stringsDecrypted++;
                                 }
                             } catch(e) {
@@ -423,21 +423,21 @@
             });
         });
     },
-    
+
     // Hook reflection APIs
     hookReflectionAPIs: function() {
         var self = this;
-        
+
         // Type::InvokeMember
-        var invokeMember = this.findExportPattern("Type_InvokeMember", 
+        var invokeMember = this.findExportPattern("Type_InvokeMember",
             "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57");
-        
+
         if (invokeMember) {
             Interceptor.attach(invokeMember, {
                 onEnter: function(args) {
                     var memberName = args[1].readUtf16String();
                     var bindingFlags = args[2].toInt32();
-                    
+
                     if (memberName && self.isLicenseMethod(memberName)) {
                         send({
                             type: "bypass",
@@ -463,17 +463,17 @@
             });
             this.stats.methodsHooked++;
         }
-        
+
         // MethodBase::Invoke
         var methodInvoke = this.findExportPattern("MethodBase_Invoke",
             "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B D9");
-        
+
         if (methodInvoke) {
             Interceptor.attach(methodInvoke, {
                 onEnter: function(args) {
                     var method = args[0];
                     var methodName = self.getMethodName(method);
-                    
+
                     if (methodName && self.isLicenseMethod(methodName)) {
                         send({
                             type: "bypass",
@@ -496,11 +496,11 @@
             this.stats.methodsHooked++;
         }
     },
-    
+
     // Hook security APIs
     hookSecurityAPIs: function() {
         var self = this;
-        
+
         // StrongNameSignatureVerificationEx
         var strongNameVerify = Module.findExportByName("mscoree.dll", "StrongNameSignatureVerificationEx");
         if (strongNameVerify) {
@@ -510,17 +510,17 @@
                     target: "dotnet_bypass_suite",
                     action: "strongname_verification_bypassed"
                 });
-                
+
                 if (pfWasVerified) {
                     pfWasVerified.writeU8(1);
                 }
-                
+
                 self.stats.checksumsBypassed++;
                 return 1; // TRUE
             }, 'int', ['pointer', 'int', 'pointer']));
             this.stats.methodsHooked++;
         }
-        
+
         // Authenticode verification
         var winVerifyTrust = Module.findExportByName("wintrust.dll", "WinVerifyTrust");
         if (winVerifyTrust) {
@@ -541,13 +541,13 @@
             this.stats.methodsHooked++;
         }
     },
-    
+
     // Hook anti-tamper mechanisms
     hookAntiTamper: function() {
         var self = this;
-        
+
         // Common anti-tamper checks
-        
+
         // 1. Module checksum verification
         var imageNtHeader = Module.findExportByName("ntdll.dll", "RtlImageNtHeader");
         if (imageNtHeader) {
@@ -562,21 +562,21 @@
             });
             this.stats.methodsHooked++;
         }
-        
+
         // 2. File hash verification
         this.hookHashAPIs();
-        
+
         // 3. Debugger detection
         this.hookDebuggerDetection();
-        
+
         // 4. Runtime integrity checks
         this.hookRuntimeIntegrity();
     },
-    
+
     // Hook hash APIs
     hookHashAPIs: function() {
         var self = this;
-        
+
         // CryptHashData
         var cryptHashData = Module.findExportByName("advapi32.dll", "CryptHashData");
         if (cryptHashData) {
@@ -585,7 +585,7 @@
                     var hHash = args[0];
                     var pbData = args[1];
                     var dwDataLen = args[2].toInt32();
-                    
+
                     // Check if hashing assembly data
                     if (dwDataLen > 1024 && self.isAssemblyData(pbData, dwDataLen)) {
                         send({
@@ -599,7 +599,7 @@
             });
             this.stats.methodsHooked++;
         }
-        
+
         // BCryptHashData
         var bcryptHashData = Module.findExportByName("bcrypt.dll", "BCryptHashData");
         if (bcryptHashData) {
@@ -608,7 +608,7 @@
                     var hHash = args[0];
                     var pbInput = args[1];
                     var cbInput = args[2].toInt32();
-                    
+
                     if (cbInput > 1024 && self.isAssemblyData(pbInput, cbInput)) {
                         send({
                             type: "bypass",
@@ -624,11 +624,11 @@
             this.stats.methodsHooked++;
         }
     },
-    
+
     // Hook debugger detection
     hookDebuggerDetection: function() {
         var self = this;
-        
+
         // IsDebuggerPresent
         var isDebuggerPresent = Module.findExportByName("kernel32.dll", "IsDebuggerPresent");
         if (isDebuggerPresent) {
@@ -638,7 +638,7 @@
             }, 'int', []));
             this.stats.methodsHooked++;
         }
-        
+
         // CheckRemoteDebuggerPresent
         var checkRemoteDebugger = Module.findExportByName("kernel32.dll", "CheckRemoteDebuggerPresent");
         if (checkRemoteDebugger) {
@@ -654,7 +654,7 @@
             });
             this.stats.methodsHooked++;
         }
-        
+
         // NtQueryInformationProcess
         var ntQueryInfoProcess = Module.findExportByName("ntdll.dll", "NtQueryInformationProcess");
         if (ntQueryInfoProcess) {
@@ -681,11 +681,11 @@
             this.stats.methodsHooked++;
         }
     },
-    
+
     // Hook runtime integrity checks
     hookRuntimeIntegrity: function() {
         var self = this;
-        
+
         // Hook CLR internal integrity checks
         var patterns = [
             // Integrity check pattern 1
@@ -693,10 +693,10 @@
             // Integrity check pattern 2
             "40 53 48 83 EC ?? 48 8B D9 E8 ?? ?? ?? ?? 84 C0 74 ??"
         ];
-        
+
         patterns.forEach(function(pattern) {
             var matches = Memory.scanSync(self.clrModule.base, self.clrModule.size, pattern);
-            
+
             matches.forEach(function(match) {
                 Interceptor.attach(match.address, {
                     onLeave: function(retval) {
@@ -715,11 +715,11 @@
             });
         });
     },
-    
+
     // Hook known license check methods
     hookLicenseChecks: function() {
         var self = this;
-        
+
         // Common license check patterns
         var licensePatterns = [
             "IsLicenseValid",
@@ -731,7 +731,7 @@
             "HasExpired",
             "GetLicenseStatus"
         ];
-        
+
         // Hook by method name pattern
         licensePatterns.forEach(function(pattern) {
             self.hookMethodByName(pattern, function(originalFunc) {
@@ -743,7 +743,7 @@
                         pattern: pattern
                     });
                     self.bypassedChecks++;
-                    
+
                     // Return success based on method name
                     if (pattern.includes("Trial") || pattern.includes("Expired")) {
                         return 0; // false
@@ -754,29 +754,29 @@
             });
         });
     },
-    
+
     // Hook obfuscator runtime
     hookObfuscatorRuntime: function() {
         var self = this;
-        
+
         // ConfuserEx runtime
         this.hookConfuserExRuntime();
-        
+
         // Eazfuscator runtime
         this.hookEazfuscatorRuntime();
-        
+
         // Crypto Obfuscator runtime
         this.hookCryptoObfuscatorRuntime();
     },
-    
+
     // Hook ConfuserEx runtime
     hookConfuserExRuntime: function() {
         var self = this;
-        
+
         // ConfuserEx anti-tamper
         var antiTamperPattern = "E8 ?? ?? ?? ?? 0A 06 72 ?? ?? ?? ?? 28 ?? ?? ?? ?? 0A 00 DE ??";
         var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, antiTamperPattern);
-        
+
         matches.forEach(function(match) {
             // NOP out the anti-tamper check
             Memory.patchCode(match.address, 5, function(code) {
@@ -792,11 +792,11 @@
             });
             self.stats.checksumsBypassed++;
         });
-        
+
         // ConfuserEx constants decryption
         var constDecryptPattern = "28 ?? ?? ?? ?? 8E 69 28 ?? ?? ?? ?? 28 ?? ?? ?? ?? 28";
         matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, constDecryptPattern);
-        
+
         matches.forEach(function(match) {
             Interceptor.attach(match.address, {
                 onLeave: function(retval) {
@@ -811,15 +811,15 @@
             });
         });
     },
-    
+
     // Hook Eazfuscator runtime
     hookEazfuscatorRuntime: function() {
         var self = this;
-        
+
         // Eazfuscator string encryption
         var stringPattern = "7E ?? ?? ?? ?? 02 7B ?? ?? ?? ?? 7E ?? ?? ?? ?? 28";
         var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, stringPattern);
-        
+
         matches.forEach(function(match) {
             Interceptor.attach(match.address, {
                 onEnter: function(args) {
@@ -836,7 +836,7 @@
                                     action: "eazfuscator_string_decrypted",
                                     decrypted_string: decrypted
                                 });
-                                
+
                                 // Replace with valid string
                                 var valid = self.generateValidLicense(decrypted);
                                 retval.writeUtf16String(valid);
@@ -848,15 +848,15 @@
             });
         });
     },
-    
+
     // Hook Crypto Obfuscator runtime
     hookCryptoObfuscatorRuntime: function() {
         var self = this;
-        
+
         // Crypto Obfuscator license check
         var licensePattern = "14 0A 06 16 33 ?? 16 0A 2B ?? 17 0A 06 2A";
         var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, licensePattern);
-        
+
         matches.forEach(function(match) {
             // Patch to always return true
             Memory.patchCode(match.address, 2, function(code) {
@@ -871,25 +871,25 @@
             self.bypassedChecks++;
         });
     },
-    
+
     // Helper: Find export by pattern
     findExportPattern: function(name, pattern) {
         var func = Module.findExportByName(this.clrModule.name, name);
         if (func) return func;
-        
+
         // Try pattern matching
         var matches = Memory.scanSync(this.clrModule.base, this.clrModule.size, pattern);
         if (matches.length > 0) {
             return matches[0].address;
         }
-        
+
         return null;
     },
-    
+
     // Helper: Hook method by name
     hookMethodByName: function(name, replacementFactory) {
         var self = this;
-        
+
         // Search in all loaded modules
         Process.enumerateModules().forEach(function(module) {
             module.enumerateExports().forEach(function(exp) {
@@ -907,7 +907,7 @@
             });
         });
     },
-    
+
     // Helper: Get method name from metadata
     getMethodName: function(methodDef) {
         try {
@@ -918,34 +918,34 @@
                 return namePtr.readUtf8String();
             }
         } catch(e) {}
-        
+
         return null;
     },
-    
+
     // Helper: Check if method is license-related
     isLicenseMethod: function(name) {
         if (!name) return false;
-        
+
         var keywords = [
             "license", "activation", "serial", "trial",
             "expire", "validate", "verify", "check",
             "register", "unlock", "authentic"
         ];
-        
+
         name = name.toLowerCase();
         for (var i = 0; i < keywords.length; i++) {
             if (name.includes(keywords[i])) {
                 return true;
             }
         }
-        
+
         return false;
     },
-    
+
     // Helper: Check if string is license-related
     isLicenseString: function(str) {
         if (!str || str.length < 4) return false;
-        
+
         // Check for license patterns
         var patterns = [
             /^[A-Z0-9]{4,}-[A-Z0-9]{4,}/,      // XXXX-XXXX pattern
@@ -953,16 +953,16 @@
             /[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}/, // GUID-like
             /licen[sc]e|serial|key|activation/i
         ];
-        
+
         for (var i = 0; i < patterns.length; i++) {
             if (patterns[i].test(str)) {
                 return true;
             }
         }
-        
+
         return false;
     },
-    
+
     // Helper: Generate valid license
     generateValidLicense: function(original) {
         // Generate a valid-looking license based on the original format
@@ -973,14 +973,14 @@
         } else if (original.match(/[A-F0-9]{8}-[A-F0-9]{4}/)) {
             return "DEADBEEF-CAFE-BABE-F00D-123456789ABC";
         }
-        
+
         return "VALID-LICENSE-KEY";
     },
-    
+
     // Helper: Check if data is assembly
     isAssemblyData: function(data, length) {
         if (length < 64) return false;
-        
+
         try {
             // Check for PE header
             var dos = data.readU16();
@@ -992,10 +992,10 @@
                 }
             }
         } catch(e) {}
-        
+
         return false;
     },
-    
+
     // Helper: Get known good hash
     getKnownGoodHash: function() {
         // Return a hash that will pass validation
@@ -1006,7 +1006,7 @@
             0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00
         ];
     },
-    
+
     // Helper: Check for known protections
     checkForProtections: function(assembly) {
         // Check for obfuscator signatures
@@ -1019,7 +1019,7 @@
             "BabelAttribute": "Babel",
             "AgileDotNetRT": "Agile.NET"
         };
-        
+
         Object.keys(signatures).forEach(function(sig) {
             // Check for attributes in metadata
             send({
@@ -1030,7 +1030,7 @@
             });
         });
     },
-    
+
     // Helper: Patch anti-tamper checks
     patchAntiTamperChecks: function(assembly) {
         send({
@@ -1040,7 +1040,7 @@
         });
         // Implementation would patch specific anti-tamper patterns
     },
-    
+
     // Helper: Patch compiled method
     patchCompiledMethod: function(methodInfo) {
         send({
@@ -1048,7 +1048,7 @@
             target: "dotnet_bypass_suite",
             action: "patching_compiled_license_method"
         });
-        
+
         // Get native code address
         var nativeCode = methodInfo.add(0x20).readPointer();
         if (nativeCode && !nativeCode.isNull()) {
@@ -1061,7 +1061,7 @@
             this.bypassedChecks++;
         }
     },
-    
+
     // Helper: Find method in vtable
     findMethodInVTable: function(object, methodName) {
         // Simplified vtable search
@@ -1076,26 +1076,26 @@
                 }
             }
         } catch(e) {}
-        
+
         return null;
     },
-    
+
     // Helper: Check if assembly is protected
     isProtectedAssembly: function(filename) {
         if (!filename) return false;
-        
+
         var protectedNames = [
             "license", "activation", "crypto", "protect",
             "obfuscat", "secure", "guard", "shield"
         ];
-        
+
         filename = filename.toLowerCase();
         for (var i = 0; i < protectedNames.length; i++) {
             if (filename.includes(protectedNames[i])) {
                 return true;
             }
         }
-        
+
         return false;
     }
 }

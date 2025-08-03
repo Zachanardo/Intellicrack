@@ -18,10 +18,10 @@
 
 /**
  * WebSocket Protocol Interceptor
- * 
+ *
  * Real-time WebSocket communication interception and manipulation for
  * bypassing WebSocket-based license verification and real-time checks.
- * 
+ *
  * Author: Intellicrack Framework
  * Version: 1.0.0
  * License: GPL v3
@@ -31,7 +31,7 @@
     name: "WebSocket Interceptor",
     description: "WebSocket protocol hijacking for real-time license bypass",
     version: "1.0.0",
-    
+
     // Configuration
     config: {
         // Target WebSocket URLs
@@ -39,7 +39,7 @@
             "*license*", "*activation*", "*verify*", "*auth*",
             "*subscription*", "*validate*", "*check*"
         ],
-        
+
         // Message patterns to intercept
         messagePatterns: {
             requests: [
@@ -55,7 +55,7 @@
                 { pattern: /"trial":\s*true/i, replacement: '"trial": false' }
             ]
         },
-        
+
         // Spoofed responses
         spoofedResponses: {
             verify: {
@@ -83,35 +83,35 @@
             }
         }
     },
-    
+
     // Runtime state
     sockets: {},
     interceptedMessages: 0,
     spoofedResponses: 0,
-    
+
     run: function() {
         send({
             type: "status",
             target: "websocket_interceptor",
             action: "starting_interceptor"
         });
-        
+
         this.hookWebSocketConstructor();
         this.hookWebSocketMethods();
         this.hookXMLHttpRequestForSocketIO();
         this.hookWindowsWebSocket();
-        
+
         send({
             type: "status",
             target: "websocket_interceptor",
             action: "interceptor_installed"
         });
     },
-    
+
     // Hook WebSocket constructor
     hookWebSocketConstructor: function() {
         var self = this;
-        
+
         // Browser/Electron WebSocket
         try {
             var WebSocketCtor = ObjC.classes.WebSocket || WebSocket;
@@ -125,7 +125,7 @@
                             action: "websocket_connection",
                             url: url
                         });
-                        
+
                         // Check if URL matches our targets
                         if (self.shouldInterceptUrl(url)) {
                             this.shouldIntercept = true;
@@ -141,22 +141,22 @@
         } catch(e) {
             // Not in browser context
         }
-        
+
         // Native WebSocket implementations
         this.hookNativeWebSocket();
     },
-    
+
     // Hook native WebSocket implementations
     hookNativeWebSocket: function() {
         var self = this;
-        
+
         // Windows WebSocket API (websocket.dll)
         var wsModules = ["websocket.dll", "winhttp.dll"];
-        
+
         wsModules.forEach(function(moduleName) {
             var module = Process.findModuleByName(moduleName);
             if (!module) return;
-            
+
             // WebSocketCreateClientHandle
             var createHandle = Module.findExportByName(moduleName, "WebSocketCreateClientHandle");
             if (createHandle) {
@@ -179,7 +179,7 @@
                     }
                 });
             }
-            
+
             // WebSocketSend
             var wsSend = Module.findExportByName(moduleName, "WebSocketSend");
             if (wsSend) {
@@ -189,7 +189,7 @@
                         var bufferType = args[1].toInt32();
                         var buffer = args[2];
                         var bufferLength = args[3] ? args[3].toInt32() : 0;
-                        
+
                         if (self.sockets[handle.toString()]) {
                             var message = self.readWebSocketBuffer(buffer, bufferLength, bufferType);
                             send({
@@ -199,7 +199,7 @@
                                 message: message,
                                 handle: handle.toString()
                             });
-                            
+
                             // Check if we should modify the message
                             var modified = self.processOutgoingMessage(message);
                             if (modified !== message) {
@@ -214,13 +214,13 @@
                                     handle: handle.toString()
                                 });
                             }
-                            
+
                             self.interceptedMessages++;
                         }
                     }
                 });
             }
-            
+
             // WebSocketReceive
             var wsReceive = Module.findExportByName(moduleName, "WebSocketReceive");
             if (wsReceive) {
@@ -234,7 +234,7 @@
                         if (retval.toInt32() === 0 && self.sockets[this.handle.toString()]) {
                             var length = this.bufferLength.readU32();
                             var bufferType = this.context.r9 ? this.context.r9.readU32() : 1;
-                            
+
                             var message = self.readWebSocketBuffer(this.buffer, length, bufferType);
                             send({
                                 type: "info",
@@ -243,7 +243,7 @@
                                 message: message,
                                 handle: this.handle.toString()
                             });
-                            
+
                             // Process and potentially modify the message
                             var modified = self.processIncomingMessage(message);
                             if (modified !== message) {
@@ -259,7 +259,7 @@
                                 });
                                 self.spoofedResponses++;
                             }
-                            
+
                             self.interceptedMessages++;
                         }
                     }
@@ -267,15 +267,15 @@
             }
         });
     },
-    
+
     // Hook WebSocket instance methods
     hookWebSocketInstance: function(ws) {
         var self = this;
-        
+
         // Store original methods
         var originalSend = ws.send;
         var originalClose = ws.close;
-        
+
         // Hook send method
         ws.send = function(data) {
             send({
@@ -284,7 +284,7 @@
                 action: "send_intercepted",
                 data: data.toString()
             });
-            
+
             var modified = self.processOutgoingMessage(data);
             if (modified !== data) {
                 send({
@@ -296,10 +296,10 @@
                 });
                 self.interceptedMessages++;
             }
-            
+
             return originalSend.call(this, modified);
         };
-        
+
         // Hook message event
         ws.addEventListener('message', function(event) {
             var data = event.data;
@@ -309,7 +309,7 @@
                 action: "message_received",
                 data: data.toString()
             });
-            
+
             var modified = self.processIncomingMessage(data);
             if (modified !== data) {
                 // Create modified event
@@ -321,7 +321,7 @@
                     source: event.source,
                     ports: event.ports
                 });
-                
+
                 send({
                     type: "bypass",
                     target: "websocket_interceptor",
@@ -330,16 +330,16 @@
                     modified: modified.toString()
                 });
                 self.spoofedResponses++;
-                
+
                 // Dispatch modified event
                 setTimeout(function() {
                     ws.dispatchEvent(modifiedEvent);
                 }, 0);
             }
-            
+
             self.interceptedMessages++;
         }, true); // Use capture phase
-        
+
         // Hook close method
         ws.close = function(code, reason) {
             send({
@@ -352,11 +352,11 @@
             return originalClose.call(this, code, reason);
         };
     },
-    
+
     // Hook WebSocket methods globally
     hookWebSocketMethods: function() {
         var self = this;
-        
+
         // Hook WinHTTP WebSocket upgrade
         var winHttpWebSocketCompleteUpgrade = Module.findExportByName("winhttp.dll", "WinHttpWebSocketCompleteUpgrade");
         if (winHttpWebSocketCompleteUpgrade) {
@@ -381,7 +381,7 @@
                 }
             });
         }
-        
+
         // Hook WinHTTP WebSocket send/receive
         ["WinHttpWebSocketSend", "WinHttpWebSocketReceive"].forEach(function(func) {
             var fn = Module.findExportByName("winhttp.dll", func);
@@ -397,7 +397,7 @@
                     onLeave: function(retval) {
                         if (retval.toInt32() === 0 && self.sockets[this.handle.toString()]) {
                             var message = self.readWebSocketBuffer(this.buffer, this.bufferLength, this.bufferType);
-                            
+
                             if (this.isSend) {
                                 send({
                                     type: "info",
@@ -424,7 +424,7 @@
                                     self.spoofedResponses++;
                                 }
                             }
-                            
+
                             self.interceptedMessages++;
                         }
                     }
@@ -432,11 +432,11 @@
             }
         });
     },
-    
+
     // Hook XMLHttpRequest for Socket.IO fallback
     hookXMLHttpRequestForSocketIO: function() {
         var self = this;
-        
+
         // Socket.IO often falls back to HTTP long-polling
         var xhrOpen = Module.findExportByName(null, "XMLHttpRequest.prototype.open");
         if (xhrOpen) {
@@ -444,7 +444,7 @@
                 onEnter: function(args) {
                     var method = args[0];
                     var url = args[1];
-                    
+
                     if (url && url.toString().match(/socket\.io|engine\.io/i)) {
                         send({
                             type: "info",
@@ -458,11 +458,11 @@
             });
         }
     },
-    
+
     // Hook Windows-specific WebSocket implementations
     hookWindowsWebSocket: function() {
         var self = this;
-        
+
         // Windows.Networking.Sockets.MessageWebSocket (UWP apps)
         try {
             var messageWebSocket = ObjC.classes["Windows.Networking.Sockets.MessageWebSocket"];
@@ -483,27 +483,27 @@
             // Not a UWP app
         }
     },
-    
+
     // Check if URL should be intercepted
     shouldInterceptUrl: function(url) {
         if (!url) return false;
-        
+
         url = url.toString().toLowerCase();
-        
+
         for (var i = 0; i < this.config.targetUrls.length; i++) {
             var pattern = this.config.targetUrls[i].replace(/\*/g, '.*');
             if (url.match(new RegExp(pattern))) {
                 return true;
             }
         }
-        
+
         return false;
     },
-    
+
     // Read WebSocket buffer
     readWebSocketBuffer: function(buffer, length, bufferType) {
         if (!buffer || buffer.isNull()) return "";
-        
+
         try {
             // bufferType: 0 = binary, 1 = UTF8, 2 = close
             if (bufferType === 0) {
@@ -521,11 +521,11 @@
             return "<read error>";
         }
     },
-    
+
     // Replace WebSocket buffer content
     replaceWebSocketBuffer: function(buffer, newContent, bufferType) {
         if (!buffer || buffer.isNull()) return;
-        
+
         try {
             if (bufferType === 0) {
                 // Binary - expect hex string
@@ -549,11 +549,11 @@
             });
         }
     },
-    
+
     // Process outgoing message
     processOutgoingMessage: function(message) {
         if (!message || typeof message !== 'string') return message;
-        
+
         // Check request patterns
         for (var i = 0; i < this.config.messagePatterns.requests.length; i++) {
             var pattern = this.config.messagePatterns.requests[i];
@@ -565,7 +565,7 @@
                     pattern: pattern.pattern,
                     message: message
                 });
-                
+
                 // Don't modify outgoing, but prepare for response spoofing
                 var handler = this[pattern.handler];
                 if (handler) {
@@ -574,14 +574,14 @@
                 break;
             }
         }
-        
+
         return message;
     },
-    
+
     // Process incoming message
     processIncomingMessage: function(message) {
         if (!message || typeof message !== 'string') return message;
-        
+
         // If we have a pending handler from request
         if (this.pendingHandler) {
             var handler = this[this.pendingHandler];
@@ -591,7 +591,7 @@
                 return spoofed;
             }
         }
-        
+
         // Apply response patterns
         var modified = message;
         for (var i = 0; i < this.config.messagePatterns.responses.length; i++) {
@@ -607,25 +607,25 @@
                 modified = modified.replace(pattern.pattern, pattern.replacement);
             }
         }
-        
+
         return modified;
     },
-    
+
     // Spoofing handlers
     spoofVerifyResponse: function(originalMessage) {
         try {
             var parsed = JSON.parse(originalMessage);
-            
+
             // Override with spoofed response
             Object.assign(parsed, this.config.spoofedResponses.verify);
-            
+
             return JSON.stringify(parsed);
         } catch(e) {
             // Return generic success response
             return JSON.stringify(this.config.spoofedResponses.verify);
         }
     },
-    
+
     spoofLicenseResponse: function(originalMessage) {
         try {
             var parsed = JSON.parse(originalMessage);
@@ -635,7 +635,7 @@
             return JSON.stringify(this.config.spoofedResponses.license);
         }
     },
-    
+
     spoofValidateResponse: function(originalMessage) {
         try {
             var parsed = JSON.parse(originalMessage);
@@ -645,7 +645,7 @@
             return JSON.stringify(this.config.spoofedResponses.validate);
         }
     },
-    
+
     spoofAuthResponse: function(originalMessage) {
         try {
             var parsed = JSON.parse(originalMessage);

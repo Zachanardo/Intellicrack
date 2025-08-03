@@ -47,216 +47,228 @@ def inject_comprehensive_api_hooks(app: Any, hook_types: list[str] = None) -> st
 
     # Hardware ID hooks
     if "hardware_id" in hook_types:
-        script_lines.extend([
-            "// Hardware ID Spoofing Hooks",
-            "if (Process.platform === 'windows') {",
-            "    var kernel32 = Process.getModuleByName('kernel32.dll');",
-            "    var advapi32 = Process.getModuleByName('advapi32.dll');",
-            "",
-            "    // Hook GetVolumeInformation",
-            "    try {",
-            "        var GetVolumeInformationW = kernel32.getExportByName('GetVolumeInformationW');",
-            "        Interceptor.attach(GetVolumeInformationW, {",
-            "            onEnter: function(args) {",
-            "                console.log('[HWID] GetVolumeInformationW called');",
-            "            },",
-            "            onLeave: function(retval) {",
-            "                console.log('[HWID] Spoofing volume information');",
-            "                // Modify volume serial number",
-            "                return retval;",
-            "            }",
-            "        });",
-            "    } catch (e) {",
-            "        console.log('[HWID] Failed to hook GetVolumeInformationW: ' + e);",
-            "    }",
-            "",
-            "    // Hook registry functions for hardware info",
-            "    try {",
-            "        var RegQueryValueExW = advapi32.getExportByName('RegQueryValueExW');",
-            "        Interceptor.attach(RegQueryValueExW, {",
-            "            onEnter: function(args) {",
-            "                var valueName = args[1].readUtf16String();",
-            "                if (valueName && (valueName.includes('ProcessorId') || valueName.includes('SystemBiosVersion'))) {",
-            "                    console.log('[HWID] Registry query for hardware info: ' + valueName);",
-            "                }",
-            "            }",
-            "        });",
-            "    } catch (e) {",
-            "        console.log('[HWID] Failed to hook RegQueryValueExW: ' + e);",
-            "    }",
-            "}",
-            "",
-        ])
+        script_lines.extend(
+            [
+                "// Hardware ID Spoofing Hooks",
+                "if (Process.platform === 'windows') {",
+                "    var kernel32 = Process.getModuleByName('kernel32.dll');",
+                "    var advapi32 = Process.getModuleByName('advapi32.dll');",
+                "",
+                "    // Hook GetVolumeInformation",
+                "    try {",
+                "        var GetVolumeInformationW = kernel32.getExportByName('GetVolumeInformationW');",
+                "        Interceptor.attach(GetVolumeInformationW, {",
+                "            onEnter: function(args) {",
+                "                console.log('[HWID] GetVolumeInformationW called');",
+                "            },",
+                "            onLeave: function(retval) {",
+                "                console.log('[HWID] Spoofing volume information');",
+                "                // Modify volume serial number",
+                "                return retval;",
+                "            }",
+                "        });",
+                "    } catch (e) {",
+                "        console.log('[HWID] Failed to hook GetVolumeInformationW: ' + e);",
+                "    }",
+                "",
+                "    // Hook registry functions for hardware info",
+                "    try {",
+                "        var RegQueryValueExW = advapi32.getExportByName('RegQueryValueExW');",
+                "        Interceptor.attach(RegQueryValueExW, {",
+                "            onEnter: function(args) {",
+                "                var valueName = args[1].readUtf16String();",
+                "                if (valueName && (valueName.includes('ProcessorId') || valueName.includes('SystemBiosVersion'))) {",
+                "                    console.log('[HWID] Registry query for hardware info: ' + valueName);",
+                "                }",
+                "            }",
+                "        });",
+                "    } catch (e) {",
+                "        console.log('[HWID] Failed to hook RegQueryValueExW: ' + e);",
+                "    }",
+                "}",
+                "",
+            ]
+        )
 
     # Anti-debugger hooks
     if "debugger" in hook_types:
-        script_lines.extend([
-            "// Anti-Debugger Hooks",
-            "if (Process.platform === 'windows') {",
-            "    var ntdll = Process.getModuleByName('ntdll.dll');",
-            "",
-            "    // Hook NtQueryInformationProcess",
-            "    try {",
-            "        var NtQueryInformationProcess = ntdll.getExportByName('NtQueryInformationProcess');",
-            "        Interceptor.attach(NtQueryInformationProcess, {",
-            "            onEnter: function(args) {",
-            "                var infoClass = args[1].toInt32();",
-            "                if (infoClass === 7) { // ProcessDebugPort",
-            "                    console.log('[AntiDebug] ProcessDebugPort query detected');",
-            "                    this.spoofDebugPort = true;",
-            "                }",
-            "            },",
-            "            onLeave: function(retval) {",
-            "                if (this.spoofDebugPort) {",
-            "                    console.log('[AntiDebug] Spoofing debug port result');",
-            "                    retval.replace(ptr(0)); // Return success but no debug port",
-            "                }",
-            "            }",
-            "        });",
-            "    } catch (e) {",
-            "        console.log('[AntiDebug] Failed to hook NtQueryInformationProcess: ' + e);",
-            "    }",
-            "",
-            "    // Hook IsDebuggerPresent",
-            "    try {",
-            "        var IsDebuggerPresent = kernel32.getExportByName('IsDebuggerPresent');",
-            "        Interceptor.attach(IsDebuggerPresent, {",
-            "            onLeave: function(retval) {",
-            "                console.log('[AntiDebug] IsDebuggerPresent called, returning false');",
-            "                retval.replace(ptr(0)); // Always return false",
-            "            }",
-            "        });",
-            "    } catch (e) {",
-            "        console.log('[AntiDebug] Failed to hook IsDebuggerPresent: ' + e);",
-            "    }",
-            "}",
-            "",
-        ])
+        script_lines.extend(
+            [
+                "// Anti-Debugger Hooks",
+                "if (Process.platform === 'windows') {",
+                "    var ntdll = Process.getModuleByName('ntdll.dll');",
+                "",
+                "    // Hook NtQueryInformationProcess",
+                "    try {",
+                "        var NtQueryInformationProcess = ntdll.getExportByName('NtQueryInformationProcess');",
+                "        Interceptor.attach(NtQueryInformationProcess, {",
+                "            onEnter: function(args) {",
+                "                var infoClass = args[1].toInt32();",
+                "                if (infoClass === 7) { // ProcessDebugPort",
+                "                    console.log('[AntiDebug] ProcessDebugPort query detected');",
+                "                    this.spoofDebugPort = true;",
+                "                }",
+                "            },",
+                "            onLeave: function(retval) {",
+                "                if (this.spoofDebugPort) {",
+                "                    console.log('[AntiDebug] Spoofing debug port result');",
+                "                    retval.replace(ptr(0)); // Return success but no debug port",
+                "                }",
+                "            }",
+                "        });",
+                "    } catch (e) {",
+                "        console.log('[AntiDebug] Failed to hook NtQueryInformationProcess: ' + e);",
+                "    }",
+                "",
+                "    // Hook IsDebuggerPresent",
+                "    try {",
+                "        var IsDebuggerPresent = kernel32.getExportByName('IsDebuggerPresent');",
+                "        Interceptor.attach(IsDebuggerPresent, {",
+                "            onLeave: function(retval) {",
+                "                console.log('[AntiDebug] IsDebuggerPresent called, returning false');",
+                "                retval.replace(ptr(0)); // Always return false",
+                "            }",
+                "        });",
+                "    } catch (e) {",
+                "        console.log('[AntiDebug] Failed to hook IsDebuggerPresent: ' + e);",
+                "    }",
+                "}",
+                "",
+            ]
+        )
 
     # Time manipulation hooks
     if "time" in hook_types:
-        script_lines.extend([
-            "// Time Manipulation Hooks",
-            "if (Process.platform === 'windows') {",
-            "    // Hook GetTickCount and GetTickCount64",
-            "    try {",
-            "        var GetTickCount = kernel32.getExportByName('GetTickCount');",
-            "        Interceptor.attach(GetTickCount, {",
-            "            onLeave: function(retval) {",
-            "                console.log('[Time] GetTickCount called, returning modified value');",
-            "                // Return a time that makes the application think it's been running longer",
-            "                var spoofedTime = retval.toInt32() + 3600000; // Add 1 hour",
-            "                retval.replace(ptr(spoofedTime));",
-            "            }",
-            "        });",
-            "    } catch (e) {",
-            "        console.log('[Time] Failed to hook GetTickCount: ' + e);",
-            "    }",
-            "",
-            "    // Hook GetSystemTime",
-            "    try {",
-            "        var GetSystemTime = kernel32.getExportByName('GetSystemTime');",
-            "        Interceptor.attach(GetSystemTime, {",
-            "            onEnter: function(args) {",
-            "                console.log('[Time] GetSystemTime called');",
-            "            }",
-            "        });",
-            "    } catch (e) {",
-            "        console.log('[Time] Failed to hook GetSystemTime: ' + e);",
-            "    }",
-            "}",
-            "",
-        ])
+        script_lines.extend(
+            [
+                "// Time Manipulation Hooks",
+                "if (Process.platform === 'windows') {",
+                "    // Hook GetTickCount and GetTickCount64",
+                "    try {",
+                "        var GetTickCount = kernel32.getExportByName('GetTickCount');",
+                "        Interceptor.attach(GetTickCount, {",
+                "            onLeave: function(retval) {",
+                "                console.log('[Time] GetTickCount called, returning modified value');",
+                "                // Return a time that makes the application think it's been running longer",
+                "                var spoofedTime = retval.toInt32() + 3600000; // Add 1 hour",
+                "                retval.replace(ptr(spoofedTime));",
+                "            }",
+                "        });",
+                "    } catch (e) {",
+                "        console.log('[Time] Failed to hook GetTickCount: ' + e);",
+                "    }",
+                "",
+                "    // Hook GetSystemTime",
+                "    try {",
+                "        var GetSystemTime = kernel32.getExportByName('GetSystemTime');",
+                "        Interceptor.attach(GetSystemTime, {",
+                "            onEnter: function(args) {",
+                "                console.log('[Time] GetSystemTime called');",
+                "            }",
+                "        });",
+                "    } catch (e) {",
+                "        console.log('[Time] Failed to hook GetSystemTime: ' + e);",
+                "    }",
+                "}",
+                "",
+            ]
+        )
 
     # Telemetry blocking hooks
     if "telemetry" in hook_types:
-        script_lines.extend([
-            "// Telemetry Blocking Hooks",
-            "if (Process.platform === 'windows') {",
-            "    var wininet = null;",
-            "    try {",
-            "        wininet = Process.getModuleByName('wininet.dll');",
-            "    } catch (e) {",
-            "        console.log('[Telemetry] wininet.dll not found');",
-            "    }",
-            "",
-            "    if (wininet) {",
-            "        // Hook InternetOpenUrl",
-            "        try {",
-            "            var InternetOpenUrlW = wininet.getExportByName('InternetOpenUrlW');",
-            "            Interceptor.attach(InternetOpenUrlW, {",
-            "                onEnter: function(args) {",
-            "                    var url = args[1].readUtf16String();",
-            "                    console.log('[Telemetry] InternetOpenUrl called with: ' + url);",
-            "                    if (url && (url.includes('telemetry') || url.includes('analytics') || url.includes('tracking'))) {",
-            "                        console.log('[Telemetry] Blocking telemetry URL: ' + url);",
-            "                        this.blockRequest = true;",
-            "                    }",
-            "                },",
-            "                onLeave: function(retval) {",
-            "                    if (this.blockRequest) {",
-            "                        retval.replace(ptr(0)); // Return null handle",
-            "                    }",
-            "                }",
-            "            });",
-            "        } catch (e) {",
-            "            console.log('[Telemetry] Failed to hook InternetOpenUrlW: ' + e);",
-            "        }",
-            "    }",
-            "}",
-            "",
-        ])
+        script_lines.extend(
+            [
+                "// Telemetry Blocking Hooks",
+                "if (Process.platform === 'windows') {",
+                "    var wininet = null;",
+                "    try {",
+                "        wininet = Process.getModuleByName('wininet.dll');",
+                "    } catch (e) {",
+                "        console.log('[Telemetry] wininet.dll not found');",
+                "    }",
+                "",
+                "    if (wininet) {",
+                "        // Hook InternetOpenUrl",
+                "        try {",
+                "            var InternetOpenUrlW = wininet.getExportByName('InternetOpenUrlW');",
+                "            Interceptor.attach(InternetOpenUrlW, {",
+                "                onEnter: function(args) {",
+                "                    var url = args[1].readUtf16String();",
+                "                    console.log('[Telemetry] InternetOpenUrl called with: ' + url);",
+                "                    if (url && (url.includes('telemetry') || url.includes('analytics') || url.includes('tracking'))) {",
+                "                        console.log('[Telemetry] Blocking telemetry URL: ' + url);",
+                "                        this.blockRequest = true;",
+                "                    }",
+                "                },",
+                "                onLeave: function(retval) {",
+                "                    if (this.blockRequest) {",
+                "                        retval.replace(ptr(0)); // Return null handle",
+                "                    }",
+                "                }",
+                "            });",
+                "        } catch (e) {",
+                "            console.log('[Telemetry] Failed to hook InternetOpenUrlW: ' + e);",
+                "        }",
+                "    }",
+                "}",
+                "",
+            ]
+        )
 
     # Network monitoring hooks
     if "network" in hook_types:
-        script_lines.extend([
-            "// Network Monitoring Hooks",
-            "if (Process.platform === 'windows') {",
-            "    var ws2_32 = null;",
-            "    try {",
-            "        ws2_32 = Process.getModuleByName('ws2_32.dll');",
-            "    } catch (e) {",
-            "        console.log('[Network] ws2_32.dll not found');",
-            "    }",
-            "",
-            "    if (ws2_32) {",
-            "        // Hook connect function",
-            "        try {",
-            "            var connect = ws2_32.getExportByName('connect');",
-            "            Interceptor.attach(connect, {",
-            "                onEnter: function(args) {",
-            "                    console.log('[Network] Socket connect called');",
-            "                    // Could analyze the destination address here",
-            "                }",
-            "            });",
-            "        } catch (e) {",
-            "            console.log('[Network] Failed to hook connect: ' + e);",
-            "        }",
-            "",
-            "        // Hook send function",
-            "        try {",
-            "            var send = ws2_32.getExportByName('send');",
-            "            Interceptor.attach(send, {",
-            "                onEnter: function(args) {",
-            "                    var dataPtr = args[1];",
-            "                    var dataSize = args[2].toInt32();",
-            "                    console.log('[Network] Data being sent, size: ' + dataSize);",
-            "                }",
-            "            });",
-            "        } catch (e) {",
-            "            console.log('[Network] Failed to hook send: ' + e);",
-            "        }",
-            "    }",
-            "}",
-            "",
-        ])
+        script_lines.extend(
+            [
+                "// Network Monitoring Hooks",
+                "if (Process.platform === 'windows') {",
+                "    var ws2_32 = null;",
+                "    try {",
+                "        ws2_32 = Process.getModuleByName('ws2_32.dll');",
+                "    } catch (e) {",
+                "        console.log('[Network] ws2_32.dll not found');",
+                "    }",
+                "",
+                "    if (ws2_32) {",
+                "        // Hook connect function",
+                "        try {",
+                "            var connect = ws2_32.getExportByName('connect');",
+                "            Interceptor.attach(connect, {",
+                "                onEnter: function(args) {",
+                "                    console.log('[Network] Socket connect called');",
+                "                    // Could analyze the destination address here",
+                "                }",
+                "            });",
+                "        } catch (e) {",
+                "            console.log('[Network] Failed to hook connect: ' + e);",
+                "        }",
+                "",
+                "        // Hook send function",
+                "        try {",
+                "            var send = ws2_32.getExportByName('send');",
+                "            Interceptor.attach(send, {",
+                "                onEnter: function(args) {",
+                "                    var dataPtr = args[1];",
+                "                    var dataSize = args[2].toInt32();",
+                "                    console.log('[Network] Data being sent, size: ' + dataSize);",
+                "                }",
+                "            });",
+                "        } catch (e) {",
+                "            console.log('[Network] Failed to hook send: ' + e);",
+                "        }",
+                "    }",
+                "}",
+                "",
+            ]
+        )
 
     # Add completion message
-    script_lines.extend([
-        "console.log('[Intellicrack] API hooking setup complete');",
-        "console.log('[Intellicrack] Active hooks: " + ", ".join(hook_types) + "');",
-        "",
-    ])
+    script_lines.extend(
+        [
+            "console.log('[Intellicrack] API hooking setup complete');",
+            "console.log('[Intellicrack] Active hooks: " + ", ".join(hook_types) + "');",
+            "",
+        ]
+    )
 
     return "\n".join(script_lines)
 
@@ -300,7 +312,11 @@ def detect_protection_mechanisms(binary_path: str) -> dict[str, Any]:
             protections["details"].append("Themida protection detected")
 
         # Anti-debug indicators
-        debug_strings = [b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent", b"NtQueryInformationProcess"]
+        debug_strings = [
+            b"IsDebuggerPresent",
+            b"CheckRemoteDebuggerPresent",
+            b"NtQueryInformationProcess",
+        ]
         for debug_str in debug_strings:
             if debug_str in data:
                 protections["anti_debug"] = True
@@ -390,7 +406,17 @@ def generate_bypass_strategy(protections: dict[str, Any]) -> list[str]:
         strategies.append("Hook network APIs to redirect requests")
         strategies.append("Analyze network protocol for proper responses")
 
-    if not any(protections.get(key) for key in ["packer", "anti_debug", "vm_detection", "hardware_fingerprinting", "time_checks", "network_validation"]):
+    if not any(
+        protections.get(key)
+        for key in [
+            "packer",
+            "anti_debug",
+            "vm_detection",
+            "hardware_fingerprinting",
+            "time_checks",
+            "network_validation",
+        ]
+    ):
         strategies.append("No major protections detected - standard patching may be sufficient")
         strategies.append("Focus on license validation logic analysis")
 
@@ -425,54 +451,68 @@ def create_custom_hook_script(hook_config: dict[str, Any]) -> str:
             if not function_name:
                 continue
 
-            script_lines.extend([
-                f"// Hook {function_name} in {module_name}",
-                "try {",
-                f"    var module = Process.getModuleByName('{module_name}');",
-                f"    var {function_name} = module.getExportByName('{function_name}');",
-                f"    Interceptor.attach({function_name}, {{",
-                "        onEnter: function(args) {",
-                f"            console.log('[Custom] {function_name} called');",
-            ])
+            script_lines.extend(
+                [
+                    f"// Hook {function_name} in {module_name}",
+                    "try {",
+                    f"    var module = Process.getModuleByName('{module_name}');",
+                    f"    var {function_name} = module.getExportByName('{function_name}');",
+                    f"    Interceptor.attach({function_name}, {{",
+                    "        onEnter: function(args) {",
+                    f"            console.log('[Custom] {function_name} called');",
+                ]
+            )
 
             if hook_type == "block":
-                script_lines.extend([
-                    "            this.block = true;",
-                ])
+                script_lines.extend(
+                    [
+                        "            this.block = true;",
+                    ]
+                )
             elif hook_type == "modify":
-                script_lines.extend([
-                    "            // Custom modification logic here",
-                    "            this.modify = true;",
-                ])
+                script_lines.extend(
+                    [
+                        "            // Custom modification logic here",
+                        "            this.modify = true;",
+                    ]
+                )
 
-            script_lines.extend([
-                "        },",
-                "        onLeave: function(retval) {",
-            ])
+            script_lines.extend(
+                [
+                    "        },",
+                    "        onLeave: function(retval) {",
+                ]
+            )
 
             if hook_type == "block":
-                script_lines.extend([
-                    "            if (this.block) {",
-                    f"                console.log('[Custom] Blocking {function_name}');",
-                    "                retval.replace(ptr(0));",
-                    "            }",
-                ])
+                script_lines.extend(
+                    [
+                        "            if (this.block) {",
+                        f"                console.log('[Custom] Blocking {function_name}');",
+                        "                retval.replace(ptr(0));",
+                        "            }",
+                    ]
+                )
             elif hook_type == "modify":
-                script_lines.extend([
-                    "            if (this.modify) {",
-                    f"                console.log('[Custom] Modifying {function_name} result');",
-                    "                // Custom result modification here",
-                    "            }",
-                ])
+                script_lines.extend(
+                    [
+                        "            if (this.modify) {",
+                        f"                console.log('[Custom] Modifying {function_name} result');",
+                        "                // Custom result modification here",
+                        "            }",
+                    ]
+                )
 
-            script_lines.extend([
-                "        }",
-                "    });",
-                "} catch (e) {",
-                f"    console.log('[Custom] Failed to hook {function_name}: ' + e);",
-                "}",
-                "",
-            ])
+            script_lines.extend(
+                [
+                    "        }",
+                    "    });",
+                    "} catch (e) {",
+                    f"    console.log('[Custom] Failed to hook {function_name}: ' + e);",
+                    "}",
+                    "",
+                ]
+            )
 
     # Process memory patches
     if "memory_patches" in hook_config:
@@ -482,30 +522,34 @@ def create_custom_hook_script(hook_config: dict[str, Any]) -> str:
             replacement = patch.get("replacement", "")
 
             if address:
-                script_lines.extend([
-                    f"// Memory patch at {address}",
-                    "try {",
-                    f"    var addr = ptr('{address}');",
-                    f"    var originalBytes = '{original}';",
-                    f"    var newBytes = '{replacement}';",
-                    "    ",
-                    "    // Apply memory patch",
-                    "    Memory.protect(addr, newBytes.length / 2, 'rwx');",
-                    "    for (var i = 0; i < newBytes.length; i += 2) {",
-                    "        var byte = parseInt(newBytes.substr(i, 2), 16);",
-                    "        addr.add(i / 2).writeU8(byte);",
-                    "    }",
-                    f"    console.log('[Custom] Applied memory patch at {address}');",
-                    "} catch (e) {",
-                    f"    console.log('[Custom] Failed to apply patch at {address}: ' + e);",
-                    "}",
-                    "",
-                ])
+                script_lines.extend(
+                    [
+                        f"// Memory patch at {address}",
+                        "try {",
+                        f"    var addr = ptr('{address}');",
+                        f"    var originalBytes = '{original}';",
+                        f"    var newBytes = '{replacement}';",
+                        "    ",
+                        "    // Apply memory patch",
+                        "    Memory.protect(addr, newBytes.length / 2, 'rwx');",
+                        "    for (var i = 0; i < newBytes.length; i += 2) {",
+                        "        var byte = parseInt(newBytes.substr(i, 2), 16);",
+                        "        addr.add(i / 2).writeU8(byte);",
+                        "    }",
+                        f"    console.log('[Custom] Applied memory patch at {address}');",
+                        "} catch (e) {",
+                        f"    console.log('[Custom] Failed to apply patch at {address}: ' + e);",
+                        "}",
+                        "",
+                    ]
+                )
 
-    script_lines.extend([
-        "console.log('[Custom] Custom hooks setup complete');",
-        "",
-    ])
+    script_lines.extend(
+        [
+            "console.log('[Custom] Custom hooks setup complete');",
+            "",
+        ]
+    )
 
     return "\n".join(script_lines)
 
@@ -612,7 +656,7 @@ Interceptor.attach(Module.findExportByName(null, 'CmGetLicenseInfo'), {
     emulation_result["memory_map"] = {
         "0x0000": b"DONGLE_OK",
         "0x0008": serial_number.encode()[:16].ljust(16, b"\x00"),
-        "0x0018": b"\xFF" * 8,  # Feature flags
+        "0x0018": b"\xff" * 8,  # Feature flags
         "0x0020": b"\x00" * 32,  # User data area
     }
 
@@ -701,7 +745,9 @@ def generate_hwid_spoof_config(target_hwid: str) -> dict[str, Any]:
             "Win32_BaseBoard": {"SerialNumber": f"MB-{target_hwid[:12].upper()}"},
             "Win32_Processor": {"ProcessorId": f"BFEBFBFF{target_hwid[:8].upper()}"},
             "Win32_DiskDrive": {"SerialNumber": f"DSK-{target_hwid[:10].upper()}"},
-            "Win32_NetworkAdapter": {"MACAddress": f"{target_hwid[:2]}:{target_hwid[2:4]}:{target_hwid[4:6]}:00:00:01"},
+            "Win32_NetworkAdapter": {
+                "MACAddress": f"{target_hwid[:2]}:{target_hwid[2:4]}:{target_hwid[4:6]}:00:00:01"
+            },
         },
         "implementation_script": f"""
 # HWID Spoofing Script
@@ -805,19 +851,21 @@ def generate_time_bomb_defuser(binary_path: str) -> dict[str, Any]:
                 }
 
                 # Generate hook point
-                config["hook_points"].append({
-                    "api": api.decode(),
-                    "module": "kernel32.dll" if b"Get" in api else "msvcrt.dll",
-                    "strategy": "return_fixed_value",
-                })
+                config["hook_points"].append(
+                    {
+                        "api": api.decode(),
+                        "module": "kernel32.dll" if b"Get" in api else "msvcrt.dll",
+                        "strategy": "return_fixed_value",
+                    }
+                )
 
         # Look for date comparison patterns
         date_patterns = [
-            (b"\x07\xE5", "2021"),  # Year 2021 in hex
-            (b"\x07\xE6", "2022"),
-            (b"\x07\xE7", "2023"),
-            (b"\x07\xE8", "2024"),
-            (b"\x07\xE9", "2025"),
+            (b"\x07\xe5", "2021"),  # Year 2021 in hex
+            (b"\x07\xe6", "2022"),
+            (b"\x07\xe7", "2023"),
+            (b"\x07\xe8", "2024"),
+            (b"\x07\xe9", "2025"),
         ]
 
         for pattern, year in date_patterns:
@@ -830,12 +878,14 @@ def generate_time_bomb_defuser(binary_path: str) -> dict[str, Any]:
                 }
 
                 # Generate patch to change year to 2099
-                config["patches"].append({
-                    "offset": hex(offset),
-                    "original": pattern.hex(),
-                    "replacement": b"\x07\xF3".hex(),  # 2099
-                    "description": f"Change year {year} to 2099",
-                })
+                config["patches"].append(
+                    {
+                        "offset": hex(offset),
+                        "original": pattern.hex(),
+                        "replacement": b"\x07\xf3".hex(),  # 2099
+                        "description": f"Change year {year} to 2099",
+                    }
+                )
 
         # Generate defusal strategies based on findings
         if config["time_checks_found"] > 0:
@@ -894,19 +944,30 @@ if (time_func) {
 
         # Add recommendations
         if config["time_checks_found"] > 3:
-            config["recommendations"].append("Multiple time checks detected - comprehensive bypass recommended")
+            config["recommendations"].append(
+                "Multiple time checks detected - comprehensive bypass recommended"
+            )
 
-        if any("critical" in result.get("severity", "") for result in config["analysis_results"].values()):
-            config["recommendations"].append("Critical time bomb detected - immediate patching required")
+        if any(
+            "critical" in result.get("severity", "")
+            for result in config["analysis_results"].values()
+        ):
+            config["recommendations"].append(
+                "Critical time bomb detected - immediate patching required"
+            )
 
         if config["patches"]:
-            config["recommendations"].append(f"Apply {len(config['patches'])} binary patches for permanent fix")
+            config["recommendations"].append(
+                f"Apply {len(config['patches'])} binary patches for permanent fix"
+            )
 
-        config["recommendations"].extend([
-            "Use Frida script for runtime bypass without modifying binary",
-            "Consider system date manipulation as alternative approach",
-            "Monitor for additional time checks during runtime",
-        ])
+        config["recommendations"].extend(
+            [
+                "Use Frida script for runtime bypass without modifying binary",
+                "Consider system date manipulation as alternative approach",
+                "Monitor for additional time checks during runtime",
+            ]
+        )
 
     except Exception as e:
         logger.error(f"Time bomb analysis failed: {e}")
@@ -1022,13 +1083,15 @@ def generate_telemetry_blocker(app_name: str) -> dict[str, Any]:
 
     # Add domain-specific firewall rules
     for domain in blocked_domains[:10]:  # Limit to 10 most important
-        config["firewall_rules"].append({
-            "name": f'Block_{domain.replace(".", "_")}',
-            "direction": "out",
-            "action": "block",
-            "remoteip": domain,
-            "command": f'netsh advfirewall firewall add rule name="Block {domain}" dir=out action=block remoteip={domain} enable=yes',
-        })
+        config["firewall_rules"].append(
+            {
+                "name": f'Block_{domain.replace(".", "_")}',
+                "direction": "out",
+                "action": "block",
+                "remoteip": domain,
+                "command": f'netsh advfirewall firewall add rule name="Block {domain}" dir=out action=block remoteip={domain} enable=yes',
+            }
+        )
 
     # Generate Frida script for runtime blocking
     config["frida_script"] = f"""

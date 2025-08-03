@@ -29,16 +29,16 @@ class TestRealKeygenOperations:
             dos_header += b'\x00' * 40
             dos_header += b'\x80\x00\x00\x00'
             dos_header += b'\x00' * 60
-            
+
             # PE Signature
             pe_signature = b'PE\x00\x00'
-            
+
             # COFF Header
             coff_header = b'\x4c\x01\x03\x00' + b'\x00' * 16
-            
+
             # Optional Header
             optional_header = b'\x0b\x01\x0e\x00' + b'\x00' * 220
-            
+
             # Section Headers
             text_section = b'.text\x00\x00\x00'
             text_section += b'\x00\x20\x00\x00'  # VirtualSize
@@ -47,7 +47,7 @@ class TestRealKeygenOperations:
             text_section += b'\x00\x04\x00\x00'  # PointerToRawData
             text_section += b'\x00' * 12
             text_section += b'\x20\x00\x00\x60'  # Characteristics
-            
+
             data_section = b'.data\x00\x00\x00'
             data_section += b'\x00\x10\x00\x00'
             data_section += b'\x00\x30\x00\x00'
@@ -55,113 +55,113 @@ class TestRealKeygenOperations:
             data_section += b'\x00\x24\x00\x00'
             data_section += b'\x00' * 12
             data_section += b'\x40\x00\x00\xc0'
-            
+
             # Serial validation code
             serial_code = b''
-            
+
             # Function: validate_serial(char* serial)
             # Prologue
             serial_code += b'\x55'  # push ebp
             serial_code += b'\x8b\xec'  # mov ebp, esp
             serial_code += b'\x83\xec\x20'  # sub esp, 32
-            
+
             # Get serial parameter
             serial_code += b'\x8b\x45\x08'  # mov eax, [ebp+8]
             serial_code += b'\x89\x45\xf0'  # mov [ebp-16], eax
-            
+
             # Length check (must be 16 chars)
             serial_code += b'\x50'  # push eax
             serial_code += b'\xe8\x50\x00\x00\x00'  # call strlen
             serial_code += b'\x83\xc4\x04'  # add esp, 4
             serial_code += b'\x83\xf8\x10'  # cmp eax, 16
             serial_code += b'\x75\x40'  # jne invalid
-            
+
             # Algorithm: sum = 0
             serial_code += b'\x33\xc0'  # xor eax, eax
             serial_code += b'\x89\x45\xfc'  # mov [ebp-4], eax
-            
+
             # Loop through characters
             serial_code += b'\x33\xc9'  # xor ecx, ecx (i = 0)
             # loop_start:
             serial_code += b'\x83\xf9\x10'  # cmp ecx, 16
             serial_code += b'\x7d\x20'  # jge check_sum
-            
+
             # Get char at position i
             serial_code += b'\x8b\x55\xf0'  # mov edx, [ebp-16]
             serial_code += b'\x0f\xb6\x04\x0a'  # movzx eax, byte [edx+ecx]
-            
+
             # Complex algorithm
             serial_code += b'\x6b\xc0\x0d'  # imul eax, 13
             serial_code += b'\x03\xc1'  # add eax, ecx
             serial_code += b'\x35\xef\xbe\xad\xde'  # xor eax, 0xDEADBEEF
             serial_code += b'\xc1\xc0\x05'  # rol eax, 5
-            
+
             # Add to sum
             serial_code += b'\x03\x45\xfc'  # add eax, [ebp-4]
             serial_code += b'\x89\x45\xfc'  # mov [ebp-4], eax
-            
+
             # Increment counter
             serial_code += b'\x41'  # inc ecx
             serial_code += b'\xeb\xde'  # jmp loop_start
-            
+
             # check_sum:
             serial_code += b'\x8b\x45\xfc'  # mov eax, [ebp-4]
             serial_code += b'\x3d\x37\x13\x00\x00'  # cmp eax, 0x1337
             serial_code += b'\x75\x07'  # jne invalid
-            
+
             # Valid serial
             serial_code += b'\xb8\x01\x00\x00\x00'  # mov eax, 1
             serial_code += b'\xeb\x05'  # jmp done
-            
+
             # invalid:
             serial_code += b'\xb8\x00\x00\x00\x00'  # mov eax, 0
-            
+
             # done:
             serial_code += b'\x8b\xe5'  # mov esp, ebp
             serial_code += b'\x5d'  # pop ebp
             serial_code += b'\xc3'  # ret
-            
+
             # Generate hardware ID function
             serial_code += b'\x90' * 16  # padding
-            
+
             # Function: get_hardware_id()
             serial_code += b'\x55'  # push ebp
             serial_code += b'\x8b\xec'  # mov ebp, esp
-            
+
             # Simulate hardware ID generation
             serial_code += b'\xe8\x00\x00\x00\x00'  # call GetVolumeInformation
             serial_code += b'\x35\x12\x34\x56\x78'  # xor eax, 0x78563412
             serial_code += b'\xc1\xc8\x08'  # ror eax, 8
-            
+
             serial_code += b'\x8b\xe5'  # mov esp, ebp
             serial_code += b'\x5d'  # pop ebp
             serial_code += b'\xc3'  # ret
-            
+
             # RSA-style validation stub
             serial_code += b'\x90' * 16  # padding
-            
+
             # Function: rsa_verify(serial, signature)
             serial_code += b'\x55'  # push ebp
             serial_code += b'\x8b\xec'  # mov ebp, esp
-            
+
             # Simulate RSA operations
             serial_code += b'\x8b\x45\x08'  # mov eax, [ebp+8] (serial)
             serial_code += b'\x8b\x55\x0c'  # mov edx, [ebp+12] (signature)
-            
+
             # Mock modular exponentiation
             serial_code += b'\xb9\x41\x00\x00\x00'  # mov ecx, 65 (public exponent)
             serial_code += b'\xf7\xe1'  # mul ecx
             serial_code += b'\xb9\x11\x01\x00\x00'  # mov ecx, 273 (modulus)
             serial_code += b'\xf7\xf1'  # div ecx
             serial_code += b'\x89\xd0'  # mov eax, edx (remainder)
-            
+
             serial_code += b'\x8b\xe5'  # mov esp, ebp
             serial_code += b'\x5d'  # pop ebp
             serial_code += b'\xc3'  # ret
-            
+
             # Pad to section size
             serial_code += b'\x90' * (8192 - len(serial_code))
-            
+
             # Data section with strings
             data_content = b'strlen\x00GetVolumeInformation\x00'
             data_content += b'Enter Serial Number: \x00'
@@ -169,12 +169,12 @@ class TestRealKeygenOperations:
             data_content += b'Serial Accepted!\x00'
             data_content += b'XXXX-XXXX-XXXX-XXXX\x00'
             data_content += b'\x00' * (4096 - len(data_content))
-            
-            temp_file.write(dos_header + pe_signature + coff_header + optional_header + 
+
+            temp_file.write(dos_header + pe_signature + coff_header + optional_header +
                           text_section + data_section + serial_code + data_content)
             temp_file.flush()
             yield temp_file.name
-        
+
         try:
             os.unlink(temp_file.name)
         except:
@@ -217,39 +217,39 @@ class TestRealKeygenOperations:
         """Test REAL serial validation algorithm analysis."""
         analyzer = BinaryAnalyzer()
         keygen_assistant = Radare2KeygenAssistant()
-        
+
         # Analyze binary
         analysis_results = analyzer.analyze_file(protected_binary_with_serial_check)
         assert analysis_results is not None, "Binary analysis must succeed"
-        
+
         # Find serial validation functions
         functions = analysis_results.get('functions', [])
         serial_functions = []
-        
+
         for func in functions:
             func_name = func.get('name', '').lower()
             if any(keyword in func_name for keyword in ['serial', 'validate', 'check', 'verify']):
                 serial_functions.append(func)
-        
+
         # Analyze serial validation logic
         serial_analysis = keygen_assistant.analyze_serial_validation(
             protected_binary_with_serial_check,
             serial_functions
         )
-        
+
         assert serial_analysis is not None, "Serial analysis must return results"
         assert 'algorithm_type' in serial_analysis, "Must identify algorithm type"
         assert 'operations' in serial_analysis, "Must identify operations"
         assert 'constants' in serial_analysis, "Must extract constants"
         assert 'constraints' in serial_analysis, "Must identify constraints"
-        
+
         # Verify algorithm detection
         operations = serial_analysis['operations']
         assert len(operations) > 0, "Must detect at least one operation"
-        
+
         constants = serial_analysis['constants']
         assert len(constants) > 0, "Must extract at least one constant"
-        
+
         # Check for common patterns
         algorithm_type = serial_analysis['algorithm_type']
         assert algorithm_type in ['checksum', 'xor_based', 'mathematical', 'rsa_style', 'custom'], \
@@ -259,7 +259,7 @@ class TestRealKeygenOperations:
         """Test REAL keygen template generation from analysis."""
         ai_generator = AIScriptGenerator(app_context)
         keygen_assistant = Radare2KeygenAssistant()
-        
+
         # Analyze the binary first
         algorithm_info = {
             'binary': protected_binary_with_serial_check,
@@ -272,24 +272,24 @@ class TestRealKeygenOperations:
                 'format': 'XXXX-XXXX-XXXX-XXXX'
             }
         }
-        
+
         # Generate keygen template
         keygen_result = ai_generator.generate_keygen_from_analysis(algorithm_info)
         assert keygen_result is not None, "Keygen generation must succeed"
         assert 'keygen_code' in keygen_result, "Must generate keygen code"
         assert 'algorithm_notes' in keygen_result, "Must include algorithm notes"
         assert 'test_serials' in keygen_result, "Must generate test serials"
-        
+
         keygen_code = keygen_result['keygen_code']
         assert len(keygen_code) > 0, "Keygen code must not be empty"
         assert 'def generate_serial' in keygen_code, "Must have serial generation function"
         assert 'def validate_serial' in keygen_code, "Must have validation function"
-        
+
         # Verify test serials
         test_serials = keygen_result['test_serials']
         assert isinstance(test_serials, list), "Test serials must be a list"
         assert len(test_serials) >= 3, "Must generate at least 3 test serials"
-        
+
         for serial in test_serials:
             assert len(serial) == 19, "Serial must match format (16 chars + 3 dashes)"
             assert serial.count('-') == 3, "Serial must have correct format"
@@ -297,9 +297,9 @@ class TestRealKeygenOperations:
     def test_real_multi_algorithm_keygen(self, keygen_patterns, app_context):
         """Test REAL keygen for multiple algorithm types."""
         keygen_assistant = Radare2KeygenAssistant()
-        
+
         test_cases = []
-        
+
         # Test each algorithm pattern
         for algo_name, pattern in keygen_patterns.items():
             # Generate keygen for pattern
@@ -310,15 +310,15 @@ class TestRealKeygenOperations:
                 'target_platform': 'windows',
                 'output_format': 'python'
             }
-            
+
             keygen_result = keygen_assistant.generate_multi_algorithm_keygen(keygen_config)
             assert keygen_result is not None, f"Keygen generation failed for {algo_name}"
             assert 'implementation' in keygen_result, f"Must have implementation for {algo_name}"
             assert 'complexity' in keygen_result, f"Must assess complexity for {algo_name}"
-            
+
             implementation = keygen_result['implementation']
             assert len(implementation) > 0, f"Implementation must not be empty for {algo_name}"
-            
+
             # Test the example function
             if 'example' in pattern:
                 test_name = "TestUser"
@@ -329,14 +329,14 @@ class TestRealKeygenOperations:
                     'expected_format': expected,
                     'implementation': implementation
                 })
-        
+
         # Verify all algorithms generated
         assert len(test_cases) == len(keygen_patterns), "Must generate keygen for all patterns"
 
     def test_real_hardware_locked_keygen(self, app_context):
         """Test REAL hardware-locked keygen generation."""
         keygen_assistant = Radare2KeygenAssistant()
-        
+
         # Hardware ID sources
         hardware_sources = {
             'cpu_id': {'method': 'cpuid', 'registers': ['eax', 'ebx', 'ecx', 'edx']},
@@ -344,7 +344,7 @@ class TestRealKeygenOperations:
             'mac_address': {'method': 'GetAdaptersInfo', 'api': 'windows'},
             'motherboard': {'method': 'WMI', 'query': 'Win32_BaseBoard'}
         }
-        
+
         # Generate hardware-locked keygen
         hw_keygen_config = {
             'hardware_sources': hardware_sources,
@@ -352,17 +352,17 @@ class TestRealKeygenOperations:
             'user_input_required': True,
             'reversible': False
         }
-        
+
         hw_keygen_result = keygen_assistant.generate_hardware_locked_keygen(hw_keygen_config)
         assert hw_keygen_result is not None, "Hardware keygen generation must succeed"
         assert 'collector_code' in hw_keygen_result, "Must generate hardware collector"
         assert 'generator_code' in hw_keygen_result, "Must generate key generator"
         assert 'validator_code' in hw_keygen_result, "Must generate validator"
-        
+
         collector_code = hw_keygen_result['collector_code']
         assert 'GetVolumeInformation' in collector_code or 'cpuid' in collector_code, \
             "Collector must use hardware APIs"
-        
+
         generator_code = hw_keygen_result['generator_code']
         assert 'hardware_id' in generator_code, "Generator must use hardware ID"
         assert 'user_name' in generator_code or 'user_input' in generator_code, \
@@ -371,7 +371,7 @@ class TestRealKeygenOperations:
     def test_real_rsa_style_keygen(self, app_context):
         """Test REAL RSA-style keygen implementation."""
         keygen_assistant = Radare2KeygenAssistant()
-        
+
         # RSA parameters (small for testing)
         rsa_params = {
             'p': 17,
@@ -380,7 +380,7 @@ class TestRealKeygenOperations:
             'n': 323,  # p * q
             'd': 173  # Private exponent
         }
-        
+
         # Generate RSA-style keygen
         rsa_config = {
             'key_size': 'small',  # For testing
@@ -388,22 +388,22 @@ class TestRealKeygenOperations:
             'encoding': 'base32',
             'add_checksum': True
         }
-        
+
         rsa_keygen_result = keygen_assistant.generate_rsa_keygen(rsa_config)
         assert rsa_keygen_result is not None, "RSA keygen generation must succeed"
         assert 'signing_function' in rsa_keygen_result, "Must have signing function"
         assert 'verification_function' in rsa_keygen_result, "Must have verification function"
         assert 'example_keys' in rsa_keygen_result, "Must generate example keys"
-        
+
         # Test example key generation
         example_keys = rsa_keygen_result['example_keys']
         assert len(example_keys) >= 3, "Must generate multiple example keys"
-        
+
         for key_info in example_keys:
             assert 'name' in key_info, "Key must have associated name"
             assert 'serial' in key_info, "Key must have serial"
             assert 'signature' in key_info, "Key must have signature"
-            
+
             # Verify format
             serial = key_info['serial']
             assert len(serial) > 0, "Serial must not be empty"
@@ -411,7 +411,7 @@ class TestRealKeygenOperations:
     def test_real_keygen_brute_force_resistance(self, keygen_patterns, app_context):
         """Test REAL keygen resistance to brute force attacks."""
         keygen_assistant = Radare2KeygenAssistant()
-        
+
         # Analyze brute force resistance
         for algo_name, pattern in keygen_patterns.items():
             resistance_analysis = keygen_assistant.analyze_brute_force_resistance({
@@ -422,15 +422,15 @@ class TestRealKeygenOperations:
                     'charset_size': 36  # alphanumeric
                 }
             })
-            
+
             assert resistance_analysis is not None, f"Resistance analysis failed for {algo_name}"
             assert 'entropy_bits' in resistance_analysis, "Must calculate entropy"
             assert 'brute_force_time' in resistance_analysis, "Must estimate brute force time"
             assert 'recommendations' in resistance_analysis, "Must provide recommendations"
-            
+
             entropy = resistance_analysis['entropy_bits']
             assert entropy > 0, f"Entropy must be positive for {algo_name}"
-            
+
             # Check recommendations
             recommendations = resistance_analysis['recommendations']
             assert isinstance(recommendations, list), "Recommendations must be a list"
@@ -439,7 +439,7 @@ class TestRealKeygenOperations:
         """Test REAL keygen pattern obfuscation techniques."""
         shellcode_gen = ShellcodeGenerator()
         keygen_assistant = Radare2KeygenAssistant()
-        
+
         # Original keygen algorithm
         original_keygen = """
 def generate_key(name):
@@ -450,31 +450,31 @@ def generate_key(name):
         sum_val = ((sum_val << 5) | (sum_val >> 27)) & 0xFFFFFFFF
     return f"{name[:4]}-{sum_val:08X}"
 """
-        
+
         # Obfuscate the keygen
         obfuscation_config = {
             'techniques': ['opaque_predicates', 'control_flow_flattening', 'constant_hiding'],
             'level': 'high',
             'preserve_functionality': True
         }
-        
+
         obfuscated_result = keygen_assistant.obfuscate_keygen(original_keygen, obfuscation_config)
         assert obfuscated_result is not None, "Obfuscation must succeed"
         assert 'obfuscated_code' in obfuscated_result, "Must return obfuscated code"
         assert 'techniques_applied' in obfuscated_result, "Must list applied techniques"
         assert 'complexity_increase' in obfuscated_result, "Must measure complexity increase"
-        
+
         obfuscated_code = obfuscated_result['obfuscated_code']
         assert len(obfuscated_code) > len(original_keygen), "Obfuscated code should be larger"
         assert '0xDEADBEEF' not in obfuscated_code, "Constants should be hidden"
-        
+
         # Generate native code version
         native_result = shellcode_gen.generate_keygen_shellcode({
             'algorithm': original_keygen,
             'architecture': 'x86',
             'obfuscate': True
         })
-        
+
         assert native_result is not None, "Native code generation must succeed"
         assert 'shellcode' in native_result, "Must generate shellcode"
         assert len(native_result['shellcode']) > 0, "Shellcode must not be empty"
@@ -482,7 +482,7 @@ def generate_key(name):
     def test_real_online_activation_keygen(self, app_context):
         """Test REAL online activation system keygen."""
         keygen_assistant = Radare2KeygenAssistant()
-        
+
         # Online activation configuration
         activation_config = {
             'server_url': 'https://license.example.com/activate',
@@ -492,24 +492,24 @@ def generate_key(name):
             'time_limited': True,
             'features': ['pro', 'enterprise', 'unlimited']
         }
-        
+
         # Generate activation keygen system
         activation_result = keygen_assistant.generate_online_activation_system(activation_config)
         assert activation_result is not None, "Activation system generation must succeed"
         assert 'client_code' in activation_result, "Must generate client code"
         assert 'server_code' in activation_result, "Must generate server code"
         assert 'protocol_spec' in activation_result, "Must define protocol"
-        
+
         client_code = activation_result['client_code']
         assert 'generate_request' in client_code, "Client must generate requests"
         assert 'validate_response' in client_code, "Client must validate responses"
         assert 'hardware_fingerprint' in client_code, "Client must collect hardware info"
-        
+
         server_code = activation_result['server_code']
         assert 'process_activation' in server_code, "Server must process activations"
         assert 'generate_license' in server_code, "Server must generate licenses"
         assert 'verify_hardware' in server_code, "Server must verify hardware"
-        
+
         # Test protocol specification
         protocol = activation_result['protocol_spec']
         assert 'request_format' in protocol, "Protocol must define request format"
@@ -520,11 +520,11 @@ def generate_key(name):
         """Test REAL keygen validation bypass generation."""
         analyzer = BinaryAnalyzer()
         keygen_assistant = Radare2KeygenAssistant()
-        
+
         # Analyze serial check locations
         check_locations = analyzer.find_serial_checks(protected_binary_with_serial_check)
         assert check_locations is not None, "Must find serial check locations"
-        
+
         # Generate bypass instead of keygen
         bypass_config = {
             'binary': protected_binary_with_serial_check,
@@ -532,17 +532,17 @@ def generate_key(name):
             'bypass_method': 'patch',
             'preserve_functionality': True
         }
-        
+
         bypass_result = keygen_assistant.generate_validation_bypass(bypass_config)
         assert bypass_result is not None, "Bypass generation must succeed"
         assert 'patch_locations' in bypass_result, "Must identify patch locations"
         assert 'patch_bytes' in bypass_result, "Must provide patch bytes"
         assert 'bypass_script' in bypass_result, "Must generate bypass script"
-        
+
         # Verify patch locations
         patch_locations = bypass_result['patch_locations']
         assert len(patch_locations) > 0, "Must identify at least one patch location"
-        
+
         for location in patch_locations:
             assert 'offset' in location, "Patch must have offset"
             assert 'original' in location, "Patch must show original bytes"
@@ -552,7 +552,7 @@ def generate_key(name):
     def test_real_elliptic_curve_keygen(self, app_context):
         """Test REAL elliptic curve based keygen."""
         keygen_assistant = Radare2KeygenAssistant()
-        
+
         # ECC parameters
         ecc_config = {
             'curve': 'secp256k1',  # Bitcoin curve
@@ -560,7 +560,7 @@ def generate_key(name):
             'encoding': 'base58',
             'add_checksum': True
         }
-        
+
         # Generate ECC keygen
         ecc_result = keygen_assistant.generate_ecc_keygen(ecc_config)
         assert ecc_result is not None, "ECC keygen generation must succeed"
@@ -568,16 +568,16 @@ def generate_key(name):
         assert 'signature_generation' in ecc_result, "Must have signature code"
         assert 'verification' in ecc_result, "Must have verification code"
         assert 'example_keys' in ecc_result, "Must generate examples"
-        
+
         # Test example generation
         examples = ecc_result['example_keys']
         assert len(examples) >= 2, "Must generate multiple examples"
-        
+
         for example in examples:
             assert 'private_key' in example, "Must have private key"
             assert 'public_key' in example, "Must have public key"
             assert 'license_key' in example, "Must have license key"
-            
+
             # Verify format
             license_key = example['license_key']
             assert len(license_key) > 20, "ECC keys should be reasonably long"
@@ -588,7 +588,7 @@ def generate_key(name):
         """Test REAL keygen with anti-debugging protection."""
         keygen_assistant = Radare2KeygenAssistant()
         shellcode_gen = ShellcodeGenerator()
-        
+
         # Generate protected keygen
         protected_config = {
             'base_algorithm': 'checksum_xor',
@@ -601,13 +601,13 @@ def generate_key(name):
             'false_paths': 3,
             'obfuscation_level': 'high'
         }
-        
+
         protected_result = keygen_assistant.generate_protected_keygen(protected_config)
         assert protected_result is not None, "Protected keygen generation must succeed"
         assert 'protected_code' in protected_result, "Must generate protected code"
         assert 'protection_layers' in protected_result, "Must document protections"
         assert 'bypass_difficulty' in protected_result, "Must assess bypass difficulty"
-        
+
         # Generate native protected version
         native_protected = shellcode_gen.generate_protected_keygen_stub({
             'keygen_logic': protected_result['protected_code'],
@@ -615,16 +615,16 @@ def generate_key(name):
             'anti_vm': True,
             'polymorphic': True
         })
-        
+
         assert native_protected is not None, "Native protection must succeed"
         assert 'stub_code' in native_protected, "Must generate stub code"
         assert len(native_protected['stub_code']) > 100, "Protected stub should be substantial"
-        
+
         # Verify protection features
         protection_layers = protected_result['protection_layers']
         assert len(protection_layers) >= len(protected_config['protections']), \
             "All protections should be applied"
-        
+
         for protection in protection_layers:
             assert 'type' in protection, "Protection must have type"
             assert 'implementation' in protection, "Protection must be implemented"
@@ -633,7 +633,7 @@ def generate_key(name):
     def test_real_keygen_machine_learning_detection(self, keygen_patterns, app_context):
         """Test REAL ML-based keygen pattern detection."""
         keygen_assistant = Radare2KeygenAssistant()
-        
+
         # Prepare training data from patterns
         training_samples = []
         for algo_name, pattern in keygen_patterns.items():
@@ -647,20 +647,20 @@ def generate_key(name):
                         'output': serial,
                         'algorithm': algo_name
                     })
-        
+
         # Train ML model to detect patterns
         ml_config = {
             'model_type': 'pattern_classifier',
             'features': ['length', 'charset', 'entropy', 'structure'],
             'training_samples': training_samples
         }
-        
+
         ml_result = keygen_assistant.train_keygen_detector(ml_config)
         assert ml_result is not None, "ML training must succeed"
         assert 'model_accuracy' in ml_result, "Must report model accuracy"
         assert 'feature_importance' in ml_result, "Must show feature importance"
         assert 'detection_rules' in ml_result, "Must generate detection rules"
-        
+
         # Test pattern detection
         test_serial = "TEST-1234ABCD"
         detection = keygen_assistant.detect_keygen_pattern(test_serial, ml_result['model'])

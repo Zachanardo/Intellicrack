@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 from intellicrack.logger import logger
 
 from ...utils.core.import_checks import TENSORFLOW_AVAILABLE
@@ -29,6 +28,7 @@ from ...utils.logger import get_logger
 try:
     import pyopencl as cl
     import pyopencl.array as cl_array
+
     OPENCL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in gpu_accelerator: %s", e)
@@ -38,6 +38,7 @@ except ImportError as e:
 
 try:
     import cupy as cp
+
     CUPY_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in gpu_accelerator: %s", e)
@@ -171,7 +172,9 @@ class GPUAccelerationManager:
                 return self._cupy_pattern_matching(data, patterns)
             if self._torch:
                 return self._torch_pattern_matching(data, patterns)
-            self.logger.warning("Pattern matching not implemented for backend: %s", self.gpu_backend)
+            self.logger.warning(
+                "Pattern matching not implemented for backend: %s", self.gpu_backend
+            )
             return self._cpu_pattern_matching(data, patterns)
         except Exception as e:
             self.logger.error("GPU pattern matching failed: %s", e)
@@ -205,7 +208,9 @@ class GPUAccelerationManager:
 
         for pattern in patterns:
             pattern_np = np.frombuffer(pattern, dtype=np.uint8)
-            pattern_tensor = self._torch.tensor(pattern_np, dtype=self._torch.uint8, device=self.device)
+            pattern_tensor = self._torch.tensor(
+                pattern_np, dtype=self._torch.uint8, device=self.device
+            )
 
             # Use convolution for pattern matching
             if len(pattern) <= len(data):
@@ -277,19 +282,30 @@ class GPUAccelerationManager:
             match_count = np.zeros(1, dtype=np.int32)
 
             mf = self.cl.mem_flags
-            data_buffer = self.cl.Buffer(self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data_array)
-            pattern_buffer = self.cl.Buffer(self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=pattern_array)
+            data_buffer = self.cl.Buffer(
+                self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data_array
+            )
+            pattern_buffer = self.cl.Buffer(
+                self.context, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=pattern_array
+            )
             matches_buffer = self.cl.Buffer(self.context, mf.WRITE_ONLY, matches_array.nbytes)
-            count_buffer = self.cl.Buffer(self.context, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=match_count)
+            count_buffer = self.cl.Buffer(
+                self.context, mf.READ_WRITE | mf.COPY_HOST_PTR, hostbuf=match_count
+            )
 
             global_size = (len(data_array),)
             local_size = None
 
             program.pattern_match(
-                self.queue, global_size, local_size,
-                data_buffer, np.int32(len(data_array)),
-                pattern_buffer, np.int32(len(pattern_array)),
-                matches_buffer, count_buffer,
+                self.queue,
+                global_size,
+                local_size,
+                data_buffer,
+                np.int32(len(data_array)),
+                pattern_buffer,
+                np.int32(len(pattern_array)),
+                matches_buffer,
+                count_buffer,
             )
 
             self.cl.enqueue_copy(self.queue, matches_array, matches_buffer)
@@ -298,9 +314,11 @@ class GPUAccelerationManager:
 
             num_matches = match_count[0]
             if num_matches > 0:
-                all_matches.extend(matches_array[:min(num_matches, max_matches)].tolist())
+                all_matches.extend(matches_array[: min(num_matches, max_matches)].tolist())
 
-            self.logger.debug(f"OpenCL found {num_matches} matches for pattern of size {len(pattern)}")
+            self.logger.debug(
+                f"OpenCL found {num_matches} matches for pattern of size {len(pattern)}"
+            )
 
         return sorted(all_matches)
 
@@ -312,7 +330,8 @@ class GPUAccelerationManager:
         import numpy as np
 
         # CUDA kernel for pattern matching
-        pattern_match_kernel = cp.RawKernel(r"""
+        pattern_match_kernel = cp.RawKernel(
+            r"""
         extern "C" __global__
         void pattern_match(
             const unsigned char* data,
@@ -343,7 +362,9 @@ class GPUAccelerationManager:
                 }
             }
         }
-        """, "pattern_match")
+        """,
+            "pattern_match",
+        )
 
         all_matches = []
 
@@ -359,7 +380,8 @@ class GPUAccelerationManager:
             blocks_per_grid = (len(data) + threads_per_block - 1) // threads_per_block
 
             pattern_match_kernel(
-                (blocks_per_grid,), (threads_per_block,),
+                (blocks_per_grid,),
+                (threads_per_block,),
                 (data_gpu, len(data), pattern_gpu, len(pattern), matches_gpu, match_count_gpu),
             )
 
@@ -367,10 +389,12 @@ class GPUAccelerationManager:
 
             num_matches = int(match_count_gpu.get()[0])
             if num_matches > 0:
-                matches_cpu = matches_gpu[:min(num_matches, max_matches)].get()
+                matches_cpu = matches_gpu[: min(num_matches, max_matches)].get()
                 all_matches.extend(matches_cpu.tolist())
 
-            self.logger.debug(f"CUDA found {num_matches} matches for pattern of size {len(pattern)}")
+            self.logger.debug(
+                f"CUDA found {num_matches} matches for pattern of size {len(pattern)}"
+            )
 
         return sorted(all_matches)
 

@@ -16,11 +16,11 @@ from ...utils.logger import get_logger
 
 try:
     import numpy as np
+
     HAS_NUMPY = True
 except ImportError:
     np = None
     HAS_NUMPY = False
-
 
 
 logger = get_logger(__name__)
@@ -32,6 +32,7 @@ plt = None
 
 try:
     import pyqtgraph as pg
+
     PYQTGRAPH_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in entropy_graph_widget: %s", e)
@@ -41,6 +42,7 @@ except ImportError as e:
         import matplotlib.pyplot as plt
         from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
         from matplotlib.figure import Figure
+
         plt.style.use("dark_background")
     except ImportError as e:
         logger.error("Import error in entropy_graph_widget: %s", e)
@@ -284,7 +286,7 @@ class EntropyGraphWidget(QWidget):
         for _i, (bar, entropy) in enumerate(zip(bars, entropies, strict=False)):
             height = bar.get_height()
             self.ax.text(
-                bar.get_x() + bar.get_width()/2.,
+                bar.get_x() + bar.get_width() / 2.0,
                 height + 0.05,
                 f"{entropy:.2f}",
                 ha="center",

@@ -1,4 +1,5 @@
 """SSL traffic interceptor for analyzing and modifying encrypted communications."""
+
 import logging
 import os
 import subprocess
@@ -32,11 +33,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
 # Optional cryptography dependencies - graceful fallback if not available
 try:
     import importlib.util
+
     CRYPTOGRAPHY_AVAILABLE = importlib.util.find_spec("cryptography") is not None
 except ImportError as e:
     logger.error("Import error in ssl_interceptor: %s", e)
@@ -62,6 +62,7 @@ class SSLTLSInterceptor:
 
         # Default configuration
         from ...utils.system.windows_structures import COMMON_LICENSE_DOMAINS
+
         self.config = {
             "listen_ip": "127.0.0.1",
             "listen_port": 8443,
@@ -88,9 +89,9 @@ class SSLTLSInterceptor:
         self._load_response_templates()
 
     def _load_response_templates(self):
-        """Load response templates for various license verification endpoints.
-        """
+        """Load response templates for various license verification endpoints."""
         from ...utils.templates.license_response_templates import get_all_response_templates
+
         self.response_templates = get_all_response_templates()
 
     def generate_ca_certificate(self) -> tuple[bytes | None, bytes | None]:
@@ -134,12 +135,16 @@ class SSLTLSInterceptor:
         """
         try:
             # Generate CA certificate if needed
-            if not os.path.exists(self.config["ca_cert_path"]) or not os.path.exists(self.config["ca_key_path"]):
+            if not os.path.exists(self.config["ca_cert_path"]) or not os.path.exists(
+                self.config["ca_key_path"]
+            ):
                 self.logger.info("Generating CA certificate...")
                 cert_pem, key_pem = self.generate_ca_certificate()
                 if cert_pem and key_pem:
                     # Create directory if it doesn't exist
-                    os.makedirs(os.path.dirname(os.path.abspath(self.config["ca_cert_path"])), exist_ok=True)
+                    os.makedirs(
+                        os.path.dirname(os.path.abspath(self.config["ca_cert_path"])), exist_ok=True
+                    )
 
                     # Save certificate and key
                     with open(self.config["ca_cert_path"], "wb") as f:
@@ -236,11 +241,16 @@ def response(flow: http.HTTPFlow) -> None:
                 # Start mitmproxy
                 cmd = [
                     mitmdump_path,
-                    "-s", script_path,
-                    "--listen-host", self.config["listen_ip"],
-                    "--listen-port", str(self.config["listen_port"]),
-                    "--set", "block_global=false",
-                    "--set", "ssl_insecure=true",
+                    "-s",
+                    script_path,
+                    "--listen-host",
+                    self.config["listen_ip"],
+                    "--listen-port",
+                    str(self.config["listen_port"]),
+                    "--set",
+                    "block_global=false",
+                    "--set",
+                    "ssl_insecure=true",
                 ]
 
                 self.proxy_process = subprocess.Popen(
@@ -255,12 +265,23 @@ def response(flow: http.HTTPFlow) -> None:
                 self.logger.warning("mitmproxy not found. SSL/TLS interception will be limited.")
                 # Implement a basic proxy server here if needed
 
-            self.logger.info("SSL/TLS interceptor started on %s:%s", self.config["listen_ip"], self.config["listen_port"])
+            self.logger.info(
+                "SSL/TLS interceptor started on %s:%s",
+                self.config["listen_ip"],
+                self.config["listen_port"],
+            )
 
             # Print instructions
             self.logger.info("To use the SSL/TLS interceptor:")
-            self.logger.info("1. Configure the application to use %s:%s as proxy", self.config["listen_ip"], self.config["listen_port"])
-            self.logger.info("2. Install the CA certificate (%s) in the system trust store", self.config["ca_cert_path"])
+            self.logger.info(
+                "1. Configure the application to use %s:%s as proxy",
+                self.config["listen_ip"],
+                self.config["listen_port"],
+            )
+            self.logger.info(
+                "2. Install the CA certificate (%s) in the system trust store",
+                self.config["ca_cert_path"],
+            )
 
             return True
 
@@ -308,6 +329,7 @@ def response(flow: http.HTTPFlow) -> None:
 
         # Fallback to simple PATH search for tools not in path_discovery specs
         import shutil
+
         return shutil.which(executable)
 
     def get_traffic_log(self) -> list[dict[str, Any]]:
@@ -368,9 +390,18 @@ def response(flow: http.HTTPFlow) -> None:
 
             # Validate configuration
             valid_keys = {
-                "listen_ip", "listen_port", "target_hosts", "ca_cert_path",
-                "ca_key_path", "record_traffic", "auto_respond", "proxy_timeout",
-                "max_connections", "log_level", "response_delay", "inject_headers",
+                "listen_ip",
+                "listen_port",
+                "target_hosts",
+                "ca_cert_path",
+                "ca_key_path",
+                "record_traffic",
+                "auto_respond",
+                "proxy_timeout",
+                "max_connections",
+                "log_level",
+                "response_delay",
+                "inject_headers",
             }
 
             invalid_keys = set(config.keys()) - valid_keys
@@ -388,6 +419,7 @@ def response(flow: http.HTTPFlow) -> None:
                 ip = config["listen_ip"]
                 # Basic IP validation
                 import socket
+
                 try:
                     socket.inet_aton(ip)
                 except OSError:
@@ -412,7 +444,9 @@ def response(flow: http.HTTPFlow) -> None:
             # Validate certificate paths if changed
             if "ca_cert_path" in config or "ca_key_path" in config:
                 if not os.path.exists(self.config["ca_cert_path"]):
-                    self.logger.warning(f"CA certificate not found at {self.config['ca_cert_path']}")
+                    self.logger.warning(
+                        f"CA certificate not found at {self.config['ca_cert_path']}"
+                    )
                     # Generate new certificate if needed
                     self.logger.info("Generating new CA certificate")
                     cert, key = self.generate_ca_certificate()
@@ -475,7 +509,9 @@ def response(flow: http.HTTPFlow) -> None:
 
         # Redact sensitive information
         if "ca_key_path" in safe_config:
-            safe_config["ca_key_path"] = "<redacted>" if os.path.exists(self.config["ca_key_path"]) else "not found"
+            safe_config["ca_key_path"] = (
+                "<redacted>" if os.path.exists(self.config["ca_key_path"]) else "not found"
+            )
 
         # Add runtime status
         safe_config["status"] = {

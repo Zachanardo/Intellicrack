@@ -35,6 +35,7 @@ try:
     import ctypes.wintypes
 except ImportError as e:
     logger.error("Import error in process_hollowing: %s", e)
+
     # Create mock for non-Windows platforms
     class MockWintypes:
         """Mock wintypes implementation for non-Windows platforms."""
@@ -44,8 +45,8 @@ except ImportError as e:
         WORD = ctypes.c_ushort
         LPVOID = ctypes.c_void_p
         HANDLE = ctypes.c_void_p
-    ctypes.wintypes = MockWintypes()
 
+    ctypes.wintypes = MockWintypes()
 
 
 # Windows structures for process hollowing
@@ -122,8 +123,7 @@ CONTEXT_FULL = 0x10007
 
 
 class ProcessHollowing:
-    """Process hollowing implementation for stealthy code execution.
-    """
+    """Process hollowing implementation for stealthy code execution."""
 
     def __init__(self):
         """Initialize the process hollowing engine with supported target processes."""
@@ -156,10 +156,9 @@ class ProcessHollowing:
             },
         }
 
-    def hollow_process(self,
-                      target_process: str,
-                      payload: bytes,
-                      payload_entry_point: int = 0) -> tuple[bool, dict[str, Any]]:
+    def hollow_process(
+        self, target_process: str, payload: bytes, payload_entry_point: int = 0
+    ) -> tuple[bool, dict[str, Any]]:
         """Perform process hollowing.
 
         Args:
@@ -244,7 +243,7 @@ class ProcessHollowing:
             return False
 
         # Check PE signature
-        if data[pe_offset:pe_offset+4] != b"PE\x00\x00":
+        if data[pe_offset : pe_offset + 4] != b"PE\x00\x00":
             return False
 
         return True
@@ -253,6 +252,7 @@ class ProcessHollowing:
         """Create a suspended process."""
         try:
             import platform
+
             if platform.system() != "Windows":
                 return None
 
@@ -294,13 +294,13 @@ class ProcessHollowing:
 
         return None
 
-    def _perform_hollowing(self,
-                          process_info: dict[str, Any],
-                          payload: bytes,
-                          entry_point_offset: int) -> bool:
+    def _perform_hollowing(
+        self, process_info: dict[str, Any], payload: bytes, entry_point_offset: int
+    ) -> bool:
         """Perform the actual hollowing operation."""
         try:
             import platform
+
             if platform.system() != "Windows":
                 return False
 
@@ -334,8 +334,12 @@ class ProcessHollowing:
             # Get image size from PE header using the offset
             try:
                 # Read SizeOfImage from PE header (at offset pe_header_offset + 0x50)
-                image_size_bytes = payload[pe_header_offset + 0x50:pe_header_offset + 0x54]
-                image_size = struct.unpack("<I", image_size_bytes)[0] if len(image_size_bytes) == 4 else 0x10000
+                image_size_bytes = payload[pe_header_offset + 0x50 : pe_header_offset + 0x54]
+                image_size = (
+                    struct.unpack("<I", image_size_bytes)[0]
+                    if len(image_size_bytes) == 4
+                    else 0x10000
+                )
             except:
                 image_size = 0x10000  # Default size
 
@@ -387,6 +391,7 @@ class ProcessHollowing:
         """Resume the hollowed process."""
         try:
             import platform
+
             if platform.system() != "Windows":
                 return False
 
@@ -403,6 +408,7 @@ class ProcessHollowing:
         """Terminate a process."""
         try:
             import platform
+
             if platform.system() != "Windows":
                 return False
 

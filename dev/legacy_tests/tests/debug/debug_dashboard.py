@@ -16,26 +16,26 @@ def test_dashboard_tab():
         print("1. Importing Qt...")
         from PyQt6.QtWidgets import QApplication
         print("   ✓ Qt imported")
-        
+
         print("2. Creating QApplication...")
         app = QApplication(sys.argv)
         print("   ✓ QApplication created")
-        
+
         print("3. Testing DashboardTab...")
         from intellicrack.ui.tabs.dashboard_tab import DashboardTab
         print("   - Import successful")
-        
+
         print("4. Creating DashboardTab with minimal context...")
         shared_context = {}
         tab = DashboardTab(shared_context)
         print("   ✓ DashboardTab created")
-        
+
         print("5. Calling lazy_load_content...")
         tab.lazy_load_content()
         print("   ✓ lazy_load_content completed")
-        
+
         return 0
-        
+
     except Exception as e:
         print(f"   ✗ Error: {e}")
         import traceback

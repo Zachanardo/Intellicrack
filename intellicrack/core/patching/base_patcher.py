@@ -89,7 +89,9 @@ class BaseWindowsPatcher(ABC):
 
         return True, process_info, context
 
-    def create_and_handle_suspended_process(self, target_exe: str, logger_instance=None) -> tuple[bool, Any, Any]:
+    def create_and_handle_suspended_process(
+        self, target_exe: str, logger_instance=None
+    ) -> tuple[bool, Any, Any]:
         """Create a suspended process and handle the result in one operation.
         Common pattern to eliminate duplication between early bird injection and process hollowing.
 

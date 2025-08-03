@@ -47,8 +47,8 @@ ADOBE_PROCESSES = [
 
 # Common file size formatting breakpoints
 SIZE_UNITS = [
-    (1024 ** 3, "GB"),
-    (1024 ** 2, "MB"),
+    (1024**3, "GB"),
+    (1024**2, "MB"),
     (1024, "KB"),
     (1, "B"),
 ]

@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 from typing import Any
 
 
@@ -35,6 +34,7 @@ def create_bypass_result() -> dict[str, Any]:
         "errors": [],
     }
 
+
 def add_bypass_method(result: dict[str, Any], method_name: str) -> None:
     """Add a successful bypass method to results.
 
@@ -47,6 +47,7 @@ def add_bypass_method(result: dict[str, Any], method_name: str) -> None:
         result["methods_applied"] = []
     result["methods_applied"].append(method_name)
 
+
 def add_bypass_error(result: dict[str, Any], error: str) -> None:
     """Add an error to bypass results.
 
@@ -58,6 +59,7 @@ def add_bypass_error(result: dict[str, Any], error: str) -> None:
     if "errors" not in result:
         result["errors"] = []
     result["errors"].append(error)
+
 
 def finalize_bypass_result(result: dict[str, Any]) -> dict[str, Any]:
     """Finalize bypass result by setting success flag.

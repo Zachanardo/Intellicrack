@@ -27,12 +27,14 @@ import subprocess
 logger = logging.getLogger(__name__)
 
 
-def run_subprocess(cmd: str | list[str],
-                  timeout: int | None = None,
-                  capture_output: bool = True,
-                  text: bool = True,
-                  cwd: str | None = None,
-                  env: dict | None = None) -> tuple[int, str, str]:
+def run_subprocess(
+    cmd: str | list[str],
+    timeout: int | None = None,
+    capture_output: bool = True,
+    text: bool = True,
+    cwd: str | None = None,
+    env: dict | None = None,
+) -> tuple[int, str, str]:
     """Run a subprocess command with standard error handling.
 
     Args:
@@ -75,11 +77,13 @@ def run_subprocess(cmd: str | list[str],
         return -1, "", str(e)
 
 
-def run_subprocess_check(cmd: str | list[str],
-                        timeout: int = 10,
-                        capture_output: bool = True,
-                        text: bool = True,
-                        check: bool = False) -> subprocess.CompletedProcess:
+def run_subprocess_check(
+    cmd: str | list[str],
+    timeout: int = 10,
+    capture_output: bool = True,
+    text: bool = True,
+    check: bool = False,
+) -> subprocess.CompletedProcess:
     """Run subprocess with standard settings used in docker_container and qemu_emulator.
 
     This is the common pattern extracted from duplicate code.
@@ -116,8 +120,9 @@ def run_subprocess_check(cmd: str | list[str],
         raise
 
 
-def create_popen_with_encoding(cmd: list[str], encoding: str = "utf-8",
-                              timeout: int | None = None) -> tuple[int, str, str]:
+def create_popen_with_encoding(
+    cmd: list[str], encoding: str = "utf-8", timeout: int | None = None
+) -> tuple[int, str, str]:
     """Create Popen process with encoding and error handling.
 
     Common pattern for process creation with output capture and encoding.

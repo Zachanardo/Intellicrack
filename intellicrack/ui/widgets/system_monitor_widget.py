@@ -32,12 +32,14 @@ from PyQt6.QtWidgets import (
 
 try:
     import pyqtgraph as pg
+
     PYQTGRAPH_AVAILABLE = True
 except ImportError:
     PYQTGRAPH_AVAILABLE = False
 
 try:
     import GPUtil
+
     GPU_AVAILABLE = True
 except ImportError:
     GPU_AVAILABLE = False
@@ -158,6 +160,8 @@ class SystemMonitorWorker(QObject):
             disk_read_mb=disk_read_mb,
             disk_write_mb=disk_write_mb,
         )
+
+
 class SystemMonitorWidget(QWidget):
     """System monitoring widget for the Dashboard"""
 
@@ -295,14 +299,21 @@ class SystemMonitorWidget(QWidget):
 
         self.process_table = QTableWidget()
         self.process_table.setColumnCount(5)
-        self.process_table.setHorizontalHeaderLabels([
-            "PID", "Name", "CPU %", "Memory %", "Status",
-        ])
+        self.process_table.setHorizontalHeaderLabels(
+            [
+                "PID",
+                "Name",
+                "CPU %",
+                "Memory %",
+                "Status",
+            ]
+        )
         self.process_table.horizontalHeader().setStretchLastSection(True)
         process_layout.addWidget(self.process_table)
 
         content_splitter.addWidget(process_group)
         layout.addWidget(content_splitter)
+
     def start_monitoring(self):
         """Start system monitoring"""
         self.monitor_thread.start()
@@ -371,7 +382,9 @@ class SystemMonitorWidget(QWidget):
         try:
             # Get top processes by CPU usage
             processes = []
-            for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent", "status"]):
+            for proc in psutil.process_iter(
+                ["pid", "name", "cpu_percent", "memory_percent", "status"]
+            ):
                 try:
                     pinfo = proc.info
                     if pinfo["cpu_percent"] > 0 or pinfo["memory_percent"] > 0:
@@ -389,7 +402,9 @@ class SystemMonitorWidget(QWidget):
                 self.process_table.setItem(row, 0, QTableWidgetItem(str(proc["pid"])))
                 self.process_table.setItem(row, 1, QTableWidgetItem(proc["name"]))
                 self.process_table.setItem(row, 2, QTableWidgetItem(f"{proc['cpu_percent']:.1f}"))
-                self.process_table.setItem(row, 3, QTableWidgetItem(f"{proc['memory_percent']:.1f}"))
+                self.process_table.setItem(
+                    row, 3, QTableWidgetItem(f"{proc['memory_percent']:.1f}")
+                )
                 self.process_table.setItem(row, 4, QTableWidgetItem(proc["status"]))
 
                 # Highlight high usage
@@ -468,11 +483,13 @@ class SystemMonitorWidget(QWidget):
         if GPU_AVAILABLE:
             gpu_values = [m.gpu_percent for m in self.metrics_history if m.gpu_percent is not None]
             if gpu_values:
-                summary.update({
-                    "gpu_current": gpu_values[-1],
-                    "gpu_average": sum(gpu_values) / len(gpu_values),
-                    "gpu_max": max(gpu_values),
-                })
+                summary.update(
+                    {
+                        "gpu_current": gpu_values[-1],
+                        "gpu_average": sum(gpu_values) / len(gpu_values),
+                        "gpu_max": max(gpu_values),
+                    }
+                )
 
         return summary
 
@@ -491,15 +508,17 @@ class SystemMonitorWidget(QWidget):
 
         data = []
         for metric in self.metrics_history:
-            data.append({
-                "timestamp": metric.timestamp,
-                "cpu_percent": metric.cpu_percent,
-                "memory_percent": metric.memory_percent,
-                "memory_used_gb": metric.memory_used_gb,
-                "gpu_percent": metric.gpu_percent,
-                "network_sent_mb": metric.network_sent_mb,
-                "network_recv_mb": metric.network_recv_mb,
-            })
+            data.append(
+                {
+                    "timestamp": metric.timestamp,
+                    "cpu_percent": metric.cpu_percent,
+                    "memory_percent": metric.memory_percent,
+                    "memory_used_gb": metric.memory_used_gb,
+                    "gpu_percent": metric.gpu_percent,
+                    "network_sent_mb": metric.network_sent_mb,
+                    "network_recv_mb": metric.network_recv_mb,
+                }
+            )
 
         with open(filepath, "w") as f:
             json.dump(data, f, indent=2)

@@ -49,6 +49,7 @@ try:
         QVBoxLayout,
         QWidget,
     )
+
     HAS_QT = True
 except ImportError as e:
     logger.error("Import error in smart_program_selector_dialog: %s", e)
@@ -68,8 +69,10 @@ except ImportError as e:
     QWidget = object
     QApplication = object
     QThread = object
+
     def pyqtSignal(*args):
         return None
+
     QTimer = object
     QIcon = object
     QPixmap = object
@@ -79,6 +82,7 @@ except ImportError as e:
 try:
     from ...utils.system.file_resolution import file_resolver
     from ...utils.system.program_discovery import ProgramInfo, program_discovery_engine
+
     HAS_PROGRAM_DISCOVERY = True
 except ImportError as e:
     logger.error("Import error in smart_program_selector_dialog: %s", e)
@@ -214,38 +218,58 @@ class SmartProgramSelectorDialog(QDialog):
             # Windows paths
             user_profile = os.environ.get("USERPROFILE", "")
             if user_profile:
-                paths.extend([
-                    os.path.join(user_profile, "Desktop"),
-                    os.path.join(user_profile, "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs"),
-                ])
-            paths.extend([
-                r"C:\Users\Public\Desktop",
-                r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs",
-            ])
+                paths.extend(
+                    [
+                        os.path.join(user_profile, "Desktop"),
+                        os.path.join(
+                            user_profile,
+                            "AppData",
+                            "Roaming",
+                            "Microsoft",
+                            "Windows",
+                            "Start Menu",
+                            "Programs",
+                        ),
+                    ]
+                )
+            paths.extend(
+                [
+                    r"C:\Users\Public\Desktop",
+                    r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs",
+                ]
+            )
         elif sys.platform.startswith("linux"):
             # Linux paths
             home = os.environ.get("HOME", "")
             if home:
-                paths.extend([
-                    os.path.join(home, "Desktop"),
-                    os.path.join(home, ".local", "share", "applications"),
-                ])
-            paths.extend([
-                "/usr/share/applications",
-                "/usr/local/share/applications",
-            ])
+                paths.extend(
+                    [
+                        os.path.join(home, "Desktop"),
+                        os.path.join(home, ".local", "share", "applications"),
+                    ]
+                )
+            paths.extend(
+                [
+                    "/usr/share/applications",
+                    "/usr/local/share/applications",
+                ]
+            )
         elif sys.platform.startswith("darwin"):
             # macOS paths
             home = os.environ.get("HOME", "")
             if home:
-                paths.extend([
-                    os.path.join(home, "Desktop"),
-                    os.path.join(home, "Applications"),
-                ])
-            paths.extend([
-                "/Applications",
-                "/System/Applications",
-            ])
+                paths.extend(
+                    [
+                        os.path.join(home, "Desktop"),
+                        os.path.join(home, "Applications"),
+                    ]
+                )
+            paths.extend(
+                [
+                    "/Applications",
+                    "/System/Applications",
+                ]
+            )
 
         # Filter to existing paths
         return [path for path in paths if os.path.exists(path)]

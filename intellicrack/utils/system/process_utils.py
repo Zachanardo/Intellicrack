@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import hashlib
 import logging
 import os
@@ -30,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in process_utils: %s", e)
@@ -38,6 +38,7 @@ except ImportError as e:
 
 
 # Consolidated process iteration utilities to avoid code duplication
+
 
 def find_process_by_name(process_name: str, exact_match: bool = False) -> int | None:
     """Find process PID by name with unified logic.
@@ -62,10 +63,14 @@ def find_process_by_name(process_name: str, exact_match: bool = False) -> int | 
                     proc_name_lower = proc.info["name"].lower()
                     if exact_match:
                         if proc_name_lower == target_name:
-                            logger.info(f"Found exact process match: {process_name} with PID: {proc.info['pid']}")
+                            logger.info(
+                                f"Found exact process match: {process_name} with PID: {proc.info['pid']}"
+                            )
                             return proc.info["pid"]
                     elif target_name in proc_name_lower:
-                        logger.info(f"Found process match: {process_name} with PID: {proc.info['pid']}")
+                        logger.info(
+                            f"Found process match: {process_name} with PID: {proc.info['pid']}"
+                        )
                         return proc.info["pid"]
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 logger.error("Error in process_utils: %s", e)
@@ -122,7 +127,9 @@ def find_processes_matching_names(target_names: list[str]) -> list[str]:
         return []
 
     try:
-        running_processes = [p.info["name"] for p in psutil.process_iter(["name"]) if p.info["name"]]
+        running_processes = [
+            p.info["name"] for p in psutil.process_iter(["name"]) if p.info["name"]
+        ]
         target_names_lower = [name.lower() for name in target_names]
 
         matches = []
@@ -138,10 +145,12 @@ def find_processes_matching_names(target_names: list[str]) -> list[str]:
         logger.error(f"Error matching process names: {e}")
         return []
 
+
 def _get_system_path(path_type: str) -> str | None:
     """Get system path dynamically."""
     try:
         from .core.path_discovery import get_system_path
+
         return get_system_path(path_type)
     except ImportError as e:
         logger.error("Import error in process_utils: %s", e)
@@ -332,7 +341,9 @@ def detect_hardware_dongles(app=None) -> list[str]:
             results.append("winreg not available - cannot check registry")
 
     if found_dongles:
-        results.append(f"\nSummary: Found {len(found_dongles)} dongle types: {', '.join(found_dongles)}")
+        results.append(
+            f"\nSummary: Found {len(found_dongles)} dongle types: {', '.join(found_dongles)}"
+        )
     else:
         results.append("No hardware dongles detected")
 
@@ -363,6 +374,7 @@ def detect_tpm_protection() -> dict[str, Any]:
             try:
                 # Check WMI for _TPM info
                 import wmi
+
                 c = wmi.WMI()
 
                 tpm_instances = c.Win32_Tpm()
@@ -396,7 +408,9 @@ def detect_tpm_protection() -> dict[str, Any]:
         if psutil:
             tpm_processes = ["tpm2-abrmd", "tcsd", "trousers"]
             for proc in psutil.process_iter(["name"]):
-                if proc.info["name"] and any(tmp_proc_name in proc.info["name"].lower() for tmp_proc_name in tpm_processes):
+                if proc.info["name"] and any(
+                    tmp_proc_name in proc.info["name"].lower() for tmp_proc_name in tpm_processes
+                ):
                     results["detection_methods"].append(f"TPM process: {proc.info['name']}")
 
         # Check for TPM kernel modules on Linux
@@ -437,12 +451,14 @@ def get_system_processes() -> list[dict[str, Any]]:
     try:
         for proc in psutil.process_iter(["pid", "name", "cmdline", "create_time"]):
             try:
-                processes.append({
-                    "pid": proc.info["pid"],
-                    "name": proc.info["name"],
-                    "cmdline": " ".join(proc.info["cmdline"]) if proc.info["cmdline"] else "",
-                    "create_time": proc.info["create_time"],
-                })
+                processes.append(
+                    {
+                        "pid": proc.info["pid"],
+                        "name": proc.info["name"],
+                        "cmdline": " ".join(proc.info["cmdline"]) if proc.info["cmdline"] else "",
+                        "create_time": proc.info["create_time"],
+                    }
+                )
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 logger.error("Error in process_utils: %s", e)
                 # Process may have terminated or access denied
@@ -476,12 +492,8 @@ def run_command(command: str, timeout: int = 30) -> dict[str, Any]:
         logger.info("Running command: %s", command)
 
         process = subprocess.run(
-            command,
-            shell=True,
-            capture_output=True,
-            text=True,
-            timeout=timeout
-        , check=False)
+            command, shell=True, capture_output=True, text=True, timeout=timeout, check=False
+        )
 
         result["success"] = process.returncode == 0
         result["stdout"] = process.stdout

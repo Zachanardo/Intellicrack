@@ -1,4 +1,5 @@
 """Emulator manager for coordinating different emulation engines."""
+
 import logging
 import os
 from collections.abc import Callable
@@ -36,6 +37,7 @@ except ImportError as e:
 
 try:
     from .qemu_emulator import QemuEmulator
+
     QEMU_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in emulator_manager: %s", e)
@@ -106,11 +108,16 @@ class EmulatorManager(QObject):
             # Check if already running
             if self.qemu_running and self.qemu_instance:
                 # Check if we're using the same binary
-                if hasattr(self.qemu_instance, "binary_path") and self.qemu_instance.binary_path == binary_path:
+                if (
+                    hasattr(self.qemu_instance, "binary_path")
+                    and self.qemu_instance.binary_path == binary_path
+                ):
                     self.logger.debug(f"QEMU already running for binary: {binary_path}")
                     return True
                 # Different binary, need to restart
-                self.logger.info(f"QEMU running for different binary, restarting for: {binary_path}")
+                self.logger.info(
+                    f"QEMU running for different binary, restarting for: {binary_path}"
+                )
                 self.stop_qemu()
 
             # Check if already starting
@@ -121,7 +128,9 @@ class EmulatorManager(QObject):
             self.qemu_starting = True
 
         try:
-            self.emulator_status_changed.emit("QEMU", False, f"Starting QEMU emulator for {os.path.basename(binary_path)}...")
+            self.emulator_status_changed.emit(
+                "QEMU", False, f"Starting QEMU emulator for {os.path.basename(binary_path)}..."
+            )
 
             # Prepare configuration with binary path
             if config is None:
@@ -144,7 +153,11 @@ class EmulatorManager(QObject):
                 self.qemu_running = True
                 self.qemu_starting = False
 
-            self.emulator_status_changed.emit("QEMU", True, f"QEMU emulator started successfully for {os.path.basename(binary_path)}")
+            self.emulator_status_changed.emit(
+                "QEMU",
+                True,
+                f"QEMU emulator started successfully for {os.path.basename(binary_path)}",
+            )
             return True
 
         except Exception as e:
@@ -169,7 +182,9 @@ class EmulatorManager(QObject):
 
         """
         if not QILING_AVAILABLE:
-            self.emulator_error.emit("Qiling", "Qiling framework not installed. Run: pip install qiling")
+            self.emulator_error.emit(
+                "Qiling", "Qiling framework not installed. Run: pip install qiling"
+            )
             return None
 
         try:
@@ -218,8 +233,9 @@ def get_emulator_manager() -> EmulatorManager:
     return _emulator_manager
 
 
-def run_with_qemu(binary_path: str, analysis_func: Callable,
-                  config: dict[str, Any] | None = None) -> dict[str, Any]:
+def run_with_qemu(
+    binary_path: str, analysis_func: Callable, config: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Run an analysis function with QEMU automatically started.
 
     Args:

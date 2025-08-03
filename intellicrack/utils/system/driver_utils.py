@@ -40,6 +40,7 @@ def get_driver_path(driver_name: str) -> str:
     # Try to use path discovery if available
     try:
         from .core.path_discovery import get_system_path
+
         drivers_dir = get_system_path("windows_drivers")
         if drivers_dir:
             return os.path.join(drivers_dir, driver_name)

@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 # Binary analysis tools
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError:
     pefile = None
@@ -37,6 +38,7 @@ except ImportError:
 
 try:
     from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CS_ARCH_X86 = None
@@ -48,6 +50,7 @@ except ImportError:
 
 try:
     import lief
+
     LIEF_AVAILABLE = True
 except ImportError:
     lief = None
@@ -56,6 +59,7 @@ except ImportError:
 
 try:
     from elftools.elf.elffile import ELFFile
+
     PYELFTOOLS_AVAILABLE = True
 except ImportError:
     ELFFile = None
@@ -64,6 +68,7 @@ except ImportError:
 
 try:
     from macholib.MachO import MachO
+
     MACHOLIB_AVAILABLE = True
 except ImportError:
     MachO = None
@@ -73,6 +78,7 @@ except ImportError:
 # Android/Java analysis tools
 try:
     import zipfile
+
     ZIPFILE_AVAILABLE = True
 except ImportError:
     zipfile = None
@@ -81,6 +87,7 @@ except ImportError:
 
 try:
     import xml.etree.ElementTree as ET
+
     XML_AVAILABLE = True
 except ImportError:
     ET = None
@@ -90,6 +97,7 @@ except ImportError:
 # System tools
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     psutil = None

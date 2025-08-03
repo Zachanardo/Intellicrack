@@ -1,4 +1,5 @@
 """Cloud license hooking module for intercepting and modifying license requests."""
+
 import hashlib
 import json
 import logging
@@ -33,9 +34,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
 try:
     from PyQt6.QtWidgets import QMessageBox
+
     PYQT6_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in cloud_license_hooker: %s", e)
@@ -66,12 +67,24 @@ class CloudLicenseResponseGenerator:
             "response_cache_size": 100,
             "adaptive_mode": True,
             "success_patterns": [
-                "success", "valid", "activated", "authorized",
-                "authenticated", "approved", "allowed", "granted",
+                "success",
+                "valid",
+                "activated",
+                "authorized",
+                "authenticated",
+                "approved",
+                "allowed",
+                "granted",
             ],
             "failure_patterns": [
-                "error", "invalid", "expired", "unauthorized",
-                "unauthenticated", "denied", "rejected", "failed",
+                "error",
+                "invalid",
+                "expired",
+                "unauthorized",
+                "unauthenticated",
+                "denied",
+                "rejected",
+                "failed",
             ],
         }
 
@@ -91,10 +104,30 @@ class CloudLicenseResponseGenerator:
         # Network API hooking functionality for Feature #41
         self.api_hooks_enabled = False
         self.hooked_apis = {
-            "winsock": ["WSAStartup", "WSACleanup", "socket", "connect", "send", "recv", "closesocket"],
-            "wininet": ["InternetOpen", "InternetConnect", "HttpOpenRequest", "HttpSendRequest", "InternetReadFile", "InternetCloseHandle"],
+            "winsock": [
+                "WSAStartup",
+                "WSACleanup",
+                "socket",
+                "connect",
+                "send",
+                "recv",
+                "closesocket",
+            ],
+            "wininet": [
+                "InternetOpen",
+                "InternetConnect",
+                "HttpOpenRequest",
+                "HttpSendRequest",
+                "InternetReadFile",
+                "InternetCloseHandle",
+            ],
             "ssl": ["SSL_connect", "SSL_read", "SSL_write", "SSL_CTX_new", "SSL_new", "SSL_free"],
-            "http": ["HttpSendRequestA", "HttpSendRequestW", "WinHttpSendRequest", "WinHttpReceiveResponse"],
+            "http": [
+                "HttpSendRequestA",
+                "HttpSendRequestW",
+                "WinHttpSendRequest",
+                "WinHttpReceiveResponse",
+            ],
         }
         self.api_call_log: list[dict[str, Any]] = []
         self._original_functions: dict[str, Any] = {}
@@ -105,14 +138,13 @@ class CloudLicenseResponseGenerator:
         self._load_request_patterns()
 
     def _load_response_templates(self) -> None:
-        """Load response templates for various cloud license services.
-        """
+        """Load response templates for various cloud license services."""
         from ...utils.templates.license_response_templates import get_all_response_templates
+
         self.response_templates = get_all_response_templates()
 
     def _load_request_patterns(self) -> None:
-        """Load request patterns for identifying license check requests.
-        """
+        """Load request patterns for identifying license check requests."""
         # Adobe Creative Cloud
         self.request_patterns["adobe"] = {
             "urls": [
@@ -487,7 +519,9 @@ class CloudLicenseResponseGenerator:
 
         return response
 
-    def _customize_template(self, template: dict[str, Any], request: dict[str, Any]) -> dict[str, Any]:
+    def _customize_template(
+        self, template: dict[str, Any], request: dict[str, Any]
+    ) -> dict[str, Any]:
         """Customize a response template based on the request.
 
         Args:
@@ -500,6 +534,7 @@ class CloudLicenseResponseGenerator:
         """
         # Create a deep copy of the template
         import copy
+
         result = copy.deepcopy(template)
 
         # Extract information from request
@@ -549,11 +584,13 @@ class CloudLicenseResponseGenerator:
                     break
 
             if not product_found:
-                result["products"].append({
-                    "id": product_id,
-                    "name": product_id,
-                    "status": "ACTIVATED",
-                })
+                result["products"].append(
+                    {
+                        "id": product_id,
+                        "name": product_id,
+                        "status": "ACTIVATED",
+                    }
+                )
 
         if user_id and "user" in result:
             result["user"]["id"] = user_id
@@ -672,7 +709,9 @@ class CloudLicenseResponseGenerator:
                 if _keyword.lower() in request["body"].lower():
                     self.learned_patterns[service]["body_patterns"].add(_keyword)
 
-    def _extract_response_template(self, service: str, request: dict[str, Any], response: dict[str, Any]) -> None:
+    def _extract_response_template(
+        self, service: str, request: dict[str, Any], response: dict[str, Any]
+    ) -> None:
         """Extract a response template from a successful response.
 
         Args:
@@ -697,9 +736,13 @@ class CloudLicenseResponseGenerator:
         template_context = {
             "request_method": request_method,
             "request_path": request_url.split("/")[-1] if request_url else "",
-            "has_authentication": any(key.lower() in ["authorization", "api-key", "x-api-key"]
-                                    for key in request.get("headers", {})),
-            "request_body_type": "json" if request_body and request_body.strip().startswith("{") else "form",
+            "has_authentication": any(
+                key.lower() in ["authorization", "api-key", "x-api-key"]
+                for key in request.get("headers", {})
+            ),
+            "request_body_type": "json"
+            if request_body and request_body.strip().startswith("{")
+            else "form",
         }
 
         # Store template context for this service
@@ -817,16 +860,35 @@ class CloudLicenseResponseGenerator:
 
             # Hook key Winsock functions
             winsock_apis = [
-                "WSAStartup", "WSACleanup", "socket", "connect", "send", "recv",
-                "sendto", "recvfrom", "bind", "listen", "accept", "closesocket",
-                "WSASend", "WSARecv", "WSAConnect", "WSASocket",
+                "WSAStartup",
+                "WSACleanup",
+                "socket",
+                "connect",
+                "send",
+                "recv",
+                "sendto",
+                "recvfrom",
+                "bind",
+                "listen",
+                "accept",
+                "closesocket",
+                "WSASend",
+                "WSARecv",
+                "WSAConnect",
+                "WSASocket",
             ]
 
             # Hook key WinINet functions
             wininet_apis = [
-                "InternetOpen", "InternetConnect", "HttpOpenRequest", "HttpSendRequest",
-                "InternetReadFile", "InternetCloseHandle", "HttpQueryInfo",
-                "InternetSetOption", "InternetQueryOption",
+                "InternetOpen",
+                "InternetConnect",
+                "HttpOpenRequest",
+                "HttpSendRequest",
+                "InternetReadFile",
+                "InternetCloseHandle",
+                "HttpQueryInfo",
+                "InternetSetOption",
+                "InternetQueryOption",
             ]
 
             # Install hooks for Winsock
@@ -841,12 +903,16 @@ class CloudLicenseResponseGenerator:
                     self.hooked_apis["wininet"].append(api)
                     self.logger.debug("Hooked WinINet API: %s", api)
 
-            self.logger.info("Network API hooks enabled - monitoring %d APIs",
-                           len(self.hooked_apis["winsock"]) + len(self.hooked_apis["wininet"]))
+            self.logger.info(
+                "Network API hooks enabled - monitoring %d APIs",
+                len(self.hooked_apis["winsock"]) + len(self.hooked_apis["wininet"]),
+            )
             return True
 
         except ImportError:
-            self.logger.warning("API hooking requires Windows ctypes - using cross-platform implementation")
+            self.logger.warning(
+                "API hooking requires Windows ctypes - using cross-platform implementation"
+            )
             # Use cross-platform network monitoring instead
             self.api_hooks_enabled = True
             self._setup_cross_platform_hooks()
@@ -887,7 +953,12 @@ class CloudLicenseResponseGenerator:
                 if func_addr:
                     # Store original function for later restoration
                     self._original_functions[f"{dll_name}:{function_name}"] = func_addr
-                    self.logger.debug("Hook handler registered for %s:%s", dll_name, function_name, extra={"handler": str(hook_handler)})
+                    self.logger.debug(
+                        "Hook handler registered for %s:%s",
+                        dll_name,
+                        function_name,
+                        extra={"handler": str(hook_handler)},
+                    )
 
                     # In a real implementation, this would use techniques like:
                     # - VirtualProtect to make memory writable
@@ -895,12 +966,14 @@ class CloudLicenseResponseGenerator:
                     # - CreateHook to install detour
 
                     # For now, we register the hook for simulation
-                    self.api_call_log.append({
-                        "timestamp": self._get_timestamp(),
-                        "api": function_name,
-                        "dll": dll_name,
-                        "status": "hooked",
-                    })
+                    self.api_call_log.append(
+                        {
+                            "timestamp": self._get_timestamp(),
+                            "api": function_name,
+                            "dll": dll_name,
+                            "status": "hooked",
+                        }
+                    )
 
                     return True
             except AttributeError:
@@ -923,13 +996,15 @@ class CloudLicenseResponseGenerator:
 
         """
         # Log the API call
-        self.api_call_log.append({
-            "timestamp": self._get_timestamp(),
-            "category": "winsock",
-            "api": api_name,
-            "args": str(args)[:200],  # Limit arg length
-            "thread_id": self._get_current_thread_id(),
-        })
+        self.api_call_log.append(
+            {
+                "timestamp": self._get_timestamp(),
+                "category": "winsock",
+                "api": api_name,
+                "args": str(args)[:200],  # Limit arg length
+                "thread_id": self._get_current_thread_id(),
+            }
+        )
 
         # Check if this is a license-related call
         if self._is_license_related_call(api_name, args):
@@ -962,13 +1037,15 @@ class CloudLicenseResponseGenerator:
 
         """
         # Log the API call
-        self.api_call_log.append({
-            "timestamp": self._get_timestamp(),
-            "category": "wininet",
-            "api": api_name,
-            "args": str(args)[:200],
-            "thread_id": self._get_current_thread_id(),
-        })
+        self.api_call_log.append(
+            {
+                "timestamp": self._get_timestamp(),
+                "category": "wininet",
+                "api": api_name,
+                "args": str(args)[:200],
+                "thread_id": self._get_current_thread_id(),
+            }
+        )
 
         # Check for license server requests
         if api_name in ["HttpOpenRequest", "HttpSendRequest"]:
@@ -1000,14 +1077,23 @@ class CloudLicenseResponseGenerator:
         """
         # Check for common license server patterns
         license_indicators = [
-            "activate", "license", "adobe", "autodesk", "flexlm",
-            "hasp", "sentinel", "verification", "auth",
+            "activate",
+            "license",
+            "adobe",
+            "autodesk",
+            "flexlm",
+            "hasp",
+            "sentinel",
+            "verification",
+            "auth",
         ]
 
         args_str = str(args).lower()
         is_license_call = any(indicator in args_str for indicator in license_indicators)
         if is_license_call:
-            self.logger.debug("License-related call detected: %s with args: %s", api_name, args_str[:100])
+            self.logger.debug(
+                "License-related call detected: %s with args: %s", api_name, args_str[:100]
+            )
         return is_license_call
 
     def _is_license_server_request(self, args: tuple) -> bool:
@@ -1022,8 +1108,13 @@ class CloudLicenseResponseGenerator:
         """
         args_str = str(args).lower()
         license_domains = [
-            "adobe.com", "autodesk.com", "activate.", "license.",
-            "practivate.", "lm.licenses", "registeronce",
+            "adobe.com",
+            "autodesk.com",
+            "activate.",
+            "license.",
+            "practivate.",
+            "lm.licenses",
+            "registeronce",
         ]
 
         return any(domain in args_str for domain in license_domains)
@@ -1078,7 +1169,9 @@ class CloudLicenseResponseGenerator:
         """
         # Generate appropriate license response
         args_str = str(args).lower()
-        self.logger.debug("Handling license HTTP request: %s with args: %s", api_name, args_str[:200])
+        self.logger.debug(
+            "Handling license HTTP request: %s with args: %s", api_name, args_str[:200]
+        )
         if "activate" in args_str:
             return self._generate_activation_response()
         if "check" in args_str:
@@ -1089,14 +1182,18 @@ class CloudLicenseResponseGenerator:
             request_analysis = self._analyze_license_request(args)
             response_code = self._generate_protocol_response(request_analysis)
 
-            self.logger.info(f"Generated response code {response_code} for request type: {request_analysis.get('type', 'unknown')}")
+            self.logger.info(
+                f"Generated response code {response_code} for request type: {request_analysis.get('type', 'unknown')}"
+            )
             return response_code
 
         except Exception as e:
             self.logger.error(f"Failed to analyze license request: {e}")
             return -1  # Error code for analysis failure
 
-    def _generate_activation_response(self, request_data: bytes = None, software_type: str = None) -> int:
+    def _generate_activation_response(
+        self, request_data: bytes = None, software_type: str = None
+    ) -> int:
         """Generate comprehensive activation success response.
 
         Args:
@@ -1120,8 +1217,10 @@ class CloudLicenseResponseGenerator:
             # Store the response for potential replay
             self._store_activation_response(response, software_type)
 
-            self.logger.info("Generated comprehensive activation response for %s",
-                           software_type or "unknown software")
+            self.logger.info(
+                "Generated comprehensive activation response for %s",
+                software_type or "unknown software",
+            )
             # Verify response generation was successful
             if response and len(response) > 0:
                 return 1  # Success - valid response generated
@@ -1151,7 +1250,9 @@ class CloudLicenseResponseGenerator:
 
             # Validate response completeness
             if self._validate_response_structure(response_data):
-                self.logger.info(f"Generated valid license check response for {request_info.get('software', 'unknown')}")
+                self.logger.info(
+                    f"Generated valid license check response for {request_info.get('software', 'unknown')}"
+                )
                 return 1  # Success - valid response
             self.logger.warning("Generated response failed validation")
             return 0  # Partial success - response may have issues
@@ -1163,6 +1264,7 @@ class CloudLicenseResponseGenerator:
     def _get_current_thread_id(self) -> int:
         """Get current thread ID."""
         import threading
+
         return threading.get_ident()
 
     def _analyze_license_request(self, args: tuple) -> dict:
@@ -1284,17 +1386,21 @@ class CloudLicenseResponseGenerator:
 
             # Add software-specific response fields
             if software == "adobe":
-                response.update({
-                    "subscription_status": "active",
-                    "cloud_sync": True,
-                    "creative_cloud": True,
-                })
+                response.update(
+                    {
+                        "subscription_status": "active",
+                        "cloud_sync": True,
+                        "creative_cloud": True,
+                    }
+                )
             elif software == "office":
-                response.update({
-                    "office_version": "365",
-                    "activation_count": 1,
-                    "device_limit": 5,
-                })
+                response.update(
+                    {
+                        "office_version": "365",
+                        "activation_count": 1,
+                        "device_limit": 5,
+                    }
+                )
 
             return response
 
@@ -1356,13 +1462,13 @@ class CloudLicenseResponseGenerator:
 
         """
         success_codes = {
-            "connect": 0,          # SOCKET_ERROR is -1, success is 0
-            "send": 1,             # Number of bytes sent (simplified)
-            "recv": 1,             # Number of bytes received (simplified)
-            "HttpOpenRequest": 1,   # Non-null handle (simplified)
-            "HttpSendRequest": 1,   # TRUE
-            "getaddrinfo": 0,      # NO_ERROR
-            "gethostbyname": 1,    # Non-null pointer (simplified)
+            "connect": 0,  # SOCKET_ERROR is -1, success is 0
+            "send": 1,  # Number of bytes sent (simplified)
+            "recv": 1,  # Number of bytes received (simplified)
+            "HttpOpenRequest": 1,  # Non-null handle (simplified)
+            "HttpSendRequest": 1,  # TRUE
+            "getaddrinfo": 0,  # NO_ERROR
+            "gethostbyname": 1,  # Non-null pointer (simplified)
         }
         return success_codes.get(api_name, 1)  # Default success
 
@@ -1422,7 +1528,9 @@ class CloudLicenseResponseGenerator:
             self.logger.debug("Failed to analyze activation request: %s", e)
             return {"format": "binary", "protocol": "unknown"}
 
-    def _generate_software_specific_response(self, software_type: str, response_format: dict[str, Any]) -> bytes:
+    def _generate_software_specific_response(
+        self, software_type: str, response_format: dict[str, Any]
+    ) -> bytes:
         """Generate software-specific activation response.
 
         Args:
@@ -1550,8 +1658,10 @@ class CloudLicenseResponseGenerator:
 
             # Limit cache size
             if len(self._activation_cache) > 100:
-                oldest_key = min(self._activation_cache.keys(),
-                               key=lambda k: self._activation_cache[k]["timestamp"])
+                oldest_key = min(
+                    self._activation_cache.keys(),
+                    key=lambda k: self._activation_cache[k]["timestamp"],
+                )
                 del self._activation_cache[oldest_key]
 
         except Exception as e:
@@ -1560,6 +1670,7 @@ class CloudLicenseResponseGenerator:
     def _generate_uuid(self) -> str:
         """Generate UUID for responses."""
         import uuid
+
         return str(uuid.uuid4())
 
     def _generate_activation_code(self) -> str:
@@ -1597,10 +1708,12 @@ class CloudLicenseResponseGenerator:
     def _get_common_license_response(self) -> dict:
         """Get common license response template."""
         from ...utils.templates.license_response_templates import get_common_license_response
+
         return get_common_license_response()
 
     def _dict_to_xml(self, data: dict, root_name: str = "root") -> str:
         """Convert dictionary to XML format."""
+
         def dict_to_xml_recursive(d, root):
             xml = f"<{root}>"
             for key, value in d.items():
@@ -1703,15 +1816,30 @@ class CloudLicenseResponseGenerator:
 
         """
         license_indicators = [
-            "license", "activation", "auth", "verify", "check",
-            "adobe", "autodesk", "microsoft", "flexlm", "hasp",
+            "license",
+            "activation",
+            "auth",
+            "verify",
+            "check",
+            "adobe",
+            "autodesk",
+            "microsoft",
+            "flexlm",
+            "hasp",
         ]
 
         # Check API name for license-related functions
         api_name_lower = api_name.lower()
         api_license_indicators = [
-            "connect", "send", "recv", "httpopen", "httpsend", "ssl_connect",
-            "internetopen", "internetconnect", "winhttp",
+            "connect",
+            "send",
+            "recv",
+            "httpopen",
+            "httpsend",
+            "ssl_connect",
+            "internetopen",
+            "internetconnect",
+            "winhttp",
         ]
 
         is_network_api = any(indicator in api_name_lower for indicator in api_license_indicators)
@@ -1767,14 +1895,16 @@ class CloudLicenseResponseGenerator:
             response_data = self._generate_generic_license_response(url, request_data)
 
         # Log the interception for analysis
-        self.api_call_log.append({
-            "timestamp": time.time(),
-            "api": api_name,
-            "protocol": protocol_type,
-            "url": url[:100],  # Truncate long URLs
-            "response_size": len(str(response_data)),
-            "status": "intercepted",
-        })
+        self.api_call_log.append(
+            {
+                "timestamp": time.time(),
+                "api": api_name,
+                "protocol": protocol_type,
+                "url": url[:100],  # Truncate long URLs
+                "response_size": len(str(response_data)),
+                "status": "intercepted",
+            }
+        )
 
         return {
             "status": "intercepted",
@@ -1794,17 +1924,25 @@ class CloudLicenseResponseGenerator:
             str: Identified protocol type
 
         """
-        if any(indicator in url or indicator in hostname for indicator in
-               ["adobe.com", "activate.adobe", "practivate.adobe"]):
+        if any(
+            indicator in url or indicator in hostname
+            for indicator in ["adobe.com", "activate.adobe", "practivate.adobe"]
+        ):
             return "adobe"
-        if any(indicator in url or indicator in hostname for indicator in
-                ["autodesk.com", "autodesk.ca"]):
+        if any(
+            indicator in url or indicator in hostname
+            for indicator in ["autodesk.com", "autodesk.ca"]
+        ):
             return "autodesk"
-        if any(indicator in url or indicator in hostname for indicator in
-                ["flexlm", "flexnet", "macrovision"]):
+        if any(
+            indicator in url or indicator in hostname
+            for indicator in ["flexlm", "flexnet", "macrovision"]
+        ):
             return "flexlm"
-        if any(indicator in url or indicator in hostname for indicator in
-                ["hasp", "sentinel", "gemalto"]):
+        if any(
+            indicator in url or indicator in hostname
+            for indicator in ["hasp", "sentinel", "gemalto"]
+        ):
             return "hasp"
         return "generic"
 
@@ -1836,26 +1974,36 @@ class CloudLicenseResponseGenerator:
 
     def _generate_autodesk_response(self, url: str, request_data: str) -> dict[str, Any]:
         """Generate Autodesk-specific license response."""
-        self.logger.debug("Generating Autodesk response for URL: %s, data length: %d", url, len(request_data) if request_data else 0)
+        self.logger.debug(
+            "Generating Autodesk response for URL: %s, data length: %d",
+            url,
+            len(request_data) if request_data else 0,
+        )
         return {
             "status_code": 200,
             "headers": {"Content-Type": "application/json"},
-            "body": json.dumps({
-                "success": True,
-                "license_type": "COMMERCIAL",
-                "expires": "2099-12-31T23:59:59.000Z",
-                "seat_count": 999,
-                "features": {
-                    "AUTOCAD": "ENABLED",
-                    "MAYA": "ENABLED",
-                    "3DSMAX": "ENABLED",
-                },
-            }),
+            "body": json.dumps(
+                {
+                    "success": True,
+                    "license_type": "COMMERCIAL",
+                    "expires": "2099-12-31T23:59:59.000Z",
+                    "seat_count": 999,
+                    "features": {
+                        "AUTOCAD": "ENABLED",
+                        "MAYA": "ENABLED",
+                        "3DSMAX": "ENABLED",
+                    },
+                }
+            ),
         }
 
     def _generate_flexlm_response(self, url: str, request_data: str) -> dict[str, Any]:
         """Generate FlexLM-specific license response."""
-        self.logger.debug("Generating FlexLM response for URL: %s, data length: %d", url, len(request_data) if request_data else 0)
+        self.logger.debug(
+            "Generating FlexLM response for URL: %s, data length: %d",
+            url,
+            len(request_data) if request_data else 0,
+        )
         return {
             "status_code": 200,
             "headers": {"Content-Type": "text/plain"},
@@ -1864,7 +2012,11 @@ class CloudLicenseResponseGenerator:
 
     def _generate_hasp_response(self, url: str, request_data: str) -> dict[str, Any]:
         """Generate HASP/Sentinel-specific license response."""
-        self.logger.debug("Generating HASP response for URL: %s, data length: %d", url, len(request_data) if request_data else 0)
+        self.logger.debug(
+            "Generating HASP response for URL: %s, data length: %d",
+            url,
+            len(request_data) if request_data else 0,
+        )
         return {
             "status_code": 200,
             "headers": {"Content-Type": "application/octet-stream"},
@@ -1873,21 +2025,26 @@ class CloudLicenseResponseGenerator:
 
     def _generate_generic_license_response(self, url: str, request_data: str) -> dict[str, Any]:
         """Generate generic license success response."""
-        self.logger.debug("Generating generic license response for URL: %s, data length: %d", url, len(request_data) if request_data else 0)
+        self.logger.debug(
+            "Generating generic license response for URL: %s, data length: %d",
+            url,
+            len(request_data) if request_data else 0,
+        )
         return {
             "status_code": 200,
             "headers": {"Content-Type": "application/json"},
-            "body": json.dumps({
-                "status": "SUCCESS",
-                "licensed": True,
-                "expires": "2099-12-31",
-                "message": "License verification successful",
-            }),
+            "body": json.dumps(
+                {
+                    "status": "SUCCESS",
+                    "licensed": True,
+                    "expires": "2099-12-31",
+                    "message": "License verification successful",
+                }
+            ),
         }
 
     def _setup_cross_platform_hooks(self) -> None:
-        """Set up cross-platform network monitoring using available libraries.
-        """
+        """Set up cross-platform network monitoring using available libraries."""
         self.logger.info("Setting up cross-platform network hooks")
 
         # Try different cross-platform methods
@@ -1916,18 +2073,23 @@ class CloudLicenseResponseGenerator:
                     result = super().connect(address)
                     # Log connection for license detection
                     if hasattr(self, "_app_ref") and self._app_ref:
-                        self._app_ref.api_call_log.append({
-                            "api": "socket.connect",
-                            "address": address,
-                            "timestamp": self._app_ref._get_timestamp(),
-                        })
+                        self._app_ref.api_call_log.append(
+                            {
+                                "api": "socket.connect",
+                                "address": address,
+                                "timestamp": self._app_ref._get_timestamp(),
+                            }
+                        )
                     return result
 
                 def send(self, data, flags=0):
                     # Intercept license-related traffic
                     if isinstance(data, bytes):
                         data_str = data.decode("utf-8", errors="ignore").lower()
-                        if any(keyword in data_str for keyword in ["license", "activation", "serial", "key"]):
+                        if any(
+                            keyword in data_str
+                            for keyword in ["license", "activation", "serial", "key"]
+                        ):
                             self._logger.info("Intercepted license-related traffic")
                     return super().send(data, flags)
 
@@ -1936,7 +2098,9 @@ class CloudLicenseResponseGenerator:
                     # Monitor responses
                     if data and isinstance(data, bytes):
                         data_str = data.decode("utf-8", errors="ignore").lower()
-                        if any(keyword in data_str for keyword in ["valid", "activated", "success"]):
+                        if any(
+                            keyword in data_str for keyword in ["valid", "activated", "success"]
+                        ):
                             self._logger.info("Intercepted license response")
                     return data
 
@@ -1962,7 +2126,9 @@ class CloudLicenseResponseGenerator:
                     response = self._original_functions["requests.get"](url, **kwargs)
 
                     # Check for license-related URLs
-                    if any(keyword in url.lower() for keyword in ["license", "activate", "validate"]):
+                    if any(
+                        keyword in url.lower() for keyword in ["license", "activate", "validate"]
+                    ):
                         self.logger.info("License-related HTTP request detected")
                         # Could modify response here if needed
 
@@ -1990,8 +2156,7 @@ class CloudLicenseResponseGenerator:
             self.logger.warning(f"HTTP hooking failed: {e}")
 
     def _setup_alternative_hooks(self) -> None:
-        """Set up alternative hooking using available debugging/tracing libraries.
-        """
+        """Set up alternative hooking using available debugging/tracing libraries."""
         self.logger.info("Setting up alternative network hooks")
 
         # Try using system-level tracing if available
@@ -2011,11 +2176,13 @@ class CloudLicenseResponseGenerator:
 
                         # Log relevant calls
                         if func_name in ["connect", "send", "recv", "get", "post"]:
-                            self.api_call_log.append({
-                                "api": f"{module_name}.{func_name}",
-                                "timestamp": self._get_timestamp(),
-                                "event_arg": str(arg)[:100] if arg else None,
-                            })
+                            self.api_call_log.append(
+                                {
+                                    "api": f"{module_name}.{func_name}",
+                                    "timestamp": self._get_timestamp(),
+                                    "event_arg": str(arg)[:100] if arg else None,
+                                }
+                            )
 
                 return trace_network_calls
 
@@ -2057,12 +2224,15 @@ def run_cloud_license_generator(app: Any) -> None:
     # Handle learning mode selection if PyQt6 is available
     learning_mode = True
     if PYQT6_AVAILABLE:
-        learning_mode = QMessageBox.question(
-            app,
-            "Learning Mode",
-            "Enable learning mode? (Learns from successful license checks)",
-            QMessageBox.Yes | QMessageBox.No,
-        ) == QMessageBox.Yes
+        learning_mode = (
+            QMessageBox.question(
+                app,
+                "Learning Mode",
+                "Enable learning mode? (Learns from successful license checks)",
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            == QMessageBox.Yes
+        )
 
     generator.config["learning_mode"] = learning_mode
 
@@ -2092,9 +2262,15 @@ def run_cloud_license_generator(app: Any) -> None:
         app.analyze_results.append("- Learning mode for adapting to new license check patterns")
 
     app.analyze_results.append("\nTo use the cloud license response generator:")
-    app.analyze_results.append("1. Use with the SSL/TLS interceptor or network license server emulator")
-    app.analyze_results.append("2. The generator will automatically create valid responses for license checks")
-    app.analyze_results.append("3. Responses are customized based on the specific service and request")
+    app.analyze_results.append(
+        "1. Use with the SSL/TLS interceptor or network license server emulator"
+    )
+    app.analyze_results.append(
+        "2. The generator will automatically create valid responses for license checks"
+    )
+    app.analyze_results.append(
+        "3. Responses are customized based on the specific service and request"
+    )
 
 
 # Export the main classes and functions

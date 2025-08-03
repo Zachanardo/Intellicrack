@@ -31,6 +31,7 @@ WINDOWS_AVAILABLE = sys.platform == "win32"
 if WINDOWS_AVAILABLE:
     try:
         import ctypes.wintypes
+
         STRUCTURES_AVAILABLE = True
     except ImportError as e:
         logger.error("Import error in windows_structures: %s", e)
@@ -55,6 +56,7 @@ class WindowsContext:
 
         try:
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
+
                 class CONTEXT(ctypes.Structure):
                     """Windows 64-bit thread context structure."""
 
@@ -98,8 +100,10 @@ class WindowsContext:
                         ("R15", ctypes.c_ulonglong),
                         ("Rip", ctypes.c_ulonglong),
                     ]
+
                 CONTEXT_FULL = 0x10000B
             else:  # 32-bit
+
                 class CONTEXT(ctypes.Structure):
                     """Windows 32-bit thread context structure."""
 
@@ -129,6 +133,7 @@ class WindowsContext:
                         ("Esp", ctypes.wintypes.DWORD),
                         ("SegSs", ctypes.wintypes.DWORD),
                     ]
+
                 CONTEXT_FULL = 0x10007
 
             return CONTEXT, CONTEXT_FULL
@@ -222,6 +227,7 @@ class WindowsProcessStructures:
                 ("hStdOutput", ctypes.wintypes.HANDLE),
                 ("hStdError", ctypes.wintypes.HANDLE),
             ]
+
         return STARTUPINFO
 
     @staticmethod
@@ -239,6 +245,7 @@ class WindowsProcessStructures:
                 ("dwProcessId", ctypes.wintypes.DWORD),
                 ("dwThreadId", ctypes.wintypes.DWORD),
             ]
+
         return PROCESS_INFORMATION
 
     def create_suspended_process(self, exe_path: str, command_line: str = None) -> dict | None:
@@ -346,29 +353,39 @@ def create_ssl_certificate_builder():
 
         return (
             x509.CertificateBuilder()
-            .subject_name(x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-            ]))
-            .issuer_name(x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-            ]))
+            .subject_name(
+                x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+                        x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
+                        x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+                    ]
+                )
+            )
+            .issuer_name(
+                x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+                        x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
+                        x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+                    ]
+                )
+            )
             .serial_number(x509.random_serial_number())
             .not_valid_before(datetime.datetime.utcnow())
             .not_valid_after(datetime.datetime.utcnow() + datetime.timedelta(days=365))
             .add_extension(
-                x509.SubjectAlternativeName([
-                    x509.DNSName("localhost"),
-                    x509.DNSName("*.localhost"),
-                    x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
-                ]),
+                x509.SubjectAlternativeName(
+                    [
+                        x509.DNSName("localhost"),
+                        x509.DNSName("*.localhost"),
+                        x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
+                    ]
+                ),
                 critical=False,
             )
         )

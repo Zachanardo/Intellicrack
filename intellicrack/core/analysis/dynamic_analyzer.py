@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import subprocess
 import time
@@ -30,9 +29,9 @@ from ...utils.logger import get_logger, log_message
 
 logger = get_logger(__name__)
 
+
 class AdvancedDynamicAnalyzer:
-    """Comprehensive dynamic runtime analysis and exploit simulation
-    """
+    """Comprehensive dynamic runtime analysis and exploit simulation"""
 
     def __init__(self, binary_path: str | Path):
         """Initialize the advanced dynamic analyzer with binary path configuration."""
@@ -64,7 +63,9 @@ class AdvancedDynamicAnalyzer:
                  runtime analysis, and process behavior information
 
         """
-        self.logger.info(f"Running comprehensive dynamic analysis for {self.binary_path}. Payload provided: {bool(payload)}")
+        self.logger.info(
+            f"Running comprehensive dynamic analysis for {self.binary_path}. Payload provided: {bool(payload)}"
+        )
 
         analysis_results = {
             "subprocess_execution": self._subprocess_analysis(),
@@ -93,13 +94,14 @@ class AdvancedDynamicAnalyzer:
 
         try:
             result = subprocess.run(
-                [self.binary_path],
-                capture_output=True,
-                text=True,
-                timeout=10
-            , check=False)
+                [self.binary_path], capture_output=True, text=True, timeout=10, check=False
+            )
 
-            self.logger.debug("Subprocess result: Success=%s, ReturnCode=%s", result.returncode == 0, result.returncode)
+            self.logger.debug(
+                "Subprocess result: Success=%s, ReturnCode=%s",
+                result.returncode == 0,
+                result.returncode,
+            )
 
             return {
                 "success": result.returncode == 0,
@@ -472,7 +474,12 @@ class AdvancedDynamicAnalyzer:
 
                     if msg_type == "analysis_complete":
                         analysis_data.update(payload_data["data"])
-                    elif msg_type in ["file_access", "registry_access", "network_activity", "license_function"]:
+                    elif msg_type in [
+                        "file_access",
+                        "registry_access",
+                        "network_activity",
+                        "license_function",
+                    ]:
                         if msg_type not in analysis_data:
                             analysis_data[msg_type] = []
                         analysis_data[msg_type].append(payload_data["data"])
@@ -550,7 +557,8 @@ class AdvancedDynamicAnalyzer:
                         "type": c.type,
                         "laddr": str(c.laddr),
                         "raddr": str(c.raddr),
-                    } for c in ps_process.connections()
+                    }
+                    for c in ps_process.connections()
                 ],
                 "threads": ps_process.num_threads(),
             }
@@ -558,7 +566,12 @@ class AdvancedDynamicAnalyzer:
             # Terminate process
             process.terminate()
 
-            self.logger.debug("Process behavior analysis result: PID=%s, Memory=%s, Threads=%s", analysis.get("pid"), analysis.get("memory_info"), analysis.get("threads"))
+            self.logger.debug(
+                "Process behavior analysis result: PID=%s, Memory=%s, Threads=%s",
+                analysis.get("pid"),
+                analysis.get("memory_info"),
+                analysis.get("threads"),
+            )
 
             return analysis
 
@@ -566,7 +579,9 @@ class AdvancedDynamicAnalyzer:
             self.logger.error("Process behavior analysis error: %s", e, exc_info=True)
             return {"error": str(e)}
 
-    def scan_memory_for_keywords(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
+    def scan_memory_for_keywords(
+        self, keywords: list[str], target_process: str | None = None
+    ) -> dict[str, Any]:
         """Scan process memory for specific keywords.
 
         Performs real-time memory scanning of the target process or a specified process
@@ -596,7 +611,9 @@ class AdvancedDynamicAnalyzer:
                 "matches": [],
             }
 
-    def _frida_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
+    def _frida_memory_scan(
+        self, keywords: list[str], target_process: str | None = None
+    ) -> dict[str, Any]:
         """Perform memory scanning using Frida instrumentation."""
         try:
             # Get process to attach to
@@ -738,7 +755,9 @@ class AdvancedDynamicAnalyzer:
                 "matches": [],
             }
 
-    def _psutil_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
+    def _psutil_memory_scan(
+        self, keywords: list[str], target_process: str | None = None
+    ) -> dict[str, Any]:
         """Perform basic memory scanning using psutil (limited functionality)."""
         try:
             process_name = target_process or Path(self.binary_path).name
@@ -773,24 +792,30 @@ class AdvancedDynamicAnalyzer:
             # Basic memory information (limited on most systems)
             try:
                 memory_info = target_proc.memory_info()
-                memory_maps = target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
+                memory_maps = (
+                    target_proc.memory_maps() if hasattr(target_proc, "memory_maps") else []
+                )
 
                 # Simulate memory scanning with process environment and command line
                 cmdline = " ".join(target_proc.cmdline()) if hasattr(target_proc, "cmdline") else ""
-                environ_vars = list(target_proc.environ().values()) if hasattr(target_proc, "environ") else []
+                environ_vars = (
+                    list(target_proc.environ().values()) if hasattr(target_proc, "environ") else []
+                )
 
                 search_text = (cmdline + " " + " ".join(environ_vars)).lower()
 
                 for keyword in keywords:
                     if keyword.lower() in search_text:
-                        matches.append({
-                            "address": "0x00000000",  # Placeholder address
-                            "keyword": keyword,
-                            "context": f"Found in process environment/cmdline: {keyword}",
-                            "offset": 0,
-                            "region_base": "0x00000000",
-                            "region_size": len(search_text),
-                        })
+                        matches.append(
+                            {
+                                "address": "0x00000000",  # Placeholder address
+                                "keyword": keyword,
+                                "context": f"Found in process environment/cmdline: {keyword}",
+                                "offset": 0,
+                                "region_base": "0x00000000",
+                                "region_size": len(search_text),
+                            }
+                        )
 
                 self.logger.info(f"PSUtil memory scan found {len(matches)} matches")
 
@@ -820,7 +845,9 @@ class AdvancedDynamicAnalyzer:
                 "matches": [],
             }
 
-    def _fallback_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
+    def _fallback_memory_scan(
+        self, keywords: list[str], target_process: str | None = None
+    ) -> dict[str, Any]:
         """Fallback memory scanning using binary file analysis."""
         try:
             if target_process:
@@ -851,14 +878,16 @@ class AdvancedDynamicAnalyzer:
                     context_end = min(len(binary_text), index + len(keyword) + 50)
                     context = binary_text[context_start:context_end]
 
-                    matches.append({
-                        "address": f"0x{index:08X}",
-                        "keyword": keyword,
-                        "context": context.replace("\x00", "."),
-                        "offset": index,
-                        "region_base": "0x00000000",
-                        "region_size": len(binary_data),
-                    })
+                    matches.append(
+                        {
+                            "address": f"0x{index:08X}",
+                            "keyword": keyword,
+                            "context": context.replace("\x00", "."),
+                            "offset": index,
+                            "region_base": "0x00000000",
+                            "region_size": len(binary_data),
+                        }
+                    )
 
                     offset = index + len(keyword)
 
@@ -880,8 +909,9 @@ class AdvancedDynamicAnalyzer:
 
 
 # Convenience functions for application integration
-def run_dynamic_analysis(app, binary_path: str | Path | None = None,
-                        payload: bytes | None = None) -> dict[str, Any]:
+def run_dynamic_analysis(
+    app, binary_path: str | Path | None = None, payload: bytes | None = None
+) -> dict[str, Any]:
     """Run dynamic analysis on a binary with app integration.
 
     Args:
@@ -930,16 +960,26 @@ def run_dynamic_analysis(app, binary_path: str | Path | None = None,
         if frida_result.get("success"):
             analysis_data = frida_result.get("analysis_data", {})
             app.analyze_results.append("\nRuntime Analysis:")
-            app.analyze_results.append(f"  File Operations: {len(analysis_data.get('file_access', []))}")
-            app.analyze_results.append(f"  Registry Operations: {len(analysis_data.get('registry_access', []))}")
-            app.analyze_results.append(f"  Network Connections: {len(analysis_data.get('network_activity', []))}")
-            app.analyze_results.append(f"  License Functions: {len(analysis_data.get('license_function', []))}")
+            app.analyze_results.append(
+                f"  File Operations: {len(analysis_data.get('file_access', []))}"
+            )
+            app.analyze_results.append(
+                f"  Registry Operations: {len(analysis_data.get('registry_access', []))}"
+            )
+            app.analyze_results.append(
+                f"  Network Connections: {len(analysis_data.get('network_activity', []))}"
+            )
+            app.analyze_results.append(
+                f"  License Functions: {len(analysis_data.get('license_function', []))}"
+            )
 
             # Show some details
             if analysis_data.get("license_function"):
                 app.analyze_results.append("\n  Detected License Functions:")
                 for func in analysis_data["license_function"][:5]:
-                    app.analyze_results.append(f"    - {func.get('function', 'Unknown')} in {func.get('module', 'Unknown')}")
+                    app.analyze_results.append(
+                        f"    - {func.get('function', 'Unknown')} in {func.get('module', 'Unknown')}"
+                    )
 
     # Process behavior
     if "process_behavior_analysis" in results:
@@ -950,7 +990,9 @@ def run_dynamic_analysis(app, binary_path: str | Path | None = None,
             app.analyze_results.append(f"  Threads: {behavior.get('threads', 0)}")
             if behavior.get("memory_info"):
                 mem = behavior["memory_info"]
-                app.analyze_results.append(f"  Memory RSS: {mem.get('rss', 0) / 1024 / 1024:.2f} MB")
+                app.analyze_results.append(
+                    f"  Memory RSS: {mem.get('rss', 0) / 1024 / 1024:.2f} MB"
+                )
 
     return results
 
@@ -969,8 +1011,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
         List[str]: Log messages from the monitoring session
 
     """
-    logs = [
-        f"Starting runtime monitoring of {binary_path} (timeout: {timeout}ms)"]
+    logs = [f"Starting runtime monitoring of {binary_path} (timeout: {timeout}ms)"]
 
     try:
         if not FRIDA_AVAILABLE:
@@ -1102,6 +1143,7 @@ def create_dynamic_analyzer(binary_path: str | Path) -> AdvancedDynamicAnalyzer:
 
     """
     return AdvancedDynamicAnalyzer(binary_path)
+
 
 def run_quick_analysis(binary_path: str | Path, payload: bytes | None = None) -> dict[str, Any]:
     """Run a quick comprehensive analysis on a binary.

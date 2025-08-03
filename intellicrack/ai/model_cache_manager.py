@@ -44,6 +44,7 @@ memory_reserved = None
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
+
 def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
     # Serialize object
@@ -57,6 +58,7 @@ def secure_pickle_dump(obj, file_path):
         f.write(mac)
         f.write(data)
 
+
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
@@ -64,11 +66,19 @@ class RestrictedUnpickler(pickle.Unpickler):
         """Override find_class to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
-            "numpy", "numpy.core.multiarray", "numpy.core.numeric",
-            "pandas", "pandas.core.frame", "pandas.core.series",
-            "sklearn", "torch", "tensorflow",
-            "__builtin__", "builtins",
-            "collections", "collections.abc",
+            "numpy",
+            "numpy.core.multiarray",
+            "numpy.core.numeric",
+            "pandas",
+            "pandas.core.frame",
+            "pandas.core.series",
+            "sklearn",
+            "torch",
+            "tensorflow",
+            "__builtin__",
+            "builtins",
+            "collections",
+            "collections.abc",
         }
 
         # Allow model classes from our own modules
@@ -81,6 +91,7 @@ class RestrictedUnpickler(pickle.Unpickler):
 
         # Deny everything else
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
+
 
 def secure_pickle_load(file_path):
     """Securely load object with integrity verification and restricted unpickling."""
@@ -100,11 +111,15 @@ def secure_pickle_load(file_path):
         import io
 
         import joblib
+
         return joblib.load(io.BytesIO(data))
     except ImportError:
         # Fallback to restricted pickle unpickler
         import io
+
         return RestrictedUnpickler(io.BytesIO(data)).load()
+
+
 empty_cache = None
 gpu_autoloader = None
 
@@ -118,12 +133,14 @@ try:
         memory_reserved,
         to_device,
     )
+
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     pass
 
 try:
     import torch
+
     HAS_TORCH = True
 except ImportError:
     torch = None
@@ -309,8 +326,7 @@ class ModelCacheManager:
 
                 # Handle different return types
                 if isinstance(result, tuple):
-                    model, tokenizer = result[0], result[1] if len(
-                        result) > 1 else None
+                    model, tokenizer = result[0], result[1] if len(result) > 1 else None
                 else:
                     model, tokenizer = result, None
 
@@ -370,8 +386,9 @@ class ModelCacheManager:
         memory_size = self._estimate_model_memory(model)
 
         # Check if we need to evict models
-        while (self.current_memory_usage + memory_size > self.max_memory_bytes
-               and len(self.cache) > 0):
+        while (
+            self.current_memory_usage + memory_size > self.max_memory_bytes and len(self.cache) > 0
+        ):
             self._evict_lru()
 
         # Detect device
@@ -590,6 +607,7 @@ class ModelCacheManager:
         # Clear disk cache if requested
         if clear_disk and self.enable_disk_cache:
             import shutil
+
             try:
                 shutil.rmtree(self.cache_dir)
                 self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -631,7 +649,8 @@ class ModelCacheManager:
                 "evictions": self.stats["evictions"],
                 "avg_load_time": (
                     self.stats["total_load_time"] / self.stats["misses"]
-                    if self.stats["misses"] > 0 else 0
+                    if self.stats["misses"] > 0
+                    else 0
                 ),
             },
         }
@@ -659,26 +678,30 @@ class ModelCacheManager:
 
         # Memory cache
         for model_id, entry in self.cache.items():
-            models.append({
-                "model_id": model_id,
-                "location": "memory",
-                "model_type": entry.model_type,
-                "memory_size_mb": entry.memory_size / (1024 * 1024),
-                "last_accessed": entry.last_accessed.isoformat(),
-                "access_count": entry.access_count,
-                "device": entry.device,
-                "quantization": entry.quantization,
-            })
+            models.append(
+                {
+                    "model_id": model_id,
+                    "location": "memory",
+                    "model_type": entry.model_type,
+                    "memory_size_mb": entry.memory_size / (1024 * 1024),
+                    "last_accessed": entry.last_accessed.isoformat(),
+                    "access_count": entry.access_count,
+                    "device": entry.device,
+                    "quantization": entry.quantization,
+                }
+            )
 
         # Disk cache
         for model_id, info in self.disk_index.items():
             if model_id not in self.cache:
-                models.append({
-                    "model_id": model_id,
-                    "location": "disk",
-                    "size_mb": info.get("size_mb", 0),
-                    "saved_at": info.get("saved_at", ""),
-                })
+                models.append(
+                    {
+                        "model_id": model_id,
+                        "location": "disk",
+                        "size_mb": info.get("size_mb", 0),
+                        "saved_at": info.get("saved_at", ""),
+                    }
+                )
 
         return models
 

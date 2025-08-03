@@ -27,8 +27,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def compare_snapshots(snapshot1: dict[str, Any],
-                     snapshot2: dict[str, Any]) -> dict[str, Any]:
+def compare_snapshots(snapshot1: dict[str, Any], snapshot2: dict[str, Any]) -> dict[str, Any]:
     """Compare two system snapshots and return differences.
 
     Args:

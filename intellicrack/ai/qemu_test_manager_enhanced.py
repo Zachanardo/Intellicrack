@@ -35,8 +35,13 @@ logger = get_logger(__name__)
 class EnhancedQEMUTestManager:
     """Enhanced QEMU manager with real data capture capabilities."""
 
-    def test_frida_script_with_callback(self, snapshot_id: str, script_content: str,
-                                       binary_path: str, output_callback: Callable[[str], None]):
+    def test_frida_script_with_callback(
+        self,
+        snapshot_id: str,
+        script_content: str,
+        binary_path: str,
+        output_callback: Callable[[str], None],
+    ):
         """Execute Frida script with real-time output streaming."""
         # Extract binary information for targeted analysis
         binary_name = os.path.basename(binary_path)
@@ -173,12 +178,17 @@ Process.enumerateModules().forEach(module => {{{{
             # Execute wrapper script in QEMU with real-time output
             qemu_cmd = [
                 "qemu-system-x86_64",
-                "-snapshot", snapshot_id,
+                "-snapshot",
+                snapshot_id,
                 "-enable-kvm",
-                "-monitor", "stdio",
-                "-serial", "tcp::4444,server,nowait",
-                "-device", "e1000,netdev=net0",
-                "-netdev", "user,id=net0,hostfwd=tcp::2222-:22",
+                "-monitor",
+                "stdio",
+                "-serial",
+                "tcp::4444,server,nowait",
+                "-device",
+                "e1000,netdev=net0",
+                "-netdev",
+                "user,id=net0,hostfwd=tcp::2222-:22",
             ]
 
             process = subprocess.Popen(
@@ -225,7 +235,9 @@ Process.enumerateModules().forEach(module => {{{{
             try:
                 with open("/tmp/qemu_test_data.json") as f:
                     detailed_data = json.load(f)
-                    logger.info(f"Loaded execution data: {len(detailed_data.get('api_calls', []))} API calls captured")
+                    logger.info(
+                        f"Loaded execution data: {len(detailed_data.get('api_calls', []))} API calls captured"
+                    )
             except Exception as e:
                 logger.warning(f"Failed to load execution data: {e}")
                 detailed_data = {}
@@ -279,11 +291,13 @@ Process.enumerateModules().forEach(module => {{{{
 
             # Get real section data
             for section in pe.sections:
-                result["sections"].append({
-                    "name": section.Name.decode("utf-8").strip("\x00"),
-                    "virtual_address": hex(section.VirtualAddress),
-                    "size": section.SizeOfRawData,
-                })
+                result["sections"].append(
+                    {
+                        "name": section.Name.decode("utf-8").strip("\x00"),
+                        "virtual_address": hex(section.VirtualAddress),
+                        "size": section.SizeOfRawData,
+                    }
+                )
 
         elif "ELF" in file_type:
             # Linux binary
@@ -327,7 +341,8 @@ echo "}}"
         # Execute and return real metrics
         result = subprocess.run(
             ["ssh", f"qemu@{self.vm_ip}", monitor_script],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 

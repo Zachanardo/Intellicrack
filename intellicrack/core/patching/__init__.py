@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 
 # Set up package logger
@@ -72,13 +71,11 @@ __all__ = [
     "create_nop_sled",
     "inject_shellcode",
     "generate_complete_api_hooking_script",
-
     # From adobe_injector
     "AdobeInjector",
     "create_adobe_injector",
     "inject_running_adobe_processes",
     "start_adobe_monitoring",
-
     # From windows_activator
     "WindowsActivator",
     "ActivationMethod",
@@ -87,7 +84,6 @@ __all__ = [
     "check_windows_activation",
     "activate_windows_hwid",
     "activate_windows_kms",
-
     # From memory_patcher
     "generate_launcher_script",
     "setup_memory_patching",

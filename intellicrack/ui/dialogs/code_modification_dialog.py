@@ -106,8 +106,8 @@ class ModificationAnalysisThread(QThread):
     """Thread for analyzing modification requests."""
 
     analysis_complete = pyqtSignal(list)  # List of CodeChange objects
-    progress_updated = pyqtSignal(str)    # Progress message
-    error_occurred = pyqtSignal(str)      # Error message
+    progress_updated = pyqtSignal(str)  # Progress message
+    error_occurred = pyqtSignal(str)  # Error message
 
     def __init__(self, modifier: IntelligentCodeModifier, request: ModificationRequest):
         """Initialize the ModificationAnalysisThread with default values."""
@@ -286,9 +286,15 @@ class CodeModificationDialog(QDialog):
         left_layout.addWidget(QLabel("Proposed Changes"))
 
         self.changes_tree = QTreeWidget()
-        self.changes_tree.setHeaderLabels([
-            "Change", "File", "Type", "Confidence", "Status",
-        ])
+        self.changes_tree.setHeaderLabels(
+            [
+                "Change",
+                "File",
+                "Type",
+                "Confidence",
+                "Status",
+            ]
+        )
         self.changes_tree.setAlternatingRowColors(True)
         self.changes_tree.itemSelectionChanged.connect(self.on_change_selected)
         left_layout.addWidget(self.changes_tree)
@@ -408,9 +414,17 @@ class CodeModificationDialog(QDialog):
 
         # History tree
         self.history_tree = QTreeWidget()
-        self.history_tree.setHeaderLabels([
-            "Change ID", "File", "Description", "Type", "Status", "Confidence", "Date",
-        ])
+        self.history_tree.setHeaderLabels(
+            [
+                "Change ID",
+                "File",
+                "Description",
+                "Type",
+                "Status",
+                "Confidence",
+                "Date",
+            ]
+        )
 
         header = self.history_tree.header()
         header.setStretchLastSection(True)
@@ -462,7 +476,9 @@ class CodeModificationDialog(QDialog):
     def add_target_file(self):
         """Add a target file to the request."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Target File", self.project_root,
+            self,
+            "Select Target File",
+            self.project_root,
             "Python Files (*.py);;JavaScript Files (*.js);;All Files (*)",
         )
 
@@ -510,11 +526,11 @@ class CodeModificationDialog(QDialog):
 
         # Create request
         requirements = [
-            req.strip() for req in self.requirements_edit.toPlainText().split("\n")
-            if req.strip()
+            req.strip() for req in self.requirements_edit.toPlainText().split("\n") if req.strip()
         ]
         constraints = [
-            constraint.strip() for constraint in self.constraints_edit.toPlainText().split("\n")
+            constraint.strip()
+            for constraint in self.constraints_edit.toPlainText().split("\n")
             if constraint.strip()
         ]
 
@@ -558,7 +574,9 @@ class CodeModificationDialog(QDialog):
         self.progress_bar.setVisible(False)
 
         self.status_label.setText("Analysis failed")
-        QMessageBox.critical(self, "Analysis Error", f"Failed to analyze modifications:\n{error_message}")
+        QMessageBox.critical(
+            self, "Analysis Error", f"Failed to analyze modifications:\n{error_message}"
+        )
 
     def populate_changes_tree(self):
         """Populate the changes tree with current changes."""
@@ -666,7 +684,8 @@ class CodeModificationDialog(QDialog):
 
         # Confirm application
         reply = QMessageBox.question(
-            self, "Confirm Application",
+            self,
+            "Confirm Application",
             f"Apply {len(change_ids)} selected changes?\n\n"
             "This will modify the files. Backups will be created.",
             QMessageBox.Yes | QMessageBox.No,
@@ -685,16 +704,17 @@ class CodeModificationDialog(QDialog):
 
             if failed == 0:
                 QMessageBox.information(
-                    self, "Success",
+                    self,
+                    "Success",
                     f"Successfully applied {applied} changes.\n\n"
                     f"Backups created: {len(results['backups_created'])}",
                 )
             else:
                 error_details = "\n".join(results["errors"])
                 QMessageBox.warning(
-                    self, "Partial Success",
-                    f"Applied {applied} changes, {failed} failed.\n\n"
-                    f"Errors:\n{error_details}",
+                    self,
+                    "Partial Success",
+                    f"Applied {applied} changes, {failed} failed.\n\n" f"Errors:\n{error_details}",
                 )
 
             # Refresh display
@@ -739,7 +759,12 @@ class CodeModificationDialog(QDialog):
                 item = QTreeWidgetItem()
                 item.setText(0, record["change_id"])
                 item.setText(1, Path(record["file_path"]).name)
-                item.setText(2, record["description"][:50] + "..." if len(record["description"]) > 50 else record["description"])
+                item.setText(
+                    2,
+                    record["description"][:50] + "..."
+                    if len(record["description"]) > 50
+                    else record["description"],
+                )
                 item.setText(3, record["type"])
                 item.setText(4, record["status"])
                 item.setText(5, f"{record['confidence']:.2f}")

@@ -28,7 +28,6 @@ This module provides shared utilities for reading and analyzing binary files.
 """
 
 
-
 def find_all_pattern_offsets(data: bytes, pattern: bytes) -> list[int]:
     """Find all occurrences of a pattern in binary data.
 

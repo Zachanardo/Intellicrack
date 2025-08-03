@@ -35,7 +35,7 @@ This document identifies all simulation patterns in `/mnt/c/Intellicrack/intelli
 - Real branch coverage calculation
 
 ## 3. CFG (Control Flow Graph) Simulation (Lines 2148-2158)
-**Location**: `analyze_binary()` method  
+**Location**: `analyze_binary()` method
 **Current Behavior**: Creates fake function nodes and edges
 **Issues**:
 - Line 2148: Comment explicitly states "simulated call graph"

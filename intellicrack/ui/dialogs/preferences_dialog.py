@@ -130,11 +130,13 @@ class PreferencesDialog(QDialog):
         qemu_layout = QFormLayout()
 
         self.qemu_preference_combo = QComboBox()
-        self.qemu_preference_combo.addItems([
-            "Always ask",
-            "Always test in QEMU first",
-            "Never test in QEMU",
-        ])
+        self.qemu_preference_combo.addItems(
+            [
+                "Always ask",
+                "Always test in QEMU first",
+                "Never test in QEMU",
+            ]
+        )
         qemu_layout.addRow("QEMU testing preference:", self.qemu_preference_combo)
 
         self.qemu_timeout_spin = QSpinBox()
@@ -227,9 +229,14 @@ class PreferencesDialog(QDialog):
         model_layout = QFormLayout()
 
         self.default_model_combo = QComboBox()
-        self.default_model_combo.addItems([
-            "GPT-4", "GPT-3.5-turbo", "Claude", "Local Model",
-        ])
+        self.default_model_combo.addItems(
+            [
+                "GPT-4",
+                "GPT-3.5-turbo",
+                "Claude",
+                "Local Model",
+            ]
+        )
         model_layout.addRow("Default AI model:", self.default_model_combo)
 
         self.api_key_edit = QLineEdit()
@@ -359,9 +366,15 @@ class PreferencesDialog(QDialog):
 
         # Security
         self.settings.setValue("security/warn_dangerous", self.warn_dangerous_checkbox.isChecked())
-        self.settings.setValue("security/confirm_patches", self.confirm_patches_checkbox.isChecked())
-        self.settings.setValue("security/sandbox_default", self.sandbox_default_checkbox.isChecked())
-        self.settings.setValue("security/auto_detect_protections", self.auto_detect_checkbox.isChecked())
+        self.settings.setValue(
+            "security/confirm_patches", self.confirm_patches_checkbox.isChecked()
+        )
+        self.settings.setValue(
+            "security/sandbox_default", self.sandbox_default_checkbox.isChecked()
+        )
+        self.settings.setValue(
+            "security/auto_detect_protections", self.auto_detect_checkbox.isChecked()
+        )
         self.settings.setValue("security/use_ml_analysis", self.ml_analysis_checkbox.isChecked())
 
         # AI

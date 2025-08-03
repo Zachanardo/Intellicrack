@@ -255,7 +255,7 @@ class TestRadare2Utils(unittest.TestCase):
         """Test R2AIIntegration initialization"""
         if not MODULES_AVAILABLE:
             self.skipTest("Modules not available")
-        
+
         try:
             ai_integration = R2AIIntegration(self.test_binary)
             self.assertIsNotNone(ai_integration)
@@ -266,7 +266,7 @@ class TestRadare2Utils(unittest.TestCase):
         """Test R2BinaryDiff initialization"""
         if not MODULES_AVAILABLE:
             self.skipTest("Modules not available")
-        
+
         try:
             binary_diff = R2BinaryDiff()
             self.assertIsNotNone(binary_diff)
@@ -277,7 +277,7 @@ class TestRadare2Utils(unittest.TestCase):
         """Test R2BypassGenerator initialization"""
         if not MODULES_AVAILABLE:
             self.skipTest("Modules not available")
-        
+
         try:
             bypass_gen = R2BypassGenerator()
             self.assertIsNotNone(bypass_gen)
@@ -288,7 +288,7 @@ class TestRadare2Utils(unittest.TestCase):
         """Test R2ESILEngine initialization"""
         if not MODULES_AVAILABLE:
             self.skipTest("Modules not available")
-        
+
         try:
             esil_engine = R2ESILEngine()
             self.assertIsNotNone(esil_engine)
@@ -299,7 +299,7 @@ class TestRadare2Utils(unittest.TestCase):
         """Test R2ImportAnalyzer initialization"""
         if not MODULES_AVAILABLE:
             self.skipTest("Modules not available")
-        
+
         try:
             import_analyzer = R2ImportAnalyzer()
             self.assertIsNotNone(import_analyzer)
@@ -310,7 +310,7 @@ class TestRadare2Utils(unittest.TestCase):
         """Test R2ScriptEngine initialization"""
         if not MODULES_AVAILABLE:
             self.skipTest("Modules not available")
-        
+
         try:
             script_engine = R2ScriptEngine()
             self.assertIsNotNone(script_engine)
@@ -321,7 +321,7 @@ class TestRadare2Utils(unittest.TestCase):
         """Test R2SignatureAnalyzer initialization"""
         if not MODULES_AVAILABLE:
             self.skipTest("Modules not available")
-        
+
         try:
             sig_analyzer = R2SignatureAnalyzer()
             self.assertIsNotNone(sig_analyzer)
@@ -332,7 +332,7 @@ class TestRadare2Utils(unittest.TestCase):
         """Test R2VulnerabilityEngine initialization"""
         if not MODULES_AVAILABLE:
             self.skipTest("Modules not available")
-        
+
         try:
             vuln_engine = R2VulnerabilityEngine()
             self.assertIsNotNone(vuln_engine)
@@ -343,7 +343,7 @@ class TestRadare2Utils(unittest.TestCase):
         """Test standardize_r2_result function"""
         if not MODULES_AVAILABLE:
             self.skipTest("Modules not available")
-        
+
         try:
             test_data = {"test": "data"}
             result = standardize_r2_result(test_data)

@@ -36,6 +36,7 @@ from .performance_monitor import profile_ai_operation
 
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in predictive_intelligence: %s", e)
@@ -44,6 +45,7 @@ except ImportError as e:
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in predictive_intelligence: %s", e)
@@ -131,19 +133,21 @@ class FeatureExtractor:
 
         logger.info("Feature extractor initialized")
 
-    def extract_operation_features(self, operation_type: str, context: dict[str, Any]) -> dict[str, float]:
+    def extract_operation_features(
+        self, operation_type: str, context: dict[str, Any]
+    ) -> dict[str, float]:
         """Extract features for operation prediction."""
         features = {}
 
         # Basic operation features
         features["operation_complexity"] = self._calculate_operation_complexity(
-            operation_type, context)
+            operation_type, context
+        )
         features["input_size"] = self._calculate_input_size(context)
         features["context_richness"] = len(context)
 
         # Historical performance features
-        historical_performance = self._get_historical_performance(
-            operation_type)
+        historical_performance = self._get_historical_performance(operation_type)
         features.update(historical_performance)
 
         # System state features
@@ -156,7 +160,9 @@ class FeatureExtractor:
 
         return features
 
-    def _calculate_operation_complexity(self, operation_type: str, context: dict[str, Any]) -> float:
+    def _calculate_operation_complexity(
+        self, operation_type: str, context: dict[str, Any]
+    ) -> float:
         """Calculate complexity score for operation."""
         complexity_map = {
             "binary_analysis": 0.7,
@@ -171,21 +177,18 @@ class FeatureExtractor:
 
         # Adjust based on context
         if "file_size" in context:
-            size_factor = min(context["file_size"] /
-                              1000000, 2.0)  # Normalize to MB
+            size_factor = min(context["file_size"] / 1000000, 2.0)  # Normalize to MB
             base_complexity += size_factor * 0.2
 
         if "analysis_depth" in context:
-            depth_map = {"shallow": 0.0, "medium": 0.2,
-                         "deep": 0.4, "comprehensive": 0.6}
+            depth_map = {"shallow": 0.0, "medium": 0.2, "deep": 0.4, "comprehensive": 0.6}
             base_complexity += depth_map.get(context["analysis_depth"], 0.2)
 
         return min(base_complexity, 2.0)
 
     def _calculate_input_size(self, context: dict[str, Any]) -> float:
         """Calculate normalized input size."""
-        size_indicators = ["file_size", "data_size",
-                           "input_length", "code_lines"]
+        size_indicators = ["file_size", "data_size", "input_length", "code_lines"]
 
         for indicator in size_indicators:
             if indicator in context:
@@ -205,22 +208,25 @@ class FeatureExtractor:
             # Use operation_type to filter relevant insights
             if operation_type in insights.get("operation_types", {}):
                 type_specific_insights = insights["operation_types"][operation_type]
-                logger.debug(
-                    f"Found type-specific insights for {operation_type}")
+                logger.debug(f"Found type-specific insights for {operation_type}")
             else:
                 type_specific_insights = {}
-                logger.debug(
-                    f"No specific insights for operation type: {operation_type}")
+                logger.debug(f"No specific insights for operation type: {operation_type}")
 
             features = {
-                "historical_success_rate": type_specific_insights.get("success_rate", insights.get("success_rate", 0.8)),
-                "avg_execution_time": type_specific_insights.get("avg_execution_time", insights.get("avg_execution_time", 5.0)),
-                "historical_confidence": type_specific_insights.get("avg_confidence", insights.get("avg_confidence", 0.7)),
+                "historical_success_rate": type_specific_insights.get(
+                    "success_rate", insights.get("success_rate", 0.8)
+                ),
+                "avg_execution_time": type_specific_insights.get(
+                    "avg_execution_time", insights.get("avg_execution_time", 5.0)
+                ),
+                "historical_confidence": type_specific_insights.get(
+                    "avg_confidence", insights.get("avg_confidence", 0.7)
+                ),
             }
 
             # Normalize execution time
-            features["normalized_exec_time"] = min(
-                features["avg_execution_time"] / 60.0, 1.0)
+            features["normalized_exec_time"] = min(features["avg_execution_time"] / 60.0, 1.0)
 
             return features
 
@@ -266,7 +272,8 @@ class FeatureExtractor:
                 disk_io = psutil.disk_io_counters()
                 if disk_io:
                     features["disk_activity"] = min(
-                        (disk_io.read_bytes + disk_io.write_bytes) / (1024**3), 1.0,
+                        (disk_io.read_bytes + disk_io.write_bytes) / (1024**3),
+                        1.0,
                     )
             except (AttributeError, OSError):
                 features["disk_activity"] = 0.1
@@ -301,24 +308,32 @@ class FeatureExtractor:
             "is_business_hours": is_business_hours,
         }
 
-    def extract_vulnerability_features(self, vulnerability_context: dict[str, Any]) -> dict[str, float]:
+    def extract_vulnerability_features(
+        self, vulnerability_context: dict[str, Any]
+    ) -> dict[str, float]:
         """Extract features for vulnerability prediction."""
         features = {}
 
         # File type features
-        file_extension = vulnerability_context.get(
-            "file_extension", "").lower()
+        file_extension = vulnerability_context.get("file_extension", "").lower()
         extension_risk = {
-            ".exe": 0.9, ".dll": 0.8, ".sys": 0.95, ".bat": 0.7,
-            ".ps1": 0.8, ".vbs": 0.7, ".js": 0.6, ".py": 0.5,
-            ".c": 0.4, ".cpp": 0.4, ".java": 0.3,
+            ".exe": 0.9,
+            ".dll": 0.8,
+            ".sys": 0.95,
+            ".bat": 0.7,
+            ".ps1": 0.8,
+            ".vbs": 0.7,
+            ".js": 0.6,
+            ".py": 0.5,
+            ".c": 0.4,
+            ".cpp": 0.4,
+            ".java": 0.3,
         }
         features["file_type_risk"] = extension_risk.get(file_extension, 0.5)
 
         # Size-based features
         file_size = vulnerability_context.get("file_size", 0)
-        features["size_risk"] = min(
-            file_size / (10 * 1024 * 1024), 1.0)  # 10MB baseline
+        features["size_risk"] = min(file_size / (10 * 1024 * 1024), 1.0)  # 10MB baseline
 
         # Complexity features
         functions_count = vulnerability_context.get("functions_count", 0)
@@ -331,8 +346,7 @@ class FeatureExtractor:
 
         # Age and entropy features
         if "entropy" in vulnerability_context:
-            features["entropy"] = min(
-                vulnerability_context["entropy"] / 8.0, 1.0)  # Normalize
+            features["entropy"] = min(vulnerability_context["entropy"] / 8.0, 1.0)  # Normalize
 
         return features
 
@@ -353,8 +367,7 @@ class FeatureExtractor:
 
         # Target system features
         target_os = exploit_context.get("target_os", "unknown").lower()
-        os_difficulty = {"windows": 0.6, "linux": 0.7,
-                         "macos": 0.8, "unknown": 0.8}
+        os_difficulty = {"windows": 0.6, "linux": 0.7, "macos": 0.8, "unknown": 0.8}
         features["target_difficulty"] = os_difficulty.get(target_os, 0.8)
 
         # Protection features
@@ -390,8 +403,7 @@ class PredictiveModel:
         """Train the model with provided data."""
         self.training_data = training_data
         self.last_training = datetime.now()
-        logger.info(
-            f"Model {self.model_name} trained with {len(training_data)} samples")
+        logger.info(f"Model {self.model_name} trained with {len(training_data)} samples")
 
     def predict(self, features: dict[str, float]) -> tuple[float, float]:
         """Make prediction. Returns (prediction, confidence)."""
@@ -401,15 +413,16 @@ class PredictiveModel:
 
         # Basic fallback prediction based on feature analysis
         feature_count = len(features)
-        avg_value = sum(features.values()) / \
-            feature_count if feature_count > 0 else 0.0
+        avg_value = sum(features.values()) / feature_count if feature_count > 0 else 0.0
         # More features = higher confidence
         confidence = min(1.0, feature_count / 10.0)
 
         logger.debug(
-            f"Fallback prediction using {feature_count} features: {avg_value:.3f} (confidence: {confidence:.3f})")
+            f"Fallback prediction using {feature_count} features: {avg_value:.3f} (confidence: {confidence:.3f})"
+        )
         raise NotImplementedError(
-            f"Subclasses must implement predict method. Fallback for {feature_count} features would return {avg_value:.3f}")
+            f"Subclasses must implement predict method. Fallback for {feature_count} features would return {avg_value:.3f}"
+        )
 
     def update_model(self, new_data: dict[str, Any]):
         """Update model with new data point."""
@@ -473,14 +486,13 @@ class LinearRegressionModel(PredictiveModel):
 
                 # Calculate error
                 error = target - prediction
-                total_error += error ** 2
+                total_error += error**2
 
                 # Backward pass (gradient descent)
                 self.bias += self.learning_rate * error
                 for feature_name, value in features.items():
                     if feature_name in self.weights:
-                        self.weights[feature_name] += self.learning_rate * \
-                            error * value
+                        self.weights[feature_name] += self.learning_rate * error * value
 
             # Early stopping if converged
             if total_error < 0.001:
@@ -490,8 +502,7 @@ class LinearRegressionModel(PredictiveModel):
         total_weight = sum(abs(w) for w in self.weights.values())
         if total_weight > 0:
             self.feature_importance = {
-                name: abs(weight) / total_weight
-                for name, weight in self.weights.items()
+                name: abs(weight) / total_weight for name, weight in self.weights.items()
             }
 
         logger.info(f"Linear model {self.model_name} training completed")
@@ -542,8 +553,7 @@ class SuccessProbabilityPredictor:
 
         for sample_idx in range(200):
             # Generate synthetic features with some variation based on index
-            complexity_base = 0.2 + (sample_idx % 10) * \
-                0.1  # Varies based on index
+            complexity_base = 0.2 + (sample_idx % 10) * 0.1  # Varies based on index
 
             if NUMPY_AVAILABLE:
                 features = {
@@ -557,6 +567,7 @@ class SuccessProbabilityPredictor:
             else:
                 # Fallback random values when numpy is not available
                 import random
+
                 features = {
                     "operation_complexity": random.uniform(complexity_base, 1.5),  # noqa: S311
                     "system_load": random.uniform(0.1, 0.9),  # noqa: S311
@@ -568,10 +579,10 @@ class SuccessProbabilityPredictor:
 
             # Calculate synthetic target based on realistic relationships
             target = (
-                0.8 * features["historical_success_rate"] +
-                0.1 * (1.0 - features["operation_complexity"]) +
-                0.05 * (1.0 - features["system_load"]) +
-                0.05 * (1.0 - features["cpu_usage"])
+                0.8 * features["historical_success_rate"]
+                + 0.1 * (1.0 - features["operation_complexity"])
+                + 0.05 * (1.0 - features["system_load"])
+                + 0.05 * (1.0 - features["cpu_usage"])
             )
 
             # Add some noise
@@ -579,22 +590,26 @@ class SuccessProbabilityPredictor:
                 target += np.random.normal(0, 0.1)
             else:
                 import random
+
                 target += random.gauss(0, 0.1)
             target = max(0.0, min(target, 1.0))
 
-            training_data.append({
-                "features": features,
-                "target": target,
-            })
+            training_data.append(
+                {
+                    "features": features,
+                    "target": target,
+                }
+            )
 
         self.model.train(training_data)
 
     @profile_ai_operation("success_prediction")
-    def predict_success_probability(self, operation_type: str, context: dict[str, Any]) -> PredictionResult:
+    def predict_success_probability(
+        self, operation_type: str, context: dict[str, Any]
+    ) -> PredictionResult:
         """Predict success probability for operation."""
         # Extract features
-        features = self.feature_extractor.extract_operation_features(
-            operation_type, context)
+        features = self.feature_extractor.extract_operation_features(operation_type, context)
 
         # Make prediction
         predicted_value, confidence_score = self.model.predict(features)
@@ -632,7 +647,9 @@ class SuccessProbabilityPredictor:
             error_bounds=error_bounds,
         )
 
-    def _generate_success_reasoning(self, features: dict[str, float], predicted_value: float) -> str:
+    def _generate_success_reasoning(
+        self, features: dict[str, float], predicted_value: float
+    ) -> str:
         """Generate reasoning for success prediction."""
         factors = []
 
@@ -711,6 +728,7 @@ class ExecutionTimePredictor:
                 }
             else:
                 import random
+
                 features = {
                     "operation_complexity": random.uniform(complexity_factor, 2.0),  # noqa: S311
                     "input_size": random.uniform(0.1, 1.0),  # noqa: S311
@@ -721,10 +739,10 @@ class ExecutionTimePredictor:
 
             # Execution time correlates with complexity and system load
             base_time = (
-                features["operation_complexity"] * 10.0 +
-                features["input_size"] * 5.0 +
-                features["system_load"] * 8.0 +
-                features["cpu_usage"] * 3.0
+                features["operation_complexity"] * 10.0
+                + features["input_size"] * 5.0
+                + features["system_load"] * 8.0
+                + features["cpu_usage"] * 3.0
             )
 
             # Add noise and ensure positive
@@ -732,21 +750,25 @@ class ExecutionTimePredictor:
                 noise = np.random.normal(0, 2.0)
             else:
                 import random
+
                 noise = random.gauss(0, 2.0)
             target = max(0.5, base_time + noise)
 
-            training_data.append({
-                "features": features,
-                "target": target,
-            })
+            training_data.append(
+                {
+                    "features": features,
+                    "target": target,
+                }
+            )
 
         self.model.train(training_data)
 
     @profile_ai_operation("time_prediction")
-    def predict_execution_time(self, operation_type: str, context: dict[str, Any]) -> PredictionResult:
+    def predict_execution_time(
+        self, operation_type: str, context: dict[str, Any]
+    ) -> PredictionResult:
         """Predict execution time for operation."""
-        features = self.feature_extractor.extract_operation_features(
-            operation_type, context)
+        features = self.feature_extractor.extract_operation_features(operation_type, context)
 
         predicted_time, confidence_score = self.model.predict(features)
 
@@ -819,15 +841,16 @@ class VulnerabilityPredictor:
         for vuln_sample_idx in range(300):
             # File characteristics with variation based on sample index
             if NUMPY_AVAILABLE:
-                file_type_risk = np.random.choice(
-                    [0.3, 0.5, 0.7, 0.9], p=[0.3, 0.3, 0.3, 0.1])
+                file_type_risk = np.random.choice([0.3, 0.5, 0.7, 0.9], p=[0.3, 0.3, 0.3, 0.1])
                 size_risk = np.random.uniform(0.1, 1.0)
                 complexity = np.random.uniform(0.2, 1.0)
                 entropy = np.random.uniform(0.3, 1.0)
             else:
                 import random
+
                 file_type_risk = random.choices(  # noqa: S311
-                    [0.3, 0.5, 0.7, 0.9], weights=[0.3, 0.3, 0.3, 0.1])[0]
+                    [0.3, 0.5, 0.7, 0.9], weights=[0.3, 0.3, 0.3, 0.1]
+                )[0]
                 size_risk = random.uniform(0.1, 1.0)  # noqa: S311
                 complexity = random.uniform(0.2, 1.0)  # noqa: S311
                 entropy = random.uniform(0.3, 1.0)  # noqa: S311
@@ -840,6 +863,7 @@ class VulnerabilityPredictor:
                 compiler_risk = np.random.uniform(0.2, 0.8)
             else:
                 import random
+
                 compiler_risk = random.uniform(0.2, 0.8)  # noqa: S311
 
             features = {
@@ -852,11 +876,11 @@ class VulnerabilityPredictor:
 
             # Vulnerability probability
             vuln_prob = (
-                0.3 * file_type_risk +
-                0.2 * size_risk +
-                0.25 * complexity +
-                0.15 * entropy +
-                0.1 * features["compiler_risk"]
+                0.3 * file_type_risk
+                + 0.2 * size_risk
+                + 0.25 * complexity
+                + 0.15 * entropy
+                + 0.1 * features["compiler_risk"]
             )
 
             # Add noise and normalize
@@ -864,21 +888,23 @@ class VulnerabilityPredictor:
                 noise = np.random.normal(0, 0.1)
             else:
                 import random
+
                 noise = random.gauss(0, 0.1)
             target = max(0.0, min(vuln_prob + noise, 1.0))
 
-            training_data.append({
-                "features": features,
-                "target": target,
-            })
+            training_data.append(
+                {
+                    "features": features,
+                    "target": target,
+                }
+            )
 
         self.model.train(training_data)
 
     @profile_ai_operation("vulnerability_prediction")
     def predict_vulnerability_likelihood(self, file_context: dict[str, Any]) -> PredictionResult:
         """Predict likelihood of finding vulnerabilities."""
-        features = self.feature_extractor.extract_vulnerability_features(
-            file_context)
+        features = self.feature_extractor.extract_vulnerability_features(file_context)
 
         predicted_likelihood, confidence_score = self.model.predict(features)
 
@@ -891,8 +917,7 @@ class VulnerabilityPredictor:
             confidence = PredictionConfidence.LOW
 
         # Generate reasoning
-        reasoning = self._generate_vuln_reasoning(
-            features, predicted_likelihood)
+        reasoning = self._generate_vuln_reasoning(features, predicted_likelihood)
 
         error_bounds = (
             max(0.0, predicted_likelihood - 0.15),
@@ -938,6 +963,7 @@ class VulnerabilityPredictor:
         """Predict vulnerabilities for a binary file."""
         try:
             import os
+
             if not os.path.exists(binary_path):
                 logger.warning("Binary file not found: %s", binary_path)
                 return []
@@ -950,23 +976,25 @@ class VulnerabilityPredictor:
 
             result = self.predict_vulnerability_likelihood(file_context)
 
-            return [{
-                "type": "vulnerability_prediction",
-                "likelihood": result.predicted_value,
-                "confidence": result.confidence_score,
-                "reasoning": result.reasoning,
-                "factors": result.factors,
-            }]
+            return [
+                {
+                    "type": "vulnerability_prediction",
+                    "likelihood": result.predicted_value,
+                    "confidence": result.confidence_score,
+                    "reasoning": result.reasoning,
+                    "factors": result.factors,
+                }
+            ]
 
         except Exception as e:
-            logger.error(
-                "Error predicting vulnerabilities for %s: %s", binary_path, e)
+            logger.error("Error predicting vulnerabilities for %s: %s", binary_path, e)
             return []
 
     def get_confidence_score(self, binary_path: str) -> float:
         """Get confidence score for vulnerability predictions."""
         try:
             import os
+
             if not os.path.exists(binary_path):
                 logger.warning("Binary file not found: %s", binary_path)
                 return 0.0
@@ -981,8 +1009,7 @@ class VulnerabilityPredictor:
             return result.confidence_score
 
         except Exception as e:
-            logger.error(
-                "Error getting confidence score for %s: %s", binary_path, e)
+            logger.error("Error getting confidence score for %s: %s", binary_path, e)
             return 0.0
 
 
@@ -1008,8 +1035,9 @@ class PredictiveIntelligenceEngine:
         logger.info("Predictive intelligence engine initialized")
 
     @profile_ai_operation("make_prediction")
-    def make_prediction(self, prediction_type: PredictionType,
-                        context: dict[str, Any]) -> PredictionResult:
+    def make_prediction(
+        self, prediction_type: PredictionType, context: dict[str, Any]
+    ) -> PredictionResult:
         """Make a prediction of specified type."""
         # Check cache first
         cache_key = self._generate_cache_key(prediction_type, context)
@@ -1024,15 +1052,16 @@ class PredictiveIntelligenceEngine:
         # Make new prediction
         if prediction_type == PredictionType.SUCCESS_PROBABILITY:
             result = self.success_predictor.predict_success_probability(
-                context.get("operation_type", "unknown"), context,
+                context.get("operation_type", "unknown"),
+                context,
             )
         elif prediction_type == PredictionType.EXECUTION_TIME:
             result = self.time_predictor.predict_execution_time(
-                context.get("operation_type", "unknown"), context,
+                context.get("operation_type", "unknown"),
+                context,
             )
         elif prediction_type == PredictionType.VULNERABILITY_DISCOVERY:
-            result = self.vulnerability_predictor.predict_vulnerability_likelihood(
-                context)
+            result = self.vulnerability_predictor.predict_vulnerability_likelihood(context)
         else:
             # Default prediction for unsupported types
             result = PredictionResult(
@@ -1055,6 +1084,7 @@ class PredictiveIntelligenceEngine:
     def _generate_cache_key(self, prediction_type: PredictionType, context: dict[str, Any]) -> str:
         """Generate cache key for prediction."""
         import hashlib
+
         key_data = f"{prediction_type.value}_{json.dumps(context, sort_keys=True)}"
         return hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()
 
@@ -1068,8 +1098,7 @@ class PredictiveIntelligenceEngine:
                 break
 
         if not prediction:
-            logger.warning(
-                f"Prediction {prediction_id} not found for accuracy tracking")
+            logger.warning(f"Prediction {prediction_id} not found for accuracy tracking")
             return
 
         # Calculate accuracy
@@ -1078,28 +1107,35 @@ class PredictiveIntelligenceEngine:
 
         # Track accuracy by prediction type
         self.prediction_stats["accuracy_tracking"][prediction.prediction_type.value].append(
-            accuracy)
+            accuracy
+        )
 
         # Update model with actual result
         if prediction.prediction_type == PredictionType.SUCCESS_PROBABILITY:
-            self.success_predictor.model.update_model({
-                "features": prediction.factors,
-                "target": actual_value,
-            })
+            self.success_predictor.model.update_model(
+                {
+                    "features": prediction.factors,
+                    "target": actual_value,
+                }
+            )
         elif prediction.prediction_type == PredictionType.EXECUTION_TIME:
-            self.time_predictor.model.update_model({
-                "features": prediction.factors,
-                "target": actual_value,
-            })
+            self.time_predictor.model.update_model(
+                {
+                    "features": prediction.factors,
+                    "target": actual_value,
+                }
+            )
 
         logger.info(
-            f"Updated prediction accuracy for {prediction.prediction_type.value}: {accuracy:.3f}")
+            f"Updated prediction accuracy for {prediction.prediction_type.value}: {accuracy:.3f}"
+        )
 
     def get_prediction_analytics(self) -> dict[str, Any]:
         """Get analytics about prediction performance."""
         analytics = {
             "total_predictions": self.prediction_stats["total_predictions"],
-            "cache_hit_rate": self.prediction_stats["cache_hits"] / max(1, self.prediction_stats["total_predictions"]),
+            "cache_hit_rate": self.prediction_stats["cache_hits"]
+            / max(1, self.prediction_stats["total_predictions"]),
             "recent_predictions": len(self.prediction_history),
             "accuracy_by_type": {},
         }
@@ -1124,39 +1160,39 @@ class PredictiveIntelligenceEngine:
             recent_predictions = list(self.prediction_history)[-10:]
 
             # Success rate trends
-            success_predictions = [p for p in recent_predictions
-                                   if p.prediction_type == PredictionType.SUCCESS_PROBABILITY]
+            success_predictions = [
+                p
+                for p in recent_predictions
+                if p.prediction_type == PredictionType.SUCCESS_PROBABILITY
+            ]
             if success_predictions:
-                avg_success = sum(
-                    p.predicted_value for p in success_predictions) / len(success_predictions)
+                avg_success = sum(p.predicted_value for p in success_predictions) / len(
+                    success_predictions
+                )
                 if avg_success > 0.8:
-                    insights.append(
-                        "Recent predictions show high success probability")
+                    insights.append("Recent predictions show high success probability")
                 elif avg_success < 0.6:
-                    insights.append(
-                        "Recent predictions show concerning success rates")
+                    insights.append("Recent predictions show concerning success rates")
 
             # Time predictions
-            time_predictions = [p for p in recent_predictions
-                                if p.prediction_type == PredictionType.EXECUTION_TIME]
+            time_predictions = [
+                p for p in recent_predictions if p.prediction_type == PredictionType.EXECUTION_TIME
+            ]
             if time_predictions:
-                avg_time = sum(
-                    p.predicted_value for p in time_predictions) / len(time_predictions)
+                avg_time = sum(p.predicted_value for p in time_predictions) / len(time_predictions)
                 if avg_time > 30:
-                    insights.append(
-                        "Recent operations predicted to be time-consuming")
+                    insights.append("Recent operations predicted to be time-consuming")
 
         # Confidence analysis
-        high_confidence_predictions = [p for p in self.prediction_history
-                                       if p.confidence_score > 0.8]
-        confidence_rate = len(high_confidence_predictions) / \
-            max(1, len(self.prediction_history))
+        high_confidence_predictions = [
+            p for p in self.prediction_history if p.confidence_score > 0.8
+        ]
+        confidence_rate = len(high_confidence_predictions) / max(1, len(self.prediction_history))
 
         if confidence_rate > 0.7:
             insights.append("High confidence in most predictions")
         elif confidence_rate < 0.3:
-            insights.append(
-                "Low confidence in predictions - may need more training data")
+            insights.append("Low confidence in predictions - may need more training data")
 
         return {
             "insights": insights,

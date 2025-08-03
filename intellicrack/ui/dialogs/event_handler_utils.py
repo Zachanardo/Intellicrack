@@ -57,7 +57,10 @@ class DialogEventHandler:
         def close_event_handler(event: QCloseEvent):
             if condition_check():
                 reply = QMessageBox.question(
-                    dialog, title, message, QMessageBox.Yes | QMessageBox.No,
+                    dialog,
+                    title,
+                    message,
+                    QMessageBox.Yes | QMessageBox.No,
                 )
                 if reply == QMessageBox.Yes:
                     if cleanup_action:

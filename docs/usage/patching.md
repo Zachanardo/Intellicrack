@@ -47,7 +47,7 @@ patcher.patch_bytes(binary_path, 0x1234, b'\xEB')
    ; Original: Check if trial expired
    CMP EAX, 0x1E  ; 30 days
    JG error_label
-   
+
    ; Patch: Always jump over check
    JMP continue_label
    NOP
@@ -165,12 +165,12 @@ class LicenseBypasser:
                 "replace": b"\x85\xC0\xEB."   # TEST EAX,EAX; JMP
             }
         ]
-    
+
     def apply(self, binary_data):
         # Apply all patterns
         for pattern in self.patterns:
             binary_data = binary_data.replace(
-                pattern["search"], 
+                pattern["search"],
                 pattern["replace"]
             )
         return binary_data
@@ -283,4 +283,3 @@ Patching software may violate license agreements and laws. Use these techniques 
 - Personal education
 - Software you own
 - Authorized testing
-

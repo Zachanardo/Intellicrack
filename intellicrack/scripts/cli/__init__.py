@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 from .ai_wrapper import AIWrapper
 from .config_profiles import ConfigProfileManager
 from .enhanced_runner import EnhancedRunner

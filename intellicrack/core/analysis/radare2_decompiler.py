@@ -151,7 +151,9 @@ class R2DecompilationEngine:
 
                     addr = func.get("offset")
                     if addr:
-                        self.logger.info(f"Decompiling function {func.get('name', 'unknown')} at {hex(addr)}")
+                        self.logger.info(
+                            f"Decompiling function {func.get('name', 'unknown')} at {hex(addr)}"
+                        )
                         results[hex(addr)] = self.decompile_function(addr)
                         function_count += 1
 
@@ -170,13 +172,15 @@ class R2DecompilationEngine:
 
             if isinstance(var_info, list):
                 for var in var_info:
-                    variables.append({
-                        "name": var.get("name", ""),
-                        "type": var.get("type", ""),
-                        "offset": var.get("delta", 0),
-                        "kind": var.get("kind", ""),
-                        "size": var.get("size", 0),
-                    })
+                    variables.append(
+                        {
+                            "name": var.get("name", ""),
+                            "type": var.get("type", ""),
+                            "offset": var.get("delta", 0),
+                            "kind": var.get("kind", ""),
+                            "size": var.get("size", 0),
+                        }
+                    )
         except R2Exception as e:
             self.logger.error("R2Exception in radare2_decompiler: %s", e)
 
@@ -217,24 +221,28 @@ class R2DecompilationEngine:
             # Check for license keywords
             for pattern in license_keywords:
                 if re.search(pattern, line_lower, re.IGNORECASE):
-                    patterns.append({
-                        "type": "license_keyword",
-                        "pattern": pattern,
-                        "line": line.strip(),
-                        "line_number": i + 1,
-                        "confidence": 0.7,
-                    })
+                    patterns.append(
+                        {
+                            "type": "license_keyword",
+                            "pattern": pattern,
+                            "line": line.strip(),
+                            "line_number": i + 1,
+                            "confidence": 0.7,
+                        }
+                    )
 
             # Check for validation patterns
             for pattern in validation_patterns:
                 if re.search(pattern, line_lower, re.IGNORECASE):
-                    patterns.append({
-                        "type": "license_validation",
-                        "pattern": pattern,
-                        "line": line.strip(),
-                        "line_number": i + 1,
-                        "confidence": 0.9,
-                    })
+                    patterns.append(
+                        {
+                            "type": "license_validation",
+                            "pattern": pattern,
+                            "line": line.strip(),
+                            "line_number": i + 1,
+                            "confidence": 0.9,
+                        }
+                    )
 
         return patterns
 
@@ -263,7 +271,7 @@ class R2DecompilationEngine:
         memory_patterns = [
             r"free\s*\(\s*.*\s*\).*free\s*\(",  # Double free
             r"malloc\s*\(\s*.*\s*\).*(?!free)",  # Memory leak
-            r"\*\s*\(\s*.*\s*\+\s*.*\s*\)",     # Potential buffer overrun
+            r"\*\s*\(\s*.*\s*\+\s*.*\s*\)",  # Potential buffer overrun
         ]
 
         lines = pseudocode.split("\n")
@@ -271,35 +279,41 @@ class R2DecompilationEngine:
             # Check buffer overflow patterns
             for pattern in buffer_patterns:
                 if re.search(pattern, line, re.IGNORECASE):
-                    patterns.append({
-                        "type": "buffer_overflow",
-                        "pattern": pattern,
-                        "line": line.strip(),
-                        "line_number": i + 1,
-                        "severity": "high",
-                    })
+                    patterns.append(
+                        {
+                            "type": "buffer_overflow",
+                            "pattern": pattern,
+                            "line": line.strip(),
+                            "line_number": i + 1,
+                            "severity": "high",
+                        }
+                    )
 
             # Check format string patterns
             for pattern in format_patterns:
                 if re.search(pattern, line, re.IGNORECASE):
-                    patterns.append({
-                        "type": "format_string",
-                        "pattern": pattern,
-                        "line": line.strip(),
-                        "line_number": i + 1,
-                        "severity": "medium",
-                    })
+                    patterns.append(
+                        {
+                            "type": "format_string",
+                            "pattern": pattern,
+                            "line": line.strip(),
+                            "line_number": i + 1,
+                            "severity": "medium",
+                        }
+                    )
 
             # Check memory management patterns
             for pattern in memory_patterns:
                 if re.search(pattern, line, re.IGNORECASE):
-                    patterns.append({
-                        "type": "memory_management",
-                        "pattern": pattern,
-                        "line": line.strip(),
-                        "line_number": i + 1,
-                        "severity": "high",
-                    })
+                    patterns.append(
+                        {
+                            "type": "memory_management",
+                            "pattern": pattern,
+                            "line": line.strip(),
+                            "line_number": i + 1,
+                            "severity": "high",
+                        }
+                    )
 
         return patterns
 
@@ -361,14 +375,15 @@ class R2DecompilationEngine:
 
             # Enhanced complexity calculation with graph data
             if len(nodes) > 1:
-                metrics["cyclomatic_complexity"] = max(metrics["cyclomatic_complexity"],
-                                                     len(edges) - len(nodes) + 2)
+                metrics["cyclomatic_complexity"] = max(
+                    metrics["cyclomatic_complexity"], len(edges) - len(nodes) + 2
+                )
 
         # Cognitive complexity (simplified calculation)
         metrics["cognitive_complexity"] = (
-            metrics["cyclomatic_complexity"] +
-            metrics["nesting_depth"] * 2 +
-            metrics["number_of_loops"]
+            metrics["cyclomatic_complexity"]
+            + metrics["nesting_depth"] * 2
+            + metrics["number_of_loops"]
         )
 
         return metrics
@@ -392,12 +407,14 @@ class R2DecompilationEngine:
             for pattern in api_patterns:
                 matches = re.findall(pattern, line)
                 for match in matches:
-                    api_calls.append({
-                        "function": match,
-                        "line": line.strip(),
-                        "line_number": i + 1,
-                        "context": "decompiled_code",
-                    })
+                    api_calls.append(
+                        {
+                            "function": match,
+                            "line": line.strip(),
+                            "line_number": i + 1,
+                            "context": "decompiled_code",
+                        }
+                    )
 
         return api_calls
 
@@ -418,11 +435,13 @@ class R2DecompilationEngine:
                             try:
                                 string_data = r2._execute_command(f"ps @ {hex(addr)}")
                                 if string_data:
-                                    strings.append({
-                                        "address": hex(addr),
-                                        "content": string_data.strip(),
-                                        "reference_type": "direct",
-                                    })
+                                    strings.append(
+                                        {
+                                            "address": hex(addr),
+                                            "content": string_data.strip(),
+                                            "reference_type": "direct",
+                                        }
+                                    )
                             except R2Exception as e:
                                 logger.error("R2Exception in radare2_decompiler: %s", e)
                                 continue
@@ -475,7 +494,9 @@ class R2DecompilationEngine:
 
         return flow_analysis
 
-    def generate_license_bypass_suggestions(self, function_results: dict[str, Any]) -> list[dict[str, Any]]:
+    def generate_license_bypass_suggestions(
+        self, function_results: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Generate bypass suggestions based on decompilation analysis.
 
         Args:
@@ -494,7 +515,10 @@ class R2DecompilationEngine:
         if pseudocode:
             # Look for conditional structures in pseudocode that may indicate license checks
             conditional_patterns = [
-                "if (", "switch (", "while (", "for (",
+                "if (",
+                "switch (",
+                "while (",
+                "for (",
             ]
             for i, line in enumerate(pseudocode.split("\n")):
                 line_lower = line.lower()
@@ -502,50 +526,60 @@ class R2DecompilationEngine:
                     # Check if this conditional might be license-related
                     license_keywords = ["license", "trial", "expir", "valid", "check", "key"]
                     if any(keyword in line_lower for keyword in license_keywords):
-                        license_patterns.append({
-                            "type": "conditional_license_check",
-                            "line": line.strip(),
-                            "line_number": i + 1,
-                            "confidence": 0.7,
-                            "context": "pseudocode_analysis",
-                        })
+                        license_patterns.append(
+                            {
+                                "type": "conditional_license_check",
+                                "line": line.strip(),
+                                "line_number": i + 1,
+                                "confidence": 0.7,
+                                "context": "pseudocode_analysis",
+                            }
+                        )
 
         for pattern in license_patterns:
             if pattern["type"] == "license_validation":
                 line_content = pattern["line"].lower()
 
                 # Suggest NOP patches for validation checks
-                if "if" in line_content and any(keyword in line_content for keyword in ["license", "key", "valid"]):
-                    suggestions.append({
-                        "type": "nop_patch",
-                        "description": "NOP out license validation check",
-                        "line": pattern["line"],
-                        "line_number": pattern["line_number"],
-                        "confidence": 0.8,
-                        "risk": "low",
-                    })
+                if "if" in line_content and any(
+                    keyword in line_content for keyword in ["license", "key", "valid"]
+                ):
+                    suggestions.append(
+                        {
+                            "type": "nop_patch",
+                            "description": "NOP out license validation check",
+                            "line": pattern["line"],
+                            "line_number": pattern["line_number"],
+                            "confidence": 0.8,
+                            "risk": "low",
+                        }
+                    )
 
                 # Suggest return value modification
                 if "return" in line_content:
-                    suggestions.append({
-                        "type": "return_patch",
-                        "description": "Force return value to success",
-                        "line": pattern["line"],
-                        "line_number": pattern["line_number"],
-                        "confidence": 0.9,
-                        "risk": "medium",
-                    })
+                    suggestions.append(
+                        {
+                            "type": "return_patch",
+                            "description": "Force return value to success",
+                            "line": pattern["line"],
+                            "line_number": pattern["line_number"],
+                            "confidence": 0.9,
+                            "risk": "medium",
+                        }
+                    )
 
                 # Suggest jump modification
                 if any(jump in line_content for jump in ["jmp", "je", "jne", "jz", "jnz"]):
-                    suggestions.append({
-                        "type": "jump_patch",
-                        "description": "Modify conditional jump",
-                        "line": pattern["line"],
-                        "line_number": pattern["line_number"],
-                        "confidence": 0.7,
-                        "risk": "medium",
-                    })
+                    suggestions.append(
+                        {
+                            "type": "jump_patch",
+                            "description": "Modify conditional jump",
+                            "line": pattern["line"],
+                            "line_number": pattern["line_number"],
+                            "confidence": 0.7,
+                            "risk": "medium",
+                        }
+                    )
 
         return suggestions
 
@@ -572,10 +606,28 @@ class R2DecompilationEngine:
                 result["total_functions_analyzed"] = len(functions)
 
                 license_keywords = [
-                    "license", "licens", "registration", "register", "activation",
-                    "activate", "serial", "key", "trial", "demo", "valid",
-                    "validate", "verification", "verify", "expire", "expiration",
-                    "authentic", "auth", "dongle", "hwid", "crack", "pirate",
+                    "license",
+                    "licens",
+                    "registration",
+                    "register",
+                    "activation",
+                    "activate",
+                    "serial",
+                    "key",
+                    "trial",
+                    "demo",
+                    "valid",
+                    "validate",
+                    "verification",
+                    "verify",
+                    "expire",
+                    "expiration",
+                    "authentic",
+                    "auth",
+                    "dongle",
+                    "hwid",
+                    "crack",
+                    "pirate",
                 ]
 
                 pattern_counts = {}
@@ -588,14 +640,18 @@ class R2DecompilationEngine:
                         continue
 
                     # Check if function name suggests license-related functionality
-                    is_license_function = any(keyword in func_name.lower() for keyword in license_keywords)
+                    is_license_function = any(
+                        keyword in func_name.lower() for keyword in license_keywords
+                    )
 
                     if is_license_function or self._should_analyze_function(func_name):
                         # Decompile the function for deeper analysis
                         decompilation_result = self.decompile_function(func_addr, optimize=True)
 
                         if decompilation_result.get("error"):
-                            self.logger.warning(f"Failed to decompile function {func_name} at {hex(func_addr)}")
+                            self.logger.warning(
+                                f"Failed to decompile function {func_name} at {hex(func_addr)}"
+                            )
                             continue
 
                         license_patterns = decompilation_result.get("license_patterns", [])
@@ -607,11 +663,22 @@ class R2DecompilationEngine:
                                 "address": hex(func_addr),
                                 "size": func.get("size", 0),
                                 "license_patterns": license_patterns,
-                                "confidence_score": self._calculate_license_confidence(func_name, license_patterns),
+                                "confidence_score": self._calculate_license_confidence(
+                                    func_name, license_patterns
+                                ),
                                 "api_calls": decompilation_result.get("api_calls", []),
-                                "string_references": decompilation_result.get("string_references", []),
-                                "complexity_metrics": decompilation_result.get("complexity_metrics", {}),
-                                "pseudocode_preview": decompilation_result.get("pseudocode", "")[:500] + "..." if len(decompilation_result.get("pseudocode", "")) > 500 else decompilation_result.get("pseudocode", ""),
+                                "string_references": decompilation_result.get(
+                                    "string_references", []
+                                ),
+                                "complexity_metrics": decompilation_result.get(
+                                    "complexity_metrics", {}
+                                ),
+                                "pseudocode_preview": decompilation_result.get("pseudocode", "")[
+                                    :500
+                                ]
+                                + "..."
+                                if len(decompilation_result.get("pseudocode", "")) > 500
+                                else decompilation_result.get("pseudocode", ""),
                             }
 
                             result["license_functions"].append(license_func_info)
@@ -620,16 +687,22 @@ class R2DecompilationEngine:
                             # Count pattern types
                             for pattern in license_patterns:
                                 pattern_type = pattern.get("type", "unknown")
-                                pattern_counts[pattern_type] = pattern_counts.get(pattern_type, 0) + 1
+                                pattern_counts[pattern_type] = (
+                                    pattern_counts.get(pattern_type, 0) + 1
+                                )
 
                             # High confidence targets (score > 0.8)
                             if license_func_info["confidence_score"] > 0.8:
-                                result["high_confidence_targets"].append({
-                                    "name": func_name,
-                                    "address": hex(func_addr),
-                                    "confidence": license_func_info["confidence_score"],
-                                    "reason": self._get_confidence_reason(func_name, license_patterns),
-                                })
+                                result["high_confidence_targets"].append(
+                                    {
+                                        "name": func_name,
+                                        "address": hex(func_addr),
+                                        "confidence": license_func_info["confidence_score"],
+                                        "reason": self._get_confidence_reason(
+                                            func_name, license_patterns
+                                        ),
+                                    }
+                                )
 
                 result["license_patterns_summary"] = pattern_counts
 
@@ -637,7 +710,9 @@ class R2DecompilationEngine:
                 result["license_functions"].sort(key=lambda x: x["confidence_score"], reverse=True)
                 result["high_confidence_targets"].sort(key=lambda x: x["confidence"], reverse=True)
 
-                self.logger.info(f"Found {len(result['license_functions'])} license-related functions")
+                self.logger.info(
+                    f"Found {len(result['license_functions'])} license-related functions"
+                )
 
         except R2Exception as e:
             result["error"] = str(e)
@@ -663,12 +738,23 @@ class R2DecompilationEngine:
 
         return any(re.search(pattern, func_name.lower()) for pattern in suspicious_patterns)
 
-    def _calculate_license_confidence(self, func_name: str, license_patterns: list[dict[str, Any]]) -> float:
+    def _calculate_license_confidence(
+        self, func_name: str, license_patterns: list[dict[str, Any]]
+    ) -> float:
         """Calculate confidence score for license-related function."""
         score = 0.0
 
         # Name-based scoring
-        license_name_keywords = ["license", "registration", "activation", "serial", "key", "trial", "demo", "valid"]
+        license_name_keywords = [
+            "license",
+            "registration",
+            "activation",
+            "serial",
+            "key",
+            "trial",
+            "demo",
+            "valid",
+        ]
         for keyword in license_name_keywords:
             if keyword in func_name.lower():
                 score += 0.3
@@ -687,7 +773,9 @@ class R2DecompilationEngine:
         """Get human-readable reason for high confidence."""
         reasons = []
 
-        if any(keyword in func_name.lower() for keyword in ["license", "registration", "activation"]):
+        if any(
+            keyword in func_name.lower() for keyword in ["license", "registration", "activation"]
+        ):
             reasons.append("Function name contains license keywords")
 
         validation_patterns = [p for p in license_patterns if p.get("type") == "license_validation"]
@@ -717,9 +805,21 @@ class R2DecompilationEngine:
                 "analysis_timestamp": analysis_results.get("timestamp"),
                 "summary": {
                     "functions_analyzed": len(analysis_results),
-                    "license_patterns_found": sum(len(r.get("license_patterns", [])) for r in analysis_results.values() if isinstance(r, dict)),
-                    "vulnerabilities_found": sum(len(r.get("vulnerability_patterns", [])) for r in analysis_results.values() if isinstance(r, dict)),
-                    "total_lines_decompiled": sum(r.get("complexity_metrics", {}).get("lines_of_code", 0) for r in analysis_results.values() if isinstance(r, dict)),
+                    "license_patterns_found": sum(
+                        len(r.get("license_patterns", []))
+                        for r in analysis_results.values()
+                        if isinstance(r, dict)
+                    ),
+                    "vulnerabilities_found": sum(
+                        len(r.get("vulnerability_patterns", []))
+                        for r in analysis_results.values()
+                        if isinstance(r, dict)
+                    ),
+                    "total_lines_decompiled": sum(
+                        r.get("complexity_metrics", {}).get("lines_of_code", 0)
+                        for r in analysis_results.values()
+                        if isinstance(r, dict)
+                    ),
                 },
                 "detailed_results": analysis_results,
             }
@@ -735,8 +835,9 @@ class R2DecompilationEngine:
             return False
 
 
-def analyze_binary_decompilation(binary_path: str, radare2_path: str | None = None,
-                                function_limit: int | None = 20) -> dict[str, Any]:
+def analyze_binary_decompilation(
+    binary_path: str, radare2_path: str | None = None, function_limit: int | None = 20
+) -> dict[str, Any]:
     """Perform comprehensive decompilation analysis of a binary.
 
     Args:

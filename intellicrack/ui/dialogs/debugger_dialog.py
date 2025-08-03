@@ -1,4 +1,3 @@
-
 """Plugin Debugger Dialog for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
@@ -222,7 +221,9 @@ class DebuggerDialog(QDialog):
         toolbar.addSeparator()
 
         # Breakpoint controls
-        toolbar.addAction("🔴 Toggle Breakpoint").triggered.connect(self.toggle_current_line_breakpoint)
+        toolbar.addAction("🔴 Toggle Breakpoint").triggered.connect(
+            self.toggle_current_line_breakpoint
+        )
         toolbar.addAction("🗑️ Clear All Breakpoints").triggered.connect(self.clear_all_breakpoints)
 
         return toolbar
@@ -281,8 +282,10 @@ class DebuggerDialog(QDialog):
     def browse_plugin(self):
         """Browse for plugin file"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Plugin",
-            "", "Python Files (*.py);;All Files (*.*)",
+            self,
+            "Select Plugin",
+            "",
+            "Python Files (*.py);;All Files (*.*)",
         )
 
         if file_path:
@@ -530,7 +533,9 @@ class DebuggerDialog(QDialog):
             self.console.append(f"⏸️ Paused at {data['file']}:{data['line']} in {data['function']}")
 
         elif msg_type == "breakpoint":
-            self.console.append(f"🔴 Breakpoint hit: {data['file']}:{data['line']} (hit count: {data['hit_count']})")
+            self.console.append(
+                f"🔴 Breakpoint hit: {data['file']}:{data['line']} (hit count: {data['hit_count']})"
+            )
 
         elif msg_type == "stack":
             self.update_stack_display(data)
@@ -590,11 +595,14 @@ class DebuggerDialog(QDialog):
         for name, info in sorted(variables.items()):
             parent = local_root if info["scope"] == "local" else global_root
 
-            item = QTreeWidgetItem(parent, [
-                name,
-                str(info["value"]),
-                info["type"],
-            ])
+            item = QTreeWidgetItem(
+                parent,
+                [
+                    name,
+                    str(info["value"]),
+                    info["type"],
+                ],
+            )
 
             # Add children for complex types
             if isinstance(info["value"], dict):
@@ -623,10 +631,12 @@ class DebuggerDialog(QDialog):
             return
 
         # Add to debugger
-        self.debugger.command_queue.put({
-            "type": "watch",
-            "expression": expr,
-        })
+        self.debugger.command_queue.put(
+            {
+                "type": "watch",
+                "expression": expr,
+            }
+        )
 
         # Add to UI
         QTreeWidgetItem(self.watch_tree, [expr, "<not evaluated>"])
@@ -642,10 +652,12 @@ class DebuggerDialog(QDialog):
 
         self.console.append(f"\n>>> {expr}")
 
-        self.debugger.command_queue.put({
-            "type": "evaluate",
-            "expression": expr,
-        })
+        self.debugger.command_queue.put(
+            {
+                "type": "evaluate",
+                "expression": expr,
+            }
+        )
 
         # Clear input
         self.repl_input.clear()
@@ -654,7 +666,8 @@ class DebuggerDialog(QDialog):
         """Handle dialog close"""
         if self.debugger.state != DebuggerState.IDLE:
             reply = QMessageBox.question(
-                self, "Debugging Active",
+                self,
+                "Debugging Active",
                 "Debugging session is active. Stop debugging and close?",
                 QMessageBox.Yes | QMessageBox.No,
             )
@@ -727,7 +740,9 @@ class CodeEditorWidget(QTextEdit):
         super().resizeEvent(event)
 
         cr = self.contentsRect()
-        self.line_number_area.setGeometry(cr.left(), cr.top(), self.line_number_area_width(), cr.height())
+        self.line_number_area.setGeometry(
+            cr.left(), cr.top(), self.line_number_area_width(), cr.height()
+        )
 
     def line_number_area_paint_event(self, event):
         """Paint line numbers"""
@@ -747,15 +762,25 @@ class CodeEditorWidget(QTextEdit):
 
                 # Draw breakpoint indicator
                 if block_number + 1 in self.breakpoint_lines:
-                    painter.fillRect(0, top, self.line_number_area.width(),
-                                   self.fontMetrics().height(), QColor(255, 0, 0, 50))
+                    painter.fillRect(
+                        0,
+                        top,
+                        self.line_number_area.width(),
+                        self.fontMetrics().height(),
+                        QColor(255, 0, 0, 50),
+                    )
                     painter.setPen(Qt.GlobalColor.red)
                 else:
                     painter.setPen(Qt.GlobalColor.black)
 
-                painter.drawText(0, top, self.line_number_area.width() - 3,
-                               self.fontMetrics().height(),
-                               Qt.AlignRight, number)
+                painter.drawText(
+                    0,
+                    top,
+                    self.line_number_area.width() - 3,
+                    self.fontMetrics().height(),
+                    Qt.AlignRight,
+                    number,
+                )
 
             block = block.next()
             top = bottom

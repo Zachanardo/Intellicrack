@@ -18,14 +18,14 @@ def test_platform_detection():
     """Test that we can detect Windows platform correctly"""
     print(f"Platform: {platform.system()}")
     print(f"Python version: {sys.version}")
-    
+
     # Check if we're on Windows or WSL
     is_windows = platform.system() == "Windows"
     is_wsl = "microsoft" in platform.uname().release.lower()
-    
+
     print(f"Is Windows: {is_windows}")
     print(f"Is WSL: {is_wsl}")
-    
+
     assert is_windows or is_wsl, "Not running on Windows or WSL"
 
 
@@ -38,7 +38,7 @@ def test_path_handling():
         "/mnt/c/Intellicrack/test.exe",
         Path("C:/Intellicrack/test.exe")
     ]
-    
+
     for path in paths_to_test:
         print(f"Testing path: {path}")
         # Convert to Path object
@@ -54,11 +54,11 @@ def test_pyqt6_import():
         from PyQt6.QtCore import Qt
         from PyQt6.QtGui import QFont
         print("PyQt6 imports successful")
-        
+
         # Test Qt namespace (common issue)
         print(f"Qt.WindowType.Window = {Qt.WindowType.Window}")
         print(f"Qt.AlignmentFlag.AlignCenter = {Qt.AlignmentFlag.AlignCenter}")
-        
+
     except ImportError as e:
         print(f"PyQt6 import error: {e}")
         raise
@@ -67,29 +67,29 @@ def test_pyqt6_import():
 def test_file_operations():
     """Test file operations on Windows"""
     test_file = Path("test_windows_file.tmp")
-    
+
     try:
         # Write test
         with open(test_file, 'w') as f:
             f.write("Windows test file\n")
         print(f"Created test file: {test_file}")
-        
+
         # Read test
         with open(test_file, 'r') as f:
             content = f.read()
         print(f"Read content: {content.strip()}")
-        
+
         # Binary write/read test
         binary_data = b"\x4D\x5A\x90\x00"  # PE header start
         with open(test_file, 'wb') as f:
             f.write(binary_data)
-        
+
         with open(test_file, 'rb') as f:
             read_data = f.read()
-        
+
         assert read_data == binary_data, "Binary data mismatch"
         print("Binary file operations successful")
-        
+
     finally:
         # Cleanup
         if test_file.exists():
@@ -110,7 +110,7 @@ def test_process_execution():
             ["echo", "Hello from WSL"],
             ["ls", "-la"]
         ]
-    
+
     for cmd in commands:
         try:
             result = subprocess.run(cmd, capture_output=True, text=True)
@@ -124,19 +124,19 @@ def test_process_execution():
 def test_dll_loading():
     """Test that we can handle Windows DLLs"""
     import ctypes
-    
+
     try:
         # Try to load a common Windows DLL
         if platform.system() == "Windows":
             kernel32 = ctypes.windll.kernel32
             print("Successfully loaded kernel32.dll")
-            
+
             # Test a simple function
             pid = kernel32.GetCurrentProcessId()
             print(f"Current process ID: {pid}")
         else:
             print("Skipping DLL test on non-Windows platform")
-            
+
     except Exception as e:
         print(f"DLL loading error: {e}")
 
@@ -150,7 +150,7 @@ def test_intellicrack_imports():
         "intellicrack.ui.main_app",
         "intellicrack.ui.tabs.base_tab"
     ]
-    
+
     for module in modules_to_test:
         try:
             __import__(module)
@@ -174,7 +174,7 @@ def test_gpu_detection():
                 print(f"NVIDIA GPU detected: {result.stdout.strip()}")
             else:
                 print("No NVIDIA GPU detected")
-        
+
         # Check for Intel Arc
         try:
             import pyopencl as cl
@@ -186,7 +186,7 @@ def test_gpu_detection():
                     print(f"  Device: {device.name}")
         except:
             print("PyOpenCL not available")
-            
+
     except Exception as e:
         print(f"GPU detection error: {e}")
 
@@ -197,7 +197,7 @@ def main():
     print("Intellicrack Windows Compatibility Tests")
     print("=" * 60)
     print()
-    
+
     tests = [
         ("Platform Detection", test_platform_detection),
         ("Path Handling", test_path_handling),
@@ -208,10 +208,10 @@ def main():
         ("Intellicrack Imports", test_intellicrack_imports),
         ("GPU Detection", test_gpu_detection)
     ]
-    
+
     passed = 0
     failed = 0
-    
+
     for test_name, test_func in tests:
         print(f"\n[TEST] {test_name}")
         print("-" * 40)
@@ -222,11 +222,11 @@ def main():
         except Exception as e:
             print(f"✗ {test_name} FAILED: {e}")
             failed += 1
-    
+
     print("\n" + "=" * 60)
     print(f"Test Results: {passed} passed, {failed} failed")
     print("=" * 60)
-    
+
     return 0 if failed == 0 else 1
 
 

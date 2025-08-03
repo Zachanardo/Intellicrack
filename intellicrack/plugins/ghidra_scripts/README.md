@@ -59,7 +59,7 @@ Include these tags in your script comments:
 ```java
 /**
  * Your Script Title
- * 
+ *
  * @description Brief description of what the script does
  * @author Your Name
  * @category Category Name (e.g., Analysis, Protection)

@@ -85,30 +85,36 @@ class BypassConfig:
     @staticmethod
     def get_bypass_info(bypass_type: str) -> dict[str, Any]:
         """Get detailed information about a specific bypass type."""
-        return BypassConfig.BYPASS_TYPES.get(bypass_type, {
-            "description": "Unknown bypass type",
-            "target_protection": "unknown",
-            "difficulty": "unknown",
-            "reliability": 0,
-        })
+        return BypassConfig.BYPASS_TYPES.get(
+            bypass_type,
+            {
+                "description": "Unknown bypass type",
+                "target_protection": "unknown",
+                "difficulty": "unknown",
+                "reliability": 0,
+            },
+        )
 
     @staticmethod
     def get_bypasses_by_difficulty(difficulty: str) -> list[str]:
         """Get bypasses filtered by difficulty level."""
         return [
-            bypass_type for bypass_type, config in BypassConfig.BYPASS_TYPES.items()
+            bypass_type
+            for bypass_type, config in BypassConfig.BYPASS_TYPES.items()
             if config["difficulty"] == difficulty
         ]
 
     @staticmethod
-    def get_recommended_bypasses(target_info: dict[str, Any],
-                                min_reliability: int = 6) -> list[str]:
+    def get_recommended_bypasses(
+        target_info: dict[str, Any], min_reliability: int = 6
+    ) -> list[str]:
         """Get recommended bypasses based on target and reliability threshold."""
         analysis = BypassConfig.analyze_bypass_capabilities(target_info)
         available_bypasses = analysis["bypasses_available"]
 
         return [
-            bypass_type for bypass_type in available_bypasses
+            bypass_type
+            for bypass_type in available_bypasses
             if BypassConfig.BYPASS_TYPES[bypass_type]["reliability"] >= min_reliability
         ]
 

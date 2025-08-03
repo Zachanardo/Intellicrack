@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError as e:
     logger.error("Import error in performance_monitor: %s", e)
@@ -82,8 +83,7 @@ class PerformanceMonitor:
         """
         self.logger = logging.getLogger(__name__ + ".PerformanceMonitor")
         self.max_history = max_history
-        self.metrics: dict[str, deque] = defaultdict(
-            lambda: deque(maxlen=max_history))
+        self.metrics: dict[str, deque] = defaultdict(lambda: deque(maxlen=max_history))
         self.profiles: deque = deque(maxlen=max_history)
         self.active_operations: dict[str, dict[str, Any]] = {}
         self.optimization_rules: list[Callable] = []
@@ -146,21 +146,16 @@ class PerformanceMonitor:
                     cpu_percent = psutil.cpu_percent(interval=0.1)
                     memory_info = self.process.memory_info()
 
-                    self.record_metric("system.cpu_usage",
-                                       cpu_percent, "percent")
-                    self.record_metric("system.memory_rss",
-                                       memory_info.rss, "bytes")
-                    self.record_metric("system.memory_vms",
-                                       memory_info.vms, "bytes")
+                    self.record_metric("system.cpu_usage", cpu_percent, "percent")
+                    self.record_metric("system.memory_rss", memory_info.rss, "bytes")
+                    self.record_metric("system.memory_vms", memory_info.vms, "bytes")
 
                     # Memory growth tracking
                     memory_growth = memory_info.rss - self.baseline_memory
-                    self.record_metric("system.memory_growth",
-                                       memory_growth, "bytes")
+                    self.record_metric("system.memory_growth", memory_growth, "bytes")
 
                 # Check thresholds
-                self._check_thresholds(
-                    cpu_percent, memory_info.rss, memory_growth)
+                self._check_thresholds(cpu_percent, memory_info.rss, memory_growth)
 
                 time.sleep(interval)
 
@@ -199,8 +194,14 @@ class PerformanceMonitor:
             except Exception as e:
                 logger.error(f"Error in optimization rule: {e}")
 
-    def record_metric(self, name: str, value: float, unit: str,
-                      category: str = "general", context: dict[str, Any] = None):
+    def record_metric(
+        self,
+        name: str,
+        value: float,
+        unit: str,
+        category: str = "general",
+        context: dict[str, Any] = None,
+    ):
         """Record a performance metric."""
         metric = PerformanceMetric(
             name=name,
@@ -260,11 +261,10 @@ class PerformanceMonitor:
 
             # Record individual metrics
             self.record_metric(
-                f"operation.{operation_name}.execution_time", execution_time, "seconds")
-            self.record_metric(
-                f"operation.{operation_name}.memory_usage", memory_usage, "bytes")
-            self.record_metric(
-                f"operation.{operation_name}.cpu_usage", cpu_usage, "percent")
+                f"operation.{operation_name}.execution_time", execution_time, "seconds"
+            )
+            self.record_metric(f"operation.{operation_name}.memory_usage", memory_usage, "bytes")
+            self.record_metric(f"operation.{operation_name}.cpu_usage", cpu_usage, "percent")
 
             # Cleanup
             if operation_id in self.active_operations:
@@ -272,6 +272,7 @@ class PerformanceMonitor:
 
     def time_function(self, func_name: str = None):
         """Decorator for timing function execution."""
+
         def decorator(func: Callable) -> Callable:
             name = func_name or f"{func.__module__}.{func.__name__}"
 
@@ -279,6 +280,7 @@ class PerformanceMonitor:
             def wrapper(*args, **kwargs):
                 with self.profile_operation(name):
                     return func(*args, **kwargs)
+
             return wrapper
 
         return decorator
@@ -296,10 +298,7 @@ class PerformanceMonitor:
 
         # Metrics summary
         for metric_name, metric_list in self.metrics.items():
-            recent_metrics = [
-                m for m in metric_list
-                if m.timestamp >= cutoff_time
-            ]
+            recent_metrics = [m for m in metric_list if m.timestamp >= cutoff_time]
 
             if recent_metrics:
                 values = [m.value for m in recent_metrics]
@@ -313,10 +312,7 @@ class PerformanceMonitor:
                 }
 
         # Operation summary
-        recent_profiles = [
-            p for p in self.profiles
-            if p.timestamp >= cutoff_time
-        ]
+        recent_profiles = [p for p in self.profiles if p.timestamp >= cutoff_time]
 
         operation_stats = defaultdict(list)
         for profile in recent_profiles:
@@ -325,8 +321,7 @@ class PerformanceMonitor:
         for op_name, profiles in operation_stats.items():
             exec_times = [p.execution_time for p in profiles]
             memory_usage = [p.memory_usage for p in profiles]
-            success_rate = sum(
-                1 for p in profiles if p.success) / len(profiles)
+            success_rate = sum(1 for p in profiles if p.success) / len(profiles)
 
             summary["operation_summary"][op_name] = {
                 "count": len(profiles),
@@ -370,10 +365,7 @@ class PerformanceMonitor:
                 issues.append("High CPU usage")
 
             # Recent errors
-            recent_failures = [
-                p for p in list(self.profiles)[-50:]
-                if not p.success
-            ]
+            recent_failures = [p for p in list(self.profiles)[-50:] if not p.success]
 
             if len(recent_failures) > 10:
                 health_score -= 20
@@ -384,7 +376,11 @@ class PerformanceMonitor:
 
             return {
                 "score": max(0, health_score),
-                "status": "healthy" if health_score > 80 else "degraded" if health_score > 50 else "critical",
+                "status": "healthy"
+                if health_score > 80
+                else "degraded"
+                if health_score > 50
+                else "critical",
                 "issues": issues,
                 "current_memory_mb": current_memory / 1024 / 1024,
                 "memory_growth_mb": memory_growth / 1024 / 1024,
@@ -405,28 +401,29 @@ class PerformanceMonitor:
         summary = self.get_metrics_summary(timedelta(minutes=30))
 
         # Memory recommendations
-        current_memory = self.process.memory_info(
-        ).rss if HAS_PSUTIL and self.process else 0
+        current_memory = self.process.memory_info().rss if HAS_PSUTIL and self.process else 0
         memory_growth = current_memory - self.baseline_memory
 
         if memory_growth > 100 * 1024 * 1024:  # 100MB
-            recommendations.append(
-                "Consider running garbage collection or reducing memory usage")
+            recommendations.append("Consider running garbage collection or reducing memory usage")
 
         # CPU recommendations
         if summary["system_health"]["cpu_usage"] > 80:
             recommendations.append(
-                "High CPU usage detected - consider optimizing algorithms or reducing workload")
+                "High CPU usage detected - consider optimizing algorithms or reducing workload"
+            )
 
         # Operation-specific recommendations
         for op_name, stats in summary.get("operation_summary", {}).items():
             if stats["avg_execution_time"] > 10.0:
                 recommendations.append(
-                    f"Operation '{op_name}' is slow (avg: {stats['avg_execution_time']:.2f}s)")
+                    f"Operation '{op_name}' is slow (avg: {stats['avg_execution_time']:.2f}s)"
+                )
 
             if stats["success_rate"] < 0.9:
                 recommendations.append(
-                    f"Operation '{op_name}' has low success rate ({stats['success_rate']:.1%})")
+                    f"Operation '{op_name}' has low success rate ({stats['success_rate']:.1%})"
+                )
 
         return recommendations
 
@@ -450,7 +447,8 @@ class PerformanceMonitor:
         """Optimize performance cache."""
         current_time = time.time()
         expired_keys = [
-            key for key, (timestamp, _) in self.performance_cache.items()
+            key
+            for key, (timestamp, _) in self.performance_cache.items()
             if current_time - timestamp > self.cache_ttl
         ]
 
@@ -479,8 +477,7 @@ class PerformanceMonitor:
             current_stats = self.get_metrics_summary()
             logger.info(f"Final performance metrics: {current_stats}")
             if hasattr(self, "optimization_rules") and self.optimization_rules:
-                logger.info(
-                    f"Active optimization rules: {len(self.optimization_rules)}")
+                logger.info(f"Active optimization rules: {len(self.optimization_rules)}")
         except Exception as e:
             logger.debug(f"Could not log final metrics: {e}")
 
@@ -492,13 +489,13 @@ class PerformanceMonitor:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         if exc_type:
-            logger.error(
-                f"Performance monitor exiting due to {exc_type.__name__}: {exc_val}")
+            logger.error(f"Performance monitor exiting due to {exc_type.__name__}: {exc_val}")
             # Log performance data before exit for debugging
             self._log_final_metrics()
             if exc_tb:
                 logger.debug(
-                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
+                )
         self.stop_monitoring()
         return False  # Don't suppress exceptions
 
@@ -507,6 +504,7 @@ class PerformanceMonitor:
 # Lazy initialization to avoid circular imports
 _performance_monitor = None
 
+
 def get_performance_monitor():
     """Get the global performance monitor instance."""
     global _performance_monitor
@@ -514,11 +512,14 @@ def get_performance_monitor():
         _performance_monitor = PerformanceMonitor()
     return _performance_monitor
 
+
 def profile_ai_operation(operation_name: str = None):
     """Decorator for profiling AI operations."""
+
     def decorator(func: Callable) -> Callable:
         # Simplified version to avoid initialization issues
         return func
+
     return decorator
 
 
@@ -534,8 +535,7 @@ def monitor_memory_usage(threshold_mb: float = 100.0):
         memory_increase = (end_memory - start_memory) / 1024 / 1024
 
         if memory_increase > threshold_mb:
-            logger.warning(
-                f"High memory usage: {memory_increase:.2f}MB increase")
+            logger.warning(f"High memory usage: {memory_increase:.2f}MB increase")
 
         get_performance_monitor().record_metric(
             "memory.operation_increase",
@@ -595,12 +595,14 @@ class AsyncPerformanceMonitor:
 
     def profile_async(self, operation_name: str = None):
         """Decorator for async functions."""
+
         def decorator(func: Callable) -> Callable:
             name = operation_name or func.__name__
 
             @functools.wraps(func)
             async def wrapper(*args, **kwargs):
                 return await self.profile_async_operation(name, func(*args, **kwargs))
+
             return wrapper
 
         return decorator
@@ -608,6 +610,7 @@ class AsyncPerformanceMonitor:
 
 # Lazy initialization for async monitor
 _async_monitor = None
+
 
 def get_async_monitor():
     """Get the global async performance monitor instance."""

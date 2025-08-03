@@ -32,18 +32,21 @@ from .interface import ModelInfo
 # Set up logging
 logger = logging.getLogger(__name__)
 
+
 class GoogleRepository(APIRepositoryBase):
     """Repository implementation for Google's GenerativeAI API."""
 
-    def __init__(self,
-                 repository_name: str = "google",
-                 api_endpoint: str = "https://generativelanguage.googleapis.com",
-                 api_key: str = "",
-                 timeout: int = 60,
-                 proxy: str = "",
-                 rate_limit_config: RateLimitConfig | None = None,
-                 cache_config: dict[str, Any] | None = None,
-                 download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads")):
+    def __init__(
+        self,
+        repository_name: str = "google",
+        api_endpoint: str = "https://generativelanguage.googleapis.com",
+        api_key: str = "",
+        timeout: int = 60,
+        proxy: str = "",
+        rate_limit_config: RateLimitConfig | None = None,
+        cache_config: dict[str, Any] | None = None,
+        download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads"),
+    ):
         """Initialize the Google repository.
 
         Args:
@@ -202,7 +205,14 @@ class GoogleRepository(APIRepositoryBase):
 
             # Check for multimodal support
             input_features = []
-            for input_feature in model_data.get("inputSchema", {}).get("properties", {}).get("parts", {}).get("items", {}).get("properties", {}).keys():
+            for input_feature in (
+                model_data.get("inputSchema", {})
+                .get("properties", {})
+                .get("parts", {})
+                .get("items", {})
+                .get("properties", {})
+                .keys()
+            ):
                 input_features.append(input_feature)
 
             if "inlineData" in input_features:
@@ -238,5 +248,7 @@ class GoogleRepository(APIRepositoryBase):
             Always returns (False, "Google doesn't support model downloads")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning(
+            f"Download requested for {model_id} to {destination_path}, but not supported"
+        )
         return False, "Google doesn't support model downloads"

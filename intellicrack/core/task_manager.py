@@ -3,6 +3,7 @@
 This module provides task scheduling, execution, and monitoring capabilities
 for asynchronous operations and distributed processing.
 """
+
 import logging
 import traceback
 import uuid
@@ -42,6 +43,7 @@ class TaskSignals(QObject):
 # Create a metaclass that resolves the conflict between QRunnable and ABC
 class TaskMeta(type(QRunnable), type(ABC)):
     pass
+
 
 class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
     """Base class for all background tasks."""
@@ -118,8 +120,14 @@ class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
 class CallableTask(BaseTask):
     """Task that wraps a callable function."""
 
-    def __init__(self, func: Callable, args: tuple = (), kwargs: dict = None,
-                 task_id: str | None = None, description: str = ""):
+    def __init__(
+        self,
+        func: Callable,
+        args: tuple = (),
+        kwargs: dict = None,
+        task_id: str | None = None,
+        description: str = "",
+    ):
         """Initialize the callable task with function, arguments, and task metadata.
 
         Args:
@@ -139,6 +147,7 @@ class CallableTask(BaseTask):
         """Execute the wrapped callable."""
         # If the function expects a task parameter, pass self
         import inspect
+
         sig = inspect.signature(self.func)
         if "task" in sig.parameters:
             self.kwargs["task"] = self
@@ -199,8 +208,14 @@ class TaskManager(QObject):
         logger.info(f"Task submitted: {task.task_id} - {task.description}")
         return task.task_id
 
-    def submit_callable(self, func: Callable, args: tuple = (), kwargs: dict = None,
-                       task_id: str | None = None, description: str = "") -> str:
+    def submit_callable(
+        self,
+        func: Callable,
+        args: tuple = (),
+        kwargs: dict = None,
+        task_id: str | None = None,
+        description: str = "",
+    ) -> str:
         """Submit a callable as a task."""
         task = CallableTask(func, args, kwargs, task_id, description)
         return self.submit_task(task)

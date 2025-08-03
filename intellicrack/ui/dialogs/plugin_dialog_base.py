@@ -64,7 +64,10 @@ class PluginDialogBase(QDialog):
     def browse_plugin(self):
         """Browse for a plugin file"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Plugin", "", "Python Files (*.py);;All Files (*.*)",
+            self,
+            "Select Plugin",
+            "",
+            "Python Files (*.py);;All Files (*.*)",
         )
 
         if file_path:

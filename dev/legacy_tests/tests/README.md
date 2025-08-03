@@ -100,12 +100,12 @@ from intellicrack.core.analysis import VulnerabilityEngine
 class TestVulnerabilityEngine(unittest.TestCase):
     def setUp(self):
         self.engine = VulnerabilityEngine()
-    
+
     def test_buffer_overflow_detection(self):
         # Test buffer overflow detection
         result = self.engine.detect_buffer_overflow("test_binary.exe")
         self.assertTrue(result['detected'])
-    
+
     def test_format_string_detection(self):
         # Test format string vulnerability detection
         result = self.engine.detect_format_string("vulnerable_app.exe")
@@ -125,11 +125,11 @@ class TestAIWorkflow(unittest.TestCase):
         # Test complete AI-driven analysis
         generator = AIScriptGenerator()
         manager = FridaManager()
-        
+
         # Generate script
         script = generator.generate_frida_script("target.exe")
         self.assertIsNotNone(script)
-        
+
         # Execute script
         result = manager.execute_script(script, "target.exe")
         self.assertTrue(result['success'])
@@ -142,10 +142,10 @@ Test core analysis engines:
 def test_vulnerability_engine():
     """Test vulnerability detection engine"""
     from intellicrack.core.analysis.vulnerability_engine import VulnerabilityEngine
-    
+
     engine = VulnerabilityEngine()
     results = engine.scan_binary("test_samples/vulnerable.exe")
-    
+
     assert len(results) > 0
     assert any(vuln.type == "buffer_overflow" for vuln in results)
 ```
@@ -161,10 +161,10 @@ class TestPerformance(unittest.TestCase):
     def test_analysis_speed(self):
         """Ensure analysis completes within reasonable time"""
         start_time = time.time()
-        
+
         # Perform analysis
         result = analyze_binary("large_binary.exe")
-        
+
         elapsed = time.time() - start_time
         self.assertLess(elapsed, 300)  # Should complete within 5 minutes
 ```
@@ -276,13 +276,13 @@ tests/
 def test_ai_script_generation():
     """Test AI-powered script generation"""
     from intellicrack.ai.ai_script_generator import AIScriptGenerator
-    
+
     generator = AIScriptGenerator()
     script = generator.generate_frida_script(
         binary_path="test.exe",
         analysis_type="license_bypass"
     )
-    
+
     assert "Java.perform" in script
     assert "hook" in script.lower()
 ```
@@ -292,14 +292,14 @@ def test_ai_script_generation():
 def test_frida_script_execution():
     """Test Frida script execution and management"""
     from intellicrack.core.frida_manager import FridaManager
-    
+
     manager = FridaManager()
-    
+
     # Test script loading
     script_path = "tests/samples/test_script.js"
     result = manager.load_script(script_path)
     assert result['success']
-    
+
     # Test script execution
     execution_result = manager.execute_on_process("notepad.exe")
     assert execution_result['status'] == 'completed'
@@ -310,10 +310,10 @@ def test_frida_script_execution():
 def test_icp_integration():
     """Test ICP engine integration"""
     from intellicrack.protection.icp_backend import ICPBackend
-    
+
     backend = ICPBackend()
     result = backend.analyze_binary("test_samples/protected.exe")
-    
+
     assert 'protections' in result
     assert len(result['protections']) > 0
 ```
@@ -323,19 +323,19 @@ def test_icp_integration():
 def test_network_traffic_analysis():
     """Test network traffic capture and analysis"""
     from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
-    
+
     analyzer = NetworkTrafficAnalyzer()
-    
+
     # Start capture
     analyzer.start_capture(interface="eth0")
-    
+
     # Simulate network activity
     # ... network operations ...
-    
+
     # Stop and analyze
     packets = analyzer.stop_capture()
     analysis = analyzer.analyze_packets(packets)
-    
+
     assert len(packets) > 0
     assert 'protocols' in analysis
 ```
@@ -355,7 +355,7 @@ def test_analysis_with_mock(mock_analyzer):
         'architecture': 'x86_64',
         'vulnerabilities': []
     }
-    
+
     # Test with mock
     result = analyze_binary_wrapper("test.exe")
     assert result['file_type'] == 'PE'
@@ -456,7 +456,7 @@ def test_error_handling():
     """Test proper error handling"""
     with pytest.raises(ValueError):
         invalid_operation()
-    
+
     # Test graceful degradation
     result = operation_with_fallback()
     assert result['status'] == 'fallback_used'
@@ -473,7 +473,7 @@ def test_input_validation():
         "<script>alert('xss')</script>",
         "'; DROP TABLE users; --"
     ]
-    
+
     for malicious_input in malicious_inputs:
         with pytest.raises(ValueError):
             process_user_input(malicious_input)
@@ -484,7 +484,7 @@ def test_input_validation():
 def test_file_permissions():
     """Test file access permissions"""
     restricted_path = "/etc/shadow"
-    
+
     with pytest.raises(PermissionError):
         read_file(restricted_path)
 ```
@@ -500,13 +500,13 @@ def test_memory_usage():
     """Monitor memory usage during analysis"""
     process = psutil.Process()
     initial_memory = process.memory_info().rss
-    
+
     # Perform memory-intensive operation
     analyze_large_binary("huge_binary.exe")
-    
+
     final_memory = process.memory_info().rss
     memory_increase = final_memory - initial_memory
-    
+
     # Ensure memory usage is reasonable
     assert memory_increase < 1024 * 1024 * 1024  # 1GB limit
 ```
@@ -517,11 +517,11 @@ def test_memory_usage():
 def test_analysis_speed():
     """Benchmark analysis speed"""
     import time
-    
+
     start_time = time.time()
     result = quick_analysis("test_binary.exe")
     elapsed = time.time() - start_time
-    
+
     assert elapsed < 30  # Should complete in 30 seconds
     assert result['status'] == 'completed'
 ```
@@ -538,10 +538,10 @@ def test_with_debug():
     """Test with debug output enabled"""
     logger = logging.getLogger(__name__)
     logger.debug("Starting test")
-    
+
     result = complex_operation()
     logger.debug(f"Result: {result}")
-    
+
     assert result['success']
 ```
 
@@ -553,9 +553,9 @@ def isolate_tests():
     # Setup
     original_config = get_config()
     set_test_config()
-    
+
     yield
-    
+
     # Cleanup
     set_config(original_config)
     clear_cache()

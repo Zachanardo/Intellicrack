@@ -1,5 +1,5 @@
 """
-Test script to verify modular import structure works correctly. 
+Test script to verify modular import structure works correctly.
 
 Copyright (C) 2025 Zachary Flint
 

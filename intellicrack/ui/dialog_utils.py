@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 from .common_imports import QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton
 
 
@@ -64,7 +63,9 @@ def connect_binary_signals(dialog):
 def browse_binary_file(dialog):
     """Standard binary file browser."""
     file_path, _ = QFileDialog.getOpenFileName(
-        dialog, "Select Target Binary", "",
+        dialog,
+        "Select Target Binary",
+        "",
         "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)",
     )
     if file_path:

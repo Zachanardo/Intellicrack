@@ -1,4 +1,5 @@
 """Common imports module for UI components."""
+
 from intellicrack.logger import logger
 
 """
@@ -89,6 +90,7 @@ try:
         QWizard,
         QWizardPage,
     )
+
     PYQT6_AVAILABLE = True
 
     # Utility functions that use the imported classes
@@ -140,8 +142,12 @@ try:
 
     def handle_resize_event(event: QResizeEvent) -> tuple:
         """Extract size information from resize event"""
-        return (event.size().width(), event.size().height(),
-                event.oldSize().width(), event.oldSize().height())
+        return (
+            event.size().width(),
+            event.size().height(),
+            event.oldSize().width(),
+            event.oldSize().height(),
+        )
 
     def create_standard_action(text: str, parent=None, slot=None, shortcut=None) -> QAction:
         """Create a standard action with optional shortcut"""
@@ -210,8 +216,7 @@ try:
         scroll.setWidgetResizable(True)
         return scroll
 
-    def create_slider_with_range(min_val: int, max_val: int,
-                                orientation=None) -> QSlider:
+    def create_slider_with_range(min_val: int, max_val: int, orientation=None) -> QSlider:
         """Create a slider with specified range"""
         if orientation is None:
             orientation = Qt.Orientation.Horizontal
@@ -254,8 +259,7 @@ try:
             page.setSubTitle(subtitle)
         return page
 
-    def configure_abstract_item_view(view: QAbstractItemView,
-                                   selection_mode=None):
+    def configure_abstract_item_view(view: QAbstractItemView, selection_mode=None):
         """Configure common settings for item views"""
         if selection_mode is None:
             selection_mode = QAbstractItemView.SelectionMode.SingleSelection
@@ -263,9 +267,7 @@ try:
         view.setAlternatingRowColors(True)
         return view
 
-    def configure_abstract_scroll_area(area: QAbstractScrollArea,
-                                     h_policy=None,
-                                     v_policy=None):
+    def configure_abstract_scroll_area(area: QAbstractScrollArea, h_policy=None, v_policy=None):
         """Configure scroll bar policies"""
         if h_policy is None:
             h_policy = Qt.ScrollBarPolicy.AsNeeded
@@ -292,8 +294,9 @@ try:
         browser.setOpenExternalLinks(True)
         return browser
 
-    def create_standard_dialog_buttons(accept_text="OK", reject_text="Cancel",
-                                     buttons=None) -> QDialogButtonBox:
+    def create_standard_dialog_buttons(
+        accept_text="OK", reject_text="Cancel", buttons=None
+    ) -> QDialogButtonBox:
         """Create standard dialog buttons"""
         if buttons is None:
             buttons = QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -304,9 +307,9 @@ try:
             button_box.button(QDialogButtonBox.StandardButton.Cancel).setText(reject_text)
         return button_box
 
-    def create_spacer_item(width: int = 20, height: int = 20,
-                          h_policy=None,
-                          v_policy=None) -> QSpacerItem:
+    def create_spacer_item(
+        width: int = 20, height: int = 20, h_policy=None, v_policy=None
+    ) -> QSpacerItem:
         """Create a spacer item for layouts"""
         if h_policy is None:
             h_policy = QSizePolicy.Policy.Minimum
@@ -319,34 +322,106 @@ try:
         # PyQt6 availability flag
         "PYQT6_AVAILABLE",
         # Core classes
-        "Qt", "QThread", "QTimer", "pyqtSignal",
+        "Qt",
+        "QThread",
+        "QTimer",
+        "pyqtSignal",
         # Geometry classes
-        "QPoint", "QRect", "QSize",
+        "QPoint",
+        "QRect",
+        "QSize",
         # GUI classes
-        "QColor", "QFont", "QFontMetrics", "QIcon", "QKeyEvent", "QKeySequence",
-        "QMouseEvent", "QPainter", "QPaintEvent", "QPen", "QPixmap", "QResizeEvent",
+        "QColor",
+        "QFont",
+        "QFontMetrics",
+        "QIcon",
+        "QKeyEvent",
+        "QKeySequence",
+        "QMouseEvent",
+        "QPainter",
+        "QPaintEvent",
+        "QPen",
+        "QPixmap",
+        "QResizeEvent",
         # Widget classes
-        "QAbstractItemView", "QAbstractScrollArea", "QAction", "QApplication",
-        "QButtonGroup", "QCheckBox", "QComboBox", "QDialog",
-        "QDialogButtonBox", "QFileDialog", "QFormLayout", "QFrame", "QGridLayout",
-        "QGroupBox", "QHBoxLayout", "QHeaderView", "QInputDialog", "QLabel",
-        "QLineEdit", "QListWidget", "QListWidgetItem", "QMainWindow", "QMenu",
-        "QMessageBox", "QPlainTextEdit", "QProgressBar", "QPushButton", "QRadioButton",
-        "QScrollArea", "QSizePolicy", "QSlider", "QSpacerItem", "QSpinBox",
-        "QSplashScreen", "QSplitter", "QStatusBar", "QTableWidget", "QTableWidgetItem",
-        "QTabWidget", "QTextBrowser", "QTextEdit", "QToolBar", "QTreeWidget",
-        "QTreeWidgetItem", "QVBoxLayout", "QWidget", "QWizard", "QWizardPage",
+        "QAbstractItemView",
+        "QAbstractScrollArea",
+        "QAction",
+        "QApplication",
+        "QButtonGroup",
+        "QCheckBox",
+        "QComboBox",
+        "QDialog",
+        "QDialogButtonBox",
+        "QFileDialog",
+        "QFormLayout",
+        "QFrame",
+        "QGridLayout",
+        "QGroupBox",
+        "QHBoxLayout",
+        "QHeaderView",
+        "QInputDialog",
+        "QLabel",
+        "QLineEdit",
+        "QListWidget",
+        "QListWidgetItem",
+        "QMainWindow",
+        "QMenu",
+        "QMessageBox",
+        "QPlainTextEdit",
+        "QProgressBar",
+        "QPushButton",
+        "QRadioButton",
+        "QScrollArea",
+        "QSizePolicy",
+        "QSlider",
+        "QSpacerItem",
+        "QSpinBox",
+        "QSplashScreen",
+        "QSplitter",
+        "QStatusBar",
+        "QTableWidget",
+        "QTableWidgetItem",
+        "QTabWidget",
+        "QTextBrowser",
+        "QTextEdit",
+        "QToolBar",
+        "QTreeWidget",
+        "QTreeWidgetItem",
+        "QVBoxLayout",
+        "QWidget",
+        "QWizard",
+        "QWizardPage",
         # Utility functions
-        "create_point", "create_rect", "create_size", "get_text_metrics",
-        "create_icon_from_file", "create_pixmap", "create_pen", "handle_key_event",
-        "handle_mouse_event", "handle_paint_event", "handle_resize_event",
-        "create_standard_action", "create_button_group", "get_desktop_geometry",
-        "create_frame_with_style", "prompt_for_input", "create_context_menu",
-        "create_radio_button_set", "create_scroll_area_with_widget",
-        "create_slider_with_range", "create_splash_screen", "create_toolbar_with_actions",
-        "create_wizard_with_pages", "create_wizard_page", "configure_abstract_item_view",
-        "configure_abstract_scroll_area", "create_main_window_with_statusbar",
-        "create_text_browser_with_html", "create_standard_dialog_buttons",
+        "create_point",
+        "create_rect",
+        "create_size",
+        "get_text_metrics",
+        "create_icon_from_file",
+        "create_pixmap",
+        "create_pen",
+        "handle_key_event",
+        "handle_mouse_event",
+        "handle_paint_event",
+        "handle_resize_event",
+        "create_standard_action",
+        "create_button_group",
+        "get_desktop_geometry",
+        "create_frame_with_style",
+        "prompt_for_input",
+        "create_context_menu",
+        "create_radio_button_set",
+        "create_scroll_area_with_widget",
+        "create_slider_with_range",
+        "create_splash_screen",
+        "create_toolbar_with_actions",
+        "create_wizard_with_pages",
+        "create_wizard_page",
+        "configure_abstract_item_view",
+        "configure_abstract_scroll_area",
+        "create_main_window_with_statusbar",
+        "create_text_browser_with_html",
+        "create_standard_dialog_buttons",
         "create_spacer_item",
     ]
 
@@ -357,22 +432,29 @@ except ImportError as e:
     # Create dummy implementations when PyQt5 is not available
     def create_point(x, y):
         """Create a point object for UI positioning in exploit analysis tools."""
+
         class Point:
             def __init__(self, x, y):
                 """Initialize point with x and y coordinates."""
                 self.x = int(x)
                 self.y = int(y)
+
             def __repr__(self):
                 return f"Point({self.x}, {self.y})"
+
             def __iter__(self):
                 return iter([self.x, self.y])
+
             def distance_to(self, other):
                 import math
-                return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
+
+                return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+
         return Point(x, y)
 
     def create_rect(x, y, w, h):
         """Create rectangle for exploit visualization bounds."""
+
         class Rect:
             def __init__(self, x, y, width, height):
                 """Initialize rectangle with position and dimensions."""
@@ -380,29 +462,44 @@ except ImportError as e:
                 self.y = int(y)
                 self.width = int(width)
                 self.height = int(height)
+
             def contains(self, point):
-                return (self.x <= point.x <= self.x + self.width and
-                        self.y <= point.y <= self.y + self.height)
+                return (
+                    self.x <= point.x <= self.x + self.width
+                    and self.y <= point.y <= self.y + self.height
+                )
+
             def intersects(self, other):
-                return not (self.x + self.width < other.x or other.x + other.width < self.x or
-                           self.y + self.height < other.y or other.y + other.height < self.y)
+                return not (
+                    self.x + self.width < other.x
+                    or other.x + other.width < self.x
+                    or self.y + self.height < other.y
+                    or other.y + other.height < self.y
+                )
+
             def center(self):
                 return create_point(self.x + self.width // 2, self.y + self.height // 2)
+
         return Rect(x, y, w, h)
 
     def create_size(w, h):
         """Create size object for exploit analysis UI components."""
+
         class Size:
             def __init__(self, width, height):
                 """Initialize size with width and height dimensions."""
                 self.width = int(width)
                 self.height = int(height)
+
             def area(self):
                 return self.width * self.height
+
             def scale(self, factor):
                 return Size(self.width * factor, self.height * factor)
+
             def __repr__(self):
                 return f"Size({self.width}x{self.height})"
+
         return Size(w, h)
 
     def get_text_metrics(font, text):
@@ -427,20 +524,25 @@ except ImportError as e:
 
     def create_icon_from_file(path):
         """Create icon for exploit tool UI from file."""
+
         class Icon:
             def __init__(self, path):
                 """Initialize icon from file path."""
                 self.path = path
                 self.icon_data = None
                 self.size = (16, 16)  # Default icon size
+
             def isValid(self):
                 return self.valid
+
             def actualSize(self):
                 return create_size(*self.size)
+
         return Icon(path)
 
     def create_pixmap(w, h):
         """Create pixmap for exploit visualization rendering."""
+
         class Pixmap:
             def __init__(self, width, height):
                 """Initialize pixmap with specified dimensions."""
@@ -448,6 +550,7 @@ except ImportError as e:
                 self.height = height
                 self.format = "RGBA"
                 self.data = None
+
             def fill(self, color):
                 r = (color >> 16) & 0xFF
                 g = (color >> 8) & 0xFF
@@ -455,15 +558,18 @@ except ImportError as e:
                 a = 255
                 for i in range(0, len(self.data), 4):
                     self.data[i] = r
-                    self.data[i+1] = g
-                    self.data[i+2] = b
-                    self.data[i+3] = a
+                    self.data[i + 1] = g
+                    self.data[i + 2] = b
+                    self.data[i + 3] = a
+
             def size(self):
                 return create_size(self.width, self.height)
+
         return Pixmap(w, h)
 
     def create_pen(color, width=1):
         """Create pen for exploit analysis drawing operations."""
+
         class Pen:
             def __init__(self, style=1, width=1, color=None):
                 """Initialize pen with style, width, and color."""
@@ -472,13 +578,18 @@ except ImportError as e:
                 self.color = color or (0, 0, 0, 255)
                 self.join_style = "miter"
                 self.cap_style = "square"
+
             def setStyle(self, style):
                 self.style = style
+
             def setCapStyle(self, cap):
                 self.cap_style = cap
+
             def setJoinStyle(self, join):
                 self.join_style = join
+
         return Pen(color, width)
+
     def handle_key_event(event):
         """Extract key information from a key event in fallback mode.
 
@@ -490,6 +601,7 @@ except ImportError as e:
 
         """
         return (0, 0, "")
+
     def handle_mouse_event(event):
         """Extract mouse information from a mouse event in fallback mode.
 
@@ -501,6 +613,7 @@ except ImportError as e:
 
         """
         return (0, 0, 0, 0)
+
     def handle_paint_event(widget, event, func=None):
         """Handle paint events for UI components with exploit analysis visualization."""
         if not widget or not event:
@@ -528,7 +641,7 @@ except ImportError as e:
             else:
                 # Default exploit analysis visualization
                 # Dark background for security tool aesthetic
-                painter.fillRect(0, 0, width, height, 0x1a1a1a)
+                painter.fillRect(0, 0, width, height, 0x1A1A1A)
 
                 # Grid pattern for technical interface
                 painter.setPen(0x333333, 1)
@@ -539,12 +652,13 @@ except ImportError as e:
                     painter.drawLine(0, y, width, y)
 
                 # Status indicator in corner
-                painter.setPen(0x00ff00, 2)
+                painter.setPen(0x00FF00, 2)
                 painter.drawRect(width - 20, 5, 10, 10)
 
         except Exception:
             # Robust error handling for UI painting
             pass
+
     def handle_resize_event(event):
         """Extract size information from resize event in fallback mode.
 
@@ -556,8 +670,10 @@ except ImportError as e:
 
         """
         return (0, 0, 0, 0)
+
     def create_standard_action(text, parent=None, slot=None, shortcut=None):
         """Create standard action for exploit tool menus."""
+
         class Action:
             def __init__(self, icon=None, text="", parent=None):
                 """Initialize action with optional icon, text, and parent."""
@@ -588,9 +704,11 @@ except ImportError as e:
                     def __init__(self, action):
                         self.action = action
                         self.callbacks = []
+
                     def connect(self, callback):
                         self.callbacks.append(callback)
                         self.action.triggered_callbacks.append(callback)
+
                 return Signal(self)
 
             def setData(self, data):
@@ -612,6 +730,7 @@ except ImportError as e:
 
     def create_button_group(buttons, parent=None):
         """Create button group for exploit option selection."""
+
         class ButtonGroup:
             def __init__(self, parent=None):
                 """Initialize button group with optional parent."""
@@ -657,8 +776,10 @@ except ImportError as e:
                 class Signal:
                     def __init__(self, group):
                         self.group = group
+
                     def connect(self, callback):
                         self.group.button_clicked_callbacks.append(callback)
+
                 return Signal(self)
 
         group = ButtonGroup(parent)
@@ -666,6 +787,7 @@ except ImportError as e:
             for i, button in enumerate(buttons):
                 group.addButton(button, i)
         return group
+
     def get_desktop_geometry():
         """Get desktop geometry in fallback mode.
 
@@ -674,8 +796,10 @@ except ImportError as e:
 
         """
         return (1920, 1080)
+
     def create_frame_with_style(style=None, shadow=None):
         """Create styled frame for exploit analysis UI."""
+
         class Frame:
             def __init__(self, parent=None, style=None):
                 """Initialize frame with optional parent and style."""
@@ -710,6 +834,7 @@ except ImportError as e:
                 return self.line_width + self.mid_line_width
 
         return Frame()
+
     def prompt_for_input(parent, title, label, default=""):
         """Prompt for input in fallback mode (no actual dialog).
 
@@ -724,8 +849,10 @@ except ImportError as e:
 
         """
         return ("", False)
+
     def create_context_menu(actions, parent=None):
         """Create context menu for exploit tool interactions."""
+
         class ContextMenu:
             def __init__(self, parent=None):
                 """Initialize context menu with optional parent."""
@@ -757,6 +884,7 @@ except ImportError as e:
             for action in actions:
                 menu.addAction(action)
         return menu
+
     def create_radio_button_set(labels, parent=None):
         """Create radio button set in fallback mode.
 
@@ -769,8 +897,10 @@ except ImportError as e:
 
         """
         return []
+
     def create_scroll_area_with_widget(widget):
         """Create scrollable area for exploit data display."""
+
         class ScrollArea:
             def __init__(self, parent=None):
                 """Initialize scroll area with optional parent."""
@@ -802,6 +932,7 @@ except ImportError as e:
 
     def create_slider_with_range(min_val, max_val, orientation=None):
         """Create slider for exploit parameter adjustment."""
+
         class Slider:
             def __init__(self, orientation="horizontal", parent=None):
                 """Initialize slider with orientation and optional parent."""
@@ -839,8 +970,10 @@ except ImportError as e:
                 class Signal:
                     def __init__(self, slider):
                         self.slider = slider
+
                     def connect(self, callback):
                         self.slider.value_changed_callbacks.append(callback)
+
                 return Signal(self)
 
         slider = Slider(orientation or "horizontal")
@@ -850,6 +983,7 @@ except ImportError as e:
 
     def create_splash_screen(pixmap_path, flags=None):
         """Create splash screen for exploit tool startup."""
+
         class SplashScreen:
             def __init__(self, pixmap=None, flags=None):
                 """Initialize splash screen with optional pixmap and flags."""
@@ -874,6 +1008,7 @@ except ImportError as e:
 
     def create_toolbar_with_actions(title, actions, parent=None):
         """Create toolbar for exploit tool actions."""
+
         class ToolBar:
             def __init__(self, title="", parent=None):
                 """Initialize toolbar with optional title and parent."""
@@ -910,6 +1045,7 @@ except ImportError as e:
 
     def create_wizard_with_pages(title, pages):
         """Create wizard for exploit configuration."""
+
         class Wizard:
             def __init__(self, parent=None, flags=None):
                 """Initialize wizard with optional parent and flags."""
@@ -945,8 +1081,10 @@ except ImportError as e:
                 class Signal:
                     def __init__(self, wizard):
                         self.wizard = wizard
+
                     def connect(self, callback):
                         self.wizard.finished_callbacks.append(callback)
+
                 return Signal(self)
 
         wizard = Wizard(title)
@@ -957,6 +1095,7 @@ except ImportError as e:
 
     def create_wizard_page(title, subtitle=""):
         """Create wizard page for exploit setup steps."""
+
         class WizardPage:
             def __init__(self, parent=None):
                 """Initialize wizard page with optional parent."""
@@ -985,6 +1124,7 @@ except ImportError as e:
                 self.final_page = bool(final)
 
         return WizardPage(title, subtitle)
+
     def configure_abstract_item_view(view, selection_mode=None):
         """Configure item view in fallback mode.
 
@@ -1011,6 +1151,7 @@ except ImportError as e:
 
         """
         return area
+
     # Create dummy classes for missing imports
     class MockQtClass:
         """Mock class to stand in for PyQt5 classes when PyQt5 is not available.
@@ -1021,8 +1162,10 @@ except ImportError as e:
 
         def __init__(self, *args, **kwargs):
             """Initialize mock Qt class with any arguments."""
+
         def __call__(self, *args, **kwargs):
             return self
+
         def __getattr__(self, name):
             return MockQtClass()
 

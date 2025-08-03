@@ -7,7 +7,6 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-
 from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QTextDocument
 from PyQt6.QtWidgets import (
@@ -47,6 +46,7 @@ except ImportError:
         """
         return logging.getLogger(name)
 
+
 logger = get_logger(__name__)
 
 
@@ -80,18 +80,15 @@ class ScriptGenerationWorker(QRunnable):
     def run(self):
         """Generate the bypass script"""
         try:
-            self.signals.progress.emit(
-                f"Generating {self.script_type} script...")
+            self.signals.progress.emit(f"Generating {self.script_type} script...")
 
             generator = ProtectionAwareScriptGenerator()
 
             # Generate script based on type
             if self.script_type.lower() == "frida":
-                result = generator.generate_bypass_script(
-                    self.file_path, "frida")
+                result = generator.generate_bypass_script(self.file_path, "frida")
             elif self.script_type.lower() == "ghidra":
-                result = generator.generate_bypass_script(
-                    self.file_path, "ghidra")
+                result = generator.generate_bypass_script(self.file_path, "ghidra")
             else:
                 result = {
                     "success": False,
@@ -103,6 +100,7 @@ class ScriptGenerationWorker(QRunnable):
         except Exception as e:
             self.logger.error("Exception in script_generation_handler: %s", e)
             import traceback
+
             self.signals.error.emit((type(e), e, traceback.format_exc()))
         finally:
             self.signals.finished.emit()
@@ -134,8 +132,7 @@ class ScriptDisplayDialog(QDialog):
         info_layout = QHBoxLayout()
 
         # Script type
-        info_layout.addWidget(
-            QLabel(f"Type: {self.script_data.get('type', 'Unknown')}"))
+        info_layout.addWidget(QLabel(f"Type: {self.script_data.get('type', 'Unknown')}"))
 
         # Approach
         approach = self.script_data.get("approach", "Unknown")
@@ -211,12 +208,41 @@ class ScriptDisplayDialog(QDialog):
 
         if script_type == "frida":
             # JavaScript highlighting for Frida
-            keywords = ["function", "var", "let", "const", "if", "else", "for", "while",
-                        "return", "true", "false", "null", "undefined", "new"]
+            keywords = [
+                "function",
+                "var",
+                "let",
+                "const",
+                "if",
+                "else",
+                "for",
+                "while",
+                "return",
+                "true",
+                "false",
+                "null",
+                "undefined",
+                "new",
+            ]
         elif script_type == "ghidra":
             # Python highlighting for Ghidra
-            keywords = ["def", "class", "import", "from", "if", "else", "elif", "for",
-                        "while", "return", "True", "False", "None", "try", "except"]
+            keywords = [
+                "def",
+                "class",
+                "import",
+                "from",
+                "if",
+                "else",
+                "elif",
+                "for",
+                "while",
+                "return",
+                "True",
+                "False",
+                "None",
+                "try",
+                "except",
+            ]
         else:
             keywords = []
 
@@ -262,12 +288,12 @@ class ScriptDisplayDialog(QDialog):
     def copy_script(self):
         """Copy script to clipboard"""
         from PyQt6.QtWidgets import QApplication
+
         QApplication.clipboard().setText(self.script_data.get("script", ""))
 
         # Show brief confirmation
         self.copy_btn.setText("Copied!")
-        QTimer.singleShot(
-            1500, lambda: self.copy_btn.setText("Copy to Clipboard"))
+        QTimer.singleShot(1500, lambda: self.copy_btn.setText("Copy to Clipboard"))
 
     def save_script(self):
         """Save script to file"""
@@ -335,11 +361,9 @@ class ScriptGenerationHandler(QObject):
         self.parent_widget = parent
 
     def on_analysis_complete(self, result: UnifiedProtectionResult):
-        """Main slot called when protection analysis completes.
-        """
+        """Main slot called when protection analysis completes."""
         self.current_result = result
-        logger.info(
-            f"Script generation handler received analysis for: {result.file_path}")
+        logger.info(f"Script generation handler received analysis for: {result.file_path}")
 
     def generate_script(self, script_type: str = "frida", parent_widget=None):
         """Generate a bypass script of the specified type.
@@ -386,8 +410,7 @@ class ScriptGenerationHandler(QObject):
                 dialog = ScriptDisplayDialog(result, parent_widget)
                 dialog.exec()
         else:
-            error_msg = result.get(
-                "error", "Unknown error during script generation")
+            error_msg = result.get("error", "Unknown error during script generation")
             self.script_error.emit(error_msg)
 
             if parent_widget:

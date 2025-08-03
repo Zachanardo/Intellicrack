@@ -22,6 +22,7 @@ logger = get_logger(__name__)
 
 try:
     import yara
+
     YARA_AVAILABLE = True
 except ImportError:
     YARA_AVAILABLE = False
@@ -162,7 +163,9 @@ class YaraPatternEngine:
             self.compiled_rules = yara.compile(filepaths=rule_files)
             self._extract_rule_metadata()
 
-            logger.info(f"Loaded {len(rule_files)} YARA rule namespaces with {self._count_total_rules()} rules")
+            logger.info(
+                f"Loaded {len(rule_files)} YARA rule namespaces with {self._count_total_rules()} rules"
+            )
 
         except Exception as e:
             logger.error(f"Failed to load YARA rules: {e}")
@@ -514,6 +517,7 @@ rule Basic_PE_Detection
 
         """
         import time
+
         start_time = time.time()
 
         if not YARA_AVAILABLE:
@@ -627,6 +631,7 @@ rule Basic_PE_Detection
             # Cleanup temporary directory if created
             if temp_dir and os.path.exists(temp_dir):
                 import shutil
+
                 try:
                     shutil.rmtree(temp_dir)
                     logger.debug(f"Cleaned up temporary directory: {temp_dir}")
@@ -638,11 +643,17 @@ rule Basic_PE_Detection
         # Check rule name first
         rule_name = match.rule.lower()
 
-        if any(keyword in rule_name for keyword in ["protection", "protect", "vmprotect", "themida", "enigma"]):
+        if any(
+            keyword in rule_name
+            for keyword in ["protection", "protect", "vmprotect", "themida", "enigma"]
+        ):
             return PatternCategory.PROTECTION
         if any(keyword in rule_name for keyword in ["pack", "upx", "aspack", "pecompact"]):
             return PatternCategory.PACKER
-        if any(keyword in rule_name for keyword in ["license", "flexlm", "hasp", "dongle", "activation"]):
+        if any(
+            keyword in rule_name
+            for keyword in ["license", "flexlm", "hasp", "dongle", "activation"]
+        ):
             return PatternCategory.LICENSING
         if any(keyword in rule_name for keyword in ["debug", "antidebug", "anti_debug"]):
             return PatternCategory.ANTI_DEBUG
@@ -806,7 +817,9 @@ rule Basic_PE_Detection
         return {
             "total_rules": self._count_total_rules(),
             "categories": categories,
-            "namespaces": list(set(meta.get("namespace", "unknown") for meta in self.rule_metadata.values())),
+            "namespaces": list(
+                set(meta.get("namespace", "unknown") for meta in self.rule_metadata.values())
+            ),
             "namespace_distribution": namespace_dist,
             "yara_available": YARA_AVAILABLE,
         }
@@ -853,41 +866,49 @@ rule Basic_PE_Detection
 
         # Process protection matches
         for match in scan_result.get_matches_by_category(PatternCategory.PROTECTION):
-            supplemental_data["protection_indicators"].append({
-                "name": match.rule_name,
-                "confidence": match.confidence,
-                "offset": match.offset,
-                "technique": "pattern_matching",
-            })
+            supplemental_data["protection_indicators"].append(
+                {
+                    "name": match.rule_name,
+                    "confidence": match.confidence,
+                    "offset": match.offset,
+                    "technique": "pattern_matching",
+                }
+            )
 
         # Process licensing matches
         for match in scan_result.get_matches_by_category(PatternCategory.LICENSING):
-            supplemental_data["licensing_indicators"].append({
-                "name": match.rule_name,
-                "confidence": match.confidence,
-                "offset": match.offset,
-                "type": "licensing_system",
-            })
+            supplemental_data["licensing_indicators"].append(
+                {
+                    "name": match.rule_name,
+                    "confidence": match.confidence,
+                    "offset": match.offset,
+                    "type": "licensing_system",
+                }
+            )
 
         # Process packer matches
         for match in scan_result.get_matches_by_category(PatternCategory.PACKER):
-            supplemental_data["packer_indicators"].append({
-                "name": match.rule_name,
-                "confidence": match.confidence,
-                "offset": match.offset,
-                "packer_type": "signature_based",
-            })
+            supplemental_data["packer_indicators"].append(
+                {
+                    "name": match.rule_name,
+                    "confidence": match.confidence,
+                    "offset": match.offset,
+                    "packer_type": "signature_based",
+                }
+            )
 
         # Process anti-analysis matches
         anti_analysis_categories = [PatternCategory.ANTI_DEBUG, PatternCategory.ANTI_VM]
         for category in anti_analysis_categories:
             for match in scan_result.get_matches_by_category(category):
-                supplemental_data["anti_analysis_indicators"].append({
-                    "name": match.rule_name,
-                    "confidence": match.confidence,
-                    "offset": match.offset,
-                    "category": category.value,
-                })
+                supplemental_data["anti_analysis_indicators"].append(
+                    {
+                        "name": match.rule_name,
+                        "confidence": match.confidence,
+                        "offset": match.offset,
+                        "category": category.value,
+                    }
+                )
 
         return supplemental_data
 

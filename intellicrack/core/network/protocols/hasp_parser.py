@@ -30,6 +30,7 @@ from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 @dataclass
 class HASPRequest:
     """HASP/Sentinel request structure"""
@@ -44,6 +45,7 @@ class HASPRequest:
     encryption_data: bytes
     additional_params: dict[str, Any]
 
+
 @dataclass
 class HASPResponse:
     """HASP/Sentinel response structure"""
@@ -55,6 +57,7 @@ class HASPResponse:
     encryption_response: bytes
     expiry_info: dict[str, Any]
     hardware_info: dict[str, Any]
+
 
 class HASPSentinelParser:
     """Real HASP/Sentinel protocol parser and response generator"""
@@ -160,7 +163,6 @@ class HASPSentinelParser:
                 "memory_size": 1024,
                 "rtc_supported": False,
             },
-
             # Bentley features
             200: {
                 "name": "MICROSTATION",
@@ -171,7 +173,6 @@ class HASPSentinelParser:
                 "memory_size": 8192,
                 "rtc_supported": True,
             },
-
             # Siemens features
             300: {
                 "name": "NX_ADVANCED",
@@ -182,7 +183,6 @@ class HASPSentinelParser:
                 "memory_size": 4096,
                 "rtc_supported": True,
             },
-
             # ANSYS features
             400: {
                 "name": "ANSYS_MECHANICAL",
@@ -193,7 +193,6 @@ class HASPSentinelParser:
                 "memory_size": 2048,
                 "rtc_supported": False,
             },
-
             # Generic feature for testing
             999: {
                 "name": "GENERIC_FEATURE",
@@ -236,7 +235,7 @@ class HASPSentinelParser:
             offset = 0
 
             # Check HASP magic signature
-            magic = struct.unpack("<I", data[offset:offset+4])[0]
+            magic = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
             if magic not in [0x48415350, 0x53454E54, 0x484C4D58]:  # "HASP", "SENT", "HLMX"
@@ -244,57 +243,57 @@ class HASPSentinelParser:
                 return None
 
             # Parse header
-            command = struct.unpack("<I", data[offset:offset+4])[0]
+            command = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
-            session_id = struct.unpack("<I", data[offset:offset+4])[0]
+            session_id = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
-            feature_id = struct.unpack("<I", data[offset:offset+4])[0]
+            feature_id = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
-            vendor_code = struct.unpack("<I", data[offset:offset+4])[0]
+            vendor_code = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
             # Parse variable-length fields
-            scope_length = struct.unpack("<H", data[offset:offset+2])[0]
+            scope_length = struct.unpack("<H", data[offset : offset + 2])[0]
             offset += 2
 
             if offset + scope_length > len(data):
                 return None
 
-            scope = data[offset:offset+scope_length].decode("utf-8", errors="ignore")
+            scope = data[offset : offset + scope_length].decode("utf-8", errors="ignore")
             offset += scope_length
 
-            format_length = struct.unpack("<H", data[offset:offset+2])[0]
+            format_length = struct.unpack("<H", data[offset : offset + 2])[0]
             offset += 2
 
             if offset + format_length > len(data):
                 return None
 
-            format_str = data[offset:offset+format_length].decode("utf-8", errors="ignore")
+            format_str = data[offset : offset + format_length].decode("utf-8", errors="ignore")
             offset += format_length
 
             # Parse client info JSON
-            client_info_length = struct.unpack("<H", data[offset:offset+2])[0]
+            client_info_length = struct.unpack("<H", data[offset : offset + 2])[0]
             offset += 2
 
             client_info = {}
             if client_info_length > 0 and offset + client_info_length <= len(data):
                 try:
-                    client_info_json = data[offset:offset+client_info_length].decode("utf-8")
+                    client_info_json = data[offset : offset + client_info_length].decode("utf-8")
                     client_info = json.loads(client_info_json)
                 except (UnicodeDecodeError, ValueError, json.JSONDecodeError, Exception) as e:
                     logger.error("Error in hasp_parser: %s", e)
                 offset += client_info_length
 
             # Parse encryption data
-            encryption_length = struct.unpack("<H", data[offset:offset+2])[0]
+            encryption_length = struct.unpack("<H", data[offset : offset + 2])[0]
             offset += 2
 
             encryption_data = b""
             if encryption_length > 0 and offset + encryption_length <= len(data):
-                encryption_data = data[offset:offset+encryption_length]
+                encryption_data = data[offset : offset + encryption_length]
                 offset += encryption_length
 
             # Parse additional parameters
@@ -328,14 +327,14 @@ class HASPSentinelParser:
         try:
             offset = 0
             while offset < len(data) - 4:
-                param_type = struct.unpack("<H", data[offset:offset+2])[0]
-                param_length = struct.unpack("<H", data[offset+2:offset+4])[0]
+                param_type = struct.unpack("<H", data[offset : offset + 2])[0]
+                param_length = struct.unpack("<H", data[offset + 2 : offset + 4])[0]
                 offset += 4
 
                 if offset + param_length > len(data):
                     break
 
-                param_data = data[offset:offset+param_length]
+                param_data = data[offset : offset + param_length]
                 offset += param_length
 
                 if param_type == 0x0001:  # Hostname
@@ -490,8 +489,9 @@ class HASPSentinelParser:
             )
 
         # Check if feature is already in use (simulate concurrent user limit)
-        active_users = len([s for s in self.active_sessions.values()
-                           if s.get("feature_id") == request.feature_id])
+        active_users = len(
+            [s for s in self.active_sessions.values() if s.get("feature_id") == request.feature_id]
+        )
 
         if active_users >= feature["max_users"]:
             return HASPResponse(

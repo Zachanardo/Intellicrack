@@ -23,7 +23,7 @@ REM Intel GPU specific
 set INTEL_EXTENSION_FOR_PYTORCH_ENABLED=1
 set IPEX_VERBOSE=1
 
-echo Python: 
+echo Python:
 where python
 echo.
 python --version

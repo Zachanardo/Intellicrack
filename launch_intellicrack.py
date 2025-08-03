@@ -66,6 +66,7 @@ def detect_and_configure_gpu():
     # Set OMP_NUM_THREADS based on CPU count
     try:
         import multiprocessing
+
         os.environ["OMP_NUM_THREADS"] = str(multiprocessing.cpu_count())
     except Exception:
         os.environ["OMP_NUM_THREADS"] = "4"
@@ -85,6 +86,7 @@ def detect_and_configure_gpu():
     try:
         # First attempt: Use OpenCL to detect GPUs across all vendors
         import pyopencl as cl
+
         platforms = cl.get_platforms()
         all_gpus = []
 
@@ -109,33 +111,61 @@ def detect_and_configure_gpu():
                 gpu_lower = gpu_name.lower()
 
                 # Intel discrete GPUs - exclude generic "arc graphics" (integrated)
-                intel_discrete = any(keyword in gpu_lower for keyword in [
-                    "a770", "a750", "a580", "a380", "b580", "b770",  # Specific Arc models
-                ]) and "arc" in gpu_lower
+                intel_discrete = (
+                    any(
+                        keyword in gpu_lower
+                        for keyword in [
+                            "a770",
+                            "a750",
+                            "a580",
+                            "a380",
+                            "b580",
+                            "b770",  # Specific Arc models
+                        ]
+                    )
+                    and "arc" in gpu_lower
+                )
 
                 # Enhanced Intel Arc detection for B580 and other models
-                if any(model in gpu_lower for model in ["b580", "b770", "b570"]) or "intel(r) arc(tm) b" in gpu_lower:
+                if (
+                    any(model in gpu_lower for model in ["b580", "b770", "b570"])
+                    or "intel(r) arc(tm) b" in gpu_lower
+                ):
                     intel_discrete = True
                 elif gpu_lower == "intel(r) arc(tm) graphics":
                     intel_discrete = False  # This is integrated
 
                 # NVIDIA and AMD discrete detection
-                nvidia_discrete = any(keyword in gpu_lower for keyword in [
-                    "rtx", "gtx", "titan", "quadro",
-                ])
+                nvidia_discrete = any(
+                    keyword in gpu_lower
+                    for keyword in [
+                        "rtx",
+                        "gtx",
+                        "titan",
+                        "quadro",
+                    ]
+                )
 
-                amd_discrete = any(keyword in gpu_lower for keyword in [
-                    "rx", "radeon rx", "vega", "navi",
-                ])
+                amd_discrete = any(
+                    keyword in gpu_lower
+                    for keyword in [
+                        "rx",
+                        "radeon rx",
+                        "vega",
+                        "navi",
+                    ]
+                )
 
                 is_discrete = intel_discrete or nvidia_discrete or amd_discrete
 
-                all_gpus.append({
-                    "name": gpu_name,
-                    "vendor": gpu_vendor_detected,
-                    "discrete": is_discrete,
-                    "device": device,
-                })
+                all_gpus.append(
+                    {
+                        "name": gpu_name,
+                        "vendor": gpu_vendor_detected,
+                        "discrete": is_discrete,
+                        "device": device,
+                    }
+                )
 
         if all_gpus:
             # Show all detected GPUs
@@ -166,6 +196,7 @@ def detect_and_configure_gpu():
         try:
             # Try unified GPU autoloader first
             from intellicrack.utils.gpu_autoloader import get_device, get_gpu_info
+
             gpu_info = get_gpu_info()
             if gpu_info["available"]:
                 gpu_detected = True
@@ -197,6 +228,7 @@ def detect_and_configure_gpu():
             # Fall back to direct PyTorch detection
             try:
                 import torch
+
                 if hasattr(torch, "xpu") and torch.xpu.is_available():
                     gpu_detected = True
                     gpu_vendor = "Intel"
@@ -220,7 +252,9 @@ def detect_and_configure_gpu():
 
         # Qt settings for Intel Arc Graphics - use WARP for stability
         os.environ["QT_OPENGL"] = "software"  # Software rendering
-        os.environ["QT_ANGLE_PLATFORM"] = "warp"  # Use WARP (Windows Advanced Rasterization Platform)
+        os.environ["QT_ANGLE_PLATFORM"] = (
+            "warp"  # Use WARP (Windows Advanced Rasterization Platform)
+        )
         os.environ["QT_D3D_ADAPTER_INDEX"] = "1"  # Try different adapter
         os.environ["QT_QUICK_BACKEND"] = "software"  # Software backend for QtQuick
         os.environ["QT_QPA_PLATFORM"] = "windows"  # Use Windows platform
@@ -330,14 +364,18 @@ def main():
     try:
         # Suppress known warnings
         import warnings
+
         warnings.filterwarnings("ignore", message="Overriding a previously registered kernel")
         warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API")
-        warnings.filterwarnings("ignore", message=".*XPU.*operator.*override.*", category=UserWarning)
+        warnings.filterwarnings(
+            "ignore", message=".*XPU.*operator.*override.*", category=UserWarning
+        )
         warnings.filterwarnings("ignore", message=".*XPU.*not implemented.*", category=UserWarning)
 
         # Import and run the main application
         print("Importing intellicrack.main...")
         from intellicrack.main import main as intellicrack_main
+
         print("Successfully imported intellicrack.main")
 
         print("Calling intellicrack_main()...")
@@ -350,7 +388,9 @@ def main():
             print("\n" + "=" * 60)
             print("INTEL ARC GRAPHICS CRASH DETECTED")
             print("=" * 60)
-            print(f"The application crashed (exit code: {exit_code}) due to Intel Arc Graphics compatibility issues.")
+            print(
+                f"The application crashed (exit code: {exit_code}) due to Intel Arc Graphics compatibility issues."
+            )
             print("This is a known issue with Intel Arc Graphics drivers and Qt applications.")
             print()
             print("Automatically restarting in software rendering mode...")
@@ -365,11 +405,13 @@ def main():
         print(f"ERROR: Failed to import Intellicrack: {e}")
         print("Make sure all dependencies are installed.")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
     except Exception as e:
         print(f"ERROR: Failed to start Intellicrack: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

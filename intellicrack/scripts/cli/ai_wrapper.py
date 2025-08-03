@@ -96,9 +96,9 @@ class ConfirmationManager:
             return True
 
         # Display action details
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🤖 AI ACTION CONFIRMATION REQUEST")
-        print("="*80)
+        print("=" * 80)
         print(f"Action Type: {action.action_type.value}")
         print(f"Description: {action.description}")
         print(f"Risk Level: {action.risk_level.upper()}")
@@ -112,7 +112,7 @@ class ConfirmationManager:
         if action.ai_reasoning:
             print(f"\nAI Reasoning: {action.ai_reasoning}")
 
-        print("\n" + "-"*80)
+        print("\n" + "-" * 80)
 
         # Get user input
         while True:
@@ -137,19 +137,23 @@ class ConfirmationManager:
                 continue
 
             if response == "y":
-                self.action_history.append({
-                    "action": action,
-                    "approved": True,
-                    "timestamp": time.time(),
-                })
+                self.action_history.append(
+                    {
+                        "action": action,
+                        "approved": True,
+                        "timestamp": time.time(),
+                    }
+                )
                 return True
 
             # Default to No
-            self.action_history.append({
-                "action": action,
-                "approved": False,
-                "timestamp": time.time(),
-            })
+            self.action_history.append(
+                {
+                    "action": action,
+                    "approved": False,
+                    "timestamp": time.time(),
+                }
+            )
             return False
 
 
@@ -166,13 +170,11 @@ class IntellicrackAIInterface:
         "--license-analysis": "low",
         "--import-export": "low",
         "--section-analysis": "low",
-
         # Potentially modifying operations
         "--suggest-patches": "medium",
         "--generate-payload": "medium",
         "--memory-patch": "medium",
         "--frida-script": "medium",
-
         # High-risk operations
         "--apply-patch": "high",
         "--bypass-tpm": "high",
@@ -195,6 +197,7 @@ class IntellicrackAIInterface:
     def _generate_session_id(self) -> str:
         """Generate unique session ID."""
         import uuid
+
         return str(uuid.uuid4())[:8]
 
     def _determine_action_type(self, args: list[str]) -> ActionType:
@@ -248,8 +251,9 @@ class IntellicrackAIInterface:
 
         return impacts
 
-    def _create_action(self, args: list[str], description: str,
-                      ai_reasoning: str | None = None) -> PendingAction:
+    def _create_action(
+        self, args: list[str], description: str, ai_reasoning: str | None = None
+    ) -> PendingAction:
         """Create a pending action for confirmation."""
         import uuid
 
@@ -264,8 +268,9 @@ class IntellicrackAIInterface:
             ai_reasoning=ai_reasoning,
         )
 
-    def execute_command(self, args: list[str], description: str,
-                       ai_reasoning: str | None = None) -> dict[str, Any]:
+    def execute_command(
+        self, args: list[str], description: str, ai_reasoning: str | None = None
+    ) -> dict[str, Any]:
         """Execute an Intellicrack CLI command with confirmation.
 
         Args:
@@ -294,7 +299,8 @@ class IntellicrackAIInterface:
 
             result = subprocess.run(
                 action.command,
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=300,  # 5 minute timeout
             )
@@ -383,8 +389,12 @@ class IntellicrackAIInterface:
         return {
             "session_id": self.session_id,
             "total_actions": len(self.confirmation_manager.action_history),
-            "approved_actions": sum(1 for h in self.confirmation_manager.action_history if h["approved"]),
-            "declined_actions": sum(1 for h in self.confirmation_manager.action_history if not h["approved"]),
+            "approved_actions": sum(
+                1 for h in self.confirmation_manager.action_history if h["approved"]
+            ),
+            "declined_actions": sum(
+                1 for h in self.confirmation_manager.action_history if not h["approved"]
+            ),
             "action_history": self.confirmation_manager.action_history,
         }
 

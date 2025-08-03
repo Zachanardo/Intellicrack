@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 """
-Verify and update paths after moving the project from 
+Verify and update paths after moving the project from
 C:\\Intellicrack\\Intellicrack_Project\\Intellicrack_Project to C:\\Intellicrack
 
 Run this script after moving the project to ensure all paths are correct.

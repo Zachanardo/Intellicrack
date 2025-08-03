@@ -29,13 +29,13 @@ if %ERRORLEVEL% NEQ 0 (
     echo Creating new environment...
     call conda create -n %CONDA_ENV_NAME% python=3.10 -y
     call conda activate %CONDA_ENV_NAME%
-    
+
     echo Installing PyTorch...
     call conda install pytorch torchvision torchaudio -c pytorch -y
-    
+
     echo Installing Intel Extension for PyTorch...
     call conda install -c intel intel-extension-for-pytorch -y
-    
+
     echo Installing Intellicrack dependencies...
     cd /d "%~dp0..\.."
     pip install -r requirements.txt

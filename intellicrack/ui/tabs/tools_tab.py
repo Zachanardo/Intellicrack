@@ -3,6 +3,7 @@
 This module provides the tools interface for plugin management,
 custom tool integration, and external tool execution.
 """
+
 import os
 import subprocess
 
@@ -431,9 +432,16 @@ class ToolsTab(BaseTab):
         # Network packets table
         self.packets_table = QTableWidget()
         self.packets_table.setColumnCount(6)
-        self.packets_table.setHorizontalHeaderLabels([
-            "Time", "Source", "Destination", "Protocol", "Length", "Info",
-        ])
+        self.packets_table.setHorizontalHeaderLabels(
+            [
+                "Time",
+                "Source",
+                "Destination",
+                "Protocol",
+                "Length",
+                "Info",
+            ]
+        )
         self.packets_table.horizontalHeader().setStretchLastSection(True)
 
         # Plugin output
@@ -448,7 +456,6 @@ class ToolsTab(BaseTab):
 
         layout.addWidget(self.results_tabs)
         return panel
-
 
     def get_system_info(self):
         """Get system information"""
@@ -481,10 +488,12 @@ class ToolsTab(BaseTab):
             for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
                 try:
                     proc_info = proc.info
-                    processes.append(f"PID: {proc_info['pid']:>6} | "
-                                   f"Name: {proc_info['name']:<20} | "
-                                   f"CPU: {proc_info['cpu_percent']:>5.1f}% | "
-                                   f"Memory: {proc_info['memory_percent']:>5.1f}%")
+                    processes.append(
+                        f"PID: {proc_info['pid']:>6} | "
+                        f"Name: {proc_info['name']:<20} | "
+                        f"CPU: {proc_info['cpu_percent']:>5.1f}% | "
+                        f"Memory: {proc_info['memory_percent']:>5.1f}%"
+                    )
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
 
@@ -577,7 +586,7 @@ class ToolsTab(BaseTab):
 
             hex_lines = []
             for i in range(0, len(data), 16):
-                chunk = data[i:i+16]
+                chunk = data[i : i + 16]
                 hex_part = " ".join(f"{b:02x}" for b in chunk)
                 ascii_part = "".join(chr(b) if 32 <= b <= 126 else "." for b in chunk)
                 hex_lines.append(f"{i:08x}: {hex_part:<48} |{ascii_part}|")
@@ -625,7 +634,9 @@ class ToolsTab(BaseTab):
                     except:
                         continue
 
-            self.log_message(f"Extracted {len(ascii_strings)} ASCII and {len(unicode_strings)} Unicode strings")
+            self.log_message(
+                f"Extracted {len(ascii_strings)} ASCII and {len(unicode_strings)} Unicode strings"
+            )
 
         except Exception as e:
             self.output_console.append(f"Error extracting strings: {e!s}")
@@ -696,7 +707,8 @@ class ToolsTab(BaseTab):
             # Try using objdump first
             result = subprocess.run(
                 ["objdump", "-d", binary_path],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=30,
             )
@@ -743,7 +755,7 @@ class ToolsTab(BaseTab):
             section_entropies = []
 
             for i in range(0, len(data), chunk_size):
-                chunk = data[i:i+chunk_size]
+                chunk = data[i : i + chunk_size]
                 if len(chunk) > 0:
                     chunk_counts = Counter(chunk)
                     chunk_entropy = 0
@@ -828,16 +840,22 @@ class ToolsTab(BaseTab):
             if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                 export_dir = pe.DIRECTORY_ENTRY_EXPORT
                 self.tool_output.append(f"Export DLL Name: {export_dir.name.decode('utf-8')}")
-                self.tool_output.append(f"Number of Functions: {export_dir.struct.NumberOfFunctions}")
+                self.tool_output.append(
+                    f"Number of Functions: {export_dir.struct.NumberOfFunctions}"
+                )
                 self.tool_output.append(f"Number of Names: {export_dir.struct.NumberOfNames}")
                 self.tool_output.append("\nExported Functions:")
 
                 for exp in export_dir.symbols:
                     if exp.name:
                         func_name = exp.name.decode("utf-8")
-                        self.tool_output.append(f"  {exp.ordinal}: {func_name} (RVA: 0x{exp.address:08x})")
+                        self.tool_output.append(
+                            f"  {exp.ordinal}: {func_name} (RVA: 0x{exp.address:08x})"
+                        )
                     else:
-                        self.tool_output.append(f"  {exp.ordinal}: <no name> (RVA: 0x{exp.address:08x})")
+                        self.tool_output.append(
+                            f"  {exp.ordinal}: <no name> (RVA: 0x{exp.address:08x})"
+                        )
             else:
                 self.tool_output.append("No exports found")
 
@@ -862,7 +880,9 @@ class ToolsTab(BaseTab):
 
             self.tool_output.append("Section Analysis:")
             self.tool_output.append("-" * 60)
-            self.tool_output.append(f"{'Name':<8} {'VirtAddr':<10} {'VirtSize':<10} {'RawAddr':<10} {'RawSize':<10} {'Characteristics'}")
+            self.tool_output.append(
+                f"{'Name':<8} {'VirtAddr':<10} {'VirtSize':<10} {'RawAddr':<10} {'RawSize':<10} {'Characteristics'}"
+            )
             self.tool_output.append("-" * 60)
 
             for section in pe.sections:
@@ -873,7 +893,9 @@ class ToolsTab(BaseTab):
                 raw_size = f"0x{section.SizeOfRawData:08x}"
                 chars = f"0x{section.Characteristics:08x}"
 
-                self.tool_output.append(f"{name:<8} {virt_addr:<10} {virt_size:<10} {raw_addr:<10} {raw_size:<10} {chars}")
+                self.tool_output.append(
+                    f"{name:<8} {virt_addr:<10} {virt_size:<10} {raw_addr:<10} {raw_size:<10} {chars}"
+                )
 
             self.log_message("Section analysis completed")
 
@@ -893,7 +915,8 @@ class ToolsTab(BaseTab):
             # Try using nm tool
             result = subprocess.run(
                 ["nm", binary_path],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=30,
             )
@@ -986,7 +1009,9 @@ class ToolsTab(BaseTab):
         self.plugin_list.clear()
 
         # Look for plugins in the plugins directory
-        plugins_dir = os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules")
+        plugins_dir = os.path.join(
+            os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"
+        )
 
         if os.path.exists(plugins_dir):
             for file in os.listdir(plugins_dir):
@@ -1023,7 +1048,9 @@ class ToolsTab(BaseTab):
             }
 
             # Update plugin info
-            self.plugin_info_text.setText(f"Plugin: {plugin_name}\nStatus: Loaded\nDescription: Custom plugin module")
+            self.plugin_info_text.setText(
+                f"Plugin: {plugin_name}\nStatus: Loaded\nDescription: Custom plugin module"
+            )
 
             # Update list display
             self.populate_plugin_list()
@@ -1115,7 +1142,9 @@ def get_plugin():
 '''
 
             # Save plugin file
-            plugins_dir = os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules")
+            plugins_dir = os.path.join(
+                os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"
+            )
             os.makedirs(plugins_dir, exist_ok=True)
 
             plugin_file = os.path.join(plugins_dir, f"{plugin_name.lower()}_plugin.py")
@@ -1141,7 +1170,9 @@ def get_plugin():
         plugin_name = current_item.text().split(" ")[0]  # Remove status text
 
         # Open plugin file in default editor
-        plugins_dir = os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules")
+        plugins_dir = os.path.join(
+            os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"
+        )
         plugin_file = os.path.join(plugins_dir, f"{plugin_name}.py")
 
         if os.path.exists(plugin_file):

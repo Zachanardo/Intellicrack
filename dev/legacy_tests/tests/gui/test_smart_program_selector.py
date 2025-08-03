@@ -21,22 +21,22 @@ sys.path.insert(0, str(project_root))
 def test_file_resolver():
     """Test the file resolution capabilities."""
     print("Testing File Resolution Capabilities...")
-    
+
     from intellicrack.utils.system.file_resolution import file_resolver
 
     # Test supported file types
     print(f"Supported file types: {len(file_resolver.FILE_TYPES)}")
-    
+
     # Test file dialog filter generation
     filters = file_resolver.get_supported_file_filters()
     print(f"Generated file filters: {filters[:100]}...")
-    
+
     print("File resolver test completed.\n")
 
 def test_program_discovery():
     """Test the program discovery engine."""
     print("Testing Program Discovery Engine...")
-    
+
     from intellicrack.utils.system.program_discovery import program_discovery_engine
 
     # Test desktop path discovery
@@ -53,38 +53,38 @@ def test_program_discovery():
         desktop_paths = [
             os.path.join(os.environ.get('HOME', ''), 'Desktop')
         ]
-    
+
     for desktop_path in desktop_paths:
         if os.path.exists(desktop_path):
             print(f"Found desktop path: {desktop_path}")
             programs = program_discovery_engine.discover_programs_from_path(desktop_path)
             print(f"Found {len(programs)} programs on desktop")
-            
+
             for program in programs[:3]:  # Show first 3
                 print(f"- {program.display_name} ({program.discovery_method})")
             break
     else:
         print("No desktop paths found")
-    
+
     print("Program discovery test completed.\n")
 
 def test_smart_dialog_components():
     """Test smart dialog components without GUI."""
     print("Testing Smart Dialog Components...")
-    
+
     try:
         from intellicrack.ui.dialogs.smart_program_selector_dialog import SmartProgramSelectorDialog
         from intellicrack.utils.system.program_discovery import ProgramDiscoveryEngine
 
         # Test dialog class availability
         print(f"SmartProgramSelectorDialog class: {SmartProgramSelectorDialog}")
-        
+
         # Test discovery engine
         engine = ProgramDiscoveryEngine()
         print(f"Program discovery engine initialized: {engine}")
-        
+
         print("Smart dialog components test completed.\n")
-        
+
     except ImportError as e:
         print(f"Import error: {e}")
         print("Smart dialog components test failed.\n")
@@ -92,7 +92,7 @@ def test_smart_dialog_components():
 def test_with_gui():
     """Test with GUI if PyQt5 is available."""
     print("Testing with GUI...")
-    
+
     try:
         from PyQt6.QtWidgets import QApplication
 
@@ -102,15 +102,15 @@ def test_with_gui():
 
         # Create QApplication
         app = QApplication(sys.argv)
-        
+
         print("Qt Application created successfully")
         print("Smart Program Selector function available")
-        
+
         # Don't actually show the dialog in test mode, but test the function
         result = show_smart_program_selector(None, [])
         print(f"Smart program selector function tested: {result is not None}")
         print("GUI test completed (dialog not shown in test mode).\n")
-        
+
     except ImportError as e:
         print(f"GUI test skipped - PyQt5 not available: {e}\n")
 
@@ -120,13 +120,13 @@ def main():
     print("SMART PROGRAM SELECTOR TEST SUITE")
     print("=" * 60)
     print()
-    
+
     # Test individual components
     test_file_resolver()
     test_program_discovery()
     test_smart_dialog_components()
     test_with_gui()
-    
+
     print("=" * 60)
     print("TEST SUITE COMPLETED")
     print("=" * 60)

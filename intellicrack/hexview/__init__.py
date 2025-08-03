@@ -3,6 +3,7 @@
 This package provides advanced hexadecimal viewing and editing capabilities
 including search functionality, data visualization, and binary analysis tools.
 """
+
 from intellicrack.logger import logger
 
 # Core components
@@ -63,8 +64,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
 # Large file optimization components
 try:
     from .large_file_handler import LargeFileHandler as LargeFileHandler
@@ -72,6 +71,7 @@ try:
     from .large_file_handler import MemoryStrategy as MemoryStrategy
     from .performance_monitor import PerformanceMonitor as PerformanceMonitor
     from .performance_monitor import PerformanceWidget as PerformanceWidget
+
     LARGE_FILE_SUPPORT = True
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
@@ -92,7 +92,6 @@ __all__ = [
     "ViewMode",
     "parse_hex_view",
     "HexViewerWidget",
-
     # API functions
     "add_hex_viewer_to_application",
     "analyze_binary_data",
@@ -109,32 +108,31 @@ __all__ = [
     "search_binary_pattern",
     "suggest_binary_edits",
     "write_hex_region",
-
     # Integration functions
     "initialize_hex_viewer",
     "integrate_enhanced_hex_viewer",
     "register_hex_viewer_ai_tools",
     "restore_standard_hex_viewer",
     "show_enhanced_hex_viewer",
-
     # Convenience aliases
     "show_hex_viewer",
     "integrate",
     "HexViewer",
-
     # Large file optimization (conditionally available)
     "LARGE_FILE_SUPPORT",
 ]
 
 # Conditionally add large file components to __all__ if available
 if LARGE_FILE_SUPPORT:
-    __all__.extend([
-        "LargeFileHandler",
-        "MemoryConfig",
-        "MemoryStrategy",
-        "PerformanceMonitor",
-        "PerformanceWidget",
-    ])
+    __all__.extend(
+        [
+            "LargeFileHandler",
+            "MemoryConfig",
+            "MemoryStrategy",
+            "PerformanceMonitor",
+            "PerformanceWidget",
+        ]
+    )
 
 # Convenience aliases
 show_hex_viewer = show_enhanced_hex_viewer

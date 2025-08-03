@@ -26,9 +26,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def create_hex_dump(data: bytes | bytearray,
-                   bytes_per_line: int = 16,
-                   start_offset: int = 0) -> str:
+def create_hex_dump(
+    data: bytes | bytearray, bytes_per_line: int = 16, start_offset: int = 0
+) -> str:
     """Create a formatted hex dump of binary data.
 
     Args:
@@ -47,17 +47,14 @@ def create_hex_dump(data: bytes | bytearray,
         offset = start_offset + i
 
         # Get chunk
-        chunk = data[i:i + bytes_per_line]
+        chunk = data[i : i + bytes_per_line]
 
         # Hex representation
         hex_part = " ".join(f"{b:02x}" for b in chunk)
         hex_part = hex_part.ljust(bytes_per_line * 3 - 1)
 
         # ASCII representation
-        ascii_part = "".join(
-            chr(b) if 32 <= b < 127 else "."
-            for b in chunk
-        )
+        ascii_part = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
 
         # Format line
         line = f"{offset:08x}  {hex_part}  |{ascii_part}|"
@@ -91,9 +88,7 @@ def hex_to_bytes(hex_string: str) -> bytes:
         raise
 
 
-def bytes_to_hex(data: bytes,
-                format_style: str = "plain",
-                uppercase: bool = False) -> str:
+def bytes_to_hex(data: bytes, format_style: str = "plain", uppercase: bool = False) -> str:
     """Convert bytes to hex string in various formats.
 
     Args:
@@ -113,11 +108,11 @@ def bytes_to_hex(data: bytes,
     if format_style == "plain":
         return hex_str
     if format_style == "spaces":
-        return " ".join(hex_str[i:i+2] for i in range(0, len(hex_str), 2))
+        return " ".join(hex_str[i : i + 2] for i in range(0, len(hex_str), 2))
     if format_style == "0x":
         return "0x" + hex_str
     if format_style == "\\x":
-        return "\\x".join([""] + [hex_str[i:i+2] for i in range(0, len(hex_str), 2)])
+        return "\\x".join([""] + [hex_str[i : i + 2] for i in range(0, len(hex_str), 2)])
     if format_style == "c_array":
         hex_bytes = [f"0x{hex_str[i:i+2]}" for i in range(0, len(hex_str), 2)]
         return ", ".join(hex_bytes)
@@ -193,7 +188,7 @@ def patch_bytes(data: bytearray, offset: int, patch_data: bytes) -> bool:
             logger.error("Patch offset out of bounds")
             return False
 
-        data[offset:offset + len(patch_data)] = patch_data
+        data[offset : offset + len(patch_data)] = patch_data
         return True
 
     except Exception as e:
@@ -290,12 +285,14 @@ def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> list[dict]:
 
     # Handle length differences
     if len(data1) != len(data2):
-        differences.append({
-            "offset": min_len,
-            "type": "length",
-            "len1": len(data1),
-            "len2": len(data2),
-        })
+        differences.append(
+            {
+                "offset": min_len,
+                "type": "length",
+                "len1": len(data1),
+                "len2": len(data2),
+            }
+        )
 
     return differences
 

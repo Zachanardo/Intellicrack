@@ -219,7 +219,8 @@ class VMResource(ManagedResource):
                     "-qmp",
                     f"unix:/tmp/qemu-{self.vm_name}-qmp.sock,server,nowait",
                 ],
-                check=False, input=b'{"execute":"quit"}\n',
+                check=False,
+                input=b'{"execute":"quit"}\n',
                 timeout=10,
             )
         except Exception as e:
@@ -258,15 +259,21 @@ class ContainerResource(ManagedResource):
         """Clean up the Docker container."""
         try:
             # Stop container
-            subprocess.run(["docker", "stop", self.container_id], check=False, capture_output=True, timeout=30)
+            subprocess.run(
+                ["docker", "stop", self.container_id], check=False, capture_output=True, timeout=30
+            )
 
             # Remove container
-            subprocess.run(["docker", "rm", self.container_id], check=False, capture_output=True, timeout=10)
+            subprocess.run(
+                ["docker", "rm", self.container_id], check=False, capture_output=True, timeout=10
+            )
 
             logger.info(f"Cleaned up container {self.container_name}")
         except subprocess.TimeoutExpired:
             # Force remove
-            subprocess.run(["docker", "rm", "-f", self.container_id], check=False, capture_output=True)
+            subprocess.run(
+                ["docker", "rm", "-f", self.container_id], check=False, capture_output=True
+            )
         except Exception as e:
             logger.error(f"Failed to cleanup container {self.container_id}: {e}")
 
@@ -369,11 +376,17 @@ class ResourceManager:
             # Check limits
             resource_count = len(self._resources_by_type.get(resource.resource_type, set()))
 
-            if resource.resource_type == ResourceType.PROCESS and resource_count >= self.max_processes:
+            if (
+                resource.resource_type == ResourceType.PROCESS
+                and resource_count >= self.max_processes
+            ):
                 raise RuntimeError(f"Process limit reached: {self.max_processes}")
             if resource.resource_type == ResourceType.VM and resource_count >= self.max_vms:
                 raise RuntimeError(f"VM limit reached: {self.max_vms}")
-            if resource.resource_type == ResourceType.CONTAINER and resource_count >= self.max_containers:
+            if (
+                resource.resource_type == ResourceType.CONTAINER
+                and resource_count >= self.max_containers
+            ):
                 raise RuntimeError(f"Container limit reached: {self.max_containers}")
 
             # Register resource
@@ -508,7 +521,9 @@ class ResourceManager:
             except Exception as e:
                 logger.error(f"Failed to remove temp directory {temp_dir}: {e}")
 
-        resource = ManagedResource(resource_id=temp_dir, resource_type=ResourceType.TEMP_DIR, cleanup_func=cleanup_temp)
+        resource = ManagedResource(
+            resource_id=temp_dir, resource_type=ResourceType.TEMP_DIR, cleanup_func=cleanup_temp
+        )
 
         try:
             self.register_resource(resource)
@@ -613,7 +628,9 @@ class ResourceManager:
                     if self._cleanup_resource(resource_id):
                         cleaned_count += 1
 
-        logger.info(f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)")
+        logger.info(
+            f"Force cleaned {cleaned_count} expired resources (older than {max_age_seconds}s)"
+        )
         return cleaned_count
 
     def set_resource_limits(self, **limits):
@@ -666,7 +683,12 @@ class ResourceManager:
 
     def health_check(self) -> dict[str, Any]:
         """Perform health check on resource manager."""
-        health = {"status": "healthy", "issues": [], "warnings": [], "stats": self.get_resource_usage_stats()}
+        health = {
+            "status": "healthy",
+            "issues": [],
+            "warnings": [],
+            "stats": self.get_resource_usage_stats(),
+        }
 
         with self._lock:
             # Check for resource limits
@@ -680,7 +702,10 @@ class ResourceManager:
                     f"VM count exceeds limit: {len(self._resources_by_type.get(ResourceType.VM, set()))} > {self.max_vms}",
                 )
 
-            if len(self._resources_by_type.get(ResourceType.CONTAINER, set())) > self.max_containers:
+            if (
+                len(self._resources_by_type.get(ResourceType.CONTAINER, set()))
+                > self.max_containers
+            ):
                 health["issues"].append(
                     f"Container count exceeds limit: {len(self._resources_by_type.get(ResourceType.CONTAINER, set()))} > {self.max_containers}",
                 )
@@ -690,12 +715,15 @@ class ResourceManager:
             stuck_resources = []
             for resource in self._resources.values():
                 if (
-                    resource.status == ResourceState.CLEANING and (current_time - resource.created_at) > 300
+                    resource.status == ResourceState.CLEANING
+                    and (current_time - resource.created_at) > 300
                 ):  # 5 minutes
                     stuck_resources.append(resource.resource_id)
 
             if stuck_resources:
-                health["warnings"].append(f"Found {len(stuck_resources)} stuck resources in cleanup state")
+                health["warnings"].append(
+                    f"Found {len(stuck_resources)} stuck resources in cleanup state"
+                )
 
             # Check memory usage
             memory_stats = self._get_memory_usage()
@@ -737,7 +765,11 @@ class ResourceContext:
         return False
 
     def register_resource(
-        self, resource_type: ResourceType, resource_handle: Any, cleanup_func: Callable = None, metadata: dict = None,
+        self,
+        resource_type: ResourceType,
+        resource_handle: Any,
+        cleanup_func: Callable = None,
+        metadata: dict = None,
     ) -> str:
         """Register a resource in this context."""
         if not self._entered:
@@ -748,14 +780,18 @@ class ResourceContext:
         metadata["owner"] = self.owner
         metadata["context_managed"] = True
 
-        resource_id = self.resource_manager.register_resource(resource_type, resource_handle, cleanup_func, metadata)
+        resource_id = self.resource_manager.register_resource(
+            resource_type, resource_handle, cleanup_func, metadata
+        )
         self.managed_resources.append(resource_id)
         return resource_id
 
     def cleanup_all(self):
         """Cleanup all resources in this context."""
         cleaned_count = 0
-        for resource_id in self.managed_resources[:]:  # Copy list to avoid modification during iteration
+        for resource_id in self.managed_resources[
+            :
+        ]:  # Copy list to avoid modification during iteration
             if self.resource_manager._cleanup_resource(resource_id):
                 cleaned_count += 1
                 self.managed_resources.remove(resource_id)
@@ -786,7 +822,9 @@ class AutoCleanupResource:
                 # If result is a resource handle, register it
                 if result is not None:
                     ctx.register_resource(
-                        self.resource_type, result, metadata={"function": func.__name__, "auto_managed": True},
+                        self.resource_type,
+                        result,
+                        metadata={"function": func.__name__, "auto_managed": True},
                     )
 
                 return result
@@ -947,7 +985,9 @@ class FallbackHandler:
             # Extract Unicode strings
             unicode_pattern = rb"(?:[\x20-\x7E]\x00){" + str(min_length).encode() + rb",}"
             unicode_strings = re.findall(unicode_pattern, data)
-            strings.extend([s.decode("utf-16le", errors="ignore").rstrip("\x00") for s in unicode_strings])
+            strings.extend(
+                [s.decode("utf-16le", errors="ignore").rstrip("\x00") for s in unicode_strings]
+            )
 
             return list(set(strings))  # Remove duplicates
 
@@ -1164,7 +1204,9 @@ class FallbackHandler:
                     {
                         "protocol": "TCP" if conn.type == socket.SOCK_STREAM else "UDP",
                         "local_address": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "",
-                        "remote_address": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "",
+                        "remote_address": f"{conn.raddr.ip}:{conn.raddr.port}"
+                        if conn.raddr
+                        else "",
                         "status": conn.status,
                         "pid": conn.pid,
                     },
@@ -1220,7 +1262,11 @@ class FallbackHandler:
             "status": "fallback",
             "message": "AFL++ not available. Using custom Python fuzzing.",
             "implementation": "custom_python_fuzzer",
-            "features": ["Random byte mutations", "Dictionary-based fuzzing", "Coverage tracking via trace"],
+            "features": [
+                "Random byte mutations",
+                "Dictionary-based fuzzing",
+                "Coverage tracking via trace",
+            ],
         }
 
     def register_fallback(self, tool_name: str, fallback_func: Callable):
@@ -1246,12 +1292,17 @@ def get_fallback_handler() -> FallbackHandler:
 
 
 def execute_with_fallback(
-    tool_name: str, primary_command: list[str], fallback_args: tuple = None, fallback_kwargs: dict = None,
+    tool_name: str,
+    primary_command: list[str],
+    fallback_args: tuple = None,
+    fallback_kwargs: dict = None,
 ):
     """Execute command with automatic fallback on failure."""
     try:
         # Try primary command first
-        result = subprocess.run(primary_command, check=False, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(
+            primary_command, check=False, capture_output=True, text=True, timeout=30
+        )
         if result.returncode == 0:
             return {"status": "success", "output": result.stdout, "method": "primary"}
         raise subprocess.CalledProcessError(result.returncode, primary_command, result.stderr)
@@ -1260,7 +1311,9 @@ def execute_with_fallback(
         logger.warning(f"Primary command failed for {tool_name}: {e}")
 
         # Try fallback
-        fallback_result = fallback_handler.get_fallback(tool_name, *(fallback_args or ()), **(fallback_kwargs or {}))
+        fallback_result = fallback_handler.get_fallback(
+            tool_name, *(fallback_args or ()), **(fallback_kwargs or {})
+        )
 
         if fallback_result is not None:
             return {"status": "fallback", "output": fallback_result, "method": "fallback"}
@@ -1296,7 +1349,9 @@ def validate_external_dependencies() -> dict[str, Any]:
             if status != external_tools_manager.tools[tool_name].status.AVAILABLE:
                 install_script = external_tools_manager.get_installation_script(tool_name)
                 if install_script:
-                    validation_result["recommendations"].append(f"Install {tool_name}: {install_script.strip()}")
+                    validation_result["recommendations"].append(
+                        f"Install {tool_name}: {install_script.strip()}"
+                    )
 
         return validation_result
 

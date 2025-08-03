@@ -49,7 +49,7 @@ Analyzes a file asynchronously using die-python.
 - `file_path` (str): Path to file to analyze
 - `scan_mode` (ScanMode): Scan mode to use (default: ScanMode.DEEP)
 - `show_entropy` (bool): Include entropy analysis (legacy compatibility, ignored)
-- `show_info` (bool): Include file info (legacy compatibility, ignored)  
+- `show_info` (bool): Include file info (legacy compatibility, ignored)
 - `timeout` (float): Maximum time to wait for analysis in seconds (default: 30.0)
 
 **Returns:**
@@ -125,7 +125,7 @@ from intellicrack.protection.icp_backend import ScanMode
 
 # Available modes
 ScanMode.NORMAL      # Basic scanning (flag value: 0)
-ScanMode.DEEP        # Deep analysis (flag value: 1) 
+ScanMode.DEEP        # Deep analysis (flag value: 1)
 ScanMode.HEURISTIC   # Heuristic scanning (flag value: 2)
 ScanMode.AGGRESSIVE  # Combined deep + heuristic
 ScanMode.ALL         # All available scan types
@@ -133,7 +133,7 @@ ScanMode.ALL         # All available scan types
 
 **Mode Descriptions:**
 - **NORMAL**: Fast scanning with basic detection
-- **DEEP**: Thorough analysis with extended patterns  
+- **DEEP**: Thorough analysis with extended patterns
 - **HEURISTIC**: Behavior-based detection algorithms
 - **AGGRESSIVE**: Combines DEEP and HEURISTIC for maximum coverage
 - **ALL**: Enables all scanning types and flags
@@ -218,7 +218,7 @@ Individual detection result.
 ##### name: str
 Detection name (e.g., "UPX", "VMProtect").
 
-##### type: str  
+##### type: str
 Detection type (e.g., "Packer", "Protector").
 
 ##### version: str
@@ -295,14 +295,14 @@ Base exception for ICP engine-related errors.
 try:
     backend = ICPBackend()
     result = await backend.analyze_file("target.exe")
-    
+
     if result.error:
         print(f"Analysis error: {result.error}")
     else:
         # Process successful result
         for detection in result.all_detections:
             print(f"{detection.type}: {detection.name}")
-            
+
 except ICPEngineError as e:
     print(f"ICP Engine error: {e}")
 except Exception as e:
@@ -387,7 +387,7 @@ From Phase 5 testing with die-python v0.4.0:
 import subprocess
 result = subprocess.run(["die", "target.exe"], capture_output=True)
 
-# ICP Backend  
+# ICP Backend
 from intellicrack.protection.icp_backend import get_icp_backend, ScanMode
 
 backend = get_icp_backend()

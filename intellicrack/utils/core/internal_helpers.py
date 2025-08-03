@@ -1,4 +1,5 @@
 """Internal helper utilities for core functionality."""
+
 import hashlib
 import json
 import math
@@ -40,8 +41,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
 # Import actual modules when available
 if HAS_NUMPY:
     import numpy as np
@@ -55,6 +54,7 @@ else:
 
 try:
     import torch
+
     HAS_TORCH = True
 except ImportError as e:
     logger.error("Import error in internal_helpers: %s", e)
@@ -64,6 +64,7 @@ except ImportError as e:
 if HAS_TENSORFLOW:
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     import os
+
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
     import tensorflow as tf  # pylint: disable=import-error
@@ -71,14 +72,15 @@ else:
     tf = None
 
 
-
 logger = setup_logger(__name__)
 
 
 # === Protocol and Network Helpers ===
 
-def _add_protocol_fingerprinter_results(results: dict[str, Any],
-                                       fingerprints: dict[str, Any]) -> None:
+
+def _add_protocol_fingerprinter_results(
+    results: dict[str, Any], fingerprints: dict[str, Any]
+) -> None:
     """Add protocol fingerprinter results to analysis results.
 
     Args:
@@ -117,10 +119,12 @@ def _analyze_requests(requests: list[dict[str, Any]]) -> dict[str, Any]:
 
         # Check for suspicious patterns
         if "license" in req.get("path", "").lower():
-            analysis["suspicious_patterns"].append({
-                "type": "license_check",
-                "request": req,
-            })
+            analysis["suspicious_patterns"].append(
+                {
+                    "type": "license_check",
+                    "request": req,
+                }
+            )
 
     analysis["unique_hosts"] = list(analysis["unique_hosts"])
     return analysis
@@ -223,7 +227,10 @@ def _handle_check_license(request_data: dict[str, Any]) -> dict[str, Any]:
 
     # Add warnings or notices based on license status
     if status == "trial":
-        response["notices"] = ["Trial license expires soon", "Upgrade to full license for continued access"]
+        response["notices"] = [
+            "Trial license expires soon",
+            "Upgrade to full license for continued access",
+        ]
     elif (datetime.strptime(expiry_date, "%Y-%m-%d") - datetime.now()).days < 30:
         response["notices"] = ["License expires within 30 days", "Please renew your license"]
 
@@ -242,7 +249,6 @@ def _handle_decrypt(data: bytes, key: bytes) -> bytes:
 
     """
     try:
-
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import padding
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -294,7 +300,6 @@ def _handle_encrypt(data: bytes, key: bytes) -> bytes:
 
     """
     try:
-
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives import padding
         from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -410,8 +415,13 @@ def _handle_get_info() -> dict[str, Any]:
             "health_check": "/health",
         },
         "supported_vendors": [
-            "Adobe", "Autodesk", "Microsoft", "FlexLM", "HASP/Sentinel",
-            "CodeMeter", "Custom Protocol",
+            "Adobe",
+            "Autodesk",
+            "Microsoft",
+            "FlexLM",
+            "HASP/Sentinel",
+            "CodeMeter",
+            "Custom Protocol",
         ],
         "timestamp": datetime.now().isoformat(),
         "timezone": time.tzname[0],
@@ -445,7 +455,7 @@ def _handle_get_key(key_id: str) -> str | None:
 
     if any(pattern in key_id_lower for pattern in ["adobe", "cc", "creative"]):
         # Adobe Creative Cloud style key
-        segments = [base_hash[i:i+4].upper() for i in range(0, 16, 4)]
+        segments = [base_hash[i : i + 4].upper() for i in range(0, 16, 4)]
         return f"ADBE-{'-'.join(segments)}"
 
     if any(pattern in key_id_lower for pattern in ["autodesk", "autocad", "maya"]):
@@ -455,7 +465,7 @@ def _handle_get_key(key_id: str) -> str | None:
 
     if any(pattern in key_id_lower for pattern in ["microsoft", "office", "windows"]):
         # Microsoft style product key
-        segments = [base_hash[i:i+5].upper() for i in range(0, 25, 5)]
+        segments = [base_hash[i : i + 5].upper() for i in range(0, 25, 5)]
         return "-".join(segments)
 
     if any(pattern in key_id_lower for pattern in ["jetbrains", "intellij", "idea"]):
@@ -486,7 +496,7 @@ def _handle_get_key(key_id: str) -> str | None:
         return f"ENT-{ent_hash[:6]}-{ent_hash[6:12]}-{ent_hash[12:18]}-{ent_hash[18:24]}-UNLIMITED"
 
     # Generic license key format
-    segments = [base_hash[i:i+4].upper() for i in range(0, 20, 4)]
+    segments = [base_hash[i : i + 4].upper() for i in range(0, 20, 4)]
     checksum = sum(ord(c) for c in key_id) % 100
     return f"LIC-{'-'.join(segments)}-{checksum:02d}"
 
@@ -523,7 +533,14 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
     elif license_id.startswith("LIC-ENT"):
         license_type = "enterprise"
         status = "active"
-        features = ["full_suite", "enterprise", "admin_access", "api_access", "multi_user", "support"]
+        features = [
+            "full_suite",
+            "enterprise",
+            "admin_access",
+            "api_access",
+            "multi_user",
+            "support",
+        ]
         max_users = 999
         issued_days_ago = 30
         expires_days_from_now = 365
@@ -566,7 +583,13 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
     expires_date = datetime.fromtimestamp(expires_timestamp)
 
     # Generate user and organization info based on license hash
-    org_types = ["Corporation", "Educational Institution", "Government Agency", "Non-Profit", "Small Business"]
+    org_types = [
+        "Corporation",
+        "Educational Institution",
+        "Government Agency",
+        "Non-Profit",
+        "Small Business",
+    ]
     org_type = org_types[int(license_hash[:2], 16) % len(org_types)]
 
     user_id = f"user_{license_hash[:8]}"
@@ -624,8 +647,12 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
         "support_level": support_level,
         "billing_cycle": billing_cycle,
         "cost_per_month": cost_per_month,
-        "seat_utilization": f"{(current_users / max_users * 100):.1f}%" if max_users > 0 else "0.0%",
-        "compliance_status": "compliant" if status == "active" and current_users <= max_users else "non_compliant",
+        "seat_utilization": f"{(current_users / max_users * 100):.1f}%"
+        if max_users > 0
+        else "0.0%",
+        "compliance_status": "compliant"
+        if status == "active" and current_users <= max_users
+        else "non_compliant",
         "license_server": f"license-server-{int(license_hash[22:24], 16) % 10 + 1}.{os.environ.get('BASE_DOMAIN', 'internal')}",
         "contact_email": f"{user_id}@{organization.lower().replace(' ', '')}.com",
         "notes": f"License {license_id} - {status.title()} {license_type} license",
@@ -767,11 +794,15 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             continue
 
         # Generate license ID with realistic format
-        license_hash = hashlib.sha256(f"{template['product']}_{user_id}_{i}".encode()).hexdigest()[:8]
+        license_hash = hashlib.sha256(f"{template['product']}_{user_id}_{i}".encode()).hexdigest()[
+            :8
+        ]
         license_id = f"LIC-{license_hash.upper()}-{i+1:04d}"
 
         # Calculate usage statistics
-        current_users = min(template["max_users"], max(1, (hash(f"usage_{i}") % template["max_users"]) + 1))
+        current_users = min(
+            template["max_users"], max(1, (hash(f"usage_{i}") % template["max_users"]) + 1)
+        )
 
         license_data = {
             "id": license_id,
@@ -787,12 +818,18 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             "features": template["features"],
             "organization": f"{user_type.title()} Organization {(i % 10) + 1}",
             "license_server": f"license-{(i % 5) + 1}.{os.environ.get('BASE_DOMAIN', 'internal')}",
-            "last_checkin": (datetime.now() - timedelta(hours=hash(f"checkin_{i}") % 48)).strftime("%Y-%m-%d %H:%M:%S"),
+            "last_checkin": (datetime.now() - timedelta(hours=hash(f"checkin_{i}") % 48)).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
             "version": f"{((i % 5) + 1)}.{(i % 10)}.{(i % 20)}",
             "platform": ["Windows", "macOS", "Linux"][i % 3],
             "maintenance_expires": (expiry_date + timedelta(days=90)).strftime("%Y-%m-%d"),
-            "seat_utilization": f"{(current_users / template['max_users'] * 100):.1f}%" if template["max_users"] > 0 else "0.0%",
-            "compliance_status": "compliant" if license_status == "active" and current_users <= template["max_users"] else "non_compliant",
+            "seat_utilization": f"{(current_users / template['max_users'] * 100):.1f}%"
+            if template["max_users"] > 0
+            else "0.0%",
+            "compliance_status": "compliant"
+            if license_status == "active" and current_users <= template["max_users"]
+            else "non_compliant",
             "billing_cycle": "monthly" if template["type"] == "subscription" else "one_time",
             "cost_center": f"CC-{(i % 20) + 1:03d}",
             "contact_email": f"{user_id}@{os.environ.get('EMAIL_DOMAIN', 'internal.local')}",
@@ -866,22 +903,32 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         release_reason = "normal_user_logout"
 
     # Calculate billing information for the session
-    cost_per_hour = current_license.get("cost_per_month", 99.99) / (30 * 24)  # Approximate hourly cost
+    cost_per_hour = current_license.get("cost_per_month", 99.99) / (
+        30 * 24
+    )  # Approximate hourly cost
     session_cost = round(session_hours * cost_per_hour, 4)
 
     # Generate compliance and audit information
     compliance_check = {
         "license_valid": current_license.get("status") == "active",
-        "within_user_limit": current_license.get("current_users", 0) <= current_license.get("max_users", 1),
-        "features_authorized": all(feature in current_license.get("features", []) for feature in features_used),
-        "maintenance_current": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d") > release_datetime,
+        "within_user_limit": current_license.get("current_users", 0)
+        <= current_license.get("max_users", 1),
+        "features_authorized": all(
+            feature in current_license.get("features", []) for feature in features_used
+        ),
+        "maintenance_current": datetime.strptime(
+            current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d"
+        )
+        > release_datetime,
     }
 
     compliance_status = "compliant" if all(compliance_check.values()) else "violation_detected"
 
     # Generate next available license slot information
     max_users = current_license.get("max_users", 1)
-    current_users = max(0, current_license.get("current_users", 1) - 1)  # Decrease by 1 after release
+    current_users = max(
+        0, current_license.get("current_users", 1) - 1
+    )  # Decrease by 1 after release
 
     return {
         "id": license_id,
@@ -903,7 +950,9 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
             "seats_available": max_users - current_users,
             "seats_total": max_users,
             "seats_used": current_users,
-            "utilization_percentage": round((current_users / max_users * 100), 1) if max_users > 0 else 0,
+            "utilization_percentage": round((current_users / max_users * 100), 1)
+            if max_users > 0
+            else 0,
         },
         "user_information": {
             "user_id": current_license.get("user_id", "unknown"),
@@ -922,8 +971,12 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
         "next_actions": {
             "license_available_for_reuse": True,
             "requires_compliance_review": compliance_status != "compliant",
-            "maintenance_due": datetime.strptime(current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d") < release_datetime,
-            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0)) < release_datetime + timedelta(days=30),
+            "maintenance_due": datetime.strptime(
+                current_license.get("maintenance_expires", "1999-01-01"), "%Y-%m-%d"
+            )
+            < release_datetime,
+            "renewal_recommended": datetime.fromtimestamp(current_license.get("expires", 0))
+            < release_datetime + timedelta(days=30),
         },
         "confirmation": {
             "message": f"License {license_id} has been successfully released",
@@ -1015,14 +1068,14 @@ def _handle_read_memory(address: int, size: int) -> bytes:
         # Typical executable region - simulate code
         # Create realistic x86 instruction patterns
         code_patterns = [
-            b"\x55",           # push ebp
-            b"\x8B\xEC",       # mov ebp, esp
-            b"\x83\xEC",       # sub esp, imm8
-            b"\xE8\x00\x00\x00\x00",  # call
-            b"\x85\xC0",       # test eax, eax
-            b"\x74",           # jz
-            b"\x75",           # jnz
-            b"\xC3",           # ret
+            b"\x55",  # push ebp
+            b"\x8b\xec",  # mov ebp, esp
+            b"\x83\xec",  # sub esp, imm8
+            b"\xe8\x00\x00\x00\x00",  # call
+            b"\x85\xc0",  # test eax, eax
+            b"\x74",  # jz
+            b"\x75",  # jnz
+            b"\xc3",  # ret
         ]
 
         memory_data = bytearray()
@@ -1039,8 +1092,14 @@ def _handle_read_memory(address: int, size: int) -> bytes:
         # Mix of strings, numbers, and structured data
         data_content = bytearray()
         base_strings = [
-            b"license\x00", b"serial\x00", b"key\x00", b"valid\x00",
-            b"expired\x00", b"trial\x00", b"full\x00", b"demo\x00",
+            b"license\x00",
+            b"serial\x00",
+            b"key\x00",
+            b"valid\x00",
+            b"expired\x00",
+            b"trial\x00",
+            b"full\x00",
+            b"demo\x00",
         ]
 
         string_data = b"".join(base_strings)
@@ -1158,8 +1217,10 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
 
 # === Analysis and Comparison Helpers ===
 
-def _analyze_snapshot_differences(snapshot1: dict[str, Any],
-                                snapshot2: dict[str, Any]) -> dict[str, Any]:
+
+def _analyze_snapshot_differences(
+    snapshot1: dict[str, Any], snapshot2: dict[str, Any]
+) -> dict[str, Any]:
     """Analyze differences between two snapshots.
 
     Args:
@@ -1191,8 +1252,7 @@ def _analyze_snapshot_differences(snapshot1: dict[str, Any],
     return differences
 
 
-def _compare_filesystem_state(state1: dict[str, Any],
-                            state2: dict[str, Any]) -> dict[str, Any]:
+def _compare_filesystem_state(state1: dict[str, Any], state2: dict[str, Any]) -> dict[str, Any]:
     """Compare filesystem states.
 
     Args:
@@ -1207,15 +1267,15 @@ def _compare_filesystem_state(state1: dict[str, Any],
         "added_files": list(set(state2.get("files", [])) - set(state1.get("files", []))),
         "removed_files": list(set(state1.get("files", [])) - set(state2.get("files", []))),
         "modified_files": [
-            f for f in state1.get("files", [])
-            if f in state2.get("files", []) and
-            state1.get("hashes", {}).get(f) != state2.get("hashes", {}).get(f)
+            f
+            for f in state1.get("files", [])
+            if f in state2.get("files", [])
+            and state1.get("hashes", {}).get(f) != state2.get("hashes", {}).get(f)
         ],
     }
 
 
-def _compare_memory_dumps(dump1: dict[str, Any],
-                        dump2: dict[str, Any]) -> dict[str, Any]:
+def _compare_memory_dumps(dump1: dict[str, Any], dump2: dict[str, Any]) -> dict[str, Any]:
     """Compare memory dumps.
 
     Args:
@@ -1233,8 +1293,7 @@ def _compare_memory_dumps(dump1: dict[str, Any],
     }
 
 
-def _compare_mmap_state(state1: dict[str, Any],
-                       state2: dict[str, Any]) -> dict[str, Any]:
+def _compare_mmap_state(state1: dict[str, Any], state2: dict[str, Any]) -> dict[str, Any]:
     """Compare memory mapping states.
 
     Args:
@@ -1247,18 +1306,15 @@ def _compare_mmap_state(state1: dict[str, Any],
     """
     return {
         "new_mappings": [
-            m for m in state2.get("mappings", [])
-            if m not in state1.get("mappings", [])
+            m for m in state2.get("mappings", []) if m not in state1.get("mappings", [])
         ],
         "removed_mappings": [
-            m for m in state1.get("mappings", [])
-            if m not in state2.get("mappings", [])
+            m for m in state1.get("mappings", []) if m not in state2.get("mappings", [])
         ],
     }
 
 
-def _compare_network_state(state1: dict[str, Any],
-                         state2: dict[str, Any]) -> dict[str, Any]:
+def _compare_network_state(state1: dict[str, Any], state2: dict[str, Any]) -> dict[str, Any]:
     """Compare network states.
 
     Args:
@@ -1283,8 +1339,7 @@ def _compare_network_state(state1: dict[str, Any],
     }
 
 
-def _compare_process_state(state1: dict[str, Any],
-                         state2: dict[str, Any]) -> dict[str, Any]:
+def _compare_process_state(state1: dict[str, Any], state2: dict[str, Any]) -> dict[str, Any]:
     """Compare process states.
 
     Args:
@@ -1352,12 +1407,14 @@ def _get_memory_regions() -> list[dict[str, Any]]:
         try:
             process = psutil.Process()
             for mmap in process.memory_maps():
-                regions.append({
-                    "path": mmap.path,
-                    "rss": mmap.rss,
-                    "size": mmap.size,
-                    "perm": mmap.perms,
-                })
+                regions.append(
+                    {
+                        "path": mmap.path,
+                        "rss": mmap.rss,
+                        "size": mmap.size,
+                        "perm": mmap.perms,
+                    }
+                )
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error getting memory regions: %s", e)
 
@@ -1395,11 +1452,13 @@ def _get_network_state() -> dict[str, Any]:
             connections = psutil.net_connections()
             for conn in connections[:20]:  # Limit to 20
                 if conn.status == "ESTABLISHED":
-                    state["connections"].append({
-                        "local": f"{conn.laddr.ip}:{conn.laddr.port}",
-                        "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else None,
-                        "status": conn.status,
-                    })
+                    state["connections"].append(
+                        {
+                            "local": f"{conn.laddr.ip}:{conn.laddr.port}",
+                            "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else None,
+                            "status": conn.status,
+                        }
+                    )
                 if conn.laddr:
                     state["ports"].append(conn.laddr.port)
         except (OSError, ValueError, RuntimeError) as e:
@@ -1438,6 +1497,7 @@ def _get_process_state() -> dict[str, Any]:
 
 
 # === Data Management Helpers ===
+
 
 def _archive_data(data: Any, archive_path: str) -> bool:
     """Archive data to a file.
@@ -1551,7 +1611,7 @@ def _dump_memory_region(address: int, size: int) -> bytes:
         for func_start in function_starts:
             # Function prologue: push ebp; mov ebp, esp
             if func_start + 3 < size:
-                dump_data[func_start] = 0x55      # push ebp
+                dump_data[func_start] = 0x55  # push ebp
                 dump_data[func_start + 1] = 0x8B  # mov ebp, esp (part 1)
                 dump_data[func_start + 2] = 0xEC  # mov ebp, esp (part 2)
 
@@ -1576,7 +1636,7 @@ def _dump_memory_region(address: int, size: int) -> bytes:
         for i, string in enumerate(license_strings):
             pos = (i * 100) % (size - len(string) - 1)
             if pos + len(string) < size:
-                dump_data[pos:pos+len(string)] = string
+                dump_data[pos : pos + len(string)] = string
                 dump_data[pos + len(string)] = 0  # Null terminator
 
         # Add some realistic numerical data (timestamps, counts, etc.)
@@ -1585,7 +1645,7 @@ def _dump_memory_region(address: int, size: int) -> bytes:
                 # Insert timestamp
                 timestamp = int(time.time()) + i
                 timestamp_bytes = struct.pack("<Q", timestamp)
-                dump_data[i:i+8] = timestamp_bytes
+                dump_data[i : i + 8] = timestamp_bytes
 
     elif address >= 0x7F0000000000:  # 64-bit stack region
         # Stack region - add realistic stack frame structures
@@ -1595,8 +1655,8 @@ def _dump_memory_region(address: int, size: int) -> bytes:
                 saved_ebp = struct.pack("<Q", 0x7F0000001000 + i)
                 return_addr = struct.pack("<Q", 0x401000 + (i % 0x1000))
 
-                dump_data[i:i+8] = saved_ebp
-                dump_data[i+8:i+16] = return_addr
+                dump_data[i : i + 8] = saved_ebp
+                dump_data[i + 8 : i + 16] = return_addr
 
     # Add some entropy to make it look more realistic
     for i in range(0, size, 127):
@@ -1700,7 +1760,7 @@ def _match_pattern(data: bytes, pattern: bytes) -> list[int]:
     pattern_len = len(pattern)
 
     for i in range(len(data) - pattern_len + 1):
-        if data[i:i + pattern_len] == pattern:
+        if data[i : i + pattern_len] == pattern:
             matches.append(i)
 
     return matches
@@ -1755,6 +1815,7 @@ def _save_patterns(patterns: dict[str, Any], output_path: str) -> bool:
 
 
 # === GPU/Hardware Acceleration Helpers ===
+
 
 def _calculate_hash_opencl(data: bytes, algorithm: str = "sha256") -> str | None:
     """Calculate hash using OpenCL acceleration.
@@ -1873,6 +1934,7 @@ def _pytorch_entropy_calculation(data: bytes) -> float:
         # Use shared entropy calculation for consistency
         # PyTorch tensor operations can be added later for GPU acceleration
         from ..analysis.entropy_utils import calculate_byte_entropy
+
         return calculate_byte_entropy(data)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("PyTorch entropy calculation failed: %s", e)
@@ -1915,7 +1977,7 @@ def _pytorch_pattern_matching(data: bytes, pattern: bytes) -> list[int]:
         # Sliding window comparison
         matches = []
         for i in range(len(data) - len(pattern) + 1):
-            if torch.equal(data_tensor[i:i+len(pattern)], pattern_tensor):
+            if torch.equal(data_tensor[i : i + len(pattern)], pattern_tensor):
                 matches.append(i)
 
         return matches
@@ -2017,7 +2079,6 @@ def _tensorflow_convolve_search(data_array: "np.ndarray", pattern_array: "np.nda
 
     """
     try:
-
         # Method 1: Try TensorFlow convolution if available
         if HAS_TENSORFLOW:
             matches = _tf_convolution_search(data_array, pattern_array)
@@ -2054,7 +2115,9 @@ def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
         # Reshape data for TensorFlow convolution
         # TensorFlow expects [batch, height, width, channels] format
         data_tensor = tf.expand_dims(tf.expand_dims(tf.cast(data_array, tf.float32), 0), -1)
-        pattern_tensor = tf.expand_dims(tf.expand_dims(tf.cast(pattern_array[::-1], tf.float32), -1), -1)
+        pattern_tensor = tf.expand_dims(
+            tf.expand_dims(tf.cast(pattern_array[::-1], tf.float32), -1), -1
+        )
 
         # Perform 1D convolution
         convolution_result = tf.nn.conv1d(
@@ -2134,7 +2197,7 @@ def _sliding_window_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
 
         # Optimized sliding window using NumPy vectorization
         for i in range(data_len - pattern_len + 1):
-            if np.array_equal(data_array[i:i + pattern_len], pattern_array):
+            if np.array_equal(data_array[i : i + pattern_len], pattern_array):
                 matches.append(i)
 
         return matches
@@ -2154,7 +2217,7 @@ def _match_pattern(data: bytes, pattern: bytes) -> list[int]:
 
     # Simple byte-by-byte search
     for i in range(len(data) - pattern_len + 1):
-        if data[i:i + pattern_len] == pattern:
+        if data[i : i + pattern_len] == pattern:
             matches.append(i)
 
     return matches
@@ -2191,6 +2254,7 @@ def _validate_gpu_memory(required_mb: int) -> bool:
 
 
 # === Model Conversion Helpers ===
+
 
 def _convert_to_gguf(model_path: str, output_path: str) -> bool:
     """Convert model to GGUF format.
@@ -2321,14 +2385,24 @@ def _write_realistic_tensor_data(file_handle: Any, tensors: list[dict[str, Any]]
 
             # Determine bytes per element based on data type
             type_sizes = {
-                "float32": 4, "float16": 2, "int32": 4, "int16": 2,
-                "int8": 1, "uint8": 1, "bool": 1, "double": 8,
+                "float32": 4,
+                "float16": 2,
+                "int32": 4,
+                "int16": 2,
+                "int8": 1,
+                "uint8": 1,
+                "bool": 1,
+                "double": 8,
             }
             bytes_per_element = type_sizes.get(data_type, 4)
             total_bytes = total_elements * bytes_per_element
 
-            logger.debug("Writing tensor %s: %s elements (%d bytes)",
-                        tensor_name, total_elements, total_bytes)
+            logger.debug(
+                "Writing tensor %s: %s elements (%d bytes)",
+                tensor_name,
+                total_elements,
+                total_bytes,
+            )
 
             # Generate realistic data based on tensor role and dimensions
             if tensor_role == "embedding" or "embed" in tensor_name.lower():
@@ -2353,7 +2427,7 @@ def _write_realistic_tensor_data(file_handle: Any, tensors: list[dict[str, Any]]
             # Write data in chunks to handle large tensors efficiently
             chunk_size = min(8192, len(tensor_data))  # 8KB chunks
             for i in range(0, len(tensor_data), chunk_size):
-                chunk = tensor_data[i:i + chunk_size]
+                chunk = tensor_data[i : i + chunk_size]
                 file_handle.write(chunk)
 
     except Exception as e:
@@ -2388,7 +2462,7 @@ def _generate_embedding_data(dims: list[int], data_type: str, total_elements: in
         # Embedding values typically in range [-0.1, 0.1] with some structure
         for i in range(total_elements):
             # Add some patterns to make embeddings more realistic
-            base_val = (random.gauss(0, 0.05))  # Small Gaussian distribution
+            base_val = random.gauss(0, 0.05)  # Small Gaussian distribution
             # Add positional encoding-like patterns for some dimensions
             if len(dims) >= 2 and i % dims[-1] < 64:  # First 64 dimensions get positional patterns
                 pos_component = 0.01 * math.sin(i * 0.01) * math.cos(i * 0.001)
@@ -2650,6 +2724,7 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
 
 # === Response Generation Helpers ===
 
+
 def _generate_error_response(error: str, code: int = 500) -> dict[str, Any]:
     """Generate error response.
 
@@ -2767,8 +2842,8 @@ if __name__ == '__main__':
 
 # === Data Augmentation Helpers ===
 
-def _perform_augmentation(data: dict[str, Any],
-                        augmentation_type: str) -> dict[str, Any]:
+
+def _perform_augmentation(data: dict[str, Any], augmentation_type: str) -> dict[str, Any]:
     """Perform data augmentation.
 
     Args:
@@ -2809,6 +2884,7 @@ def _perform_augmentation(data: dict[str, Any],
 
 # === Thread Functions ===
 
+
 def _run_autonomous_patching_thread(target: Callable, args: tuple) -> threading.Thread:
     """Run autonomous patching in a thread.
 
@@ -2837,16 +2913,23 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
         Thread object running Ghidra analysis
 
     """
+
     def run_ghidra():
         """Thread function to run Ghidra analysis."""
         try:
-            subprocess.run([
-                ghidra_path,
-                binary,
-                "-import",
-                "-scriptPath", os.path.dirname(script),
-                "-postScript", os.path.basename(script),
-            ], check=True, text=True)
+            subprocess.run(
+                [
+                    ghidra_path,
+                    binary,
+                    "-import",
+                    "-scriptPath",
+                    os.path.dirname(script),
+                    "-postScript",
+                    os.path.basename(script),
+                ],
+                check=True,
+                text=True,
+            )
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Ghidra thread error: %s", e)
 
@@ -2855,8 +2938,9 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
     return thread
 
 
-def _run_report_generation_thread(report_func: Callable,
-                                report_data: dict[str, Any]) -> threading.Thread:
+def _run_report_generation_thread(
+    report_func: Callable, report_data: dict[str, Any]
+) -> threading.Thread:
     """Run report generation in a thread.
 
     Args:
@@ -2878,46 +2962,77 @@ def _run_report_generation_thread(report_func: Callable,
 # Export all functions
 __all__ = [
     # Protocol and Network Helpers
-    "_add_protocol_fingerprinter_results", "_analyze_requests",
-    "_build_cm_packet", "_handle_check_license", "_handle_decrypt",
-    "_handle_encrypt", "_handle_get_info", "_handle_get_key",
-    "_handle_get_license", "_handle_license_query", "_handle_license_release",
-    "_handle_license_request", "_handle_login", "_handle_logout",
-    "_handle_read_memory", "_handle_request", "_handle_return_license",
+    "_add_protocol_fingerprinter_results",
+    "_analyze_requests",
+    "_build_cm_packet",
+    "_handle_check_license",
+    "_handle_decrypt",
+    "_handle_encrypt",
+    "_handle_get_info",
+    "_handle_get_key",
+    "_handle_get_license",
+    "_handle_license_query",
+    "_handle_license_release",
+    "_handle_license_request",
+    "_handle_login",
+    "_handle_logout",
+    "_handle_read_memory",
+    "_handle_request",
+    "_handle_return_license",
     "_handle_write_memory",
-
     # Analysis and Comparison Helpers
-    "_analyze_snapshot_differences", "_compare_filesystem_state",
-    "_compare_memory_dumps", "_compare_mmap_state", "_compare_network_state",
-    "_compare_process_state", "_get_filesystem_state", "_get_memory_regions",
-    "_get_mmap_state", "_get_network_state", "_get_process_state",
-
+    "_analyze_snapshot_differences",
+    "_compare_filesystem_state",
+    "_compare_memory_dumps",
+    "_compare_mmap_state",
+    "_compare_network_state",
+    "_compare_process_state",
+    "_get_filesystem_state",
+    "_get_memory_regions",
+    "_get_mmap_state",
+    "_get_network_state",
+    "_get_process_state",
     # Data Management Helpers
-    "_archive_data", "_browse_for_output", "_browse_for_source",
-    "_build_knowledge_index", "_dump_memory_region", "_export_validation_report",
-    "_fix_dataset_issues", "_init_response_templates", "_learn_pattern",
-    "_match_pattern", "_preview_dataset", "_release_buffer", "_save_patterns",
-
+    "_archive_data",
+    "_browse_for_output",
+    "_browse_for_source",
+    "_build_knowledge_index",
+    "_dump_memory_region",
+    "_export_validation_report",
+    "_fix_dataset_issues",
+    "_init_response_templates",
+    "_learn_pattern",
+    "_match_pattern",
+    "_preview_dataset",
+    "_release_buffer",
+    "_save_patterns",
     # GPU/Hardware Acceleration Helpers
-    "_calculate_hash_opencl", "_cpu_hash_calculation", "_cuda_hash_calculation",
-    "_gpu_entropy_calculation", "_opencl_entropy_calculation",
-    "_opencl_hash_calculation", "_pytorch_entropy_calculation",
-    "_pytorch_hash_calculation", "_pytorch_pattern_matching",
-    "_tensorflow_entropy_calculation", "_tensorflow_hash_calculation",
-    "_tensorflow_pattern_matching", "_validate_gpu_memory",
-
+    "_calculate_hash_opencl",
+    "_cpu_hash_calculation",
+    "_cuda_hash_calculation",
+    "_gpu_entropy_calculation",
+    "_opencl_entropy_calculation",
+    "_opencl_hash_calculation",
+    "_pytorch_entropy_calculation",
+    "_pytorch_hash_calculation",
+    "_pytorch_pattern_matching",
+    "_tensorflow_entropy_calculation",
+    "_tensorflow_hash_calculation",
+    "_tensorflow_pattern_matching",
+    "_validate_gpu_memory",
     # Model Conversion Helpers
-    "_convert_to_gguf", "_manual_gguf_conversion", "_write_gguf_metadata",
+    "_convert_to_gguf",
+    "_manual_gguf_conversion",
+    "_write_gguf_metadata",
     "_write_gguf_tensor_info",
-
     # Response Generation Helpers
-    "_generate_error_response", "_generate_generic_response",
+    "_generate_error_response",
+    "_generate_generic_response",
     "_generate_mitm_script",
-
     # Data Augmentation Helpers
     "_perform_augmentation",
-
     # Thread Functions
-    "_run_autonomous_patching_thread", "_run_ghidra_thread",
+    "_run_autonomous_patching_thread",
+    "_run_ghidra_thread",
     "_run_report_generation_thread",
 ]

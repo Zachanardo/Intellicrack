@@ -37,6 +37,7 @@ import time
 # Import optional performance/debugging modules
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -46,6 +47,7 @@ try:
     import io
     import pstats
     import tracemalloc
+
     PROFILING_AVAILABLE = True
 except ImportError:
     PROFILING_AVAILABLE = False
@@ -156,6 +158,7 @@ except ImportError as e:
 
         from intellicrack.config import CONFIG
         from intellicrack.utils.analysis.binary_analysis import analyze_binary
+
         print("Basic analysis functionality available.")
     except ImportError:
         print("Critical imports failed. Cannot continue.")
@@ -241,6 +244,7 @@ class IntellicrackCLI:
 
         # Enable import debugging
         import sys
+
         sys.settrace(self._trace_calls)
 
     def _trace_calls(self, frame, event, arg):
@@ -444,8 +448,10 @@ class IntellicrackCLI:
 
         if self.args.commercial_protections:
             logger.info("Detecting commercial protection systems...")
-            self.results["commercial_protections"] = protection_detection.detect_commercial_protections(
-                self.binary_path,
+            self.results["commercial_protections"] = (
+                protection_detection.detect_commercial_protections(
+                    self.binary_path,
+                )
             )
 
         if self.args.anti_debug:
@@ -508,6 +514,7 @@ class IntellicrackCLI:
 
             # Use memory patching utility functions
             from intellicrack.core.patching.memory_patcher import apply_memory_patches
+
             results = apply_memory_patches(
                 self.binary_path,
                 patch_def,
@@ -622,7 +629,9 @@ class IntellicrackCLI:
             self.results["qemu_emulator"] = {
                 "status": "initialized",
                 "emulator_id": id(emulator),
-                "target_binary": emulator.target_binary if hasattr(emulator, "target_binary") else self.binary_path,
+                "target_binary": emulator.target_binary
+                if hasattr(emulator, "target_binary")
+                else self.binary_path,
                 "emulation_ready": True,
             }
             logger.info(f"QEMU emulator ready for {os.path.basename(self.binary_path)}")
@@ -649,6 +658,7 @@ class IntellicrackCLI:
         if self.args.generate_license_key:
             logger.info("Generating license key...")
             from intellicrack.utils.exploitation import generate_license_key
+
             algorithm = self.args.license_algorithm or "auto-detect"
             license_key = generate_license_key(
                 self.binary_path,
@@ -662,6 +672,7 @@ class IntellicrackCLI:
         if self.args.ai_assistant:
             logger.info("Running AI Assistant...")
             from intellicrack.ai.ai_tools import AIAssistant
+
             assistant = AIAssistant()
 
             question = self.args.ai_question or "Analyze this binary"
@@ -682,6 +693,7 @@ class IntellicrackCLI:
         if hasattr(self.args, "ai_reasoning") and self.args.ai_reasoning:
             logger.info("Running AI Reasoning...")
             from intellicrack.ai.ai_assistant_enhanced import IntellicrackAIAssistant
+
             ai_assistant = IntellicrackAIAssistant()
 
             # Prepare task data from analysis results
@@ -697,11 +709,13 @@ class IntellicrackCLI:
                 protection_data = self.results["protection_detection"]
                 if isinstance(protection_data, dict) and "protections" in protection_data:
                     for protection in protection_data["protections"]:
-                        task_data["patterns"].append({
-                            "name": protection.get("name", "Unknown"),
-                            "type": protection.get("type", "Unknown"),
-                            "confidence": protection.get("confidence", 0),
-                        })
+                        task_data["patterns"].append(
+                            {
+                                "name": protection.get("name", "Unknown"),
+                                "type": protection.get("type", "Unknown"),
+                                "confidence": protection.get("confidence", 0),
+                            }
+                        )
 
             # Add ML results if available
             if "ml_analysis" in self.results:
@@ -853,12 +867,14 @@ class IntellicrackCLI:
         try:
             # Save results to temporary file
             import tempfile
+
             with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
                 json.dump(self.results, f, indent=2, default=str)
                 results_file = f.name
 
             # Launch GUI with results
             from intellicrack.ui.main_app import launch_with_results
+
             logger.info(f"Launching GUI with results from {results_file}")
             launch_with_results(results_file, self.binary_path)
 
@@ -932,10 +948,8 @@ class IntellicrackCLI:
                 else:
                     node_colors.append("lightblue")
 
-            nx.draw_networkx_nodes(G, pos, node_color=node_colors,
-                                 node_size=1000, alpha=0.9)
-            nx.draw_networkx_edges(G, pos, edge_color="gray",
-                                 arrows=True, arrowsize=20, alpha=0.6)
+            nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=1000, alpha=0.9)
+            nx.draw_networkx_edges(G, pos, edge_color="gray", arrows=True, arrowsize=20, alpha=0.6)
             nx.draw_networkx_labels(G, pos, font_size=8)
 
             # Add fancy boxes around important nodes using FancyBboxPatch
@@ -944,7 +958,9 @@ class IntellicrackCLI:
                 if G.nodes[node].get("type") in ["entry", "exit"]:
                     # Create fancy box for entry/exit nodes
                     fancy_box = FancyBboxPatch(
-                        (x - 0.1, y - 0.05), 0.2, 0.1,
+                        (x - 0.1, y - 0.05),
+                        0.2,
+                        0.1,
                         boxstyle="round,pad=0.02",
                         facecolor="yellow",
                         edgecolor="red",
@@ -1082,10 +1098,14 @@ class IntellicrackCLI:
         """Setup cloud license hooking using CloudLicenseHooker."""
         try:
             hooker = CloudLicenseHooker()
-            hooker.configure_endpoints([
-                os.environ.get("LICENSE_VALIDATION_URL", "https://license.internal/api/v1/validate"),
-                os.environ.get("AUTH_CHECK_URL", "https://auth.internal/license/check"),
-            ])
+            hooker.configure_endpoints(
+                [
+                    os.environ.get(
+                        "LICENSE_VALIDATION_URL", "https://license.internal/api/v1/validate"
+                    ),
+                    os.environ.get("AUTH_CHECK_URL", "https://auth.internal/license/check"),
+                ]
+            )
             hooker.set_bypass_mode(True)
 
             self.results["cloud_license_hook"] = {
@@ -1102,11 +1122,13 @@ class IntellicrackCLI:
         try:
             emulator = LicenseServerEmulator()
             emulator.set_port(8080)
-            emulator.configure_responses({
-                "license_valid": True,
-                "expiry_date": "2099-12-31",
-                "features": ["premium", "enterprise"],
-            })
+            emulator.configure_responses(
+                {
+                    "license_valid": True,
+                    "expiry_date": "2099-12-31",
+                    "features": ["premium", "enterprise"],
+                }
+            )
 
             self.results["license_emulator"] = {
                 "emulator": emulator,
@@ -1414,310 +1436,374 @@ def parse_arguments():
 
     # Core Analysis Options
     analysis_group = parser.add_argument_group("Core Analysis")
-    analysis_group.add_argument("--comprehensive", "-c", action="store_true",
-                               help="Run comprehensive analysis (all basic modules)")
-    analysis_group.add_argument("--skip-basic", action="store_true",
-                               help="Skip basic binary analysis")
-    analysis_group.add_argument("--cfg-analysis", action="store_true",
-                               help="Generate control flow graph")
-    analysis_group.add_argument("--cfg-output", metavar="FILE",
-                               help="Output file for CFG")
-    analysis_group.add_argument("--cfg-format", choices=["dot", "json"], default="dot",
-                               help="CFG output format")
-    analysis_group.add_argument("--symbolic-execution", action="store_true",
-                               help="Run symbolic execution")
-    analysis_group.add_argument("--symbolic-address", metavar="ADDR",
-                               help="Start symbolic execution from address (hex)")
-    analysis_group.add_argument("--concolic-execution", action="store_true",
-                               help="Run concolic execution")
-    analysis_group.add_argument("--concolic-coverage", type=float, default=0.8,
-                               help="Target code coverage (0.0-1.0)")
-    analysis_group.add_argument("--taint-analysis", action="store_true",
-                               help="Perform taint analysis")
-    analysis_group.add_argument("--taint-sources", metavar="SOURCES",
-                               help="Comma-separated taint sources")
-    analysis_group.add_argument("--rop-gadgets", action="store_true",
-                               help="Find ROP gadgets")
-    analysis_group.add_argument("--rop-max-gadgets", type=int, default=1000,
-                               help="Maximum gadgets to find")
-    analysis_group.add_argument("--rop-chain", metavar="GOAL",
-                               help="Generate ROP chain for goal")
-    analysis_group.add_argument("--similarity-search", action="store_true",
-                               help="Search for similar binaries")
-    analysis_group.add_argument("--similarity-db", metavar="PATH",
-                               help="Database for similarity search")
-    analysis_group.add_argument("--similarity-threshold", type=float, default=0.8,
-                               help="Similarity threshold (0.0-1.0)")
-    analysis_group.add_argument("--multi-format", action="store_true",
-                               help="Multi-format binary analysis")
-    analysis_group.add_argument("--section-analysis", action="store_true",
-                               help="Analyze binary sections")
-    analysis_group.add_argument("--import-export", action="store_true",
-                               help="Analyze imports and exports")
+    analysis_group.add_argument(
+        "--comprehensive",
+        "-c",
+        action="store_true",
+        help="Run comprehensive analysis (all basic modules)",
+    )
+    analysis_group.add_argument(
+        "--skip-basic", action="store_true", help="Skip basic binary analysis"
+    )
+    analysis_group.add_argument(
+        "--cfg-analysis", action="store_true", help="Generate control flow graph"
+    )
+    analysis_group.add_argument("--cfg-output", metavar="FILE", help="Output file for CFG")
+    analysis_group.add_argument(
+        "--cfg-format", choices=["dot", "json"], default="dot", help="CFG output format"
+    )
+    analysis_group.add_argument(
+        "--symbolic-execution", action="store_true", help="Run symbolic execution"
+    )
+    analysis_group.add_argument(
+        "--symbolic-address", metavar="ADDR", help="Start symbolic execution from address (hex)"
+    )
+    analysis_group.add_argument(
+        "--concolic-execution", action="store_true", help="Run concolic execution"
+    )
+    analysis_group.add_argument(
+        "--concolic-coverage", type=float, default=0.8, help="Target code coverage (0.0-1.0)"
+    )
+    analysis_group.add_argument(
+        "--taint-analysis", action="store_true", help="Perform taint analysis"
+    )
+    analysis_group.add_argument(
+        "--taint-sources", metavar="SOURCES", help="Comma-separated taint sources"
+    )
+    analysis_group.add_argument("--rop-gadgets", action="store_true", help="Find ROP gadgets")
+    analysis_group.add_argument(
+        "--rop-max-gadgets", type=int, default=1000, help="Maximum gadgets to find"
+    )
+    analysis_group.add_argument("--rop-chain", metavar="GOAL", help="Generate ROP chain for goal")
+    analysis_group.add_argument(
+        "--similarity-search", action="store_true", help="Search for similar binaries"
+    )
+    analysis_group.add_argument(
+        "--similarity-db", metavar="PATH", help="Database for similarity search"
+    )
+    analysis_group.add_argument(
+        "--similarity-threshold", type=float, default=0.8, help="Similarity threshold (0.0-1.0)"
+    )
+    analysis_group.add_argument(
+        "--multi-format", action="store_true", help="Multi-format binary analysis"
+    )
+    analysis_group.add_argument(
+        "--section-analysis", action="store_true", help="Analyze binary sections"
+    )
+    analysis_group.add_argument(
+        "--import-export", action="store_true", help="Analyze imports and exports"
+    )
 
     # Vulnerability Detection
     vuln_group = parser.add_argument_group("Vulnerability Detection")
-    vuln_group.add_argument("--vulnerability-scan", "-v", action="store_true",
-                           help="Scan for security vulnerabilities")
-    vuln_group.add_argument("--vuln-scan-depth", choices=["quick", "normal", "deep"],
-                           default="normal", help="Vulnerability scan depth")
-    vuln_group.add_argument("--weak-crypto", action="store_true",
-                           help="Detect weak cryptography")
-    vuln_group.add_argument("--ml-vulnerability", action="store_true",
-                           help="ML-based vulnerability prediction")
-    vuln_group.add_argument("--ml-model", metavar="PATH",
-                           help="Custom ML model for prediction")
+    vuln_group.add_argument(
+        "--vulnerability-scan", "-v", action="store_true", help="Scan for security vulnerabilities"
+    )
+    vuln_group.add_argument(
+        "--vuln-scan-depth",
+        choices=["quick", "normal", "deep"],
+        default="normal",
+        help="Vulnerability scan depth",
+    )
+    vuln_group.add_argument("--weak-crypto", action="store_true", help="Detect weak cryptography")
+    vuln_group.add_argument(
+        "--ml-vulnerability", action="store_true", help="ML-based vulnerability prediction"
+    )
+    vuln_group.add_argument("--ml-model", metavar="PATH", help="Custom ML model for prediction")
 
     # Protection Detection
     protection_group = parser.add_argument_group("Protection Detection")
-    protection_group.add_argument("--detect-packing", "-p", action="store_true",
-                                 help="Detect packing and obfuscation")
-    protection_group.add_argument("--detect-protections", action="store_true",
-                                 help="Scan for all known protections")
-    protection_group.add_argument("--commercial-protections", action="store_true",
-                                 help="Detect commercial protection systems")
-    protection_group.add_argument("--anti-debug", action="store_true",
-                                 help="Detect anti-debugging techniques")
-    protection_group.add_argument("--license-analysis", "-l", action="store_true",
-                                 help="Analyze license mechanisms")
+    protection_group.add_argument(
+        "--detect-packing", "-p", action="store_true", help="Detect packing and obfuscation"
+    )
+    protection_group.add_argument(
+        "--detect-protections", action="store_true", help="Scan for all known protections"
+    )
+    protection_group.add_argument(
+        "--commercial-protections", action="store_true", help="Detect commercial protection systems"
+    )
+    protection_group.add_argument(
+        "--anti-debug", action="store_true", help="Detect anti-debugging techniques"
+    )
+    protection_group.add_argument(
+        "--license-analysis", "-l", action="store_true", help="Analyze license mechanisms"
+    )
 
     # Network Analysis
     network_group = parser.add_argument_group("Network Analysis")
-    network_group.add_argument("--network-capture", action="store_true",
-                              help="Capture network traffic")
-    network_group.add_argument("--network-interface", metavar="IFACE",
-                              default="eth0", help="Network interface")
-    network_group.add_argument("--capture-duration", type=int,
-                              help="Capture duration in seconds")
-    network_group.add_argument("--capture-filter", metavar="FILTER",
-                              help="BPF filter expression")
-    network_group.add_argument("--protocol-fingerprint", action="store_true",
-                              help="Fingerprint network protocols")
-    network_group.add_argument("--pcap-file", metavar="FILE",
-                              help="Analyze protocols from PCAP")
-    network_group.add_argument("--ssl-intercept", action="store_true",
-                              help="Setup SSL/TLS interception")
-    network_group.add_argument("--ssl-port", type=int, default=8443,
-                              help="SSL interception port")
-    network_group.add_argument("--ssl-cert", metavar="FILE",
-                              help="SSL certificate file")
+    network_group.add_argument(
+        "--network-capture", action="store_true", help="Capture network traffic"
+    )
+    network_group.add_argument(
+        "--network-interface", metavar="IFACE", default="eth0", help="Network interface"
+    )
+    network_group.add_argument("--capture-duration", type=int, help="Capture duration in seconds")
+    network_group.add_argument("--capture-filter", metavar="FILTER", help="BPF filter expression")
+    network_group.add_argument(
+        "--protocol-fingerprint", action="store_true", help="Fingerprint network protocols"
+    )
+    network_group.add_argument("--pcap-file", metavar="FILE", help="Analyze protocols from PCAP")
+    network_group.add_argument(
+        "--ssl-intercept", action="store_true", help="Setup SSL/TLS interception"
+    )
+    network_group.add_argument("--ssl-port", type=int, default=8443, help="SSL interception port")
+    network_group.add_argument("--ssl-cert", metavar="FILE", help="SSL certificate file")
 
     # Patching Operations
     patch_group = parser.add_argument_group("Patching Operations")
-    patch_group.add_argument("--suggest-patches", action="store_true",
-                            help="Generate patch suggestions")
-    patch_group.add_argument("--apply-patch", action="store_true",
-                            help="Apply patch from file")
-    patch_group.add_argument("--patch-file", metavar="FILE",
-                            help="Patch definition file (JSON)")
-    patch_group.add_argument("--memory-patch", action="store_true",
-                            help="Apply patches in memory only")
-    patch_group.add_argument("--generate-payload", action="store_true",
-                            help="Generate exploit payload")
-    patch_group.add_argument("--payload-type", choices=["license", "bypass", "hook"],
-                            help="Payload type")
-    patch_group.add_argument("--payload-options", metavar="OPTS",
-                            help="Payload options (JSON)")
-    patch_group.add_argument("--payload-output", metavar="FILE",
-                            help="Save payload to file")
+    patch_group.add_argument(
+        "--suggest-patches", action="store_true", help="Generate patch suggestions"
+    )
+    patch_group.add_argument("--apply-patch", action="store_true", help="Apply patch from file")
+    patch_group.add_argument("--patch-file", metavar="FILE", help="Patch definition file (JSON)")
+    patch_group.add_argument(
+        "--memory-patch", action="store_true", help="Apply patches in memory only"
+    )
+    patch_group.add_argument(
+        "--generate-payload", action="store_true", help="Generate exploit payload"
+    )
+    patch_group.add_argument(
+        "--payload-type", choices=["license", "bypass", "hook"], help="Payload type"
+    )
+    patch_group.add_argument("--payload-options", metavar="OPTS", help="Payload options (JSON)")
+    patch_group.add_argument("--payload-output", metavar="FILE", help="Save payload to file")
 
     # Protection Bypass
     bypass_group = parser.add_argument_group("Protection Bypass")
-    bypass_group.add_argument("--bypass-tpm", action="store_true",
-                             help="Generate TPM bypass")
-    bypass_group.add_argument("--tpm-method", choices=["api", "virtual", "patch"],
-                             default="api", help="TPM bypass method")
-    bypass_group.add_argument("--bypass-vm-detection", action="store_true",
-                             help="Bypass VM detection")
-    bypass_group.add_argument("--aggressive-bypass", action="store_true",
-                             help="Use aggressive bypass techniques")
-    bypass_group.add_argument("--emulate-dongle", action="store_true",
-                             help="Emulate hardware dongle")
-    bypass_group.add_argument("--dongle-type", choices=["safenet", "hasp", "codemeter"],
-                             help="Dongle type to emulate")
-    bypass_group.add_argument("--dongle-id", metavar="ID",
-                             help="Dongle ID to emulate")
-    bypass_group.add_argument("--hwid-spoof", action="store_true",
-                             help="Generate HWID spoofing")
-    bypass_group.add_argument("--target-hwid", metavar="HWID",
-                             help="Target HWID to spoof")
-    bypass_group.add_argument("--time-bomb-defuser", action="store_true",
-                             help="Generate time bomb defusion scripts")
-    bypass_group.add_argument("--telemetry-blocker", action="store_true",
-                             help="Generate telemetry blocking configuration")
+    bypass_group.add_argument("--bypass-tpm", action="store_true", help="Generate TPM bypass")
+    bypass_group.add_argument(
+        "--tpm-method", choices=["api", "virtual", "patch"], default="api", help="TPM bypass method"
+    )
+    bypass_group.add_argument(
+        "--bypass-vm-detection", action="store_true", help="Bypass VM detection"
+    )
+    bypass_group.add_argument(
+        "--aggressive-bypass", action="store_true", help="Use aggressive bypass techniques"
+    )
+    bypass_group.add_argument(
+        "--emulate-dongle", action="store_true", help="Emulate hardware dongle"
+    )
+    bypass_group.add_argument(
+        "--dongle-type", choices=["safenet", "hasp", "codemeter"], help="Dongle type to emulate"
+    )
+    bypass_group.add_argument("--dongle-id", metavar="ID", help="Dongle ID to emulate")
+    bypass_group.add_argument("--hwid-spoof", action="store_true", help="Generate HWID spoofing")
+    bypass_group.add_argument("--target-hwid", metavar="HWID", help="Target HWID to spoof")
+    bypass_group.add_argument(
+        "--time-bomb-defuser", action="store_true", help="Generate time bomb defusion scripts"
+    )
+    bypass_group.add_argument(
+        "--telemetry-blocker", action="store_true", help="Generate telemetry blocking configuration"
+    )
 
     # Machine Learning
     ml_group = parser.add_argument_group("Machine Learning")
-    ml_group.add_argument("--ml-similarity", action="store_true",
-                         help="ML-based similarity analysis")
-    ml_group.add_argument("--ml-database", metavar="PATH",
-                         help="ML feature database")
-    ml_group.add_argument("--train-model", action="store_true",
-                         help="Train custom ML model")
-    ml_group.add_argument("--training-data", metavar="PATH",
-                         help="Training data directory")
-    ml_group.add_argument("--model-type", choices=["rf", "nn", "svm"],
-                         default="rf", help="Model type to train")
-    ml_group.add_argument("--training-epochs", type=int, default=100,
-                         help="Training epochs")
-    ml_group.add_argument("--save-model", metavar="PATH",
-                         help="Save trained model")
+    ml_group.add_argument(
+        "--ml-similarity", action="store_true", help="ML-based similarity analysis"
+    )
+    ml_group.add_argument("--ml-database", metavar="PATH", help="ML feature database")
+    ml_group.add_argument("--train-model", action="store_true", help="Train custom ML model")
+    ml_group.add_argument("--training-data", metavar="PATH", help="Training data directory")
+    ml_group.add_argument(
+        "--model-type", choices=["rf", "nn", "svm"], default="rf", help="Model type to train"
+    )
+    ml_group.add_argument("--training-epochs", type=int, default=100, help="Training epochs")
+    ml_group.add_argument("--save-model", metavar="PATH", help="Save trained model")
 
     # External Tools
     tools_group = parser.add_argument_group("External Tools")
-    tools_group.add_argument("--ghidra-analysis", action="store_true",
-                            help="Run Ghidra analysis")
-    tools_group.add_argument("--ghidra-script", metavar="SCRIPT",
-                            help="Ghidra script to run")
-    tools_group.add_argument("--radare2-analysis", action="store_true",
-                            help="Run Radare2 analysis")
-    tools_group.add_argument("--r2-commands", metavar="CMDS",
-                            help="Radare2 commands to execute")
-    tools_group.add_argument("--qemu-emulate", action="store_true",
-                            help="Emulate with QEMU")
-    tools_group.add_argument("--qemu-arch", metavar="ARCH",
-                            help="QEMU architecture")
-    tools_group.add_argument("--qemu-snapshot", action="store_true",
-                            help="Create QEMU snapshot")
-    tools_group.add_argument("--frida-script", metavar="SCRIPT",
-                            help="Run Frida script")
-    tools_group.add_argument("--frida-spawn", action="store_true",
-                            help="Spawn process for Frida")
+    tools_group.add_argument("--ghidra-analysis", action="store_true", help="Run Ghidra analysis")
+    tools_group.add_argument("--ghidra-script", metavar="SCRIPT", help="Ghidra script to run")
+    tools_group.add_argument("--radare2-analysis", action="store_true", help="Run Radare2 analysis")
+    tools_group.add_argument("--r2-commands", metavar="CMDS", help="Radare2 commands to execute")
+    tools_group.add_argument("--qemu-emulate", action="store_true", help="Emulate with QEMU")
+    tools_group.add_argument("--qemu-arch", metavar="ARCH", help="QEMU architecture")
+    tools_group.add_argument("--qemu-snapshot", action="store_true", help="Create QEMU snapshot")
+    tools_group.add_argument("--frida-script", metavar="SCRIPT", help="Run Frida script")
+    tools_group.add_argument("--frida-spawn", action="store_true", help="Spawn process for Frida")
 
     # Processing Options
     processing_group = parser.add_argument_group("Processing Options")
-    processing_group.add_argument("--gpu-accelerate", "-g", action="store_true",
-                                 help="Use GPU acceleration")
-    processing_group.add_argument("--distributed", action="store_true",
-                                 help="Use distributed processing")
-    processing_group.add_argument("--distributed-backend", choices=["ray", "dask"],
-                                 default="ray", help="Distributed backend")
-    processing_group.add_argument("--threads", "-t", type=int, default=4,
-                                 help="Number of analysis threads")
-    processing_group.add_argument("--incremental", action="store_true",
-                                 help="Use incremental analysis cache")
-    processing_group.add_argument("--memory-optimized", action="store_true",
-                                 help="Use memory-optimized loading")
+    processing_group.add_argument(
+        "--gpu-accelerate", "-g", action="store_true", help="Use GPU acceleration"
+    )
+    processing_group.add_argument(
+        "--distributed", action="store_true", help="Use distributed processing"
+    )
+    processing_group.add_argument(
+        "--distributed-backend", choices=["ray", "dask"], default="ray", help="Distributed backend"
+    )
+    processing_group.add_argument(
+        "--threads", "-t", type=int, default=4, help="Number of analysis threads"
+    )
+    processing_group.add_argument(
+        "--incremental", action="store_true", help="Use incremental analysis cache"
+    )
+    processing_group.add_argument(
+        "--memory-optimized", action="store_true", help="Use memory-optimized loading"
+    )
 
     # Plugin System
     plugin_group = parser.add_argument_group("Plugin System")
-    plugin_group.add_argument("--plugin-list", action="store_true",
-                             help="List available plugins")
-    plugin_group.add_argument("--plugin-run", metavar="PLUGIN",
-                             help="Run specific plugin")
-    plugin_group.add_argument("--plugin-params", metavar="PARAMS",
-                             help="Plugin parameters (JSON)")
-    plugin_group.add_argument("--plugin-install", metavar="PATH",
-                             help="Install plugin from path")
-    plugin_group.add_argument("--plugin-remote", action="store_true",
-                             help="Execute plugin on remote server")
-    plugin_group.add_argument("--plugin-server", metavar="SERVER",
-                             help="Remote plugin server address")
-    plugin_group.add_argument("--plugin-port", type=int, default=9999,
-                             help="Remote plugin server port")
-    plugin_group.add_argument("--plugin-sandbox", action="store_true",
-                             help="Run plugin in sandboxed environment")
+    plugin_group.add_argument("--plugin-list", action="store_true", help="List available plugins")
+    plugin_group.add_argument("--plugin-run", metavar="PLUGIN", help="Run specific plugin")
+    plugin_group.add_argument("--plugin-params", metavar="PARAMS", help="Plugin parameters (JSON)")
+    plugin_group.add_argument("--plugin-install", metavar="PATH", help="Install plugin from path")
+    plugin_group.add_argument(
+        "--plugin-remote", action="store_true", help="Execute plugin on remote server"
+    )
+    plugin_group.add_argument(
+        "--plugin-server", metavar="SERVER", help="Remote plugin server address"
+    )
+    plugin_group.add_argument(
+        "--plugin-port", type=int, default=9999, help="Remote plugin server port"
+    )
+    plugin_group.add_argument(
+        "--plugin-sandbox", action="store_true", help="Run plugin in sandboxed environment"
+    )
 
     # Utility Features
     utility_group = parser.add_argument_group("Utility Features")
-    utility_group.add_argument("--extract-icon", action="store_true",
-                              help="Extract executable icon")
-    utility_group.add_argument("--icon-output", metavar="FILE",
-                              help="Icon output path")
-    utility_group.add_argument("--generate-report", action="store_true",
-                              help="Generate detailed report")
-    utility_group.add_argument("--report-format", choices=["pdf", "html"],
-                              help="Report format")
-    utility_group.add_argument("--generate-license-key", action="store_true",
-                              help="Generate license key using detected algorithm")
-    utility_group.add_argument("--license-algorithm", metavar="ALG",
-                              help="License algorithm to use (auto-detect if not specified)")
-    utility_group.add_argument("--ai-assistant", action="store_true",
-                              help="AI assistant Q&A mode (non-interactive)")
-    utility_group.add_argument("--ai-question", metavar="QUESTION",
-                              help="Question for AI assistant")
-    utility_group.add_argument("--ai-context", metavar="CONTEXT",
-                              help="Context for AI assistant (analysis results, etc.)")
-    utility_group.add_argument("--ai-reasoning", action="store_true",
-                              help="Perform AI reasoning on analysis results (cracking, patching, exploitation, protection detection)")
+    utility_group.add_argument(
+        "--extract-icon", action="store_true", help="Extract executable icon"
+    )
+    utility_group.add_argument("--icon-output", metavar="FILE", help="Icon output path")
+    utility_group.add_argument(
+        "--generate-report", action="store_true", help="Generate detailed report"
+    )
+    utility_group.add_argument("--report-format", choices=["pdf", "html"], help="Report format")
+    utility_group.add_argument(
+        "--generate-license-key",
+        action="store_true",
+        help="Generate license key using detected algorithm",
+    )
+    utility_group.add_argument(
+        "--license-algorithm",
+        metavar="ALG",
+        help="License algorithm to use (auto-detect if not specified)",
+    )
+    utility_group.add_argument(
+        "--ai-assistant", action="store_true", help="AI assistant Q&A mode (non-interactive)"
+    )
+    utility_group.add_argument(
+        "--ai-question", metavar="QUESTION", help="Question for AI assistant"
+    )
+    utility_group.add_argument(
+        "--ai-context", metavar="CONTEXT", help="Context for AI assistant (analysis results, etc.)"
+    )
+    utility_group.add_argument(
+        "--ai-reasoning",
+        action="store_true",
+        help="Perform AI reasoning on analysis results (cracking, patching, exploitation, protection detection)",
+    )
 
     # GUI Integration
     gui_group = parser.add_argument_group("GUI Integration")
-    gui_group.add_argument("--launch-gui", action="store_true",
-                          help="Launch GUI with analysis results preloaded")
-    gui_group.add_argument("--gui-export", metavar="FILE",
-                          help="Export results to GUI-compatible format")
-    gui_group.add_argument("--visual-cfg", action="store_true",
-                          help="Generate visual CFG images (PNG/SVG)")
-    gui_group.add_argument("--visual-cfg-output", metavar="FILE",
-                          help="Output path for visual CFG (default: cfg.png)")
-    gui_group.add_argument("--interactive-hex", action="store_true",
-                          help="Launch interactive hex editor with file")
+    gui_group.add_argument(
+        "--launch-gui", action="store_true", help="Launch GUI with analysis results preloaded"
+    )
+    gui_group.add_argument(
+        "--gui-export", metavar="FILE", help="Export results to GUI-compatible format"
+    )
+    gui_group.add_argument(
+        "--visual-cfg", action="store_true", help="Generate visual CFG images (PNG/SVG)"
+    )
+    gui_group.add_argument(
+        "--visual-cfg-output", metavar="FILE", help="Output path for visual CFG (default: cfg.png)"
+    )
+    gui_group.add_argument(
+        "--interactive-hex", action="store_true", help="Launch interactive hex editor with file"
+    )
 
     # Batch Processing
     batch_group = parser.add_argument_group("Batch Processing")
-    batch_group.add_argument("--batch", metavar="FILE",
-                            help="Batch process files from list")
-    batch_group.add_argument("--batch-output-dir", metavar="DIR",
-                            help="Output directory for batch results")
-    batch_group.add_argument("--batch-parallel", action="store_true",
-                            help="Process batch files in parallel")
+    batch_group.add_argument("--batch", metavar="FILE", help="Batch process files from list")
+    batch_group.add_argument(
+        "--batch-output-dir", metavar="DIR", help="Output directory for batch results"
+    )
+    batch_group.add_argument(
+        "--batch-parallel", action="store_true", help="Process batch files in parallel"
+    )
 
     # Output Options
     output_group = parser.add_argument_group("Output Options")
-    output_group.add_argument("--output", "-o", metavar="FILE",
-                             help="Output file path")
-    output_group.add_argument("--format", "-f",
-                             choices=["text", "json", "pdf", "html"],
-                             default="text", help="Output format")
-    output_group.add_argument("--verbose", "-V", action="store_true",
-                             help="Enable verbose output")
-    output_group.add_argument("--quiet", "-q", action="store_true",
-                             help="Suppress non-essential output")
-    output_group.add_argument("--no-color", action="store_true",
-                             help="Disable colored output")
+    output_group.add_argument("--output", "-o", metavar="FILE", help="Output file path")
+    output_group.add_argument(
+        "--format",
+        "-f",
+        choices=["text", "json", "pdf", "html"],
+        default="text",
+        help="Output format",
+    )
+    output_group.add_argument("--verbose", "-V", action="store_true", help="Enable verbose output")
+    output_group.add_argument(
+        "--quiet", "-q", action="store_true", help="Suppress non-essential output"
+    )
+    output_group.add_argument("--no-color", action="store_true", help="Disable colored output")
 
     # Advanced Options
     advanced_group = parser.add_argument_group("Advanced Options")
-    advanced_group.add_argument("--config", metavar="FILE",
-                               help="Custom configuration file")
-    advanced_group.add_argument("--timeout", type=int, default=300,
-                               help="Analysis timeout in seconds")
-    advanced_group.add_argument("--ignore-errors", action="store_true",
-                               help="Continue on errors")
-    advanced_group.add_argument("--debug", action="store_true",
-                               help="Enable debug mode")
-    advanced_group.add_argument("--debug-mode", action="store_true",
-                               help="Developer debug mode with detailed tracing")
-    advanced_group.add_argument("--profile-performance", action="store_true",
-                               help="Profile performance and show timing metrics")
-    advanced_group.add_argument("--memory-trace", action="store_true",
-                               help="Track and report memory usage during analysis")
+    advanced_group.add_argument("--config", metavar="FILE", help="Custom configuration file")
+    advanced_group.add_argument(
+        "--timeout", type=int, default=300, help="Analysis timeout in seconds"
+    )
+    advanced_group.add_argument("--ignore-errors", action="store_true", help="Continue on errors")
+    advanced_group.add_argument("--debug", action="store_true", help="Enable debug mode")
+    advanced_group.add_argument(
+        "--debug-mode", action="store_true", help="Developer debug mode with detailed tracing"
+    )
+    advanced_group.add_argument(
+        "--profile-performance",
+        action="store_true",
+        help="Profile performance and show timing metrics",
+    )
+    advanced_group.add_argument(
+        "--memory-trace", action="store_true", help="Track and report memory usage during analysis"
+    )
 
     # Help and Information
     help_group = parser.add_argument_group("Help and Information")
-    help_group.add_argument("--help-categories", action="store_true",
-                           help="Show organized feature categories with examples")
-    help_group.add_argument("--list-commands", action="store_true",
-                           help="List all available commands")
-    help_group.add_argument("--help-category", metavar="CATEGORY",
-                           choices=["analysis", "vulnerability", "protection", "network",
-                                  "bypass", "patching", "ml", "tools", "plugins", "processing"],
-                           help="Show help for specific category")
+    help_group.add_argument(
+        "--help-categories",
+        action="store_true",
+        help="Show organized feature categories with examples",
+    )
+    help_group.add_argument(
+        "--list-commands", action="store_true", help="List all available commands"
+    )
+    help_group.add_argument(
+        "--help-category",
+        metavar="CATEGORY",
+        choices=[
+            "analysis",
+            "vulnerability",
+            "protection",
+            "network",
+            "bypass",
+            "patching",
+            "ml",
+            "tools",
+            "plugins",
+            "processing",
+        ],
+        help="Show help for specific category",
+    )
 
     # Special modes
-    parser.add_argument("--server", action="store_true",
-                       help="Run as REST API server")
-    parser.add_argument("--server-port", type=int, default=8080,
-                       help="API server port")
-    parser.add_argument("--watch", action="store_true",
-                       help="Watch file for changes")
-    parser.add_argument("--watch-interval", type=int, default=5,
-                       help="Watch interval in seconds")
-    parser.add_argument("--ai-mode", action="store_true",
-                       help="Run in AI-controlled mode with confirmation safeguards")
-    parser.add_argument("--ai-auto-approve-low-risk", action="store_true",
-                       help="Auto-approve low-risk actions in AI mode")
+    parser.add_argument("--server", action="store_true", help="Run as REST API server")
+    parser.add_argument("--server-port", type=int, default=8080, help="API server port")
+    parser.add_argument("--watch", action="store_true", help="Watch file for changes")
+    parser.add_argument("--watch-interval", type=int, default=5, help="Watch interval in seconds")
+    parser.add_argument(
+        "--ai-mode",
+        action="store_true",
+        help="Run in AI-controlled mode with confirmation safeguards",
+    )
+    parser.add_argument(
+        "--ai-auto-approve-low-risk",
+        action="store_true",
+        help="Auto-approve low-risk actions in AI mode",
+    )
 
     return parser.parse_args()
 
@@ -1746,6 +1832,7 @@ def handle_batch_processing(args):
     if args.batch_parallel and args.threads > 1:
         # Parallel processing
         from concurrent.futures import ProcessPoolExecutor
+
         with ProcessPoolExecutor(max_workers=args.threads) as executor:
             futures = {}
             for file_path in files:
@@ -1875,10 +1962,12 @@ def run_server_mode(args):
             logger.error(f"Analysis endpoint error: {e!s}", exc_info=True)
 
             # Return generic error message to user (don't expose stack trace)
-            return jsonify({
-                "error": "An internal error occurred during analysis",
-                "status": "failed",
-            }), 500
+            return jsonify(
+                {
+                    "error": "An internal error occurred during analysis",
+                    "status": "failed",
+                }
+            ), 500
 
     @app.route("/health", methods=["GET"])
     def health():
@@ -2050,7 +2139,9 @@ def show_category_help(category):
         print(f"Example: intellicrack-cli binary.exe {info['commands'][0][0]}")
     else:
         print(f"Unknown category: {category}")
-        print("Available categories: analysis, vulnerability, protection, network, bypass, patching, ml, tools, plugins, processing")
+        print(
+            "Available categories: analysis, vulnerability, protection, network, bypass, patching, ml, tools, plugins, processing"
+        )
 
 
 def list_all_commands():
@@ -2064,7 +2155,9 @@ def list_all_commands():
     parser = argparse.ArgumentParser()
     # We would add all arguments here, but it's complex
     # For now, just show the main categories
-    print(f"Parser configured with {len(vars(parser)) if hasattr(parser, '_option_string_actions') else 0} options")
+    print(
+        f"Parser configured with {len(vars(parser)) if hasattr(parser, '_option_string_actions') else 0} options"
+    )
     commands = [
         "Analysis Commands:",
         "  --comprehensive, --cfg-analysis, --symbolic-execution, --concolic-execution",
@@ -2118,11 +2211,16 @@ def run_ai_mode(args):
 
     # Create confirmation manager
     manager = ConfirmationManager(auto_approve_low_risk=args.ai_auto_approve_low_risk)
-    logger.debug("Confirmation manager created with auto-approve: %s", manager.auto_approve_low_risk)
+    logger.debug(
+        "Confirmation manager created with auto-approve: %s", manager.auto_approve_low_risk
+    )
 
     # Create AI server
     server = IntellicrackAIServer(args.ai_auto_approve_low_risk)
-    logger.debug("AI server initialized with capabilities: %s", server.get_capabilities() if hasattr(server, "get_capabilities") else "default")
+    logger.debug(
+        "AI server initialized with capabilities: %s",
+        server.get_capabilities() if hasattr(server, "get_capabilities") else "default",
+    )
 
     print("🤖 Intellicrack AI Mode Active")
     print("=" * 80)
@@ -2187,8 +2285,14 @@ def main():
                 if isinstance(plugin, str):
                     print(f"  {plugin:<20} No description")
                 else:
-                    name = plugin.get("name", "Unknown") if isinstance(plugin, dict) else str(plugin)
-                    desc = plugin.get("description", "No description") if isinstance(plugin, dict) else "No description"
+                    name = (
+                        plugin.get("name", "Unknown") if isinstance(plugin, dict) else str(plugin)
+                    )
+                    desc = (
+                        plugin.get("description", "No description")
+                        if isinstance(plugin, dict)
+                        else "No description"
+                    )
                     print(f"  {name:<20} {desc}")
         print()
         print("💡 Use --plugin-run <plugin> to execute a plugin")
@@ -2226,6 +2330,7 @@ def main():
         logger.error(f"Analysis failed: {e}")
         if args.debug or args.debug_mode:
             import traceback
+
             traceback.print_exc()
         if "cli" in locals() and hasattr(cli, "finalize_analysis"):
             cli.finalize_analysis()

@@ -69,15 +69,24 @@ class GPUAutoLoader:
             # First check if we have a conda environment with Intel Extension
             conda_envs = self._find_conda_envs_with_ipex()
             if conda_envs:
-                logger.info(f"Found {len(conda_envs)} conda environment(s) with Intel Extension for PyTorch")
+                logger.info(
+                    f"Found {len(conda_envs)} conda environment(s) with Intel Extension for PyTorch"
+                )
                 # Try to use the first one
                 conda_env = conda_envs[0]
-                python_path = os.path.join(conda_env["path"], "python.exe" if sys.platform == "win32" else "python")
+                python_path = os.path.join(
+                    conda_env["path"], "python.exe" if sys.platform == "win32" else "python"
+                )
 
                 # Test if we can import from that environment
                 result = subprocess.run(
-                    [python_path, "-c", "import torch; import intel_extension_for_pytorch as ipex; print(torch.xpu.is_available())"],
-                    check=False, capture_output=True,
+                    [
+                        python_path,
+                        "-c",
+                        "import torch; import intel_extension_for_pytorch as ipex; print(torch.xpu.is_available())",
+                    ],
+                    check=False,
+                    capture_output=True,
                     text=True,
                 )
 
@@ -87,11 +96,13 @@ class GPUAutoLoader:
 
             # Try to import
             import torch
+
             self._torch = torch
 
             # Check for Intel Extension
             try:
                 import intel_extension_for_pytorch as ipex
+
                 self._ipex = ipex
             except ImportError:
                 logger.debug("Intel Extension for PyTorch not available")
@@ -109,14 +120,20 @@ class GPUAutoLoader:
                 self.gpu_info = {
                     "device_count": device_count,
                     "backend": "Intel Extension for PyTorch",
-                    "driver_version": torch.xpu.get_driver_version() if hasattr(torch.xpu, "get_driver_version") else "Unknown",
+                    "driver_version": torch.xpu.get_driver_version()
+                    if hasattr(torch.xpu, "get_driver_version")
+                    else "Unknown",
                 }
 
                 # Get info for first device
                 if device_count > 0:
                     self.gpu_info["device_name"] = torch.xpu.get_device_name(0)
                     props = torch.xpu.get_device_properties(0)
-                    self.gpu_info["total_memory"] = f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, "total_memory") else "Unknown"
+                    self.gpu_info["total_memory"] = (
+                        f"{props.total_memory / (1024**3):.1f} GB"
+                        if hasattr(props, "total_memory")
+                        else "Unknown"
+                    )
 
                 return True
 
@@ -130,6 +147,7 @@ class GPUAutoLoader:
         """Try to use NVIDIA CUDA"""
         try:
             import torch
+
             self._torch = torch
 
             if torch.cuda.is_available():
@@ -165,6 +183,7 @@ class GPUAutoLoader:
         """Try to use AMD ROCm"""
         try:
             import torch
+
             self._torch = torch
 
             # Check for ROCm support
@@ -179,14 +198,20 @@ class GPUAutoLoader:
                 self.gpu_info = {
                     "device_count": device_count,
                     "backend": "AMD ROCm",
-                    "hip_version": torch.version.hip if hasattr(torch.version, "hip") else "Unknown",
+                    "hip_version": torch.version.hip
+                    if hasattr(torch.version, "hip")
+                    else "Unknown",
                 }
 
                 # Get info for first device
                 if device_count > 0:
                     self.gpu_info["device_name"] = torch.hip.get_device_name(0)
                     props = torch.hip.get_device_properties(0)
-                    self.gpu_info["total_memory"] = f"{props.total_memory / (1024**3):.1f} GB" if hasattr(props, "total_memory") else "Unknown"
+                    self.gpu_info["total_memory"] = (
+                        f"{props.total_memory / (1024**3):.1f} GB"
+                        if hasattr(props, "total_memory")
+                        else "Unknown"
+                    )
 
                 return True
 
@@ -200,6 +225,7 @@ class GPUAutoLoader:
         """Try to use DirectML (works with Intel Arc on Windows)"""
         try:
             import torch
+
             self.gpu_available = True
             self.gpu_type = "directml"
             self._torch = torch
@@ -222,6 +248,7 @@ class GPUAutoLoader:
         """Fallback to CPU"""
         try:
             import torch
+
             self._torch = torch
             self.gpu_available = False
             self.gpu_type = "cpu"
@@ -264,19 +291,41 @@ class GPUAutoLoader:
                     env_path = os.path.join(envs_dir, env_name)
                     # Check for Intel Extension for PyTorch
                     ipex_indicators = [
-                        os.path.join(env_path, "Lib", "site-packages", "intel_extension_for_pytorch"),
-                        os.path.join(env_path, "lib", "python3.9", "site-packages", "intel_extension_for_pytorch"),
-                        os.path.join(env_path, "lib", "python3.10", "site-packages", "intel_extension_for_pytorch"),
-                        os.path.join(env_path, "lib", "python3.11", "site-packages", "intel_extension_for_pytorch"),
+                        os.path.join(
+                            env_path, "Lib", "site-packages", "intel_extension_for_pytorch"
+                        ),
+                        os.path.join(
+                            env_path,
+                            "lib",
+                            "python3.9",
+                            "site-packages",
+                            "intel_extension_for_pytorch",
+                        ),
+                        os.path.join(
+                            env_path,
+                            "lib",
+                            "python3.10",
+                            "site-packages",
+                            "intel_extension_for_pytorch",
+                        ),
+                        os.path.join(
+                            env_path,
+                            "lib",
+                            "python3.11",
+                            "site-packages",
+                            "intel_extension_for_pytorch",
+                        ),
                     ]
 
                     for indicator in ipex_indicators:
                         if os.path.exists(indicator):
-                            conda_envs.append({
-                                "name": env_name,
-                                "path": env_path,
-                                "base": base,
-                            })
+                            conda_envs.append(
+                                {
+                                    "name": env_name,
+                                    "path": env_path,
+                                    "base": base,
+                                }
+                            )
                             break
 
         return conda_envs
@@ -342,13 +391,17 @@ class GPUAutoLoader:
                 if hasattr(self._torch.xpu, "memory_allocated"):
                     return {
                         "allocated": f"{self._torch.xpu.memory_allocated() / (1024**3):.2f} GB",
-                        "reserved": f"{self._torch.xpu.memory_reserved() / (1024**3):.2f} GB" if hasattr(self._torch.xpu, "memory_reserved") else "N/A",
+                        "reserved": f"{self._torch.xpu.memory_reserved() / (1024**3):.2f} GB"
+                        if hasattr(self._torch.xpu, "memory_reserved")
+                        else "N/A",
                     }
             elif self.gpu_type == "amd_rocm":
                 if hasattr(self._torch.hip, "memory_allocated"):
                     return {
                         "allocated": f"{self._torch.hip.memory_allocated() / (1024**3):.2f} GB",
-                        "reserved": f"{self._torch.hip.memory_reserved() / (1024**3):.2f} GB" if hasattr(self._torch.hip, "memory_reserved") else "N/A",
+                        "reserved": f"{self._torch.hip.memory_reserved() / (1024**3):.2f} GB"
+                        if hasattr(self._torch.hip, "memory_reserved")
+                        else "N/A",
                     }
         except Exception as e:
             logger.debug(f"Failed to get memory info: {e}")

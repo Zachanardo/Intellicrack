@@ -62,9 +62,13 @@ class WizardState(Enum):
 class BypassStrategy:
     """Represents a bypass strategy for a specific protection"""
 
-    def __init__(self, protection_type: ProtectionType,
-                 scripts: list[str], priority: int = 50,
-                 dependencies: list[ProtectionType] = None):
+    def __init__(
+        self,
+        protection_type: ProtectionType,
+        scripts: list[str],
+        priority: int = 50,
+        dependencies: list[ProtectionType] = None,
+    ):
         """Initialize a bypass strategy.
 
         Args:
@@ -226,8 +230,7 @@ class FridaBypassWizard:
         else:
             logger.warning(f"Unknown mode: {mode}, using balanced")
 
-    def set_callbacks(self, progress_callback: Callable = None,
-                     status_callback: Callable = None):
+    def set_callbacks(self, progress_callback: Callable = None, status_callback: Callable = None):
         """Set callback functions for progress and status updates.
 
         Args:
@@ -814,7 +817,9 @@ class FridaBypassWizard:
                 if success:
                     success_count += 1
                     self.metrics["scripts_loaded"] += 1
-                    logger.info(f"Successfully loaded {script_name} for {strategy.protection_type.value}")
+                    logger.info(
+                        f"Successfully loaded {script_name} for {strategy.protection_type.value}"
+                    )
                 else:
                     logger.warning(f"Failed to load {script_name}")
 
@@ -1183,10 +1188,14 @@ class FridaBypassWizard:
                             verify_success = await self._verify_bypass(prot_type)
 
                             if verify_success:
-                                logger.info(f"Alternative strategy successful for {prot_type.value}")
+                                logger.info(
+                                    f"Alternative strategy successful for {prot_type.value}"
+                                )
                                 self.metrics["retry_successes"] += 1
                             else:
-                                logger.warning(f"Alternative strategy failed verification for {prot_type.value}")
+                                logger.warning(
+                                    f"Alternative strategy failed verification for {prot_type.value}"
+                                )
                                 self.metrics["retry_failures"] += 1
                         else:
                             self.metrics["retry_failures"] += 1
@@ -1267,9 +1276,7 @@ class FridaBypassWizard:
             "detections": {
                 "total": self.metrics["protections_detected"],
                 "types": [p.value for p in self.detected_protections.keys()],
-                "evidence": {
-                    p.value: e for p, e in self.protection_evidence.items()
-                },
+                "evidence": {p.value: e for p, e in self.protection_evidence.items()},
             },
             "bypasses": {
                 "attempted": self.metrics["bypasses_attempted"],
@@ -1277,7 +1284,8 @@ class FridaBypassWizard:
                 "failed": len(self.failed_bypasses),
                 "success_rate": (
                     self.metrics["bypasses_successful"] / self.metrics["bypasses_attempted"] * 100
-                    if self.metrics["bypasses_attempted"] > 0 else 0
+                    if self.metrics["bypasses_attempted"] > 0
+                    else 0
                 ),
                 "successful_types": [p.value for p in self.successful_bypasses],
                 "failed_types": [p.value for p in self.failed_bypasses],

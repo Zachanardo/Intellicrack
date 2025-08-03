@@ -31,9 +31,11 @@ class ResponseLineParser:
     """
 
     @staticmethod
-    def parse_lines_by_sections(response: str,
-                                section_keywords: dict[str, list[str]],
-                                line_processor: Callable[[str, str], str | None] | None = None) -> dict[str, list[str]]:
+    def parse_lines_by_sections(
+        response: str,
+        section_keywords: dict[str, list[str]],
+        line_processor: Callable[[str, str], str | None] | None = None,
+    ) -> dict[str, list[str]]:
         """Parse response lines into sections based on keywords.
 
         Args:
@@ -56,8 +58,7 @@ class ResponseLineParser:
                 continue
 
             # Detect section changes
-            detected_section = ResponseLineParser._detect_section(
-                line, section_keywords)
+            detected_section = ResponseLineParser._detect_section(line, section_keywords)
             if detected_section:
                 current_section = detected_section
                 continue
@@ -77,9 +78,9 @@ class ResponseLineParser:
         return sections
 
     @staticmethod
-    def parse_lines_with_categorization(response: str,
-                                        category_keywords: dict[str, list[str]],
-                                        default_category: str = "other") -> dict[str, list[str]]:
+    def parse_lines_with_categorization(
+        response: str, category_keywords: dict[str, list[str]], default_category: str = "other"
+    ) -> dict[str, list[str]]:
         """Parse response lines and categorize them based on content.
 
         Args:
@@ -114,9 +115,9 @@ class ResponseLineParser:
         return categories
 
     @staticmethod
-    def extract_structured_content(response: str,
-                                   patterns: list[str],
-                                   section_separators: list[str] | None = None) -> list[dict[str, str]]:
+    def extract_structured_content(
+        response: str, patterns: list[str], section_separators: list[str] | None = None
+    ) -> list[dict[str, str]]:
         """Extract structured content using regex patterns.
 
         Args:
@@ -180,9 +181,9 @@ class ResponseLineParser:
         return None
 
     @staticmethod
-    def clean_and_filter_lines(lines: list[str],
-                               min_length: int = 3,
-                               filter_patterns: list[str] | None = None) -> list[str]:
+    def clean_and_filter_lines(
+        lines: list[str], min_length: int = 3, filter_patterns: list[str] | None = None
+    ) -> list[str]:
         """Clean and filter lines based on criteria.
 
         Args:

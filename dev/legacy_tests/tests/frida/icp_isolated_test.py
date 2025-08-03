@@ -4,7 +4,7 @@ Isolated ICP Backend Test
 
 Completely self-contained test with copied ICP classes to avoid import issues.
 
-Copyright (C) 2025 Zachary Flint  
+Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
@@ -100,7 +100,7 @@ class ICPScanResult:
     def from_die_text(cls, file_path: str, die_text: str) -> 'ICPScanResult':
         """Create from die-python text output"""
         obj = cls(file_path=file_path)
-        
+
         if not die_text or not die_text.strip():
             # Create a basic file info with no detections
             file_info = ICPFileInfo(
@@ -116,7 +116,7 @@ class ICPScanResult:
 
         # First line is the file type (e.g., "PE64", "ELF64")
         filetype = lines[0].strip() if lines else "Binary"
-        
+
         # Create file info
         file_info = ICPFileInfo(
             filetype=filetype,
@@ -128,13 +128,13 @@ class ICPScanResult:
             line = line.strip()
             if not line:
                 continue
-                
+
             # Parse "Type: Name" format
             if ':' in line:
                 type_part, name_part = line.split(':', 1)
                 detection_type = type_part.strip()
                 detection_name = name_part.strip()
-                
+
                 # Create detection with parsed info
                 detection = ICPDetection(
                     name=detection_name,
@@ -144,7 +144,7 @@ class ICPScanResult:
                     string=line, # Store original line
                     confidence=1.0  # Default confidence
                 )
-                
+
                 file_info.detections.append(detection)
             else:
                 # Handle lines without colons (unusual case)
@@ -266,23 +266,23 @@ class ICPBackend:
 def test_die_python_basic():
     """Test basic die-python functionality"""
     print("🔍 Testing die-python basic functionality...")
-    
+
     try:
         import die
         print(f"  ✓ die-python v{die.__version__} (DIE engine v{die.die_version})")
-        
+
         # Test scan flags
         flags = [
             ("NORMAL", 0),
             ("DEEP", die.ScanFlags.DEEP_SCAN),
             ("HEURISTIC", die.ScanFlags.HEURISTIC_SCAN)
         ]
-        
+
         for flag_name, flag_value in flags:
             print(f"  ✓ {flag_name} scan flag: {flag_value}")
-            
+
         return True
-        
+
     except Exception as e:
         print(f"  ✗ die-python test failed: {e}")
         return False
@@ -290,7 +290,7 @@ def test_die_python_basic():
 def test_text_parsing():
     """Test text parsing functionality"""
     print("\n📝 Testing text parsing...")
-    
+
     try:
         # Test sample inputs
         test_cases = [
@@ -300,27 +300,27 @@ def test_text_parsing():
             ("", "Empty input"),
             ("PE32", "No detections"),
         ]
-        
+
         for test_input, description in test_cases:
             print(f"    Testing: {description}")
-            
+
             result = ICPScanResult.from_die_text("/test/sample.exe", test_input)
-            
+
             if result.file_infos:
                 file_info = result.file_infos[0]
                 print(f"      ✓ File type: {file_info.filetype}")
                 print(f"      ✓ Detections: {len(result.all_detections)}")
-                
+
                 for detection in result.all_detections:
                     print(f"        - {detection.type}: {detection.name}")
-                    
+
                 print(f"      ✓ Is packed: {result.is_packed}")
                 print(f"      ✓ Is protected: {result.is_protected}")
             else:
                 print("      ! No file infos generated")
-                
+
         return True
-        
+
     except Exception as e:
         print(f"  ✗ Text parsing test failed: {e}")
         import traceback
@@ -330,12 +330,12 @@ def test_text_parsing():
 def find_test_binary():
     """Find a test binary for analysis"""
     print("\n🔎 Finding test binary...")
-    
+
     search_paths = [
         "/mnt/c/Intellicrack/backups/icp_engine_pre_rebrand",
         "/mnt/c/Intellicrack/dev/conflict_test/lib/python3.12/site-packages/pip/_vendor/distlib"
     ]
-    
+
     for path in search_paths:
         if os.path.exists(path):
             for root, dirs, files in os.walk(path):
@@ -345,46 +345,46 @@ def find_test_binary():
                         if os.path.getsize(full_path) > 1024:
                             print(f"  ✓ Found test binary: {os.path.basename(full_path)}")
                             return full_path
-                            
+
     print("  ! No test binary found")
     return None
 
 async def test_async_analysis(backend, test_file):
     """Test async analysis"""
     print(f"\n⚡ Testing async analysis with {os.path.basename(test_file)}...")
-    
+
     try:
         # Test each scan mode
         modes_to_test = [ScanMode.NORMAL, ScanMode.DEEP, ScanMode.HEURISTIC]
-        
+
         for mode in modes_to_test:
             print(f"    Testing {mode.name} mode...")
-            
+
             start_time = time.time()
             result = await backend.analyze_file(test_file, mode)
             analysis_time = time.time() - start_time
-            
+
             if result and not result.error:
                 detection_count = len(result.all_detections)
                 print(f"      ✓ Success: {detection_count} detections ({analysis_time:.2f}s)")
-                
+
                 if result.file_infos:
                     file_info = result.file_infos[0]
                     print(f"        File type: {file_info.filetype}")
                     print(f"        Packed: {result.is_packed}")
                     print(f"        Protected: {result.is_protected}")
-                    
+
                     # Show sample detections
                     for i, detection in enumerate(result.all_detections[:3]):
                         print(f"        Detection {i+1}: {detection.type} - {detection.name}")
-                        
+
             elif result and result.error:
                 print(f"      ! Error: {result.error}")
             else:
                 print("      ! No result returned")
-                
+
         return True
-        
+
     except Exception as e:
         print(f"  ✗ Async analysis failed: {e}")
         import traceback
@@ -395,19 +395,19 @@ def main():
     """Run isolated ICP tests"""
     print("🔬 ISOLATED ICP BACKEND TESTING")
     print("=" * 60)
-    
+
     start_time = time.time()
-    
+
     # Test 1: die-python basic
     if not test_die_python_basic():
         print("\n❌ FAILED: die-python not working")
         return 1
-        
+
     # Test 2: Text parsing
     if not test_text_parsing():
         print("\n❌ FAILED: Text parsing failed")
         return 1
-        
+
     # Test 3: Backend creation
     print("\n🔧 Testing ICP backend creation...")
     try:
@@ -417,28 +417,28 @@ def main():
     except Exception as e:
         print(f"  ✗ Backend creation failed: {e}")
         return 1
-        
+
     # Test 4: Real binary analysis
     test_file = find_test_binary()
     if test_file:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        
+
         try:
             async_result = loop.run_until_complete(
                 test_async_analysis(backend, test_file)
             )
         finally:
             loop.close()
-            
+
         if not async_result:
             print("\n❌ FAILED: Async analysis failed")
             return 1
     else:
         print("\n⚠️  SKIPPED: No test binary available for async testing")
-        
+
     total_time = time.time() - start_time
-    
+
     print("\n" + "=" * 60)
     print("🎉 ALL ISOLATED TESTS PASSED!")
     print(f"📊 Total time: {total_time:.2f}s")
@@ -448,7 +448,7 @@ def main():
     print("✅ Async analysis system operational")
     print("✅ Phase 5 ICP integration validation COMPLETE")
     print("=" * 60)
-    
+
     return 0
 
 if __name__ == "__main__":

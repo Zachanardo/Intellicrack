@@ -201,7 +201,7 @@ class RealTimeChart:
 
         # Keep only recent points
         if len(self.data_points) > self.max_points:
-            self.data_points = self.data_points[-self.max_points:]
+            self.data_points = self.data_points[-self.max_points :]
 
         self.refresh()
 
@@ -231,10 +231,14 @@ class RealTimeChart:
             time_range = times[-1] - times[0]
             if time_range < 60:
                 # Show seconds
-                self.axis.set_xticklabels([f"{int(t - times[0])}s" for t in times[::max(1, len(times)//5)]])
+                self.axis.set_xticklabels(
+                    [f"{int(t - times[0])}s" for t in times[:: max(1, len(times) // 5)]]
+                )
             else:
                 # Show minutes
-                self.axis.set_xticklabels([f"{int((t - times[0])/60)}m" for t in times[::max(1, len(times)//5)]])
+                self.axis.set_xticklabels(
+                    [f"{int((t - times[0])/60)}m" for t in times[:: max(1, len(times) // 5)]]
+                )
 
         self.canvas.draw()
 
@@ -266,9 +270,13 @@ class LogViewer:
         # Log level filter
         ttk.Label(self.toolbar, text="Level:").pack(side=tk.LEFT, padx=(10, 2))
         self.level_var = tk.StringVar(value="ALL")
-        self.level_combo = ttk.Combobox(self.toolbar, textvariable=self.level_var,
-                                       values=["ALL", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-                                       width=10, state="readonly")
+        self.level_combo = ttk.Combobox(
+            self.toolbar,
+            textvariable=self.level_var,
+            values=["ALL", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+            width=10,
+            state="readonly",
+        )
         self.level_combo.pack(side=tk.LEFT, padx=2)
         self.level_combo.bind("<<ComboboxSelected>>", self.on_filter_change)
 
@@ -302,7 +310,9 @@ class LogViewer:
         self.text_widget.tag_configure("ERROR", foreground="#ff4444")
         self.text_widget.tag_configure("CRITICAL", foreground="#ff0000", background="#440000")
         self.text_widget.tag_configure("TIMESTAMP", foreground="#00aaff")
-        self.text_widget.tag_configure("SEARCH_HIGHLIGHT", background="#ffff00", foreground="#000000")
+        self.text_widget.tag_configure(
+            "SEARCH_HIGHLIGHT", background="#ffff00", foreground="#000000"
+        )
 
     def add_log(self, level: str, message: str, source: str = ""):
         """Add log entry"""
@@ -318,7 +328,7 @@ class LogViewer:
 
         # Limit entries
         if len(self.log_entries) > self.config.max_log_entries:
-            self.log_entries = self.log_entries[-self.config.max_log_entries:]
+            self.log_entries = self.log_entries[-self.config.max_log_entries :]
 
         self.refresh_display()
 
@@ -588,7 +598,9 @@ class FileExplorerPanel:
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=2)
 
         # Tree widget with scrollbars
-        self.tree = ttk.Treeview(tree_frame, columns=("size", "modified", "type"), show="tree headings")
+        self.tree = ttk.Treeview(
+            tree_frame, columns=("size", "modified", "type"), show="tree headings"
+        )
 
         # Configure columns
         self.tree.heading("#0", text="Name")
@@ -671,10 +683,13 @@ class FileExplorerPanel:
                         item_type = item.suffix.upper()[1:] if item.suffix else "File"
                         file_count += 1
 
-                    modified = datetime.fromtimestamp(item.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+                    modified = datetime.fromtimestamp(item.stat().st_mtime).strftime(
+                        "%Y-%m-%d %H:%M"
+                    )
 
                     tree_item = self.tree.insert(
-                        "", "end",
+                        "",
+                        "end",
                         text=f"{icon} {item.name}",
                         values=(size, modified, item_type),
                         tags=("directory" if item.is_dir() else "file",),
@@ -684,13 +699,15 @@ class FileExplorerPanel:
                     self.tree.set(tree_item, "path", str(item))
 
                     # Track items for further processing
-                    items.append({
-                        "tree_item": tree_item,
-                        "path": item,
-                        "is_dir": item.is_dir(),
-                        "name": item.name,
-                        "size": size,
-                    })
+                    items.append(
+                        {
+                            "tree_item": tree_item,
+                            "path": item,
+                            "is_dir": item.is_dir(),
+                            "name": item.name,
+                            "size": size,
+                        }
+                    )
 
                 except (PermissionError, OSError):
                     continue
@@ -915,9 +932,12 @@ class AnalysisViewerPanel:
         info_frame.pack(fill=tk.X, padx=5, pady=5)
 
         self.file_info_text = scrolledtext.ScrolledText(
-            info_frame, height=4, wrap=tk.WORD,
+            info_frame,
+            height=4,
+            wrap=tk.WORD,
             font=(self.config.font_family, self.config.font_size),
-            bg="#1e1e1e", fg="#ffffff",
+            bg="#1e1e1e",
+            fg="#ffffff",
         )
         self.file_info_text.pack(fill=tk.X, padx=5, pady=5)
 
@@ -930,7 +950,11 @@ class AnalysisViewerPanel:
         details_frame.pack(fill=tk.X, padx=5, pady=5)
 
         ttk.Label(details_frame, text="Protection Type:").grid(row=0, column=0, sticky="w", padx=5)
-        self.protection_type_label = ttk.Label(details_frame, text="Unknown", font=(self.config.font_family, self.config.font_size, "bold"))
+        self.protection_type_label = ttk.Label(
+            details_frame,
+            text="Unknown",
+            font=(self.config.font_family, self.config.font_size, "bold"),
+        )
         self.protection_type_label.grid(row=0, column=1, sticky="w", padx=5)
 
         ttk.Label(details_frame, text="Confidence:").grid(row=1, column=0, sticky="w", padx=5)
@@ -948,7 +972,8 @@ class AnalysisViewerPanel:
         self.bypass_listbox = tk.Listbox(
             bypass_frame,
             font=(self.config.font_family, self.config.font_size),
-            bg="#1e1e1e", fg="#ffffff",
+            bg="#1e1e1e",
+            fg="#ffffff",
             selectbackground="#264f78",
         )
         self.bypass_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -983,9 +1008,11 @@ class AnalysisViewerPanel:
         paned.add(right_frame, weight=1)
 
         self.details_text = scrolledtext.ScrolledText(
-            right_frame, wrap=tk.WORD,
+            right_frame,
+            wrap=tk.WORD,
             font=(self.config.font_family, self.config.font_size),
-            bg="#1e1e1e", fg="#ffffff",
+            bg="#1e1e1e",
+            fg="#ffffff",
         )
         self.details_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
@@ -1004,9 +1031,12 @@ class AnalysisViewerPanel:
         ttk.Label(control_frame, text="Chart Type:").pack(side=tk.LEFT, padx=5)
 
         self.chart_type_var = tk.StringVar(value="Confidence Over Time")
-        chart_combo = ttk.Combobox(control_frame, textvariable=self.chart_type_var,
-                                 values=["Confidence Over Time", "Protection Distribution", "Bypass Success Rate"],
-                                 state="readonly")
+        chart_combo = ttk.Combobox(
+            control_frame,
+            textvariable=self.chart_type_var,
+            values=["Confidence Over Time", "Protection Distribution", "Bypass Success Rate"],
+            state="readonly",
+        )
         chart_combo.pack(side=tk.LEFT, padx=5)
         chart_combo.bind("<<ComboboxSelected>>", self.update_visualization)
 
@@ -1025,13 +1055,19 @@ class AnalysisViewerPanel:
         toolbar = ttk.Frame(self.history_frame)
         toolbar.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(toolbar, text="Clear History", command=self.clear_history).pack(side=tk.LEFT, padx=5)
-        ttk.Button(toolbar, text="Export History", command=self.export_history).pack(side=tk.LEFT, padx=5)
+        ttk.Button(toolbar, text="Clear History", command=self.clear_history).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(toolbar, text="Export History", command=self.export_history).pack(
+            side=tk.LEFT, padx=5
+        )
 
         # History tree
-        self.history_tree = ttk.Treeview(self.history_frame,
-                                       columns=("file", "protection", "confidence", "timestamp"),
-                                       show="tree headings")
+        self.history_tree = ttk.Treeview(
+            self.history_frame,
+            columns=("file", "protection", "confidence", "timestamp"),
+            show="tree headings",
+        )
 
         self.history_tree.heading("#0", text="#")
         self.history_tree.heading("file", text="File")
@@ -1045,7 +1081,9 @@ class AnalysisViewerPanel:
         self.history_tree.column("confidence", width=100)
         self.history_tree.column("timestamp", width=150)
 
-        history_scroll = ttk.Scrollbar(self.history_frame, orient=tk.VERTICAL, command=self.history_tree.yview)
+        history_scroll = ttk.Scrollbar(
+            self.history_frame, orient=tk.VERTICAL, command=self.history_tree.yview
+        )
         self.history_tree.configure(yscrollcommand=history_scroll.set)
 
         self.history_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -1118,7 +1156,9 @@ class AnalysisViewerPanel:
                     self.details_tree.insert(cat_item, "end", text=key, values=(str(value),))
             elif isinstance(data, list):
                 for i, item in enumerate(data):
-                    self.details_tree.insert(cat_item, "end", text=f"Item {i+1}", values=(str(item),))
+                    self.details_tree.insert(
+                        cat_item, "end", text=f"Item {i+1}", values=(str(item),)
+                    )
             else:
                 self.details_tree.set(cat_item, "value", str(data))
 
@@ -1193,14 +1233,17 @@ class AnalysisViewerPanel:
         """Add analysis result to history"""
         item_count = len(self.history_tree.get_children()) + 1
 
-        self.history_tree.insert("", "end",
-                               text=str(item_count),
-                               values=(
-                                   Path(result.target_file).name,
-                                   result.protection_type,
-                                   f"{result.confidence:.1f}%",
-                                   result.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-                               ))
+        self.history_tree.insert(
+            "",
+            "end",
+            text=str(item_count),
+            values=(
+                Path(result.target_file).name,
+                result.protection_type,
+                f"{result.confidence:.1f}%",
+                result.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            ),
+        )
 
         # Auto-scroll to latest
         items = self.history_tree.get_children()
@@ -1215,7 +1258,11 @@ class AnalysisViewerPanel:
 
             # Get item details
             item_text = self.details_tree.item(item, "text")
-            item_value = self.details_tree.item(item, "values")[0] if self.details_tree.item(item, "values") else ""
+            item_value = (
+                self.details_tree.item(item, "values")[0]
+                if self.details_tree.item(item, "values")
+                else ""
+            )
 
             # Show in details text
             details_content = f"Property: {item_text}\n"
@@ -1228,7 +1275,11 @@ class AnalysisViewerPanel:
                 details_content += "\nSub-properties:\n"
                 for child in children:
                     child_text = self.details_tree.item(child, "text")
-                    child_value = self.details_tree.item(child, "values")[0] if self.details_tree.item(child, "values") else ""
+                    child_value = (
+                        self.details_tree.item(child, "values")[0]
+                        if self.details_tree.item(child, "values")
+                        else ""
+                    )
                     details_content += f"  {child_text}: {child_value}\n"
 
             self.details_text.delete(1.0, tk.END)
@@ -1258,13 +1309,19 @@ class AnalysisViewerPanel:
                 detail_frame.pack(fill=tk.BOTH, expand=True)
 
                 # Add details
-                ttk.Label(detail_frame, text=f"File: {file_name}", font=("TkDefaultFont", 10, "bold")).pack(anchor="w", pady=5)
-                ttk.Label(detail_frame, text=f"Protection Type: {protection_type}").pack(anchor="w", pady=2)
+                ttk.Label(
+                    detail_frame, text=f"File: {file_name}", font=("TkDefaultFont", 10, "bold")
+                ).pack(anchor="w", pady=5)
+                ttk.Label(detail_frame, text=f"Protection Type: {protection_type}").pack(
+                    anchor="w", pady=2
+                )
                 ttk.Label(detail_frame, text=f"Confidence: {confidence}%").pack(anchor="w", pady=2)
                 ttk.Label(detail_frame, text=f"Analyzed: {timestamp}").pack(anchor="w", pady=2)
 
                 # Add text area for detailed info
-                ttk.Label(detail_frame, text="Analysis Details:", font=("TkDefaultFont", 9, "bold")).pack(anchor="w", pady=(10, 5))
+                ttk.Label(
+                    detail_frame, text="Analysis Details:", font=("TkDefaultFont", 9, "bold")
+                ).pack(anchor="w", pady=(10, 5))
 
                 detail_text = tk.Text(detail_frame, height=15, width=70, wrap=tk.WORD)
                 detail_text.pack(fill=tk.BOTH, expand=True, pady=5)
@@ -1288,7 +1345,9 @@ class AnalysisViewerPanel:
                         detail_info += "Detailed Analysis:\n"
                         detail_info += self.analysis_history_details[history_key]
                 else:
-                    detail_info += "Detailed analysis data not available for this historical entry.\n"
+                    detail_info += (
+                        "Detailed analysis data not available for this historical entry.\n"
+                    )
                     detail_info += "Future analyses will store complete details."
 
                 detail_text.insert("1.0", detail_info)
@@ -1299,7 +1358,9 @@ class AnalysisViewerPanel:
 
     def clear_history(self):
         """Clear analysis history"""
-        if messagebox.askyesno("Clear History", "Are you sure you want to clear the analysis history?"):
+        if messagebox.askyesno(
+            "Clear History", "Are you sure you want to clear the analysis history?"
+        ):
             for item in self.history_tree.get_children():
                 self.history_tree.delete(item)
 
@@ -1315,12 +1376,14 @@ class AnalysisViewerPanel:
                 items = []
                 for item in self.history_tree.get_children():
                     values = self.history_tree.item(item, "values")
-                    items.append({
-                        "file": values[0],
-                        "protection": values[1],
-                        "confidence": values[2],
-                        "timestamp": values[3],
-                    })
+                    items.append(
+                        {
+                            "file": values[0],
+                            "protection": values[1],
+                            "confidence": values[2],
+                            "timestamp": values[3],
+                        }
+                    )
 
                 if filename.endswith(".json"):
                     with open(filename, "w", encoding="utf-8") as f:
@@ -1328,8 +1391,11 @@ class AnalysisViewerPanel:
                 else:
                     # CSV format
                     import csv
+
                     with open(filename, "w", newline="", encoding="utf-8") as f:
-                        writer = csv.DictWriter(f, fieldnames=["file", "protection", "confidence", "timestamp"])
+                        writer = csv.DictWriter(
+                            f, fieldnames=["file", "protection", "confidence", "timestamp"]
+                        )
                         writer.writeheader()
                         writer.writerows(items)
 
@@ -1374,32 +1440,45 @@ class ScriptGeneratorPanel:
         control_frame.pack(fill=tk.X, padx=5, pady=5)
 
         # Target process
-        ttk.Label(control_frame, text="Target Process:").grid(row=0, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Target Process:").grid(
+            row=0, column=0, sticky="w", padx=5, pady=2
+        )
         self.frida_process_var = tk.StringVar()
         process_entry = ttk.Entry(control_frame, textvariable=self.frida_process_var, width=30)
         process_entry.grid(row=0, column=1, sticky="w", padx=5, pady=2)
 
-        ttk.Button(control_frame, text="Browse", command=self.browse_process).grid(row=0, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Browse", command=self.browse_process).grid(
+            row=0, column=2, padx=5, pady=2
+        )
 
         # Script type
-        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Script Type:").grid(
+            row=1, column=0, sticky="w", padx=5, pady=2
+        )
         self.frida_type_var = tk.StringVar(value="License Bypass")
-        type_combo = ttk.Combobox(control_frame, textvariable=self.frida_type_var,
-                                values=["License Bypass", "API Hook", "Memory Patch", "Crypto Hook", "Custom"],
-                                state="readonly")
+        type_combo = ttk.Combobox(
+            control_frame,
+            textvariable=self.frida_type_var,
+            values=["License Bypass", "API Hook", "Memory Patch", "Crypto Hook", "Custom"],
+            state="readonly",
+        )
         type_combo.grid(row=1, column=1, sticky="w", padx=5, pady=2)
 
         # Generate button
-        ttk.Button(control_frame, text="Generate Script", command=self.generate_frida_script).grid(row=1, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Generate Script", command=self.generate_frida_script).grid(
+            row=1, column=2, padx=5, pady=2
+        )
 
         # Script editor
         editor_frame = ttk.LabelFrame(frida_frame, text="Script Editor")
         editor_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         self.frida_editor = scrolledtext.ScrolledText(
-            editor_frame, wrap=tk.NONE,
+            editor_frame,
+            wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
-            bg="#1e1e1e", fg="#ffffff",
+            bg="#1e1e1e",
+            fg="#ffffff",
             insertbackground="#ffffff",
         )
         self.frida_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -1411,9 +1490,15 @@ class ScriptGeneratorPanel:
         action_frame = ttk.Frame(frida_frame)
         action_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(action_frame, text="Run Script", command=self.run_frida_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Save Script", command=self.save_frida_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Load Script", command=self.load_frida_script).pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Run Script", command=self.run_frida_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Save Script", command=self.save_frida_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Load Script", command=self.load_frida_script).pack(
+            side=tk.LEFT, padx=5
+        )
 
     def create_ghidra_tab(self):
         """Create Ghidra script tab"""
@@ -1426,32 +1511,51 @@ class ScriptGeneratorPanel:
         control_frame.pack(fill=tk.X, padx=5, pady=5)
 
         # Target binary
-        ttk.Label(control_frame, text="Target Binary:").grid(row=0, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Target Binary:").grid(
+            row=0, column=0, sticky="w", padx=5, pady=2
+        )
         self.ghidra_binary_var = tk.StringVar()
         binary_entry = ttk.Entry(control_frame, textvariable=self.ghidra_binary_var, width=30)
         binary_entry.grid(row=0, column=1, sticky="w", padx=5, pady=2)
 
-        ttk.Button(control_frame, text="Browse", command=self.browse_binary).grid(row=0, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Browse", command=self.browse_binary).grid(
+            row=0, column=2, padx=5, pady=2
+        )
 
         # Script type
-        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Script Type:").grid(
+            row=1, column=0, sticky="w", padx=5, pady=2
+        )
         self.ghidra_type_var = tk.StringVar(value="License Analysis")
-        type_combo = ttk.Combobox(control_frame, textvariable=self.ghidra_type_var,
-                                values=["License Analysis", "Crypto Detection", "Packer Analysis", "Key Generation", "Custom"],
-                                state="readonly")
+        type_combo = ttk.Combobox(
+            control_frame,
+            textvariable=self.ghidra_type_var,
+            values=[
+                "License Analysis",
+                "Crypto Detection",
+                "Packer Analysis",
+                "Key Generation",
+                "Custom",
+            ],
+            state="readonly",
+        )
         type_combo.grid(row=1, column=1, sticky="w", padx=5, pady=2)
 
         # Generate button
-        ttk.Button(control_frame, text="Generate Script", command=self.generate_ghidra_script).grid(row=1, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Generate Script", command=self.generate_ghidra_script).grid(
+            row=1, column=2, padx=5, pady=2
+        )
 
         # Script editor
         editor_frame = ttk.LabelFrame(ghidra_frame, text="Script Editor")
         editor_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         self.ghidra_editor = scrolledtext.ScrolledText(
-            editor_frame, wrap=tk.NONE,
+            editor_frame,
+            wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
-            bg="#1e1e1e", fg="#ffffff",
+            bg="#1e1e1e",
+            fg="#ffffff",
             insertbackground="#ffffff",
         )
         self.ghidra_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -1463,9 +1567,15 @@ class ScriptGeneratorPanel:
         action_frame = ttk.Frame(ghidra_frame)
         action_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(action_frame, text="Run in Ghidra", command=self.run_ghidra_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Save Script", command=self.save_ghidra_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Load Script", command=self.load_ghidra_script).pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Run in Ghidra", command=self.run_ghidra_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Save Script", command=self.save_ghidra_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Load Script", command=self.load_ghidra_script).pack(
+            side=tk.LEFT, padx=5
+        )
 
     def create_radare2_tab(self):
         """Create Radare2 script tab"""
@@ -1477,32 +1587,51 @@ class ScriptGeneratorPanel:
         control_frame.pack(fill=tk.X, padx=5, pady=5)
 
         # Target binary
-        ttk.Label(control_frame, text="Target Binary:").grid(row=0, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Target Binary:").grid(
+            row=0, column=0, sticky="w", padx=5, pady=2
+        )
         self.r2_binary_var = tk.StringVar()
         binary_entry = ttk.Entry(control_frame, textvariable=self.r2_binary_var, width=30)
         binary_entry.grid(row=0, column=1, sticky="w", padx=5, pady=2)
 
-        ttk.Button(control_frame, text="Browse", command=self.browse_r2_binary).grid(row=0, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Browse", command=self.browse_r2_binary).grid(
+            row=0, column=2, padx=5, pady=2
+        )
 
         # Script type
-        ttk.Label(control_frame, text="Script Type:").grid(row=1, column=0, sticky="w", padx=5, pady=2)
+        ttk.Label(control_frame, text="Script Type:").grid(
+            row=1, column=0, sticky="w", padx=5, pady=2
+        )
         self.r2_type_var = tk.StringVar(value="License Analysis")
-        type_combo = ttk.Combobox(control_frame, textvariable=self.r2_type_var,
-                                values=["License Analysis", "Keygen Assistant", "Patch Generation", "Analysis Script", "Custom"],
-                                state="readonly")
+        type_combo = ttk.Combobox(
+            control_frame,
+            textvariable=self.r2_type_var,
+            values=[
+                "License Analysis",
+                "Keygen Assistant",
+                "Patch Generation",
+                "Analysis Script",
+                "Custom",
+            ],
+            state="readonly",
+        )
         type_combo.grid(row=1, column=1, sticky="w", padx=5, pady=2)
 
         # Generate button
-        ttk.Button(control_frame, text="Generate Script", command=self.generate_r2_script).grid(row=1, column=2, padx=5, pady=2)
+        ttk.Button(control_frame, text="Generate Script", command=self.generate_r2_script).grid(
+            row=1, column=2, padx=5, pady=2
+        )
 
         # Script editor
         editor_frame = ttk.LabelFrame(radare2_frame, text="Script Editor")
         editor_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         self.r2_editor = scrolledtext.ScrolledText(
-            editor_frame, wrap=tk.NONE,
+            editor_frame,
+            wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
-            bg="#1e1e1e", fg="#ffffff",
+            bg="#1e1e1e",
+            fg="#ffffff",
             insertbackground="#ffffff",
         )
         self.r2_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -1514,9 +1643,15 @@ class ScriptGeneratorPanel:
         action_frame = ttk.Frame(radare2_frame)
         action_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(action_frame, text="Run Script", command=self.run_r2_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Save Script", command=self.save_r2_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Load Script", command=self.load_r2_script).pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Run Script", command=self.run_r2_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Save Script", command=self.save_r2_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Load Script", command=self.load_r2_script).pack(
+            side=tk.LEFT, padx=5
+        )
 
     def create_custom_tab(self):
         """Create custom script tab"""
@@ -1528,9 +1663,12 @@ class ScriptGeneratorPanel:
         lang_frame.pack(fill=tk.X, padx=5, pady=5)
 
         self.custom_lang_var = tk.StringVar(value="Python")
-        lang_combo = ttk.Combobox(lang_frame, textvariable=self.custom_lang_var,
-                                values=["Python", "PowerShell", "Batch", "Bash", "JavaScript", "C++"],
-                                state="readonly")
+        lang_combo = ttk.Combobox(
+            lang_frame,
+            textvariable=self.custom_lang_var,
+            values=["Python", "PowerShell", "Batch", "Bash", "JavaScript", "C++"],
+            state="readonly",
+        )
         lang_combo.pack(side=tk.LEFT, padx=5, pady=5)
         lang_combo.bind("<<ComboboxSelected>>", self.on_language_change)
 
@@ -1539,9 +1677,11 @@ class ScriptGeneratorPanel:
         editor_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         self.custom_editor = scrolledtext.ScrolledText(
-            editor_frame, wrap=tk.NONE,
+            editor_frame,
+            wrap=tk.NONE,
             font=(self.config.font_family, self.config.font_size),
-            bg="#1e1e1e", fg="#ffffff",
+            bg="#1e1e1e",
+            fg="#ffffff",
             insertbackground="#ffffff",
         )
         self.custom_editor.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -1550,9 +1690,15 @@ class ScriptGeneratorPanel:
         action_frame = ttk.Frame(custom_frame)
         action_frame.pack(fill=tk.X, padx=5, pady=5)
 
-        ttk.Button(action_frame, text="Run Script", command=self.run_custom_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Save Script", command=self.save_custom_script).pack(side=tk.LEFT, padx=5)
-        ttk.Button(action_frame, text="Load Script", command=self.load_custom_script).pack(side=tk.LEFT, padx=5)
+        ttk.Button(action_frame, text="Run Script", command=self.run_custom_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Save Script", command=self.save_custom_script).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(action_frame, text="Load Script", command=self.load_custom_script).pack(
+            side=tk.LEFT, padx=5
+        )
 
     def setup_js_syntax_highlighting(self, text_widget):
         """Setup JavaScript syntax highlighting"""
@@ -1565,9 +1711,30 @@ class ScriptGeneratorPanel:
 
         # JavaScript keywords
         js_keywords = [
-            "var", "let", "const", "function", "if", "else", "for", "while", "do",
-            "break", "continue", "return", "try", "catch", "finally", "throw",
-            "new", "this", "typeof", "instanceof", "true", "false", "null", "undefined",
+            "var",
+            "let",
+            "const",
+            "function",
+            "if",
+            "else",
+            "for",
+            "while",
+            "do",
+            "break",
+            "continue",
+            "return",
+            "try",
+            "catch",
+            "finally",
+            "throw",
+            "new",
+            "this",
+            "typeof",
+            "instanceof",
+            "true",
+            "false",
+            "null",
+            "undefined",
         ]
 
         # Bind highlighting
@@ -1582,13 +1749,44 @@ class ScriptGeneratorPanel:
         text_widget.tag_configure("number", foreground="#b5cea8")
 
         java_keywords = [
-            "public", "private", "protected", "class", "interface", "extends", "implements",
-            "static", "final", "abstract", "void", "int", "String", "boolean", "if", "else",
-            "for", "while", "do", "break", "continue", "return", "try", "catch", "finally",
-            "throw", "throws", "new", "this", "super", "true", "false", "null",
+            "public",
+            "private",
+            "protected",
+            "class",
+            "interface",
+            "extends",
+            "implements",
+            "static",
+            "final",
+            "abstract",
+            "void",
+            "int",
+            "String",
+            "boolean",
+            "if",
+            "else",
+            "for",
+            "while",
+            "do",
+            "break",
+            "continue",
+            "return",
+            "try",
+            "catch",
+            "finally",
+            "throw",
+            "throws",
+            "new",
+            "this",
+            "super",
+            "true",
+            "false",
+            "null",
         ]
 
-        text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, java_keywords))
+        text_widget.bind(
+            "<KeyRelease>", lambda e: self.highlight_syntax(text_widget, java_keywords)
+        )
 
     def setup_python_syntax_highlighting(self, text_widget):
         """Setup Python syntax highlighting"""
@@ -1599,12 +1797,36 @@ class ScriptGeneratorPanel:
         text_widget.tag_configure("number", foreground="#b5cea8")
 
         python_keywords = [
-            "def", "class", "if", "elif", "else", "for", "while", "break", "continue",
-            "return", "try", "except", "finally", "raise", "import", "from", "as",
-            "with", "lambda", "yield", "global", "nonlocal", "True", "False", "None",
+            "def",
+            "class",
+            "if",
+            "elif",
+            "else",
+            "for",
+            "while",
+            "break",
+            "continue",
+            "return",
+            "try",
+            "except",
+            "finally",
+            "raise",
+            "import",
+            "from",
+            "as",
+            "with",
+            "lambda",
+            "yield",
+            "global",
+            "nonlocal",
+            "True",
+            "False",
+            "None",
         ]
 
-        text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, python_keywords))
+        text_widget.bind(
+            "<KeyRelease>", lambda e: self.highlight_syntax(text_widget, python_keywords)
+        )
 
     def highlight_syntax(self, text_widget, keywords):
         """Basic syntax highlighting"""
@@ -1663,7 +1885,11 @@ class ScriptGeneratorPanel:
         """Browse for target binary"""
         filename = filedialog.askopenfilename(
             title="Select Target Binary",
-            filetypes=[("Executable files", "*.exe"), ("Library files", "*.dll"), ("All files", "*.*")],
+            filetypes=[
+                ("Executable files", "*.exe"),
+                ("Library files", "*.dll"),
+                ("All files", "*.*"),
+            ],
         )
         if filename:
             self.ghidra_binary_var.set(filename)
@@ -1672,7 +1898,11 @@ class ScriptGeneratorPanel:
         """Browse for Radare2 target binary"""
         filename = filedialog.askopenfilename(
             title="Select Target Binary",
-            filetypes=[("Executable files", "*.exe"), ("Library files", "*.dll"), ("All files", "*.*")],
+            filetypes=[
+                ("Executable files", "*.exe"),
+                ("Library files", "*.dll"),
+                ("All files", "*.*"),
+            ],
         )
         if filename:
             self.r2_binary_var.set(filename)
@@ -1734,12 +1964,14 @@ class ScriptGeneratorPanel:
     def add_to_script_history(self, platform: str, script_type: str, content: str):
         """Add script to history"""
         timestamp = datetime.now()
-        self.script_history.append({
-            "platform": platform,
-            "type": script_type,
-            "content": content,
-            "timestamp": timestamp,
-        })
+        self.script_history.append(
+            {
+                "platform": platform,
+                "type": script_type,
+                "content": content,
+                "timestamp": timestamp,
+            }
+        )
 
     def on_language_change(self, event=None):
         """Handle language change for custom scripts"""
@@ -1804,17 +2036,23 @@ class ScriptGeneratorPanel:
     def save_frida_script(self):
         """Save Frida script to file"""
         script = self.frida_editor.get(1.0, tk.END)
-        self.save_script_to_file(script, "Frida Script", [("JavaScript files", "*.js"), ("All files", "*.*")])
+        self.save_script_to_file(
+            script, "Frida Script", [("JavaScript files", "*.js"), ("All files", "*.*")]
+        )
 
     def save_ghidra_script(self):
         """Save Ghidra script to file"""
         script = self.ghidra_editor.get(1.0, tk.END)
-        self.save_script_to_file(script, "Ghidra Script", [("Java files", "*.java"), ("All files", "*.*")])
+        self.save_script_to_file(
+            script, "Ghidra Script", [("Java files", "*.java"), ("All files", "*.*")]
+        )
 
     def save_r2_script(self):
         """Save Radare2 script to file"""
         script = self.r2_editor.get(1.0, tk.END)
-        self.save_script_to_file(script, "Radare2 Script", [("Python files", "*.py"), ("All files", "*.*")])
+        self.save_script_to_file(
+            script, "Radare2 Script", [("Python files", "*.py"), ("All files", "*.*")]
+        )
 
     def save_custom_script(self):
         """Save custom script to file"""
@@ -1830,7 +2068,9 @@ class ScriptGeneratorPanel:
             "C++": [("C++ files", "*.cpp"), ("Header files", "*.h"), ("All files", "*.*")],
         }
 
-        self.save_script_to_file(script, f"{language} Script", filetypes.get(language, [("All files", "*.*")]))
+        self.save_script_to_file(
+            script, f"{language} Script", filetypes.get(language, [("All files", "*.*")])
+        )
 
     def save_script_to_file(self, script: str, title: str, filetypes: list[tuple[str, str]]):
         """Save script content to file"""
@@ -1846,21 +2086,29 @@ class ScriptGeneratorPanel:
 
     def load_frida_script(self):
         """Load Frida script from file"""
-        self.load_script_to_editor(self.frida_editor, "Frida Script", [("JavaScript files", "*.js"), ("All files", "*.*")])
+        self.load_script_to_editor(
+            self.frida_editor, "Frida Script", [("JavaScript files", "*.js"), ("All files", "*.*")]
+        )
 
     def load_ghidra_script(self):
         """Load Ghidra script from file"""
-        self.load_script_to_editor(self.ghidra_editor, "Ghidra Script", [("Java files", "*.java"), ("All files", "*.*")])
+        self.load_script_to_editor(
+            self.ghidra_editor, "Ghidra Script", [("Java files", "*.java"), ("All files", "*.*")]
+        )
 
     def load_r2_script(self):
         """Load Radare2 script from file"""
-        self.load_script_to_editor(self.r2_editor, "Radare2 Script", [("Python files", "*.py"), ("All files", "*.*")])
+        self.load_script_to_editor(
+            self.r2_editor, "Radare2 Script", [("Python files", "*.py"), ("All files", "*.*")]
+        )
 
     def load_custom_script(self):
         """Load custom script from file"""
         self.load_script_to_editor(self.custom_editor, "Custom Script", [("All files", "*.*")])
 
-    def load_script_to_editor(self, editor: scrolledtext.ScrolledText, title: str, filetypes: list[tuple[str, str]]):
+    def load_script_to_editor(
+        self, editor: scrolledtext.ScrolledText, title: str, filetypes: list[tuple[str, str]]
+    ):
         """Load script from file into editor"""
         filename = filedialog.askopenfilename(title=f"Load {title}", filetypes=filetypes)
 
@@ -2053,7 +2301,9 @@ class UIEnhancementModule:
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Open File...", command=self.open_file, accelerator="Ctrl+O")
-        file_menu.add_command(label="Open Folder...", command=self.open_folder, accelerator="Ctrl+Shift+O")
+        file_menu.add_command(
+            label="Open Folder...", command=self.open_folder, accelerator="Ctrl+Shift+O"
+        )
         file_menu.add_separator()
         file_menu.add_command(label="Recent Files", command=self.show_recent_files)
         file_menu.add_separator()
@@ -2140,13 +2390,18 @@ class UIEnhancementModule:
             self.vm_unwrapper = VMProtectionUnwrapper()
             self.anti_debug = AntiAntiDebugSuite()
 
-            self.log_viewer.add_log("INFO", "Analysis modules initialized successfully", "ModuleInit")
+            self.log_viewer.add_log(
+                "INFO", "Analysis modules initialized successfully", "ModuleInit"
+            )
 
         except Exception as e:
-            self.log_viewer.add_log("ERROR", f"Failed to initialize analysis modules: {e}", "ModuleInit")
+            self.log_viewer.add_log(
+                "ERROR", f"Failed to initialize analysis modules: {e}", "ModuleInit"
+            )
 
     def start_auto_refresh(self):
         """Start auto-refresh timer"""
+
         def refresh():
             if self.config.auto_refresh:
                 self.refresh_current_view()
@@ -2162,6 +2417,7 @@ class UIEnhancementModule:
 
             # Update memory usage
             import psutil
+
             memory_percent = psutil.virtual_memory().percent
             self.memory_label.config(text=f"Memory: {memory_percent:.1f}%")
 
@@ -2183,7 +2439,9 @@ class UIEnhancementModule:
         self.state_label.config(text=self.analysis_state.value.title())
         if hasattr(self.state_label, "configure"):
             try:
-                self.state_label.configure(foreground=state_colors.get(self.analysis_state, "#ffffff"))
+                self.state_label.configure(
+                    foreground=state_colors.get(self.analysis_state, "#ffffff")
+                )
             except:
                 pass
 
@@ -2267,7 +2525,11 @@ class UIEnhancementModule:
         # Update analysis viewer
         self.analysis_viewer.update_analysis(result)
 
-        self.log_viewer.add_log("INFO", f"Analysis complete: {result.protection_type} ({result.confidence:.1f}%)", "Analysis")
+        self.log_viewer.add_log(
+            "INFO",
+            f"Analysis complete: {result.protection_type} ({result.confidence:.1f}%)",
+            "Analysis",
+        )
 
     def _analysis_error(self, error_msg: str):
         """Handle analysis error"""
@@ -2290,7 +2552,9 @@ class UIEnhancementModule:
             self.script_generator.r2_binary_var.set(file_path)
 
         except Exception as e:
-            self.log_viewer.add_log("ERROR", f"Failed to prepare script generation: {e}", "ScriptGen")
+            self.log_viewer.add_log(
+                "ERROR", f"Failed to prepare script generation: {e}", "ScriptGen"
+            )
 
     # Script generation methods
     def generate_frida_script(self, target: str, script_type: str) -> str:
@@ -2349,7 +2613,6 @@ Java.perform(function() {{
 
     console.log("[+] License bypass hooks installed");
 }});""",
-
             "API Hook": f"""// Frida API Hook Script for {Path(target).name}
 // Generated by Intellicrack UI Enhancement Module
 
@@ -2463,7 +2726,9 @@ if __name__ == "__main__":
 '''
 
         templates = {
-            "License Analysis": license_template.replace("TARGET_NAME", Path(target).name).replace("TARGET_PATH", target),
+            "License Analysis": license_template.replace("TARGET_NAME", Path(target).name).replace(
+                "TARGET_PATH", target
+            ),
         }
 
         return templates.get(script_type, f"# Template for {script_type} not implemented")
@@ -2475,28 +2740,48 @@ if __name__ == "__main__":
 
         # In a real implementation, this would execute the Frida script
         # For now, just simulate execution
-        self.root.after(2000, lambda: self.log_viewer.add_log("INFO", "Frida script execution complete", "ScriptExec"))
+        self.root.after(
+            2000,
+            lambda: self.log_viewer.add_log(
+                "INFO", "Frida script execution complete", "ScriptExec"
+            ),
+        )
 
     def execute_ghidra_script(self, script: str, target: str):
         """Execute Ghidra script"""
         self.log_viewer.add_log("INFO", f"Executing Ghidra script on {target}", "ScriptExec")
 
         # In a real implementation, this would execute the Ghidra script
-        self.root.after(2000, lambda: self.log_viewer.add_log("INFO", "Ghidra script execution complete", "ScriptExec"))
+        self.root.after(
+            2000,
+            lambda: self.log_viewer.add_log(
+                "INFO", "Ghidra script execution complete", "ScriptExec"
+            ),
+        )
 
     def execute_r2_script(self, script: str, target: str):
         """Execute Radare2 script"""
         self.log_viewer.add_log("INFO", f"Executing Radare2 script on {target}", "ScriptExec")
 
         # In a real implementation, this would execute the R2 script
-        self.root.after(2000, lambda: self.log_viewer.add_log("INFO", "Radare2 script execution complete", "ScriptExec"))
+        self.root.after(
+            2000,
+            lambda: self.log_viewer.add_log(
+                "INFO", "Radare2 script execution complete", "ScriptExec"
+            ),
+        )
 
     def execute_custom_script(self, script: str, language: str):
         """Execute custom script"""
         self.log_viewer.add_log("INFO", f"Executing {language} script", "ScriptExec")
 
         # In a real implementation, this would execute based on language
-        self.root.after(2000, lambda: self.log_viewer.add_log("INFO", f"{language} script execution complete", "ScriptExec"))
+        self.root.after(
+            2000,
+            lambda: self.log_viewer.add_log(
+                "INFO", f"{language} script execution complete", "ScriptExec"
+            ),
+        )
 
     # File operations
     def open_file(self):
@@ -2580,7 +2865,9 @@ if __name__ == "__main__":
     def open_hex_editor(self):
         """Open hex editor"""
         if self.current_target:
-            self.log_viewer.add_log("INFO", f"Opening hex editor for {self.current_target}", "Tools")
+            self.log_viewer.add_log(
+                "INFO", f"Opening hex editor for {self.current_target}", "Tools"
+            )
             # Implementation would open hex editor
         else:
             messagebox.showwarning("No Target", "Please select a file first")
@@ -2588,7 +2875,9 @@ if __name__ == "__main__":
     def open_disassembler(self):
         """Open disassembler"""
         if self.current_target:
-            self.log_viewer.add_log("INFO", f"Opening disassembler for {self.current_target}", "Tools")
+            self.log_viewer.add_log(
+                "INFO", f"Opening disassembler for {self.current_target}", "Tools"
+            )
             # Implementation would open disassembler
         else:
             messagebox.showwarning("No Target", "Please select a file first")
@@ -2596,7 +2885,9 @@ if __name__ == "__main__":
     def open_string_extractor(self):
         """Open string extractor"""
         if self.current_target:
-            self.log_viewer.add_log("INFO", f"Extracting strings from {self.current_target}", "Tools")
+            self.log_viewer.add_log(
+                "INFO", f"Extracting strings from {self.current_target}", "Tools"
+            )
             # Implementation would extract strings
         else:
             messagebox.showwarning("No Target", "Please select a file first")
@@ -2644,34 +2935,48 @@ if __name__ == "__main__":
         # Theme selection
         ttk.Label(general_frame, text="Theme:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
         theme_var = tk.StringVar(value=self.config.theme.value)
-        theme_combo = ttk.Combobox(general_frame, textvariable=theme_var,
-                                 values=[theme.value for theme in UITheme],
-                                 state="readonly")
+        theme_combo = ttk.Combobox(
+            general_frame,
+            textvariable=theme_var,
+            values=[theme.value for theme in UITheme],
+            state="readonly",
+        )
         theme_combo.grid(row=0, column=1, sticky="w", padx=5, pady=5)
 
         # Font settings
-        ttk.Label(general_frame, text="Font Family:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(general_frame, text="Font Family:").grid(
+            row=1, column=0, sticky="w", padx=5, pady=5
+        )
         font_var = tk.StringVar(value=self.config.font_family)
-        font_combo = ttk.Combobox(general_frame, textvariable=font_var,
-                                values=["Consolas", "Courier New", "Monaco", "DejaVu Sans Mono"],
-                                state="readonly")
+        font_combo = ttk.Combobox(
+            general_frame,
+            textvariable=font_var,
+            values=["Consolas", "Courier New", "Monaco", "DejaVu Sans Mono"],
+            state="readonly",
+        )
         font_combo.grid(row=1, column=1, sticky="w", padx=5, pady=5)
 
-        ttk.Label(general_frame, text="Font Size:").grid(row=2, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(general_frame, text="Font Size:").grid(
+            row=2, column=0, sticky="w", padx=5, pady=5
+        )
         font_size_var = tk.IntVar(value=self.config.font_size)
         font_size_spin = ttk.Spinbox(general_frame, from_=8, to=20, textvariable=font_size_var)
         font_size_spin.grid(row=2, column=1, sticky="w", padx=5, pady=5)
 
         # Auto-refresh settings
         auto_refresh_var = tk.BooleanVar(value=self.config.auto_refresh)
-        auto_refresh_check = ttk.Checkbutton(general_frame, text="Enable auto-refresh",
-                                           variable=auto_refresh_var)
+        auto_refresh_check = ttk.Checkbutton(
+            general_frame, text="Enable auto-refresh", variable=auto_refresh_var
+        )
         auto_refresh_check.grid(row=3, column=0, columnspan=2, sticky="w", padx=5, pady=5)
 
-        ttk.Label(general_frame, text="Refresh Interval (ms):").grid(row=4, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(general_frame, text="Refresh Interval (ms):").grid(
+            row=4, column=0, sticky="w", padx=5, pady=5
+        )
         refresh_var = tk.IntVar(value=self.config.refresh_interval)
-        refresh_spin = ttk.Spinbox(general_frame, from_=500, to=10000, increment=500,
-                                 textvariable=refresh_var)
+        refresh_spin = ttk.Spinbox(
+            general_frame, from_=500, to=10000, increment=500, textvariable=refresh_var
+        )
         refresh_spin.grid(row=4, column=1, sticky="w", padx=5, pady=5)
 
         # Button frame
@@ -2691,13 +2996,19 @@ if __name__ == "__main__":
             self.save_config()
 
             pref_window.destroy()
-            messagebox.showinfo("Preferences", "Preferences saved. Some changes may require restart.")
+            messagebox.showinfo(
+                "Preferences", "Preferences saved. Some changes may require restart."
+            )
 
         def cancel_preferences():
             pref_window.destroy()
 
-        ttk.Button(button_frame, text="Apply", command=apply_preferences).pack(side=tk.RIGHT, padx=5)
-        ttk.Button(button_frame, text="Cancel", command=cancel_preferences).pack(side=tk.RIGHT, padx=5)
+        ttk.Button(button_frame, text="Apply", command=apply_preferences).pack(
+            side=tk.RIGHT, padx=5
+        )
+        ttk.Button(button_frame, text="Cancel", command=cancel_preferences).pack(
+            side=tk.RIGHT, padx=5
+        )
 
     def show_file_properties(self, file_path: Path):
         """Show file properties dialog"""

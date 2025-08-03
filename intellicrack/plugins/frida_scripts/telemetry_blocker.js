@@ -35,7 +35,7 @@ if (winHttpConnect) {
     Interceptor.attach(winHttpConnect, {
         onEnter: function(args) {
             var serverName = args[1].readUtf16String();
-            
+
             // Block known telemetry domains
             var blockedDomains = [
                 'telemetry.microsoft.com',
@@ -50,7 +50,7 @@ if (winHttpConnect) {
                 'prod.telemetry.ros.rockstargames.com',
                 'telemetry.unity3d.com'
             ];
-            
+
             for (var domain of blockedDomains) {
                 if (serverName && serverName.toLowerCase().includes(domain)) {
                     send({
@@ -84,7 +84,7 @@ if (winHttpSendRequest) {
                 if (headers && (headers.includes("telemetry") || headers.includes("activation"))) {
                     send({
                         type: "bypass",
-                        target: "telemetry_blocker", 
+                        target: "telemetry_blocker",
                         action: "http_request_blocked",
                         reason: "telemetry_headers_detected",
                         timestamp: Date.now()
@@ -116,15 +116,15 @@ if (wsaConnect) {
                 if (family === 2) { // AF_INET
                     var port = (sockAddr.add(2).readU8() << 8) | sockAddr.add(3).readU8();
                     var ip = sockAddr.add(4).readU32();
-                    
+
                     // Block common telemetry ports
                     if (port === 80 || port === 443 || port === 8080) {
                         // Convert IP to readable format
-                        var ipStr = ((ip & 0xFF)) + "." + 
-                                   ((ip >> 8) & 0xFF) + "." + 
-                                   ((ip >> 16) & 0xFF) + "." + 
+                        var ipStr = ((ip & 0xFF)) + "." +
+                                   ((ip >> 8) & 0xFF) + "." +
+                                   ((ip >> 16) & 0xFF) + "." +
                                    ((ip >> 24) & 0xFF);
-                        
+
                         send({
                             type: "bypass",
                             target: "telemetry_blocker",
@@ -156,14 +156,14 @@ if (connectFunc) {
                 var family = sockAddr.readU16();
                 if (family === 2) { // AF_INET
                     var port = (sockAddr.add(2).readU8() << 8) | sockAddr.add(3).readU8();
-                    
+
                     // Block suspicious ports
                     var suspiciousPorts = [80, 443, 8080, 8443, 9001, 9443];
                     if (suspiciousPorts.includes(port)) {
                         send({
                             type: "bypass",
                             target: "telemetry_blocker",
-                            action: "connect_call_blocked", 
+                            action: "connect_call_blocked",
                             port: port,
                             timestamp: Date.now()
                         });
@@ -197,7 +197,7 @@ if (getAddrInfoW) {
                     'vortex.data',
                     'settings-win'
                 ];
-                
+
                 for (var pattern of blockedPatterns) {
                     if (nodeName.toLowerCase().includes(pattern)) {
                         send({
@@ -237,7 +237,7 @@ if (createProcessW) {
                     'activation',
                     'licensing'
                 ];
-                
+
                 for (var cmd of suspiciousCommands) {
                     if (cmdLine.toLowerCase().includes(cmd.toLowerCase())) {
                         send({
@@ -304,7 +304,7 @@ if (createFileW) {
                     '.log',
                     'activation'
                 ];
-                
+
                 for (var path of blockedPaths) {
                     if (fileName.toLowerCase().includes(path.toLowerCase())) {
                         send({

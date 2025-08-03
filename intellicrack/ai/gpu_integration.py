@@ -20,6 +20,7 @@ try:
         optimize_for_gpu,
         to_device,
     )
+
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     logger.warning("GPU autoloader not available, using fallback implementations")
@@ -34,6 +35,7 @@ except ImportError:
 
         """
         import torch
+
         return torch.device("cpu")
 
     def get_gpu_info():
@@ -93,6 +95,7 @@ class GPUIntegration:
         if GPU_AUTOLOADER_AVAILABLE:
             try:
                 import torch
+
                 if self.gpu_info["type"] == "intel_xpu" and hasattr(torch, "xpu"):
                     info["runtime"] = {
                         "xpu_available": torch.xpu.is_available(),
@@ -106,8 +109,12 @@ class GPUIntegration:
                     }
                 elif self.gpu_info["type"] == "amd_rocm" and hasattr(torch, "hip"):
                     info["runtime"] = {
-                        "hip_available": torch.hip.is_available() if hasattr(torch.hip, "is_available") else False,
-                        "device_count": torch.hip.device_count() if hasattr(torch.hip, "device_count") else 0,
+                        "hip_available": torch.hip.is_available()
+                        if hasattr(torch.hip, "is_available")
+                        else False,
+                        "device_count": torch.hip.device_count()
+                        if hasattr(torch.hip, "device_count")
+                        else 0,
                     }
             except Exception as e:
                 logger.debug(f"Failed to get runtime info: {e}")

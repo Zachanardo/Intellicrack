@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError as e:
     logger.error("Import error in config: %s", e)
@@ -62,6 +63,7 @@ def _get_modern_config():
         _modern_config = get_new_config()
     return _modern_config
 
+
 # Tool discovery functions using new system
 
 
@@ -89,16 +91,17 @@ def find_tool(tool_name: str, required_executables=None) -> str | None:
 
     """
     if required_executables:
-        logger.debug("Tool search for %s with required executables: %s",
-                     tool_name, required_executables)
+        logger.debug(
+            "Tool search for %s with required executables: %s", tool_name, required_executables
+        )
     try:
         config = _get_modern_config()
         return config.get_tool_path(tool_name)
     except (AttributeError, KeyError, ValueError) as e:
-        logger.warning("Modern tool discovery failed for %s: %s",
-                       tool_name, e, exc_info=True)
+        logger.warning("Modern tool discovery failed for %s: %s", tool_name, e, exc_info=True)
         # Fallback to basic PATH search
         import shutil
+
         return shutil.which(tool_name)
 
 
@@ -142,8 +145,7 @@ def get_system_path(path_type: str) -> str | None:
             return config.get("directories.temp")
         return None
     except (AttributeError, KeyError, ValueError, TypeError) as e:
-        logger.warning("System path lookup failed for %s: %s",
-                       path_type, e, exc_info=True)
+        logger.warning("System path lookup failed for %s: %s", path_type, e, exc_info=True)
         # Fallback to basic paths
         if path_type == "desktop":
             return os.path.join(os.path.expanduser("~"), "Desktop")
@@ -153,6 +155,7 @@ def get_system_path(path_type: str) -> str | None:
             return os.path.join(os.path.expanduser("~"), "Downloads")
         if path_type == "temp":
             import tempfile
+
             return tempfile.gettempdir()
         return None
 
@@ -243,15 +246,12 @@ class ConfigManager:
             "temp_dir": config.get("directories.temp", str(config.get_cache_dir())),
             "plugin_directory": "intellicrack/plugins",
             "download_directory": str(config.get_cache_dir() / "downloads"),
-
             # Tool paths
             "ghidra_path": config.get_tool_path("ghidra"),
             "radare2_path": config.get_tool_path("radare2"),
             "frida_path": config.get_tool_path("frida"),
-
             # Analysis settings
             "analysis": config.get("analysis", {}),
-
             # Other sections from modern config
             "patching": config.get("patching", {}),
             "network": config.get("network", {}),
@@ -338,7 +338,9 @@ class ConfigManager:
         if key == "output_dir":
             return str(self._modern_config.get_output_dir())
         if key == "temp_dir":
-            return self._modern_config.get("directories.temp", str(self._modern_config.get_cache_dir()))
+            return self._modern_config.get(
+                "directories.temp", str(self._modern_config.get_cache_dir())
+            )
 
         # Try modern config first, then legacy structure
         result = self._modern_config.get(key, None)
@@ -487,8 +489,7 @@ try:
     _legacy_config_dict = load_config()
     CONFIG = _legacy_config_dict
 except (FileNotFoundError, PermissionError, ValueError, KeyError, ImportError) as e:
-    logger.warning(
-        "Failed to load modern config, using empty dict: %s", e, exc_info=True)
+    logger.warning("Failed to load modern config, using empty dict: %s", e, exc_info=True)
     CONFIG = {}
 
 # Create a DEFAULT_CONFIG for compatibility

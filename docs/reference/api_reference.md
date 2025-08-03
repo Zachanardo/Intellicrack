@@ -281,7 +281,7 @@ class MyPlugin(PluginBase):
     def __init__(self):
         super().__init__()
         self.name = "My Plugin"
-    
+
     def run(self, binary_data: bytes, **kwargs) -> dict:
         # Plugin logic
         return {"status": "success"}

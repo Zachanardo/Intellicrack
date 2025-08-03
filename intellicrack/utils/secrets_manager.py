@@ -22,6 +22,7 @@ try:
     from cryptography.fernet import Fernet
     from cryptography.hazmat.primitives import hashes
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
     HAS_CRYPTOGRAPHY = True
 except ImportError as e:
     logger.error("Import error in secrets_manager: %s", e)
@@ -30,6 +31,7 @@ except ImportError as e:
 
 try:
     import keyring
+
     HAS_KEYRING = True
 except ImportError as e:
     logger.error("Import error in secrets_manager: %s", e)
@@ -38,6 +40,7 @@ except ImportError as e:
 
 try:
     from dotenv import find_dotenv, load_dotenv
+
     HAS_DOTENV = True
 except ImportError as e:
     logger.error("Import error in secrets_manager: %s", e)
@@ -69,27 +72,22 @@ class SecretsManager:
         "HUGGINGFACE_API_TOKEN",
         "GROQ_API_KEY",
         "TOGETHER_API_KEY",
-
         # Cloud Services
         "AWS_ACCESS_KEY_ID",
         "AWS_SECRET_ACCESS_KEY",
         "AZURE_API_KEY",
         "GCP_API_KEY",
-
         # Analysis Services
         "VIRUSTOTAL_API_KEY",
         "HYBRID_ANALYSIS_API_KEY",
         "MALWARE_BAZAAR_API_KEY",
-
         # Database
         "DATABASE_URL",
         "DB_PASSWORD",
-
         # Application Secrets
         "JWT_SECRET_KEY",
         "ENCRYPTION_KEY",
         "SESSION_SECRET",
-
         # Custom/Generic
         "API_KEY",
         "SECRET_KEY",
@@ -136,10 +134,10 @@ class SecretsManager:
 
         # Look for .env files in order of precedence
         env_files = [
-            ".env.local",      # Highest priority - user's local overrides
-            ".env.production", # Production settings
-            ".env",           # Default settings
-            ".env.example",    # Fallback example (should not contain real secrets)
+            ".env.local",  # Highest priority - user's local overrides
+            ".env.production",  # Production settings
+            ".env",  # Default settings
+            ".env.example",  # Fallback example (should not contain real secrets)
         ]
 
         # Find project root (where .env files typically are)

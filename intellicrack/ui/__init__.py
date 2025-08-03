@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 
 # Set up package logger
@@ -44,9 +43,11 @@ try:
         get_integration_status,
         integrate_radare2_comprehensive,
     )
+
     logger.info("Radare2 comprehensive UI integration loaded successfully")
 except ImportError as e:
     logger.warning("Failed to import radare2 UI integration: %s", e)
+
     # Provide fallback functions
     def integrate_radare2_comprehensive(main_app):
         """Fallback for radare2 comprehensive integration."""
@@ -60,11 +61,14 @@ except ImportError as e:
 
             # Log to output if available
             if hasattr(main_app, "update_output"):
-                main_app.update_output.emit("[Error] Radare2 comprehensive integration module not found")
+                main_app.update_output.emit(
+                    "[Error] Radare2 comprehensive integration module not found"
+                )
 
             # Show message box if Qt is available
             try:
                 from PyQt6.QtWidgets import QMessageBox
+
                 QMessageBox.warning(
                     main_app,
                     "Integration Not Available",
@@ -81,11 +85,13 @@ except ImportError as e:
 
             # Track failed integration attempt
             if hasattr(main_app, "integration_attempts"):
-                main_app.integration_attempts.append({
-                    "module": "radare2_comprehensive",
-                    "status": "failed",
-                    "reason": "Module not available",
-                })
+                main_app.integration_attempts.append(
+                    {
+                        "module": "radare2_comprehensive",
+                        "status": "failed",
+                        "reason": "Module not available",
+                    }
+                )
 
         return False
 
@@ -110,6 +116,7 @@ try:
         R2ResultsViewer,
         create_radare2_tab,
     )
+
     logger.info("Radare2 UI components loaded successfully")
 except ImportError as e:
     logger.warning("Failed to import radare2 UI components: %s", e)
@@ -125,6 +132,7 @@ try:
         EnhancedMainWindow,
         create_enhanced_application,
     )
+
     logger.info("Enhanced UI features loaded successfully")
 except ImportError as e:
     logger.warning("Failed to import enhanced UI features: %s", e)
@@ -135,6 +143,7 @@ except ImportError as e:
 # Import UI manager
 try:
     from .radare2_ui_manager import R2UIManager, create_r2_ui_manager
+
     logger.info("Radare2 UI manager loaded successfully")
 except ImportError as e:
     logger.warning("Failed to import radare2 UI manager: %s", e)
@@ -151,32 +160,26 @@ except ImportError as e:
 __all__ = [
     # From main_window
     "IntellicrackMainWindow",
-
     # From dashboard_manager
     "DashboardManager",
-
     # Radare2 comprehensive integration
     "integrate_radare2_comprehensive",
     "get_comprehensive_integration",
     "get_integration_status",
     "cleanup_integration",
     "ComprehensiveR2Integration",
-
     # Radare2 UI components
     "R2IntegrationWidget",
     "R2ConfigurationDialog",
     "R2ResultsViewer",
     "create_radare2_tab",
-
     # Enhanced UI features
     "EnhancedAnalysisDashboard",
     "EnhancedMainWindow",
     "create_enhanced_application",
-
     # UI manager
     "R2UIManager",
     "create_r2_ui_manager",
-
     # Subpackages
     "dialogs",
     "widgets",

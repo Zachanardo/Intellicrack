@@ -1,4 +1,5 @@
 """Model fine-tuning dialog for customizing AI models."""
+
 import csv
 import json
 import logging
@@ -18,6 +19,7 @@ try:
     from ...ai.enhanced_training_interface import (
         TrainingConfiguration as EnhancedTrainingConfiguration,
     )
+
     ENHANCED_TRAINING_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
@@ -43,7 +45,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
-
 
 
 try:
@@ -75,6 +76,7 @@ try:
         QVBoxLayout,
         QWidget,
     )
+
     PYQT6_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
@@ -86,11 +88,13 @@ except ImportError as e:
 try:
     import torch
     from torch import nn
+
     TORCH_AVAILABLE = True
 
     # Import unified GPU system
     try:
         from ...utils.gpu_autoloader import get_device, get_gpu_info, to_device
+
         GPU_AUTOLOADER_AVAILABLE = True
     except ImportError:
         GPU_AUTOLOADER_AVAILABLE = False
@@ -106,6 +110,7 @@ try:
         AutoTokenizer,
         TrainingArguments,
     )
+
     TRANSFORMERS_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
@@ -113,6 +118,7 @@ except ImportError as e:
 
 try:
     from peft import LoraConfig, TaskType, get_peft_model
+
     PEFT_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
@@ -122,6 +128,7 @@ except ImportError as e:
 try:
     import nltk  # pylint: disable=import-error
     from nltk.corpus import wordnet
+
     NLTK_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
@@ -130,6 +137,7 @@ except ImportError as e:
 
 try:
     import matplotlib.pyplot as plt
+
     MATPLOTLIB_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
@@ -156,8 +164,7 @@ class TrainingConfig:
     model_format: str = "PyTorch"
     dataset_path: str = ""
     dataset_format: str = "JSON"
-    output_directory: str = os.path.join(
-        os.path.dirname(__file__), "..", "..", "models", "trained")
+    output_directory: str = os.path.join(os.path.dirname(__file__), "..", "..", "models", "trained")
     epochs: int = 3
     batch_size: int = 4
     learning_rate: float = 0.0002
@@ -244,11 +251,13 @@ class TrainingThread(QThread):
             self.logger.info("Starting training with config: %s", self.config)
 
             if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit({
-                    "status": self.status.value,
-                    "message": "Preparing training",
-                    "step": 0,
-                })
+                self.progress_signal.emit(
+                    {
+                        "status": self.status.value,
+                        "message": "Preparing training",
+                        "step": 0,
+                    }
+                )
 
             # Load model and tokenizer
             self._load_model()
@@ -262,30 +271,36 @@ class TrainingThread(QThread):
             # Run training
             self.status = TrainingStatus.TRAINING
             if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit({
-                    "status": self.status.value,
-                    "message": "Training in progress",
-                    "step": 1,
-                })
+                self.progress_signal.emit(
+                    {
+                        "status": self.status.value,
+                        "message": "Training in progress",
+                        "step": 1,
+                    }
+                )
             self._train_model()
 
             self.status = TrainingStatus.COMPLETED
             if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit({
-                    "status": self.status.value,
-                    "message": "Training completed successfully",
-                    "step": 100,
-                })
+                self.progress_signal.emit(
+                    {
+                        "status": self.status.value,
+                        "message": "Training completed successfully",
+                        "step": 100,
+                    }
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             self.status = TrainingStatus.ERROR
             self.logger.error(f"Training failed: {e}", exc_info=True)
             if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit({
-                    "status": self.status.value,
-                    "error": str(e),
-                    "step": -1,
-                })
+                self.progress_signal.emit(
+                    {
+                        "status": self.status.value,
+                        "error": str(e),
+                        "step": -1,
+                    }
+                )
 
     def _load_model(self):
         """Load the base model and tokenizer."""
@@ -320,11 +335,13 @@ class TrainingThread(QThread):
                 self._create_dummy_model()
 
             if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit({
-                    "status": self.status.value,
-                    "message": "Model loaded successfully",
-                    "step": 0,
-                })
+                self.progress_signal.emit(
+                    {
+                        "status": self.status.value,
+                        "message": "Model loaded successfully",
+                        "step": 0,
+                    }
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to load model: %s", e)
@@ -346,20 +363,33 @@ class TrainingThread(QThread):
                 num_layers = getattr(self.config, "num_layers", 6)
                 num_heads = getattr(self.config, "num_attention_heads", 8)
 
-                self.logger.info("Creating %s model with %d parameters", model_type,
-                               self._estimate_parameter_count(hidden_size, num_layers, vocab_size))
+                self.logger.info(
+                    "Creating %s model with %d parameters",
+                    model_type,
+                    self._estimate_parameter_count(hidden_size, num_layers, vocab_size),
+                )
 
                 if model_type == "gpt":
-                    self.model = self._create_gpt_model(vocab_size, hidden_size, num_layers, num_heads)
+                    self.model = self._create_gpt_model(
+                        vocab_size, hidden_size, num_layers, num_heads
+                    )
                 elif model_type == "bert":
-                    self.model = self._create_bert_model(vocab_size, hidden_size, num_layers, num_heads)
+                    self.model = self._create_bert_model(
+                        vocab_size, hidden_size, num_layers, num_heads
+                    )
                 elif model_type == "roberta":
-                    self.model = self._create_roberta_model(vocab_size, hidden_size, num_layers, num_heads)
+                    self.model = self._create_roberta_model(
+                        vocab_size, hidden_size, num_layers, num_heads
+                    )
                 elif model_type == "llama":
-                    self.model = self._create_llama_model(vocab_size, hidden_size, num_layers, num_heads)
+                    self.model = self._create_llama_model(
+                        vocab_size, hidden_size, num_layers, num_heads
+                    )
                 else:
                     # Default transformer model with enhanced features
-                    self.model = self._create_enhanced_transformer_model(vocab_size, hidden_size, num_layers, num_heads)
+                    self.model = self._create_enhanced_transformer_model(
+                        vocab_size, hidden_size, num_layers, num_heads
+                    )
 
                 # Create tokenizer
                 self.tokenizer = self._create_tokenizer(vocab_size)
@@ -370,8 +400,11 @@ class TrainingThread(QThread):
                 # Add model metadata
                 self._add_model_metadata(model_type, vocab_size, hidden_size, num_layers)
 
-                self.logger.info("Successfully created %s model with %d parameters",
-                               model_type, sum(p.numel() for p in self.model.parameters()))
+                self.logger.info(
+                    "Successfully created %s model with %d parameters",
+                    model_type,
+                    sum(p.numel() for p in self.model.parameters()),
+                )
 
             else:
                 self.logger.warning("PyTorch not available, creating minimal model placeholder")
@@ -386,6 +419,7 @@ class TrainingThread(QThread):
 
     def _create_gpt_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
         """Create a GPT-style autoregressive transformer model."""
+
         class GPTModel(nn.Module):
             """GPT-style autoregressive transformer for language modeling.
 
@@ -405,9 +439,9 @@ class TrainingThread(QThread):
                 self.position_embedding = nn.Embedding(self.max_position_embeddings, hidden_size)
 
                 # Transformer blocks
-                self.transformer_blocks = nn.ModuleList([
-                    self._create_gpt_block(hidden_size, num_heads) for _ in range(num_layers)
-                ])
+                self.transformer_blocks = nn.ModuleList(
+                    [self._create_gpt_block(hidden_size, num_heads) for _ in range(num_layers)]
+                )
 
                 # Final layer norm and output projection
                 self.final_layer_norm = nn.LayerNorm(hidden_size)
@@ -418,6 +452,7 @@ class TrainingThread(QThread):
 
             def _create_gpt_block(self, hidden_size, num_heads):
                 """Create a single GPT transformer block."""
+
                 class GPTBlock(nn.Module):
                     """A single GPT transformer block with attention and feed-forward layers."""
 
@@ -425,7 +460,10 @@ class TrainingThread(QThread):
                         """Initialize GPT block with attention and feed-forward layers."""
                         super().__init__()
                         self.attention = nn.MultiheadAttention(
-                            hidden_size, num_heads, dropout=0.1, batch_first=True,
+                            hidden_size,
+                            num_heads,
+                            dropout=0.1,
+                            batch_first=True,
                         )
                         self.feed_forward = nn.Sequential(
                             nn.Linear(hidden_size, hidden_size * 4),
@@ -440,8 +478,9 @@ class TrainingThread(QThread):
                         """Forward pass through the GPT block."""
                         # Pre-norm attention
                         normed_x = self.ln1(x)
-                        attn_out, _ = self.attention(normed_x, normed_x, normed_x,
-                                                   attn_mask=attention_mask, is_causal=True)
+                        attn_out, _ = self.attention(
+                            normed_x, normed_x, normed_x, attn_mask=attention_mask, is_causal=True
+                        )
                         x = x + attn_out
 
                         # Pre-norm feed forward
@@ -480,8 +519,11 @@ class TrainingThread(QThread):
 
         return GPTModel(vocab_size, hidden_size, num_layers, num_heads)
 
-    def _create_bert_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
+    def _create_bert_model(
+        self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+    ):
         """Create a BERT-style bidirectional transformer model."""
+
         class BERTModel(nn.Module):
             """BERT-style bidirectional transformer for masked language modeling.
 
@@ -558,7 +600,9 @@ class TrainingThread(QThread):
 
         return BERTModel(vocab_size, hidden_size, num_layers, num_heads)
 
-    def _create_roberta_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
+    def _create_roberta_model(
+        self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+    ):
         """Create a RoBERTa-style model (BERT without token type embeddings)."""
         # RoBERTa is similar to BERT but without token type embeddings and different training
         model = self._create_bert_model(vocab_size, hidden_size, num_layers, num_heads)
@@ -566,8 +610,11 @@ class TrainingThread(QThread):
         model.token_type_embedding = nn.Embedding(1, hidden_size)  # Dummy embedding
         return model
 
-    def _create_llama_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
+    def _create_llama_model(
+        self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+    ):
         """Create a LLaMA-style model with RMSNorm and SwiGLU."""
+
         class LlamaModel(nn.Module):
             """LLaMA-style transformer with RMSNorm and SwiGLU activation.
 
@@ -585,9 +632,9 @@ class TrainingThread(QThread):
                 self.token_embedding = nn.Embedding(vocab_size, hidden_size)
 
                 # Transformer layers
-                self.layers = nn.ModuleList([
-                    self._create_llama_layer(hidden_size, num_heads) for _ in range(num_layers)
-                ])
+                self.layers = nn.ModuleList(
+                    [self._create_llama_layer(hidden_size, num_heads) for _ in range(num_layers)]
+                )
 
                 # Final norm and output
                 self.final_norm = self._create_rms_norm(hidden_size)
@@ -595,6 +642,7 @@ class TrainingThread(QThread):
 
             def _create_rms_norm(self, hidden_size):
                 """Create RMSNorm layer."""
+
                 class RMSNorm(nn.Module):
                     """RMS normalization layer for transformer models."""
 
@@ -614,6 +662,7 @@ class TrainingThread(QThread):
 
             def _create_llama_layer(self, hidden_size, num_heads):
                 """Create a single LLaMA transformer layer."""
+
                 class LlamaLayer(nn.Module):
                     """Single layer of a LLaMA transformer model."""
 
@@ -622,7 +671,10 @@ class TrainingThread(QThread):
                         super().__init__()
                         self.attention_norm = parent._create_rms_norm(hidden_size)
                         self.attention = nn.MultiheadAttention(
-                            hidden_size, num_heads, dropout=0.0, batch_first=True,
+                            hidden_size,
+                            num_heads,
+                            dropout=0.0,
+                            batch_first=True,
                         )
 
                         self.ffn_norm = parent._create_rms_norm(hidden_size)
@@ -635,8 +687,9 @@ class TrainingThread(QThread):
                         """Forward pass through LLaMA layer with attention and SwiGLU FFN."""
                         # Attention with residual
                         normed_x = self.attention_norm(x)
-                        attn_out, _ = self.attention(normed_x, normed_x, normed_x,
-                                                   attn_mask=attention_mask, is_causal=True)
+                        attn_out, _ = self.attention(
+                            normed_x, normed_x, normed_x, attn_mask=attention_mask, is_causal=True
+                        )
                         x = x + attn_out
 
                         # SwiGLU FFN with residual
@@ -673,8 +726,11 @@ class TrainingThread(QThread):
 
         return LlamaModel(vocab_size, hidden_size, num_layers, num_heads)
 
-    def _create_enhanced_transformer_model(self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int):
+    def _create_enhanced_transformer_model(
+        self, vocab_size: int, hidden_size: int, num_layers: int, num_heads: int
+    ):
         """Create an enhanced transformer model with modern improvements."""
+
         class EnhancedTransformerModel(nn.Module):
             """Enhanced transformer model with modern architectural improvements.
 
@@ -694,9 +750,9 @@ class TrainingThread(QThread):
                 self.position_embedding = nn.Embedding(self.max_seq_len, hidden_size)
 
                 # Transformer layers with pre-norm and improvements
-                self.layers = nn.ModuleList([
-                    self._create_enhanced_layer(hidden_size, num_heads) for _ in range(num_layers)
-                ])
+                self.layers = nn.ModuleList(
+                    [self._create_enhanced_layer(hidden_size, num_heads) for _ in range(num_layers)]
+                )
 
                 # Output processing
                 self.final_norm = nn.LayerNorm(hidden_size)
@@ -707,6 +763,7 @@ class TrainingThread(QThread):
 
             def _create_enhanced_layer(self, hidden_size, num_heads):
                 """Create enhanced transformer layer with modern improvements."""
+
                 class EnhancedTransformerLayer(nn.Module):
                     """Enhanced transformer layer with modern improvements and optimizations."""
 
@@ -716,7 +773,10 @@ class TrainingThread(QThread):
                         # Pre-norm attention
                         self.attention_norm = nn.LayerNorm(hidden_size)
                         self.attention = nn.MultiheadAttention(
-                            hidden_size, num_heads, dropout=0.1, batch_first=True,
+                            hidden_size,
+                            num_heads,
+                            dropout=0.1,
+                            batch_first=True,
                         )
                         self.attention_dropout = nn.Dropout(0.1)
 
@@ -735,8 +795,11 @@ class TrainingThread(QThread):
                         # Pre-norm attention with residual
                         normed_x = self.attention_norm(x)
                         attn_out, _ = self.attention(
-                            normed_x, normed_x, normed_x,
-                            attn_mask=attention_mask, is_causal=True,
+                            normed_x,
+                            normed_x,
+                            normed_x,
+                            attn_mask=attention_mask,
+                            is_causal=True,
                         )
                         attn_out = self.attention_dropout(attn_out)
                         x = x + attn_out
@@ -782,6 +845,7 @@ class TrainingThread(QThread):
 
     def _create_tokenizer(self, vocab_size: int):
         """Create a functional tokenizer for the model."""
+
         class DummyTokenizer:
             """Functional tokenizer implementation for testing and demonstration.
 
@@ -812,16 +876,60 @@ class TrainingThread(QThread):
             def _create_vocabulary(self, vocab_size):
                 """Create a basic vocabulary with common tokens."""
                 vocab = [
-                    "[PAD]", "[UNK]", "[BOS]", "[EOS]", "[MASK]",
-                    "[CLS]", "[SEP]", "[NEWLINE]", "[TAB]", "[SPACE]",
+                    "[PAD]",
+                    "[UNK]",
+                    "[BOS]",
+                    "[EOS]",
+                    "[MASK]",
+                    "[CLS]",
+                    "[SEP]",
+                    "[NEWLINE]",
+                    "[TAB]",
+                    "[SPACE]",
                 ]
 
                 # Add common English words
                 common_words = [
-                    "the", "and", "of", "to", "a", "in", "is", "it", "you", "that",
-                    "he", "was", "for", "on", "are", "as", "with", "his", "they", "i",
-                    "at", "be", "this", "have", "from", "or", "one", "had", "by", "word",
-                    "but", "not", "what", "all", "were", "we", "when", "your", "can", "said",
+                    "the",
+                    "and",
+                    "of",
+                    "to",
+                    "a",
+                    "in",
+                    "is",
+                    "it",
+                    "you",
+                    "that",
+                    "he",
+                    "was",
+                    "for",
+                    "on",
+                    "are",
+                    "as",
+                    "with",
+                    "his",
+                    "they",
+                    "i",
+                    "at",
+                    "be",
+                    "this",
+                    "have",
+                    "from",
+                    "or",
+                    "one",
+                    "had",
+                    "by",
+                    "word",
+                    "but",
+                    "not",
+                    "what",
+                    "all",
+                    "were",
+                    "we",
+                    "when",
+                    "your",
+                    "can",
+                    "said",
                 ]
                 vocab.extend(common_words)
 
@@ -869,7 +977,7 @@ class TrainingThread(QThread):
 
                     # Apply max_length truncation
                     if max_length and len(token_ids) > max_length:
-                        token_ids = token_ids[:max_length-1] + [self.eos_token_id]
+                        token_ids = token_ids[: max_length - 1] + [self.eos_token_id]
 
                     encoded_sequences.append(token_ids)
 
@@ -894,7 +1002,11 @@ class TrainingThread(QThread):
                 for token_id in token_ids:
                     token = self.id_to_token.get(token_id, self.unk_token)
 
-                    if skip_special_tokens and token in [self.pad_token, self.bos_token, self.eos_token]:
+                    if skip_special_tokens and token in [
+                        self.pad_token,
+                        self.bos_token,
+                        self.eos_token,
+                    ]:
                         continue
 
                     tokens.append(token)
@@ -934,22 +1046,28 @@ class TrainingThread(QThread):
         self.model.apply(init_weights)
         self.logger.info("Model weights initialized with Xavier/normal initialization")
 
-    def _add_model_metadata(self, model_type: str, vocab_size: int, hidden_size: int, num_layers: int):
+    def _add_model_metadata(
+        self, model_type: str, vocab_size: int, hidden_size: int, num_layers: int
+    ):
         """Add comprehensive metadata to the model."""
         if not hasattr(self.model, "config"):
             self.model.config = {}
 
-        self.model.config.update({
-            "model_type": model_type,
-            "vocab_size": vocab_size,
-            "hidden_size": hidden_size,
-            "num_layers": num_layers,
-            "num_parameters": sum(p.numel() for p in self.model.parameters()),
-            "trainable_parameters": sum(p.numel() for p in self.model.parameters() if p.requires_grad),
-            "created_timestamp": time.time(),
-            "framework": "pytorch",
-            "version": "1.0.0",
-        })
+        self.model.config.update(
+            {
+                "model_type": model_type,
+                "vocab_size": vocab_size,
+                "hidden_size": hidden_size,
+                "num_layers": num_layers,
+                "num_parameters": sum(p.numel() for p in self.model.parameters()),
+                "trainable_parameters": sum(
+                    p.numel() for p in self.model.parameters() if p.requires_grad
+                ),
+                "created_timestamp": time.time(),
+                "framework": "pytorch",
+                "version": "1.0.0",
+            }
+        )
 
         # Add training configuration
         self.model.training_config = {
@@ -965,9 +1083,9 @@ class TrainingThread(QThread):
         # Rough estimation for transformer models
         embedding_params = vocab_size * hidden_size * 2  # Token + position embeddings
         layer_params = num_layers * (
-            hidden_size * hidden_size * 4 * 3 +  # Attention (Q, K, V projections + output)
-            hidden_size * hidden_size * 4 * 2 +  # FFN (up and down projections)
-            hidden_size * 4  # Layer norms and biases
+            hidden_size * hidden_size * 4 * 3  # Attention (Q, K, V projections + output)
+            + hidden_size * hidden_size * 4 * 2  # FFN (up and down projections)
+            + hidden_size * 4  # Layer norms and biases
         )
         output_params = hidden_size * vocab_size  # Output projection
 
@@ -975,6 +1093,7 @@ class TrainingThread(QThread):
 
     def _create_fallback_model(self):
         """Create a minimal fallback model when PyTorch is not available."""
+
         class FallbackModel:
             """Minimal model placeholder when PyTorch is not available."""
 
@@ -1003,13 +1122,19 @@ class TrainingThread(QThread):
                 """Fallback training method when PyTorch is unavailable."""
                 # Implement basic training stub
                 self.training = True
-                return {"status": "training_not_implemented", "message": "PyTorch required for training"}
+                return {
+                    "status": "training_not_implemented",
+                    "message": "PyTorch required for training",
+                }
 
             def eval(self):
                 """Fallback evaluation method when PyTorch is unavailable."""
                 # Implement basic evaluation stub
                 self.training = False
-                return {"status": "eval_not_implemented", "message": "PyTorch required for evaluation"}
+                return {
+                    "status": "eval_not_implemented",
+                    "message": "PyTorch required for evaluation",
+                }
 
         return FallbackModel()
 
@@ -1051,13 +1176,17 @@ class TrainingThread(QThread):
                 with open(dataset_path, encoding="utf-8") as f:
                     lines = f.readlines()
                     # Convert to input/output format
-                    data = [{"input": _line.strip(), "output": ""} for _line in lines if _line.strip()]
+                    data = [
+                        {"input": _line.strip(), "output": ""} for _line in lines if _line.strip()
+                    ]
 
             if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit({
-                    "status": f"Dataset loaded: {len(data)} samples",
-                    "step": 1,
-                })
+                self.progress_signal.emit(
+                    {
+                        "status": f"Dataset loaded: {len(data)} samples",
+                        "step": 1,
+                    }
+                )
 
             return data
 
@@ -1097,10 +1226,12 @@ class TrainingThread(QThread):
                 )
 
             if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit({
-                    "status": "Training setup complete",
-                    "step": 2,
-                })
+                self.progress_signal.emit(
+                    {
+                        "status": "Training setup complete",
+                        "step": 2,
+                    }
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Failed to setup training: %s", e)
@@ -1133,7 +1264,7 @@ class TrainingThread(QThread):
                     loss += random.uniform(-0.1, 0.1)  # Add noise
 
                     # Calculate learning rate with decay
-                    lr = self.config.learning_rate * (0.95 ** _epoch)
+                    lr = self.config.learning_rate * (0.95**_epoch)
 
                     # Store metrics
                     metrics = {
@@ -1147,11 +1278,13 @@ class TrainingThread(QThread):
 
                     # Emit progress signal
                     if PYQT6_AVAILABLE and self.progress_signal:
-                        self.progress_signal.emit({
-                            **metrics,
-                            "status": f"Training epoch {_epoch+1}/{self.config.epochs}",
-                            "history": self.training_history[-10:],  # Last 10 steps
-                        })
+                        self.progress_signal.emit(
+                            {
+                                **metrics,
+                                "status": f"Training epoch {_epoch+1}/{self.config.epochs}",
+                                "history": self.training_history[-10:],  # Last 10 steps
+                            }
+                        )
 
                     # Simulate time delay
                     time.sleep(0.1)
@@ -1160,11 +1293,13 @@ class TrainingThread(QThread):
                 if not self.is_stopped:
                     self.status = TrainingStatus.VALIDATING
                     if PYQT6_AVAILABLE and self.progress_signal:
-                        self.progress_signal.emit({
-                            "status": self.status.value,
-                            "message": f"Validating epoch {_epoch+1}",
-                            "step": current_step,
-                        })
+                        self.progress_signal.emit(
+                            {
+                                "status": self.status.value,
+                                "message": f"Validating epoch {_epoch+1}",
+                                "step": current_step,
+                            }
+                        )
 
                     # Simulate validation time
                     time.sleep(0.3)
@@ -1173,11 +1308,15 @@ class TrainingThread(QThread):
                     self.status = TrainingStatus.TRAINING
 
             if PYQT6_AVAILABLE and self.progress_signal:
-                self.progress_signal.emit({
-                    "status": "Training completed",
-                    "step": total_steps,
-                    "final_loss": self.training_history[-1]["loss"] if self.training_history else 0,
-                })
+                self.progress_signal.emit(
+                    {
+                        "status": "Training completed",
+                        "step": total_steps,
+                        "final_loss": self.training_history[-1]["loss"]
+                        if self.training_history
+                        else 0,
+                    }
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Training failed: %s", e)
@@ -1194,22 +1333,26 @@ class TrainingThread(QThread):
         self.status = TrainingStatus.PAUSED
         self.logger.info("Training paused")
         if PYQT6_AVAILABLE and self.progress_signal:
-            self.progress_signal.emit({
-                "status": self.status.value,
-                "message": "Training paused",
-                "step": -1,
-            })
+            self.progress_signal.emit(
+                {
+                    "status": self.status.value,
+                    "message": "Training paused",
+                    "step": -1,
+                }
+            )
 
     def resume(self):
         """Resume the training process."""
         self.status = TrainingStatus.TRAINING
         self.logger.info("Training resumed")
         if PYQT6_AVAILABLE and self.progress_signal:
-            self.progress_signal.emit({
-                "status": self.status.value,
-                "message": "Training resumed",
-                "step": -1,
-            })
+            self.progress_signal.emit(
+                {
+                    "status": self.status.value,
+                    "message": "Training resumed",
+                    "step": -1,
+                }
+            )
 
 
 class ModelFinetuningDialog(QDialog):
@@ -1442,9 +1585,16 @@ class ModelFinetuningDialog(QDialog):
 
         # Model format
         self.model_format_combo = QComboBox()
-        self.model_format_combo.addItems([
-            "PyTorch", "GGUF", "GGML", "ONNX", "Transformers", "TensorFlow",
-        ])
+        self.model_format_combo.addItems(
+            [
+                "PyTorch",
+                "GGUF",
+                "GGML",
+                "ONNX",
+                "Transformers",
+                "TensorFlow",
+            ]
+        )
         model_layout.addRow("Model Format:", self.model_format_combo)
 
         model_group.setLayout(model_layout)
@@ -1723,9 +1873,7 @@ class ModelFinetuningDialog(QDialog):
         self.visualization_label.setAlignment(Qt.AlignCenter)
         self.visualization_label.setMinimumHeight(300)
         self.visualization_label.setStyleSheet(
-            "background-color: #f8f9fa; "
-            "border: 1px solid #dee2e6; "
-            "border-radius: 4px;",
+            "background-color: #f8f9fa; " "border: 1px solid #dee2e6; " "border-radius: 4px;",
         )
         viz_layout.addWidget(self.visualization_label)
 
@@ -1756,7 +1904,10 @@ class ModelFinetuningDialog(QDialog):
         )
 
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select Model File", "", file_filter,
+            self,
+            "Select Model File",
+            "",
+            file_filter,
         )
 
         if path:
@@ -1791,7 +1942,10 @@ class ModelFinetuningDialog(QDialog):
         )
 
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select Dataset File", "", file_filter,
+            self,
+            "Select Dataset File",
+            "",
+            file_filter,
         )
 
         if path:
@@ -2125,9 +2279,12 @@ class ModelFinetuningDialog(QDialog):
             layout.addLayout(button_layout)
 
             cancel_button.clicked.connect(dialog.reject)
-            create_button.clicked.connect(lambda: self._generate_dataset(
-                template_combo.currentText(), dialog,
-            ))
+            create_button.clicked.connect(
+                lambda: self._generate_dataset(
+                    template_combo.currentText(),
+                    dialog,
+                )
+            )
 
             dialog.exec()
 
@@ -2138,31 +2295,37 @@ class ModelFinetuningDialog(QDialog):
     def _get_sample_data(self, template: str) -> str:
         """Get sample data for a template."""
         samples = {
-            "Binary Analysis Q&A": json.dumps([
-                {
-                    "input": "How do I analyze PE file headers?",
-                    "output": "Use tools like PE-bear or objdump to examine DOS header, NT headers, and section table.",
-                },
-                {
-                    "input": "What are common packing techniques?",
-                    "output": "UPX, ASPack, Themida are popular packers that compress and obfuscate executables.",
-                },
-            ], indent=2),
-
-            "License Bypass Instructions": json.dumps([
-                {
-                    "input": "How to identify license validation functions?",
-                    "output": "Look for string references to license keys, serial numbers, or activation codes in the binary.",
-                },
-            ], indent=2),
-
-            "Reverse Engineering Guide": json.dumps([
-                {
-                    "input": "What is static analysis?",
-                    "output": "Static analysis examines code without executing it, using disassemblers and decompilers.",
-                },
-            ], indent=2),
-
+            "Binary Analysis Q&A": json.dumps(
+                [
+                    {
+                        "input": "How do I analyze PE file headers?",
+                        "output": "Use tools like PE-bear or objdump to examine DOS header, NT headers, and section table.",
+                    },
+                    {
+                        "input": "What are common packing techniques?",
+                        "output": "UPX, ASPack, Themida are popular packers that compress and obfuscate executables.",
+                    },
+                ],
+                indent=2,
+            ),
+            "License Bypass Instructions": json.dumps(
+                [
+                    {
+                        "input": "How to identify license validation functions?",
+                        "output": "Look for string references to license keys, serial numbers, or activation codes in the binary.",
+                    },
+                ],
+                indent=2,
+            ),
+            "Reverse Engineering Guide": json.dumps(
+                [
+                    {
+                        "input": "What is static analysis?",
+                        "output": "Static analysis examines code without executing it, using disassemblers and decompilers.",
+                    },
+                ],
+                indent=2,
+            ),
             "Custom Format": '{\n  "input": "Your question here",\n  "output": "Your answer here"\n}',
         }
         return samples.get(template, "")
@@ -2312,7 +2475,9 @@ class ModelFinetuningDialog(QDialog):
                 techniques.append("random_deletion")
 
             if not techniques:
-                QMessageBox.warning(self, "No Techniques", "Please select at least one augmentation technique.")
+                QMessageBox.warning(
+                    self, "No Techniques", "Please select at least one augmentation technique."
+                )
                 return
 
             # Load sample data
@@ -2433,7 +2598,9 @@ class ModelFinetuningDialog(QDialog):
                 techniques.append("random_deletion")
 
             if not techniques:
-                QMessageBox.warning(self, "No Techniques", "Please select at least one augmentation technique.")
+                QMessageBox.warning(
+                    self, "No Techniques", "Please select at least one augmentation technique."
+                )
                 return
 
             aug_per_sample = self.aug_per_sample_spin.value()
@@ -2464,7 +2631,8 @@ class ModelFinetuningDialog(QDialog):
                             # Apply to input field
                             if "input" in sample:
                                 augmented_sample["input"] = self._apply_augmentation_technique(
-                                    sample["input"], _technique,
+                                    sample["input"],
+                                    _technique,
                                 )
 
                             augmented_data.append(augmented_sample)
@@ -2522,6 +2690,7 @@ class ModelFinetuningDialog(QDialog):
 
             # Update visualization label
             from PyQt6.QtGui import QPixmap
+
             pixmap = QPixmap(temp_path)
             scaled_pixmap = pixmap.scaled(
                 self.visualization_label.size(),
@@ -2564,7 +2733,9 @@ class ModelFinetuningDialog(QDialog):
                     # Export as CSV
                     with open(save_path, "w", newline="", encoding="utf-8") as f:
                         if self.training_thread.training_history:
-                            writer = csv.DictWriter(f, fieldnames=self.training_thread.training_history[0].keys())
+                            writer = csv.DictWriter(
+                                f, fieldnames=self.training_thread.training_history[0].keys()
+                            )
                             writer.writeheader()
                             writer.writerows(self.training_thread.training_history)
                 else:
@@ -2619,8 +2790,14 @@ class ModelFinetuningDialog(QDialog):
                     improvement = initial_loss - final_loss
 
                     stats_text = f"Initial Loss: {initial_loss:.4f}\nFinal Loss: {final_loss:.4f}\nImprovement: {improvement:.4f}"
-                    ax.text(0.02, 0.98, stats_text, transform=ax.transAxes,
-                           verticalalignment="top", bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8))
+                    ax.text(
+                        0.02,
+                        0.98,
+                        stats_text,
+                        transform=ax.transAxes,
+                        verticalalignment="top",
+                        bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
+                    )
 
                 fig.savefig(save_path, dpi=300, bbox_inches="tight")
                 plt.close(fig)
@@ -2639,9 +2816,12 @@ class ModelFinetuningDialog(QDialog):
         """Open the enhanced training interface with current configuration."""
         try:
             if not ENHANCED_TRAINING_AVAILABLE:
-                QMessageBox.warning(self, "Enhanced Training Not Available",
-                                  "The enhanced training interface is not available.\n"
-                                  "Please ensure all required dependencies are installed.")
+                QMessageBox.warning(
+                    self,
+                    "Enhanced Training Not Available",
+                    "The enhanced training interface is not available.\n"
+                    "Please ensure all required dependencies are installed.",
+                )
                 return
 
             # Get current configuration
@@ -2651,6 +2831,7 @@ class ModelFinetuningDialog(QDialog):
             if enhanced_config:
                 # Import and show enhanced training interface
                 from ...ai.enhanced_training_interface import create_enhanced_training_interface
+
                 dialog = create_enhanced_training_interface(self)
 
                 # Set configuration
@@ -2660,13 +2841,17 @@ class ModelFinetuningDialog(QDialog):
                 # Show the dialog
                 dialog.exec()
             else:
-                QMessageBox.warning(self, "Configuration Error",
-                                  "Could not convert current configuration to enhanced format.")
+                QMessageBox.warning(
+                    self,
+                    "Configuration Error",
+                    "Could not convert current configuration to enhanced format.",
+                )
 
         except (ImportError, AttributeError, OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error opening enhanced training interface: %s", e)
-            QMessageBox.critical(self, "Enhanced Training Error",
-                               f"Error opening enhanced training interface:\n{e}")
+            QMessageBox.critical(
+                self, "Enhanced Training Error", f"Error opening enhanced training interface:\n{e}"
+            )
 
     def _get_current_config(self) -> TrainingConfig:
         """Get current training configuration from UI."""

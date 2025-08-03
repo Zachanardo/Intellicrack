@@ -4,7 +4,7 @@
 
 ### Critical Issues Resolved ✅
 
-1. **Syntax Errors (Fixed)**: 
+1. **Syntax Errors (Fixed)**:
    - Fixed 3 unterminated string literals in:
      - `cfg_explorer.py:567`
      - `main_app.py:9937`

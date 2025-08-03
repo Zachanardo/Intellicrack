@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import os
 
@@ -291,7 +290,9 @@ class HexViewerDialog(QDialog):
 
         """
         try:
-            logger.info("HexDialog.load_file: Attempting to load %s, read_only=%s", file_path, read_only)
+            logger.info(
+                "HexDialog.load_file: Attempting to load %s, read_only=%s", file_path, read_only
+            )
 
             # Check if file exists and is accessible
             if not os.path.exists(file_path):
@@ -324,7 +325,9 @@ class HexViewerDialog(QDialog):
                 self.setWindowTitle(f"Enhanced Hex Viewer - {filename} ({mode_str})")
 
                 # Update Edit mode button text
-                self.edit_mode_action.setText("Enable Editing" if read_only else "Switch to Read-Only")
+                self.edit_mode_action.setText(
+                    "Enable Editing" if read_only else "Switch to Read-Only"
+                )
 
                 # Update status bar
                 self.update_status_bar(0, 0)
@@ -349,17 +352,24 @@ class HexViewerDialog(QDialog):
     def open_file(self):
         """Show file open dialog and load the selected file."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open File", "", "All Files (*)",
+            self,
+            "Open File",
+            "",
+            "All Files (*)",
         )
 
         if file_path:
             # Ask if the file should be opened in read-only mode
-            read_only = QMessageBox.question(
-                self, "Open Mode",
-                "Open file in read-only mode?",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes,
-            ) == QMessageBox.Yes
+            read_only = (
+                QMessageBox.question(
+                    self,
+                    "Open Mode",
+                    "Open file in read-only mode?",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes,
+                )
+                == QMessageBox.Yes
+            )
 
             self.load_file(file_path, read_only)
 
@@ -418,7 +428,6 @@ class HexViewerDialog(QDialog):
         # Force UI update
         self.hex_viewer.viewport().update()
 
-
     def update_status_bar(self, start: int = 0, end: int = None):
         """Update the status bar with current selection and offset information.
 
@@ -459,12 +468,14 @@ class HexViewerDialog(QDialog):
                     elif selection_size == 2:
                         # 16-bit
                         import struct
+
                         value_le = struct.unpack("<H", data)[0]
                         value_be = struct.unpack(">H", data)[0]
                         value_str = f" | Value: {value_le} LE, {value_be} BE"
                     elif selection_size == 4:
                         # 32-bit
                         import struct
+
                         try:
                             # Make sure we have exactly 4 bytes
                             if len(data) == 4:
@@ -474,13 +485,16 @@ class HexViewerDialog(QDialog):
                             else:
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/4 bytes>"
-                                logger.debug(f"Can't show 32-bit value - got {len(data)} bytes, need 4")
+                                logger.debug(
+                                    f"Can't show 32-bit value - got {len(data)} bytes, need 4"
+                                )
                         except (OSError, ValueError, RuntimeError) as e:
                             value_str = " | Value: <error>"
                             logger.error("Error unpacking 32-bit value: %s", e)
                     elif selection_size == 8:
                         # 64-bit
                         import struct
+
                         try:
                             # Make sure we have exactly 8 bytes
                             if len(data) == 8:
@@ -490,7 +504,9 @@ class HexViewerDialog(QDialog):
                             else:
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/8 bytes>"
-                                logger.debug(f"Can't show 64-bit value - got {len(data)} bytes, need 8")
+                                logger.debug(
+                                    f"Can't show 64-bit value - got {len(data)} bytes, need 8"
+                                )
                         except (OSError, ValueError, RuntimeError) as e:
                             value_str = " | Value: <error>"
                             logger.error("Error unpacking 64-bit value: %s", e)

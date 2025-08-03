@@ -1,4 +1,3 @@
-
 """Script Templates for AI-Generated Frida and Ghidra Scripts
 
 Copyright (C) 2025 Zachary Flint
@@ -930,19 +929,16 @@ class ScriptTemplateEngine:
         # Add specific bypass templates based on protection types
         bypass_code = []
         if "license_check" in template_vars.get("protection_types", "").lower():
-            bypass_code.append(
-                self.frida_templates.get_license_check_template())
+            bypass_code.append(self.frida_templates.get_license_check_template())
 
         if "time_bomb" in template_vars.get("protection_types", "").lower():
             bypass_code.append(self.frida_templates.get_time_bomb_template())
 
         if "network" in template_vars.get("protection_types", "").lower():
-            bypass_code.append(
-                self.frida_templates.get_network_validation_template())
+            bypass_code.append(self.frida_templates.get_network_validation_template())
 
         if "registry" in template_vars.get("protection_types", "").lower():
-            bypass_code.append(
-                self.frida_templates.get_registry_bypass_template())
+            bypass_code.append(self.frida_templates.get_registry_bypass_template())
 
         # Combine bypass logic
         template_vars["bypass_logic"] = "\n".join(bypass_code)

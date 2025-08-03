@@ -56,6 +56,7 @@ def read_file_with_ai_tools(
     # Try to use AIFileTools first
     try:
         from .ai_file_tools import get_ai_file_tools
+
         ai_file_tools = get_ai_file_tools(app_instance)
         file_data = ai_file_tools.read_file(file_path, purpose=purpose)
 

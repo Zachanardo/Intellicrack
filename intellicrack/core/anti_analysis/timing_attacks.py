@@ -33,8 +33,7 @@ and provides tools for analyzing timing characteristics.
 
 
 class TimingAttackDefense:
-    """Defense against timing-based analysis and sleep acceleration.
-    """
+    """Defense against timing-based analysis and sleep acceleration."""
 
     def __init__(self):
         """Initialize the timing attack defense system with available timing methods."""
@@ -99,7 +98,9 @@ class TimingAttackDefense:
                     elapsed_thread = time.thread_time() - start_thread_time
                     thread_drift = abs(elapsed_thread - elapsed_perf)
                     if thread_drift > 0.1:
-                        self.logger.warning(f"Thread timing anomaly detected: {thread_drift:.3f}s drift")
+                        self.logger.warning(
+                            f"Thread timing anomaly detected: {thread_drift:.3f}s drift"
+                        )
                         return False
 
                 # Check tick count if available
@@ -108,7 +109,9 @@ class TimingAttackDefense:
                     tick_elapsed = (current_tick - start_tick) / 1000.0  # Convert to seconds
                     tick_drift = abs(tick_elapsed - elapsed_perf)
                     if tick_drift > 0.1:
-                        self.logger.warning(f"Tick count timing anomaly detected: {tick_drift:.3f}s drift")
+                        self.logger.warning(
+                            f"Tick count timing anomaly detected: {tick_drift:.3f}s drift"
+                        )
                         return False
 
                 # Check if time is accelerated
@@ -125,7 +128,9 @@ class TimingAttackDefense:
 
             # Allow 5% tolerance
             if abs(final_elapsed - expected_elapsed) > (duration * 0.05):
-                self.logger.warning(f"Sleep duration mismatch: expected {duration}s, got {final_elapsed}s")
+                self.logger.warning(
+                    f"Sleep duration mismatch: expected {duration}s, got {final_elapsed}s"
+                )
                 return False
 
             return True
@@ -185,6 +190,7 @@ class TimingAttackDefense:
             Thread handle for the time bomb
 
         """
+
         def time_bomb_thread():
             try:
                 self.logger.info(f"Time bomb armed for {trigger_time}s")
@@ -324,6 +330,7 @@ class TimingAttackDefense:
             # This would normally check CPUID for RDTSC support
             # For now, assume available on x86/x64
             import platform
+
             return platform.machine().lower() in ["x86", "x86_64", "amd64", "i386", "i686"]
         except:
             return False
@@ -332,6 +339,7 @@ class TimingAttackDefense:
         """Get system tick count (Windows)."""
         try:
             import platform
+
             if platform.system() == "Windows":
                 kernel32 = ctypes.windll.kernel32
                 return kernel32.GetTickCount64()
@@ -343,6 +351,7 @@ class TimingAttackDefense:
         """Quick check for debugger presence."""
         try:
             import platform
+
             if platform.system() == "Windows":
                 kernel32 = ctypes.windll.kernel32
                 return bool(kernel32.IsDebuggerPresent())

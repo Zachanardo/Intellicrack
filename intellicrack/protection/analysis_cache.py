@@ -25,6 +25,8 @@ import hmac
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
+
+
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
@@ -32,11 +34,19 @@ class RestrictedUnpickler(pickle.Unpickler):
         """Override find_class to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
-            "numpy", "numpy.core.multiarray", "numpy.core.numeric",
-            "pandas", "pandas.core.frame", "pandas.core.series",
-            "sklearn", "torch", "tensorflow",
-            "__builtin__", "builtins",
-            "collections", "collections.abc",
+            "numpy",
+            "numpy.core.multiarray",
+            "numpy.core.numeric",
+            "pandas",
+            "pandas.core.frame",
+            "pandas.core.series",
+            "sklearn",
+            "torch",
+            "tensorflow",
+            "__builtin__",
+            "builtins",
+            "collections",
+            "collections.abc",
             "datetime",
         }
 
@@ -51,6 +61,7 @@ class RestrictedUnpickler(pickle.Unpickler):
         # Deny everything else
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
+
 def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
     # Serialize object
@@ -64,11 +75,13 @@ def secure_pickle_dump(obj, file_path):
         f.write(mac)
         f.write(data)
 
+
 def secure_pickle_load(file_path):
     """Securely load object with integrity verification."""
     try:
         # Try joblib first as it's safer for ML models
         import joblib
+
         return joblib.load(file_path)
     except (ImportError, ValueError):
         # Fallback to pickle with restricted unpickler
@@ -86,6 +99,7 @@ def secure_pickle_load(file_path):
 
     # Load object using RestrictedUnpickler
     import io
+
     return RestrictedUnpickler(io.BytesIO(data)).load()
 
 
@@ -208,8 +222,10 @@ class AnalysisCache:
         # Load existing cache
         self._load_cache()
 
-        logger.info(f"Analysis cache initialized: {len(self._cache)} entries, "
-                   f"{self._get_cache_size_mb():.1f}MB")
+        logger.info(
+            f"Analysis cache initialized: {len(self._cache)} entries, "
+            f"{self._get_cache_size_mb():.1f}MB"
+        )
 
     def get(self, file_path: str, scan_options: str = "") -> Any | None:
         """Get cached analysis result
@@ -382,12 +398,14 @@ class AnalysisCache:
             top_entries = []
             for cache_key, entry in sorted_entries[:5]:
                 file_path = cache_key.split(":")[0]
-                top_entries.append({
-                    "file": os.path.basename(file_path),
-                    "access_count": entry.access_count,
-                    "size_kb": len(str(entry.data)) / 1024,
-                    "age_hours": (time.time() - entry.timestamp) / 3600,
-                })
+                top_entries.append(
+                    {
+                        "file": os.path.basename(file_path),
+                        "access_count": entry.access_count,
+                        "size_kb": len(str(entry.data)) / 1024,
+                        "age_hours": (time.time() - entry.timestamp) / 3600,
+                    }
+                )
 
         return {
             "stats": stats.to_dict(),

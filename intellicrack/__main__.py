@@ -30,7 +30,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import os
 import sys
 
@@ -42,6 +41,7 @@ os.environ["MKL_THREADING_LAYER"] = "GNU"  # Fix PyTorch + TensorFlow import con
 # Import security enforcement early to apply patches
 try:
     from intellicrack.core import security_enforcement
+
     # Initialize security enforcement before running the application
     security_enforcement.initialize_security()
     security_status = security_enforcement.get_security_status()

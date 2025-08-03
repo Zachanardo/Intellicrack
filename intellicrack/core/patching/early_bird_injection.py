@@ -31,6 +31,7 @@ logger = get_logger(__name__)
 # Check Windows availability using common utility
 AVAILABLE = is_windows_available()
 
+
 class EarlyBirdInjector(BaseWindowsPatcher):
     """Early Bird injection - inject code before main thread executes"""
 
@@ -46,8 +47,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
         """Get list of required Windows libraries for this patcher."""
         return ["kernel32"]
 
-    def inject_early_bird(self, target_exe: str, dll_path: str,
-                         command_line: str = None) -> bool:
+    def inject_early_bird(self, target_exe: str, dll_path: str, command_line: str = None) -> bool:
         """Perform Early Bird injection
 
         Args:
@@ -101,14 +101,16 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             finally:
                 # Clean up handles
                 from ...utils.system.windows_common import cleanup_process_handles
+
                 cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
             logger.error(f"Early Bird injection failed: {e}")
             return False
 
-    def inject_early_bird_shellcode(self, target_exe: str, shellcode: bytes,
-                                   command_line: str = None) -> bool:
+    def inject_early_bird_shellcode(
+        self, target_exe: str, shellcode: bytes, command_line: str = None
+    ) -> bool:
         """Inject shellcode using Early Bird technique
 
         Args:
@@ -156,14 +158,16 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             finally:
                 # Clean up handles
                 from ...utils.system.windows_common import cleanup_process_handles
+
                 cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
             logger.error(f"Early Bird shellcode injection failed: {e}")
             return False
 
-    def inject_early_bird_with_context(self, target_exe: str, dll_path: str,
-                                      modify_entry_point: bool = True) -> bool:
+    def inject_early_bird_with_context(
+        self, target_exe: str, dll_path: str, modify_entry_point: bool = True
+    ) -> bool:
         """Advanced Early Bird with entry point modification
 
         Args:
@@ -177,12 +181,13 @@ class EarlyBirdInjector(BaseWindowsPatcher):
         """
         try:
             # Create suspended process and handle result
-            success, process_info, context = self.create_and_handle_suspended_process(target_exe, logger)
+            success, process_info, context = self.create_and_handle_suspended_process(
+                target_exe, logger
+            )
             if not success:
                 return False
 
             try:
-
                 # Allocate memory for injection stub
                 stub_addr = self._create_injection_stub(
                     process_info["process_handle"],
@@ -229,21 +234,21 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             finally:
                 # Clean up handles
                 from ...utils.system.windows_common import cleanup_process_handles
+
                 cleanup_process_handles(self.kernel32, process_info, logger)
 
         except Exception as e:
             logger.error(f"Advanced Early Bird injection failed: {e}")
             return False
 
-    def _create_suspended_process(self, exe_path: str,
-                                 command_line: str = None) -> dict | None:
+    def _create_suspended_process(self, exe_path: str, command_line: str = None) -> dict | None:
         """Create a process in suspended state"""
         from ...utils.system.windows_structures import WindowsProcessStructures
+
         structures = WindowsProcessStructures()
         return structures.create_suspended_process(exe_path, command_line)
 
-    def _allocate_and_write_dll_path(self, process_handle: int,
-                                     dll_path: str) -> int:
+    def _allocate_and_write_dll_path(self, process_handle: int, dll_path: str) -> int:
         """Allocate memory and write DLL path"""
         try:
             dll_path_bytes = dll_path.encode("utf-8") + b"\x00"
@@ -279,8 +284,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             logger.error(f"Failed to write DLL path: {e}")
             return 0
 
-    def _allocate_and_write_shellcode(self, process_handle: int,
-                                     shellcode: bytes) -> int:
+    def _allocate_and_write_shellcode(self, process_handle: int, shellcode: bytes) -> int:
         """Allocate memory and write shellcode"""
         try:
             # Allocate memory
@@ -327,8 +331,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             logger.error(f"Failed to get LoadLibraryA address: {e}")
             return 0
 
-    def _queue_user_apc(self, thread_handle: int, function_addr: int,
-                       parameter: int) -> bool:
+    def _queue_user_apc(self, thread_handle: int, function_addr: int, parameter: int) -> bool:
         """Queue user APC to thread"""
         try:
             # QueueUserAPC
@@ -353,18 +356,21 @@ class EarlyBirdInjector(BaseWindowsPatcher):
     def _get_thread_context(self, thread_handle: int) -> Any | None:
         """Get thread context"""
         from ...utils.system.windows_structures import WindowsContext
+
         context_helper = WindowsContext()
         return context_helper.get_thread_context(thread_handle)
 
     def _set_thread_context(self, thread_handle: int, context: Any) -> bool:
         """Set thread context"""
         from ...utils.system.windows_structures import WindowsContext
+
         context_helper = WindowsContext()
         return context_helper.set_thread_context(thread_handle, context)
 
     def _get_entry_point(self, context: Any) -> int:
         """Get entry point from context"""
         from ...utils.system.windows_structures import WindowsContext
+
         context_helper = WindowsContext()
         return context_helper.get_entry_point(context)
 
@@ -375,8 +381,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
         else:  # 32-bit
             context.Eax = new_entry
 
-    def _create_injection_stub(self, process_handle: int, dll_path: str,
-                              context: Any) -> int:
+    def _create_injection_stub(self, process_handle: int, dll_path: str, context: Any) -> int:
         """Create injection stub that loads DLL then jumps to original entry"""
         try:
             # Get original entry point
@@ -397,45 +402,45 @@ class EarlyBirdInjector(BaseWindowsPatcher):
                 stub = bytearray()
 
                 # Save registers
-                stub += b"\x50"                      # push rax
-                stub += b"\x51"                      # push rcx
-                stub += b"\x52"                      # push rdx
-                stub += b"\x41\x50"                  # push r8
-                stub += b"\x41\x51"                  # push r9
+                stub += b"\x50"  # push rax
+                stub += b"\x51"  # push rcx
+                stub += b"\x52"  # push rdx
+                stub += b"\x41\x50"  # push r8
+                stub += b"\x41\x51"  # push r9
 
                 # Load DLL
-                stub += b"\x48\xB9" + struct.pack("<Q", dll_path_addr)     # mov rcx, dll_path_addr
-                stub += b"\x48\xB8" + struct.pack("<Q", load_library_addr) # mov rax, LoadLibraryA
-                stub += b"\xFF\xD0"                  # call rax
+                stub += b"\x48\xb9" + struct.pack("<Q", dll_path_addr)  # mov rcx, dll_path_addr
+                stub += b"\x48\xb8" + struct.pack("<Q", load_library_addr)  # mov rax, LoadLibraryA
+                stub += b"\xff\xd0"  # call rax
 
                 # Restore registers
-                stub += b"\x41\x59"                  # pop r9
-                stub += b"\x41\x58"                  # pop r8
-                stub += b"\x5A"                      # pop rdx
-                stub += b"\x59"                      # pop rcx
-                stub += b"\x58"                      # pop rax
+                stub += b"\x41\x59"  # pop r9
+                stub += b"\x41\x58"  # pop r8
+                stub += b"\x5a"  # pop rdx
+                stub += b"\x59"  # pop rcx
+                stub += b"\x58"  # pop rax
 
                 # Jump to original entry
-                stub += b"\x48\xB8" + struct.pack("<Q", original_entry)    # mov rax, original_entry
-                stub += b"\xFF\xE0"                  # jmp rax
+                stub += b"\x48\xb8" + struct.pack("<Q", original_entry)  # mov rax, original_entry
+                stub += b"\xff\xe0"  # jmp rax
 
             else:  # 32-bit
                 stub = bytearray()
 
                 # Save registers
-                stub += b"\x60"                      # pushad
+                stub += b"\x60"  # pushad
 
                 # Load DLL
-                stub += b"\x68" + struct.pack("<I", dll_path_addr)     # push dll_path_addr
-                stub += b"\xB8" + struct.pack("<I", load_library_addr) # mov eax, LoadLibraryA
-                stub += b"\xFF\xD0"                  # call eax
+                stub += b"\x68" + struct.pack("<I", dll_path_addr)  # push dll_path_addr
+                stub += b"\xb8" + struct.pack("<I", load_library_addr)  # mov eax, LoadLibraryA
+                stub += b"\xff\xd0"  # call eax
 
                 # Restore registers
-                stub += b"\x61"                      # popad
+                stub += b"\x61"  # popad
 
                 # Jump to original entry
-                stub += b"\xB8" + struct.pack("<I", original_entry)    # mov eax, original_entry
-                stub += b"\xFF\xE0"                  # jmp eax
+                stub += b"\xb8" + struct.pack("<I", original_entry)  # mov eax, original_entry
+                stub += b"\xff\xe0"  # jmp eax
 
             # Allocate and write stub
             stub_addr = self._allocate_and_write_shellcode(process_handle, bytes(stub))
@@ -446,8 +451,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             return 0
 
 
-def perform_early_bird_injection(target_exe: str, dll_path: str,
-                               command_line: str = None) -> bool:
+def perform_early_bird_injection(target_exe: str, dll_path: str, command_line: str = None) -> bool:
     """Convenience function to perform Early Bird injection
 
     Args:

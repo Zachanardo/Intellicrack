@@ -3,6 +3,7 @@
 This module provides the main dashboard interface with system monitoring,
 project overview, and quick access to key features.
 """
+
 import hashlib
 import json
 import mimetypes
@@ -294,7 +295,9 @@ class DashboardTab(BaseTab):
             self.analysis_results = {}  # Reset analysis results
 
             self.current_project_label.setText(f"Project: {project_name}")
-            self.current_project_label.setStyleSheet("color: #0078d4; padding: 5px; font-weight: bold;")
+            self.current_project_label.setStyleSheet(
+                "color: #0078d4; padding: 5px; font-weight: bold;"
+            )
 
             # Clear and refresh the file tree
             self.populate_file_tree()
@@ -332,7 +335,9 @@ class DashboardTab(BaseTab):
 
                 # Update UI
                 self.current_project_label.setText(f"Project: {self.current_project}")
-                self.current_project_label.setStyleSheet("color: #0078d4; padding: 5px; font-weight: bold;")
+                self.current_project_label.setStyleSheet(
+                    "color: #0078d4; padding: 5px; font-weight: bold;"
+                )
 
                 # Refresh file tree with actual project files
                 self.populate_file_tree()
@@ -498,7 +503,9 @@ class DashboardTab(BaseTab):
 
                 # Notify start of analysis
                 if self.app_context:
-                    self.app_context.start_analysis("quick_analysis", {"binary": self.current_binary})
+                    self.app_context.start_analysis(
+                        "quick_analysis", {"binary": self.current_binary}
+                    )
 
                 # Simulate analysis steps with progress updates
                 steps = [
@@ -545,7 +552,9 @@ class DashboardTab(BaseTab):
 
         else:
             # Fallback to synchronous analysis
-            analysis_result = f"Quick Analysis Results for {os.path.basename(self.current_binary)}:\n"
+            analysis_result = (
+                f"Quick Analysis Results for {os.path.basename(self.current_binary)}:\n"
+            )
             analysis_result += "- File format: PE32 executable\n"
             analysis_result += "- Architecture: x86-64\n"
             analysis_result += "- Compiler: Microsoft Visual C++\n"
@@ -728,7 +737,9 @@ class DashboardTab(BaseTab):
                 else:
                     # Open with default system application
                     try:
-                        os.startfile(file_path) if os.name == "nt" else os.system(f'open "{file_path}"')
+                        os.startfile(file_path) if os.name == "nt" else os.system(
+                            f'open "{file_path}"'
+                        )
                         self.log_activity(f"Opened file: {os.path.basename(file_path)}")
                     except Exception as e:
                         QMessageBox.warning(self, "Open Error", f"Failed to open file: {e!s}")
@@ -818,9 +829,23 @@ class DashboardTab(BaseTab):
 
         # Check file extension
         supported_extensions = [
-            ".exe", ".dll", ".so", ".dylib", ".elf", ".bin",
-            ".sys", ".drv", ".ocx", ".app", ".apk", ".ipa",
-            ".dex", ".jar", ".class", ".pyc", ".pyd",
+            ".exe",
+            ".dll",
+            ".so",
+            ".dylib",
+            ".elf",
+            ".bin",
+            ".sys",
+            ".drv",
+            ".ocx",
+            ".app",
+            ".apk",
+            ".ipa",
+            ".dex",
+            ".jar",
+            ".class",
+            ".pyc",
+            ".pyd",
         ]
 
         ext = os.path.splitext(file_path)[1].lower()
@@ -837,7 +862,9 @@ class DashboardTab(BaseTab):
             # Use AppContext to load binary
             if self.app_context:
                 self.app_context.load_binary(file_path)
-                self.log_activity(f"Loaded dropped file via AppContext: {os.path.basename(file_path)}")
+                self.log_activity(
+                    f"Loaded dropped file via AppContext: {os.path.basename(file_path)}"
+                )
             else:
                 # Fallback to old behavior
                 self.display_binary_info(file_path)
@@ -848,7 +875,9 @@ class DashboardTab(BaseTab):
         else:
             # Multiple files - ask user what to do
             menu = QMenu(self)
-            menu.addAction("Load first as binary", lambda: self._handle_dropped_files([file_paths[0]]))
+            menu.addAction(
+                "Load first as binary", lambda: self._handle_dropped_files([file_paths[0]])
+            )
             menu.addAction("Add all to project", lambda: self._add_files_to_project(file_paths))
             menu.addSeparator()
             menu.addAction("Cancel", lambda: None)
@@ -1007,7 +1036,9 @@ class DashboardTab(BaseTab):
     def _add_files_to_project(self, file_paths: list):
         """Add multiple files to current project"""
         if not self.current_project:
-            QMessageBox.warning(self, "Warning", "No project loaded. Create or open a project first.")
+            QMessageBox.warning(
+                self, "Warning", "No project loaded. Create or open a project first."
+            )
             return
 
         added_count = 0

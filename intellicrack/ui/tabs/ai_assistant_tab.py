@@ -9,24 +9,24 @@ from datetime import datetime
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
-QCheckBox,
-QComboBox,
-QGroupBox,
-QHBoxLayout,
-QLabel,
-QLineEdit,
-QListWidget,
-QMessageBox,
-QProgressBar,
-QPushButton,
-QSlider,
-QSpinBox,
-QSplitter,
-QTableWidget,
-QTabWidget,
-QTextEdit,
-QVBoxLayout,
-QWidget,
+    QCheckBox,
+    QComboBox,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QSlider,
+    QSpinBox,
+    QSplitter,
+    QTableWidget,
+    QTabWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
 from ...core.ai_model_manager import ModelConfig, ModelProvider
@@ -122,7 +122,15 @@ class AIAssistantTab(BaseTab):
         provider_selection_layout.addWidget(QLabel("Provider:"))
         self.provider_combo = QComboBox()
         self.provider_combo.addItems(
-            ["OpenAI", "Anthropic", "Local (Ollama)", "Hugging Face", "Google Gemini", "Cohere", "Azure OpenAI"],
+            [
+                "OpenAI",
+                "Anthropic",
+                "Local (Ollama)",
+                "Hugging Face",
+                "Google Gemini",
+                "Cohere",
+                "Azure OpenAI",
+            ],
         )
         self.provider_combo.currentTextChanged.connect(self.on_provider_changed)
         provider_selection_layout.addWidget(self.provider_combo)
@@ -230,7 +238,6 @@ class AIAssistantTab(BaseTab):
                 "License Detection",
                 "Protection Analysis",
                 "Vulnerability Research",
-
                 "Code Quality",
                 "Performance Analysis",
                 "Security Audit",
@@ -249,7 +256,9 @@ class AIAssistantTab(BaseTab):
         depth_layout = QHBoxLayout()
         depth_layout.addWidget(QLabel("Analysis Depth:"))
         self.analysis_depth_combo = QComboBox()
-        self.analysis_depth_combo.addItems(["Quick Scan", "Standard Analysis", "Deep Analysis", "Comprehensive"])
+        self.analysis_depth_combo.addItems(
+            ["Quick Scan", "Standard Analysis", "Deep Analysis", "Comprehensive"]
+        )
         options_layout.addLayout(depth_layout)
 
         # Include options
@@ -308,10 +317,8 @@ class AIAssistantTab(BaseTab):
                 "Frida Hook Script",
                 "Ghidra Analysis Script",
                 "Python Automation",
-
                 "API Hook Script",
                 "Memory Scanner",
-
                 "Debugging Script",
             ],
         )
@@ -335,7 +342,9 @@ class AIAssistantTab(BaseTab):
         template_layout = QHBoxLayout()
         template_layout.addWidget(QLabel("Template:"))
         self.template_combo = QComboBox()
-        self.template_combo.addItems(["Basic Template", "Advanced Template", "Custom Template", "No Template"])
+        self.template_combo.addItems(
+            ["Basic Template", "Advanced Template", "Custom Template", "No Template"]
+        )
         template_layout.addWidget(self.template_combo)
 
         # Options checkboxes
@@ -402,7 +411,13 @@ class AIAssistantTab(BaseTab):
         data_source_layout.addWidget(QLabel("Data Source:"))
         self.data_source_combo = QComboBox()
         self.data_source_combo.addItems(
-            ["Analysis History", "Custom Dataset", "Binary Samples", "Script Templates", "Public Datasets"],
+            [
+                "Analysis History",
+                "Custom Dataset",
+                "Binary Samples",
+                "Script Templates",
+                "Public Datasets",
+            ],
         )
         data_source_layout.addWidget(self.data_source_combo)
 
@@ -584,7 +599,7 @@ class AIAssistantTab(BaseTab):
 
         return panel
 
-# Method implementations
+    # Method implementations
     def on_provider_changed(self, provider):
         """Update model list based on selected provider"""
         self.model_combo.clear()
@@ -608,7 +623,7 @@ class AIAssistantTab(BaseTab):
 
         self.model_combo.addItems(models)
 
-                # Update API key display
+        # Update API key display
         if provider in ["OpenAI", "Anthropic", "Cohere", "Azure OpenAI"]:
             self.api_key_edit.setPlaceholderText(f"Enter {provider} API key")
         else:
@@ -688,8 +703,11 @@ class AIAssistantTab(BaseTab):
         from PyQt6.QtWidgets import QFileDialog
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Binary for AI Analysis", "", "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)",
-)
+            self,
+            "Select Binary for AI Analysis",
+            "",
+            "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)",
+        )
 
         if file_path:
             self.analysis_binary_edit.setText(file_path)
@@ -764,9 +782,13 @@ class AIAssistantTab(BaseTab):
                 if binary_info:
                     analysis_text += "[+] Binary Architecture Analysis:\n"
                     analysis_text += f"  - Format: {binary_info.get('format', 'Unknown')}\n"
-                    analysis_text += f"  - Architecture: {binary_info.get('architecture', 'Unknown')}\n"
+                    analysis_text += (
+                        f"  - Architecture: {binary_info.get('architecture', 'Unknown')}\n"
+                    )
                     analysis_text += f"  - Endianness: {binary_info.get('endianness', 'Unknown')}\n"
-                    analysis_text += f"  - Entry Point: {binary_info.get('entry_point', 'Unknown')}\n"
+                    analysis_text += (
+                        f"  - Entry Point: {binary_info.get('entry_point', 'Unknown')}\n"
+                    )
                     analysis_text += f"  - Sections: {len(binary_info.get('sections', []))}\n\n"
 
                 # Section analysis
@@ -803,9 +825,7 @@ class AIAssistantTab(BaseTab):
                 analysis_text += f"  - DEP/NX: {'[+] Enabled' if dll_characteristics & 0x0100 else '[-] Disabled'}\n"
                 analysis_text += f"  - SEH: {'[+] Enabled' if not (dll_characteristics & 0x0400) else '[-] Disabled'}\n"
                 analysis_text += f"  - CFG: {'[+] Enabled' if dll_characteristics & 0x4000 else '[-] Disabled'}\n"
-                analysis_text += (
-                    f"  - Isolation: {'[+] Enabled' if not (dll_characteristics & 0x0200) else '[-] Disabled'}\n\n"
-                )
+                analysis_text += f"  - Isolation: {'[+] Enabled' if not (dll_characteristics & 0x0200) else '[-] Disabled'}\n\n"
 
             except Exception as e:
                 self.log_message(f"PE parsing failed: {e}", "debug")
@@ -817,17 +837,13 @@ class AIAssistantTab(BaseTab):
                     dynamic_results = dynamic_analyzer.quick_analysis(binary_path)
                     if dynamic_results:
                         analysis_text += "[+] Dynamic Analysis Summary:\n"
-                        analysis_text += f"  - API Calls Detected: {len(dynamic_results.get('api_calls', []))}\n"
                         analysis_text += (
-                            f"  - Network Activity: {'Yes' if dynamic_results.get('network_activity') else 'No'}\n"
+                            f"  - API Calls Detected: {len(dynamic_results.get('api_calls', []))}\n"
                         )
+                        analysis_text += f"  - Network Activity: {'Yes' if dynamic_results.get('network_activity') else 'No'}\n"
                         analysis_text += f"  - File Operations: {len(dynamic_results.get('file_operations', []))}\n"
-                        analysis_text += (
-                            f"  - Registry Access: {'Yes' if dynamic_results.get('registry_access') else 'No'}\n"
-                        )
-                        analysis_text += (
-                            f"  - Suspicious Behavior: {len(dynamic_results.get('suspicious_behaviors', []))}\n\n"
-                        )
+                        analysis_text += f"  - Registry Access: {'Yes' if dynamic_results.get('registry_access') else 'No'}\n"
+                        analysis_text += f"  - Suspicious Behavior: {len(dynamic_results.get('suspicious_behaviors', []))}\n\n"
                 except Exception as e:
                     self.log_message(f"Dynamic analysis failed: {e}", "debug")
 
@@ -848,7 +864,9 @@ class AIAssistantTab(BaseTab):
             if focus == "License Detection":
                 analysis_text += self._perform_license_detection_analysis(pe, strings, file_data)
             elif focus == "Protection Analysis":
-                analysis_text += self._perform_protection_analysis(pe, strings, file_data, binary_path)
+                analysis_text += self._perform_protection_analysis(
+                    pe, strings, file_data, binary_path
+                )
             elif focus == "Vulnerability Research":
                 analysis_text += self._perform_vulnerability_analysis(pe, strings, file_data)
             elif focus == "Security Audit":
@@ -868,7 +886,10 @@ class AIAssistantTab(BaseTab):
                     }
 
                     ai_analysis = self.ai_model_manager.analyze_binary(
-                        self.current_model, binary_path, focus=focus.lower().replace(" ", "_"), context=ai_context,
+                        self.current_model,
+                        binary_path,
+                        focus=focus.lower().replace(" ", "_"),
+                        context=ai_context,
                     )
 
                     if ai_analysis:
@@ -993,7 +1014,9 @@ class AIAssistantTab(BaseTab):
         registry_pattern = re.compile(r'HKEY_[A-Z_]+\\\\[^<>:"|?*\n\r]+', re.IGNORECASE)
         crypto_pattern = re.compile(r"\b[A-Fa-f0-9]{32,128}\b")
         api_pattern = re.compile(r"\b[A-Z][a-zA-Z0-9]*[A-Z][a-zA-Z0-9]*\b")
-        error_pattern = re.compile(r"\b(error|exception|failed|failure|invalid|denied|forbidden)\b", re.IGNORECASE)
+        error_pattern = re.compile(
+            r"\b(error|exception|failed|failure|invalid|denied|forbidden)\b", re.IGNORECASE
+        )
         useragent_pattern = re.compile(r"Mozilla/|User-Agent|Chrome/|Firefox/", re.IGNORECASE)
 
         for string in strings:
@@ -1148,7 +1171,10 @@ class AIAssistantTab(BaseTab):
 
         # Generate comprehensive protection report
         comprehensive_report = self._generate_protection_report(
-            protections, pe_anomalies, runtime_indicators, anti_analysis,
+            protections,
+            pe_anomalies,
+            runtime_indicators,
+            anti_analysis,
         )
 
         # Add the comprehensive report to analysis
@@ -1182,7 +1208,17 @@ class AIAssistantTab(BaseTab):
 
         # Anti-VM techniques (legacy)
         antivm_indicators = []
-        antivm_strings = ["vmware", "virtualbox", "qemu", "sandboxie", "wine", "vbox", "vmtoolsd", "vmmouse", "vmhgfs"]
+        antivm_strings = [
+            "vmware",
+            "virtualbox",
+            "qemu",
+            "sandboxie",
+            "wine",
+            "vbox",
+            "vmtoolsd",
+            "vmmouse",
+            "vmhgfs",
+        ]
 
         for string in strings:
             if any(indicator.lower() in string.lower() for indicator in antivm_strings):
@@ -1225,7 +1261,9 @@ class AIAssistantTab(BaseTab):
         # Final recommendations
         analysis += "\n[+] Final Protection Analysis Recommendations:\n"
 
-        total_protections = sum(len(prots) for prots in protections.values() if isinstance(prots, list))
+        total_protections = sum(
+            len(prots) for prots in protections.values() if isinstance(prots, list)
+        )
 
         if total_protections >= 5:
             analysis += "  - HIGH PROTECTION: Multiple layers detected\n"
@@ -1272,7 +1310,13 @@ class AIAssistantTab(BaseTab):
                     freq = count / len(data)
                     entropy -= freq * math.log2(freq)
 
-                sections.append({"name": section.Name.decode().rstrip("\x00"), "entropy": entropy, "size": len(data)})
+                sections.append(
+                    {
+                        "name": section.Name.decode().rstrip("\x00"),
+                        "entropy": entropy,
+                        "size": len(data),
+                    }
+                )
             except Exception:
                 continue
 
@@ -1366,8 +1410,6 @@ class AIAssistantTab(BaseTab):
 
         return analysis + "\n"
 
-
-
     def _perform_security_audit(self, pe, strings, file_data):
         """Security audit analysis."""
         analysis = "[+] Enhanced Security Audit:\n"
@@ -1399,7 +1441,16 @@ class AIAssistantTab(BaseTab):
 
         # Authentication mechanisms
         auth_indicators = []
-        auth_strings = ["password", "username", "login", "authenticate", "credential", "token", "session", "cookie"]
+        auth_strings = [
+            "password",
+            "username",
+            "login",
+            "authenticate",
+            "credential",
+            "token",
+            "session",
+            "cookie",
+        ]
 
         for string in strings:
             if any(auth.lower() in string.lower() for auth in auth_strings):
@@ -1412,7 +1463,16 @@ class AIAssistantTab(BaseTab):
 
         # Input validation
         validation_functions = []
-        validation_strings = ["validate", "sanitize", "filter", "escape", "strlen", "strnlen", "wcslen", "wcsnlen"]
+        validation_strings = [
+            "validate",
+            "sanitize",
+            "filter",
+            "escape",
+            "strlen",
+            "strnlen",
+            "wcslen",
+            "wcsnlen",
+        ]
 
         for string in strings:
             if any(val in string.lower() for val in validation_strings):
@@ -1463,8 +1523,8 @@ class AIAssistantTab(BaseTab):
             "WriteFile",
             "DeleteFile",
             "FindFirstFile",
-"FindNextFile",
-"GetFileAttributes",
+            "FindNextFile",
+            "GetFileAttributes",
         ]
 
         for string in strings:
@@ -1643,11 +1703,11 @@ class AIAssistantTab(BaseTab):
             "CodeMeter": [b"CodeMeter", b"WIBU"],
             "FlexLM": [b"FlexLM", b"FLEXLM", b"Flexera"],
             "Guardant": [b"Guardant", b"GUARDANT"],
-"PACE": [b"PACE Anti-Piracy", b"iLok"],
-"LockIt": [b"Lock-It!", b"LOCK-IT"],
-"SGK": [b"SuperPro", b"Rainbow"],
-"ELMLicense": [b"ELMLicense", b"ELMLICENSE"],
-}
+            "PACE": [b"PACE Anti-Piracy", b"iLok"],
+            "LockIt": [b"Lock-It!", b"LOCK-IT"],
+            "SGK": [b"SuperPro", b"Rainbow"],
+            "ELMLicense": [b"ELMLicense", b"ELMLICENSE"],
+        }
 
         # Virtualization/Code protection signatures
         virtualization_signatures = {
@@ -1800,7 +1860,16 @@ class AIAssistantTab(BaseTab):
 
         try:
             # Check for unusual section names
-            common_sections = {".text", ".data", ".rdata", ".rsrc", ".reloc", ".idata", ".edata", ".bss"}
+            common_sections = {
+                ".text",
+                ".data",
+                ".rdata",
+                ".rsrc",
+                ".reloc",
+                ".idata",
+                ".edata",
+                ".bss",
+            }
             for section in pe.sections:
                 section_name = section.Name.decode().rstrip("\x00")
                 if section_name not in common_sections and not section_name.startswith(".debug"):
@@ -1823,17 +1892,23 @@ class AIAssistantTab(BaseTab):
                 for section2 in sections_data[i + 1 :]:
                     # Check virtual address overlap
                     if (
-                        section1["virtual_address"] < section2["virtual_address"] + section2["virtual_size"]
-                        and section2["virtual_address"] < section1["virtual_address"] + section1["virtual_size"]
+                        section1["virtual_address"]
+                        < section2["virtual_address"] + section2["virtual_size"]
+                        and section2["virtual_address"]
+                        < section1["virtual_address"] + section1["virtual_size"]
                     ):
-                        anomalies.append(f"Virtual address overlap: {section1['name']} and {section2['name']}")
+                        anomalies.append(
+                            f"Virtual address overlap: {section1['name']} and {section2['name']}"
+                        )
 
                     # Check raw address overlap
                     if (
                         section1["raw_address"] < section2["raw_address"] + section2["raw_size"]
                         and section2["raw_address"] < section1["raw_address"] + section1["raw_size"]
                     ):
-                        anomalies.append(f"Raw address overlap: {section1['name']} and {section2['name']}")
+                        anomalies.append(
+                            f"Raw address overlap: {section1['name']} and {section2['name']}"
+                        )
 
             # Check for suspicious characteristics
             characteristics = pe.FILE_HEADER.Characteristics
@@ -1852,7 +1927,11 @@ class AIAssistantTab(BaseTab):
                 entry_point = pe.OPTIONAL_HEADER.AddressOfEntryPoint
                 found_in_section = False
                 for section in pe.sections:
-                    if section.VirtualAddress <= entry_point < section.VirtualAddress + section.Misc_VirtualSize:
+                    if (
+                        section.VirtualAddress
+                        <= entry_point
+                        < section.VirtualAddress + section.Misc_VirtualSize
+                    ):
                         section_name = section.Name.decode().rstrip("\x00")
                         if section_name != ".text":
                             anomalies.append(f"Entry point in unusual section: {section_name}")
@@ -2063,15 +2142,21 @@ class AIAssistantTab(BaseTab):
 
         return anti_analysis
 
-    def _generate_protection_report(self, protections, pe_anomalies, runtime_indicators, anti_analysis):
+    def _generate_protection_report(
+        self, protections, pe_anomalies, runtime_indicators, anti_analysis
+    ):
         """Generate comprehensive protection analysis report."""
         report = "[+] Comprehensive Protection Detection Report:\n"
         report += "=" * 60 + "\n\n"
 
         # Protection categories summary
-        total_protections = sum(len(prots) for prots in protections.values() if isinstance(prots, list))
+        total_protections = sum(
+            len(prots) for prots in protections.values() if isinstance(prots, list)
+        )
         if total_protections > 0:
-            report += f"[+] Protection Summary: {total_protections} protection mechanisms detected\n\n"
+            report += (
+                f"[+] Protection Summary: {total_protections} protection mechanisms detected\n\n"
+            )
 
         # Packers
         if protections["packers"]:
@@ -2246,7 +2331,10 @@ class AIAssistantTab(BaseTab):
 
                 # Generate using AI model
                 generated_script = self.ai_model_manager.generate_script(
-                    self.current_model, ai_script_type, target, requirements,
+                    self.current_model,
+                    ai_script_type,
+                    target,
+                    requirements,
                 )
 
                 if generated_script:
@@ -2340,8 +2428,6 @@ public class AutoAnalysis extends GhidraScript {{
 }}
 """
         return script_template
-
-
 
     def _generate_api_hook_script(self, target, requirements):
         """Generate API hook script"""
@@ -2477,7 +2563,10 @@ main();
         from PyQt6.QtWidgets import QFileDialog
 
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Training Dataset", "", "Dataset Files (*.json *.csv *.txt);;All Files (*)",
+            self,
+            "Select Training Dataset",
+            "",
+            "Dataset Files (*.json *.csv *.txt);;All Files (*)",
         )
 
         if file_path:
@@ -2495,7 +2584,9 @@ main();
         epochs = self.epochs_spin.value()
         learning_rate = self.learning_rate_edit.text()
 
-        self.log_message(f"Starting {training_type} with {epochs} epochs, learning rate: {learning_rate}")
+        self.log_message(
+            f"Starting {training_type} with {epochs} epochs, learning rate: {learning_rate}"
+        )
         self.training_status_label.setText("Training in progress...")
         self.training_progress.setValue(0)
 
@@ -2587,7 +2678,11 @@ main();
         """Stop ongoing model training"""
         try:
             # Stop the training thread if running
-            if hasattr(self, "training_thread") and self.training_thread and self.training_thread.isRunning():
+            if (
+                hasattr(self, "training_thread")
+                and self.training_thread
+                and self.training_thread.isRunning()
+            ):
                 self.training_thread.terminate()
                 self.training_thread.wait()
                 self.training_thread.deleteLater()
@@ -2602,13 +2697,15 @@ main();
         except Exception as e:
             self.log_message(f"Error stopping training: {e!s}", "error")
 
-
     def save_trained_model(self):
         """Save trained model"""
         from PyQt6.QtWidgets import QFileDialog
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Trained Model", "", "Model Files (*.pkl *.pth *.h5);;All Files (*)",
+            self,
+            "Save Trained Model",
+            "",
+            "Model Files (*.pkl *.pth *.h5);;All Files (*)",
         )
 
         if file_path:

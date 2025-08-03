@@ -51,8 +51,9 @@ class AnalysisStatsGenerator:
             return {}
 
     @staticmethod
-    def count_by_attribute(items: list[dict[str, Any]], attribute: str,
-                          default_value: str = "unknown") -> dict[str, int]:
+    def count_by_attribute(
+        items: list[dict[str, Any]], attribute: str, default_value: str = "unknown"
+    ) -> dict[str, int]:
         """Count items by a specific attribute.
 
         Args:

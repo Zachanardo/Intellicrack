@@ -58,24 +58,24 @@ class TestNetworkPerformance:
             pcap_header = b'\xd4\xc3\xb2\xa1\x02\x00\x04\x00'
             pcap_header += b'\x00\x00\x00\x00\x00\x00\x00\x00'
             pcap_header += b'\xff\xff\x00\x00\x01\x00\x00\x00'
-            
+
             packet_header = b'\x00\x00\x00\x00\x00\x00\x00\x00'
             packet_header += b'\x2a\x00\x00\x00\x2a\x00\x00\x00'
-            
+
             ethernet_frame = b'\xff\xff\xff\xff\xff\xff'
             ethernet_frame += b'\x00\x11\x22\x33\x44\x55'
             ethernet_frame += b'\x08\x00'
-            
+
             ip_packet = b'\x45\x00\x00\x1c\x00\x01\x00\x00'
             ip_packet += b'\x40\x11\x00\x00\x7f\x00\x00\x01'
             ip_packet += b'\x7f\x00\x00\x01'
-            
+
             udp_packet = b'\x04\xd2\x04\xd2\x00\x08\x00\x00'
-            
+
             temp_file.write(pcap_header + packet_header + ethernet_frame + ip_packet + udp_packet)
             temp_file.flush()
             yield temp_file.name
-        
+
         try:
             os.unlink(temp_file.name)
         except:
@@ -93,9 +93,9 @@ class TestNetworkPerformance:
         def parse_license_packet():
             hooker = CloudLicenseHooker()
             return hooker.parse_flexlm_packet(sample_license_packet)
-        
+
         result = benchmark(parse_license_packet)
-        
+
         assert result is not None, "License packet parsing must return result"
         assert 'packet_type' in result or 'data' in result, "Result must contain packet information"
         assert benchmark.stats.mean < 0.01, "License packet parsing should be under 10ms"
@@ -106,9 +106,9 @@ class TestNetworkPerformance:
         def handle_hasp_protocol():
             hooker = CloudLicenseHooker()
             return hooker.handle_hasp_request(hasp_packet)
-        
+
         result = benchmark(handle_hasp_protocol)
-        
+
         assert result is not None, "HASP handling must return result"
         assert len(result) > 0, "HASP response must not be empty"
         assert benchmark.stats.mean < 0.02, "HASP handling should be under 20ms"
@@ -119,9 +119,9 @@ class TestNetworkPerformance:
         def process_adobe_activation():
             hooker = CloudLicenseHooker()
             return hooker.process_adobe_activation(adobe_activation_packet)
-        
+
         result = benchmark(process_adobe_activation)
-        
+
         assert result is not None, "Adobe activation must return result"
         assert 'status' in result or 'response' in result, "Result must contain status information"
         assert benchmark.stats.mean < 0.05, "Adobe activation should be under 50ms"
@@ -135,9 +135,9 @@ class TestNetworkPerformance:
             time.sleep(0.1)
             server.stop()
             return server.is_running
-        
+
         result = benchmark(start_c2_server)
-        
+
         assert result is not None, "C2 server startup must return status"
         assert benchmark.stats.mean < 0.5, "C2 server startup should be under 500ms"
 
@@ -147,17 +147,17 @@ class TestNetworkPerformance:
         server = C2Server(host='127.0.0.1', port=0)
         server.start_async()
         server_port = server.get_port()
-        
+
         def connect_c2_client():
             client = C2Client()
             result = client.connect('127.0.0.1', server_port, timeout=1.0)
             if client.is_connected():
                 client.disconnect()
             return result
-        
+
         try:
             result = benchmark(connect_c2_client)
-            
+
             assert result is not None, "C2 client connection must return result"
             assert benchmark.stats.mean < 0.2, "C2 client connection should be under 200ms"
         finally:
@@ -169,16 +169,16 @@ class TestNetworkPerformance:
         def encrypt_decrypt_data():
             manager = EncryptionManager()
             key = manager.generate_key()
-            
+
             test_data = b"This is test data for encryption performance testing" * 10
-            
+
             encrypted = manager.encrypt(test_data, key)
             decrypted = manager.decrypt(encrypted, key)
-            
+
             return decrypted == test_data
-        
+
         result = benchmark(encrypt_decrypt_data)
-        
+
         assert result is True, "Encryption/decryption must be successful"
         assert benchmark.stats.mean < 0.01, "Encryption/decryption should be under 10ms"
 
@@ -188,9 +188,9 @@ class TestNetworkPerformance:
         def parse_network_capture():
             capture = NetworkCapture()
             return capture.parse_pcap_file(network_capture_file)
-        
+
         result = benchmark(parse_network_capture)
-        
+
         assert result is not None, "Network capture parsing must return result"
         assert 'packets' in result, "Result must contain packets"
         assert len(result['packets']) > 0, "Must parse at least one packet"
@@ -201,24 +201,24 @@ class TestNetworkPerformance:
         """Benchmark REAL session management operations."""
         def manage_sessions():
             manager = SessionManager()
-            
+
             session_ids = []
             for i in range(10):
                 session_id = manager.create_session(f"client_{i}", f"127.0.0.{i+1}")
                 session_ids.append(session_id)
-            
+
             for session_id in session_ids:
                 manager.update_session_activity(session_id)
-            
+
             active_sessions = manager.get_active_sessions()
-            
+
             for session_id in session_ids:
                 manager.close_session(session_id)
-            
+
             return len(active_sessions)
-        
+
         result = benchmark(manage_sessions)
-        
+
         assert result == 10, "Must manage exactly 10 sessions"
         assert benchmark.stats.mean < 0.05, "Session management should be under 50ms"
 
@@ -227,10 +227,10 @@ class TestNetworkPerformance:
         server = C2Server(host='127.0.0.1', port=0)
         server.start_async()
         server_port = server.get_port()
-        
+
         results = []
         errors = []
-        
+
         def connect_client(client_id):
             try:
                 client = C2Client()
@@ -241,42 +241,42 @@ class TestNetworkPerformance:
                 results.append((client_id, result))
             except Exception as e:
                 errors.append((client_id, str(e)))
-        
+
         try:
             threads = []
             start_time = time.time()
-            
+
             for i in range(5):
                 thread = threading.Thread(target=connect_client, args=(i,))
                 threads.append(thread)
                 thread.start()
-            
+
             for thread in threads:
                 thread.join(timeout=5.0)
-            
+
             end_time = time.time()
-            
+
             assert len(errors) == 0, f"Concurrent connection errors: {errors}"
             assert len(results) == 5, f"Expected 5 connections, got {len(results)}"
             assert end_time - start_time < 3.0, "Concurrent connections should complete under 3 seconds"
-        
+
         finally:
             server.stop()
 
     def test_license_protocol_memory_usage(self, sample_license_packet, process_memory):
         """Test REAL license protocol memory efficiency."""
         initial_memory = process_memory.rss
-        
+
         hooker = CloudLicenseHooker()
-        
+
         for i in range(100):
             result = hooker.parse_flexlm_packet(sample_license_packet)
             assert result is not None, f"License parsing {i} failed"
-        
+
         current_process = psutil.Process()
         final_memory = current_process.memory_info().rss
         memory_increase = final_memory - initial_memory
-        
+
         assert memory_increase < 20 * 1024 * 1024, "Memory increase should be under 20MB for 100 parsings"
 
     @pytest.mark.benchmark
@@ -284,20 +284,20 @@ class TestNetworkPerformance:
         """Benchmark REAL communication protocol switching speed."""
         def switch_protocols():
             protocols = CommunicationProtocols()
-            
+
             protocols.switch_to_http()
             http_status = protocols.get_current_protocol()
-            
+
             protocols.switch_to_dns()
             dns_status = protocols.get_current_protocol()
-            
+
             protocols.switch_to_tcp()
             tcp_status = protocols.get_current_protocol()
-            
+
             return [http_status, dns_status, tcp_status]
-        
+
         result = benchmark(switch_protocols)
-        
+
         assert result is not None, "Protocol switching must return results"
         assert len(result) == 3, "Must return status for all protocols"
         assert benchmark.stats.mean < 0.01, "Protocol switching should be under 10ms"
@@ -305,21 +305,21 @@ class TestNetworkPerformance:
     def test_network_stress_test(self, sample_license_packet, hasp_packet):
         """Stress test REAL network operations under heavy load."""
         hooker = CloudLicenseHooker()
-        
+
         start_time = time.time()
-        
+
         packets = [sample_license_packet, hasp_packet] * 50
-        
+
         for i, packet in enumerate(packets):
             if i % 2 == 0:
                 result = hooker.parse_flexlm_packet(packet)
             else:
                 result = hooker.handle_hasp_request(packet)
-            
+
             assert result is not None, f"Stress test packet {i} failed"
-        
+
         end_time = time.time()
-        
+
         assert end_time - start_time < 5.0, "Network stress test should complete under 5 seconds"
 
     def test_c2_message_throughput(self):
@@ -327,26 +327,26 @@ class TestNetworkPerformance:
         server = C2Server(host='127.0.0.1', port=0)
         server.start_async()
         server_port = server.get_port()
-        
+
         client = C2Client()
-        
+
         try:
             connection_result = client.connect('127.0.0.1', server_port, timeout=2.0)
             assert connection_result, "Client must connect successfully"
-            
+
             start_time = time.time()
             message_count = 100
-            
+
             for i in range(message_count):
                 message = f"test_message_{i}".encode()
                 sent = client.send_message(message)
                 assert sent, f"Message {i} failed to send"
-            
+
             end_time = time.time()
             throughput = message_count / (end_time - start_time)
-            
+
             assert throughput > 50, f"Throughput too low: {throughput} messages/second"
-            
+
         finally:
             if client.is_connected():
                 client.disconnect()
@@ -357,14 +357,14 @@ class TestNetworkPerformance:
         """Benchmark REAL license server emulation performance."""
         def emulate_license_server():
             hooker = CloudLicenseHooker()
-            
+
             parsed = hooker.parse_flexlm_packet(sample_license_packet)
             response = hooker.generate_license_response(parsed)
-            
+
             return response
-        
+
         result = benchmark(emulate_license_server)
-        
+
         assert result is not None, "License emulation must return response"
         assert len(result) > 0, "License response must not be empty"
         assert benchmark.stats.mean < 0.02, "License emulation should be under 20ms"
@@ -372,9 +372,9 @@ class TestNetworkPerformance:
     def test_network_error_handling_performance(self):
         """Test REAL network error handling performance."""
         hooker = CloudLicenseHooker()
-        
+
         start_time = time.time()
-        
+
         invalid_packets = [
             b"",
             b"\x00\x00\x00\x00",
@@ -382,7 +382,7 @@ class TestNetworkPerformance:
             None,
             b"\xff" * 1000
         ]
-        
+
         for packet in invalid_packets:
             try:
                 result = hooker.parse_flexlm_packet(packet)
@@ -390,33 +390,33 @@ class TestNetworkPerformance:
                     pass
             except Exception:
                 pass
-        
+
         end_time = time.time()
-        
+
         assert end_time - start_time < 0.1, "Network error handling should be fast (under 100ms)"
 
     def test_c2_session_persistence(self):
         """Test REAL C2 session persistence performance."""
         manager = SessionManager()
-        
+
         start_time = time.time()
-        
+
         session_ids = []
         for i in range(20):
             session_id = manager.create_session(f"persistent_client_{i}", f"10.0.0.{i+1}")
             session_ids.append(session_id)
-        
+
         for _ in range(10):
             for session_id in session_ids:
                 manager.update_session_activity(session_id)
-        
+
         active_count = len(manager.get_active_sessions())
-        
+
         for session_id in session_ids:
             manager.close_session(session_id)
-        
+
         end_time = time.time()
-        
+
         assert active_count == 20, f"Expected 20 active sessions, got {active_count}"
         assert end_time - start_time < 2.0, "Session persistence test should complete under 2 seconds"
 
@@ -427,9 +427,9 @@ class TestNetworkPerformance:
             capture = NetworkCapture()
             parsed = capture.parse_pcap_file(network_capture_file)
             return capture.detect_protocols(parsed['packets'])
-        
+
         result = benchmark(detect_protocols)
-        
+
         assert result is not None, "Protocol detection must return results"
         assert 'protocols' in result, "Result must contain detected protocols"
         assert len(result['protocols']) > 0, "Must detect at least one protocol"
@@ -438,19 +438,19 @@ class TestNetworkPerformance:
     def test_encryption_key_generation_performance(self):
         """Test REAL encryption key generation performance."""
         manager = EncryptionManager()
-        
+
         start_time = time.time()
-        
+
         keys = []
         for i in range(50):
             key = manager.generate_key()
             keys.append(key)
-            
+
             assert key is not None, f"Key generation {i} failed"
             assert len(key) > 0, f"Key {i} is empty"
-        
+
         end_time = time.time()
-        
+
         unique_keys = set(keys)
         assert len(unique_keys) == len(keys), "All generated keys must be unique"
         assert end_time - start_time < 1.0, "Key generation should complete under 1 second"
@@ -458,17 +458,17 @@ class TestNetworkPerformance:
     def test_network_capture_real_time_performance(self):
         """Test REAL real-time network capture performance."""
         capture = NetworkCapture()
-        
+
         packets_captured = []
-        
+
         def packet_handler(packet):
             packets_captured.append(packet)
-        
+
         start_time = time.time()
-        
+
         capture.start_real_time_capture('lo', packet_handler, duration=1.0)
-        
+
         end_time = time.time()
-        
+
         assert end_time - start_time >= 1.0, "Capture should run for at least 1 second"
         assert end_time - start_time < 1.5, "Capture should not significantly exceed 1 second"

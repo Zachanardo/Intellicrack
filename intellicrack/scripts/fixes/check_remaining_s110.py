@@ -33,6 +33,7 @@ def check_for_logger_import(lines):
             return True
     return False
 
+
 def find_exception_blocks(file_path):
     """Find exception blocks without logger calls."""
     violations = []
@@ -76,26 +77,37 @@ def find_exception_blocks(file_path):
             if current_indent <= except_indent and stripped:
                 # We've left the except block
                 if not has_logger:
-                    violations.append({
-                        "line": except_start_line,
-                        "type": exception_type,
-                        "has_logger_import": has_logger_import,
-                        "context": lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)],
-                    })
+                    violations.append(
+                        {
+                            "line": except_start_line,
+                            "type": exception_type,
+                            "has_logger_import": has_logger_import,
+                            "context": lines[
+                                max(0, except_start_line - 2) : min(
+                                    len(lines), except_start_line + 3
+                                )
+                            ],
+                        }
+                    )
                 in_except_block = False
             elif "logger" in line or "logging" in line:
                 has_logger = True
 
     # Check if the last except block had a logger
     if in_except_block and not has_logger:
-        violations.append({
-            "line": except_start_line,
-            "type": exception_type,
-            "has_logger_import": has_logger_import,
-            "context": lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)],
-        })
+        violations.append(
+            {
+                "line": except_start_line,
+                "type": exception_type,
+                "has_logger_import": has_logger_import,
+                "context": lines[
+                    max(0, except_start_line - 2) : min(len(lines), except_start_line + 3)
+                ],
+            }
+        )
 
     return violations
+
 
 def main():
     """Main function to find all S110 violations."""
@@ -155,6 +167,7 @@ def main():
             print(f"   Line {v['line']}: except {v['type']}")
         if len(violations) > 2:
             print(f"   ... and {len(violations) - 2} more")
+
 
 if __name__ == "__main__":
     main()

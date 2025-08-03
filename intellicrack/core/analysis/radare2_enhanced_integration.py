@@ -184,16 +184,20 @@ class EnhancedR2Integration:
                     results["components"][analysis_type] = component_result
             except Exception as e:
                 self.logger.error(f"Failed to run {analysis_type} analysis: {e}")
-                results["errors"].append({
-                    "component": analysis_type,
-                    "error": str(e),
-                    "timestamp": time.time(),
-                })
+                results["errors"].append(
+                    {
+                        "component": analysis_type,
+                        "error": str(e),
+                        "timestamp": time.time(),
+                    }
+                )
 
         # Add performance metrics
         results["performance"] = self.get_performance_stats()
         results["metadata"]["analysis_end"] = time.time()
-        results["metadata"]["total_duration"] = results["metadata"]["analysis_end"] - results["metadata"]["analysis_start"]
+        results["metadata"]["total_duration"] = (
+            results["metadata"]["analysis_end"] - results["metadata"]["analysis_start"]
+        )
 
         # Standardize results
         standardized_results = standardize_r2_result(
@@ -226,10 +230,14 @@ class EnhancedR2Integration:
                         results[analysis_type] = result
                 except Exception as e:
                     self.logger.error(f"Parallel analysis {analysis_type} failed: {e}")
-                    self.error_handler.handle_error(e, f"parallel_{analysis_type}", {
-                        "binary_path": self.binary_path,
-                        "analysis_type": analysis_type,
-                    })
+                    self.error_handler.handle_error(
+                        e,
+                        f"parallel_{analysis_type}",
+                        {
+                            "binary_path": self.binary_path,
+                            "analysis_type": analysis_type,
+                        },
+                    )
 
         return results
 
@@ -299,11 +307,15 @@ class EnhancedR2Integration:
             self.performance_stats["errors_handled"] += 1
 
             # Try recovery
-            if self.error_handler.handle_error(e, f"r2_{analysis_type}", {
-                "binary_path": self.binary_path,
-                "analysis_type": analysis_type,
-                "component": component,
-            }):
+            if self.error_handler.handle_error(
+                e,
+                f"r2_{analysis_type}",
+                {
+                    "binary_path": self.binary_path,
+                    "analysis_type": analysis_type,
+                    "component": component,
+                },
+            ):
                 self.performance_stats["recoveries_successful"] += 1
                 # Retry once after recovery
                 try:
@@ -401,11 +413,13 @@ class EnhancedR2Integration:
                 quick_results = self._run_single_analysis("strings")
 
                 if callback and quick_results:
-                    callback({
-                        "type": "real_time_update",
-                        "results": quick_results,
-                        "timestamp": time.time(),
-                    })
+                    callback(
+                        {
+                            "type": "real_time_update",
+                            "results": quick_results,
+                            "timestamp": time.time(),
+                        }
+                    )
 
                 time.sleep(self.config.get("monitoring_interval", 30))  # 30 seconds default
 
@@ -491,10 +505,15 @@ class EnhancedR2Integration:
 
         # Calculate recovery rate
         if stats["errors_handled"] > 0:
-            health["error_health"]["recovery_rate"] = stats["recoveries_successful"] / stats["errors_handled"]
+            health["error_health"]["recovery_rate"] = (
+                stats["recoveries_successful"] / stats["errors_handled"]
+            )
 
         # Determine overall health
-        if not health["r2pipe_available"] or health["components_available"] < health["total_components"] * 0.5:
+        if (
+            not health["r2pipe_available"]
+            or health["components_available"] < health["total_components"] * 0.5
+        ):
             health["overall_health"] = "critical"
         elif health["error_health"]["recovery_rate"] < 0.5:
             health["overall_health"] = "degraded"

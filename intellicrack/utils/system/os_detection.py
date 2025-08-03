@@ -101,6 +101,7 @@ def get_platform_specific_paths() -> dict[str, str]:
 
     if current_os == "windows":
         import os
+
         return {
             "temp": os.environ.get("TEMP", "C:\\Windows\\Temp"),
             "appdata": os.environ.get("APPDATA", ""),

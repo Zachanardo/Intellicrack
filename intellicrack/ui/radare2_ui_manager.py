@@ -318,12 +318,14 @@ class R2UIManager(QObject):
                 self.ui_components["r2_widget"]._start_analysis(analysis_type)
 
                 # Add to analysis history
-                self.analysis_history.append({
-                    "type": analysis_type,
-                    "binary": self.binary_path,
-                    "timestamp": self._get_timestamp(),
-                    "options": options or {},
-                })
+                self.analysis_history.append(
+                    {
+                        "type": analysis_type,
+                        "binary": self.binary_path,
+                        "timestamp": self._get_timestamp(),
+                        "options": options or {},
+                    }
+                )
 
                 # Emit signal
                 self.analysis_started.emit(analysis_type)
@@ -409,17 +411,20 @@ class R2UIManager(QObject):
                 self.status_updated.emit(f"Results exported to {export_path}")
 
                 # Track in history
-                self.analysis_history.append({
-                    "timestamp": self._get_timestamp(),
-                    "action": "export",
-                    "file_path": export_path,
-                    "binary": self.binary_path,
-                    "results_count": len(self.current_results),
-                })
+                self.analysis_history.append(
+                    {
+                        "timestamp": self._get_timestamp(),
+                        "action": "export",
+                        "file_path": export_path,
+                        "binary": self.binary_path,
+                        "results_count": len(self.current_results),
+                    }
+                )
 
                 return True
             # Direct export if no viewer available
             import json
+
             with open(export_path, "w") as f:
                 json.dump(self.current_results, f, indent=2)
 
@@ -450,6 +455,7 @@ class R2UIManager(QObject):
     def _get_timestamp(self) -> str:
         """Get current timestamp"""
         from datetime import datetime
+
         return datetime.now().isoformat()
 
     # Signal handlers

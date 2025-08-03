@@ -1,4 +1,5 @@
 """Final core utilities for various common operations."""
+
 import hashlib
 import json
 import os
@@ -38,10 +39,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
 # Optional imports with graceful fallbacks
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError as e:
     logger.error("Import error in final_utilities: %s", e)
@@ -49,6 +50,7 @@ except ImportError as e:
 
 try:
     import requests
+
     REQUESTS_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in final_utilities: %s", e)
@@ -65,6 +67,7 @@ logger = setup_logger(__name__)
 
 
 # === UI Functions ===
+
 
 def add_table(parent: Any, headers: list[str], data: list[list[Any]]) -> Any:
     """Add a table widget to the parent UI element.
@@ -205,8 +208,8 @@ def update_visualization(data: Any, viz_type: str = "plot") -> None:
 
 # === Analysis Functions ===
 
-def monitor_memory(process_name: str | None = None,
-                  threshold_mb: float = 1000.0) -> dict[str, Any]:
+
+def monitor_memory(process_name: str | None = None, threshold_mb: float = 1000.0) -> dict[str, Any]:
     """Monitor memory usage of a process or the system.
 
     Args:
@@ -252,8 +255,10 @@ def monitor_memory(process_name: str | None = None,
 
 # === Core Utility Functions ===
 
-def accelerate_hash_calculation(data: bytes, algorithm: str = "sha256",
-                              use_gpu: bool = False) -> str:
+
+def accelerate_hash_calculation(
+    data: bytes, algorithm: str = "sha256", use_gpu: bool = False
+) -> str:
     """Calculate hash with optional GPU acceleration.
 
     Args:
@@ -309,6 +314,7 @@ def compute_section_hashes(binary_path: str) -> dict[str, str]:
 
     try:
         import pefile
+
         pe = pefile.PE(binary_path)
 
         for section in pe.sections:
@@ -412,8 +418,7 @@ def get_resource_type(file_path: str) -> str:
     return "unknown"
 
 
-def cache_analysis_results(key: str, results: dict[str, Any],
-                         cache_dir: str = ".cache") -> bool:
+def cache_analysis_results(key: str, results: dict[str, Any], cache_dir: str = ".cache") -> bool:
     """Cache analysis results to disk.
 
     Args:
@@ -430,10 +435,13 @@ def cache_analysis_results(key: str, results: dict[str, Any],
         cache_file = os.path.join(cache_dir, f"{key}.json")
 
         with open(cache_file, "w", encoding="utf-8") as f:
-            json.dump({
-                "timestamp": time.time(),
-                "results": results,
-            }, f)
+            json.dump(
+                {
+                    "timestamp": time.time(),
+                    "results": results,
+                },
+                f,
+            )
 
         return True
     except (OSError, ValueError, RuntimeError) as e:
@@ -482,8 +490,9 @@ def get_captured_requests(limit: int = 100) -> list[dict[str, Any]]:
         for request in captured_requests:
             _enhance_request_metadata(request)
 
-        logger.info("Retrieved %d captured network requests from %d sources",
-                   len(captured_requests), 4)
+        logger.info(
+            "Retrieved %d captured network requests from %d sources", len(captured_requests), 4
+        )
 
         return captured_requests
 
@@ -522,42 +531,48 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, Any]]:
                 # Simulate getting requests from active handlers
                 if module_name == "license_protocol_handler":
                     # FlexLM requests
-                    request_list.extend([
-                        {
-                            "timestamp": time.time() - (i * 30),
-                            "source": "FlexLM_Handler",
-                            "type": "license_checkout",
-                            "protocol": "FlexLM",
-                            "src_ip": "192.168.1.100",
-                            "dst_ip": os.environ.get("LICENSE_SERVER_HOST", "license.internal"),
-                            "dst_port": 27000 + i,
-                            "request_data": f"CHECKOUT feature_{i} HOST=client VERSION=1.0",
-                            "response_data": f"GRANT feature_{i} 1.0 permanent",
-                            "status": "success",
-                            "license_feature": f"feature_{i}",
-                            "bytes_sent": 45 + i,
-                            "bytes_received": 38 + i,
-                        } for i in range(min(3, limit // 4))
-                    ])
+                    request_list.extend(
+                        [
+                            {
+                                "timestamp": time.time() - (i * 30),
+                                "source": "FlexLM_Handler",
+                                "type": "license_checkout",
+                                "protocol": "FlexLM",
+                                "src_ip": "192.168.1.100",
+                                "dst_ip": os.environ.get("LICENSE_SERVER_HOST", "license.internal"),
+                                "dst_port": 27000 + i,
+                                "request_data": f"CHECKOUT feature_{i} HOST=client VERSION=1.0",
+                                "response_data": f"GRANT feature_{i} 1.0 permanent",
+                                "status": "success",
+                                "license_feature": f"feature_{i}",
+                                "bytes_sent": 45 + i,
+                                "bytes_received": 38 + i,
+                            }
+                            for i in range(min(3, limit // 4))
+                        ]
+                    )
                 elif module_name == "cloud_license_hooker":
                     # Cloud license API requests
-                    request_list.extend([
-                        {
-                            "timestamp": time.time() - (i * 45),
-                            "source": "Cloud_License_Hooker",
-                            "type": "api_call",
-                            "protocol": "HTTPS",
-                            "src_ip": "192.168.1.100",
-                            "dst_ip": "api.adobe.com",
-                            "dst_port": 443,
-                            "request_data": f'POST /auth/validate HTTP/1.1\\nContent-Type: application/json\\n\\n{{"token": "abc{i}"}}',
-                            "response_data": f'{{"valid": true, "expires": "{int(time.time()) + 3600}"}}',
-                            "status": "intercepted",
-                            "api_endpoint": "/auth/validate",
-                            "bytes_sent": 156 + i,
-                            "bytes_received": 89 + i,
-                        } for i in range(min(2, limit // 4))
-                    ])
+                    request_list.extend(
+                        [
+                            {
+                                "timestamp": time.time() - (i * 45),
+                                "source": "Cloud_License_Hooker",
+                                "type": "api_call",
+                                "protocol": "HTTPS",
+                                "src_ip": "192.168.1.100",
+                                "dst_ip": "api.adobe.com",
+                                "dst_port": 443,
+                                "request_data": f'POST /auth/validate HTTP/1.1\\nContent-Type: application/json\\n\\n{{"token": "abc{i}"}}',
+                                "response_data": f'{{"valid": true, "expires": "{int(time.time()) + 3600}"}}',
+                                "status": "intercepted",
+                                "api_endpoint": "/auth/validate",
+                                "bytes_sent": 156 + i,
+                                "bytes_received": 89 + i,
+                            }
+                            for i in range(min(2, limit // 4))
+                        ]
+                    )
 
             except ImportError as e:
                 logger.error("Import error in final_utilities: %s", e)
@@ -596,22 +611,24 @@ def _get_network_interceptor_requests(limit: int) -> list[dict[str, Any]]:
             if i >= limit:
                 break
 
-            request_list.append({
-                "timestamp": time.time() - (i * 60),
-                "source": "Network_Interceptor",
-                "type": "intercepted_traffic",
-                "protocol": protocol.upper(),
-                "src_ip": f"192.168.1.{100 + i}",
-                "dst_ip": f"server{i}.{os.environ.get('BASE_DOMAIN', 'internal')}",
-                "dst_port": port,
-                "request_data": _generate_realistic_request_data(req_type, protocol),
-                "response_data": _generate_realistic_response_data(req_type, protocol),
-                "status": "intercepted",
-                "traffic_type": req_type,
-                "bytes_sent": 200 + (i * 50),
-                "bytes_received": 150 + (i * 30),
-                "connection_id": f"conn_{hash(f'{req_type}_{i}') % 10000}",
-            })
+            request_list.append(
+                {
+                    "timestamp": time.time() - (i * 60),
+                    "source": "Network_Interceptor",
+                    "type": "intercepted_traffic",
+                    "protocol": protocol.upper(),
+                    "src_ip": f"192.168.1.{100 + i}",
+                    "dst_ip": f"server{i}.{os.environ.get('BASE_DOMAIN', 'internal')}",
+                    "dst_port": port,
+                    "request_data": _generate_realistic_request_data(req_type, protocol),
+                    "response_data": _generate_realistic_response_data(req_type, protocol),
+                    "status": "intercepted",
+                    "traffic_type": req_type,
+                    "bytes_sent": 200 + (i * 50),
+                    "bytes_received": 150 + (i * 30),
+                    "connection_id": f"conn_{hash(f'{req_type}_{i}') % 10000}",
+                }
+            )
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error getting network interceptor requests: %s", e)
@@ -634,9 +651,12 @@ def _get_cached_capture_requests(limit: int) -> list[dict[str, Any]]:
     try:
         # Check multiple cache locations
         from intellicrack.utils.core.plugin_paths import get_data_dir
+
         data_dir = get_data_dir()
         cache_locations = [
-            os.path.join(os.path.expanduser("~"), ".intellicrack", "cache", "network_captures.json"),
+            os.path.join(
+                os.path.expanduser("~"), ".intellicrack", "cache", "network_captures.json"
+            ),
             str(data_dir / "captures" / "network_log.json"),
             os.path.join("/tmp", "intellicrack_network.json"),
         ]
@@ -691,19 +711,21 @@ def _get_system_network_requests(limit: int) -> list[dict[str, Any]]:
 
                 for i, conn in enumerate(connections[:limit]):
                     if conn.status == "ESTABLISHED" and conn.raddr:
-                        request_list.append({
-                            "timestamp": time.time() - (i * 10),
-                            "source": "System_Monitor",
-                            "type": "active_connection",
-                            "protocol": "TCP" if conn.type == socket.SOCK_STREAM else "UDP",
-                            "src_ip": conn.laddr.ip if conn.laddr else "unknown",
-                            "src_port": conn.laddr.port if conn.laddr else 0,
-                            "dst_ip": conn.raddr.ip if conn.raddr else "unknown",
-                            "dst_port": conn.raddr.port if conn.raddr else 0,
-                            "status": conn.status,
-                            "pid": conn.pid,
-                            "connection_type": "system_monitored",
-                        })
+                        request_list.append(
+                            {
+                                "timestamp": time.time() - (i * 10),
+                                "source": "System_Monitor",
+                                "type": "active_connection",
+                                "protocol": "TCP" if conn.type == socket.SOCK_STREAM else "UDP",
+                                "src_ip": conn.laddr.ip if conn.laddr else "unknown",
+                                "src_port": conn.laddr.port if conn.laddr else 0,
+                                "dst_ip": conn.raddr.ip if conn.raddr else "unknown",
+                                "dst_port": conn.raddr.port if conn.raddr else 0,
+                                "status": conn.status,
+                                "pid": conn.pid,
+                                "connection_type": "system_monitored",
+                            }
+                        )
 
             except (AttributeError, OSError) as e:
                 logger.error("Error in final_utilities: %s", e)
@@ -717,18 +739,22 @@ def _get_system_network_requests(limit: int) -> list[dict[str, Any]]:
                         connections = child.connections(kind="inet")
                         for conn in connections[:2]:
                             if conn.raddr:
-                                request_list.append({
-                                    "timestamp": time.time() - 5,
-                                    "source": "Process_Monitor",
-                                    "type": "process_connection",
-                                    "protocol": "TCP" if conn.type == socket.SOCK_STREAM else "UDP",
-                                    "src_ip": conn.laddr.ip if conn.laddr else "unknown",
-                                    "dst_ip": conn.raddr.ip if conn.raddr else "unknown",
-                                    "dst_port": conn.raddr.port if conn.raddr else 0,
-                                    "process_name": child.name(),
-                                    "process_pid": child.pid,
-                                    "status": conn.status,
-                                })
+                                request_list.append(
+                                    {
+                                        "timestamp": time.time() - 5,
+                                        "source": "Process_Monitor",
+                                        "type": "process_connection",
+                                        "protocol": "TCP"
+                                        if conn.type == socket.SOCK_STREAM
+                                        else "UDP",
+                                        "src_ip": conn.laddr.ip if conn.laddr else "unknown",
+                                        "dst_ip": conn.raddr.ip if conn.raddr else "unknown",
+                                        "dst_port": conn.raddr.port if conn.raddr else 0,
+                                        "process_name": child.name(),
+                                        "process_pid": child.pid,
+                                        "status": conn.status,
+                                    }
+                                )
                     except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                         logger.error("Error in final_utilities: %s", e)
                         continue
@@ -805,7 +831,8 @@ def _generate_example_cached_requests(limit: int) -> list[dict[str, Any]]:
             "response_data": f'{{"valid": true, "feature": "example_feature_{i}"}}',
             "status": "cached_example",
             "cache_age": i * 120,
-        } for i in range(min(limit, 5))
+        }
+        for i in range(min(limit, 5))
     ]
 
 
@@ -890,7 +917,9 @@ def _analyze_protocol(protocol: str, request: dict[str, Any]) -> dict[str, Any]:
         analysis["encrypted"] = protocol == "https"
         # Check for common license-related endpoints
         request_data = request.get("request_data", "")
-        if any(term in request_data.lower() for term in ["license", "auth", "activate", "validate"]):
+        if any(
+            term in request_data.lower() for term in ["license", "auth", "activate", "validate"]
+        ):
             analysis["license_related"] = True
     elif protocol == "tcp":
         analysis["connection_oriented"] = True
@@ -926,7 +955,9 @@ def _assess_request_security(request: dict[str, Any]) -> list[str]:
     request_data = request.get("request_data", "").lower()
     response_data = request.get("response_data", "").lower()
 
-    if any(term in request_data + response_data for term in ["license", "key", "activate", "validate"]):
+    if any(
+        term in request_data + response_data for term in ["license", "key", "activate", "validate"]
+    ):
         flags.append("license_related")
 
     # Check for suspicious patterns
@@ -1055,6 +1086,7 @@ def initialize_memory_optimizer(threshold_mb: float = 500.0) -> dict[str, Any]:
 
     # Set garbage collection thresholds
     import gc
+
     gc.set_threshold(700, 10, 10)  # More aggressive GC
 
     return config
@@ -1083,8 +1115,9 @@ def sandbox_process(command: list[str], timeout: int = 60) -> dict[str, Any]:
             env={
                 "PATH": "/usr/bin:/bin",  # Restricted PATH
                 "HOME": "/tmp",
-            }
-        , check=False)
+            },
+            check=False,
+        )
 
         return {
             "success": result.returncode == 0,
@@ -1106,8 +1139,7 @@ def sandbox_process(command: list[str], timeout: int = 60) -> dict[str, Any]:
         }
 
 
-def select_backend_for_workload(workload_type: str,
-                              available_backends: list[str]) -> str:
+def select_backend_for_workload(workload_type: str, available_backends: list[str]) -> str:
     """Select the best backend for a given workload type.
 
     Args:
@@ -1137,8 +1169,7 @@ def select_backend_for_workload(workload_type: str,
     return available_backends[0] if available_backends else "sequential"
 
 
-def truncate_text(text: str, max_length: int = 100,
-                 suffix: str = "...") -> str:
+def truncate_text(text: str, max_length: int = 100, suffix: str = "...") -> str:
     """Truncate text to specified length.
 
     Args:
@@ -1153,7 +1184,7 @@ def truncate_text(text: str, max_length: int = 100,
     if len(text) <= max_length:
         return text
 
-    return text[:max_length - len(suffix)] + suffix
+    return text[: max_length - len(suffix)] + suffix
 
 
 def center_on_screen(widget: Any) -> None:
@@ -1204,8 +1235,7 @@ def copy_to_clipboard(text: str) -> bool:
             subprocess.run(["pbcopy"], input=text, text=True, check=True)
             return True
         elif platform.system() == "Linux":
-            subprocess.run(["xclip", "-selection", "clipboard"],
-                         input=text, text=True, check=True)
+            subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True, check=True)
             return True
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Failed to copy to clipboard: %s", e)
@@ -1223,6 +1253,7 @@ def async_wrapper(func: Callable) -> Callable:
         Wrapped function that returns a Thread object
 
     """
+
     def wrapped(*args, **kwargs):
         """Inner wrapper function."""
         thread = threading.Thread(
@@ -1262,6 +1293,7 @@ def hash_func(data: Any, algorithm: str = "sha256") -> str:
 
 # === Report Functions ===
 
+
 def export_metrics(metrics: dict[str, Any], output_path: str) -> bool:
     """Export metrics to a file.
 
@@ -1282,8 +1314,7 @@ def export_metrics(metrics: dict[str, Any], output_path: str) -> bool:
         return False
 
 
-def submit_report(report_data: dict[str, Any],
-                 endpoint: str | None = None) -> dict[str, Any]:
+def submit_report(report_data: dict[str, Any], endpoint: str | None = None) -> dict[str, Any]:
     """Submit a comprehensive analysis report to an endpoint or save locally with full validation.
 
     This function handles report submission with multiple delivery methods including
@@ -1332,8 +1363,11 @@ def submit_report(report_data: dict[str, Any],
             "metadata": submission_metadata,
         }
 
-        logger.info("Report submission completed: %s (ID: %s)",
-                   submission_result.get("status", "unknown"), report_id)
+        logger.info(
+            "Report submission completed: %s (ID: %s)",
+            submission_result.get("status", "unknown"),
+            report_id,
+        )
 
         return final_result
 
@@ -1448,7 +1482,9 @@ def _create_submission_metadata(report_id: str, endpoint: str | None) -> dict[st
     }
 
 
-def _submit_to_remote_endpoint(report_data: dict[str, Any], endpoint: str, report_id: str) -> dict[str, Any]:
+def _submit_to_remote_endpoint(
+    report_data: dict[str, Any], endpoint: str, report_id: str
+) -> dict[str, Any]:
     """Submit report to remote endpoint with comprehensive handling."""
     try:
         # Parse endpoint URL
@@ -1489,7 +1525,9 @@ def _submit_to_remote_endpoint(report_data: dict[str, Any], endpoint: str, repor
                         "status": "submitted",
                         "endpoint": endpoint,
                         "response_code": response.status_code,
-                        "response_message": response.text[:200] if response.text else "Report submitted",
+                        "response_message": response.text[:200]
+                        if response.text
+                        else "Report submitted",
                         "tracking_id": report_id,
                         "delivery_method": "http_post",
                     }
@@ -1544,7 +1582,9 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
         try:
             with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
-            formats_saved.append({"format": "json", "path": json_path, "size": os.path.getsize(json_path)})
+            formats_saved.append(
+                {"format": "json", "path": json_path, "size": os.path.getsize(json_path)}
+            )
         except (OSError, ValueError) as e:
             logger.error("Failed to save JSON report: %s", e)
 
@@ -1553,7 +1593,9 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
         try:
             with open(txt_path, "w", encoding="utf-8") as f:
                 f.write(_format_report_as_text(report_data))
-            formats_saved.append({"format": "text", "path": txt_path, "size": os.path.getsize(txt_path)})
+            formats_saved.append(
+                {"format": "text", "path": txt_path, "size": os.path.getsize(txt_path)}
+            )
         except (OSError, ValueError) as e:
             logger.error("Failed to save text report: %s", e)
 
@@ -1561,7 +1603,9 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
         csv_path = os.path.join(reports_dir, f"{report_id}.csv")
         try:
             if _save_report_as_csv(report_data, csv_path):
-                formats_saved.append({"format": "csv", "path": csv_path, "size": os.path.getsize(csv_path)})
+                formats_saved.append(
+                    {"format": "csv", "path": csv_path, "size": os.path.getsize(csv_path)}
+                )
         except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
             logger.debug("Could not save CSV format: %s", e)
 
@@ -1569,7 +1613,13 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
         archive_path = os.path.join(reports_dir, f"{report_id}.tar.gz")
         try:
             if _create_report_archive(report_id, formats_saved, archive_path):
-                formats_saved.append({"format": "archive", "path": archive_path, "size": os.path.getsize(archive_path)})
+                formats_saved.append(
+                    {
+                        "format": "archive",
+                        "path": archive_path,
+                        "size": os.path.getsize(archive_path),
+                    }
+                )
         except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
             logger.debug("Could not create archive: %s", e)
 
@@ -1593,7 +1643,9 @@ def _submit_to_local_storage(report_data: dict[str, Any], report_id: str) -> dic
         return {"status": "error", "error": str(e)}
 
 
-def _handle_additional_delivery_methods(report_data: dict[str, Any], report_id: str) -> list[dict[str, Any]]:
+def _handle_additional_delivery_methods(
+    report_data: dict[str, Any], report_id: str
+) -> list[dict[str, Any]]:
     """Handle additional delivery methods like email, cloud storage, etc."""
     additional_deliveries = []
 
@@ -1703,7 +1755,8 @@ def _attempt_cloud_storage(report_data: dict[str, Any], report_id: str) -> dict[
             try:
                 import boto3
 
-                s3 = boto3.client("s3",
+                s3 = boto3.client(
+                    "s3",
                     aws_access_key_id=config.get("access_key"),
                     aws_secret_access_key=config.get("secret_key"),
                     region_name=config.get("region", "us-east-1"),
@@ -1846,13 +1899,17 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
                                 metadata TEXT)""")
 
                 # Insert report
-                cursor.execute("""INSERT OR REPLACE INTO analysis_reports
+                cursor.execute(
+                    """INSERT OR REPLACE INTO analysis_reports
                                (id, timestamp, report_data, metadata)
                                VALUES (?, ?, ?, ?)""",
-                               (report_id,
-                                time.time(),
-                                json.dumps(report_data),
-                                json.dumps(report_data.get("report_metadata", {}))))
+                    (
+                        report_id,
+                        time.time(),
+                        json.dumps(report_data),
+                        json.dumps(report_data.get("report_metadata", {})),
+                    ),
+                )
 
                 conn.commit()
                 conn.close()
@@ -1898,17 +1955,21 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
                                 metadata JSONB)""")
 
                 # Insert report
-                cursor.execute("""INSERT INTO analysis_reports
+                cursor.execute(
+                    """INSERT INTO analysis_reports
                                (id, timestamp, report_data, metadata)
                                VALUES (%s, to_timestamp(%s), %s, %s)
                                ON CONFLICT (id) DO UPDATE
                                SET timestamp = EXCLUDED.timestamp,
                                    report_data = EXCLUDED.report_data,
                                    metadata = EXCLUDED.metadata""",
-                               (report_id,
-                                time.time(),
-                                json.dumps(report_data),
-                                json.dumps(report_data.get("report_metadata", {}))))
+                    (
+                        report_id,
+                        time.time(),
+                        json.dumps(report_data),
+                        json.dumps(report_data.get("report_metadata", {})),
+                    ),
+                )
 
                 conn.commit()
                 conn.close()
@@ -1945,7 +2006,9 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
             try:
                 import pymongo
 
-                client = pymongo.MongoClient(config.get("connection_string", "mongodb://localhost:27017/"))
+                client = pymongo.MongoClient(
+                    config.get("connection_string", "mongodb://localhost:27017/")
+                )
                 db = client[config.get("database", "intellicrack")]
                 collection = db[config.get("collection", "analysis_reports")]
 
@@ -2147,7 +2210,9 @@ def _save_report_as_csv(report_data: dict[str, Any], csv_path: str) -> bool:
         return False
 
 
-def _create_report_archive(report_id: str, formats_saved: list[dict[str, Any]], archive_path: str) -> bool:
+def _create_report_archive(
+    report_id: str, formats_saved: list[dict[str, Any]], archive_path: str
+) -> bool:
     """Create compressed archive of all report formats."""
     _ = report_id
     try:
@@ -2168,7 +2233,9 @@ def _create_report_archive(report_id: str, formats_saved: list[dict[str, Any]], 
         return False
 
 
-def _create_submission_audit_trail(submission_result: dict[str, Any], metadata: dict[str, Any]) -> None:
+def _create_submission_audit_trail(
+    submission_result: dict[str, Any], metadata: dict[str, Any]
+) -> None:
     """Create audit trail for report submission."""
     try:
         audit_entry = {
@@ -2186,6 +2253,7 @@ def _create_submission_audit_trail(submission_result: dict[str, Any], metadata: 
 
         # Save to audit file if possible
         from intellicrack.utils.core.plugin_paths import get_reports_dir
+
         audit_file = get_reports_dir() / "audit.log"
         try:
             with open(audit_file, "a", encoding="utf-8") as f:
@@ -2199,6 +2267,7 @@ def _create_submission_audit_trail(submission_result: dict[str, Any], metadata: 
 
 
 # === Training Functions ===
+
 
 def start_training(model_config: dict[str, Any]) -> dict[str, Any]:
     """Start model training with given configuration.
@@ -2248,8 +2317,8 @@ def on_training_finished(results: dict[str, Any]) -> None:
 
 # === Model Functions ===
 
-def create_dataset(data: list[dict[str, Any]],
-                  format: str = "json") -> dict[str, Any]:  # pylint: disable=redefined-builtin
+
+def create_dataset(data: list[dict[str, Any]], format: str = "json") -> dict[str, Any]:  # pylint: disable=redefined-builtin
     """Create a dataset from raw data.
 
     Args:
@@ -2278,8 +2347,9 @@ def create_dataset(data: list[dict[str, Any]],
     return dataset
 
 
-def augment_dataset(dataset: list[dict[str, Any]],
-                   augmentation_config: dict[str, Any]) -> list[dict[str, Any]]:
+def augment_dataset(
+    dataset: list[dict[str, Any]], augmentation_config: dict[str, Any]
+) -> list[dict[str, Any]]:
     """Augment a dataset with various techniques.
 
     Args:
@@ -2342,8 +2412,7 @@ def load_dataset_preview(dataset_path: str, limit: int = 10) -> list[dict[str, A
         return []
 
 
-def create_full_feature_model(features: list[str],
-                            model_type: str = "ensemble") -> dict[str, Any]:
+def create_full_feature_model(features: list[str], model_type: str = "ensemble") -> dict[str, Any]:
     """Create a model configuration with all features.
 
     Args:
@@ -2368,8 +2437,9 @@ def create_full_feature_model(features: list[str],
     }
 
 
-def predict_vulnerabilities(binary_features: dict[str, Any],
-                          model: Any | None = None) -> dict[str, Any]:
+def predict_vulnerabilities(
+    binary_features: dict[str, Any], model: Any | None = None
+) -> dict[str, Any]:
     """Predict vulnerabilities in a binary.
 
     Args:
@@ -2406,8 +2476,10 @@ def predict_vulnerabilities(binary_features: dict[str, Any],
 
 # === Misc Functions ===
 
-def add_code_snippet(snippets: list[dict[str, Any]],
-                    title: str, code: str, language: str = "python") -> None:
+
+def add_code_snippet(
+    snippets: list[dict[str, Any]], title: str, code: str, language: str = "python"
+) -> None:
     """Add a code snippet to a collection.
 
     Args:
@@ -2418,12 +2490,14 @@ def add_code_snippet(snippets: list[dict[str, Any]],
 
     """
     """Add a code snippet to a collection."""
-    snippets.append({
-        "title": title,
-        "code": code,
-        "language": language,
-        "timestamp": time.time(),
-    })
+    snippets.append(
+        {
+            "title": title,
+            "code": code,
+            "language": language,
+            "timestamp": time.time(),
+        }
+    )
 
 
 def add_dataset_row(dataset: list[dict[str, Any]], row: dict[str, Any]) -> None:
@@ -2437,8 +2511,7 @@ def add_dataset_row(dataset: list[dict[str, Any]], row: dict[str, Any]) -> None:
     dataset.append(row)
 
 
-def add_image(document: Any, image_path: str,
-             caption: str | None = None) -> bool:
+def add_image(document: Any, image_path: str, caption: str | None = None) -> bool:
     """Add an image to a document.
 
     Args:
@@ -2457,8 +2530,7 @@ def add_image(document: Any, image_path: str,
     return os.path.exists(image_path)
 
 
-def add_recommendations(report: dict[str, Any],
-                       recommendations: list[str]) -> None:
+def add_recommendations(report: dict[str, Any], recommendations: list[str]) -> None:
     """Add recommendations to a report.
 
     Args:

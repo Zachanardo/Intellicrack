@@ -26,7 +26,7 @@ if (getSystemTime) {
     });
 }
 
-// Hook GetLocalTime  
+// Hook GetLocalTime
 var getLocalTime = Module.findExportByName("kernel32.dll", "GetLocalTime");
 if (getLocalTime) {
     Interceptor.attach(getLocalTime, {
@@ -82,10 +82,10 @@ if (getFileTime) {
                 var creationTime = this.context.r8;
                 var lastAccessTime = this.context.r9;
                 var lastWriteTime = this.context.rsp.add(0x28).readPointer();
-                
+
                 // Set to January 1, 2020 (as FILETIME)
                 var safeFileTime = ptr("0x01d5e8d6c6c00000"); // Jan 1, 2020 in FILETIME
-                
+
                 if (creationTime && !creationTime.isNull()) {
                     creationTime.writeU64(safeFileTime);
                 }
@@ -95,7 +95,7 @@ if (getFileTime) {
                 if (lastWriteTime && !lastWriteTime.isNull()) {
                     lastWriteTime.writeU64(safeFileTime);
                 }
-                
+
                 console.log("[Time Bomb] File times spoofed");
             }
         }

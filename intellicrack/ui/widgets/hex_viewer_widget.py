@@ -90,8 +90,7 @@ class HexViewerThread(QThread):
 
 
 class HexViewerWidget(QWidget):
-    """Hex viewer widget with protection analysis integration
-    """
+    """Hex viewer widget with protection analysis integration"""
 
     # Signals
     offset_selected = pyqtSignal(int)  # Offset clicked
@@ -444,7 +443,7 @@ class HexViewerWidget(QWidget):
             # Format hex with spacing
             hex_line = offset_str
             for k in range(0, len(hex_values), 4):
-                hex_line += " ".join(hex_values[k:k+4]) + "  "
+                hex_line += " ".join(hex_values[k : k + 4]) + "  "
 
             hex_lines.append(hex_line.rstrip())
             ascii_lines.append("".join(ascii_values))
@@ -513,7 +512,9 @@ class HexViewerWidget(QWidget):
             section = self.file_model.get_section_at_rva(rva)
             if section:
                 self.structure_info_text.append(f"Section: {section.name}")
-                self.structure_info_text.append(f"Section Offset: 0x{rva - section.virtual_address:X}")
+                self.structure_info_text.append(
+                    f"Section Offset: 0x{rva - section.virtual_address:X}"
+                )
         else:
             QMessageBox.warning(self, "Invalid RVA", f"RVA 0x{rva:X} is not valid for this file")
 
@@ -625,11 +626,13 @@ class HexViewerWidget(QWidget):
             byte_val = self.file_data[offset]
             interpretations.append(("UInt8", str(byte_val)))
             interpretations.append(("Int8", str(struct.unpack("b", bytes([byte_val]))[0])))
-            interpretations.append(("Char", repr(chr(byte_val)) if 32 <= byte_val <= 126 else "N/A"))
+            interpretations.append(
+                ("Char", repr(chr(byte_val)) if 32 <= byte_val <= 126 else "N/A")
+            )
 
         # 16-bit values
         if available >= 2:
-            data = self.file_data[offset:offset+2]
+            data = self.file_data[offset : offset + 2]
             interpretations.append(("UInt16 LE", str(struct.unpack("<H", data)[0])))
             interpretations.append(("UInt16 BE", str(struct.unpack(">H", data)[0])))
             interpretations.append(("Int16 LE", str(struct.unpack("<h", data)[0])))
@@ -637,7 +640,7 @@ class HexViewerWidget(QWidget):
 
         # 32-bit values
         if available >= 4:
-            data = self.file_data[offset:offset+4]
+            data = self.file_data[offset : offset + 4]
             interpretations.append(("UInt32 LE", str(struct.unpack("<I", data)[0])))
             interpretations.append(("UInt32 BE", str(struct.unpack(">I", data)[0])))
             interpretations.append(("Int32 LE", str(struct.unpack("<i", data)[0])))
@@ -647,7 +650,7 @@ class HexViewerWidget(QWidget):
 
         # 64-bit values
         if available >= 8:
-            data = self.file_data[offset:offset+8]
+            data = self.file_data[offset : offset + 8]
             interpretations.append(("UInt64 LE", str(struct.unpack("<Q", data)[0])))
             interpretations.append(("UInt64 BE", str(struct.unpack(">Q", data)[0])))
             interpretations.append(("Int64 LE", str(struct.unpack("<q", data)[0])))
@@ -690,7 +693,7 @@ class HexViewerWidget(QWidget):
                     hex_part = line
                 else:
                     # Skip offset and extract hex part
-                    hex_part = line[colon_pos + 1:]
+                    hex_part = line[colon_pos + 1 :]
 
                 # Remove all spaces and extract hex pairs
                 hex_part = hex_part.replace(" ", "")
@@ -698,7 +701,7 @@ class HexViewerWidget(QWidget):
                 # Process hex pairs (2 characters at a time)
                 for i in range(0, len(hex_part), 2):
                     if i + 1 < len(hex_part):
-                        hex_pair = hex_part[i:i+2]
+                        hex_pair = hex_part[i : i + 2]
                         # Validate hex characters
                         if all(c in "0123456789ABCDEFabcdef" for c in hex_pair):
                             hex_bytes.append(hex_pair)
@@ -799,8 +802,7 @@ class HexViewerWidget(QWidget):
         if offset is not None and size is not None:
             # Add temporary highlight for clicked structure
             self.highlighted_regions = [
-                region for region in self.highlighted_regions
-                if not hasattr(region, "_temporary")
+                region for region in self.highlighted_regions if not hasattr(region, "_temporary")
             ]
 
             # Add new temporary highlight

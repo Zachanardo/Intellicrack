@@ -46,13 +46,13 @@ try:
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
+
     HAS_MATPLOTLIB = True
 except ImportError:
     plt = None
     FigureCanvas = None
     Figure = None
     HAS_MATPLOTLIB = False
-
 
 
 logger = get_logger(__name__)
@@ -65,8 +65,9 @@ class AdvancedAnalysisThread(QThread):
     analysis_error = pyqtSignal(str)
     analysis_progress = pyqtSignal(str, int)  # message, percentage
 
-    def __init__(self, file_path: str, scan_mode: ScanMode,
-                 enable_heuristic: bool, extract_strings: bool):
+    def __init__(
+        self, file_path: str, scan_mode: ScanMode, enable_heuristic: bool, extract_strings: bool
+    ):
         """Initialize advanced analysis thread with file path, scan configuration, and analysis options."""
         super().__init__()
         self.file_path = file_path
@@ -113,8 +114,14 @@ class EntropyGraphWidget(FigureCanvas):
         ax = self.figure.add_subplot(111)
 
         if not entropy_data:
-            ax.text(0.5, 0.5, "No entropy data available",
-                   ha="center", va="center", transform=ax.transAxes)
+            ax.text(
+                0.5,
+                0.5,
+                "No entropy data available",
+                ha="center",
+                va="center",
+                transform=ax.transAxes,
+            )
             self.draw()
             return
 
@@ -129,12 +136,15 @@ class EntropyGraphWidget(FigureCanvas):
         # Add value labels on bars
         for bar in bars:
             height = bar.get_height()
-            ax.annotate(f"{height:.2f}",
-                       xy=(bar.get_x() + bar.get_width() / 2, height),
-                       xytext=(0, 3),  # 3 points vertical offset
-                       textcoords="offset points",
-                       ha="center", va="bottom",
-                       fontsize=8)
+            ax.annotate(
+                f"{height:.2f}",
+                xy=(bar.get_x() + bar.get_width() / 2, height),
+                xytext=(0, 3),  # 3 points vertical offset
+                textcoords="offset points",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
 
         # Add threshold line
         ax.axhline(y=7.0, color="orange", linestyle="--", label="Packing threshold")
@@ -155,8 +165,7 @@ class EntropyGraphWidget(FigureCanvas):
 
 
 class IntellicrackAdvancedProtectionWidget(QWidget):
-    """Advanced widget for DIE protection detection with full feature access
-    """
+    """Advanced widget for DIE protection detection with full feature access"""
 
     # Signals
     protection_detected = pyqtSignal(str, list)  # protection_name, bypass_recommendations
@@ -336,9 +345,15 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         # Detections table
         self.detections_table = QTableWidget()
         self.detections_table.setColumnCount(5)
-        self.detections_table.setHorizontalHeaderLabels([
-            "Name", "Type", "Version", "Confidence", "Bypass Available",
-        ])
+        self.detections_table.setHorizontalHeaderLabels(
+            [
+                "Name",
+                "Type",
+                "Version",
+                "Confidence",
+                "Bypass Available",
+            ]
+        )
         self.detections_table.horizontalHeader().setStretchLastSection(True)
         self.detections_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.detections_table.itemSelectionChanged.connect(self.on_detection_selected)
@@ -366,9 +381,15 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         # Entropy details table
         self.entropy_table = QTableWidget()
         self.entropy_table.setColumnCount(5)
-        self.entropy_table.setHorizontalHeaderLabels([
-            "Section", "Offset", "Size", "Entropy", "Status",
-        ])
+        self.entropy_table.setHorizontalHeaderLabels(
+            [
+                "Section",
+                "Offset",
+                "Size",
+                "Entropy",
+                "Status",
+            ]
+        )
         self.entropy_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.entropy_table)
 
@@ -382,9 +403,16 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
 
         self.certificates_table = QTableWidget()
         self.certificates_table.setColumnCount(6)
-        self.certificates_table.setHorizontalHeaderLabels([
-            "Subject", "Issuer", "Valid From", "Valid To", "Algorithm", "Status",
-        ])
+        self.certificates_table.setHorizontalHeaderLabels(
+            [
+                "Subject",
+                "Issuer",
+                "Valid From",
+                "Valid To",
+                "Algorithm",
+                "Status",
+            ]
+        )
         self.certificates_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.certificates_table)
 
@@ -398,9 +426,15 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
 
         self.resources_table = QTableWidget()
         self.resources_table.setColumnCount(5)
-        self.resources_table.setHorizontalHeaderLabels([
-            "Type", "Name", "Language", "Size", "Hash",
-        ])
+        self.resources_table.setHorizontalHeaderLabels(
+            [
+                "Type",
+                "Name",
+                "Language",
+                "Size",
+                "Hash",
+            ]
+        )
         self.resources_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.resources_table)
 
@@ -424,9 +458,14 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         # Strings table
         self.strings_table = QTableWidget()
         self.strings_table.setColumnCount(4)
-        self.strings_table.setHorizontalHeaderLabels([
-            "String", "Offset", "Encoding", "Suspicious",
-        ])
+        self.strings_table.setHorizontalHeaderLabels(
+            [
+                "String",
+                "Offset",
+                "Encoding",
+                "Suspicious",
+            ]
+        )
         self.strings_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.strings_table)
 
@@ -838,7 +877,9 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         if not analysis.heuristic_detections:
             heuristics_text += "No heuristic detections found.\n"
         else:
-            heuristics_text += f"Found {len(analysis.heuristic_detections)} heuristic detections:\n\n"
+            heuristics_text += (
+                f"Found {len(analysis.heuristic_detections)} heuristic detections:\n\n"
+            )
 
             for i, detection in enumerate(analysis.heuristic_detections, 1):
                 heuristics_text += f"{i}. {detection.name}\n"
@@ -879,7 +920,9 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
             return
 
         # Get detection
-        all_detections = self.current_analysis.detections + self.current_analysis.heuristic_detections
+        all_detections = (
+            self.current_analysis.detections + self.current_analysis.heuristic_detections
+        )
         if current_row < len(all_detections):
             detection = all_detections[current_row]
 

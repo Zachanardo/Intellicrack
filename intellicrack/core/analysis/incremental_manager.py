@@ -1,4 +1,5 @@
 """Incremental analysis manager for caching and tracking analysis progress."""
+
 import datetime
 import hashlib
 import hmac
@@ -45,6 +46,7 @@ improving performance for large binaries.
 
 try:
     from PyQt6.QtWidgets import QMessageBox
+
     PYQT_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in incremental_manager: %s", e)
@@ -52,6 +54,7 @@ except ImportError as e:
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
+
 
 def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
@@ -66,6 +69,7 @@ def secure_pickle_dump(obj, file_path):
         f.write(mac)
         f.write(data)
 
+
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
@@ -73,11 +77,19 @@ class RestrictedUnpickler(pickle.Unpickler):
         """Override find_class to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
-            "numpy", "numpy.core.multiarray", "numpy.core.numeric",
-            "pandas", "pandas.core.frame", "pandas.core.series",
-            "sklearn", "torch", "tensorflow",
-            "__builtin__", "builtins",
-            "collections", "collections.abc",
+            "numpy",
+            "numpy.core.multiarray",
+            "numpy.core.numeric",
+            "pandas",
+            "pandas.core.frame",
+            "pandas.core.series",
+            "sklearn",
+            "torch",
+            "tensorflow",
+            "__builtin__",
+            "builtins",
+            "collections",
+            "collections.abc",
             "datetime",
         }
 
@@ -92,11 +104,13 @@ class RestrictedUnpickler(pickle.Unpickler):
         # Deny everything else
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
+
 def secure_pickle_load(file_path):
     """Securely load object with integrity verification."""
     try:
         # Try joblib first as it's safer for ML models
         import joblib
+
         return joblib.load(file_path)
     except (ImportError, ValueError):
         # Fallback to pickle with restricted unpickler
@@ -114,6 +128,7 @@ def secure_pickle_load(file_path):
 
     # Load object using RestrictedUnpickler
     import io
+
     return RestrictedUnpickler(io.BytesIO(data)).load()
 
 
@@ -162,7 +177,9 @@ class IncrementalAnalysisManager:
             # Initialize empty metadata
             self._init_empty_cache()
 
-        self.logger.info(f"Incremental analysis manager initialized with cache dir: {self.cache_dir}")
+        self.logger.info(
+            f"Incremental analysis manager initialized with cache dir: {self.cache_dir}"
+        )
 
     def _validate_cache_file(self, file_path: str) -> bool:
         """Validate cache file before loading.
@@ -264,8 +281,7 @@ class IncrementalAnalysisManager:
             return False
 
     def _cleanup_invalid_entries(self) -> None:
-        """Clean up cache entries that reference non-existent files.
-        """
+        """Clean up cache entries that reference non-existent files."""
         invalid_hashes = []
 
         for binary_hash, entry in self.cache.items():
@@ -277,7 +293,9 @@ class IncrementalAnalysisManager:
 
             # Check if cache files exist
             for analysis_type, cache_file in entry.items():
-                if analysis_type not in ["binary_path", "timestamp"] and isinstance(cache_file, str):
+                if analysis_type not in ["binary_path", "timestamp"] and isinstance(
+                    cache_file, str
+                ):
                     if not os.path.exists(cache_file):
                         invalid_hashes.append(binary_hash)
                         break
@@ -480,7 +498,9 @@ class IncrementalAnalysisManager:
 
         # Delete cache files
         for analysis_type, cache_file in cache_entry.items():
-            if analysis_type not in ["binary_path", "timestamp", "file_size"] and isinstance(cache_file, str):
+            if analysis_type not in ["binary_path", "timestamp", "file_size"] and isinstance(
+                cache_file, str
+            ):
                 if os.path.exists(cache_file):
                     try:
                         os.remove(cache_file)
@@ -512,7 +532,9 @@ class IncrementalAnalysisManager:
 
         for cache_entry in self.cache.values():
             for analysis_type, cache_file in cache_entry.items():
-                if analysis_type not in ["binary_path", "timestamp", "file_size"] and isinstance(cache_file, str):
+                if analysis_type not in ["binary_path", "timestamp", "file_size"] and isinstance(
+                    cache_file, str
+                ):
                     analysis_types.add(analysis_type)
                     if os.path.exists(cache_file):
                         total_files += 1
@@ -569,7 +591,9 @@ class IncrementalAnalysisManager:
 
         return cleaned_count
 
-    def analyze_incremental(self, binary_path: str, analysis_types: list | None = None) -> dict[str, Any]:
+    def analyze_incremental(
+        self, binary_path: str, analysis_types: list | None = None
+    ) -> dict[str, Any]:
         """Perform incremental analysis on a binary file.
 
         Args:
@@ -635,7 +659,9 @@ class IncrementalAnalysisManager:
                 "cache_stats": self.get_cache_stats(),
             }
 
-            self.logger.info("Incremental analysis completed in %.3f seconds", end_time - start_time)
+            self.logger.info(
+                "Incremental analysis completed in %.3f seconds", end_time - start_time
+            )
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Incremental analysis failed: {e}"
@@ -699,6 +725,7 @@ class IncrementalAnalysisManager:
                     if freq > 0:
                         prob = freq / data_len
                         import math
+
                         entropy -= prob * math.log2(prob)
             else:
                 entropy = 0.0
@@ -716,12 +743,15 @@ class IncrementalAnalysisManager:
         """String extraction analysis."""
         try:
             import re
+
             with open(binary_path, "rb") as f:
                 data = f.read(16384)  # Sample first 16KB
 
             # Extract printable strings (4+ characters)
             strings = re.findall(rb"[ -~]{4,}", data)
-            string_list = [s.decode("ascii", errors="ignore") for s in strings[:50]]  # Limit to 50 strings
+            string_list = [
+                s.decode("ascii", errors="ignore") for s in strings[:50]
+            ]  # Limit to 50 strings
 
             return {
                 "strings_count": len(string_list),
@@ -753,7 +783,11 @@ class IncrementalAnalysisManager:
             }
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error in incremental_manager: %s", e)
-            return {"file_type": "unknown", "analysis_type": "headers", "error": "Failed to read file"}
+            return {
+                "file_type": "unknown",
+                "analysis_type": "headers",
+                "error": "Failed to read file",
+            }
 
 
 def run_analysis_manager(app: Any) -> None:
@@ -784,18 +818,22 @@ def run_analysis_manager(app: Any) -> None:
     try:
         binary_size = os.path.getsize(app.binary_path)
         binary_name = os.path.basename(app.binary_path)
-        app.update_output.emit(f"[Incremental Analysis] Analyzing binary: {binary_name} ({binary_size/1024:.1f} KB)")
+        app.update_output.emit(
+            f"[Incremental Analysis] Analyzing binary: {binary_name} ({binary_size/1024:.1f} KB)"
+        )
     except OSError as e:
         logger.error("OS error in incremental_manager: %s", e)
         app.update_output.emit(f"[Incremental Analysis] Error accessing binary: {e}")
         return
 
     # Create and configure the manager
-    manager = IncrementalAnalysisManager({
-        "cache_dir": os.path.join(os.getcwd(), "analysis_cache"),
-        "enable_caching": True,
-        "cache_max_age": 30,
-    })
+    manager = IncrementalAnalysisManager(
+        {
+            "cache_dir": os.path.join(os.getcwd(), "analysis_cache"),
+            "enable_caching": True,
+            "cache_max_age": 30,
+        }
+    )
 
     # Set binary and track performance metrics
     analysis_phases = []
@@ -806,12 +844,15 @@ def run_analysis_manager(app: Any) -> None:
         app.update_output.emit("[Incremental Analysis] Binary found in cache")
 
         # Ask if user wants to use cached results
-        use_cache = QMessageBox.question(
-            app,
-            "Use Cached Results",
-            "Cached analysis results found for this binary. Do you want to use them?",
-            QMessageBox.Yes | QMessageBox.No,
-        ) == QMessageBox.Yes
+        use_cache = (
+            QMessageBox.question(
+                app,
+                "Use Cached Results",
+                "Cached analysis results found for this binary. Do you want to use them?",
+                QMessageBox.Yes | QMessageBox.No,
+            )
+            == QMessageBox.Yes
+        )
 
         if use_cache:
             # Get cached results
@@ -850,16 +891,20 @@ def run_analysis_manager(app: Any) -> None:
     elapsed_time = end_time - start_time
 
     # Add performance data to analysis_phases
-    analysis_phases.append({
-        "phase": "total",
-        "start_time": start_time,
-        "end_time": end_time,
-        "elapsed_time": elapsed_time,
-        "binary_size": binary_size,
-    })
+    analysis_phases.append(
+        {
+            "phase": "total",
+            "start_time": start_time,
+            "end_time": end_time,
+            "elapsed_time": elapsed_time,
+            "binary_size": binary_size,
+        }
+    )
 
     # Report performance metrics
-    app.update_output.emit(f"[Incremental Analysis] Analysis completed in {elapsed_time:.2f} seconds")
+    app.update_output.emit(
+        f"[Incremental Analysis] Analysis completed in {elapsed_time:.2f} seconds"
+    )
 
     # Save performance metrics for future optimization
     if not hasattr(app, "performance_metrics"):

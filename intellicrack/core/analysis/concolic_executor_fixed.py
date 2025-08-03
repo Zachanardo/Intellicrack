@@ -37,6 +37,7 @@ SYMBOLIC_ENGINE_NAME = None
 try:
     import angr
     import claripy
+
     SYMBOLIC_ENGINE = "angr"
     SYMBOLIC_ENGINE_NAME = "angr"
     ANGR_AVAILABLE = True
@@ -48,6 +49,7 @@ if not SYMBOLIC_ENGINE:
     try:
         from manticore.core.plugin import Plugin
         from manticore.native import Manticore
+
         SYMBOLIC_ENGINE = "manticore"
         SYMBOLIC_ENGINE_NAME = "manticore"
         MANTICORE_AVAILABLE = True
@@ -63,11 +65,13 @@ if not SYMBOLIC_ENGINE:
         import sys
 
         import intellicrack
+
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
         scripts_dir = os.path.join(base_dir, "intellicrack", "scripts")
         if os.path.exists(scripts_dir):
             sys.path.insert(0, scripts_dir)
         from simconcolic import BinaryAnalyzer as SimConcolic
+
         SYMBOLIC_ENGINE = "simconcolic"
         SYMBOLIC_ENGINE_NAME = "simconcolic"
         SIMCONCOLIC_AVAILABLE = True
@@ -109,11 +113,14 @@ class ConcolicExecutionEngine:
         """Legacy property for backward compatibility."""
         return self.symbolic_engine is not None
 
-    def explore_paths(self, target_address: int | None = None,
-                     avoid_addresses: list[int] | None = None) -> dict[str, Any]:
+    def explore_paths(
+        self, target_address: int | None = None, avoid_addresses: list[int] | None = None
+    ) -> dict[str, Any]:
         """Explore paths using the available symbolic execution engine."""
         if not self.symbolic_engine:
-            return {"error": "No symbolic execution engine available. Install angr (recommended) or manticore (Linux)."}
+            return {
+                "error": "No symbolic execution engine available. Install angr (recommended) or manticore (Linux)."
+            }
 
         if self.symbolic_engine == "angr":
             return self._explore_paths_angr(target_address, avoid_addresses)
@@ -164,10 +171,12 @@ class ConcolicExecutionEngine:
             for found_state in simgr.found:
                 if found_state.posix.stdin.load(0, found_state.posix.stdin.size):
                     stdin_data = found_state.posix.dumps(0)
-                    results["inputs"].append({
-                        "stdin": stdin_data.hex() if stdin_data else None,
-                        "constraints": len(found_state.solver.constraints),
-                    })
+                    results["inputs"].append(
+                        {
+                            "stdin": stdin_data.hex() if stdin_data else None,
+                            "constraints": len(found_state.solver.constraints),
+                        }
+                    )
 
             return results
 
@@ -279,22 +288,31 @@ class ConcolicExecutionEngine:
                         # Find cross-references to this string
                         xrefs = project.analyses.Xrefs(pattern, memory_only=True)
                         for xref in xrefs:
-                            string_refs.append({
-                                "pattern": pattern.decode("utf-8", errors="ignore"),
-                                "string_addr": addr,
-                                "ref_addr": xref.addr,
-                            })
+                            string_refs.append(
+                                {
+                                    "pattern": pattern.decode("utf-8", errors="ignore"),
+                                    "string_addr": addr,
+                                    "ref_addr": xref.addr,
+                                }
+                            )
                             license_addrs.append(xref.addr)
                 except Exception as e:
                     logger.debug(f"Failed to search for pattern {pattern}: {e}")
 
             for func in cfg.functions.values():
                 # Look for functions that might be license checks
-                if any(pattern in func.name.lower() for pattern in ["license", "register", "validate", "check"]):
+                if any(
+                    pattern in func.name.lower()
+                    for pattern in ["license", "register", "validate", "check"]
+                ):
                     license_addrs.append(func.addr)
 
             if not license_addrs:
-                return {"success": False, "bypass_found": False, "reason": "No license functions found"}
+                return {
+                    "success": False,
+                    "bypass_found": False,
+                    "reason": "No license functions found",
+                }
 
             # Try to find bypass
             state = project.factory.entry_state()

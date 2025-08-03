@@ -69,10 +69,7 @@ class ProtectionAnalyzerTool:
         """
         # Verify file exists
         if not os.path.exists(binary_path):
-            return {
-                "success": False,
-                "error": f"File not found: {binary_path}"
-            }
+            return {"success": False, "error": f"File not found: {binary_path}"}
 
         try:
             # Get protection analysis
@@ -86,25 +83,26 @@ class ProtectionAnalyzerTool:
                 "technical_details": self._get_technical_details(result) if detailed else None,
                 "bypass_guidance": self._get_bypass_guidance(result),
                 "tool_recommendations": self._get_tool_recommendations(result),
-                "llm_context": self._build_llm_context(result)
+                "llm_context": self._build_llm_context(result),
             }
 
             # Add AI-enhanced complex analysis
             try:
                 # Prepare ML results from protection detections
-                ml_results = {
-                    "confidence": 0.85,
-                    "predictions": []
-                }
+                ml_results = {"confidence": 0.85, "predictions": []}
 
                 # Convert protection detections to ML format
                 if result and hasattr(result, "detections"):
                     for detection in result.detections:
-                        ml_results["predictions"].append({
-                            "name": detection.name,
-                            "type": detection.type.value if hasattr(detection.type, "value") else str(detection.type),
-                            "confidence": detection.confidence
-                        })
+                        ml_results["predictions"].append(
+                            {
+                                "name": detection.name,
+                                "type": detection.type.value
+                                if hasattr(detection.type, "value")
+                                else str(detection.type),
+                                "confidence": detection.confidence,
+                            }
+                        )
 
                 # Run AI complex analysis
                 ai_analysis = self.ai_assistant.analyze_binary_complex(binary_path, ml_results)
@@ -119,18 +117,26 @@ class ProtectionAnalyzerTool:
                             analysis["bypass_guidance"] = {}
                         if "ai_enhanced" not in analysis["bypass_guidance"]:
                             analysis["bypass_guidance"]["ai_enhanced"] = []
-                        analysis["bypass_guidance"]["ai_enhanced"].extend(ai_analysis["recommendations"])
+                        analysis["bypass_guidance"]["ai_enhanced"].extend(
+                            ai_analysis["recommendations"]
+                        )
 
                 # Check if license-related protections were detected
                 has_license_protection = False
                 if result and hasattr(result, "detections"):
                     for detection in result.detections:
-                        if detection.type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
+                        if detection.type in [
+                            ProtectionType.LICENSE,
+                            ProtectionType.DONGLE,
+                            ProtectionType.DRM,
+                        ]:
                             has_license_protection = True
                             break
 
                 # Run license pattern analysis if relevant
-                if has_license_protection or (detailed and self._should_analyze_license_patterns(result)):
+                if has_license_protection or (
+                    detailed and self._should_analyze_license_patterns(result)
+                ):
                     license_analysis = self._analyze_license_patterns(binary_path, result)
                     if license_analysis and not license_analysis.get("error"):
                         analysis["license_pattern_analysis"] = license_analysis
@@ -141,14 +147,20 @@ class ProtectionAnalyzerTool:
                                 analysis["bypass_guidance"] = {}
                             if "license_patterns" not in analysis["bypass_guidance"]:
                                 analysis["bypass_guidance"]["license_patterns"] = []
-                            analysis["bypass_guidance"]["license_patterns"].extend(license_analysis["bypass_suggestions"])
+                            analysis["bypass_guidance"]["license_patterns"].extend(
+                                license_analysis["bypass_suggestions"]
+                            )
 
                     # Search for license files in the binary's directory
                     try:
                         binary_dir = os.path.dirname(os.path.abspath(binary_path))
-                        license_file_results = self.ai_file_tools.search_for_license_files(binary_dir)
+                        license_file_results = self.ai_file_tools.search_for_license_files(
+                            binary_dir
+                        )
 
-                        if license_file_results.get("status") == "success" and license_file_results.get("files_found"):
+                        if license_file_results.get(
+                            "status"
+                        ) == "success" and license_file_results.get("files_found"):
                             analysis["license_files_found"] = license_file_results
 
                             # Read up to 3 license files for analysis
@@ -159,7 +171,7 @@ class ProtectionAnalyzerTool:
                             if license_files_to_read:
                                 read_results = self.ai_file_tools.read_multiple_files(
                                     license_files_to_read,
-                                    f"Analyze license files for {os.path.basename(binary_path)}"
+                                    f"Analyze license files for {os.path.basename(binary_path)}",
                                 )
 
                                 if read_results.get("status") == "success":
@@ -183,10 +195,7 @@ class ProtectionAnalyzerTool:
 
         except Exception as e:
             logger.error(f"Error analyzing {binary_path}: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _get_file_info(self, binary_path: str) -> Dict[str, Any]:
         """Get basic file information"""
@@ -197,7 +206,7 @@ class ProtectionAnalyzerTool:
             "size": path.stat().st_size,
             "size_human": self._format_size(path.stat().st_size),
             "extension": path.suffix,
-            "directory": str(path.parent)
+            "directory": str(path.parent),
         }
 
     def _format_size(self, size: int) -> str:
@@ -217,11 +226,13 @@ class ProtectionAnalyzerTool:
             det_type = detection.type.value
             if det_type not in detections_by_type:
                 detections_by_type[det_type] = []
-            detections_by_type[det_type].append({
-                "name": detection.name,
-                "version": detection.version,
-                "confidence": detection.confidence
-            })
+            detections_by_type[det_type].append(
+                {
+                    "name": detection.name,
+                    "version": detection.version,
+                    "confidence": detection.confidence,
+                }
+            )
 
         analysis = {
             "file_type": die_result.file_type,
@@ -232,8 +243,14 @@ class ProtectionAnalyzerTool:
             "has_overlay": die_result.has_overlay,
             "detections": detections_by_type,
             "total_detections": len(die_result.detections),
-            "total_licensing_schemes": len([d for d in die_result.detections if d.type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]]),
-            "protection_summary": self._get_protection_summary(die_result)
+            "total_licensing_schemes": len(
+                [
+                    d
+                    for d in die_result.detections
+                    if d.type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]
+                ]
+            ),
+            "protection_summary": self._get_protection_summary(die_result),
         }
 
         return analysis
@@ -245,8 +262,13 @@ class ProtectionAnalyzerTool:
 
         protection_names = []
         for detection in die_result.detections:
-            if detection.type in [ProtectionType.PACKER, ProtectionType.PROTECTOR,
-                                  ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
+            if detection.type in [
+                ProtectionType.PACKER,
+                ProtectionType.PROTECTOR,
+                ProtectionType.LICENSE,
+                ProtectionType.DONGLE,
+                ProtectionType.DRM,
+            ]:
                 ver_str = f" v{detection.version}" if detection.version else ""
                 protection_names.append(f"{detection.name}{ver_str}")
 
@@ -287,13 +309,13 @@ class ProtectionAnalyzerTool:
                 "is_packed": die_result.is_packed,
                 "is_protected": die_result.is_protected,
                 "has_overlay": die_result.has_overlay,
-                "has_resources": die_result.has_resources
+                "has_resources": die_result.has_resources,
             },
             "sections": die_result.sections[:5] if die_result.sections else [],
             "imports_summary": {
                 "total_dlls": len(die_result.imports),
-                "sample_imports": die_result.imports[:10]
-            }
+                "sample_imports": die_result.imports[:10],
+            },
         }
 
         # Add protection-specific indicators
@@ -345,14 +367,18 @@ class ProtectionAnalyzerTool:
                 "approach": "No bypass needed",
                 "description": "The binary appears to be unprotected. Standard analysis techniques should work.",
                 "estimated_time": "N/A",
-                "difficulty_score": 0
+                "difficulty_score": 0,
             }
 
         # Find the most significant protection
         main_protection = None
         for detection in die_result.detections:
-            if detection.type in [ProtectionType.PROTECTOR, ProtectionType.LICENSE,
-                                  ProtectionType.DONGLE, ProtectionType.DRM]:
+            if detection.type in [
+                ProtectionType.PROTECTOR,
+                ProtectionType.LICENSE,
+                ProtectionType.DONGLE,
+                ProtectionType.DRM,
+            ]:
                 main_protection = detection
                 break
 
@@ -368,7 +394,7 @@ class ProtectionAnalyzerTool:
                 "approach": "Standard analysis",
                 "description": "No significant protections detected. Use standard RE tools.",
                 "estimated_time": "Minimal",
-                "difficulty_score": 1
+                "difficulty_score": 1,
             }
 
         # Get bypass recommendations from detection
@@ -376,7 +402,7 @@ class ProtectionAnalyzerTool:
             "approach": f"{main_protection.name} bypass required",
             "protection_type": main_protection.type.value,
             "estimated_time": self._estimate_bypass_time(main_protection.name),
-            "difficulty_score": self._difficulty_to_score(self._get_bypass_difficulty(die_result))
+            "difficulty_score": self._difficulty_to_score(self._get_bypass_difficulty(die_result)),
         }
 
         if main_protection.bypass_recommendations:
@@ -398,7 +424,7 @@ class ProtectionAnalyzerTool:
             "High": 7,
             "Very High": 9,
             "Extreme": 10,
-            "Unknown": 5
+            "Unknown": 5,
         }
         return scores.get(difficulty, 5)
 
@@ -426,23 +452,29 @@ class ProtectionAnalyzerTool:
         tips = []
 
         if detection.type == ProtectionType.PACKER:
-            tips.extend([
-                "Set breakpoint at OEP (Original Entry Point)",
-                "Monitor VirtualAlloc/VirtualProtect calls",
-                "Use process dumper after unpacking"
-            ])
+            tips.extend(
+                [
+                    "Set breakpoint at OEP (Original Entry Point)",
+                    "Monitor VirtualAlloc/VirtualProtect calls",
+                    "Use process dumper after unpacking",
+                ]
+            )
         elif detection.type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR]:
-            tips.extend([
-                "Use anti-anti-debug plugins",
-                "Monitor API hooks and redirections",
-                "Check for VM detection routines"
-            ])
+            tips.extend(
+                [
+                    "Use anti-anti-debug plugins",
+                    "Monitor API hooks and redirections",
+                    "Check for VM detection routines",
+                ]
+            )
         elif detection.type in [ProtectionType.LICENSE, ProtectionType.DONGLE]:
-            tips.extend([
-                "Monitor license validation APIs",
-                "Check registry/file access for license data",
-                "Use API hooking to bypass checks"
-            ])
+            tips.extend(
+                [
+                    "Monitor license validation APIs",
+                    "Check registry/file access for license data",
+                    "Use API hooking to bypass checks",
+                ]
+            )
 
         return tips[:5]
 
@@ -455,7 +487,7 @@ class ProtectionAnalyzerTool:
         basic_tools = [
             {"name": "x64dbg", "purpose": "Dynamic analysis"},
             {"name": "IDA Pro", "purpose": "Static analysis"},
-            {"name": "Ghidra", "purpose": "Free disassembler"}
+            {"name": "Ghidra", "purpose": "Free disassembler"},
         ]
 
         # Add protection-specific tools
@@ -496,7 +528,6 @@ class ProtectionAnalyzerTool:
 
         return all_tools[:8]  # Return top 8 tools
 
-
     def _build_llm_context(self, die_result: ProtectionAnalysis) -> Dict[str, Any]:
         """Build context specifically formatted for LLM consumption"""
         # Get protection summary
@@ -507,7 +538,7 @@ class ProtectionAnalyzerTool:
             "file_type": die_result.file_type,
             "architecture": die_result.architecture,
             "is_protected": die_result.is_protected or die_result.is_packed,
-            "key_characteristics": []
+            "key_characteristics": [],
         }
 
         # Add key characteristics
@@ -527,7 +558,7 @@ class ProtectionAnalyzerTool:
                 det_info = {
                     "name": detection.name,
                     "type": detection.type.value,
-                    "version": detection.version
+                    "version": detection.version,
                 }
                 if detection.bypass_recommendations:
                     det_info["primary_bypass"] = detection.bypass_recommendations[0]
@@ -536,8 +567,12 @@ class ProtectionAnalyzerTool:
             # Get main protection for guidance
             main_protection = None
             for detection in die_result.detections:
-                if detection.type in [ProtectionType.PROTECTOR, ProtectionType.LICENSE,
-                                      ProtectionType.DONGLE, ProtectionType.DRM]:
+                if detection.type in [
+                    ProtectionType.PROTECTOR,
+                    ProtectionType.LICENSE,
+                    ProtectionType.DONGLE,
+                    ProtectionType.DRM,
+                ]:
                     main_protection = detection.name
                     break
 
@@ -547,7 +582,9 @@ class ProtectionAnalyzerTool:
             else:
                 context["llm_guidance"] = "No significant protections. Focus on standard analysis."
         else:
-            context["llm_guidance"] = "Binary appears unprotected. Standard analysis techniques apply."
+            context["llm_guidance"] = (
+                "Binary appears unprotected. Standard analysis techniques apply."
+            )
 
         return context
 
@@ -561,11 +598,15 @@ class ProtectionAnalyzerTool:
         elif "flexlm" in name_lower or "flexnet" in name_lower:
             return "Network license manager. Look for license.dat parsing and server communication."
         elif "winlicense" in name_lower or "themida" in name_lower:
-            return "Heavy virtualization. Unpacking required before analysis. Check for SecureEngine."
+            return (
+                "Heavy virtualization. Unpacking required before analysis. Check for SecureEngine."
+            )
         elif "vmprotect" in name_lower:
             return "Code virtualization. Look for .vmp sections and VM handlers."
         elif "steam" in name_lower:
-            return "Steam wrapper. Use Steamless or similar for unwrapping. Monitor Steam API calls."
+            return (
+                "Steam wrapper. Use Steamless or similar for unwrapping. Monitor Steam API calls."
+            )
         elif "denuvo" in name_lower:
             return "Extreme protection with 100+ triggers. Professional challenge requiring months."
         elif "upx" in name_lower:
@@ -579,7 +620,15 @@ class ProtectionAnalyzerTool:
         """Determine if license pattern analysis would be beneficial"""
         # Check for license-related imports
         if hasattr(result, "imports"):
-            license_imports = ["license", "serial", "activation", "key", "hasp", "sentinel", "flexlm"]
+            license_imports = [
+                "license",
+                "serial",
+                "activation",
+                "key",
+                "hasp",
+                "sentinel",
+                "flexlm",
+            ]
             for import_dll in result.imports:
                 if any(keyword in import_dll.lower() for keyword in license_imports):
                     return True
@@ -592,7 +641,9 @@ class ProtectionAnalyzerTool:
 
         return False
 
-    def _analyze_license_patterns(self, binary_path: str, result: ProtectionAnalysis) -> Dict[str, Any]:
+    def _analyze_license_patterns(
+        self, binary_path: str, result: ProtectionAnalysis
+    ) -> Dict[str, Any]:
         """Analyze license patterns using AI assistant"""
         try:
             # Extract strings from binary if available
@@ -601,27 +652,37 @@ class ProtectionAnalyzerTool:
             # Prepare input for AI license pattern analysis
             input_data = {
                 "patterns": [],
-                "strings": strings_data.get("license_related_strings", [])[:50],  # Limit to 50 strings
-                "binary_path": binary_path
+                "strings": strings_data.get("license_related_strings", [])[
+                    :50
+                ],  # Limit to 50 strings
+                "binary_path": binary_path,
             }
 
             # Add detection patterns if available
             if hasattr(result, "detections"):
                 for detection in result.detections:
-                    if detection.type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
-                        input_data["patterns"].append({
-                            "name": detection.name,
-                            "type": detection.type.value,
-                            "version": detection.version,
-                            "confidence": detection.confidence
-                        })
+                    if detection.type in [
+                        ProtectionType.LICENSE,
+                        ProtectionType.DONGLE,
+                        ProtectionType.DRM,
+                    ]:
+                        input_data["patterns"].append(
+                            {
+                                "name": detection.name,
+                                "type": detection.type.value,
+                                "version": detection.version,
+                                "confidence": detection.confidence,
+                            }
+                        )
 
             # Call AI assistant's license pattern analysis
             license_analysis = self.ai_assistant.analyze_license_patterns(input_data)
 
             # Enhance with protection-specific insights
             if license_analysis and not license_analysis.get("error"):
-                license_analysis["protection_context"] = self._get_license_protection_context(result)
+                license_analysis["protection_context"] = self._get_license_protection_context(
+                    result
+                )
 
             return license_analysis
 
@@ -635,6 +696,7 @@ class ProtectionAnalyzerTool:
             # Try to use radare2 string analyzer if available
             try:
                 from ..core.analysis.radare2_strings import R2StringAnalyzer
+
                 analyzer = R2StringAnalyzer(binary_path)
                 string_results = analyzer.analyze_all_strings(min_length=6)
 
@@ -646,23 +708,35 @@ class ProtectionAnalyzerTool:
 
                 return {
                     "license_related_strings": license_strings[:100],  # Limit to 100
-                    "total_strings": string_results.get("total_strings", 0)
+                    "total_strings": string_results.get("total_strings", 0),
                 }
             except ImportError:
                 pass
 
             # Fallback to basic string extraction
             import subprocess
+
             try:
                 # Use strings command if available
-                result = subprocess.run(["strings", "-n", "6", binary_path],
-                                      capture_output=True, text=True, timeout=30)
+                result = subprocess.run(
+                    ["strings", "-n", "6", binary_path], capture_output=True, text=True, timeout=30
+                )
                 if result.returncode == 0:
                     all_strings = result.stdout.split("\n")
 
                     # Filter for license-related strings
-                    license_keywords = ["license", "serial", "key", "activation", "trial",
-                                      "expire", "register", "unlock", "demo", "evaluation"]
+                    license_keywords = [
+                        "license",
+                        "serial",
+                        "key",
+                        "activation",
+                        "trial",
+                        "expire",
+                        "register",
+                        "unlock",
+                        "demo",
+                        "evaluation",
+                    ]
                     license_strings = []
 
                     for string in all_strings:
@@ -673,24 +747,17 @@ class ProtectionAnalyzerTool:
 
                     return {
                         "license_related_strings": license_strings,
-                        "total_strings": len(all_strings)
+                        "total_strings": len(all_strings),
                     }
             except (subprocess.SubprocessError, FileNotFoundError):
                 pass
 
             # If all else fails, return empty
-            return {
-                "license_related_strings": [],
-                "total_strings": 0
-            }
+            return {"license_related_strings": [], "total_strings": 0}
 
         except Exception as e:
             logger.warning(f"String extraction failed: {e}")
-            return {
-                "license_related_strings": [],
-                "total_strings": 0,
-                "error": str(e)
-            }
+            return {"license_related_strings": [], "total_strings": 0, "error": str(e)}
 
     def _get_license_protection_context(self, result: ProtectionAnalysis) -> Dict[str, Any]:
         """Get additional context for license protection analysis"""
@@ -698,7 +765,7 @@ class ProtectionAnalyzerTool:
             "has_network_apis": False,
             "has_crypto_apis": False,
             "has_registry_apis": False,
-            "likely_license_files": []
+            "likely_license_files": [],
         }
 
         # Check imports for relevant APIs
@@ -717,8 +784,11 @@ class ProtectionAnalyzerTool:
 
         # Common license file patterns
         context["likely_license_files"] = [
-            "license.dat", "license.lic", "license.key",
-            "activation.dat", "registration.key"
+            "license.dat",
+            "license.lic",
+            "license.key",
+            "activation.dat",
+            "registration.key",
         ]
 
         return context
@@ -758,7 +828,9 @@ class ProtectionAnalyzerTool:
                 output.append(f"\n  {det_type.upper()}:")
                 for det in detections:
                     ver_str = f" v{det['version']}" if det.get("version") else ""
-                    conf_str = f" ({det['confidence']:.0f}%)" if det.get("confidence", 100) < 100 else ""
+                    conf_str = (
+                        f" ({det['confidence']:.0f}%)" if det.get("confidence", 100) < 100 else ""
+                    )
                     output.append(f"    - {det['name']}{ver_str}{conf_str}")
         else:
             output.append("\nNo protections detected")
@@ -808,18 +880,17 @@ def register_protection_analyzer_tool():
             "properties": {
                 "file_path": {
                     "type": "string",
-                    "description": "Path to the binary file to analyze"
+                    "description": "Path to the binary file to analyze",
                 },
                 "detailed": {
                     "type": "boolean",
                     "description": "Include detailed technical information",
-                    "default": True
-                }
+                    "default": True,
+                },
             },
-            "required": ["file_path"]
+            "required": ["file_path"],
         },
         "handler": lambda params: ProtectionAnalyzerTool().analyze(
-            params["file_path"],
-            params.get("detailed", True)
-        )
+            params["file_path"], params.get("detailed", True)
+        ),
     }

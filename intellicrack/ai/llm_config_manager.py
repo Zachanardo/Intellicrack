@@ -59,8 +59,7 @@ class LLMConfigManager:
     def _load_all_configs(self):
         """Load all configuration files."""
         self.configs = self._load_json_file(self.config_file, {})
-        self.profiles = self._load_json_file(
-            self.profiles_file, self._get_default_profiles())
+        self.profiles = self._load_json_file(self.profiles_file, self._get_default_profiles())
         self.metrics = self._load_json_file(self.metrics_file, {})
 
     def _load_json_file(self, file_path: Path, default: Any) -> Any:
@@ -98,8 +97,11 @@ class LLMConfigManager:
                     "presence_penalty": 0.0,
                 },
                 "recommended_models": [
-                    "gpt-4", "claude-3-5-sonnet-20241022", "codellama",
-                    "deepseek-coder", "starcoder",
+                    "gpt-4",
+                    "claude-3-5-sonnet-20241022",
+                    "codellama",
+                    "deepseek-coder",
+                    "starcoder",
                 ],
             },
             "analysis": {
@@ -113,7 +115,9 @@ class LLMConfigManager:
                     "presence_penalty": 0.0,
                 },
                 "recommended_models": [
-                    "gpt-4", "claude-3-opus-20240229", "llama2-70b",
+                    "gpt-4",
+                    "claude-3-opus-20240229",
+                    "llama2-70b",
                 ],
             },
             "creative": {
@@ -127,7 +131,9 @@ class LLMConfigManager:
                     "presence_penalty": 0.3,
                 },
                 "recommended_models": [
-                    "gpt-4", "claude-3-5-sonnet-20241022", "mixtral-8x7b",
+                    "gpt-4",
+                    "claude-3-5-sonnet-20241022",
+                    "mixtral-8x7b",
                 ],
             },
             "fast_inference": {
@@ -141,7 +147,9 @@ class LLMConfigManager:
                     "presence_penalty": 0.0,
                 },
                 "recommended_models": [
-                    "gpt-3.5-turbo", "claude-3-haiku-20240307", "mistral-7b",
+                    "gpt-3.5-turbo",
+                    "claude-3-haiku-20240307",
+                    "mistral-7b",
                 ],
             },
         }
@@ -264,8 +272,7 @@ class LLMConfigManager:
                             logger.info(f"Auto-loaded model: {model_id}")
                         else:
                             failed += 1
-                            logger.warning(
-                                f"Failed to register model: {model_id}")
+                            logger.warning(f"Failed to register model: {model_id}")
                     except Exception as e:
                         failed += 1
                         logger.error(f"Error loading model {model_id}: {e}")
@@ -379,8 +386,7 @@ class LLMConfigManager:
         # Calculate averages
         total_tokens = sum(m.get("tokens_generated", 0) for m in history)
         total_time = sum(m.get("generation_time", 0) for m in history)
-        total_memory = sum(m.get("memory_mb", 0)
-                           for m in history if m.get("memory_mb"))
+        total_memory = sum(m.get("memory_mb", 0) for m in history if m.get("memory_mb"))
 
         count = len(history)
         memory_count = sum(1 for m in history if m.get("memory_mb"))

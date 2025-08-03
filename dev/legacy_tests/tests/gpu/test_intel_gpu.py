@@ -24,7 +24,7 @@ print(f"XPU device count: {torch.xpu.device_count()}")
 
 if torch.xpu.is_available():
     print(f"XPU device name: {torch.xpu.get_device_name()}")
-    
+
     # Test tensor operation on GPU
     x = torch.randn(3, 3).to('xpu')
     y = torch.randn(3, 3).to('xpu')

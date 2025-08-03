@@ -16,14 +16,14 @@ class ImportTracer:
     def __init__(self):
         self.depth = 0
         self.imports = []
-        
+
     def find_spec(self, name, path, target=None):
         indent = "  " * self.depth
         print(f"{indent}→ Importing: {name}", flush=True)
         self.imports.append((self.depth, name))
         self.depth += 1
         return None
-        
+
     def find_module(self, name, path=None):
         return None
 
@@ -47,7 +47,7 @@ try:
     print("\n[TRACE] Successfully imported intellicrack.ui")
 except Exception as e:
     print(f"\n[TRACE] Failed at intellicrack.ui import: {e}")
-    
+
 print("\n[TRACE] Last 10 imports before failure/success:")
 for depth, name in tracer.imports[-10:]:
     print(f"  {'  ' * depth}{name}")

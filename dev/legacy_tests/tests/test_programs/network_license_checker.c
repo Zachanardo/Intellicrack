@@ -42,30 +42,30 @@ int validate_network_license(const char* license_key, const char* machine_id) {
         printf("Debug environment detected. Exiting.\n");
         exit(1);
     }
-    
+
     printf("Validating license with server...\n");
-    
+
     // Simulate network delay
     #ifdef _WIN32
     Sleep(2000);
     #else
     sleep(2);
     #endif
-    
+
     // Basic license format check
     if (!license_key || strlen(license_key) < 16) {
         printf("Invalid license format\n");
         return 0;
     }
-    
+
     // Simulate network request
     char request_url[512];
-    snprintf(request_url, sizeof(request_url), 
-             "%s?key=%s&machine=%s&version=1.0", 
+    snprintf(request_url, sizeof(request_url),
+             "%s?key=%s&machine=%s&version=1.0",
              LICENSE_SERVER, license_key, machine_id);
-    
+
     printf("Contacting: %s\n", request_url);
-    
+
     // Hardcoded validation logic (target for patching)
     // Check for specific "valid" license patterns
     if (strstr(license_key, "VALID-") == license_key) {
@@ -101,33 +101,33 @@ void get_machine_id(char* machine_id, size_t size) {
 int check_cached_license() {
     FILE* license_file;
     char cached_license[MAX_LICENSE_SIZE];
-    
+
 #ifdef _WIN32
     license_file = fopen("C:\\ProgramData\\AppLicense\\cached.lic", "r");
 #else
     license_file = fopen("/tmp/.app_license_cache", "r");
 #endif
-    
+
     if (!license_file) {
         printf("No cached license found\n");
         return 0;
     }
-    
+
     if (fgets(cached_license, sizeof(cached_license), license_file) != NULL) {
         // Simple XOR "encryption" with key 0x42
         for (int i = 0; cached_license[i]; i++) {
             cached_license[i] ^= 0x42;
         }
-        
+
         printf("Found cached license: %s\n", cached_license);
         fclose(license_file);
-        
+
         // Validate cached license
         if (strstr(cached_license, "CACHED-VALID")) {
             return 1;
         }
     }
-    
+
     fclose(license_file);
     return 0;
 }
@@ -136,21 +136,21 @@ int check_cached_license() {
 int main(int argc, char* argv[]) {
     printf("=== Network License Checker v2.1 ===\n");
     printf("Checking application license...\n\n");
-    
+
     char machine_id[128];
     char license_key[MAX_LICENSE_SIZE];
-    
+
     // Get machine identifier
     get_machine_id(machine_id, sizeof(machine_id));
     printf("Machine ID: %s\n", machine_id);
-    
+
     // Check for cached license first
     if (check_cached_license()) {
         printf("Using cached license validation\n");
         printf("Application startup: SUCCESS\n");
         return 0;
     }
-    
+
     // Get license from user or command line
     if (argc > 1) {
         strncpy(license_key, argv[1], sizeof(license_key) - 1);
@@ -162,10 +162,10 @@ int main(int argc, char* argv[]) {
             license_key[strcspn(license_key, "\n")] = '\0';
         }
     }
-    
+
     // Validate license with network server
     int validation_result = validate_network_license(license_key, machine_id);
-    
+
     switch (validation_result) {
         case 1:
             printf("\n✓ License validation successful!\n");
@@ -181,6 +181,6 @@ int main(int argc, char* argv[]) {
             printf("Please contact support or purchase a valid license.\n");
             return 1;
     }
-    
+
     return 0;
 }

@@ -38,8 +38,7 @@ PTRACE_DETACH = 17
 
 
 class DebuggerDetector(BaseDetector):
-    """Comprehensive debugger detection using multiple techniques.
-    """
+    """Comprehensive debugger detection using multiple techniques."""
 
     def __init__(self):
         """Initialize the debugger detector with platform-specific detection methods."""
@@ -75,9 +74,19 @@ class DebuggerDetector(BaseDetector):
         # Known debugger signatures
         self.debugger_signatures = {
             "windows": {
-                "processes": ["ollydbg.exe", "x64dbg.exe", "x32dbg.exe", "windbg.exe",
-                             "idaq.exe", "idaq64.exe", "ida.exe", "ida64.exe",
-                             "devenv.exe", "dbgview.exe", "processhacker.exe"],
+                "processes": [
+                    "ollydbg.exe",
+                    "x64dbg.exe",
+                    "x32dbg.exe",
+                    "windbg.exe",
+                    "idaq.exe",
+                    "idaq64.exe",
+                    "ida.exe",
+                    "ida64.exe",
+                    "devenv.exe",
+                    "dbgview.exe",
+                    "processhacker.exe",
+                ],
                 "window_classes": ["OLLYDBG", "WinDbgFrameClass", "ID", "Zeta Debugger"],
                 "window_titles": ["OllyDbg", "x64dbg", "WinDbg", "IDA", "Immunity Debugger"],
             },
@@ -123,7 +132,9 @@ class DebuggerDetector(BaseDetector):
             # Calculate anti-debug effectiveness score
             results["anti_debug_score"] = self._calculate_antidebug_score(results["detections"])
 
-            self.logger.info(f"Debugger detection complete: {results['is_debugged']} (confidence: {results['confidence']:.2f})")
+            self.logger.info(
+                f"Debugger detection complete: {results['is_debugged']} (confidence: {results['confidence']:.2f})"
+            )
             return results
 
         except Exception as e:
@@ -233,7 +244,6 @@ class DebuggerDetector(BaseDetector):
             self.logger.warning("Failed to get process heap handle")
             return True  # Assume debugger if heap access fails
 
-
         except Exception as e:
             self.logger.debug(f"Heap flags check failed: {e}")
 
@@ -253,8 +263,11 @@ class DebuggerDetector(BaseDetector):
 
             # NtQueryInformationProcess(handle, ProcessDebugPort, &debug_port, sizeof(debug_port), NULL)
             status = ntdll.NtQueryInformationProcess(
-                handle, 7, ctypes.byref(debug_port),
-                ctypes.sizeof(debug_port), None,
+                handle,
+                7,
+                ctypes.byref(debug_port),
+                ctypes.sizeof(debug_port),
+                None,
             )
 
             if status == 0 and debug_port.value != 0:
@@ -539,10 +552,12 @@ class DebuggerDetector(BaseDetector):
         kernel_debugger_methods = ["debug_port", "hardware_breakpoints"]
         user_debugger_methods = ["isdebuggerpresent", "checkremotedebuggerpresent"]
 
-        kernel_count = sum(1 for m in kernel_debugger_methods
-                          if m in detections and detections[m]["detected"])
-        user_count = sum(1 for m in user_debugger_methods
-                        if m in detections and detections[m]["detected"])
+        kernel_count = sum(
+            1 for m in kernel_debugger_methods if m in detections and detections[m]["detected"]
+        )
+        user_count = sum(
+            1 for m in user_debugger_methods if m in detections and detections[m]["detected"]
+        )
 
         if kernel_count > user_count:
             return "Kernel Debugger"

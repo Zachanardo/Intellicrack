@@ -14,20 +14,20 @@ def main():
     """Test offscreen mode."""
     try:
         print("Testing with offscreen platform...")
-        
+
         from PyQt6.QtWidgets import QApplication
         from PyQt6.QtCore import QCoreApplication
-        
+
         # Try headless mode
         QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseSoftwareOpenGL)
-        
+
         print("Creating QApplication...")
         app = QApplication(sys.argv + ['-platform', 'offscreen'])
         print("✓ QApplication created in offscreen mode!")
-        
+
         app.quit()
         return 0
-        
+
     except Exception as e:
         print(f"✗ Error: {e}")
         import traceback

@@ -18,11 +18,11 @@
 
 /**
  * Cloud License Server Bypass
- * 
+ *
  * Advanced cloud-based license server bypass for modern software protection.
  * Handles HTTP/HTTPS interception, OAuth token manipulation, JWT spoofing,
  * and cloud API response manipulation.
- * 
+ *
  * Author: Intellicrack Framework
  * Version: 2.0.0
  * License: GPL v3
@@ -32,7 +32,7 @@
     name: "Cloud License Server Bypass",
     description: "Comprehensive cloud-based license verification bypass",
     version: "2.0.0",
-    
+
     // Configuration for cloud license bypass
     config: {
         // HTTP/HTTPS interception
@@ -43,7 +43,7 @@
             blockLicenseChecks: true,
             spoofResponses: true
         },
-        
+
         // OAuth token manipulation
         oauth: {
             enabled: true,
@@ -57,7 +57,7 @@
                 'generic': 'valid_research_license_token_example'
             }
         },
-        
+
         // JWT token spoofing
         jwt: {
             enabled: true,
@@ -74,7 +74,7 @@
                 'tier': 'enterprise'
             }
         },
-        
+
         // License server endpoints
         licenseServers: [
             // Adobe
@@ -82,19 +82,19 @@
             'lcs-cops.adobe.io',
             'cc-api-cp.adobe.io',
             'prod.adobegenuine.com',
-            
+
             // Autodesk
             'registeronce.autodesk.com',
             'register.autodesk.com',
             'accounts.autodesk.com',
             'api.autodesk.com',
-            
+
             // Microsoft
             'login.microsoftonline.com',
             'login.live.com',
             'licensing.mp.microsoft.com',
             'activation.sls.microsoft.com',
-            
+
             // Generic patterns
             'license-server',
             'licensing',
@@ -103,7 +103,7 @@
             'validation',
             'verify'
         ],
-        
+
         // API response templates
         responseTemplates: {
             'license_valid': {
@@ -131,13 +131,13 @@
             }
         }
     },
-    
+
     // Hook tracking
     hooksInstalled: {},
     interceptedRequests: 0,
     blockedRequests: 0,
     spoofedResponses: 0,
-    
+
     onAttach: function(pid) {
         send({
             type: "status",
@@ -147,14 +147,14 @@
         });
         this.processId = pid;
     },
-    
+
     run: function() {
         send({
             type: "status",
             target: "cloud_licensing_bypass",
             action: "installing_hooks"
         });
-        
+
         // Initialize bypass components
         this.hookHttpRequests();
         this.hookHttpsRequests();
@@ -164,10 +164,10 @@
         this.hookNetworkConnections();
         this.hookCertificateValidation();
         this.hookDnsResolution();
-        
+
         this.installSummary();
     },
-    
+
     // === HTTP REQUEST HOOKS ===
     hookHttpRequests: function() {
         send({
@@ -175,27 +175,27 @@
             target: "cloud_licensing_bypass",
             action: "installing_http_hooks"
         });
-        
+
         // Hook WinHTTP functions
         this.hookWinHttpFunctions();
-        
+
         // Hook WinINet functions
         this.hookWinINetFunctions();
-        
+
         // Hook cURL functions
         this.hookCurlFunctions();
-        
+
         // Hook generic HTTP libraries
         this.hookGenericHttpLibraries();
     },
-    
+
     hookWinHttpFunctions: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_winhttp_hooks"
         });
-        
+
         // Hook WinHttpSendRequest
         var winHttpSendRequest = Module.findExportByName("winhttp.dll", "WinHttpSendRequest");
         if (winHttpSendRequest) {
@@ -207,10 +207,10 @@
                     this.lpOptional = args[3];
                     this.dwOptionalLength = args[4].toInt32();
                     this.dwTotalLength = args[5].toInt32();
-                    
+
                     // Get request details
                     this.requestDetails = this.getRequestDetails();
-                    
+
                     if (this.isLicenseRequest(this.requestDetails)) {
                         send({
                             type: "info",
@@ -219,7 +219,7 @@
                         });
                         this.isLicenseReq = true;
                         this.parent.parent.interceptedRequests++;
-                        
+
                         if (this.parent.parent.config.networkInterception.blockLicenseChecks) {
                             send({
                                 type: "bypass",
@@ -230,7 +230,7 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockRequest) {
                         // Block the request by returning failure
@@ -249,23 +249,23 @@
                         });
                     }
                 },
-                
+
                 getRequestDetails: function() {
                     try {
                         var details = {};
-                        
+
                         // Try to get URL from headers
                         if (this.lpszHeaders && !this.lpszHeaders.isNull() && this.dwHeadersLength > 0) {
                             var headers = this.lpszHeaders.readUtf16String(this.dwHeadersLength);
                             details.headers = headers;
-                            
+
                             // Extract Host header
                             var hostMatch = headers.match(/Host:\s*([^\r\n]+)/i);
                             if (hostMatch) {
                                 details.host = hostMatch[1].trim();
                             }
                         }
-                        
+
                         // Get request body if present
                         if (this.lpOptional && !this.lpOptional.isNull() && this.dwOptionalLength > 0) {
                             try {
@@ -277,35 +277,35 @@
                                 details.body = '[Binary: ' + bodyBytes.byteLength + ' bytes]';
                             }
                         }
-                        
+
                         return details;
                     } catch(e) {
                         return {};
                     }
                 },
-                
+
                 isLicenseRequest: function(details) {
                     var config = this.parent.parent.config;
-                    
+
                     if (details.host) {
-                        return config.licenseServers.some(server => 
+                        return config.licenseServers.some(server =>
                             details.host.toLowerCase().includes(server.toLowerCase())
                         );
                     }
-                    
+
                     if (details.body) {
                         var bodyLower = details.body.toLowerCase();
                         var licenseKeywords = ['license', 'activation', 'genuine', 'validate', 'verify', 'auth'];
                         return licenseKeywords.some(keyword => bodyLower.includes(keyword));
                     }
-                    
+
                     return false;
                 }
             });
-            
+
             this.hooksInstalled['WinHttpSendRequest'] = true;
         }
-        
+
         // Hook WinHttpReceiveResponse for response manipulation
         var winHttpReceiveResponse = Module.findExportByName("winhttp.dll", "WinHttpReceiveResponse");
         if (winHttpReceiveResponse) {
@@ -323,10 +323,10 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['WinHttpReceiveResponse'] = true;
         }
-        
+
         // Hook WinHttpReadData for response content manipulation
         var winHttpReadData = Module.findExportByName("winhttp.dll", "WinHttpReadData");
         if (winHttpReadData) {
@@ -337,33 +337,33 @@
                     this.dwNumberOfBytesToRead = args[2].toInt32();
                     this.lpdwNumberOfBytesRead = args[3];
                 },
-                
+
                 onLeave: function(retval) {
-                    if (retval.toInt32() !== 0 && this.lpBuffer && !this.lpBuffer.isNull() && 
+                    if (retval.toInt32() !== 0 && this.lpBuffer && !this.lpBuffer.isNull() &&
                         this.lpdwNumberOfBytesRead && !this.lpdwNumberOfBytesRead.isNull()) {
-                        
+
                         var bytesRead = this.lpdwNumberOfBytesRead.readU32();
                         if (bytesRead > 0) {
                             this.spoofResponseData(bytesRead);
                         }
                     }
                 },
-                
+
                 spoofResponseData: function(bytesRead) {
                     try {
                         var config = this.parent.parent.config;
                         if (!config.networkInterception.spoofResponses) return;
-                        
+
                         var responseData = this.lpBuffer.readUtf8String(bytesRead);
                         var shouldSpoof = this.shouldSpoofResponse(responseData);
-                        
+
                         if (shouldSpoof) {
                             var spoofedResponse = this.generateSpoofedResponse(responseData);
                             if (spoofedResponse && spoofedResponse.length <= this.dwNumberOfBytesToRead) {
                                 // Write spoofed response
                                 this.lpBuffer.writeUtf8String(spoofedResponse);
                                 this.lpdwNumberOfBytesRead.writeU32(spoofedResponse.length);
-                                
+
                                 this.parent.parent.spoofedResponses++;
                                 send({
                                     type: "bypass",
@@ -382,26 +382,26 @@
                         });
                     }
                 },
-                
+
                 shouldSpoofResponse: function(responseData) {
                     if (!responseData) return false;
-                    
+
                     var lowerResponse = responseData.toLowerCase();
                     var licenseIndicators = [
                         'license', 'activation', 'genuine', 'unauthorized', 'invalid',
                         'expired', 'trial', 'demo', 'subscription', 'payment'
                     ];
-                    
+
                     return licenseIndicators.some(indicator => lowerResponse.includes(indicator));
                 },
-                
+
                 generateSpoofedResponse: function(originalResponse) {
                     var config = this.parent.parent.config;
-                    
+
                     try {
                         // Try to parse as JSON first
                         var jsonResponse = JSON.parse(originalResponse);
-                        
+
                         // Apply license validation spoofing
                         if (jsonResponse.hasOwnProperty('valid')) jsonResponse.valid = true;
                         if (jsonResponse.hasOwnProperty('licensed')) jsonResponse.licensed = true;
@@ -414,25 +414,25 @@
                         }
                         if (jsonResponse.hasOwnProperty('error')) delete jsonResponse.error;
                         if (jsonResponse.hasOwnProperty('errors')) delete jsonResponse.errors;
-                        
+
                         // Add positive license information
                         jsonResponse.license_type = jsonResponse.license_type || 'premium';
                         jsonResponse.expires = jsonResponse.expires || '2030-12-31T23:59:59Z';
                         jsonResponse.features = jsonResponse.features || ['all'];
-                        
+
                         return JSON.stringify(jsonResponse);
-                        
+
                     } catch(e) {
                         // Not JSON, try XML
                         if (originalResponse.includes('<?xml')) {
                             return this.spoofXmlResponse(originalResponse);
                         }
-                        
+
                         // Plain text response
                         return this.spoofTextResponse(originalResponse);
                     }
                 },
-                
+
                 spoofXmlResponse: function(xmlResponse) {
                     // Basic XML spoofing
                     var spoofed = xmlResponse;
@@ -443,7 +443,7 @@
                     spoofed = spoofed.replace(/(<error[^>]*>)[^<]*(</error>)/gi, '');
                     return spoofed;
                 },
-                
+
                 spoofTextResponse: function(textResponse) {
                     var spoofed = textResponse;
                     spoofed = spoofed.replace(/invalid/gi, 'valid');
@@ -455,18 +455,18 @@
                     return spoofed;
                 }
             });
-            
+
             this.hooksInstalled['WinHttpReadData'] = true;
         }
     },
-    
+
     hookWinINetFunctions: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_wininet_hooks"
         });
-        
+
         // Hook HttpSendRequest
         var httpSendRequest = Module.findExportByName("wininet.dll", "HttpSendRequestW");
         if (httpSendRequest) {
@@ -477,7 +477,7 @@
                     this.dwHeadersLength = args[2].toInt32();
                     this.lpOptional = args[3];
                     this.dwOptionalLength = args[4].toInt32();
-                    
+
                     if (this.lpszHeaders && !this.lpszHeaders.isNull()) {
                         try {
                             var headers = this.lpszHeaders.readUtf16String();
@@ -495,21 +495,21 @@
                         }
                     }
                 },
-                
+
                 isLicenseRequestByHeaders: function(headers) {
                     var config = this.parent.parent.config;
                     var headersLower = headers.toLowerCase();
-                    
+
                     // Check for license server hosts
-                    return config.licenseServers.some(server => 
+                    return config.licenseServers.some(server =>
                         headersLower.includes(server.toLowerCase())
                     );
                 }
             });
-            
+
             this.hooksInstalled['HttpSendRequestW'] = true;
         }
-        
+
         // Hook InternetReadFile for response manipulation
         var internetReadFile = Module.findExportByName("wininet.dll", "InternetReadFile");
         if (internetReadFile) {
@@ -520,30 +520,30 @@
                     this.dwNumberOfBytesToRead = args[2].toInt32();
                     this.lpdwNumberOfBytesRead = args[3];
                 },
-                
+
                 onLeave: function(retval) {
-                    if (retval.toInt32() !== 0 && this.lpBuffer && !this.lpBuffer.isNull() && 
+                    if (retval.toInt32() !== 0 && this.lpBuffer && !this.lpBuffer.isNull() &&
                         this.lpdwNumberOfBytesRead && !this.lpdwNumberOfBytesRead.isNull()) {
-                        
+
                         var bytesRead = this.lpdwNumberOfBytesRead.readU32();
                         if (bytesRead > 0) {
                             this.spoofWinINetResponse(bytesRead);
                         }
                     }
                 },
-                
+
                 spoofWinINetResponse: function(bytesRead) {
                     try {
                         var config = this.parent.parent.config;
                         if (!config.networkInterception.spoofResponses) return;
-                        
+
                         var responseData = this.lpBuffer.readUtf8String(bytesRead);
                         if (this.shouldSpoofWinINetResponse(responseData)) {
                             var spoofedResponse = this.generateWinINetSpoofedResponse(responseData);
                             if (spoofedResponse && spoofedResponse.length <= this.dwNumberOfBytesToRead) {
                                 this.lpBuffer.writeUtf8String(spoofedResponse);
                                 this.lpdwNumberOfBytesRead.writeU32(spoofedResponse.length);
-                                
+
                                 this.parent.parent.spoofedResponses++;
                                 send({
                                     type: "bypass",
@@ -561,24 +561,24 @@
                         });
                     }
                 },
-                
+
                 shouldSpoofWinINetResponse: function(responseData) {
                     if (!responseData) return false;
                     var lowerResponse = responseData.toLowerCase();
-                    return lowerResponse.includes('license') || lowerResponse.includes('activation') || 
+                    return lowerResponse.includes('license') || lowerResponse.includes('activation') ||
                            lowerResponse.includes('genuine') || lowerResponse.includes('valid');
                 },
-                
+
                 generateWinINetSpoofedResponse: function(originalResponse) {
                     var config = this.parent.parent.config;
-                    
+
                     // Use the same spoofing logic as WinHTTP
                     try {
                         var jsonResponse = JSON.parse(originalResponse);
-                        
+
                         // Apply positive license spoofing
                         Object.assign(jsonResponse, config.responseTemplates.license_valid);
-                        
+
                         return JSON.stringify(jsonResponse);
                     } catch(e) {
                         // Fallback to template response
@@ -586,18 +586,18 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['InternetReadFile'] = true;
         }
     },
-    
+
     hookCurlFunctions: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_curl_hooks"
         });
-        
+
         // Hook curl_easy_setopt for URL monitoring
         var curlSetopt = Module.findExportByName(null, "curl_easy_setopt");
         if (curlSetopt) {
@@ -606,7 +606,7 @@
                     this.curl = args[0];
                     this.option = args[1].toInt32();
                     this.parameter = args[2];
-                    
+
                     // CURLOPT_URL = 10002
                     if (this.option === 10002 && this.parameter && !this.parameter.isNull()) {
                         try {
@@ -625,20 +625,20 @@
                         }
                     }
                 },
-                
+
                 isLicenseUrl: function(url) {
                     var config = this.parent.parent.config;
                     var urlLower = url.toLowerCase();
-                    
-                    return config.licenseServers.some(server => 
+
+                    return config.licenseServers.some(server =>
                         urlLower.includes(server.toLowerCase())
                     );
                 }
             });
-            
+
             this.hooksInstalled['curl_easy_setopt'] = true;
         }
-        
+
         // Hook curl_easy_perform
         var curlPerform = Module.findExportByName(null, "curl_easy_perform");
         if (curlPerform) {
@@ -656,30 +656,30 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['curl_easy_perform'] = true;
         }
     },
-    
+
     hookGenericHttpLibraries: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_generic_http_hooks"
         });
-        
+
         // Hook common HTTP functions across modules
         var modules = Process.enumerateModules();
-        
+
         for (var i = 0; i < modules.length; i++) {
             var module = modules[i];
-            
+
             // Skip system modules
-            if (module.name.toLowerCase().includes('ntdll') || 
+            if (module.name.toLowerCase().includes('ntdll') ||
                 module.name.toLowerCase().includes('kernel32')) {
                 continue;
             }
-            
+
             try {
                 // Look for HTTP-related functions
                 var httpFunctions = [
@@ -690,19 +690,19 @@
                     'sendRequest', 'SendRequest',
                     'makeRequest', 'MakeRequest'
                 ];
-                
+
                 for (var j = 0; j < httpFunctions.length; j++) {
                     var funcName = httpFunctions[j];
                     this.hookGenericHttpFunction(module.name, funcName);
                 }
-                
+
             } catch(e) {
                 // Module scanning failed
                 continue;
             }
         }
     },
-    
+
     hookGenericHttpFunction: function(moduleName, functionName) {
         try {
             var httpFunc = Module.findExportByName(moduleName, functionName);
@@ -719,7 +719,7 @@
                         this.parent.parent.parent.interceptedRequests++;
                     }
                 });
-                
+
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
                 send({
                     type: "info",
@@ -733,7 +733,7 @@
             // Function not found or hook failed
         }
     },
-    
+
     // === HTTPS REQUEST HOOKS ===
     hookHttpsRequests: function() {
         send({
@@ -741,7 +741,7 @@
             target: "cloud_licensing_bypass",
             action: "installing_https_hooks"
         });
-        
+
         if (!this.config.networkInterception.interceptHttps) {
             send({
                 type: "info",
@@ -750,24 +750,24 @@
             });
             return;
         }
-        
+
         // Hook SSL/TLS functions
         this.hookSslFunctions();
-        
+
         // Hook certificate validation
         this.hookCertificateValidation();
-        
+
         // Hook secure channel functions
         this.hookSecureChannelFunctions();
     },
-    
+
     hookSslFunctions: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_ssl_hooks"
         });
-        
+
         // Hook SSL_write for outgoing HTTPS data
         var sslWrite = Module.findExportByName(null, "SSL_write");
         if (sslWrite) {
@@ -776,7 +776,7 @@
                     this.ssl = args[0];
                     this.buf = args[1];
                     this.num = args[2].toInt32();
-                    
+
                     if (this.buf && !this.buf.isNull() && this.num > 0) {
                         try {
                             var data = this.buf.readUtf8String(Math.min(this.num, 1024));
@@ -793,27 +793,27 @@
                         }
                     }
                 },
-                
+
                 isLicenseHttpsData: function(data) {
                     var config = this.parent.parent.config;
                     var dataLower = data.toLowerCase();
-                    
+
                     // Check for HTTP headers with license servers
                     if (dataLower.includes('host:')) {
-                        return config.licenseServers.some(server => 
+                        return config.licenseServers.some(server =>
                             dataLower.includes(server.toLowerCase())
                         );
                     }
-                    
+
                     // Check for license-related content
                     var licenseKeywords = ['license', 'activation', 'genuine', 'validate'];
                     return licenseKeywords.some(keyword => dataLower.includes(keyword));
                 }
             });
-            
+
             this.hooksInstalled['SSL_write'] = true;
         }
-        
+
         // Hook SSL_read for incoming HTTPS data
         var sslRead = Module.findExportByName(null, "SSL_read");
         if (sslRead) {
@@ -824,12 +824,12 @@
                         this.spoofSslResponse(bytesRead);
                     }
                 },
-                
+
                 spoofSslResponse: function(bytesRead) {
                     try {
                         var config = this.parent.parent.config;
                         if (!config.networkInterception.spoofResponses) return;
-                        
+
                         var responseData = this.buf.readUtf8String(bytesRead);
                         if (this.shouldSpoofSslResponse(responseData)) {
                             var spoofedResponse = this.generateSslSpoofedResponse(responseData);
@@ -852,21 +852,21 @@
                         });
                     }
                 },
-                
+
                 shouldSpoofSslResponse: function(responseData) {
                     var licenseIndicators = ['license', 'activation', 'genuine', 'valid', 'authorized'];
                     var dataLower = responseData.toLowerCase();
                     return licenseIndicators.some(indicator => dataLower.includes(indicator));
                 },
-                
+
                 generateSslSpoofedResponse: function(originalResponse) {
                     var config = this.parent.parent.config;
-                    
+
                     // Check if it's an HTTP response
                     if (originalResponse.startsWith('HTTP/')) {
                         return this.spoofHttpResponse(originalResponse);
                     }
-                    
+
                     // Try JSON
                     try {
                         var jsonResponse = JSON.parse(originalResponse);
@@ -877,26 +877,26 @@
                         return JSON.stringify(config.responseTemplates.license_valid);
                     }
                 },
-                
+
                 spoofHttpResponse: function(httpResponse) {
                     var lines = httpResponse.split('\r\n');
                     var headerEndIndex = lines.findIndex(line => line === '');
-                    
+
                     if (headerEndIndex !== -1) {
                         // Extract body
                         var body = lines.slice(headerEndIndex + 1).join('\r\n');
-                        
+
                         if (body) {
                             try {
                                 var jsonBody = JSON.parse(body);
                                 var config = this.parent.parent.config;
                                 Object.assign(jsonBody, config.responseTemplates.license_valid);
-                                
+
                                 // Rebuild HTTP response
                                 var newBody = JSON.stringify(jsonBody);
                                 lines[0] = 'HTTP/1.1 200 OK'; // Success status
                                 lines[headerEndIndex + 1] = newBody;
-                                
+
                                 return lines.join('\r\n');
                             } catch(e) {
                                 // Not JSON body
@@ -904,22 +904,22 @@
                             }
                         }
                     }
-                    
+
                     return httpResponse;
                 }
             });
-            
+
             this.hooksInstalled['SSL_read'] = true;
         }
     },
-    
+
     hookSecureChannelFunctions: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_schannel_hooks"
         });
-        
+
         // Hook EncryptMessage
         var encryptMessage = Module.findExportByName("secur32.dll", "EncryptMessage");
         if (encryptMessage) {
@@ -932,10 +932,10 @@
                     });
                 }
             });
-            
+
             this.hooksInstalled['EncryptMessage'] = true;
         }
-        
+
         // Hook DecryptMessage
         var decryptMessage = Module.findExportByName("secur32.dll", "DecryptMessage");
         if (decryptMessage) {
@@ -950,11 +950,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['DecryptMessage'] = true;
         }
     },
-    
+
     // === OAUTH TOKEN HOOKS ===
     hookOAuthTokens: function() {
         send({
@@ -962,7 +962,7 @@
             target: "cloud_licensing_bypass",
             action: "installing_oauth_hooks"
         });
-        
+
         if (!this.config.oauth.enabled) {
             send({
                 type: "info",
@@ -971,30 +971,30 @@
             });
             return;
         }
-        
+
         // Hook token generation functions
         this.hookTokenGeneration();
-        
+
         // Hook token validation functions
         this.hookTokenValidation();
-        
+
         // Hook authorization header manipulation
         this.hookAuthorizationHeaders();
     },
-    
+
     hookTokenGeneration: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_token_generation_hooks"
         });
-        
+
         // Hook common token generation patterns
         var modules = Process.enumerateModules();
-        
+
         for (var i = 0; i < modules.length; i++) {
             var module = modules[i];
-            
+
             try {
                 // Look for token-related functions
                 var tokenFunctions = [
@@ -1003,18 +1003,18 @@
                     'tokenRequest', 'TokenRequest', 'authToken', 'AuthToken',
                     'oauthToken', 'OAuthToken', 'bearerToken', 'BearerToken'
                 ];
-                
+
                 for (var j = 0; j < tokenFunctions.length; j++) {
                     var funcName = tokenFunctions[j];
                     this.hookTokenFunction(module.name, funcName);
                 }
-                
+
             } catch(e) {
                 continue;
             }
         }
     },
-    
+
     hookTokenFunction: function(moduleName, functionName) {
         try {
             var tokenFunc = Module.findExportByName(moduleName, functionName);
@@ -1026,18 +1026,18 @@
                             this.spoofTokenResult(retval);
                         }
                     },
-                    
+
                     spoofTokenResult: function(tokenPtr) {
                         try {
                             var config = this.parent.parent.parent.config;
-                            
+
                             // Try to read the token
                             var token = tokenPtr.readUtf8String();
                             if (token && this.looksLikeToken(token)) {
                                 // Replace with valid token
                                 var spoofedToken = config.oauth.customTokens.generic;
                                 tokenPtr.writeUtf8String(spoofedToken);
-                                
+
                                 send({
                                     type: "bypass",
                                     target: "cloud_licensing_bypass",
@@ -1049,29 +1049,29 @@
                             // Token spoofing failed
                         }
                     },
-                    
+
                     looksLikeToken: function(str) {
                         // Basic token pattern detection
-                        return str.length > 10 && 
-                               (str.includes('Bearer') || str.includes('OAuth') || 
+                        return str.length > 10 &&
+                               (str.includes('Bearer') || str.includes('OAuth') ||
                                 str.includes('eyJ') || str.match(/^[A-Za-z0-9+/=]{20,}$/));
                     }
                 });
-                
+
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch(e) {
             // Function not found
         }
     },
-    
+
     hookTokenValidation: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_token_validation_hooks"
         });
-        
+
         // Hook string comparison functions for token validation
         var strcmp = Module.findExportByName("msvcrt.dll", "strcmp");
         if (strcmp) {
@@ -1080,7 +1080,7 @@
                     try {
                         var str1 = args[0].readAnsiString();
                         var str2 = args[1].readAnsiString();
-                        
+
                         if (this.isTokenComparison(str1, str2)) {
                             send({
                                 type: "info",
@@ -1093,7 +1093,7 @@
                         // String read failed
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.spoofTokenComparison) {
                         // Make comparison succeed
@@ -1105,34 +1105,34 @@
                         });
                     }
                 },
-                
+
                 isTokenComparison: function(str1, str2) {
                     var config = this.parent.parent.config;
-                    
+
                     // Check if either string looks like a token
                     var tokenPatterns = config.oauth.tokenTypes;
-                    
-                    return tokenPatterns.some(pattern => 
+
+                    return tokenPatterns.some(pattern =>
                         (str1 && str1.includes(pattern)) || (str2 && str2.includes(pattern))
                     ) || this.looksLikeJWT(str1) || this.looksLikeJWT(str2);
                 },
-                
+
                 looksLikeJWT: function(str) {
                     return str && str.length > 20 && str.startsWith('eyJ') && str.includes('.');
                 }
             });
-            
+
             this.hooksInstalled['strcmp_token'] = true;
         }
     },
-    
+
     hookAuthorizationHeaders: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_authorization_header_hooks"
         });
-        
+
         // This integrates with the HTTP hooks above
         // Authorization headers are typically handled in the HTTP request hooks
         send({
@@ -1141,7 +1141,7 @@
             action: "authorization_header_manipulation_integrated"
         });
     },
-    
+
     // === JWT TOKEN HOOKS ===
     hookJwtTokens: function() {
         send({
@@ -1149,7 +1149,7 @@
             target: "cloud_licensing_bypass",
             action: "installing_jwt_token_hooks"
         });
-        
+
         if (!this.config.jwt.enabled) {
             send({
                 type: "info",
@@ -1158,24 +1158,24 @@
             });
             return;
         }
-        
+
         // Hook JWT libraries
         this.hookJwtLibraries();
-        
+
         // Hook base64 decoding (used in JWT)
         this.hookBase64Functions();
-        
+
         // Hook JSON parsing (for JWT payloads)
         this.hookJsonParsing();
     },
-    
+
     hookJwtLibraries: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_jwt_library_hooks"
         });
-        
+
         // Hook common JWT function names
         var jwtFunctions = [
             'jwt_decode', 'jwtDecode', 'JWT_decode',
@@ -1183,19 +1183,19 @@
             'jwt_parse', 'jwtParse', 'JWT_parse',
             'verifyJWT', 'VerifyJWT', 'parseJWT', 'ParseJWT'
         ];
-        
+
         var modules = Process.enumerateModules();
-        
+
         for (var i = 0; i < modules.length; i++) {
             var module = modules[i];
-            
+
             for (var j = 0; j < jwtFunctions.length; j++) {
                 var funcName = jwtFunctions[j];
                 this.hookJwtFunction(module.name, funcName);
             }
         }
     },
-    
+
     hookJwtFunction: function(moduleName, functionName) {
         try {
             var jwtFunc = Module.findExportByName(moduleName, functionName);
@@ -1214,39 +1214,39 @@
                         }
                     }
                 });
-                
+
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch(e) {
             // Function not found
         }
     },
-    
+
     hookBase64Functions: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_base64_function_hooks"
         });
-        
+
         // Hook base64 decode functions (used by JWT)
         var base64Functions = [
             'base64_decode', 'Base64Decode', 'b64decode',
             'atob', 'decodeBase64', 'DecodeBase64'
         ];
-        
+
         var modules = Process.enumerateModules();
-        
+
         for (var i = 0; i < modules.length; i++) {
             var module = modules[i];
-            
+
             for (var j = 0; j < base64Functions.length; j++) {
                 var funcName = base64Functions[j];
                 this.hookBase64Function(module.name, funcName);
             }
         }
     },
-    
+
     hookBase64Function: function(moduleName, functionName) {
         try {
             var b64Func = Module.findExportByName(moduleName, functionName);
@@ -1268,27 +1268,27 @@
                             // Input not readable
                         }
                     },
-                    
+
                     onLeave: function(retval) {
                         if (this.isJwtDecode && retval && !retval.isNull()) {
                             this.spoofJwtPayload(retval);
                         }
                     },
-                    
+
                     spoofJwtPayload: function(payloadPtr) {
                         try {
                             var config = this.parent.parent.parent.config;
                             var payload = payloadPtr.readUtf8String();
-                            
+
                             if (payload && payload.startsWith('{')) {
                                 var jwtPayload = JSON.parse(payload);
-                                
+
                                 // Apply custom JWT claims
                                 Object.assign(jwtPayload, config.jwt.customClaims);
-                                
+
                                 var spoofedPayload = JSON.stringify(jwtPayload);
                                 payloadPtr.writeUtf8String(spoofedPayload);
-                                
+
                                 send({
                                     type: "bypass",
                                     target: "cloud_licensing_bypass",
@@ -1305,24 +1305,24 @@
                         }
                     }
                 });
-                
+
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch(e) {
             // Function not found
         }
     },
-    
+
     hookJsonParsing: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_json_parsing_hooks_for_jwt"
         });
-        
+
         // Hook JSON parsing functions
         var jsonFunctions = ['json_parse', 'JSON.parse', 'parseJSON', 'ParseJSON'];
-        
+
         // This is complex to hook at the JavaScript level
         // Instead, we'll focus on the HTTP response spoofing which handles most JWT cases
         send({
@@ -1331,7 +1331,7 @@
             action: "json_parsing_hooks_integrated_with_http_spoofing"
         });
     },
-    
+
     // === LICENSE API HOOKS ===
     hookLicenseAPIs: function() {
         send({
@@ -1339,38 +1339,38 @@
             target: "cloud_licensing_bypass",
             action: "installing_license_api_hooks"
         });
-        
+
         // Hook common license API patterns
         this.hookLicenseValidationAPIs();
         this.hookActivationAPIs();
         this.hookSubscriptionAPIs();
     },
-    
+
     hookLicenseValidationAPIs: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_license_validation_api_hooks"
         });
-        
+
         var validationFunctions = [
             'validateLicense', 'ValidateLicense', 'checkLicense', 'CheckLicense',
             'verifyLicense', 'VerifyLicense', 'licensCheck', 'LicenseCheck',
             'isValidLicense', 'IsValidLicense', 'licenseValid', 'LicenseValid'
         ];
-        
+
         var modules = Process.enumerateModules();
-        
+
         for (var i = 0; i < modules.length; i++) {
             var module = modules[i];
-            
+
             for (var j = 0; j < validationFunctions.length; j++) {
                 var funcName = validationFunctions[j];
                 this.hookValidationFunction(module.name, funcName);
             }
         }
     },
-    
+
     hookValidationFunction: function(moduleName, functionName) {
         try {
             var validationFunc = Module.findExportByName(moduleName, functionName);
@@ -1387,39 +1387,39 @@
                         });
                     }
                 });
-                
+
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch(e) {
             // Function not found
         }
     },
-    
+
     hookActivationAPIs: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_activation_api_hooks"
         });
-        
+
         var activationFunctions = [
             'activate', 'Activate', 'activateLicense', 'ActivateLicense',
             'activateProduct', 'ActivateProduct', 'doActivation', 'DoActivation',
             'performActivation', 'PerformActivation'
         ];
-        
+
         var modules = Process.enumerateModules();
-        
+
         for (var i = 0; i < modules.length; i++) {
             var module = modules[i];
-            
+
             for (var j = 0; j < activationFunctions.length; j++) {
                 var funcName = activationFunctions[j];
                 this.hookActivationFunction(module.name, funcName);
             }
         }
     },
-    
+
     hookActivationFunction: function(moduleName, functionName) {
         try {
             var activationFunc = Module.findExportByName(moduleName, functionName);
@@ -1436,39 +1436,39 @@
                         });
                     }
                 });
-                
+
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch(e) {
             // Function not found
         }
     },
-    
+
     hookSubscriptionAPIs: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_subscription_api_hooks"
         });
-        
+
         var subscriptionFunctions = [
             'checkSubscription', 'CheckSubscription', 'verifySubscription', 'VerifySubscription',
             'isSubscribed', 'IsSubscribed', 'hasSubscription', 'HasSubscription',
             'subscriptionValid', 'SubscriptionValid', 'subscriptionActive', 'SubscriptionActive'
         ];
-        
+
         var modules = Process.enumerateModules();
-        
+
         for (var i = 0; i < modules.length; i++) {
             var module = modules[i];
-            
+
             for (var j = 0; j < subscriptionFunctions.length; j++) {
                 var funcName = subscriptionFunctions[j];
                 this.hookSubscriptionFunction(module.name, funcName);
             }
         }
     },
-    
+
     hookSubscriptionFunction: function(moduleName, functionName) {
         try {
             var subscriptionFunc = Module.findExportByName(moduleName, functionName);
@@ -1485,14 +1485,14 @@
                         });
                     }
                 });
-                
+
                 this.hooksInstalled[functionName + '_' + moduleName] = true;
             }
         } catch(e) {
             // Function not found
         }
     },
-    
+
     // === NETWORK CONNECTION HOOKS ===
     hookNetworkConnections: function() {
         send({
@@ -1500,24 +1500,24 @@
             target: "cloud_licensing_bypass",
             action: "installing_network_connection_hooks"
         });
-        
+
         // Hook socket creation and connection
         this.hookSocketFunctions();
-        
+
         // Hook getaddrinfo for DNS resolution
         this.hookDnsResolution();
-        
+
         // Hook connect functions
         this.hookConnectFunctions();
     },
-    
+
     hookSocketFunctions: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_socket_function_hooks"
         });
-        
+
         // Hook socket creation
         var socket = Module.findExportByName("ws2_32.dll", "socket");
         if (socket) {
@@ -1533,10 +1533,10 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['socket'] = true;
         }
-        
+
         // Hook WSASocket
         var wsaSocket = Module.findExportByName("ws2_32.dll", "WSASocketW");
         if (wsaSocket) {
@@ -1552,18 +1552,18 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['WSASocketW'] = true;
         }
     },
-    
+
     hookConnectFunctions: function() {
         send({
             type: "info",
             target: "cloud_licensing_bypass",
             action: "installing_connect_function_hooks"
         });
-        
+
         // Hook connect
         var connect = Module.findExportByName("ws2_32.dll", "connect");
         if (connect) {
@@ -1572,10 +1572,10 @@
                     this.socket = args[0].toInt32();
                     this.addr = args[1];
                     this.addrlen = args[2].toInt32();
-                    
+
                     if (this.addr && !this.addr.isNull()) {
                         this.connectionInfo = this.parseSocketAddress();
-                        
+
                         if (this.isLicenseServerConnection(this.connectionInfo)) {
                             send({
                                 type: "info",
@@ -1586,7 +1586,7 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockConnection) {
                         // Block connection by returning error
@@ -1599,55 +1599,55 @@
                         this.parent.parent.blockedRequests++;
                     }
                 },
-                
+
                 parseSocketAddress: function() {
                     try {
                         var family = this.addr.readU16();
-                        
+
                         if (family === 2) { // AF_INET
                             var port = (this.addr.add(2).readU8() << 8) | this.addr.add(3).readU8();
                             var ip = this.addr.add(4).readU32();
-                            
-                            var ipStr = ((ip & 0xFF)) + "." + 
-                                       ((ip >> 8) & 0xFF) + "." + 
-                                       ((ip >> 16) & 0xFF) + "." + 
+
+                            var ipStr = ((ip & 0xFF)) + "." +
+                                       ((ip >> 8) & 0xFF) + "." +
+                                       ((ip >> 16) & 0xFF) + "." +
                                        ((ip >> 24) & 0xFF);
-                            
+
                             return {
                                 family: 'IPv4',
                                 ip: ipStr,
                                 port: port
                             };
                         }
-                        
+
                         return null;
                     } catch(e) {
                         return null;
                     }
                 },
-                
+
                 isLicenseServerConnection: function(connInfo) {
                     if (!connInfo) return false;
-                    
+
                     var config = this.parent.parent.config;
-                    
+
                     // Check for common license server ports
                     var licensePorts = [80, 443, 8080, 8443, 9443];
                     if (!licensePorts.includes(connInfo.port)) {
                         return false;
                     }
-                    
+
                     // This is a basic check - in practice, we'd need DNS resolution to map IPs to hostnames
                     // For now, we'll block based on the HTTP/HTTPS content analysis
-                    
+
                     return false; // Let HTTP hooks handle the filtering
                 }
             });
-            
+
             this.hooksInstalled['connect'] = true;
         }
     },
-    
+
     // === DNS RESOLUTION HOOKS ===
     hookDnsResolution: function() {
         send({
@@ -1655,7 +1655,7 @@
             target: "cloud_licensing_bypass",
             action: "installing_dns_resolution_hooks"
         });
-        
+
         // Hook getaddrinfo
         var getaddrinfo = Module.findExportByName("ws2_32.dll", "getaddrinfo");
         if (getaddrinfo) {
@@ -1665,7 +1665,7 @@
                     this.servname = args[1];
                     this.hints = args[2];
                     this.res = args[3];
-                    
+
                     if (this.nodename && !this.nodename.isNull()) {
                         try {
                             this.hostname = this.nodename.readAnsiString();
@@ -1683,7 +1683,7 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockDnsLookup) {
                         // Block DNS lookup by returning error
@@ -1697,20 +1697,20 @@
                         });
                     }
                 },
-                
+
                 isLicenseServerHostname: function(hostname) {
                     var config = this.parent.parent.config;
                     var hostnameLower = hostname.toLowerCase();
-                    
-                    return config.licenseServers.some(server => 
+
+                    return config.licenseServers.some(server =>
                         hostnameLower.includes(server.toLowerCase())
                     );
                 }
             });
-            
+
             this.hooksInstalled['getaddrinfo'] = true;
         }
-        
+
         // Hook gethostbyname (legacy)
         var gethostbyname = Module.findExportByName("ws2_32.dll", "gethostbyname");
         if (gethostbyname) {
@@ -1733,7 +1733,7 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockLegacyDns) {
                         retval.replace(ptr(0)); // NULL
@@ -1744,21 +1744,21 @@
                         });
                     }
                 },
-                
+
                 isLicenseServerHostname: function(hostname) {
                     var config = this.parent.parent.config;
                     var hostnameLower = hostname.toLowerCase();
-                    
-                    return config.licenseServers.some(server => 
+
+                    return config.licenseServers.some(server =>
                         hostnameLower.includes(server.toLowerCase())
                     );
                 }
             });
-            
+
             this.hooksInstalled['gethostbyname'] = true;
         }
     },
-    
+
     // === CERTIFICATE VALIDATION HOOKS ===
     hookCertificateValidation: function() {
         send({
@@ -1766,7 +1766,7 @@
             target: "cloud_licensing_bypass",
             action: "installing_certificate_validation_hooks"
         });
-        
+
         // Hook certificate verification functions
         var certVerifyChain = Module.findExportByName("crypt32.dll", "CertVerifyCertificateChainPolicy");
         if (certVerifyChain) {
@@ -1776,14 +1776,14 @@
                     this.pChainContext = args[1];
                     this.pPolicyPara = args[2];
                     this.pPolicyStatus = args[3];
-                    
+
                     send({
                         type: "info",
                         target: "cloud_licensing_bypass",
                         action: "certificate_chain_verification_called"
                     });
                 },
-                
+
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0 && this.pPolicyStatus && !this.pPolicyStatus.isNull()) {
                         // Force certificate validation to succeed
@@ -1797,10 +1797,10 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['CertVerifyCertificateChainPolicy'] = true;
         }
-        
+
         // Hook CertGetCertificateChain
         var certGetChain = Module.findExportByName("crypt32.dll", "CertGetCertificateChain");
         if (certGetChain) {
@@ -1815,11 +1815,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['CertGetCertificateChain'] = true;
         }
     },
-    
+
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
@@ -1828,7 +1828,7 @@
                 target: "cloud_licensing_bypass",
                 action: "installation_summary_header"
             });
-            
+
             var categories = {
                 "HTTP/HTTPS Interception": 0,
                 "OAuth Token Manipulation": 0,
@@ -1838,7 +1838,7 @@
                 "DNS Resolution Blocking": 0,
                 "Certificate Validation": 0
             };
-            
+
             for (var hook in this.hooksInstalled) {
                 if (hook.includes('Http') || hook.includes('SSL') || hook.includes('curl') || hook.includes('Schannel')) {
                     categories["HTTP/HTTPS Interception"]++;
@@ -1857,33 +1857,33 @@
                     categories["Certificate Validation"]++;
                 }
             }
-            
+
             for (var category in categories) {
                 if (categories[category] > 0) {
                     send({type: 'summary', target: 'cloud_license', action: 'hook_category_count', data: {category: category, count: categories[category], message: '✓ ' + category + ': ' + categories[category] + ' hooks'}});
                 }
             }
-            
+
             send({type: 'summary', target: 'cloud_license', action: 'separator', data: {message: '========================================'}});
             send({type: 'summary', target: 'cloud_license', action: 'active_configuration_header', data: {message: 'Active Configuration:'}});
-            
+
             var config = this.config;
             if (config.networkInterception.enabled) {
                 send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'HTTP/HTTPS Interception', status: 'enabled', message: '✓ HTTP/HTTPS Interception'}});
                 send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'License Request Blocking', status: config.networkInterception.blockLicenseChecks, message: '✓ License Request Blocking: ' + config.networkInterception.blockLicenseChecks}});
                 send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'Response Spoofing', status: config.networkInterception.spoofResponses, message: '✓ Response Spoofing: ' + config.networkInterception.spoofResponses}});
             }
-            
+
             if (config.oauth.enabled) {
                 send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'OAuth Token Manipulation', status: 'enabled', message: '✓ OAuth Token Manipulation'}});
                 send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'Supported Token Types', token_types: config.oauth.tokenTypes, message: '✓ Supported Token Types: ' + config.oauth.tokenTypes.join(', ')}});
             }
-            
+
             if (config.jwt.enabled) {
                 send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'JWT Token Spoofing', status: 'enabled', message: '✓ JWT Token Spoofing'}});
                 send({type: 'summary', target: 'cloud_license', action: 'config_item', data: {feature: 'Supported Algorithms', algorithms: config.jwt.algorithms, message: '✓ Supported Algorithms: ' + config.jwt.algorithms.join(', ')}});
             }
-            
+
             send({type: 'summary', target: 'cloud_license', action: 'separator', data: {message: '========================================'}});
             send({type: 'summary', target: 'cloud_license', action: 'runtime_statistics_header', data: {message: 'Runtime Statistics:'}});
             send({type: 'summary', target: 'cloud_license', action: 'runtime_stat', data: {stat: 'Intercepted Requests', value: this.interceptedRequests, message: '• Intercepted Requests: ' + this.interceptedRequests}});

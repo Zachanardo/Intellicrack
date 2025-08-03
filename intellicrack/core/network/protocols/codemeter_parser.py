@@ -30,6 +30,7 @@ from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 @dataclass
 class CodeMeterRequest:
     """CodeMeter request structure"""
@@ -45,6 +46,7 @@ class CodeMeterRequest:
     challenge_data: bytes
     additional_data: dict[str, Any]
 
+
 @dataclass
 class CodeMeterResponse:
     """CodeMeter response structure"""
@@ -57,6 +59,7 @@ class CodeMeterResponse:
     response_data: bytes
     container_info: dict[str, Any]
     expiry_data: dict[str, Any]
+
 
 class CodeMeterProtocolParser:
     """Real CodeMeter protocol parser and response generator"""
@@ -210,7 +213,7 @@ class CodeMeterProtocolParser:
             offset = 0
 
             # Check CodeMeter magic signature
-            magic = struct.unpack("<I", data[offset:offset+4])[0]
+            magic = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
             if magic not in [0x434D4554, 0x57495553, 0x434D5354]:  # "CMET", "WIUS", "CMST"
@@ -218,58 +221,58 @@ class CodeMeterProtocolParser:
                 return None
 
             # Parse header
-            command = struct.unpack("<I", data[offset:offset+4])[0]
+            command = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
-            request_id = struct.unpack("<I", data[offset:offset+4])[0]
+            request_id = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
-            firm_code = struct.unpack("<I", data[offset:offset+4])[0]
+            firm_code = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
-            product_code = struct.unpack("<I", data[offset:offset+4])[0]
+            product_code = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
-            feature_map = struct.unpack("<I", data[offset:offset+4])[0]
+            feature_map = struct.unpack("<I", data[offset : offset + 4])[0]
             offset += 4
 
             # Parse version string
-            version_length = struct.unpack("<H", data[offset:offset+2])[0]
+            version_length = struct.unpack("<H", data[offset : offset + 2])[0]
             offset += 2
 
             if offset + version_length > len(data):
                 return None
 
-            version = data[offset:offset+version_length].decode("utf-8", errors="ignore")
+            version = data[offset : offset + version_length].decode("utf-8", errors="ignore")
             offset += version_length
 
             # Parse client ID
-            client_id_length = struct.unpack("<H", data[offset:offset+2])[0]
+            client_id_length = struct.unpack("<H", data[offset : offset + 2])[0]
             offset += 2
 
             if offset + client_id_length > len(data):
                 return None
 
-            client_id = data[offset:offset+client_id_length].decode("utf-8", errors="ignore")
+            client_id = data[offset : offset + client_id_length].decode("utf-8", errors="ignore")
             offset += client_id_length
 
             # Parse session context (JSON-like structure)
-            context_length = struct.unpack("<H", data[offset:offset+2])[0]
+            context_length = struct.unpack("<H", data[offset : offset + 2])[0]
             offset += 2
 
             session_context = {}
             if context_length > 0 and offset + context_length <= len(data):
-                context_data = data[offset:offset+context_length]
+                context_data = data[offset : offset + context_length]
                 session_context = self._parse_session_context(context_data)
                 offset += context_length
 
             # Parse challenge data
-            challenge_length = struct.unpack("<H", data[offset:offset+2])[0]
+            challenge_length = struct.unpack("<H", data[offset : offset + 2])[0]
             offset += 2
 
             challenge_data = b""
             if challenge_length > 0 and offset + challenge_length <= len(data):
-                challenge_data = data[offset:offset+challenge_length]
+                challenge_data = data[offset : offset + challenge_length]
                 offset += challenge_length
 
             # Parse additional data
@@ -291,7 +294,9 @@ class CodeMeterProtocolParser:
             )
 
             command_name = self.CODEMETER_COMMANDS.get(command, f"UNKNOWN_{command:04X}")
-            self.logger.info(f"Parsed CodeMeter {command_name} request for product {firm_code}:{product_code}")
+            self.logger.info(
+                f"Parsed CodeMeter {command_name} request for product {firm_code}:{product_code}"
+            )
             return request
 
         except Exception as e:
@@ -304,22 +309,22 @@ class CodeMeterProtocolParser:
         try:
             offset = 0
             while offset < len(data) - 4:
-                key_length = struct.unpack("<H", data[offset:offset+2])[0]
+                key_length = struct.unpack("<H", data[offset : offset + 2])[0]
                 offset += 2
 
                 if offset + key_length > len(data):
                     break
 
-                key = data[offset:offset+key_length].decode("utf-8", errors="ignore")
+                key = data[offset : offset + key_length].decode("utf-8", errors="ignore")
                 offset += key_length
 
-                value_length = struct.unpack("<H", data[offset:offset+2])[0]
+                value_length = struct.unpack("<H", data[offset : offset + 2])[0]
                 offset += 2
 
                 if offset + value_length > len(data):
                     break
 
-                value = data[offset:offset+value_length].decode("utf-8", errors="ignore")
+                value = data[offset : offset + value_length].decode("utf-8", errors="ignore")
                 offset += value_length
 
                 context[key] = value
@@ -335,14 +340,14 @@ class CodeMeterProtocolParser:
         try:
             offset = 0
             while offset < len(data) - 4:
-                field_type = struct.unpack("<H", data[offset:offset+2])[0]
-                field_length = struct.unpack("<H", data[offset+2:offset+4])[0]
+                field_type = struct.unpack("<H", data[offset : offset + 2])[0]
+                field_length = struct.unpack("<H", data[offset + 2 : offset + 4])[0]
                 offset += 4
 
                 if offset + field_length > len(data):
                     break
 
-                field_data = data[offset:offset+field_length]
+                field_data = data[offset : offset + field_length]
                 offset += field_length
 
                 if field_type == 0x0001:  # Hostname
@@ -481,9 +486,9 @@ class CodeMeterProtocolParser:
         """Handle challenge-response authentication"""
         # Generate response to challenge
         challenge_response = hashlib.sha256(
-            request.challenge_data +
-            str(request.firm_code).encode() +
-            str(request.product_code).encode(),
+            request.challenge_data
+            + str(request.firm_code).encode()
+            + str(request.product_code).encode(),
         ).digest()
 
         return CodeMeterResponse(
@@ -558,8 +563,7 @@ class CodeMeterProtocolParser:
         """Handle digital signature request"""
         # Generate signature hash
         signature = hashlib.sha256(
-            request.challenge_data +
-            struct.pack("<II", request.firm_code, request.product_code),
+            request.challenge_data + struct.pack("<II", request.firm_code, request.product_code),
         ).digest()
 
         return CodeMeterResponse(
@@ -666,13 +670,15 @@ class CodeMeterProtocolParser:
         products_list = []
         for (firm_code, product_code), product in self.products.items():
             if firm_code == request.firm_code or request.firm_code == 0:
-                products_list.append({
-                    "firm_code": firm_code,
-                    "product_code": product_code,
-                    "name": product["name"],
-                    "features": product["features"],
-                    "max_users": product["max_users"],
-                })
+                products_list.append(
+                    {
+                        "firm_code": firm_code,
+                        "product_code": product_code,
+                        "name": product["name"],
+                        "features": product["features"],
+                        "max_users": product["max_users"],
+                    }
+                )
 
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK

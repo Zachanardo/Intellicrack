@@ -166,15 +166,17 @@ def analyze_entropy_sections(data: bytes, block_size: int = 256) -> dict:
 
     # Analyze blocks
     for i in range(0, len(data), block_size):
-        block = data[i:i + block_size]
+        block = data[i : i + block_size]
         if len(block) > 0:
             block_entropy = calculate_entropy(block)
-            sections.append({
-                "offset": i,
-                "size": len(block),
-                "entropy": block_entropy,
-                "is_high_entropy": is_high_entropy(block),
-            })
+            sections.append(
+                {
+                    "offset": i,
+                    "size": len(block),
+                    "entropy": block_entropy,
+                    "is_high_entropy": is_high_entropy(block),
+                }
+            )
 
     # Calculate statistics
     if sections:

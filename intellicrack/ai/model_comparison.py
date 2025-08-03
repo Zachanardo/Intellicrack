@@ -197,8 +197,11 @@ class ModelComparison:
 
             inference_time = time.time() - start_time
             output = response.content
-            tokens_generated = response.usage.get(
-                "completion_tokens", 0) if response.usage else len(output.split())
+            tokens_generated = (
+                response.usage.get("completion_tokens", 0)
+                if response.usage
+                else len(output.split())
+            )
 
             # End performance tracking
             perf_metrics = self.performance_monitor.end_inference(
@@ -218,8 +221,7 @@ class ModelComparison:
 
         except Exception as e:
             logger.error(f"Failed to generate output from {model_id}: {e}")
-            self.performance_monitor.end_inference(
-                perf_context, tokens_generated=0, error=str(e))
+            self.performance_monitor.end_inference(perf_context, tokens_generated=0, error=str(e))
             return None
 
     def _average_results(
@@ -276,23 +278,21 @@ class ModelComparison:
 
         analysis["performance"]["fastest_model"] = results[fastest_idx].model_id
         analysis["performance"]["slowest_model"] = results[slowest_idx].model_id
-        analysis["performance"]["speed_difference"] = inference_times[slowest_idx] / \
-            inference_times[fastest_idx]
-        analysis["performance"]["avg_tokens_per_second"] = np.mean(
-            tokens_per_second)
+        analysis["performance"]["speed_difference"] = (
+            inference_times[slowest_idx] / inference_times[fastest_idx]
+        )
+        analysis["performance"]["avg_tokens_per_second"] = np.mean(tokens_per_second)
         analysis["performance"]["avg_memory_usage_mb"] = np.mean(memory_usage)
 
         # Efficiency ranking
         efficiency_scores = []
         for result in results:
             # Balance speed and memory usage
-            efficiency = result.tokens_per_second / \
-                (result.memory_used_mb / 100)
+            efficiency = result.tokens_per_second / (result.memory_used_mb / 100)
             efficiency_scores.append((result.model_id, efficiency))
 
         efficiency_scores.sort(key=lambda x: x[1], reverse=True)
-        analysis["performance"]["efficiency_ranking"] = [m[0]
-                                                         for m in efficiency_scores]
+        analysis["performance"]["efficiency_ranking"] = [m[0] for m in efficiency_scores]
 
         # Output consistency (simple keyword analysis)
         all_outputs = [r.output.lower() for r in results]
@@ -301,8 +301,9 @@ class ModelComparison:
             common_words &= set(output.split())
 
         analysis["consistency"]["common_words"] = len(common_words)
-        analysis["consistency"]["avg_word_overlap"] = len(
-            common_words) / np.mean([len(o.split()) for o in all_outputs])
+        analysis["consistency"]["avg_word_overlap"] = len(common_words) / np.mean(
+            [len(o.split()) for o in all_outputs]
+        )
 
         return analysis
 
@@ -328,11 +329,11 @@ class ModelComparison:
                 for j, other_result in enumerate(results):
                     if i != j:
                         result.similarity_scores[other_result.model_id] = float(
-                            similarity_matrix[i][j])
+                            similarity_matrix[i][j]
+                        )
 
         except ImportError:
-            logger.warning(
-                "scikit-learn not available for similarity calculation")
+            logger.warning("scikit-learn not available for similarity calculation")
 
     def _create_visualizations(
         self,
@@ -366,8 +367,7 @@ class ModelComparison:
 
             plt.tight_layout()
 
-            perf_chart_path = self.save_dir / \
-                f"{comparison_id}_performance.png"
+            perf_chart_path = self.save_dir / f"{comparison_id}_performance.png"
             fig.savefig(perf_chart_path)
             plt.close(fig)
 
@@ -412,8 +412,7 @@ class ModelComparison:
                 ax.set_xticklabels(model_ids)
                 ax.set_yticklabels(model_ids)
 
-                plt.setp(ax.get_xticklabels(), rotation=45,
-                         ha="right", rotation_mode="anchor")
+                plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
 
                 # Add colorbar
                 cbar = plt.colorbar(im, ax=ax)
@@ -423,8 +422,7 @@ class ModelComparison:
 
                 plt.tight_layout()
 
-                sim_chart_path = self.save_dir / \
-                    f"{comparison_id}_similarity.png"
+                sim_chart_path = self.save_dir / f"{comparison_id}_similarity.png"
                 plt.savefig(sim_chart_path)
                 plt.close()
 
@@ -456,8 +454,7 @@ class ModelComparison:
         # Get performance metrics from monitor
         perf_summaries = {}
         for model_id in model_ids:
-            perf_summaries[model_id] = self.performance_monitor.get_metrics_summary(
-                model_id)
+            perf_summaries[model_id] = self.performance_monitor.get_metrics_summary(model_id)
 
         # Combine results
         benchmark_results = {
@@ -473,7 +470,8 @@ class ModelComparison:
             benchmark_results["models"][model_id] = {
                 "test_performance": {
                     "success_rate": model_stats.get("success", 0) / model_stats.get("total", 1),
-                    "validation_rate": model_stats.get("validation_passed", 0) / model_stats.get("success", 1),
+                    "validation_rate": model_stats.get("validation_passed", 0)
+                    / model_stats.get("success", 1),
                     "avg_inference_time": model_stats.get("avg_inference_time", 0),
                     "avg_tokens_per_second": model_stats.get("avg_tokens_per_second", 0),
                 },
@@ -497,11 +495,11 @@ class ModelComparison:
             values = []
             for model_id in model_ids:
                 if metric in ["success_rate", "avg_tokens_per_second"]:
-                    value = benchmark_results["models"][model_id]["test_performance"].get(
-                        metric, 0)
+                    value = benchmark_results["models"][model_id]["test_performance"].get(metric, 0)
                 else:
                     value = benchmark_results["models"][model_id]["resource_usage"].get(
-                        metric, float("inf"))
+                        metric, float("inf")
+                    )
                 values.append((model_id, value))
 
             values.sort(key=lambda x: x[1], reverse=higher_better)
@@ -582,6 +580,7 @@ class ModelComparison:
         for name, path in report.visualizations.items():
             if path.exists():
                 import base64
+
                 with open(path, "rb") as f:
                     img_data = base64.b64encode(f.read()).decode()
                     embedded_images[name] = f"data:image/png;base64,{img_data}"

@@ -53,7 +53,10 @@ class BaseSnapshotHandler(ABC):
         from ...utils.system.snapshot_common import start_snapshot_comparison
 
         success, snapshot_data, error_msg = start_snapshot_comparison(
-            self.snapshots, snapshot1, snapshot2, self.logger,
+            self.snapshots,
+            snapshot1,
+            snapshot2,
+            self.logger,
         )
 
         if not success:
@@ -83,7 +86,9 @@ class BaseSnapshotHandler(ABC):
             return {"error": f"Comparison failed: {e!s}"}
 
     @abstractmethod
-    def _perform_platform_specific_comparison(self, s1: dict[str, Any], s2: dict[str, Any]) -> dict[str, Any]:
+    def _perform_platform_specific_comparison(
+        self, s1: dict[str, Any], s2: dict[str, Any]
+    ) -> dict[str, Any]:
         """Perform platform-specific snapshot comparison logic.
 
         Args:
@@ -98,6 +103,7 @@ class BaseSnapshotHandler(ABC):
     def _get_current_timestamp(self) -> float:
         """Get current timestamp for comparison metadata."""
         import time
+
         return time.time()
 
     def list_snapshots(self) -> list:

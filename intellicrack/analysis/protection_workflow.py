@@ -73,6 +73,7 @@ except ImportError:
         """
         return logging.getLogger(name)
 
+
 logger = get_logger(__name__)
 
 
@@ -100,8 +101,7 @@ class WorkflowResult:
 
 
 class ProtectionAnalysisWorkflow:
-    """Manages the complete protection analysis workflow
-    """
+    """Manages the complete protection analysis workflow"""
 
     def __init__(self):
         """Initialize workflow manager"""
@@ -113,14 +113,19 @@ class ProtectionAnalysisWorkflow:
         # Supplemental analysis engines
         self.yara_engine = get_yara_engine() if get_yara_engine else None
         self.firmware_analyzer = get_firmware_analyzer() if get_firmware_analyzer else None
-        self.memory_forensics = get_memory_forensics_engine() if get_memory_forensics_engine else None
+        self.memory_forensics = (
+            get_memory_forensics_engine() if get_memory_forensics_engine else None
+        )
 
         # Workflow callbacks
         self.progress_callback: Callable[[str, int], None] | None = None
 
-    def analyze_and_bypass(self, file_path: str,
-                           auto_generate_scripts: bool = True,
-                           target_protections: list[str] | None = None) -> WorkflowResult:
+    def analyze_and_bypass(
+        self,
+        file_path: str,
+        auto_generate_scripts: bool = True,
+        target_protections: list[str] | None = None,
+    ) -> WorkflowResult:
         """Complete workflow: analyze protections and generate bypass scripts
 
         Args:
@@ -142,13 +147,16 @@ class ProtectionAnalysisWorkflow:
             if not quick_summary["protected"]:
                 result.success = True
                 result.recommendations = [
-                    "No protections detected. The binary appears to be unprotected."]
+                    "No protections detected. The binary appears to be unprotected."
+                ]
                 result.confidence = 100.0
                 return result
 
             # Step 2: Deep analysis
             self._report_progress(
-                f"Found {quick_summary['protection_count']} protections, performing deep analysis...", 30)
+                f"Found {quick_summary['protection_count']} protections, performing deep analysis...",
+                30,
+            )
             analysis = self.engine.analyze(file_path, deep_scan=True)
             result.protection_analysis = analysis
 
@@ -166,8 +174,7 @@ class ProtectionAnalysisWorkflow:
             # Step 4: Generate bypass scripts if requested
             if auto_generate_scripts and analysis.protections:
                 self._report_progress("Generating bypass scripts...", 75)
-                scripts = self._generate_bypass_scripts(
-                    analysis, target_protections)
+                scripts = self._generate_bypass_scripts(analysis, target_protections)
                 result.bypass_scripts = scripts
 
             # Step 5: Generate next steps
@@ -211,7 +218,9 @@ class ProtectionAnalysisWorkflow:
                         "scan_time": yara_result.scan_time,
                         "supplemental_data": yara_supplemental,
                     }
-                    logger.debug(f"YARA analysis complete: {len(yara_result.matches)} matches found")
+                    logger.debug(
+                        f"YARA analysis complete: {len(yara_result.matches)} matches found"
+                    )
                 else:
                     logger.warning(f"YARA analysis failed: {yara_result.error}")
 
@@ -229,7 +238,9 @@ class ProtectionAnalysisWorkflow:
                     extraction_depth=1,
                 )
                 if not firmware_result.error:
-                    firmware_supplemental = self.firmware_analyzer.generate_icp_supplemental_data(firmware_result)
+                    firmware_supplemental = self.firmware_analyzer.generate_icp_supplemental_data(
+                        firmware_result
+                    )
                     supplemental_data["firmware_analysis"] = {
                         "signatures_found": len(firmware_result.signatures),
                         "security_findings": len(firmware_result.security_findings),
@@ -237,7 +248,9 @@ class ProtectionAnalysisWorkflow:
                         "analysis_time": firmware_result.analysis_time,
                         "supplemental_data": firmware_supplemental,
                     }
-                    logger.debug(f"Binwalk analysis complete: {len(firmware_result.signatures)} signatures found")
+                    logger.debug(
+                        f"Binwalk analysis complete: {len(firmware_result.signatures)} signatures found"
+                    )
                 else:
                     logger.warning(f"Binwalk analysis failed: {firmware_result.error}")
 
@@ -246,15 +259,21 @@ class ProtectionAnalysisWorkflow:
 
         try:
             # Volatility3 memory forensics (for memory dumps)
-            if (self.memory_forensics and is_volatility3_available and is_volatility3_available() and
-                self._is_memory_dump(file_path)):
+            if (
+                self.memory_forensics
+                and is_volatility3_available
+                and is_volatility3_available()
+                and self._is_memory_dump(file_path)
+            ):
                 logger.debug("Running Volatility3 memory forensics...")
                 memory_result = self.memory_forensics.analyze_memory_dump(
                     dump_path=file_path,
                     deep_analysis=False,  # Quick analysis for workflow performance
                 )
                 if not memory_result.error:
-                    memory_supplemental = self.memory_forensics.generate_icp_supplemental_data(memory_result)
+                    memory_supplemental = self.memory_forensics.generate_icp_supplemental_data(
+                        memory_result
+                    )
                     supplemental_data["memory_analysis"] = {
                         "artifacts_found": sum(memory_result.artifacts_found.values()),
                         "analysis_profile": memory_result.analysis_profile,
@@ -262,7 +281,9 @@ class ProtectionAnalysisWorkflow:
                         "analysis_time": memory_result.analysis_time,
                         "supplemental_data": memory_supplemental,
                     }
-                    logger.debug(f"Volatility3 analysis complete: {sum(memory_result.artifacts_found.values())} artifacts found")
+                    logger.debug(
+                        f"Volatility3 analysis complete: {sum(memory_result.artifacts_found.values())} artifacts found"
+                    )
                 else:
                     logger.warning(f"Volatility3 analysis failed: {memory_result.error}")
 
@@ -356,7 +377,9 @@ class ProtectionAnalysisWorkflow:
 
         # Supplemental analysis recommendations
         if hasattr(analysis, "supplemental_data") and analysis.supplemental_data:
-            supplemental_recs = self._generate_supplemental_recommendations(analysis.supplemental_data)
+            supplemental_recs = self._generate_supplemental_recommendations(
+                analysis.supplemental_data
+            )
             recommendations.extend(supplemental_recs)
 
         # AI assistance
@@ -367,7 +390,9 @@ class ProtectionAnalysisWorkflow:
 
         return recommendations
 
-    def _generate_supplemental_recommendations(self, supplemental_data: dict[str, Any]) -> list[str]:
+    def _generate_supplemental_recommendations(
+        self, supplemental_data: dict[str, Any]
+    ) -> list[str]:
         """Generate recommendations based on supplemental analysis results
 
         Args:
@@ -466,34 +491,31 @@ class ProtectionAnalysisWorkflow:
 
         return recommendations
 
-    def _generate_bypass_scripts(self,
-                                 analysis: UnifiedProtectionResult,
-                                 target_protections: list[str] | None = None) -> dict[str, str]:
+    def _generate_bypass_scripts(
+        self, analysis: UnifiedProtectionResult, target_protections: list[str] | None = None
+    ) -> dict[str, str]:
         """Generate bypass scripts for detected protections"""
         scripts = {}
 
         # Filter protections if targets specified
         protections = analysis.protections
         if target_protections:
-            protections = [p for p in protections if p["name"]
-                           in target_protections]
+            protections = [p for p in protections if p["name"] in target_protections]
 
         for protection in protections:
             try:
                 # Generate Frida script for dynamic analysis
-                script = self._generate_single_bypass_script(
-                    analysis, protection)
+                script = self._generate_single_bypass_script(analysis, protection)
                 if script:
                     scripts[protection["name"]] = script
             except Exception as e:
-                logger.error(
-                    f"Failed to generate script for {protection['name']}: {e}")
+                logger.error(f"Failed to generate script for {protection['name']}: {e}")
 
         return scripts
 
-    def _generate_single_bypass_script(self,
-                                       analysis: UnifiedProtectionResult,
-                                       protection: dict[str, Any]) -> str | None:
+    def _generate_single_bypass_script(
+        self, analysis: UnifiedProtectionResult, protection: dict[str, Any]
+    ) -> str | None:
         """Generate bypass script for a single protection"""
         context = {
             "file_path": analysis.file_path,
@@ -782,8 +804,7 @@ console.log("[+] Generic bypass active for " + protectionName);
         steps = []
 
         if analysis.is_packed:
-            steps.append(
-                "1. Run the unpacking script in Frida to dump the unpacked code")
+            steps.append("1. Run the unpacking script in Frida to dump the unpacked code")
             steps.append("2. Use Scylla to rebuild the import table")
             steps.append("3. Re-analyze the unpacked binary")
 
@@ -793,8 +814,7 @@ console.log("[+] Generic bypass active for " + protectionName);
             steps.append("3. Set breakpoints at key decision points")
 
         elif analysis.has_licensing:
-            steps.append(
-                "1. Run the license bypass script to identify check locations")
+            steps.append("1. Run the license bypass script to identify check locations")
             steps.append("2. Analyze the validation logic in IDA Pro")
             steps.append("3. Patch the license checks or generate valid keys")
 
@@ -804,8 +824,7 @@ console.log("[+] Generic bypass active for " + protectionName);
             steps.append("3. Analyze the protection implementation")
 
         # Always add verification step
-        steps.append(
-            f"{len(steps) + 1}. Verify the bypass by testing the patched binary")
+        steps.append(f"{len(steps) + 1}. Verify the bypass by testing the patched binary")
 
         return steps
 
@@ -820,8 +839,7 @@ console.log("[+] Generic bypass active for " + protectionName);
 def quick_protection_analysis(file_path: str) -> dict[str, Any]:
     """Quick protection analysis with summary"""
     workflow = ProtectionAnalysisWorkflow()
-    result = workflow.analyze_and_bypass(
-        file_path, auto_generate_scripts=False)
+    result = workflow.analyze_and_bypass(file_path, auto_generate_scripts=False)
 
     if result.success and result.protection_analysis:
         return {

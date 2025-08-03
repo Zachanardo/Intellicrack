@@ -10,7 +10,7 @@ A comprehensive binary analysis and security research tool with GUI, AI integrat
 
 ### Core Capabilities
 - **Multi-Format Binary Analysis**: PE, ELF, Mach-O support
-- **Protection Detection**: Anti-debug, packing, obfuscation identification  
+- **Protection Detection**: Anti-debug, packing, obfuscation identification
 - **Vulnerability Scanning**: Buffer overflows, format strings, integer overflows
 - **License Bypass Mechanisms**: Various bypass techniques for software protections
 - **Network Analysis**: Traffic capture, protocol fingerprinting, SSL interception
@@ -179,7 +179,7 @@ class MyPlugin(PluginBase):
     def __init__(self):
         super().__init__()
         self.name = "My Custom Plugin"
-    
+
     def run(self, binary_data, **kwargs):
         # Your analysis logic here
         return results
@@ -275,7 +275,7 @@ If you encounter errors about missing dependencies:
    python fix_missing_core_dependencies.py
    # or
    .\install_missing_dependencies.bat
-   
+
    # Linux/WSL
    ./install_missing_dependencies.sh
    ```

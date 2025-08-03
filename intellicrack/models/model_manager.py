@@ -47,7 +47,9 @@ except ImportError:
         @staticmethod
         def create_repository(*args, **kwargs):
             """Create repository instance."""
-            logger.debug(f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs")
+            logger.debug(
+                f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs"
+            )
 
     class DownloadProgressCallback:
         """Fallback progress callback for downloads."""
@@ -61,7 +63,9 @@ except ImportError:
 
         def __init__(self, *args, **kwargs):
             """Initialize fallback ModelInfo with default values and debug logging."""
-            logger.debug(f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs")
+            logger.debug(
+                f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs"
+            )
             self.name = "unknown"
             self.size = 0
 
@@ -81,8 +85,11 @@ except ImportError:
 class ProgressHandler(DownloadProgressCallback):
     """Handles progress updates during downloads."""
 
-    def __init__(self, progress_callback: Callable[[int, int], None] | None = None,
-                complete_callback: Callable[[bool, str], None] | None = None):
+    def __init__(
+        self,
+        progress_callback: Callable[[int, int], None] | None = None,
+        complete_callback: Callable[[bool, str], None] | None = None,
+    ):
         """Initialize the progress handler.
 
         Args:
@@ -121,7 +128,9 @@ class ModelManager:
         """
         self.config = config
         self.repositories: dict[str, ModelRepositoryInterface] = {}
-        self.download_dir = config.get("download_directory", os.path.join(os.path.dirname(__file__), "downloads"))
+        self.download_dir = config.get(
+            "download_directory", os.path.join(os.path.dirname(__file__), "downloads")
+        )
 
         # Create download directory
         os.makedirs(self.download_dir, exist_ok=True)
@@ -134,6 +143,7 @@ class ModelManager:
         # Check if we have a proper Config instance with is_repository_enabled method
         try:
             from intellicrack.config import get_config
+
             config_instance = get_config()
             use_config_method = hasattr(config_instance, "is_repository_enabled")
         except ImportError:
@@ -242,9 +252,13 @@ class ModelManager:
         # Import the model
         return local_repo.add_model(file_path)
 
-    def import_api_model(self, model_id: str, repository_name: str,
-                        progress_callback: Callable[[int, int], None] | None = None,
-                        complete_callback: Callable[[bool, str], None] | None = None) -> bool:
+    def import_api_model(
+        self,
+        model_id: str,
+        repository_name: str,
+        progress_callback: Callable[[int, int], None] | None = None,
+        complete_callback: Callable[[bool, str], None] | None = None,
+    ) -> bool:
         """Import a model from an API repository.
 
         Args:
@@ -288,8 +302,13 @@ class ModelManager:
 
         return True
 
-    def _download_model_thread(self, repository: ModelRepositoryInterface, model_id: str,
-                             destination_path: str, progress_handler: ProgressHandler):
+    def _download_model_thread(
+        self,
+        repository: ModelRepositoryInterface,
+        model_id: str,
+        destination_path: str,
+        progress_handler: ProgressHandler,
+    ):
         """Thread function for downloading a model.
 
         Args:
@@ -316,7 +335,9 @@ class ModelManager:
         # Call the completion handler
         progress_handler.on_complete(success, message)
 
-    def verify_model_integrity(self, model_path: str, expected_checksum: str | None = None) -> tuple[bool, str]:
+    def verify_model_integrity(
+        self, model_path: str, expected_checksum: str | None = None
+    ) -> tuple[bool, str]:
         """Verify the integrity of a model file.
 
         Args:
@@ -389,7 +410,9 @@ class ModelManager:
             return False
 
         # Special handling for local repository
-        if repository_name == "local" and isinstance(self.repositories[repository_name], LocalFileRepository):
+        if repository_name == "local" and isinstance(
+            self.repositories[repository_name], LocalFileRepository
+        ):
             return self.repositories[repository_name].remove_model(model_id)
 
         # For API repositories, we just remove the local copy if it exists
@@ -451,7 +474,10 @@ class ModelManager:
 
                     # Split data
                     X_train, X_test, y_train, y_test = train_test_split(
-                        X, y, test_size=0.2, random_state=42,
+                        X,
+                        y,
+                        test_size=0.2,
+                        random_state=42,
                     )
 
                     # Train model
@@ -529,10 +555,12 @@ class ModelManager:
                         # Fallback to TensorFlow/Keras
                         from tensorflow import keras
 
-                        model = keras.Sequential([
-                            keras.layers.Dense(50, activation="relu", input_shape=(10,)),
-                            keras.layers.Dense(2, activation="softmax"),
-                        ])
+                        model = keras.Sequential(
+                            [
+                                keras.layers.Dense(50, activation="relu", input_shape=(10,)),
+                                keras.layers.Dense(2, activation="softmax"),
+                            ]
+                        )
                         model.compile(optimizer="adam", loss="sparse_categorical_crossentropy")
                         self._last_trained_model = model
                         trained = True
@@ -592,6 +620,7 @@ class ModelManager:
             # Try joblib first (better for scikit-learn models)
             try:
                 import joblib
+
                 joblib.dump(model, path)
                 logger.info(f"Model saved with joblib to: {path}")
                 saved = True
@@ -602,6 +631,7 @@ class ModelManager:
                 # Try PyTorch save
                 try:
                     import torch
+
                     if hasattr(model, "state_dict"):
                         torch.save(model.state_dict(), path)
                         logger.info(f"PyTorch model saved to: {path}")
@@ -637,6 +667,7 @@ class ModelManager:
 
             with open(metadata_path, "w") as f:
                 import json
+
                 json.dump(metadata, f, indent=2)
 
             return saved

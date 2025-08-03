@@ -1,4 +1,5 @@
 """Traffic interception engine for capturing and analyzing network traffic."""
+
 import logging
 import os
 import socket
@@ -38,6 +39,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 try:
     import scapy.all as scapy
+
     HAS_SCAPY = True
 except ImportError as e:
     logger.error("Import error in traffic_interception_engine: %s", e)
@@ -45,7 +47,6 @@ except ImportError as e:
 
 # Note: Removed pcap import - now using Scapy exclusively for packet capture
 # Legacy pcap support removed in favor of superior Scapy implementation
-
 
 
 @dataclass
@@ -78,7 +79,6 @@ class AnalyzedTraffic:
     confidence: float
     patterns_matched: list[str]
     analysis_metadata: dict[str, Any]
-
 
 
 class TrafficInterceptionEngine(BaseNetworkAnalyzer):
@@ -170,12 +170,25 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
         # Known license server ports
         self.license_ports = {
-            27000, 27001, 27002, 27003, 27004, 27005, 27006, 27007, 27008, 27009,  # FlexLM
+            27000,
+            27001,
+            27002,
+            27003,
+            27004,
+            27005,
+            27006,
+            27007,
+            27008,
+            27009,  # FlexLM
             1947,  # HASP/Sentinel
-            443, 80, 8080, 8443,  # HTTPS/HTTP license servers
+            443,
+            80,
+            8080,
+            8443,  # HTTPS/HTTP license servers
             1688,  # Microsoft KMS
             2080,  # Autodesk Network License Manager
-            7788, 7789,  # Other common license ports
+            7788,
+            7789,  # Other common license ports
         }
 
         # Active connections tracking
@@ -197,6 +210,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
         # Initialize capture backend
         self.capture_backend = self._initialize_capture_backend()
+
     def _initialize_capture_backend(self) -> str:
         """Initialize the best available packet capture backend"""
         # Check platform and available libraries
@@ -313,28 +327,28 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             def process_license_packet(packet, IP, TCP):
                 """Process packets for license interception."""
                 if TCP in packet:
-                        tcp_layer = packet[TCP]
-                        ip_layer = packet[IP]
+                    tcp_layer = packet[TCP]
+                    ip_layer = packet[IP]
 
-                        # Extract packet data
-                        intercepted = InterceptedPacket(
-                            source_ip=ip_layer.src,
-                            dest_ip=ip_layer.dst,
-                            source_port=tcp_layer.sport,
-                            dest_port=tcp_layer.dport,
-                            protocol="tcp",
-                            data=bytes(tcp_layer.payload) if tcp_layer.payload else b"",
-                            timestamp=time.time(),
-                            packet_size=len(packet),
-                            flags={
-                                "syn": bool(tcp_layer.flags & 0x02),
-                                "ack": bool(tcp_layer.flags & 0x10),
-                                "fin": bool(tcp_layer.flags & 0x01),
-                                "rst": bool(tcp_layer.flags & 0x04),
-                            },
-                        )
+                    # Extract packet data
+                    intercepted = InterceptedPacket(
+                        source_ip=ip_layer.src,
+                        dest_ip=ip_layer.dst,
+                        source_port=tcp_layer.sport,
+                        dest_port=tcp_layer.dport,
+                        protocol="tcp",
+                        data=bytes(tcp_layer.payload) if tcp_layer.payload else b"",
+                        timestamp=time.time(),
+                        packet_size=len(packet),
+                        flags={
+                            "syn": bool(tcp_layer.flags & 0x02),
+                            "ack": bool(tcp_layer.flags & 0x10),
+                            "fin": bool(tcp_layer.flags & 0x01),
+                            "rst": bool(tcp_layer.flags & 0x04),
+                        },
+                    )
 
-                        self._queue_packet(intercepted)
+                    self._queue_packet(intercepted)
 
             # Create packet handler using base class
             packet_handler = self.create_packet_handler(
@@ -353,6 +367,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
         except Exception as e:
             self.logger.error(f"Scapy capture error: {e}")
+
     # Note: _pcap_capture method removed - now using Scapy exclusively for packet capture
     # This provides better cross-platform compatibility and enhanced features
 
@@ -396,6 +411,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         except Exception as e:
             self.logger.warning(f"Raw socket capture failed, using connection monitoring: {e}")
             self._monitor_local_connections()
+
     def _monitor_local_connections(self):
         """Monitor local connections when raw sockets aren't available"""
         self.logger.info("Monitoring localhost connections for license traffic")
@@ -504,6 +520,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             # Limit queue size
             if len(self.packet_queue) > 10000:
                 self.packet_queue.pop(0)
+
     def _analysis_loop(self):
         """Main packet analysis loop"""
         while self.running:
@@ -585,7 +602,8 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
             analysis_metadata = {
                 "keywords_found": patterns_matched,
-                "port_based_detection": packet.dest_port in self.license_ports or packet.source_port in self.license_ports,
+                "port_based_detection": packet.dest_port in self.license_ports
+                or packet.source_port in self.license_ports,
                 "data_size": len(packet.data),
                 "connection_flags": packet.flags,
             }
@@ -627,7 +645,9 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         try:
             proxy_key = f"{target_host}:{target_port}"
             self.proxy_mappings[proxy_key] = (self.bind_interface, target_port)
-            self.logger.info(f"Transparent proxy setup: {proxy_key} -> {self.bind_interface}:{target_port}")
+            self.logger.info(
+                f"Transparent proxy setup: {proxy_key} -> {self.bind_interface}:{target_port}"
+            )
             return True
         except Exception as e:
             self.logger.error(f"Failed to setup transparent proxy: {e}")
@@ -656,12 +676,14 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
         with self.connection_lock:
             for connection_key, info in self.active_connections.items():
-                connections.append({
-                    "endpoint": connection_key,
-                    "duration": current_time - info["first_seen"],
-                    "last_activity": info["last_activity"],
-                    "packet_count": info["packet_count"],
-                })
+                connections.append(
+                    {
+                        "endpoint": connection_key,
+                        "duration": current_time - info["first_seen"],
+                        "last_activity": info["last_activity"],
+                        "packet_count": info["packet_count"],
+                    }
+                )
 
         return connections
 

@@ -43,6 +43,7 @@ def get_resource_path(resource_path: str) -> str:
 
     # Normal Python environment
     import intellicrack
+
     package_dir = os.path.dirname(intellicrack.__file__)
 
     # If we're in a development environment, go up one level

@@ -16,7 +16,7 @@
 ### 3. Dynamic Model Discovery ✅
 - **Issue**: Model lists were outdated and hardcoded
 - **Solution**: Implemented dynamic model discovery with caching
-- **Files**: 
+- **Files**:
   - `intellicrack/ai/llm_backends.py` - Added ModelDiscoveryCache and ModelDiscovery classes
   - Added `list_models()` methods to OpenAIBackend, AnthropicBackend, and OllamaBackend
 - **Features**:
@@ -46,7 +46,7 @@
 
 ## Key Improvements
 
-1. **Better UX**: 
+1. **Better UX**:
    - Tooltips now display properly with line breaks
    - App starts in light theme as expected
    - Non-blocking model discovery

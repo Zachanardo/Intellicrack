@@ -25,6 +25,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 def count_logger_calls():
     """Count total logger.error calls in the codebase."""
     project_root = Path("/mnt/c/Intellicrack")
@@ -48,6 +49,7 @@ def count_logger_calls():
                     logger.debug(f"Failed to read file {file_path}: {e}")
 
     return total_logger_errors, files_with_logger
+
 
 def main():
     """Generate summary report."""
@@ -114,6 +116,7 @@ def main():
     print("=" * 60)
     print("ALL S110 VIOLATIONS SUCCESSFULLY RESOLVED!")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()

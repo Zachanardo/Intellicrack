@@ -106,11 +106,11 @@ graph TD
     D --> E
     E --> F[Vulnerability Detection]
     F --> G[Report Generation]
-    
+
     H[AI Assistant] --> C
     H --> D
     H --> F
-    
+
     I[Plugin System] --> C
     I --> D
     I --> F

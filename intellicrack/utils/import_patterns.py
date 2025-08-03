@@ -35,4 +35,5 @@ except ImportError:
         logger.debug(f"Detecting API hooks for: {binary_path}")
         return {"hooks": [], "suspicious": []}
 
+
 __all__ = ["analyze_import_patterns", "detect_api_hooks"]

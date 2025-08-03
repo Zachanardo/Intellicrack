@@ -63,8 +63,9 @@ def log_comparison_start(snapshot1, snapshot2, logger=None):
         logger.info("Comparing snapshots: %s vs %s", snapshot1, snapshot2)
 
 
-def start_snapshot_comparison(snapshots_dict: dict[str, Any], snapshot1: str, snapshot2: str,
-                            logger=None) -> tuple[bool, dict | None, str | None]:
+def start_snapshot_comparison(
+    snapshots_dict: dict[str, Any], snapshot1: str, snapshot2: str, logger=None
+) -> tuple[bool, dict | None, str | None]:
     """Start snapshot comparison with validation and logging.
 
     Args:

@@ -1,5 +1,3 @@
-
-
 """Intellicrack: A fully featured, AI-assisted software analysis and security research suite.
 
 Copyright (C) 2025 Zachary Flint
@@ -37,6 +35,7 @@ Usage:
     app = IntellicrackApp()
     app.run()
 """
+
 # Standard library imports first
 import logging
 
@@ -58,6 +57,7 @@ try:
     gpu_info = get_gpu_info()
     if gpu_info["gpu_available"]:
         import sys
+
         # Get the actual device for logging
         device = get_device()
         # Check if we're in interactive mode (REPL) vs script mode
@@ -156,6 +156,7 @@ def get_version():
 
     """
     return __version__
+
 
 # Package-level convenience functions
 

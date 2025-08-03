@@ -26,6 +26,7 @@ This module provides compatibility aliases for the exploit mitigation bypass com
 # Import from the actual exploit mitigation module
 try:
     from ..exploitation.cfi_bypass import CFIBypass
+
     HAS_CFI_BYPASS = True
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)

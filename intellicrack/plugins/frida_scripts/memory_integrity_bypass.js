@@ -18,10 +18,10 @@
 
 /**
  * Memory Integrity Bypass
- * 
+ *
  * Advanced memory integrity check bypass for modern license protection systems.
  * Handles memory scanning, code integrity checks, and runtime verification.
- * 
+ *
  * Author: Intellicrack Framework
  * Version: 2.0.0
  * License: GPL v3
@@ -31,7 +31,7 @@
     name: "Memory Integrity Bypass",
     description: "Advanced memory integrity and runtime verification bypass",
     version: "2.0.0",
-    
+
     // Configuration for memory integrity bypass
     config: {
         // Memory protection settings
@@ -41,7 +41,7 @@
             bypassDEP: true,
             bypassASLR: false // Keep ASLR for stability
         },
-        
+
         // Code integrity scanning
         codeIntegrity: {
             enabled: true,
@@ -49,7 +49,7 @@
             bypassSelfChecks: true,
             protectedRegions: new Map()
         },
-        
+
         // Runtime verification
         runtimeVerification: {
             enabled: true,
@@ -57,7 +57,7 @@
             bypassCFG: true, // Control Flow Guard
             bypassCFI: true  // Control Flow Integrity
         },
-        
+
         // Memory scanning countermeasures
         memoryScanning: {
             enabled: true,
@@ -70,7 +70,7 @@
                 "FEEDFACE"  // Yet another marker
             ]
         },
-        
+
         // Anti-dump protection
         antiDump: {
             enabled: true,
@@ -79,12 +79,12 @@
             hideModules: true
         }
     },
-    
+
     // Hook tracking and state
     hooksInstalled: {},
     protectedMemory: new Map(),
     originalMemory: new Map(),
-    
+
     onAttach: function(pid) {
         send({
             type: "info",
@@ -95,7 +95,7 @@
         this.processId = pid;
         this.baseAddress = Process.findModuleByName(Process.getCurrentModule().name).base;
     },
-    
+
     run: function() {
         send({
             type: "status",
@@ -103,7 +103,7 @@
             action: "installing_bypass",
             message: "Installing comprehensive memory integrity bypass..."
         });
-        
+
         // Initialize bypass components
         this.hookMemoryProtectionAPIs();
         this.hookCodeIntegrityChecks();
@@ -113,10 +113,10 @@
         this.hookVirtualMemoryAPIs();
         this.hookDebugMemoryAPIs();
         this.hookProcessMemoryAPIs();
-        
+
         this.installSummary();
     },
-    
+
     // === MEMORY PROTECTION API HOOKS ===
     hookMemoryProtectionAPIs: function() {
         send({
@@ -125,23 +125,23 @@
             action: "installing_hooks",
             category: "memory_protection_api"
         });
-        
+
         // Hook VirtualProtect
         this.hookVirtualProtect();
-        
+
         // Hook VirtualProtectEx
         this.hookVirtualProtectEx();
-        
+
         // Hook VirtualAlloc
         this.hookVirtualAlloc();
-        
+
         // Hook VirtualAllocEx
         this.hookVirtualAllocEx();
-        
+
         // Hook NtProtectVirtualMemory
         this.hookNtProtectVirtualMemory();
     },
-    
+
     hookVirtualProtect: function() {
         var virtualProtect = Module.findExportByName("kernel32.dll", "VirtualProtect");
         if (virtualProtect) {
@@ -151,7 +151,7 @@
                     this.dwSize = args[1].toInt32();
                     this.flNewProtect = args[2].toInt32();
                     this.lpflOldProtect = args[3];
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
@@ -160,7 +160,7 @@
                         size: this.dwSize,
                         protect: "0x" + this.flNewProtect.toString(16)
                     });
-                    
+
                     // Check if this is trying to remove execute permissions
                     if ((this.flNewProtect & 0xF0) === 0) { // No execute permissions
                         var config = this.parent.parent.config;
@@ -176,7 +176,7 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0 && this.lpflOldProtect && !this.lpflOldProtect.isNull()) {
                         // Record the memory region change
@@ -189,11 +189,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['VirtualProtect'] = true;
         }
     },
-    
+
     hookVirtualProtectEx: function() {
         var virtualProtectEx = Module.findExportByName("kernel32.dll", "VirtualProtectEx");
         if (virtualProtectEx) {
@@ -204,14 +204,14 @@
                     this.dwSize = args[2].toInt32();
                     this.flNewProtect = args[3].toInt32();
                     this.lpflOldProtect = args[4];
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
                         action: "virtualprotectex_called",
                         context: "external_process"
                     });
-                    
+
                     // Allow execute permissions for external processes too
                     var config = this.parent.parent.config;
                     if (config.memoryProtection.enabled && (this.flNewProtect & 0xF0) === 0) {
@@ -225,11 +225,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['VirtualProtectEx'] = true;
         }
     },
-    
+
     hookVirtualAlloc: function() {
         var virtualAlloc = Module.findExportByName("kernel32.dll", "VirtualAlloc");
         if (virtualAlloc) {
@@ -239,7 +239,7 @@
                     this.dwSize = args[1].toInt32();
                     this.flAllocationType = args[2].toInt32();
                     this.flProtect = args[3].toInt32();
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
@@ -247,7 +247,7 @@
                         size: this.dwSize,
                         protect: "0x" + this.flProtect.toString(16)
                     });
-                    
+
                     // Ensure executable allocations are allowed
                     var config = this.parent.parent.config;
                     if (config.memoryProtection.enabled && config.memoryProtection.allowExecutableWrites) {
@@ -270,7 +270,7 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (!retval.isNull()) {
                         // Track allocated executable memory
@@ -291,11 +291,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['VirtualAlloc'] = true;
         }
     },
-    
+
     hookVirtualAllocEx: function() {
         var virtualAllocEx = Module.findExportByName("kernel32.dll", "VirtualAllocEx");
         if (virtualAllocEx) {
@@ -306,14 +306,14 @@
                     this.dwSize = args[2].toInt32();
                     this.flAllocationType = args[3].toInt32();
                     this.flProtect = args[4].toInt32();
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
                         action: "virtualallocex_called",
                         context: "external_process"
                     });
-                    
+
                     // Allow executable allocations in external processes
                     var config = this.parent.parent.config;
                     if (config.memoryProtection.enabled && config.memoryProtection.allowExecutableWrites) {
@@ -329,11 +329,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['VirtualAllocEx'] = true;
         }
     },
-    
+
     hookNtProtectVirtualMemory: function() {
         var ntProtectVirtualMemory = Module.findExportByName("ntdll.dll", "NtProtectVirtualMemory");
         if (ntProtectVirtualMemory) {
@@ -344,14 +344,14 @@
                     this.regionSize = args[2];
                     this.newProtect = args[3].toInt32();
                     this.oldProtect = args[4];
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
                         action: "ntprotectvirtualmemory_called",
                         protect: "0x" + this.newProtect.toString(16)
                     });
-                    
+
                     // Force executable permissions
                     var config = this.parent.parent.config;
                     if (config.memoryProtection.enabled && config.memoryProtection.allowExecutableWrites) {
@@ -367,11 +367,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['NtProtectVirtualMemory'] = true;
         }
     },
-    
+
     // === CODE INTEGRITY CHECK HOOKS ===
     hookCodeIntegrityChecks: function() {
         send({
@@ -380,20 +380,20 @@
             action: "installing_hooks",
             category: "code_integrity_check"
         });
-        
+
         // Hook CRC32 and checksum calculations
         this.hookChecksumCalculations();
-        
+
         // Hook self-modification detection
         this.hookSelfModificationDetection();
-        
+
         // Hook code section verification
         this.hookCodeSectionVerification();
-        
+
         // Hook pattern scanning
         this.hookPatternScanning();
     },
-    
+
     hookChecksumCalculations: function() {
         send({
             type: "status",
@@ -401,28 +401,28 @@
             action: "installing_hooks",
             category: "checksum_calculation"
         });
-        
+
         // Hook common checksum functions
         var checksumFunctions = [
             "crc32", "CRC32", "crc32_compute",
             "checksum", "Checksum", "ComputeChecksum",
             "CalcCRC", "CalculateCRC", "GetChecksum"
         ];
-        
+
         checksumFunctions.forEach(funcName => {
             this.hookChecksumFunction(funcName);
         });
-        
+
         // Hook memory comparison for checksum verification
         this.hookMemoryComparison();
     },
-    
+
     hookChecksumFunction: function(functionName) {
         var modules = Process.enumerateModules();
-        
+
         for (var i = 0; i < modules.length; i++) {
             var module = modules[i];
-            
+
             try {
                 var checksumFunc = Module.findExportByName(module.name, functionName);
                 if (checksumFunc) {
@@ -430,7 +430,7 @@
                         onEnter: function(args) {
                             this.dataPtr = args[0];
                             this.dataSize = args[1] ? args[1].toInt32() : 0;
-                            
+
                             send({
                                 type: "detection",
                                 target: "memory_integrity_bypass",
@@ -440,7 +440,7 @@
                             });
                             this.spoofChecksum = true;
                         },
-                        
+
                         onLeave: function(retval) {
                             if (this.spoofChecksum) {
                                 var config = this.parent.parent.parent.config;
@@ -457,7 +457,7 @@
                             }
                         }
                     });
-                    
+
                     this.hooksInstalled[functionName + '_' + module.name] = true;
                 }
             } catch(e) {
@@ -465,7 +465,7 @@
             }
         }
     },
-    
+
     hookMemoryComparison: function() {
         var memcmp = Module.findExportByName("msvcrt.dll", "memcmp");
         if (memcmp) {
@@ -474,7 +474,7 @@
                     this.ptr1 = args[0];
                     this.ptr2 = args[1];
                     this.size = args[2].toInt32();
-                    
+
                     // Check if this might be a code integrity check
                     if (this.size >= 16 && this.size <= 1024) { // Reasonable size for code checks
                         this.isCodeIntegrityCheck = true;
@@ -486,7 +486,7 @@
                         });
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.isCodeIntegrityCheck && retval.toInt32() !== 0) {
                         var config = this.parent.parent.config;
@@ -503,11 +503,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['memcmp_integrity'] = true;
         }
     },
-    
+
     hookSelfModificationDetection: function() {
         send({
             type: "status",
@@ -515,7 +515,7 @@
             action: "installing_hooks",
             category: "self_modification_detection"
         });
-        
+
         // Hook page fault handler registration
         var addVectoredExceptionHandler = Module.findExportByName("kernel32.dll", "AddVectoredExceptionHandler");
         if (addVectoredExceptionHandler) {
@@ -523,18 +523,18 @@
                 onEnter: function(args) {
                     this.first = args[0].toInt32();
                     this.handler = args[1];
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
                         action: "handler_registered",
                         handler_type: "vectored_exception"
                     });
-                    
+
                     // Could potentially hook the handler to bypass self-modification detection
                     this.trackHandler = true;
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.trackHandler && !retval.isNull()) {
                         send({
@@ -547,10 +547,10 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['AddVectoredExceptionHandler'] = true;
         }
-        
+
         // Hook SetUnhandledExceptionFilter
         var setUnhandledFilter = Module.findExportByName("kernel32.dll", "SetUnhandledExceptionFilter");
         if (setUnhandledFilter) {
@@ -565,11 +565,11 @@
                     });
                 }
             });
-            
+
             this.hooksInstalled['SetUnhandledExceptionFilter'] = true;
         }
     },
-    
+
     hookCodeSectionVerification: function() {
         send({
             type: "status",
@@ -577,7 +577,7 @@
             action: "installing_hooks",
             category: "code_section_verification"
         });
-        
+
         // Hook GetModuleInformation to spoof module details
         var getModuleInfo = Module.findExportByName("psapi.dll", "GetModuleInformation");
         if (getModuleInfo) {
@@ -587,7 +587,7 @@
                     this.hModule = args[1];
                     this.lpmodinfo = args[2];
                     this.cb = args[3].toInt32();
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
@@ -595,7 +595,7 @@
                         api: "GetModuleInformation"
                     });
                 },
-                
+
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0 && this.lpmodinfo && !this.lpmodinfo.isNull()) {
                         // Could modify module information here
@@ -607,10 +607,10 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['GetModuleInformation'] = true;
         }
-        
+
         // Hook VirtualQuery to hide memory modifications
         var virtualQuery = Module.findExportByName("kernel32.dll", "VirtualQuery");
         if (virtualQuery) {
@@ -619,7 +619,7 @@
                     this.lpAddress = args[0];
                     this.lpBuffer = args[1];
                     this.dwLength = args[2].toInt32();
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
@@ -627,7 +627,7 @@
                         address: this.lpAddress
                     });
                 },
-                
+
                 onLeave: function(retval) {
                     if (retval.toInt32() > 0 && this.lpBuffer && !this.lpBuffer.isNull()) {
                         // Modify memory info to hide our modifications
@@ -644,11 +644,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['VirtualQuery'] = true;
         }
     },
-    
+
     hookPatternScanning: function() {
         send({
             type: "status",
@@ -656,7 +656,7 @@
             action: "installing_countermeasures",
             category: "pattern_scanning"
         });
-        
+
         // Hook common string search functions that might be used for pattern scanning
         var strstr = Module.findExportByName("msvcrt.dll", "strstr");
         if (strstr) {
@@ -665,7 +665,7 @@
                     try {
                         this.haystack = args[0].readAnsiString();
                         this.needle = args[1].readAnsiString();
-                        
+
                         if (this.needle && this.isProtectedPattern(this.needle)) {
                             this.hidePattern = true;
                             send({
@@ -679,7 +679,7 @@
                         // String read failed
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.hidePattern && !retval.isNull()) {
                         // Hide the pattern by returning NULL
@@ -691,18 +691,18 @@
                         });
                     }
                 },
-                
+
                 isProtectedPattern: function(pattern) {
                     var config = this.parent.parent.parent.config;
-                    return config.memoryScanning.protectedPatterns.some(protectedPattern => 
+                    return config.memoryScanning.protectedPatterns.some(protectedPattern =>
                         pattern.includes(protectedPattern)
                     );
                 }
             });
-            
+
             this.hooksInstalled['strstr'] = true;
         }
-        
+
         // Hook memmem (GNU extension for binary pattern search)
         var memmem = Module.findExportByName("msvcrt.dll", "memmem");
         if (memmem) {
@@ -712,7 +712,7 @@
                     this.haystacklen = args[1].toInt32();
                     this.needle = args[2];
                     this.needlelen = args[3].toInt32();
-                    
+
                     send({
                         type: "detection",
                         target: "memory_integrity_bypass",
@@ -721,7 +721,7 @@
                     });
                     this.hidePattern = true;
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.hidePattern && !retval.isNull()) {
                         var config = this.parent.parent.config;
@@ -736,11 +736,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['memmem'] = true;
         }
     },
-    
+
     // === RUNTIME VERIFICATION HOOKS ===
     hookRuntimeVerification: function() {
         send({
@@ -749,20 +749,20 @@
             action: "installing_hooks",
             category: "runtime_verification"
         });
-        
+
         // Hook stack canary checks
         this.hookStackCanaryChecks();
-        
+
         // Hook Control Flow Guard (CFG)
         this.hookControlFlowGuard();
-        
+
         // Hook Control Flow Integrity (CFI)
         this.hookControlFlowIntegrity();
-        
+
         // Hook Return Oriented Programming (ROP) detection
         this.hookRopDetection();
     },
-    
+
     hookStackCanaryChecks: function() {
         send({
             type: "status",
@@ -770,7 +770,7 @@
             action: "installing_hooks",
             category: "stack_canary"
         });
-        
+
         // Hook __security_check_cookie (MSVC stack canary)
         var securityCheckCookie = Module.findExportByName("msvcrt.dll", "__security_check_cookie");
         if (securityCheckCookie) {
@@ -784,7 +784,7 @@
                     });
                     this.bypassCanary = true;
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.bypassCanary) {
                         var config = this.parent.parent.config;
@@ -799,10 +799,10 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['__security_check_cookie'] = true;
         }
-        
+
         // Hook __stack_chk_fail (GCC stack canary)
         var stackChkFail = Module.findExportByName("msvcrt.dll", "__stack_chk_fail");
         if (stackChkFail) {
@@ -814,11 +814,11 @@
                 });
                 // Do nothing - bypass the abort
             }, 'void', []));
-            
+
             this.hooksInstalled['__stack_chk_fail'] = true;
         }
     },
-    
+
     hookControlFlowGuard: function() {
         send({
             type: "status",
@@ -826,7 +826,7 @@
             action: "installing_hooks",
             category: "control_flow_guard"
         });
-        
+
         // Hook _guard_dispatch_icall (CFG indirect call check)
         var guardDispatch = Module.findExportByName("ntdll.dll", "_guard_dispatch_icall");
         if (guardDispatch) {
@@ -841,7 +841,7 @@
                     });
                     this.bypassCFG = true;
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.bypassCFG) {
                         var config = this.parent.parent.config;
@@ -856,10 +856,10 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['_guard_dispatch_icall'] = true;
         }
-        
+
         // Hook LdrpValidateUserCallTarget
         var ldrpValidate = Module.findExportByName("ntdll.dll", "LdrpValidateUserCallTarget");
         if (ldrpValidate) {
@@ -872,7 +872,7 @@
                         action: "ldrp_validate_called"
                     });
                 },
-                
+
                 onLeave: function(retval) {
                     var config = this.parent.parent.config;
                     if (config.runtimeVerification.enabled && config.runtimeVerification.bypassCFG) {
@@ -886,11 +886,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['LdrpValidateUserCallTarget'] = true;
         }
     },
-    
+
     hookControlFlowIntegrity: function() {
         send({
             type: "status",
@@ -898,7 +898,7 @@
             action: "installing_hooks",
             category: "control_flow_integrity"
         });
-        
+
         // Hook __cfi_check (Clang CFI check)
         var cfiCheck = Module.findExportByName(null, "__cfi_check");
         if (cfiCheck) {
@@ -911,10 +911,10 @@
                 });
                 // Return without aborting
             }, 'void', ['pointer', 'pointer', 'pointer']));
-            
+
             this.hooksInstalled['__cfi_check'] = true;
         }
-        
+
         // Hook __cfi_slowpath (CFI slow path)
         var cfiSlowpath = Module.findExportByName(null, "__cfi_slowpath");
         if (cfiSlowpath) {
@@ -926,11 +926,11 @@
                 });
                 // Return without validation
             }, 'void', ['pointer', 'pointer']));
-            
+
             this.hooksInstalled['__cfi_slowpath'] = true;
         }
     },
-    
+
     hookRopDetection: function() {
         send({
             type: "status",
@@ -938,7 +938,7 @@
             action: "installing_countermeasures",
             category: "rop_detection"
         });
-        
+
         // Hook functions that might detect ROP chains
         var isExecutableAddress = Module.findExportByName("kernel32.dll", "IsBadCodePtr");
         if (isExecutableAddress) {
@@ -952,7 +952,7 @@
                         address: this.lpfn
                     });
                 },
-                
+
                 onLeave: function(retval) {
                     // Always return FALSE (address is valid)
                     retval.replace(0);
@@ -964,11 +964,11 @@
                     });
                 }
             });
-            
+
             this.hooksInstalled['IsBadCodePtr'] = true;
         }
     },
-    
+
     // === MEMORY SCANNING API HOOKS ===
     hookMemoryScanningAPIs: function() {
         send({
@@ -977,20 +977,20 @@
             action: "installing_hooks",
             category: "memory_scanning_api"
         });
-        
+
         // Hook ReadProcessMemory
         this.hookReadProcessMemory();
-        
-        // Hook WriteProcessMemory  
+
+        // Hook WriteProcessMemory
         this.hookWriteProcessMemory();
-        
+
         // Hook VirtualQueryEx
         this.hookVirtualQueryEx();
-        
+
         // Hook memory enumeration
         this.hookMemoryEnumeration();
     },
-    
+
     hookReadProcessMemory: function() {
         var readProcessMemory = Module.findExportByName("kernel32.dll", "ReadProcessMemory");
         if (readProcessMemory) {
@@ -1001,7 +1001,7 @@
                     this.lpBuffer = args[2];
                     this.nSize = args[3].toInt32();
                     this.lpNumberOfBytesRead = args[4];
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
@@ -1009,15 +1009,15 @@
                         address: this.lpBaseAddress,
                         size: this.nSize
                     });
-                    
+
                     // Check if this might be scanning our modifications
                     this.isScanning = this.nSize > 1024; // Large reads might be scanning
                 },
-                
+
                 onLeave: function(retval) {
-                    if (this.isScanning && retval.toInt32() !== 0 && 
+                    if (this.isScanning && retval.toInt32() !== 0 &&
                         this.lpBuffer && !this.lpBuffer.isNull()) {
-                        
+
                         var config = this.parent.parent.config;
                         if (config.memoryScanning.enabled && config.memoryScanning.spoofPatterns) {
                             // Could modify the read data here to hide our patches
@@ -1025,30 +1025,30 @@
                         }
                     }
                 },
-                
+
                 spoofReadData: function() {
                     try {
                         // Replace common patch patterns in the read data
                         var config = this.parent.parent.parent.config;
                         var data = this.lpBuffer.readByteArray(this.nSize);
-                        
+
                         if (data) {
                             var modified = false;
                             var bytes = new Uint8Array(data);
-                            
+
                             // Replace NOP sleds with original instructions
                             for (var i = 0; i <= bytes.length - 4; i++) {
-                                if (bytes[i] === 0x90 && bytes[i+1] === 0x90 && 
+                                if (bytes[i] === 0x90 && bytes[i+1] === 0x90 &&
                                     bytes[i+2] === 0x90 && bytes[i+3] === 0x90) {
                                     // Replace NOP sled with fake original instructions
                                     bytes[i] = 0x55;     // push ebp
                                     bytes[i+1] = 0x8B;   // mov ebp,esp
-                                    bytes[i+2] = 0xEC;   
+                                    bytes[i+2] = 0xEC;
                                     bytes[i+3] = 0x83;   // sub esp,10h
                                     modified = true;
                                 }
                             }
-                            
+
                             if (modified) {
                                 this.lpBuffer.writeByteArray(bytes);
                                 send({
@@ -1068,11 +1068,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['ReadProcessMemory'] = true;
         }
     },
-    
+
     hookWriteProcessMemory: function() {
         var writeProcessMemory = Module.findExportByName("kernel32.dll", "WriteProcessMemory");
         if (writeProcessMemory) {
@@ -1083,7 +1083,7 @@
                     this.lpBuffer = args[2];
                     this.nSize = args[3].toInt32();
                     this.lpNumberOfBytesWritten = args[4];
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
@@ -1091,7 +1091,7 @@
                         address: this.lpBaseAddress,
                         size: this.nSize
                     });
-                    
+
                     // Track our own memory modifications
                     if (this.nSize <= 1024) { // Reasonable patch size
                         var config = this.parent.parent.config;
@@ -1102,11 +1102,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['WriteProcessMemory'] = true;
         }
     },
-    
+
     hookVirtualQueryEx: function() {
         var virtualQueryEx = Module.findExportByName("kernel32.dll", "VirtualQueryEx");
         if (virtualQueryEx) {
@@ -1116,7 +1116,7 @@
                     this.lpAddress = args[1];
                     this.lpBuffer = args[2];
                     this.dwLength = args[3].toInt32();
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
@@ -1124,7 +1124,7 @@
                         address: this.lpAddress
                     });
                 },
-                
+
                 onLeave: function(retval) {
                     if (retval.toInt32() > 0 && this.lpBuffer && !this.lpBuffer.isNull()) {
                         // Could modify memory information to hide our patches
@@ -1137,11 +1137,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['VirtualQueryEx'] = true;
         }
     },
-    
+
     hookMemoryEnumeration: function() {
         send({
             type: "status",
@@ -1149,7 +1149,7 @@
             action: "installing_hooks",
             category: "memory_enumeration"
         });
-        
+
         // Hook Module32First/Next for module enumeration
         var module32First = Module.findExportByName("kernel32.dll", "Module32FirstW");
         if (module32First) {
@@ -1163,7 +1163,7 @@
                         action: "module32firstw_called"
                     });
                 },
-                
+
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0 && this.lpme && !this.lpme.isNull()) {
                         var config = this.parent.parent.config;
@@ -1178,11 +1178,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['Module32FirstW'] = true;
         }
     },
-    
+
     // === ANTI-DUMP PROTECTION HOOKS ===
     hookAntiDumpProtection: function() {
         send({
@@ -1191,17 +1191,17 @@
             action: "installing_hooks",
             category: "anti_dump_protection"
         });
-        
+
         // Hook PE header access
         this.hookPeHeaderAccess();
-        
+
         // Hook import table access
         this.hookImportTableAccess();
-        
+
         // Hook section header access
         this.hookSectionHeaderAccess();
     },
-    
+
     hookPeHeaderAccess: function() {
         send({
             type: "status",
@@ -1209,21 +1209,21 @@
             action: "installing_protection",
             protection_type: "pe_header"
         });
-        
+
         // Protect DOS and NT headers from dumping tools
         var imageBase = Process.findModuleByName(Process.getCurrentModule().name).base;
-        
+
         send({
             type: "info",
             target: "memory_integrity_bypass",
             action: "protecting_pe_headers",
             base_address: imageBase
         });
-        
+
         // We could set up memory access violations for the headers, but that might break legitimate access
         // Instead, we'll hook the functions that typically access these headers
     },
-    
+
     hookImportTableAccess: function() {
         send({
             type: "status",
@@ -1231,14 +1231,14 @@
             action: "installing_protection",
             protection_type: "import_table"
         });
-        
+
         // Hook GetProcAddress to detect import reconstruction attempts
         var getProcAddress = Module.findExportByName("kernel32.dll", "GetProcAddress");
         if (getProcAddress) {
             Interceptor.attach(getProcAddress, {
                 onEnter: function(args) {
                     this.hModule = args[0];
-                    
+
                     if (args[1].and(0xFFFF0000).equals(ptr(0))) {
                         // Ordinal import
                         this.ordinal = args[1].toInt32();
@@ -1260,16 +1260,16 @@
                             proc_name: this.procName
                         });
                     }
-                    
+
                     // Count rapid successive calls (might indicate import reconstruction)
                     this.trackCalls = true;
                 }
             });
-            
+
             this.hooksInstalled['GetProcAddress_AntiDump'] = true;
         }
     },
-    
+
     hookSectionHeaderAccess: function() {
         send({
             type: "status",
@@ -1277,7 +1277,7 @@
             action: "installing_protection",
             protection_type: "section_header"
         });
-        
+
         // Hook ImageDirectoryEntryToData (used to access PE sections)
         var imageDirEntryToData = Module.findExportByName("dbghelp.dll", "ImageDirectoryEntryToData");
         if (imageDirEntryToData) {
@@ -1287,7 +1287,7 @@
                     this.mappedAsImage = args[1].toInt32();
                     this.directoryEntry = args[2].toInt32();
                     this.size = args[3];
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
@@ -1295,7 +1295,7 @@
                         directory: this.directoryEntry
                     });
                 },
-                
+
                 onLeave: function(retval) {
                     var config = this.parent.parent.config;
                     if (config.antiDump.enabled && config.antiDump.protectHeaders) {
@@ -1311,11 +1311,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['ImageDirectoryEntryToData'] = true;
         }
     },
-    
+
     // === VIRTUAL MEMORY API HOOKS ===
     hookVirtualMemoryAPIs: function() {
         send({
@@ -1324,7 +1324,7 @@
             action: "installing_hooks",
             category: "virtual_memory_api"
         });
-        
+
         // Additional VirtualAlloc monitoring
         var virtualFree = Module.findExportByName("kernel32.dll", "VirtualFree");
         if (virtualFree) {
@@ -1333,24 +1333,24 @@
                     this.lpAddress = args[0];
                     this.dwSize = args[1].toInt32();
                     this.dwFreeType = args[2].toInt32();
-                    
+
                     send({
                         type: "info",
                         target: "memory_integrity_bypass",
                         action: "virtualfree_called",
                         address: this.lpAddress
                     });
-                    
+
                     // Remove from our tracking
                     var config = this.parent.parent.config;
                     config.codeIntegrity.protectedRegions.delete(this.lpAddress.toString());
                 }
             });
-            
+
             this.hooksInstalled['VirtualFree'] = true;
         }
     },
-    
+
     // === DEBUG MEMORY API HOOKS ===
     hookDebugMemoryAPIs: function() {
         send({
@@ -1359,7 +1359,7 @@
             action: "installing_hooks",
             category: "debug_memory_api"
         });
-        
+
         // Hook DebugActiveProcess
         var debugActiveProcess = Module.findExportByName("kernel32.dll", "DebugActiveProcess");
         if (debugActiveProcess) {
@@ -1373,7 +1373,7 @@
                         pid: this.dwProcessId
                     });
                 },
-                
+
                 onLeave: function(retval) {
                     // Block debugging attempts
                     retval.replace(0); // FALSE
@@ -1384,11 +1384,11 @@
                     });
                 }
             });
-            
+
             this.hooksInstalled['DebugActiveProcess'] = true;
         }
     },
-    
+
     // === PROCESS MEMORY API HOOKS ===
     hookProcessMemoryAPIs: function() {
         send({
@@ -1397,7 +1397,7 @@
             action: "installing_hooks",
             category: "process_memory_api"
         });
-        
+
         // Hook OpenProcess for memory access
         var openProcess = Module.findExportByName("kernel32.dll", "OpenProcess");
         if (openProcess) {
@@ -1406,7 +1406,7 @@
                     this.dwDesiredAccess = args[0].toInt32();
                     this.bInheritHandle = args[1].toInt32();
                     this.dwProcessId = args[2].toInt32();
-                    
+
                     // Check for memory access rights
                     if (this.dwDesiredAccess & 0x0010) { // PROCESS_VM_READ
                         send({
@@ -1426,11 +1426,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['OpenProcess'] = true;
         }
     },
-    
+
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
@@ -1452,7 +1452,7 @@
                 action: "separator",
                 separator: "======================================"
             });
-            
+
             var categories = {
                 "Memory Protection": 0,
                 "Code Integrity": 0,
@@ -1461,7 +1461,7 @@
                 "Anti-Dump Protection": 0,
                 "Debug Protection": 0
             };
-            
+
             for (var hook in this.hooksInstalled) {
                 if (hook.includes("Virtual") || hook.includes("Protect") || hook.includes("Alloc")) {
                     categories["Memory Protection"]++;
@@ -1477,7 +1477,7 @@
                     categories["Debug Protection"]++;
                 }
             }
-            
+
             for (var category in categories) {
                 if (categories[category] > 0) {
                     send({
@@ -1489,7 +1489,7 @@
                     });
                 }
             }
-            
+
             send({
                 type: "status",
                 target: "memory_integrity_bypass",
@@ -1502,7 +1502,7 @@
                 action: "protected_regions_count",
                 count: this.config.codeIntegrity.protectedRegions.size
             });
-            
+
             var config = this.config;
             send({
                 type: "status",
@@ -1559,7 +1559,7 @@
                     enabled: config.antiDump.protectHeaders
                 });
             }
-            
+
             send({
                 type: "status",
                 target: "memory_integrity_bypass",

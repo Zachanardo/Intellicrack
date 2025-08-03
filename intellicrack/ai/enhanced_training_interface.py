@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import json
 import logging
 import os
@@ -59,6 +58,7 @@ try:
         QVBoxLayout,
         QWidget,
     )
+
     PYQT6_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in enhanced_training_interface: %s", e)
@@ -159,6 +159,7 @@ try:
     import numpy as np
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
+
     # These will be used in widget classes that support matplotlib visualization
     MATPLOTLIB_AVAILABLE = True
     # Store at module level to prevent F401
@@ -171,6 +172,7 @@ try:
     # Store module reference to satisfy import checker
     import pyqtgraph as pg
     from pyqtgraph import PlotWidget
+
     _pyqtgraph_module = pg  # Keep reference to prevent F401
     PYQTGRAPH_AVAILABLE = True
 except ImportError as e:
@@ -245,6 +247,7 @@ except ImportError as e:
             # Return self to allow method chaining
             return self
 
+
 __all__ = [
     "EnhancedTrainingInterface",
     "ModelMetrics",
@@ -272,8 +275,7 @@ class TrainingConfiguration:
     model_name: str = "intellicrack_model"
     model_type: str = "vulnerability_classifier"
     dataset_path: str = ""
-    output_directory: str = os.path.join(
-        os.path.dirname(__file__), "..", "models", "trained")
+    output_directory: str = os.path.join(os.path.dirname(__file__), "..", "models", "trained")
 
     # Training parameters
     learning_rate: float = 0.001
@@ -358,8 +360,7 @@ class TrainingThread(QThread):
 
                 # Simulated improvement over time
                 base_accuracy = 0.5 + (_epoch / self.config.epochs) * 0.4
-                noise = np.random.normal(
-                    0, 0.02) if "numpy" in globals() else 0
+                noise = np.random.normal(0, 0.02) if "numpy" in globals() else 0
                 accuracy = min(0.99, base_accuracy + noise)
 
                 metrics = {
@@ -374,7 +375,8 @@ class TrainingThread(QThread):
                 self.progress_updated.emit(progress)
                 self.metrics_updated.emit(metrics)
                 self.log_message.emit(
-                    f"Epoch {_epoch + 1}/{self.config.epochs} - Accuracy: {accuracy:.4f}")
+                    f"Epoch {_epoch + 1}/{self.config.epochs} - Accuracy: {accuracy:.4f}"
+                )
 
                 # Simulate early stopping
                 if self.config.use_early_stopping and _epoch > 20:
@@ -383,8 +385,7 @@ class TrainingThread(QThread):
                         break
 
             if not self.should_stop:
-                self.training_completed.emit(
-                    {"status": "completed", "final_accuracy": accuracy})
+                self.training_completed.emit({"status": "completed", "final_accuracy": accuracy})
                 self.log_message.emit("Training completed successfully!")
             else:
                 self.log_message.emit("Training stopped by user")
@@ -443,12 +444,14 @@ class TrainingVisualizationWidget(QWidget):
         self.training_data["accuracy"].append(accuracy)
 
         self.loss_plot.clear()
-        self.loss_plot.plot(self.training_data["epochs"], self.training_data["loss"],
-                           pen="b", symbol="o")
+        self.loss_plot.plot(
+            self.training_data["epochs"], self.training_data["loss"], pen="b", symbol="o"
+        )
 
         self.accuracy_plot.clear()
-        self.accuracy_plot.plot(self.training_data["epochs"], self.training_data["accuracy"],
-                               pen="g", symbol="s")
+        self.accuracy_plot.plot(
+            self.training_data["epochs"], self.training_data["accuracy"], pen="g", symbol="s"
+        )
 
     def clear_plots(self):
         """Clear all training visualization plots."""
@@ -459,15 +462,18 @@ class TrainingVisualizationWidget(QWidget):
     def export_data(self, filename):
         """Export training data to CSV file."""
         import csv
+
         with open(filename, "w", newline="") as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(["Epoch", "Loss", "Accuracy"])
             for i in range(len(self.training_data["epochs"])):
-                writer.writerow([
-                    self.training_data["epochs"][i],
-                    self.training_data["loss"][i],
-                    self.training_data["accuracy"][i],
-                ])
+                writer.writerow(
+                    [
+                        self.training_data["epochs"][i],
+                        self.training_data["loss"][i],
+                        self.training_data["accuracy"][i],
+                    ]
+                )
 
 
 class DatasetAnalysisWidget(QWidget):
@@ -567,7 +573,9 @@ class DatasetAnalysisWidget(QWidget):
     def browse_dataset(self):
         """Open file dialog to browse for dataset file."""
         filename, _ = QFileDialog.getOpenFileName(
-            self, "Select Dataset", "",
+            self,
+            "Select Dataset",
+            "",
             "Data Files (*.csv *.json *.pkl);;All Files (*)",
         )
         if filename:
@@ -584,9 +592,11 @@ class DatasetAnalysisWidget(QWidget):
             # Load dataset based on file extension
             if dataset_path.endswith(".csv"):
                 import pandas as pd
+
                 self.current_dataset = pd.read_csv(dataset_path)
             elif dataset_path.endswith(".json"):
                 import json
+
                 with open(dataset_path) as f:
                     self.current_dataset = json.load(f)
             elif dataset_path.endswith(".pkl"):
@@ -605,11 +615,13 @@ class DatasetAnalysisWidget(QWidget):
                     # Use safer loading with restricted unpickler if available
                     try:
                         import joblib
+
                         # joblib is safer for loading ML models and data
                         self.current_dataset = joblib.load(dataset_path)
                     except ImportError:
                         # Fallback to pickle with warning
                         import pickle
+
                         with open(dataset_path, "rb") as f:
                             self.current_dataset = pickle.load(f)  # noqa: S301
                 else:
@@ -648,7 +660,8 @@ class DatasetAnalysisWidget(QWidget):
                     self.distribution_plot.plot(
                         list(distribution.index),
                         list(distribution.values),
-                        pen=None, symbol="o",
+                        pen=None,
+                        symbol="o",
                     )
 
                     # Also create matplotlib plot if available
@@ -748,12 +761,14 @@ class HyperparameterOptimizationWidget(QWidget):
         strategy_layout = QVBoxLayout()
 
         self.strategy_combo = QComboBox()
-        self.strategy_combo.addItems([
-            "Random Search",
-            "Grid Search",
-            "Bayesian Optimization",
-            "Genetic Algorithm",
-        ])
+        self.strategy_combo.addItems(
+            [
+                "Random Search",
+                "Grid Search",
+                "Bayesian Optimization",
+                "Genetic Algorithm",
+            ]
+        )
 
         self.num_trials_spin = QSpinBox()
         self.num_trials_spin.setRange(1, 1000)
@@ -786,9 +801,16 @@ class HyperparameterOptimizationWidget(QWidget):
 
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(6)
-        self.results_table.setHorizontalHeaderLabels([
-            "Trial", "Learning Rate", "Batch Size", "Hidden Layers", "Accuracy", "Loss",
-        ])
+        self.results_table.setHorizontalHeaderLabels(
+            [
+                "Trial",
+                "Learning Rate",
+                "Batch Size",
+                "Hidden Layers",
+                "Accuracy",
+                "Loss",
+            ]
+        )
 
         self.best_params_text = QTextEdit()
         self.best_params_text.setReadOnly(True)
@@ -866,7 +888,7 @@ class HyperparameterOptimizationWidget(QWidget):
 
             # Simulate training (would actually train model)
             accuracy = random.uniform(0.5, 0.95)  # Simulated accuracy  # noqa: S311
-            loss = random.uniform(0.1, 2.0)       # Simulated loss  # noqa: S311
+            loss = random.uniform(0.1, 2.0)  # Simulated loss  # noqa: S311
 
             # Track best parameters
             if accuracy > best_accuracy:
@@ -897,7 +919,9 @@ class HyperparameterOptimizationWidget(QWidget):
         self.results_table.insertRow(row)
 
         self.results_table.setItem(row, 0, QTableWidgetItem(str(result["trial"])))
-        self.results_table.setItem(row, 1, QTableWidgetItem(f"{result['params']['learning_rate']:.6f}"))
+        self.results_table.setItem(
+            row, 1, QTableWidgetItem(f"{result['params']['learning_rate']:.6f}")
+        )
         self.results_table.setItem(row, 2, QTableWidgetItem(str(result["params"]["batch_size"])))
         self.results_table.setItem(row, 3, QTableWidgetItem(str(result["params"]["hidden_layers"])))
         self.results_table.setItem(row, 4, QTableWidgetItem(f"{result['accuracy']:.4f}"))
@@ -1069,6 +1093,7 @@ class EnhancedTrainingInterface(QDialog):
 
     def _apply_button_icons(self):
         """Apply icons to buttons using colored pixmaps."""
+
         # Create simple colored pixmaps as placeholders for icons
         def create_colored_pixmap(color, size=16):
             """Create a solid-colored pixmap for use as a button icon.
@@ -1114,10 +1139,15 @@ class EnhancedTrainingInterface(QDialog):
 
         self.model_name_edit = QLineEdit(self.config.model_name)
         self.model_type_combo = QComboBox()
-        self.model_type_combo.addItems([
-            "vulnerability_classifier", "exploit_detector", "malware_classifier",
-            "license_detector", "packer_identifier",
-        ])
+        self.model_type_combo.addItems(
+            [
+                "vulnerability_classifier",
+                "exploit_detector",
+                "malware_classifier",
+                "license_detector",
+                "packer_identifier",
+            ]
+        )
 
         model_layout.addRow("Model Name:", self.model_name_edit)
         model_layout.addRow("Model Type:", self.model_type_combo)
@@ -1149,8 +1179,7 @@ class EnhancedTrainingInterface(QDialog):
 
         self.validation_split_slider = QSlider(Qt.Horizontal)
         self.validation_split_slider.setRange(10, 50)  # 10% to 50%
-        self.validation_split_slider.setValue(
-            int(self.config.validation_split * 100))
+        self.validation_split_slider.setValue(int(self.config.validation_split * 100))
         self.validation_split_slider.setTickPosition(QSlider.TicksBelow)
         self.validation_split_slider.setTickInterval(5)
 
@@ -1227,13 +1256,10 @@ class EnhancedTrainingInterface(QDialog):
 
         # Create and start training thread
         self.training_thread = TrainingThread(self.config)
-        self.training_thread.progress_updated.connect(
-            self.progress_bar.setValue)
-        self.training_thread.metrics_updated.connect(
-            self.viz_tab.update_metrics)
+        self.training_thread.progress_updated.connect(self.progress_bar.setValue)
+        self.training_thread.metrics_updated.connect(self.viz_tab.update_metrics)
         self.training_thread.log_message.connect(self.update_status)
-        self.training_thread.training_completed.connect(
-            self.training_completed)
+        self.training_thread.training_completed.connect(self.training_completed)
         self.training_thread.error_occurred.connect(self.training_error)
 
         self.training_thread.start()
@@ -1278,11 +1304,11 @@ class EnhancedTrainingInterface(QDialog):
         """Handle training completion."""
         self.reset_ui_state()
         accuracy = results.get("final_accuracy", 0)
-        self.status_label.setText(
-            f"Training completed! Final accuracy: {accuracy:.4f}")
+        self.status_label.setText(f"Training completed! Final accuracy: {accuracy:.4f}")
 
         QMessageBox.information(
-            self, "Training Complete",
+            self,
+            "Training Complete",
             f"Model training completed successfully!\n\nFinal accuracy: {accuracy:.4f}",
         )
 
@@ -1291,7 +1317,8 @@ class EnhancedTrainingInterface(QDialog):
         self.reset_ui_state()
         self.status_label.setText(f"Training error: {error_message}")
         QMessageBox.critical(
-            self, "Training Error", f"An error occurred during training:\n\n{error_message}")
+            self, "Training Error", f"An error occurred during training:\n\n{error_message}"
+        )
 
     def reset_ui_state(self):
         """Reset UI to initial state."""
@@ -1323,13 +1350,11 @@ class EnhancedTrainingInterface(QDialog):
     def validate_config(self) -> bool:
         """Validate the training configuration."""
         if not self.config.model_name.strip():
-            QMessageBox.warning(self, "Invalid Configuration",
-                                "Please enter a model name.")
+            QMessageBox.warning(self, "Invalid Configuration", "Please enter a model name.")
             return False
 
         if self.config.epochs <= 0:
-            QMessageBox.warning(self, "Invalid Configuration",
-                                "Epochs must be greater than 0.")
+            QMessageBox.warning(self, "Invalid Configuration", "Epochs must be greater than 0.")
             return False
 
         return True
@@ -1341,7 +1366,9 @@ class EnhancedTrainingInterface(QDialog):
     def save_configuration(self):
         """Save current configuration to file."""
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Configuration", "training_config.json",
+            self,
+            "Save Configuration",
+            "training_config.json",
             "JSON Files (*.json);;All Files (*)",
         )
 
@@ -1351,17 +1378,18 @@ class EnhancedTrainingInterface(QDialog):
                 with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(asdict(self.config), f, indent=2)
                 QMessageBox.information(
-                    self, "Configuration Saved", f"Configuration saved to {file_path}")
+                    self, "Configuration Saved", f"Configuration saved to {file_path}"
+                )
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error(
-                    "Error in enhanced_training_interface: %s", e)
-                QMessageBox.critical(self, "Save Error",
-                                     f"Error saving configuration: {e}")
+                logger.error("Error in enhanced_training_interface: %s", e)
+                QMessageBox.critical(self, "Save Error", f"Error saving configuration: {e}")
 
     def load_configuration(self):
         """Load configuration from file."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Load Configuration", "",
+            self,
+            "Load Configuration",
+            "",
             "JSON Files (*.json);;All Files (*)",
         )
 
@@ -1379,11 +1407,11 @@ class EnhancedTrainingInterface(QDialog):
                 self.update_ui_from_config()
 
                 QMessageBox.information(
-                    self, "Configuration Loaded", f"Configuration loaded from {file_path}")
+                    self, "Configuration Loaded", f"Configuration loaded from {file_path}"
+                )
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in enhanced_training_interface: %s", e)
-                QMessageBox.critical(self, "Load Error",
-                                     f"Error loading configuration: {e}")
+                QMessageBox.critical(self, "Load Error", f"Error loading configuration: {e}")
 
     def update_ui_from_config(self):
         """Update UI from configuration values."""
@@ -1405,7 +1433,6 @@ class EnhancedTrainingInterface(QDialog):
 def create_enhanced_training_interface(parent=None) -> "EnhancedTrainingInterface":
     """Factory function to create the enhanced training interface."""
     if not PYQT6_AVAILABLE:
-        raise ImportError(
-            "PyQt6 is required for the enhanced training interface")
+        raise ImportError("PyQt6 is required for the enhanced training interface")
 
     return EnhancedTrainingInterface(parent)

@@ -1,4 +1,5 @@
 """Docker container management for isolated analysis environments."""
+
 import os
 import subprocess
 import time
@@ -36,8 +37,6 @@ Docker Container Management for Distributed Analysis.
 This module provides comprehensive Docker container operations for distributed binary analysis
 with container lifecycle management, state snapshots, and artifact collection.
 """
-
-
 
 
 class DockerContainer(BaseSnapshotHandler):
@@ -90,6 +89,7 @@ class DockerContainer(BaseSnapshotHandler):
         """
         try:
             from ...utils.system.subprocess_utils import run_subprocess_check
+
             result = run_subprocess_check(
                 ["docker", "--version"],
                 timeout=10,
@@ -103,11 +103,8 @@ class DockerContainer(BaseSnapshotHandler):
 
             # Check if Docker daemon is running
             result = subprocess.run(
-                ["docker", "info"],
-                capture_output=True,
-                text=True,
-                timeout=10
-            , check=False)
+                ["docker", "info"], capture_output=True, text=True, timeout=10, check=False
+            )
 
             if result.returncode != 0:
                 raise RuntimeError("Docker daemon not running")
@@ -140,8 +137,9 @@ class DockerContainer(BaseSnapshotHandler):
                 ["docker", "pull", self.image],
                 capture_output=True,
                 text=True,
-                timeout=300  # 5 minute timeout for image pulls
-            , check=False)
+                timeout=300,  # 5 minute timeout for image pulls
+                check=False,
+            )
 
             if result.returncode != 0:
                 self.logger.warning("Failed to pull image (may already exist): %s", result.stderr)
@@ -151,10 +149,13 @@ class DockerContainer(BaseSnapshotHandler):
 
             # Build docker run command
             docker_cmd = [
-                "docker", "run",
+                "docker",
+                "run",
                 "-d",  # Detached mode
-                "--name", self.container_name,
-                "--network", network_mode,
+                "--name",
+                self.container_name,
+                "--network",
+                network_mode,
             ]
 
             # Add privileged mode if requested
@@ -172,6 +173,7 @@ class DockerContainer(BaseSnapshotHandler):
             # Start the container
             self.logger.info("Starting Docker container: %s", self.container_name)
             from ...utils.system.subprocess_utils import run_subprocess_check
+
             result = run_subprocess_check(docker_cmd, timeout=60)
 
             if result.returncode != 0:
@@ -219,7 +221,9 @@ class DockerContainer(BaseSnapshotHandler):
             stop_cmd.append(self.container_id)
 
             self.logger.info("Stopping container %s", self.container_id)
-            result = subprocess.run(stop_cmd, capture_output=True, text=True, timeout=30, check=False)
+            result = subprocess.run(
+                stop_cmd, capture_output=True, text=True, timeout=30, check=False
+            )
 
             if result.returncode != 0:
                 self.logger.warning("Failed to stop container gracefully: %s", result.stderr)
@@ -233,8 +237,9 @@ class DockerContainer(BaseSnapshotHandler):
                 ["docker", "rm", self.container_id],
                 capture_output=True,
                 text=True,
-                timeout=30
-            , check=False)
+                timeout=30,
+                check=False,
+            )
 
             if result.returncode != 0:
                 self.logger.warning("Failed to remove container: %s", result.stderr)
@@ -266,8 +271,9 @@ class DockerContainer(BaseSnapshotHandler):
                 ["docker", "inspect", "-f", "{{.State.Running}}", self.container_id],
                 capture_output=True,
                 text=True,
-                timeout=10
-            , check=False)
+                timeout=10,
+                check=False,
+            )
 
             return result.returncode == 0 and result.stdout.strip() == "true"
 
@@ -275,7 +281,9 @@ class DockerContainer(BaseSnapshotHandler):
             self.logger.error("Error in docker_container: %s", e)
             return False
 
-    def execute_command(self, command: str, timeout: int = 60, working_dir: str | None = None) -> str:
+    def execute_command(
+        self, command: str, timeout: int = 60, working_dir: str | None = None
+    ) -> str:
         """Execute a command in the Docker container.
 
         Args:
@@ -304,11 +312,8 @@ class DockerContainer(BaseSnapshotHandler):
             docker_cmd.extend([self.container_id, "bash", "-c", command])
 
             result = subprocess.run(
-                docker_cmd,
-                capture_output=True,
-                text=True,
-                timeout=timeout
-            , check=False)
+                docker_cmd, capture_output=True, text=True, timeout=timeout, check=False
+            )
 
             if result.returncode != 0:
                 self.logger.warning("Command exited with status %s", result.returncode)
@@ -360,15 +365,18 @@ class DockerContainer(BaseSnapshotHandler):
                 ["docker", "cp", source_path, f"{self.container_id}:{dest_path}"],
                 capture_output=True,
                 text=True,
-                timeout=60
-            , check=False)
+                timeout=60,
+                check=False,
+            )
 
             if result.returncode != 0:
                 self.logger.error("Failed to copy file: %s", result.stderr)
                 return False
 
             # Verify file was copied
-            verify_result = self.execute_command(f"test -f {dest_path} && echo 'SUCCESS' || echo 'FAILED'")
+            verify_result = self.execute_command(
+                f"test -f {dest_path} && echo 'SUCCESS' || echo 'FAILED'"
+            )
             if "SUCCESS" not in verify_result:
                 self.logger.error("File copy verification failed: %s", verify_result)
                 return False
@@ -452,7 +460,9 @@ class DockerContainer(BaseSnapshotHandler):
         # Use base class functionality to eliminate duplicate code
         return self.compare_snapshots_base(snapshot1, snapshot2)
 
-    def _perform_platform_specific_comparison(self, s1: dict[str, Any], s2: dict[str, Any]) -> dict[str, Any]:
+    def _perform_platform_specific_comparison(
+        self, s1: dict[str, Any], s2: dict[str, Any]
+    ) -> dict[str, Any]:
         """Perform Docker-specific snapshot comparison logic.
 
         Args:
@@ -517,9 +527,16 @@ class DockerContainer(BaseSnapshotHandler):
                 "closed_connections": closed_connections,
                 "new_env_vars": new_env,
                 "removed_env_vars": removed_env,
-                "total_changes": (len(new_files) + len(deleted_files) + len(new_processes) +
-                                len(ended_processes) + len(new_connections) + len(closed_connections) +
-                                len(new_env) + len(removed_env)),
+                "total_changes": (
+                    len(new_files)
+                    + len(deleted_files)
+                    + len(new_processes)
+                    + len(ended_processes)
+                    + len(new_connections)
+                    + len(closed_connections)
+                    + len(new_env)
+                    + len(removed_env)
+                ),
             }
 
         except Exception as e:
@@ -613,18 +630,22 @@ class DockerContainer(BaseSnapshotHandler):
                     ["docker", "inspect", self.container_id],
                     capture_output=True,
                     text=True,
-                    timeout=10
-                , check=False)
+                    timeout=10,
+                    check=False,
+                )
 
                 if inspect_result.returncode == 0:
                     import json
+
                     container_info = json.loads(inspect_result.stdout)[0]
-                    status.update({
-                        "start_time": container_info["State"]["StartedAt"],
-                        "status_detail": container_info["State"]["Status"],
-                        "network_mode": container_info["HostConfig"]["NetworkMode"],
-                        "privileged": container_info["HostConfig"]["Privileged"],
-                    })
+                    status.update(
+                        {
+                            "start_time": container_info["State"]["StartedAt"],
+                            "status_detail": container_info["State"]["Status"],
+                            "network_mode": container_info["HostConfig"]["NetworkMode"],
+                            "privileged": container_info["HostConfig"]["Privileged"],
+                        }
+                    )
 
             except (OSError, ValueError, RuntimeError) as e:
                 self.logger.warning("Failed to get detailed container status: %s", e)
@@ -660,7 +681,9 @@ class DockerContainer(BaseSnapshotHandler):
         if exc_type:
             self.logger.error(f"Docker container exiting due to {exc_type.__name__}: {exc_val}")
             if exc_tb:
-                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                self.logger.debug(
+                    f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}"
+                )
         self.cleanup()
 
 

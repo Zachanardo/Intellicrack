@@ -120,7 +120,10 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
 
         # Create main tabbed dialog layout
         layout, self.tab_widget = UILayoutHelpers.create_tabbed_dialog_layout(
-            self, "Advanced Payload Generator", (1000, 700), is_modal=False,
+            self,
+            "Advanced Payload Generator",
+            (1000, 700),
+            is_modal=False,
         )
 
         # Create and add tabs
@@ -153,8 +156,12 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         """Create template selection tab."""
         # Use base class method to create template widget
         template_categories = [
-            "Shell", "Persistence", "Privilege Escalation",
-            "Lateral Movement", "Steganography", "Anti-Analysis",
+            "Shell",
+            "Persistence",
+            "Privilege Escalation",
+            "Lateral Movement",
+            "Steganography",
+            "Anti-Analysis",
         ]
 
         # Get initial templates for first category
@@ -181,10 +188,16 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         type_layout.addWidget(QLabel("Payload Type:"))
 
         self.payload_type_combo = QComboBox()
-        self.payload_type_combo.addItems([
-            "Reverse Shell", "Bind Shell", "Meterpreter",
-            "Custom Shellcode", "DLL Injection", "Process Hollowing",
-        ])
+        self.payload_type_combo.addItems(
+            [
+                "Reverse Shell",
+                "Bind Shell",
+                "Meterpreter",
+                "Custom Shellcode",
+                "DLL Injection",
+                "Process Hollowing",
+            ]
+        )
         type_layout.addWidget(self.payload_type_combo)
 
         type_layout.addWidget(QLabel("Architecture:"))
@@ -378,10 +391,16 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         format_layout.addWidget(QLabel("Output Format:"))
 
         self.output_format_combo = QComboBox()
-        self.output_format_combo.addItems([
-            "Raw Binary", "C Array", "Python String",
-            "PowerShell", "Base64", "Hex String",
-        ])
+        self.output_format_combo.addItems(
+            [
+                "Raw Binary",
+                "C Array",
+                "Python String",
+                "PowerShell",
+                "Base64",
+                "Hex String",
+            ]
+        )
         self.output_format_combo.currentTextChanged.connect(self.update_output_display)
         format_layout.addWidget(self.output_format_combo)
 
@@ -443,7 +462,11 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
                 template_name = items[0].text()
 
             # Determine category based on current selection
-            category = self.category_combo.currentText().lower().replace(" ", "_") if hasattr(self, "category_combo") else "shell"
+            category = (
+                self.category_combo.currentText().lower().replace(" ", "_")
+                if hasattr(self, "category_combo")
+                else "shell"
+            )
 
             # Get template details
             arch = Architecture.X86  # Default for getting template info
@@ -625,6 +648,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
 
             # Update payload info
             import hashlib
+
             payload_bytes = result.get("payload", b"")
 
             self.size_label.setText(f"Size: {len(payload_bytes)} bytes")
@@ -688,6 +712,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
 
             elif format_type == "Base64":
                 import base64
+
                 b64 = base64.b64encode(payload_bytes).decode("utf-8")
                 self.output_display.append(b64)
 
@@ -702,7 +727,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         """Create hex dump of data."""
         lines = []
         for i in range(0, len(data), 16):
-            chunk = data[i:i+16]
+            chunk = data[i : i + 16]
             hex_part = " ".join(f"{b:02x}" for b in chunk)
             hex_part = hex_part.ljust(48)  # 16 * 2 + 15 spaces
 
@@ -717,7 +742,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         lines = ["unsigned char payload[] = {"]
 
         for i in range(0, len(data), 16):
-            chunk = data[i:i+16]
+            chunk = data[i : i + 16]
             hex_bytes = ", ".join(f"0x{b:02x}" for b in chunk)
             if i + 16 < len(data):
                 hex_bytes += ","
@@ -733,7 +758,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         lines = ["payload = ("]
 
         for i in range(0, len(data), 16):
-            chunk = data[i:i+16]
+            chunk = data[i : i + 16]
             escaped = "".join(f"\\x{b:02x}" for b in chunk)
             lines.append(f'    "{escaped}"')
 
@@ -746,7 +771,7 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
         lines = ["[Byte[]] $payload = @("]
 
         for i in range(0, len(data), 16):
-            chunk = data[i:i+16]
+            chunk = data[i : i + 16]
             hex_bytes = ", ".join(f"0x{b:02x}" for b in chunk)
             if i + 16 < len(data):
                 hex_bytes += ","
@@ -756,7 +781,6 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
 
         return "\n".join(lines)
 
-
     def save_payload(self):
         """Save generated payload to file."""
         if not self.current_payload:
@@ -764,7 +788,9 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
 
         try:
             filename, _ = QFileDialog.getSaveFileName(
-                self, "Save Payload", "",
+                self,
+                "Save Payload",
+                "",
                 "Binary Files (*.bin);;Executable Files (*.exe);;DLL Files (*.dll);;All Files (*.*)",
             )
 
@@ -786,7 +812,8 @@ class PayloadGeneratorDialog(BaseTemplateDialog):
             return
 
         QMessageBox.information(
-            self, "Test Payload",
+            self,
+            "Test Payload",
             "Payload testing should be performed in an isolated environment.\n\n"
             "Consider using:\n"
             "- Virtual machine\n"

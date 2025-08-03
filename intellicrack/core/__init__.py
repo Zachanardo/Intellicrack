@@ -25,6 +25,7 @@ from intellicrack.logger import logger
 # Import security enforcement early to apply patches
 try:
     from . import security_enforcement
+
     SECURITY_ENFORCEMENT_AVAILABLE = True
 except ImportError as e:
     logging.getLogger(__name__).warning(f"Security enforcement not available: {e}")
@@ -40,6 +41,7 @@ try:
         exploitation,
         vulnerability_research,
     )
+
     EXPLOITATION_MODULES_AVAILABLE = True
 except ImportError as e:
     # Exploitation modules are optional - not critical for basic functionality
@@ -53,6 +55,7 @@ FRIDA_MODULES_AVAILABLE = False
 FridaManager = None
 FRIDA_PRESETS = None
 FridaBypassWizard = None
+
 
 def get_frida_manager():
     """Get FridaManager with lazy import to avoid circular dependencies.
@@ -80,11 +83,13 @@ def get_frida_manager():
     if FridaManager is None:
         try:
             from .frida_manager import FridaManager as _FridaManager
+
             FridaManager = _FridaManager
             FRIDA_MODULES_AVAILABLE = True
         except ImportError as e:
             logging.getLogger(__name__).warning(f"FridaManager not available: {e}")
     return FridaManager
+
 
 def get_frida_presets():
     """Get FRIDA_PRESETS with lazy import to avoid circular dependencies.
@@ -110,10 +115,12 @@ def get_frida_presets():
     if FRIDA_PRESETS is None:
         try:
             from .frida_presets import FRIDA_PRESETS as _PRESETS
+
             FRIDA_PRESETS = _PRESETS
         except ImportError as e:
             logger.error("Import error in __init__: %s", e)
     return FRIDA_PRESETS
+
 
 def get_frida_bypass_wizard():
     """Get FridaBypassWizard with lazy import to avoid circular dependencies.
@@ -140,10 +147,12 @@ def get_frida_bypass_wizard():
     if FridaBypassWizard is None:
         try:
             from .frida_bypass_wizard import FridaBypassWizard as _Wizard
+
             FridaBypassWizard = _Wizard
         except ImportError as e:
             logger.error("Import error in __init__: %s", e)
     return FridaBypassWizard
+
 
 __all__ = [
     "EXPLOITATION_MODULES_AVAILABLE",

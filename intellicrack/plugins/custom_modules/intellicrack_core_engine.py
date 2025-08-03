@@ -356,7 +356,9 @@ class LoggingManager:
             },
         )
 
-    def log_plugin_operation(self, plugin_name: str, operation: str, status: str, details: dict[str, Any] = None):
+    def log_plugin_operation(
+        self, plugin_name: str, operation: str, status: str, details: dict[str, Any] = None
+    ):
         """Log plugin operation"""
         logger = self.get_logger("plugins")
         logger.info(
@@ -370,7 +372,14 @@ class LoggingManager:
             },
         )
 
-    def log_workflow_step(self, workflow_id: str, step_id: str, status: str, duration: float = None, result: Any = None):
+    def log_workflow_step(
+        self,
+        workflow_id: str,
+        step_id: str,
+        status: str,
+        duration: float = None,
+        result: Any = None,
+    ):
         """Log workflow step execution"""
         logger = self.get_logger("workflows")
         logger.info(
@@ -450,8 +459,14 @@ class ConfigurationManager:
                 "logging": {
                     "type": "object",
                     "properties": {
-                        "console_level": {"type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR"]},
-                        "file_level": {"type": "string", "enum": ["DEBUG", "INFO", "WARNING", "ERROR"]},
+                        "console_level": {
+                            "type": "string",
+                            "enum": ["DEBUG", "INFO", "WARNING", "ERROR"],
+                        },
+                        "file_level": {
+                            "type": "string",
+                            "enum": ["DEBUG", "INFO", "WARNING", "ERROR"],
+                        },
                         "log_directory": {"type": "string"},
                         "max_log_size": {"type": "integer", "minimum": 1024},
                         "backup_count": {"type": "integer", "minimum": 1},
@@ -604,6 +619,7 @@ class ConfigurationManager:
 
     def _start_file_watcher(self):
         """Start file watcher for hot reloading"""
+
         def watch_file():
             while True:
                 try:
@@ -655,6 +671,7 @@ class ConfigurationManager:
         """Remove configuration change watcher"""
         if callback in self.watchers:
             self.watchers.remove(callback)
+
 
 class AbstractPlugin(ABC):
     """Abstract base class for all plugins"""
@@ -832,11 +849,14 @@ class GhidraPlugin(AbstractPlugin):
             # Execute Ghidra script
             result = await self._execute_ghidra_script(binary_path, operation, parameters)
 
-            self.emit_event("operation_completed", {
-                "operation": operation,
-                "result": result,
-                "parameters": parameters,
-            })
+            self.emit_event(
+                "operation_completed",
+                {
+                    "operation": operation,
+                    "result": result,
+                    "parameters": parameters,
+                },
+            )
 
             return result
 
@@ -845,15 +865,20 @@ class GhidraPlugin(AbstractPlugin):
             if self.logger:
                 self.logger.error(f"Ghidra operation failed: {e}")
 
-            self.emit_event("operation_failed", {
-                "operation": operation,
-                "error": str(e),
-                "parameters": parameters,
-            })
+            self.emit_event(
+                "operation_failed",
+                {
+                    "operation": operation,
+                    "error": str(e),
+                    "parameters": parameters,
+                },
+            )
 
             raise
 
-    async def _execute_ghidra_script(self, binary_path: str, operation: str, parameters: dict[str, Any]) -> dict[str, Any]:
+    async def _execute_ghidra_script(
+        self, binary_path: str, operation: str, parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """Execute Ghidra script in subprocess"""
         ghidra_path = self.config.get("ghidra_path")
         java_path = self.config.get("java_path", "java")
@@ -878,23 +903,29 @@ class GhidraPlugin(AbstractPlugin):
 
         # Use queue for managing concurrent operations
         operation_queue = queue.Queue()
-        operation_queue.put({
-            "binary_path": binary_path,
-            "binary_id": binary_id,
-            "binary_size": binary_stats.st_size,
-            "operation": operation,
-            "timestamp": time.time(),
-        })
+        operation_queue.put(
+            {
+                "binary_path": binary_path,
+                "binary_id": binary_id,
+                "binary_size": binary_stats.st_size,
+                "operation": operation,
+                "timestamp": time.time(),
+            }
+        )
 
         # Prepare Ghidra command
         cmd = [
             java_path,
-            "-jar", f"{ghidra_path}/support/analyzeHeadless.jar",
+            "-jar",
+            f"{ghidra_path}/support/analyzeHeadless.jar",
             self.ghidra_project_path or tempfile.mkdtemp(),
             f"project_{binary_id}",
-            "-import", binary_path,
-            "-postScript", str(self.script_path),
-            "-scriptPath", str(self.script_path.parent),
+            "-import",
+            binary_path,
+            "-postScript",
+            str(self.script_path),
+            "-scriptPath",
+            str(self.script_path.parent),
         ]
 
         # Add operation-specific parameters
@@ -957,11 +988,13 @@ class GhidraPlugin(AbstractPlugin):
                 if "FUNCTION:" in line:
                     parts = line.split("FUNCTION:")[1].strip().split()
                     if len(parts) >= 2:
-                        functions.append({
-                            "name": parts[0],
-                            "address": parts[1],
-                            "size": parts[2] if len(parts) > 2 else "unknown",
-                        })
+                        functions.append(
+                            {
+                                "name": parts[0],
+                                "address": parts[1],
+                                "size": parts[2] if len(parts) > 2 else "unknown",
+                            }
+                        )
             result["functions"] = functions
 
         elif operation == "find_strings":
@@ -1113,15 +1146,20 @@ class FridaPlugin(AbstractPlugin):
             if self.logger:
                 self.logger.error(f"Frida operation failed: {e}")
 
-            self.emit_event("operation_failed", {
-                "operation": operation,
-                "error": str(e),
-                "parameters": parameters,
-            })
+            self.emit_event(
+                "operation_failed",
+                {
+                    "operation": operation,
+                    "error": str(e),
+                    "parameters": parameters,
+                },
+            )
 
             raise
 
-    async def _attach_to_process(self, target: str | int, parameters: dict[str, Any]) -> dict[str, Any]:
+    async def _attach_to_process(
+        self, target: str | int, parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """Attach to target process"""
         import frida
 
@@ -1167,11 +1205,14 @@ class FridaPlugin(AbstractPlugin):
             self.logger.debug(f"Frida message: {message}")
 
         # Emit event for message
-        self.emit_event("frida_message", {
-            "message": message,
-            "data": data,
-            "target": self.target_process,
-        })
+        self.emit_event(
+            "frida_message",
+            {
+                "message": message,
+                "data": data,
+                "target": self.target_process,
+            },
+        )
 
     async def _hook_functions(self, parameters: dict[str, Any]) -> dict[str, Any]:
         """Hook functions in target process"""
@@ -1184,17 +1225,21 @@ class FridaPlugin(AbstractPlugin):
             try:
                 # Call Frida script function
                 result = self.frida_script.exports.hook_function(func)
-                results.append({
-                    "function": func,
-                    "status": "hooked",
-                    "result": result,
-                })
+                results.append(
+                    {
+                        "function": func,
+                        "status": "hooked",
+                        "result": result,
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "function": func,
-                    "status": "failed",
-                    "error": str(e),
-                })
+                results.append(
+                    {
+                        "function": func,
+                        "status": "failed",
+                        "error": str(e),
+                    }
+                )
 
         return {"hooked_functions": results}
 
@@ -1241,17 +1286,21 @@ class FridaPlugin(AbstractPlugin):
         for protection in protections:
             try:
                 result = self.frida_script.exports.bypass_protection(protection)
-                results.append({
-                    "protection": protection,
-                    "status": "bypassed",
-                    "result": result,
-                })
+                results.append(
+                    {
+                        "protection": protection,
+                        "status": "bypassed",
+                        "result": result,
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "protection": protection,
-                    "status": "failed",
-                    "error": str(e),
-                })
+                results.append(
+                    {
+                        "protection": protection,
+                        "status": "failed",
+                        "error": str(e),
+                    }
+                )
 
         return {"bypass_results": results}
 
@@ -1402,8 +1451,14 @@ class PythonPlugin(AbstractPlugin):
 
         # Check for standard operations
         standard_ops = [
-            "analyze", "process", "execute", "run",
-            "bypass", "crack", "extract", "detect",
+            "analyze",
+            "process",
+            "execute",
+            "run",
+            "bypass",
+            "crack",
+            "extract",
+            "detect",
         ]
 
         for op in standard_ops:
@@ -1441,11 +1496,14 @@ class PythonPlugin(AbstractPlugin):
             else:
                 result = method(**parameters)
 
-            self.emit_event("operation_completed", {
-                "operation": operation,
-                "result": result,
-                "parameters": parameters,
-            })
+            self.emit_event(
+                "operation_completed",
+                {
+                    "operation": operation,
+                    "result": result,
+                    "parameters": parameters,
+                },
+            )
 
             return result
 
@@ -1454,11 +1512,14 @@ class PythonPlugin(AbstractPlugin):
             if self.logger:
                 self.logger.error(f"Python plugin operation failed: {e}")
 
-            self.emit_event("operation_failed", {
-                "operation": operation,
-                "error": str(e),
-                "parameters": parameters,
-            })
+            self.emit_event(
+                "operation_failed",
+                {
+                    "operation": operation,
+                    "error": str(e),
+                    "parameters": parameters,
+                },
+            )
 
             raise
 
@@ -1520,7 +1581,9 @@ class EventBus:
             self.subscribers[event_type] = []
 
         self.subscribers[event_type].append(handler)
-        self.stats["subscribers_count"] = sum(len(handlers) for handlers in self.subscribers.values())
+        self.stats["subscribers_count"] = sum(
+            len(handlers) for handlers in self.subscribers.values()
+        )
 
         if self.logger:
             self.logger.debug(f"New subscriber for event type: {event_type}")
@@ -1533,7 +1596,9 @@ class EventBus:
             if not self.subscribers[event_type]:
                 del self.subscribers[event_type]
 
-            self.stats["subscribers_count"] = sum(len(handlers) for handlers in self.subscribers.values())
+            self.stats["subscribers_count"] = sum(
+                len(handlers) for handlers in self.subscribers.values()
+            )
 
             if self.logger:
                 self.logger.debug(f"Unsubscribed from event type: {event_type}")
@@ -1641,7 +1706,9 @@ class EventBus:
                     for i, result in enumerate(results):
                         if isinstance(result, Exception):
                             if self.logger:
-                                self.logger.error(f"Handler {i} ({handler_types[i].__name__}) failed for event {event.event_type}: {result}")
+                                self.logger.error(
+                                    f"Handler {i} ({handler_types[i].__name__}) failed for event {event.event_type}: {result}"
+                                )
                 except asyncio.TimeoutError:
                     if self.logger:
                         self.logger.warning(f"Handler execution timed out after {handler_timeout}")
@@ -1660,7 +1727,7 @@ class EventBus:
 
         # Limit history size
         if len(self.event_history) > self.max_history_size:
-            self.event_history = self.event_history[-self.max_history_size//2:]
+            self.event_history = self.event_history[-self.max_history_size // 2 :]
 
     def get_stats(self) -> dict[str, Any]:
         """Get event bus statistics"""
@@ -1674,6 +1741,8 @@ class EventBus:
     def get_recent_events(self, count: int = 100) -> list[Event]:
         """Get recent events from history"""
         return self.event_history[-count:]
+
+
 class PluginManager:
     """Plugin discovery, loading, and lifecycle management"""
 
@@ -1857,15 +1926,17 @@ class PluginManager:
                 line = line.strip()
                 if line.startswith("//") or line.startswith("*"):
                     if "description:" in line.lower():
-                        metadata["description"] = line.split("description:")[-1].strip().strip('"\'')
+                        metadata["description"] = (
+                            line.split("description:")[-1].strip().strip("\"'")
+                        )
                     elif "author:" in line.lower():
-                        metadata["author"] = line.split("author:")[-1].strip().strip('"\'')
+                        metadata["author"] = line.split("author:")[-1].strip().strip("\"'")
                     elif "version:" in line.lower():
-                        metadata["version"] = line.split("version:")[-1].strip().strip('"\'')
+                        metadata["version"] = line.split("version:")[-1].strip().strip("\"'")
                 elif "name:" in line and ("=" in line or ":" in line):
                     # Try to extract from object property
                     if '"' in line or "'" in line:
-                        name_match = line.split("name:")[-1].strip().strip(",").strip('"\'')
+                        name_match = line.split("name:")[-1].strip().strip(",").strip("\"'")
                         if name_match:
                             metadata["name"] = name_match
 
@@ -1979,11 +2050,13 @@ class PluginManager:
             self.logger.info(f"Plugin {plugin_name} loaded successfully")
 
             # Emit event
-            await self.event_bus.emit(Event(
-                event_type="plugin_loaded",
-                source="plugin_manager",
-                data={"plugin_name": plugin_name, "metadata": metadata.to_dict()},
-            ))
+            await self.event_bus.emit(
+                Event(
+                    event_type="plugin_loaded",
+                    source="plugin_manager",
+                    data={"plugin_name": plugin_name, "metadata": metadata.to_dict()},
+                )
+            )
 
             return True
 
@@ -1992,7 +2065,9 @@ class PluginManager:
             self.logger.error(f"Failed to load plugin {plugin_name}: {e}")
             return False
 
-    async def _create_plugin_instance(self, plugin_name: str, metadata: PluginMetadata) -> AbstractPlugin | None:
+    async def _create_plugin_instance(
+        self, plugin_name: str, metadata: PluginMetadata
+    ) -> AbstractPlugin | None:
         """Create plugin instance based on type"""
         try:
             # Find plugin file
@@ -2097,11 +2172,13 @@ class PluginManager:
                 self.logger.info(f"Plugin {plugin_name} activated")
 
                 # Emit event
-                await self.event_bus.emit(Event(
-                    event_type="plugin_activated",
-                    source="plugin_manager",
-                    data={"plugin_name": plugin_name},
-                ))
+                await self.event_bus.emit(
+                    Event(
+                        event_type="plugin_activated",
+                        source="plugin_manager",
+                        data={"plugin_name": plugin_name},
+                    )
+                )
 
                 return True
             self.logger.error(f"Plugin {plugin_name} activation failed")
@@ -2127,11 +2204,13 @@ class PluginManager:
                 self.logger.info(f"Plugin {plugin_name} deactivated")
 
                 # Emit event
-                await self.event_bus.emit(Event(
-                    event_type="plugin_deactivated",
-                    source="plugin_manager",
-                    data={"plugin_name": plugin_name},
-                ))
+                await self.event_bus.emit(
+                    Event(
+                        event_type="plugin_deactivated",
+                        source="plugin_manager",
+                        data={"plugin_name": plugin_name},
+                    )
+                )
 
                 return True
             self.logger.error(f"Plugin {plugin_name} deactivation failed")
@@ -2162,11 +2241,13 @@ class PluginManager:
             self.logger.info(f"Plugin {plugin_name} unloaded")
 
             # Emit event
-            await self.event_bus.emit(Event(
-                event_type="plugin_unloaded",
-                source="plugin_manager",
-                data={"plugin_name": plugin_name},
-            ))
+            await self.event_bus.emit(
+                Event(
+                    event_type="plugin_unloaded",
+                    source="plugin_manager",
+                    data={"plugin_name": plugin_name},
+                )
+            )
 
             return True
 
@@ -2204,20 +2285,36 @@ class PluginManager:
 
     def get_plugin_stats(self) -> dict[str, Any]:
         """Get plugin statistics"""
-        active_plugins = [name for name, plugin in self.plugins.items()
-                         if plugin.status == PluginStatus.ACTIVE]
+        active_plugins = [
+            name for name, plugin in self.plugins.items() if plugin.status == PluginStatus.ACTIVE
+        ]
 
         return {
             **self.stats,
             "total_discovered": len(self.plugin_metadata),
             "active_plugins": active_plugins,
             "plugin_types": {
-                "ghidra": len([p for p in self.plugin_metadata.values()
-                             if p.component_type == ComponentType.GHIDRA_SCRIPT]),
-                "frida": len([p for p in self.plugin_metadata.values()
-                            if p.component_type == ComponentType.FRIDA_SCRIPT]),
-                "python": len([p for p in self.plugin_metadata.values()
-                              if p.component_type == ComponentType.CUSTOM_MODULE]),
+                "ghidra": len(
+                    [
+                        p
+                        for p in self.plugin_metadata.values()
+                        if p.component_type == ComponentType.GHIDRA_SCRIPT
+                    ]
+                ),
+                "frida": len(
+                    [
+                        p
+                        for p in self.plugin_metadata.values()
+                        if p.component_type == ComponentType.FRIDA_SCRIPT
+                    ]
+                ),
+                "python": len(
+                    [
+                        p
+                        for p in self.plugin_metadata.values()
+                        if p.component_type == ComponentType.CUSTOM_MODULE
+                    ]
+                ),
             },
         }
 
@@ -2244,86 +2341,90 @@ class WorkflowEngine:
     def _load_default_workflows(self):
         """Load default workflow templates"""
         # Binary Analysis Workflow
-        self.register_workflow(WorkflowDefinition(
-            workflow_id="binary_analysis_full",
-            name="Complete Binary Analysis",
-            description="Full binary analysis using all available tools",
-            steps=[
-                WorkflowStep(
-                    step_id="detect_protection",
-                    name="Detect Protection",
-                    plugin_name="ghidra_ModernPackerDetector",
-                    method="analyze_binary",
-                    dependencies=[],
-                ),
-                WorkflowStep(
-                    step_id="extract_metadata",
-                    name="Extract Metadata",
-                    plugin_name="python_neural_network_detector",
-                    method="analyze",
-                    dependencies=["detect_protection"],
-                ),
-                WorkflowStep(
-                    step_id="static_analysis",
-                    name="Static Analysis",
-                    plugin_name="ghidra_LicenseValidationAnalyzer",
-                    method="analyze_binary",
-                    dependencies=["extract_metadata"],
-                ),
-                WorkflowStep(
-                    step_id="dynamic_analysis",
-                    name="Dynamic Analysis",
-                    plugin_name="frida_wasm_protection_bypass",
-                    method="attach_process",
-                    dependencies=["static_analysis"],
-                    condition="static_analysis.has_dynamic_protection",
-                ),
-            ],
-            parallel_execution=False,
-            timeout=1800,
-            error_handling="continue",
-        ))
+        self.register_workflow(
+            WorkflowDefinition(
+                workflow_id="binary_analysis_full",
+                name="Complete Binary Analysis",
+                description="Full binary analysis using all available tools",
+                steps=[
+                    WorkflowStep(
+                        step_id="detect_protection",
+                        name="Detect Protection",
+                        plugin_name="ghidra_ModernPackerDetector",
+                        method="analyze_binary",
+                        dependencies=[],
+                    ),
+                    WorkflowStep(
+                        step_id="extract_metadata",
+                        name="Extract Metadata",
+                        plugin_name="python_neural_network_detector",
+                        method="analyze",
+                        dependencies=["detect_protection"],
+                    ),
+                    WorkflowStep(
+                        step_id="static_analysis",
+                        name="Static Analysis",
+                        plugin_name="ghidra_LicenseValidationAnalyzer",
+                        method="analyze_binary",
+                        dependencies=["extract_metadata"],
+                    ),
+                    WorkflowStep(
+                        step_id="dynamic_analysis",
+                        name="Dynamic Analysis",
+                        plugin_name="frida_wasm_protection_bypass",
+                        method="attach_process",
+                        dependencies=["static_analysis"],
+                        condition="static_analysis.has_dynamic_protection",
+                    ),
+                ],
+                parallel_execution=False,
+                timeout=1800,
+                error_handling="continue",
+            )
+        )
 
         # License Bypass Workflow
-        self.register_workflow(WorkflowDefinition(
-            workflow_id="license_bypass_comprehensive",
-            name="Comprehensive License Bypass",
-            description="Multi-layered license bypass using all bypass components",
-            steps=[
-                WorkflowStep(
-                    step_id="start_license_server",
-                    name="Start License Server",
-                    plugin_name="python_license_server_emulator",
-                    method="start_servers",
-                    dependencies=[],
-                ),
-                WorkflowStep(
-                    step_id="setup_cloud_intercept",
-                    name="Setup Cloud Interception",
-                    plugin_name="python_cloud_license_interceptor",
-                    method="start_proxy",
-                    dependencies=[],
-                ),
-                WorkflowStep(
-                    step_id="bypass_ssl_pinning",
-                    name="Bypass SSL Pinning",
-                    plugin_name="frida_certificate_pinning_bypass",
-                    method="attach_process",
-                    dependencies=["setup_cloud_intercept"],
-                ),
-                WorkflowStep(
-                    step_id="emulate_dongle",
-                    name="Emulate Hardware Dongle",
-                    plugin_name="python_hardware_dongle_emulator",
-                    method="start_emulation",
-                    dependencies=[],
-                    condition="requires_hardware_dongle",
-                ),
-            ],
-            parallel_execution=True,
-            timeout=600,
-            error_handling="continue",
-        ))
+        self.register_workflow(
+            WorkflowDefinition(
+                workflow_id="license_bypass_comprehensive",
+                name="Comprehensive License Bypass",
+                description="Multi-layered license bypass using all bypass components",
+                steps=[
+                    WorkflowStep(
+                        step_id="start_license_server",
+                        name="Start License Server",
+                        plugin_name="python_license_server_emulator",
+                        method="start_servers",
+                        dependencies=[],
+                    ),
+                    WorkflowStep(
+                        step_id="setup_cloud_intercept",
+                        name="Setup Cloud Interception",
+                        plugin_name="python_cloud_license_interceptor",
+                        method="start_proxy",
+                        dependencies=[],
+                    ),
+                    WorkflowStep(
+                        step_id="bypass_ssl_pinning",
+                        name="Bypass SSL Pinning",
+                        plugin_name="frida_certificate_pinning_bypass",
+                        method="attach_process",
+                        dependencies=["setup_cloud_intercept"],
+                    ),
+                    WorkflowStep(
+                        step_id="emulate_dongle",
+                        name="Emulate Hardware Dongle",
+                        plugin_name="python_hardware_dongle_emulator",
+                        method="start_emulation",
+                        dependencies=[],
+                        condition="requires_hardware_dongle",
+                    ),
+                ],
+                parallel_execution=True,
+                timeout=600,
+                error_handling="continue",
+            )
+        )
 
     def register_workflow(self, workflow: WorkflowDefinition):
         """Register a workflow definition"""
@@ -2375,15 +2476,17 @@ class WorkflowEngine:
             context["status"] = WorkflowStatus.RUNNING
 
             # Emit start event
-            await self.event_bus.emit(Event(
-                event_type="workflow_started",
-                source="workflow_engine",
-                data={
-                    "execution_id": execution_id,
-                    "workflow_id": workflow.workflow_id,
-                    "workflow_name": workflow.name,
-                },
-            ))
+            await self.event_bus.emit(
+                Event(
+                    event_type="workflow_started",
+                    source="workflow_engine",
+                    data={
+                        "execution_id": execution_id,
+                        "workflow_id": workflow.workflow_id,
+                        "workflow_name": workflow.name,
+                    },
+                )
+            )
 
             if workflow.parallel_execution:
                 await self._execute_parallel_workflow(context)
@@ -2397,15 +2500,17 @@ class WorkflowEngine:
             self.logger.info(f"Workflow completed: {execution_id}")
 
             # Emit completion event
-            await self.event_bus.emit(Event(
-                event_type="workflow_completed",
-                source="workflow_engine",
-                data={
-                    "execution_id": execution_id,
-                    "results": context["step_results"],
-                    "duration": (context["end_time"] - context["start_time"]).total_seconds(),
-                },
-            ))
+            await self.event_bus.emit(
+                Event(
+                    event_type="workflow_completed",
+                    source="workflow_engine",
+                    data={
+                        "execution_id": execution_id,
+                        "results": context["step_results"],
+                        "duration": (context["end_time"] - context["start_time"]).total_seconds(),
+                    },
+                )
+            )
 
         except Exception as e:
             context["status"] = WorkflowStatus.FAILED
@@ -2415,15 +2520,17 @@ class WorkflowEngine:
             self.logger.error(f"Workflow failed: {execution_id} - {e}")
 
             # Emit failure event
-            await self.event_bus.emit(Event(
-                event_type="workflow_failed",
-                source="workflow_engine",
-                data={
-                    "execution_id": execution_id,
-                    "error": str(e),
-                    "completed_steps": context["completed_steps"],
-                },
-            ))
+            await self.event_bus.emit(
+                Event(
+                    event_type="workflow_failed",
+                    source="workflow_engine",
+                    data={
+                        "execution_id": execution_id,
+                        "error": str(e),
+                        "completed_steps": context["completed_steps"],
+                    },
+                )
+            )
 
         finally:
             # Move to history and cleanup
@@ -2459,16 +2566,18 @@ class WorkflowEngine:
             context["completed_steps"].append(step.step_id)
 
             # Emit step completion event
-            await self.event_bus.emit(Event(
-                event_type="workflow_step_completed",
-                source="workflow_engine",
-                data={
-                    "execution_id": context["execution_id"],
-                    "step_id": step.step_id,
-                    "step_name": step.name,
-                    "progress": context["progress"],
-                },
-            ))
+            await self.event_bus.emit(
+                Event(
+                    event_type="workflow_step_completed",
+                    source="workflow_engine",
+                    data={
+                        "execution_id": context["execution_id"],
+                        "step_id": step.step_id,
+                        "step_name": step.name,
+                        "progress": context["progress"],
+                    },
+                )
+            )
 
     async def _execute_parallel_workflow(self, context: dict[str, Any]):
         """Execute workflow steps in parallel where possible"""
@@ -2491,9 +2600,9 @@ class WorkflowEngine:
             # Find steps ready to execute
             ready_steps = []
             for step in workflow.steps:
-                if (step.step_id not in executed_steps and
-                    all(dep in executed_steps for dep in step.dependencies)):
-
+                if step.step_id not in executed_steps and all(
+                    dep in executed_steps for dep in step.dependencies
+                ):
                     # Check condition
                     if step.condition and not self._evaluate_condition(step.condition, context):
                         executed_steps.add(step.step_id)  # Mark as done (skipped)
@@ -2527,7 +2636,9 @@ class WorkflowEngine:
                         raise
 
         # Log completion of all tasks
-        self.logger.info(f"Parallel workflow execution completed. Total tasks executed: {len(tasks)}")
+        self.logger.info(
+            f"Parallel workflow execution completed. Total tasks executed: {len(tasks)}"
+        )
 
         # Clean up any remaining tasks
         for task in tasks:
@@ -2558,7 +2669,9 @@ class WorkflowEngine:
             }
 
             # Log evaluation context for debugging
-            self.logger.debug(f"Evaluating condition '{condition}' with context: {list(eval_context.keys())}")
+            self.logger.debug(
+                f"Evaluating condition '{condition}' with context: {list(eval_context.keys())}"
+            )
 
             # Simple condition evaluation (could be enhanced with proper parser)
             # For now, support basic property checks
@@ -2654,8 +2767,13 @@ class WorkflowEngine:
                     "completed_steps": workflow_record["completed_steps"],
                     "errors": workflow_record["errors"],
                     "start_time": workflow_record["start_time"].isoformat(),
-                    "end_time": workflow_record["end_time"].isoformat() if workflow_record["end_time"] else None,
-                    "duration": ((workflow_record["end_time"] or datetime.utcnow()) - workflow_record["start_time"]).total_seconds(),
+                    "end_time": workflow_record["end_time"].isoformat()
+                    if workflow_record["end_time"]
+                    else None,
+                    "duration": (
+                        (workflow_record["end_time"] or datetime.utcnow())
+                        - workflow_record["start_time"]
+                    ).total_seconds(),
                 }
 
         return None
@@ -2686,11 +2804,17 @@ class WorkflowEngine:
             for workflow in self.workflows.values()
         ]
 
+
 class AnalysisCoordinator:
     """Real-time analysis coordination and orchestration"""
 
-    def __init__(self, plugin_manager: PluginManager, workflow_engine: WorkflowEngine,
-                 event_bus: EventBus, logger: logging.Logger):
+    def __init__(
+        self,
+        plugin_manager: PluginManager,
+        workflow_engine: WorkflowEngine,
+        event_bus: EventBus,
+        logger: logging.Logger,
+    ):
         """Initialize analysis coordinator with plugin manager, workflow engine, event bus, and logger."""
         self.plugin_manager = plugin_manager
         self.workflow_engine = workflow_engine
@@ -2752,8 +2876,12 @@ class AnalysisCoordinator:
 
         self.logger.info("Analysis coordinator stopped")
 
-    async def analyze_binary(self, binary_path: str, analysis_type: str = "deep_analysis",
-                           parameters: dict[str, Any] = None) -> str:
+    async def analyze_binary(
+        self,
+        binary_path: str,
+        analysis_type: str = "deep_analysis",
+        parameters: dict[str, Any] = None,
+    ) -> str:
         """Analyze binary file"""
         if not Path(binary_path).exists():
             raise ValueError(f"Binary file not found: {binary_path}")
@@ -2832,16 +2960,18 @@ class AnalysisCoordinator:
             analysis_context["status"] = "running"
 
             # Emit start event
-            await self.event_bus.emit(Event(
-                event_type="analysis_started",
-                source="analysis_coordinator",
-                data={
-                    "analysis_id": analysis_id,
-                    "binary_path": analysis_context["binary_path"],
-                    "analysis_type": analysis_context["analysis_type"],
-                    "execution_id": execution_id,
-                },
-            ))
+            await self.event_bus.emit(
+                Event(
+                    event_type="analysis_started",
+                    source="analysis_coordinator",
+                    data={
+                        "analysis_id": analysis_id,
+                        "binary_path": analysis_context["binary_path"],
+                        "analysis_type": analysis_context["analysis_type"],
+                        "execution_id": execution_id,
+                    },
+                )
+            )
 
             self.logger.info(f"Started analysis: {analysis_id}")
 
@@ -2852,14 +2982,16 @@ class AnalysisCoordinator:
             self.logger.error(f"Failed to start analysis {analysis_id}: {e}")
 
             # Emit failure event
-            await self.event_bus.emit(Event(
-                event_type="analysis_failed",
-                source="analysis_coordinator",
-                data={
-                    "analysis_id": analysis_id,
-                    "error": str(e),
-                },
-            ))
+            await self.event_bus.emit(
+                Event(
+                    event_type="analysis_failed",
+                    source="analysis_coordinator",
+                    data={
+                        "analysis_id": analysis_id,
+                        "error": str(e),
+                    },
+                )
+            )
 
     async def _extract_file_info(self, file_path: str) -> dict[str, Any]:
         """Extract basic file information"""
@@ -2908,7 +3040,12 @@ class AnalysisCoordinator:
             if magic == b"\x7fELF":
                 return "ELF"
             # Mach-O files
-            if magic in [b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf", b"\xce\xfa\xed\xfe", b"\xcf\xfa\xed\xfe"]:
+            if magic in [
+                b"\xfe\xed\xfa\xce",
+                b"\xfe\xed\xfa\xcf",
+                b"\xce\xfa\xed\xfe",
+                b"\xcf\xfa\xed\xfe",
+            ]:
                 return "Mach-O"
             return "Unknown"
 
@@ -2927,12 +3064,14 @@ class AnalysisCoordinator:
                 analysis_id = await self.analyze_binary(binary_path, analysis_type, parameters)
 
                 # Send response event
-                await self.event_bus.emit(Event(
-                    event_type="analysis_request_processed",
-                    source="analysis_coordinator",
-                    target=event.source,
-                    data={"analysis_id": analysis_id, "request_id": event.event_id},
-                ))
+                await self.event_bus.emit(
+                    Event(
+                        event_type="analysis_request_processed",
+                        source="analysis_coordinator",
+                        target=event.source,
+                        data={"analysis_id": analysis_id, "request_id": event.event_id},
+                    )
+                )
 
         except Exception as e:
             self.logger.error(f"Error handling analysis request: {e}")
@@ -2951,15 +3090,19 @@ class AnalysisCoordinator:
                 context["progress"] = 1.0
 
                 # Emit completion event
-                await self.event_bus.emit(Event(
-                    event_type="analysis_completed",
-                    source="analysis_coordinator",
-                    data={
-                        "analysis_id": analysis_id,
-                        "results": results,
-                        "duration": (context["end_time"] - context["start_time"]).total_seconds(),
-                    },
-                ))
+                await self.event_bus.emit(
+                    Event(
+                        event_type="analysis_completed",
+                        source="analysis_coordinator",
+                        data={
+                            "analysis_id": analysis_id,
+                            "results": results,
+                            "duration": (
+                                context["end_time"] - context["start_time"]
+                            ).total_seconds(),
+                        },
+                    )
+                )
 
                 self.logger.info(f"Analysis completed: {analysis_id}")
                 break
@@ -2977,14 +3120,16 @@ class AnalysisCoordinator:
                 context["end_time"] = datetime.utcnow()
 
                 # Emit failure event
-                await self.event_bus.emit(Event(
-                    event_type="analysis_failed",
-                    source="analysis_coordinator",
-                    data={
-                        "analysis_id": analysis_id,
-                        "error": error,
-                    },
-                ))
+                await self.event_bus.emit(
+                    Event(
+                        event_type="analysis_failed",
+                        source="analysis_coordinator",
+                        data={
+                            "analysis_id": analysis_id,
+                            "error": error,
+                        },
+                    )
+                )
 
                 self.logger.error(f"Analysis failed: {analysis_id} - {error}")
                 break
@@ -3000,7 +3145,9 @@ class AnalysisCoordinator:
                 "status": context["status"],
                 "progress": context["progress"],
                 "start_time": context["start_time"].isoformat(),
-                "end_time": context.get("end_time", {}).isoformat() if context.get("end_time") else None,
+                "end_time": context.get("end_time", {}).isoformat()
+                if context.get("end_time")
+                else None,
                 "workflow_execution_id": context.get("workflow_execution_id"),
                 "results": context.get("results", {}),
                 "error": context.get("error"),
@@ -3011,8 +3158,7 @@ class AnalysisCoordinator:
     def get_active_analyses(self) -> list[dict[str, Any]]:
         """Get all active analyses"""
         return [
-            self.get_analysis_status(analysis_id)
-            for analysis_id in self.active_analyses.keys()
+            self.get_analysis_status(analysis_id) for analysis_id in self.active_analyses.keys()
         ]
 
 
@@ -3161,6 +3307,7 @@ class ResourceManager:
             # Force garbage collection if memory usage is high
             if self.resource_stats["memory_usage"] > self.max_memory_usage:
                 import gc
+
                 gc.collect()
                 self.logger.info("Performed garbage collection due to high memory usage")
 
@@ -3184,8 +3331,9 @@ class ResourceManager:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.thread_pool, func, *args, **kwargs)
 
-    async def start_external_process(self, cmd: list[str], cwd: str = None,
-                                   timeout: int = 300) -> subprocess.Popen:
+    async def start_external_process(
+        self, cmd: list[str], cwd: str = None, timeout: int = 300
+    ) -> subprocess.Popen:
         """Start external process with tracking"""
         try:
             process = await asyncio.create_subprocess_exec(
@@ -3338,14 +3486,16 @@ class IntellicrackcoreEngine:
             self.running = True
 
             # Emit startup event
-            await self.event_bus.emit(Event(
-                event_type="engine_started",
-                source="core_engine",
-                data={
-                    "startup_time": self.startup_time.isoformat(),
-                    "loaded_plugins": loaded_plugins,
-                },
-            ))
+            await self.event_bus.emit(
+                Event(
+                    event_type="engine_started",
+                    source="core_engine",
+                    data={
+                        "startup_time": self.startup_time.isoformat(),
+                        "loaded_plugins": loaded_plugins,
+                    },
+                )
+            )
 
             self.logger.info("Intellicrack Core Engine started successfully")
 
@@ -3411,7 +3561,9 @@ class IntellicrackcoreEngine:
             raise ValueError("binary_path is required")
 
         analysis_id = await self.analysis_coordinator.analyze_binary(
-            binary_path, analysis_type, parameters,
+            binary_path,
+            analysis_type,
+            parameters,
         )
 
         return {
@@ -3453,12 +3605,14 @@ class IntellicrackcoreEngine:
                 if capability and capability not in metadata.capabilities:
                     continue
 
-                plugins.append({
-                    "name": plugin_name,
-                    "status": plugin.status.value,
-                    "metadata": metadata.to_dict(),
-                    "operations": plugin.get_supported_operations(),
-                })
+                plugins.append(
+                    {
+                        "name": plugin_name,
+                        "status": plugin.status.value,
+                        "metadata": metadata.to_dict(),
+                        "operations": plugin.get_supported_operations(),
+                    }
+                )
 
         return {"plugins": plugins}
 
@@ -3511,7 +3665,9 @@ class IntellicrackcoreEngine:
         return {
             "engine_status": "running" if self.running else "stopped",
             "startup_time": self.startup_time.isoformat() if self.startup_time else None,
-            "uptime": (datetime.utcnow() - self.startup_time).total_seconds() if self.startup_time else 0,
+            "uptime": (datetime.utcnow() - self.startup_time).total_seconds()
+            if self.startup_time
+            else 0,
             "plugin_stats": self.plugin_manager.get_plugin_stats(),
             "resource_stats": self.resource_manager.get_resource_stats(),
             "event_stats": self.event_bus.get_stats(),

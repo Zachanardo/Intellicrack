@@ -143,7 +143,7 @@ The CLI provides access to every single Intellicrack feature through command-lin
 --comprehensive              # Full analysis suite
 --cfg-analysis               # Control flow graph
 --symbolic-execution         # Symbolic execution
---concolic-execution         # Concolic execution  
+--concolic-execution         # Concolic execution
 --taint-analysis            # Taint analysis
 --rop-gadgets               # ROP gadget finding
 --similarity-search         # Binary similarity

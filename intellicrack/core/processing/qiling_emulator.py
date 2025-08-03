@@ -1,4 +1,5 @@
 """Qiling emulator interface for advanced binary emulation and analysis."""
+
 import logging
 import os
 import threading
@@ -45,6 +46,7 @@ try:
     from qiling import Qiling
     from qiling.const import QL_ARCH, QL_OS, QL_VERBOSE
     from qiling.os.mapper import QlFsMappedObject
+
     QILING_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in qiling_emulator: %s", e)
@@ -87,9 +89,14 @@ class QilingEmulator:
         "freebsd": "freebsd" if QILING_AVAILABLE else None,
     }
 
-    def __init__(self, binary_path: str, rootfs: str | None = None,
-                 ostype: str = "windows", arch: str = "x86_64",
-                 verbose: bool = False):
+    def __init__(
+        self,
+        binary_path: str,
+        rootfs: str | None = None,
+        ostype: str = "windows",
+        arch: str = "x86_64",
+        verbose: bool = False,
+    ):
         """Initialize Qiling emulator.
 
         Args:
@@ -223,11 +230,13 @@ class QilingEmulator:
         if not os.path.exists(host_path):
             raise FileNotFoundError(f"Host path not found: {host_path}")
 
-        self.mapped_files.append({
-            "host": host_path,
-            "guest": guest_path,
-            "type": "directory" if os.path.isdir(host_path) else "file",
-        })
+        self.mapped_files.append(
+            {
+                "host": host_path,
+                "guest": guest_path,
+                "type": "directory" if os.path.isdir(host_path) else "file",
+            }
+        )
 
         self.logger.info("Mapped %s -> %s", host_path, guest_path)
 
@@ -256,11 +265,13 @@ class QilingEmulator:
                     # Use QlFsMappedObject for advanced mapping
                     mapped_obj = QlFsMappedObject(host, guest)
                     self.ql.os.fs_mapper.add_fs_mapping(mapped_obj)
-                    self.mapped_files.append({
-                        "host": host,
-                        "guest": guest,
-                        "mapped_object": mapped_obj,
-                    })
+                    self.mapped_files.append(
+                        {
+                            "host": host,
+                            "guest": guest,
+                            "mapped_object": mapped_obj,
+                        }
+                    )
             except (AttributeError, OSError) as e:
                 self.logger.debug("Could not map %s: %s", host, e)
 
@@ -268,31 +279,42 @@ class QilingEmulator:
         """Add hooks for common license check patterns."""
         license_apis = [
             # Windows Registry APIs
-            "RegOpenKeyExA", "RegOpenKeyExW",
-            "RegQueryValueExA", "RegQueryValueExW",
-            "RegCreateKeyExA", "RegCreateKeyExW",
-            "RegSetValueExA", "RegSetValueExW",
-
+            "RegOpenKeyExA",
+            "RegOpenKeyExW",
+            "RegQueryValueExA",
+            "RegQueryValueExW",
+            "RegCreateKeyExA",
+            "RegCreateKeyExW",
+            "RegSetValueExA",
+            "RegSetValueExW",
             # File APIs (license files)
-            "CreateFileA", "CreateFileW",
-            "ReadFile", "WriteFile",
-
+            "CreateFileA",
+            "CreateFileW",
+            "ReadFile",
+            "WriteFile",
             # Network APIs (license servers)
-            "connect", "send", "recv",
-            "InternetOpenA", "InternetOpenW",
-            "HttpSendRequestA", "HttpSendRequestW",
-
+            "connect",
+            "send",
+            "recv",
+            "InternetOpenA",
+            "InternetOpenW",
+            "HttpSendRequestA",
+            "HttpSendRequestW",
             # Crypto APIs (license validation)
-            "CryptHashData", "CryptVerifySignature",
-            "CryptDecrypt", "CryptEncrypt",
-
+            "CryptHashData",
+            "CryptVerifySignature",
+            "CryptDecrypt",
+            "CryptEncrypt",
             # Time APIs (trial periods)
-            "GetSystemTime", "GetLocalTime",
-            "GetTickCount", "GetTickCount64",
-
+            "GetSystemTime",
+            "GetLocalTime",
+            "GetTickCount",
+            "GetTickCount64",
             # Hardware ID APIs
-            "GetVolumeInformationA", "GetVolumeInformationW",
-            "GetComputerNameA", "GetComputerNameW",
+            "GetVolumeInformationA",
+            "GetVolumeInformationW",
+            "GetComputerNameA",
+            "GetComputerNameW",
         ]
 
         for api in license_apis:
@@ -303,22 +325,28 @@ class QilingEmulator:
         api_name = ql.os.user_defined_api_name or "Unknown"
 
         # Log the API call
-        self.api_calls.append({
-            "api": api_name,
-            "address": hex(address),
-            "params": params,
-            "timestamp": time.time(),
-        })
-
-        # Check for suspicious patterns
-        if any(keyword in str(params).lower() for keyword in
-               ["license", "serial", "key", "trial", "activation", "registration"]):
-            self.license_checks.append({
+        self.api_calls.append(
+            {
                 "api": api_name,
                 "address": hex(address),
                 "params": params,
-                "type": "direct_check",
-            })
+                "timestamp": time.time(),
+            }
+        )
+
+        # Check for suspicious patterns
+        if any(
+            keyword in str(params).lower()
+            for keyword in ["license", "serial", "key", "trial", "activation", "registration"]
+        ):
+            self.license_checks.append(
+                {
+                    "api": api_name,
+                    "address": hex(address),
+                    "params": params,
+                    "type": "direct_check",
+                }
+            )
 
         # Log potential license check
         self.logger.info(f"Potential license API: {api_name} at {hex(address)}")
@@ -365,23 +393,24 @@ class QilingEmulator:
             except (ValueError, TypeError):
                 pass
 
-        self.memory_accesses.append({
-            "type": access_type,
-            "address": hex(address),
-            "size": size,
-            "value": hex(value) if access == 2 else None,
-            "memory_content": memory_content,
-            "cpu_state": cpu_state,
-            "is_stack_access": is_stack_access,
-            "timestamp": time.time(),
-        })
+        self.memory_accesses.append(
+            {
+                "type": access_type,
+                "address": hex(address),
+                "size": size,
+                "value": hex(value) if access == 2 else None,
+                "memory_content": memory_content,
+                "cpu_state": cpu_state,
+                "is_stack_access": is_stack_access,
+                "timestamp": time.time(),
+            }
+        )
 
     def hook_code_execution(self, ql: Qiling, address: int, size: int):
         """Hook for code execution monitoring."""
         # Could add disassembly here if needed
 
-    def run(self, timeout: int | None = 60,
-            until_address: int | None = None) -> dict[str, Any]:
+    def run(self, timeout: int | None = 60, until_address: int | None = None) -> dict[str, Any]:
         """Run the binary emulation.
 
         Args:
@@ -403,7 +432,9 @@ class QilingEmulator:
             if self.ql:
                 try:
                     self.ql.emu_stop()
-                    self.logger.warning("Emulation stopped due to timeout after %d seconds", timeout)
+                    self.logger.warning(
+                        "Emulation stopped due to timeout after %d seconds", timeout
+                    )
                 except (RuntimeError, AttributeError) as e:
                     logger.error("Error in qiling_emulator: %s", e)
 
@@ -532,44 +563,146 @@ class QilingEmulator:
 
         # Determine architecture details
         if self.ql_arch in [QL_ARCH.X86]:
-            arch_info.update({
-                "bits": 32,
-                "instruction_set": "x86",
-                "registers": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"],
-            })
+            arch_info.update(
+                {
+                    "bits": 32,
+                    "instruction_set": "x86",
+                    "registers": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"],
+                }
+            )
         elif self.ql_arch in [QL_ARCH.X8664]:
-            arch_info.update({
-                "bits": 64,
-                "instruction_set": "x86_64",
-                "registers": ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp",
-                            "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"],
-            })
+            arch_info.update(
+                {
+                    "bits": 64,
+                    "instruction_set": "x86_64",
+                    "registers": [
+                        "rax",
+                        "rbx",
+                        "rcx",
+                        "rdx",
+                        "rsi",
+                        "rdi",
+                        "rbp",
+                        "rsp",
+                        "r8",
+                        "r9",
+                        "r10",
+                        "r11",
+                        "r12",
+                        "r13",
+                        "r14",
+                        "r15",
+                    ],
+                }
+            )
         elif self.ql_arch in [QL_ARCH.ARM]:
-            arch_info.update({
-                "bits": 32,
-                "instruction_set": "arm",
-                "registers": ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-                            "r8", "r9", "r10", "r11", "r12", "sp", "lr", "pc"],
-            })
+            arch_info.update(
+                {
+                    "bits": 32,
+                    "instruction_set": "arm",
+                    "registers": [
+                        "r0",
+                        "r1",
+                        "r2",
+                        "r3",
+                        "r4",
+                        "r5",
+                        "r6",
+                        "r7",
+                        "r8",
+                        "r9",
+                        "r10",
+                        "r11",
+                        "r12",
+                        "sp",
+                        "lr",
+                        "pc",
+                    ],
+                }
+            )
         elif self.ql_arch in [QL_ARCH.ARM64]:
-            arch_info.update({
-                "bits": 64,
-                "instruction_set": "aarch64",
-                "registers": ["x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7",
-                            "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15",
-                            "x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23",
-                            "x24", "x25", "x26", "x27", "x28", "x29", "x30", "sp"],
-            })
+            arch_info.update(
+                {
+                    "bits": 64,
+                    "instruction_set": "aarch64",
+                    "registers": [
+                        "x0",
+                        "x1",
+                        "x2",
+                        "x3",
+                        "x4",
+                        "x5",
+                        "x6",
+                        "x7",
+                        "x8",
+                        "x9",
+                        "x10",
+                        "x11",
+                        "x12",
+                        "x13",
+                        "x14",
+                        "x15",
+                        "x16",
+                        "x17",
+                        "x18",
+                        "x19",
+                        "x20",
+                        "x21",
+                        "x22",
+                        "x23",
+                        "x24",
+                        "x25",
+                        "x26",
+                        "x27",
+                        "x28",
+                        "x29",
+                        "x30",
+                        "sp",
+                    ],
+                }
+            )
         elif self.ql_arch in [QL_ARCH.MIPS, QL_ARCH.MIPS64]:
-            arch_info.update({
-                "bits": 64 if self.ql_arch == QL_ARCH.MIPS64 else 32,
-                "instruction_set": "mips",
-                "endianness": "big",  # MIPS is typically big-endian
-                "registers": ["zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
-                            "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
-                            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-                            "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"],
-            })
+            arch_info.update(
+                {
+                    "bits": 64 if self.ql_arch == QL_ARCH.MIPS64 else 32,
+                    "instruction_set": "mips",
+                    "endianness": "big",  # MIPS is typically big-endian
+                    "registers": [
+                        "zero",
+                        "at",
+                        "v0",
+                        "v1",
+                        "a0",
+                        "a1",
+                        "a2",
+                        "a3",
+                        "t0",
+                        "t1",
+                        "t2",
+                        "t3",
+                        "t4",
+                        "t5",
+                        "t6",
+                        "t7",
+                        "s0",
+                        "s1",
+                        "s2",
+                        "s3",
+                        "s4",
+                        "s5",
+                        "s6",
+                        "s7",
+                        "t8",
+                        "t9",
+                        "k0",
+                        "k1",
+                        "gp",
+                        "sp",
+                        "fp",
+                        "ra",
+                    ],
+                }
+            )
 
         return arch_info
 
@@ -588,37 +721,45 @@ class QilingEmulator:
 
         # Determine OS details
         if self.ql_os == QL_OS.WINDOWS:
-            os_info.update({
-                "family": "windows",
-                "syscall_convention": "stdcall",
-                "executable_format": "PE",
-                "path_separator": "\\",
-                "common_dirs": ["C:\\Windows", "C:\\Program Files", "C:\\ProgramData"],
-            })
+            os_info.update(
+                {
+                    "family": "windows",
+                    "syscall_convention": "stdcall",
+                    "executable_format": "PE",
+                    "path_separator": "\\",
+                    "common_dirs": ["C:\\Windows", "C:\\Program Files", "C:\\ProgramData"],
+                }
+            )
         elif self.ql_os == QL_OS.LINUX:
-            os_info.update({
-                "family": "unix",
-                "syscall_convention": "sysv",
-                "executable_format": "ELF",
-                "path_separator": "/",
-                "common_dirs": ["/usr", "/etc", "/var", "/tmp", "/home"],
-            })
+            os_info.update(
+                {
+                    "family": "unix",
+                    "syscall_convention": "sysv",
+                    "executable_format": "ELF",
+                    "path_separator": "/",
+                    "common_dirs": ["/usr", "/etc", "/var", "/tmp", "/home"],
+                }
+            )
         elif self.ql_os == QL_OS.MACOS:
-            os_info.update({
-                "family": "unix",
-                "syscall_convention": "sysv",
-                "executable_format": "Mach-O",
-                "path_separator": "/",
-                "common_dirs": ["/Applications", "/Library", "/System", "/Users"],
-            })
+            os_info.update(
+                {
+                    "family": "unix",
+                    "syscall_convention": "sysv",
+                    "executable_format": "Mach-O",
+                    "path_separator": "/",
+                    "common_dirs": ["/Applications", "/Library", "/System", "/Users"],
+                }
+            )
         elif self.ql_os == QL_OS.FREEBSD:
-            os_info.update({
-                "family": "bsd",
-                "syscall_convention": "sysv",
-                "executable_format": "ELF",
-                "path_separator": "/",
-                "common_dirs": ["/usr", "/etc", "/var", "/tmp"],
-            })
+            os_info.update(
+                {
+                    "family": "bsd",
+                    "syscall_convention": "sysv",
+                    "executable_format": "ELF",
+                    "path_separator": "/",
+                    "common_dirs": ["/usr", "/etc", "/var", "/tmp"],
+                }
+            )
 
         return os_info
 
@@ -652,25 +793,31 @@ class QilingEmulator:
 
         # Detect suspicious patterns
         if api_categories["registry"] > 5 and api_categories["crypto"] > 0:
-            self.suspicious_behaviors.append({
-                "type": "license_check",
-                "confidence": "high",
-                "reason": "Heavy registry access with cryptography",
-            })
+            self.suspicious_behaviors.append(
+                {
+                    "type": "license_check",
+                    "confidence": "high",
+                    "reason": "Heavy registry access with cryptography",
+                }
+            )
 
         if api_categories["network"] > 0 and api_categories["hardware"] > 0:
-            self.suspicious_behaviors.append({
-                "type": "online_activation",
-                "confidence": "medium",
-                "reason": "Network communication with hardware ID access",
-            })
+            self.suspicious_behaviors.append(
+                {
+                    "type": "online_activation",
+                    "confidence": "medium",
+                    "reason": "Network communication with hardware ID access",
+                }
+            )
 
         if api_categories["time"] > 3:
-            self.suspicious_behaviors.append({
-                "type": "trial_check",
-                "confidence": "medium",
-                "reason": "Multiple time-related API calls",
-            })
+            self.suspicious_behaviors.append(
+                {
+                    "type": "trial_check",
+                    "confidence": "medium",
+                    "reason": "Multiple time-related API calls",
+                }
+            )
 
         return {
             "api_calls": self.api_calls,
@@ -695,6 +842,7 @@ class QilingEmulator:
             Analysis results after patching
 
         """
+
         # Apply patches during emulation
         def apply_patches(ql: Qiling):
             """Apply memory patches to the emulated process.
@@ -717,7 +865,6 @@ class QilingEmulator:
 
         # Run normal emulation
         return self.run()
-
 
     def detect_binary_format(self) -> dict[str, Any]:
         """Detect binary format using architecture and OS information.
@@ -742,27 +889,34 @@ class QilingEmulator:
         try:
             # Try PE format detection
             import pefile
+
             pe = pefile.PE(self.binary_path)
             format_info["format"] = "PE"
             format_info["entry_point"] = hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
 
             # Get sections
             for section in pe.sections:
-                format_info["sections"].append({
-                    "name": section.Name.decode("utf-8").rstrip("\x00"),
-                    "virtual_address": hex(section.VirtualAddress),
-                    "size": section.SizeOfRawData,
-                })
+                format_info["sections"].append(
+                    {
+                        "name": section.Name.decode("utf-8").rstrip("\x00"),
+                        "virtual_address": hex(section.VirtualAddress),
+                        "size": section.SizeOfRawData,
+                    }
+                )
 
             # Get imports
             if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
                     dll_name = entry.dll.decode("utf-8")
-                    format_info["imports"].append({
-                        "dll": dll_name,
-                        "functions": [imp.name.decode("utf-8") if imp.name else f"Ordinal_{imp.ordinal}"
-                                    for imp in entry.imports],
-                    })
+                    format_info["imports"].append(
+                        {
+                            "dll": dll_name,
+                            "functions": [
+                                imp.name.decode("utf-8") if imp.name else f"Ordinal_{imp.ordinal}"
+                                for imp in entry.imports
+                            ],
+                        }
+                    )
 
         except (ImportError, pefile.PEFormatError):
             # Try ELF format
@@ -777,8 +931,12 @@ class QilingEmulator:
                         format_info["entry_point"] = hex(entry)
                     elif magic[:2] == b"MZ":
                         format_info["format"] = "PE"  # DOS header
-                    elif magic in [b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xce",
-                                 b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf"]:
+                    elif magic in [
+                        b"\xce\xfa\xed\xfe",
+                        b"\xfe\xed\xfa\xce",
+                        b"\xce\xfa\xed\xfe",
+                        b"\xfe\xed\xfa\xcf",
+                    ]:
                         format_info["format"] = "Mach-O"
             except Exception:
                 pass
@@ -814,12 +972,12 @@ def run_qiling_emulation(binary_path: str, options: dict[str, Any] = None) -> di
             pefile = None
 
         ostype = "windows"  # Default
-        arch = "x86_64"     # Default
+        arch = "x86_64"  # Default
 
         # Try to detect from binary
         try:
             pe = pefile.PE(binary_path)
-            if pe.FILE_HEADER.Machine == 0x14c:
+            if pe.FILE_HEADER.Machine == 0x14C:
                 arch = "x86"
             elif pe.FILE_HEADER.Machine == 0x8664:
                 arch = "x86_64"

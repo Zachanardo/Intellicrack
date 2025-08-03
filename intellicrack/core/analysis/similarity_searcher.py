@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 # Import the main implementation
 from .binary_similarity_search import BinarySimilaritySearch
 

@@ -27,7 +27,16 @@ from intellicrack.logger import logger
 from ..core.misc_utils import log_message
 
 
-def run_ghidra_plugin(ghidra_path, temp_dir, project_name, binary_path, plugin_dir, plugin_file, app=None, overwrite=True):
+def run_ghidra_plugin(
+    ghidra_path,
+    temp_dir,
+    project_name,
+    binary_path,
+    plugin_dir,
+    plugin_file,
+    app=None,
+    overwrite=True,
+):
     """
     Common function to run a Ghidra plugin.
 
@@ -45,11 +54,11 @@ def run_ghidra_plugin(ghidra_path, temp_dir, project_name, binary_path, plugin_d
         tuple: (returncode, stdout, stderr)
     """
     if app:
-        app.update_output.emit(log_message(
-            "[Plugin] Setting up Ghidra project..."))
+        app.update_output.emit(log_message("[Plugin] Setting up Ghidra project..."))
 
     # Build the command
     from .ghidra_utils import build_ghidra_command
+
     cmd = build_ghidra_command(
         ghidra_path,
         temp_dir,
@@ -57,22 +66,23 @@ def run_ghidra_plugin(ghidra_path, temp_dir, project_name, binary_path, plugin_d
         binary_path,
         plugin_dir,
         plugin_file,
-        overwrite=overwrite
+        overwrite=overwrite,
     )
 
     if app:
-        app.update_output.emit(log_message(
-            "[Plugin] Running Ghidra headless analyzer..."))
+        app.update_output.emit(log_message("[Plugin] Running Ghidra headless analyzer..."))
 
     # Run Ghidra
     try:
         from .system.process_helpers import run_ghidra_process
+
         returncode, stdout, stderr = run_ghidra_process(cmd)
         return returncode, stdout, stderr
     except ImportError as e:
         logger.error("Import error in ghidra_common: %s", e)
         # Fallback to common subprocess utility
         from .system.subprocess_utils import run_subprocess
+
         return run_subprocess(cmd, cwd=os.path.dirname(ghidra_path) if ghidra_path else None)
 
 

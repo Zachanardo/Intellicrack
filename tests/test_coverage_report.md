@@ -54,7 +54,7 @@
 - **Reason**: PyQt6 dependency missing
 - **Impact**: Cannot test any UI dialogs, widgets, or tabs
 
-### 2. AI/LLM Features  
+### 2. AI/LLM Features
 - **Coverage**: <5%
 - **Reason**: Missing API configurations and model dependencies
 - **Issues Found**:
@@ -100,7 +100,7 @@ python run_tests_standalone.py
 # Output: 7/7 tests passing
 # - PE header parsing
 # - ELF parsing
-# - String extraction  
+# - String extraction
 # - Entropy analysis
 # - Security analysis
 # - Hash calculation
@@ -112,7 +112,7 @@ python run_tests_standalone.py
 # AI module tests - blocked by missing APIs/configs
 python tests/standalone/test_ai_modules.py
 
-# Additional module tests - blocked by dependencies  
+# Additional module tests - blocked by dependencies
 python tests/standalone/test_more_modules.py
 ```
 

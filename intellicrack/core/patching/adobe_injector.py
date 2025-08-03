@@ -1,4 +1,5 @@
 """Adobe software injector for patching Adobe products."""
+
 import logging
 import os
 import struct
@@ -37,10 +38,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
 try:
     import frida
     import psutil
+
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in adobe_injector: %s", e)
@@ -50,6 +51,7 @@ except ImportError as e:
 
 try:
     import pefile
+
     PE_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in adobe_injector: %s", e)
@@ -102,6 +104,7 @@ WINDOWS_API_AVAILABLE = False
 if sys.platform == "win32":
     try:
         import ctypes
+
         KERNEL32 = ctypes.WinDLL("kernel32", use_last_error=True)
         PSAPI = ctypes.WinDLL("psapi", use_last_error=True)
         USER32 = ctypes.WinDLL("user32", use_last_error=True)
@@ -156,6 +159,7 @@ if sys.platform == "win32":
         # Keep the default values and WINDOWS_API_AVAILABLE = False
 
 logger = get_logger(__name__)
+
 
 class AdobeInjector:
     """Adobe License Bypass Injector
@@ -714,8 +718,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             self.running = False
 
     def stop_monitoring(self) -> None:
-        """Stop the monitoring loop
-        """
+        """Stop the monitoring loop"""
         self.running = False
         logger.info("Adobe monitoring stopped")
 
@@ -825,7 +828,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.error("Exception during DLL injection: %s", e)
             return False
 
-    def _create_remote_thread(self, process_handle: int, start_address: int, parameter: int = 0) -> bool:
+    def _create_remote_thread(
+        self, process_handle: int, start_address: int, parameter: int = 0
+    ) -> bool:
         """Create a remote thread in the target process
 
         Args:
@@ -846,11 +851,11 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             thread_handle = KERNEL32.CreateRemoteThread(
                 process_handle,
                 None,  # Security attributes
-                0,     # Stack size (default)
+                0,  # Stack size (default)
                 start_address,
                 parameter,
-                0,     # Creation flags
-                None,   # Thread ID
+                0,  # Creation flags
+                None,  # Thread ID
             )
 
             if not thread_handle:
@@ -991,8 +996,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.error("Manual mapping failed: %s", e)
             return False
 
-    def _map_sections(self, process_handle: int, pe: Any, dll_data: bytes,
-                      remote_base: int) -> bool:
+    def _map_sections(
+        self, process_handle: int, pe: Any, dll_data: bytes, remote_base: int
+    ) -> bool:
         """Map PE sections to target process"""
         try:
             # Write PE headers
@@ -1014,8 +1020,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             # Write each section
             for section in pe.sections:
                 section_addr = remote_base + section.VirtualAddress
-                section_data = dll_data[section.PointerToRawData:
-                                      section.PointerToRawData + section.SizeOfRawData]
+                section_data = dll_data[
+                    section.PointerToRawData : section.PointerToRawData + section.SizeOfRawData
+                ]
 
                 if section_data:
                     success = KERNEL32.WriteProcessMemory(
@@ -1038,8 +1045,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.error("Section mapping failed: %s", e)
             return False
 
-    def _process_relocations(self, process_handle: int, pe: Any,
-                           remote_base: int) -> bool:
+    def _process_relocations(self, process_handle: int, pe: Any, remote_base: int) -> bool:
         """Process PE relocations for new base address"""
         try:
             # Calculate delta
@@ -1073,7 +1079,10 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                         process_handle,
                         reloc_addr,
                         ctypes.byref(current_value),
-                        8 if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20b) else 4,
+                        8
+                        if getattr(pe, "PE_TYPE", 0)
+                        == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B)
+                        else 4,
                         ctypes.byref(bytes_read),
                     )
 
@@ -1091,8 +1100,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                         continue
 
                     # Write relocated value
-                    new_value_bytes = struct.pack("<Q" if write_size == 8 else "<I",
-                                                new_value)
+                    new_value_bytes = struct.pack("<Q" if write_size == 8 else "<I", new_value)
                     bytes_written = ctypes.c_size_t(0)
 
                     KERNEL32.WriteProcessMemory(
@@ -1110,8 +1118,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.error("Relocation processing failed: %s", e)
             return False
 
-    def _resolve_imports(self, process_handle: int, pe: Any,
-                        remote_base: int) -> bool:
+    def _resolve_imports(self, process_handle: int, pe: Any, remote_base: int) -> bool:
         """Resolve import address table"""
         try:
             if not hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
@@ -1135,11 +1142,11 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 for imp in entry.imports:
                     # Get function address
                     if imp.ordinal:
-                        func_addr = KERNEL32.GetProcAddress(dll_handle,
-                                                           ctypes.c_char_p(imp.ordinal))
+                        func_addr = KERNEL32.GetProcAddress(
+                            dll_handle, ctypes.c_char_p(imp.ordinal)
+                        )
                     else:
-                        func_addr = KERNEL32.GetProcAddress(dll_handle,
-                                                           imp.name.encode("utf-8"))
+                        func_addr = KERNEL32.GetProcAddress(dll_handle, imp.name.encode("utf-8"))
 
                     if not func_addr:
                         logger.warning("Failed to resolve import: %s", imp.name or imp.ordinal)
@@ -1147,8 +1154,13 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
                     # Write to IAT
                     iat_addr = remote_base + imp.address
-                    addr_bytes = struct.pack("<Q" if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20b) else "<I",
-                                           func_addr)
+                    addr_bytes = struct.pack(
+                        "<Q"
+                        if getattr(pe, "PE_TYPE", 0)
+                        == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B)
+                        else "<I",
+                        func_addr,
+                    )
                     bytes_written = ctypes.c_size_t(0)
 
                     KERNEL32.WriteProcessMemory(
@@ -1166,8 +1178,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.error("Import resolution failed: %s", e)
             return False
 
-    def _execute_tls_callbacks(self, process_handle: int, pe: Any,
-                              remote_base: int) -> None:
+    def _execute_tls_callbacks(self, process_handle: int, pe: Any, remote_base: int) -> None:
         """Execute TLS callbacks if present"""
         try:
             if not hasattr(pe, "DIRECTORY_ENTRY_TLS"):
@@ -1189,7 +1200,10 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                     process_handle,
                     remote_base + callback_addr - getattr(pe.OPTIONAL_HEADER, "ImageBase", 0),
                     ctypes.byref(addr_value),
-                    8 if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20b) else 4,
+                    8
+                    if getattr(pe, "PE_TYPE", 0)
+                    == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B)
+                    else 4,
                     ctypes.byref(bytes_read),
                 )
 
@@ -1203,13 +1217,17 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                     remote_base,
                 )
 
-                callback_addr += 8 if getattr(pe, "PE_TYPE", 0) == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20b) else 4
+                callback_addr += (
+                    8
+                    if getattr(pe, "PE_TYPE", 0)
+                    == getattr(pefile, "OPTIONAL_HEADER_MAGIC_PE_PLUS", 0x20B)
+                    else 4
+                )
 
         except Exception as e:
             logger.debug("TLS callback execution error (non-critical): %s", e)
 
-    def _call_dll_entry(self, process_handle: int, pe: Any,
-                       remote_base: int) -> bool:
+    def _call_dll_entry(self, process_handle: int, pe: Any, remote_base: int) -> bool:
         """Call DLL entry point"""
         try:
             # Get entry point address
@@ -1306,7 +1324,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             machine = getattr(pe.FILE_HEADER, "Machine", 0) if hasattr(pe, "FILE_HEADER") else 0
             if machine == 0x8664:  # IMAGE_FILE_MACHINE_AMD64
                 return True
-            if machine == 0x014c:  # IMAGE_FILE_MACHINE_I386
+            if machine == 0x014C:  # IMAGE_FILE_MACHINE_I386
                 return False
             logger.warning("Unknown machine type: %s", hex(machine))
             return None
@@ -1343,13 +1361,17 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 dll_is_64bit = self.is_dll_64bit(dll_path)
                 injector_is_64bit = ctypes.sizeof(ctypes.c_void_p) == 8
 
-                logger.info(f"Architecture check - Process: {'64-bit' if process_is_64bit else '32-bit'}, "
-                           f"DLL: {'64-bit' if dll_is_64bit else '32-bit'}, "
-                           f"Injector: {'64-bit' if injector_is_64bit else '32-bit'}")
+                logger.info(
+                    f"Architecture check - Process: {'64-bit' if process_is_64bit else '32-bit'}, "
+                    f"DLL: {'64-bit' if dll_is_64bit else '32-bit'}, "
+                    f"Injector: {'64-bit' if injector_is_64bit else '32-bit'}"
+                )
 
                 # Validate architecture compatibility
                 if process_is_64bit != dll_is_64bit:
-                    logger.error("Architecture mismatch: Cannot inject 32-bit DLL into 64-bit process or vice versa")
+                    logger.error(
+                        "Architecture mismatch: Cannot inject 32-bit DLL into 64-bit process or vice versa"
+                    )
                     return False
 
                 # Handle different scenarios
@@ -1439,7 +1461,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 None,
                 0,
                 load_library_addr & 0xFFFFFFFF,  # Ensure 32-bit address
-                remote_memory & 0xFFFFFFFF,      # Ensure 32-bit address
+                remote_memory & 0xFFFFFFFF,  # Ensure 32-bit address
                 0,
                 None,
             )
@@ -1534,15 +1556,15 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 status = ntdll.NtWow64CreateThreadEx64(
                     ctypes.byref(thread_handle),
                     0x1FFFFF,  # THREAD_ALL_ACCESS
-                    None,      # ObjectAttributes
+                    None,  # ObjectAttributes
                     process_handle,
                     load_library_addr,
                     remote_memory.value,
-                    0,         # CreateFlags
-                    0,         # ZeroBits
-                    0,         # StackSize
-                    0,         # MaximumStackSize
-                    None,       # AttributeList
+                    0,  # CreateFlags
+                    0,  # ZeroBits
+                    0,  # StackSize
+                    0,  # MaximumStackSize
+                    None,  # AttributeList
                 )
 
                 if status == 0:
@@ -1555,7 +1577,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 return False
             # Use manual shellcode injection
             return self._execute_heavens_gate_shellcode(
-                process_handle, remote_memory.value, load_library_addr,
+                process_handle,
+                remote_memory.value,
+                load_library_addr,
             )
 
         except Exception as e:
@@ -1709,13 +1733,15 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.debug("Failed to get 64-bit LoadLibraryA address: %s", e)
             return 0
 
-    def _execute_heavens_gate_shellcode(self, process_handle: int,
-                                      remote_memory: int, load_library_addr: int) -> bool:
+    def _execute_heavens_gate_shellcode(
+        self, process_handle: int, remote_memory: int, load_library_addr: int
+    ) -> bool:
         """Execute Heaven's Gate shellcode for thread creation"""
         try:
             # Generate shellcode for creating thread via Heaven's Gate
             thread_shellcode = self._generate_thread_creation_shellcode(
-                remote_memory, load_library_addr,
+                remote_memory,
+                load_library_addr,
             )
 
             # Allocate and execute the thread creation shellcode
@@ -1767,46 +1793,68 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.debug("Heaven's Gate shellcode execution failed: %s", e)
             return False
 
-    def _generate_thread_creation_shellcode(self, dll_addr: int,
-                                          load_library_addr: int) -> bytes:
+    def _generate_thread_creation_shellcode(self, dll_addr: int, load_library_addr: int) -> bytes:
         """Generate shellcode for creating thread via Heaven's Gate"""
         # Simplified thread creation shellcode using Heaven's Gate
-        shellcode = bytearray([
-            # Switch to x64 mode
-            0x6A, 0x33,  # push 0x33
-            0xE8, 0x00, 0x00, 0x00, 0x00,  # call next instruction
-            0x83, 0x04, 0x24, 0x05,  # add dword ptr [esp], 5
-            0xCB,  # retf
-
-            # 64-bit code
-            0x48, 0xB8,  # mov rax, immediate (LoadLibraryA address)
-        ])
+        shellcode = bytearray(
+            [
+                # Switch to x64 mode
+                0x6A,
+                0x33,  # push 0x33
+                0xE8,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # call next instruction
+                0x83,
+                0x04,
+                0x24,
+                0x05,  # add dword ptr [esp], 5
+                0xCB,  # retf
+                # 64-bit code
+                0x48,
+                0xB8,  # mov rax, immediate (LoadLibraryA address)
+            ]
+        )
 
         shellcode.extend(struct.pack("<Q", load_library_addr))
 
-        shellcode.extend([
-            0x48, 0xB9,  # mov rcx, immediate (DLL path address)
-        ])
+        shellcode.extend(
+            [
+                0x48,
+                0xB9,  # mov rcx, immediate (DLL path address)
+            ]
+        )
 
         shellcode.extend(struct.pack("<Q", dll_addr))
 
-        shellcode.extend([
-            0xFF, 0xD0,  # call rax (LoadLibraryA)
-
-            # Return to 32-bit mode
-            0x6A, 0x23,  # push 0x23
-            0xE8, 0x00, 0x00, 0x00, 0x00,  # call next instruction
-            0x83, 0x04, 0x24, 0x05,  # add dword ptr [esp], 5
-            0xCB,  # retf
-
-            # 32-bit code
-            0xC3,  # ret
-        ])
+        shellcode.extend(
+            [
+                0xFF,
+                0xD0,  # call rax (LoadLibraryA)
+                # Return to 32-bit mode
+                0x6A,
+                0x23,  # push 0x23
+                0xE8,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # call next instruction
+                0x83,
+                0x04,
+                0x24,
+                0x05,  # add dword ptr [esp], 5
+                0xCB,  # retf
+                # 32-bit code
+                0xC3,  # ret
+            ]
+        )
 
         return bytes(shellcode)
 
-    def verify_injection(self, target_name: str, dll_name: str = None,
-                        check_hooks: bool = True) -> dict[str, Any]:
+    def verify_injection(
+        self, target_name: str, dll_name: str = None, check_hooks: bool = True
+    ) -> dict[str, Any]:
         """Verify that DLL was successfully injected and hooks are active
 
         Args:
@@ -1903,12 +1951,18 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 # Get first module
                 if KERNEL32.Module32First(snapshot, ctypes.byref(me32)):
                     while True:
-                        modules.append({
-                            "name": me32.szModule.decode("utf-8", errors="ignore"),
-                            "path": me32.szExePath.decode("utf-8", errors="ignore"),
-                            "base": hex(ctypes.addressof(me32.modBaseAddr.contents) if me32.modBaseAddr else 0),
-                            "size": me32.modBaseSize,
-                        })
+                        modules.append(
+                            {
+                                "name": me32.szModule.decode("utf-8", errors="ignore"),
+                                "path": me32.szExePath.decode("utf-8", errors="ignore"),
+                                "base": hex(
+                                    ctypes.addressof(me32.modBaseAddr.contents)
+                                    if me32.modBaseAddr
+                                    else 0
+                                ),
+                                "size": me32.modBaseSize,
+                            }
+                        )
 
                         # Get next module
                         if not KERNEL32.Module32Next(snapshot, ctypes.byref(me32)):
@@ -1989,11 +2043,13 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             for dll, func in hook_targets:
                 if self._is_function_hooked(process_handle, dll, func):
                     hook_info["active"] = True
-                    hook_info["details"].append({
-                        "dll": dll,
-                        "function": func,
-                        "status": "hooked",
-                    })
+                    hook_info["details"].append(
+                        {
+                            "dll": dll,
+                            "function": func,
+                            "status": "hooked",
+                        }
+                    )
 
             # 2. Check for inline hooks (JMP/CALL at function start)
             if dll_path and os.path.exists(dll_path):
@@ -2007,8 +2063,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
         return hook_info
 
-    def _is_function_hooked(self, process_handle: int, dll_name: str,
-                           func_name: str) -> bool:
+    def _is_function_hooked(self, process_handle: int, dll_name: str, func_name: str) -> bool:
         """Check if a specific function is hooked"""
         try:
             # Get function address in target process
@@ -2074,8 +2129,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
 
         return inline_hooks
 
-    def inject_setwindowshookex(self, target_name: str, dll_path: str,
-                               hook_type: int = None) -> bool:
+    def inject_setwindowshookex(
+        self, target_name: str, dll_path: str, hook_type: int = None
+    ) -> bool:
         """Inject DLL using SetWindowsHookEx - bypasses some AV solutions
 
         Args:
@@ -2230,7 +2286,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 nonlocal window_handle
                 window_handle = hwnd
                 # Log lparam for debugging injection context
-                logger.debug("Enumerating window %s with lparam %s for thread %s", hwnd, lparam, thread_id)
+                logger.debug(
+                    "Enumerating window %s with lparam %s for thread %s", hwnd, lparam, thread_id
+                )
                 return False  # Stop enumeration
 
             # Create callback
@@ -2267,8 +2325,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 self.logger.error("Error in adobe_injector: %s", e)
         self._active_hooks.clear()
 
-    def inject_apc_queue(self, target_name: str, dll_path: str,
-                        wait_for_alertable: bool = True) -> bool:
+    def inject_apc_queue(
+        self, target_name: str, dll_path: str, wait_for_alertable: bool = True
+    ) -> bool:
         """Inject DLL using APC (Asynchronous Procedure Call) queue
         More stealthy than CreateRemoteThread
 
@@ -2635,19 +2694,50 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         loader_code = bytearray()
 
         # Function prologue
-        loader_code.extend([
-            0x48, 0x89, 0x4C, 0x24, 0x08,   # mov [rsp+8], rcx (save DLL data pointer)
-            0x48, 0x83, 0xEC, 0x40,         # sub rsp, 0x40 (allocate stack space)
-            0x48, 0x89, 0x5C, 0x24, 0x48,   # mov [rsp+0x48], rbx
-            0x48, 0x89, 0x6C, 0x24, 0x50,   # mov [rsp+0x50], rbp
-            0x48, 0x89, 0x74, 0x24, 0x58,   # mov [rsp+0x58], rsi
-            0x48, 0x89, 0x7C, 0x24, 0x60,   # mov [rsp+0x60], rdi
-        ])
+        loader_code.extend(
+            [
+                0x48,
+                0x89,
+                0x4C,
+                0x24,
+                0x08,  # mov [rsp+8], rcx (save DLL data pointer)
+                0x48,
+                0x83,
+                0xEC,
+                0x40,  # sub rsp, 0x40 (allocate stack space)
+                0x48,
+                0x89,
+                0x5C,
+                0x24,
+                0x48,  # mov [rsp+0x48], rbx
+                0x48,
+                0x89,
+                0x6C,
+                0x24,
+                0x50,  # mov [rsp+0x50], rbp
+                0x48,
+                0x89,
+                0x74,
+                0x24,
+                0x58,  # mov [rsp+0x58], rsi
+                0x48,
+                0x89,
+                0x7C,
+                0x24,
+                0x60,  # mov [rsp+0x60], rdi
+            ]
+        )
 
         # Get DLL data pointer from parameter
-        loader_code.extend([
-            0x48, 0x8B, 0x74, 0x24, 0x48,   # mov rsi, [rsp+0x48] (DLL data)
-        ])
+        loader_code.extend(
+            [
+                0x48,
+                0x8B,
+                0x74,
+                0x24,
+                0x48,  # mov rsi, [rsp+0x48] (DLL data)
+            ]
+        )
 
         # Call helper functions (these would be actual implementations)
         # 1. Parse PE headers
@@ -2672,14 +2762,35 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         loader_code.extend(self._generate_call_dllmain())
 
         # Function epilogue
-        loader_code.extend([
-            0x48, 0x8B, 0x5C, 0x24, 0x48,   # mov rbx, [rsp+0x48]
-            0x48, 0x8B, 0x6C, 0x24, 0x50,   # mov rbp, [rsp+0x50]
-            0x48, 0x8B, 0x74, 0x24, 0x58,   # mov rsi, [rsp+0x58]
-            0x48, 0x8B, 0x7C, 0x24, 0x60,   # mov rdi, [rsp+0x60]
-            0x48, 0x83, 0xC4, 0x40,         # add rsp, 0x40
-            0xC3,                            # ret
-        ])
+        loader_code.extend(
+            [
+                0x48,
+                0x8B,
+                0x5C,
+                0x24,
+                0x48,  # mov rbx, [rsp+0x48]
+                0x48,
+                0x8B,
+                0x6C,
+                0x24,
+                0x50,  # mov rbp, [rsp+0x50]
+                0x48,
+                0x8B,
+                0x74,
+                0x24,
+                0x58,  # mov rsi, [rsp+0x58]
+                0x48,
+                0x8B,
+                0x7C,
+                0x24,
+                0x60,  # mov rdi, [rsp+0x60]
+                0x48,
+                0x83,
+                0xC4,
+                0x40,  # add rsp, 0x40
+                0xC3,  # ret
+            ]
+        )
 
         logger.debug("Generated x64 reflective loader: %s bytes", len(loader_code))
         return bytes(loader_code)
@@ -2689,16 +2800,23 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         loader_code = bytearray()
 
         # Function prologue
-        loader_code.extend([
-            0x55,                           # push ebp
-            0x89, 0xE5,                     # mov ebp, esp
-            0x60,                           # pushad
-        ])
+        loader_code.extend(
+            [
+                0x55,  # push ebp
+                0x89,
+                0xE5,  # mov ebp, esp
+                0x60,  # pushad
+            ]
+        )
 
         # Get DLL data pointer from parameter
-        loader_code.extend([
-            0x8B, 0x75, 0x08,               # mov esi, [ebp+8] (DLL data)
-        ])
+        loader_code.extend(
+            [
+                0x8B,
+                0x75,
+                0x08,  # mov esi, [ebp+8] (DLL data)
+            ]
+        )
 
         # Call helper functions (32-bit versions)
         loader_code.extend(self._generate_parse_pe_headers_x86())
@@ -2710,372 +2828,742 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
         loader_code.extend(self._generate_call_dllmain_x86())
 
         # Function epilogue
-        loader_code.extend([
-            0x61,                           # popad
-            0x89, 0xEC,                     # mov esp, ebp
-            0x5D,                           # pop ebp
-            0xC3,                            # ret
-        ])
+        loader_code.extend(
+            [
+                0x61,  # popad
+                0x89,
+                0xEC,  # mov esp, ebp
+                0x5D,  # pop ebp
+                0xC3,  # ret
+            ]
+        )
 
         logger.debug("Generated x86 reflective loader: %s bytes", len(loader_code))
         return bytes(loader_code)
 
     def _generate_parse_pe_headers(self) -> bytes:
         """Generate code to parse PE headers (x64 version)"""
-        return bytes([
-            # Validate DOS header
-            0x48, 0x83, 0x3E, 0x5A,         # cmp qword ptr [rsi], 0x5A4D (MZ signature)
-            0x75, 0x20,                     # jne error_exit
-
-            # Get PE header offset
-            0x48, 0x8B, 0x46, 0x3C,         # mov rax, [rsi+0x3C] (e_lfanew)
-            0x48, 0x01, 0xF0,               # add rax, rsi
-            0x48, 0x89, 0xC7,               # mov rdi, rax (PE header)
-
-            # Validate PE signature
-            0x81, 0x3F, 0x45, 0x50, 0x00, 0x00,  # cmp dword ptr [rdi], 0x4550 (PE)
-            0x75, 0x10,                     # jne error_exit
-
-            # Continue with parsing - parse optional header
-            0x48, 0x8B, 0x57, 0x18,         # mov rdx, [rdi+0x18] (AddressOfEntryPoint)
-            0x48, 0x89, 0x15, 0x00, 0x00, 0x00, 0x00,  # mov [rel entry_point], rdx
-            0x48, 0x8B, 0x47, 0x50,         # mov rax, [rdi+0x50] (SizeOfImage)
-        ])
+        return bytes(
+            [
+                # Validate DOS header
+                0x48,
+                0x83,
+                0x3E,
+                0x5A,  # cmp qword ptr [rsi], 0x5A4D (MZ signature)
+                0x75,
+                0x20,  # jne error_exit
+                # Get PE header offset
+                0x48,
+                0x8B,
+                0x46,
+                0x3C,  # mov rax, [rsi+0x3C] (e_lfanew)
+                0x48,
+                0x01,
+                0xF0,  # add rax, rsi
+                0x48,
+                0x89,
+                0xC7,  # mov rdi, rax (PE header)
+                # Validate PE signature
+                0x81,
+                0x3F,
+                0x45,
+                0x50,
+                0x00,
+                0x00,  # cmp dword ptr [rdi], 0x4550 (PE)
+                0x75,
+                0x10,  # jne error_exit
+                # Continue with parsing - parse optional header
+                0x48,
+                0x8B,
+                0x57,
+                0x18,  # mov rdx, [rdi+0x18] (AddressOfEntryPoint)
+                0x48,
+                0x89,
+                0x15,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov [rel entry_point], rdx
+                0x48,
+                0x8B,
+                0x47,
+                0x50,  # mov rax, [rdi+0x50] (SizeOfImage)
+            ]
+        )
 
     def _generate_allocate_image_memory(self) -> bytes:
         """Generate code to allocate memory for PE image (x64 version)"""
-        return bytes([
-            # Get SizeOfImage from optional header
-            0x48, 0x8B, 0x47, 0x50,         # mov rax, [rdi+0x50] (SizeOfImage)
-            0x48, 0x89, 0xC1,               # mov rcx, rax
-
-            # Call VirtualAlloc - resolved dynamically at runtime
-            0x48, 0x31, 0xD2,               # xor rdx, rdx (lpAddress = NULL)
-            0x49, 0xC7, 0xC0, 0x00, 0x30, 0x00, 0x00,  # mov r8, 0x3000 (MEM_COMMIT | MEM_RESERVE)
-            0x49, 0xC7, 0xC1, 0x40, 0x00, 0x00, 0x00,  # mov r9, 0x40 (PAGE_EXECUTE_READWRITE)
-            0x48, 0x8B, 0x05, 0x00, 0x00, 0x00, 0x00,  # mov rax, [rel virtualalloc_addr]
-            0xFF, 0xD0,                     # call rax (VirtualAlloc)
-            0x48, 0x89, 0xC3,               # mov rbx, rax (save image base)
-        ])
+        return bytes(
+            [
+                # Get SizeOfImage from optional header
+                0x48,
+                0x8B,
+                0x47,
+                0x50,  # mov rax, [rdi+0x50] (SizeOfImage)
+                0x48,
+                0x89,
+                0xC1,  # mov rcx, rax
+                # Call VirtualAlloc - resolved dynamically at runtime
+                0x48,
+                0x31,
+                0xD2,  # xor rdx, rdx (lpAddress = NULL)
+                0x49,
+                0xC7,
+                0xC0,
+                0x00,
+                0x30,
+                0x00,
+                0x00,  # mov r8, 0x3000 (MEM_COMMIT | MEM_RESERVE)
+                0x49,
+                0xC7,
+                0xC1,
+                0x40,
+                0x00,
+                0x00,
+                0x00,  # mov r9, 0x40 (PAGE_EXECUTE_READWRITE)
+                0x48,
+                0x8B,
+                0x05,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov rax, [rel virtualalloc_addr]
+                0xFF,
+                0xD0,  # call rax (VirtualAlloc)
+                0x48,
+                0x89,
+                0xC3,  # mov rbx, rax (save image base)
+            ]
+        )
 
     def _generate_map_sections(self) -> bytes:
         """Generate code to map PE sections (x64 version)"""
-        return bytes([
-            # Loop through sections and copy data
-            0x48, 0x8B, 0x47, 0x06,         # mov rax, [rdi+6] (NumberOfSections)
-            0x48, 0x89, 0xC2,               # mov rdx, rax (section counter)
-
-            # Section mapping loop implementation
-            0x48, 0x8D, 0x4F, 0xF8,         # lea rcx, [rdi+0xF8] (first section header)
-            # loop_start:
-            0x48, 0x85, 0xD2,               # test rdx, rdx
-            0x74, 0x25,                     # jz loop_end
-            # Copy section data
-            0x48, 0x8B, 0x41, 0x14,         # mov rax, [rcx+0x14] (PointerToRawData)
-            0x48, 0x01, 0xF0,               # add rax, rsi (source: file data + offset)
-            0x48, 0x8B, 0x59, 0x0C,         # mov rbx, [rcx+0x0C] (VirtualAddress)
-            0x48, 0x01, 0xFB,               # add rbx, rdi (dest: image base + RVA)
-            0x48, 0x8B, 0x51, 0x10,         # mov rdx, [rcx+0x10] (SizeOfRawData)
-            # memcpy using rep movsb
-            0x48, 0x89, 0xF6,               # mov rsi, rsi (source)
-            0x48, 0x89, 0xDF,               # mov rdi, rbx (dest)
-            0x48, 0x89, 0xD1,               # mov rcx, rdx (count)
-            0xF3, 0xA4,                     # rep movsb
-            # Next section
-            0x48, 0x83, 0xC1, 0x28,         # add rcx, 0x28 (sizeof(IMAGE_SECTION_HEADER))
-            0x48, 0xFF, 0xCA,               # dec rdx
-            0xEB, 0xD8,                     # jmp loop_start
-            # loop_end:
-        ])
+        return bytes(
+            [
+                # Loop through sections and copy data
+                0x48,
+                0x8B,
+                0x47,
+                0x06,  # mov rax, [rdi+6] (NumberOfSections)
+                0x48,
+                0x89,
+                0xC2,  # mov rdx, rax (section counter)
+                # Section mapping loop implementation
+                0x48,
+                0x8D,
+                0x4F,
+                0xF8,  # lea rcx, [rdi+0xF8] (first section header)
+                # loop_start:
+                0x48,
+                0x85,
+                0xD2,  # test rdx, rdx
+                0x74,
+                0x25,  # jz loop_end
+                # Copy section data
+                0x48,
+                0x8B,
+                0x41,
+                0x14,  # mov rax, [rcx+0x14] (PointerToRawData)
+                0x48,
+                0x01,
+                0xF0,  # add rax, rsi (source: file data + offset)
+                0x48,
+                0x8B,
+                0x59,
+                0x0C,  # mov rbx, [rcx+0x0C] (VirtualAddress)
+                0x48,
+                0x01,
+                0xFB,  # add rbx, rdi (dest: image base + RVA)
+                0x48,
+                0x8B,
+                0x51,
+                0x10,  # mov rdx, [rcx+0x10] (SizeOfRawData)
+                # memcpy using rep movsb
+                0x48,
+                0x89,
+                0xF6,  # mov rsi, rsi (source)
+                0x48,
+                0x89,
+                0xDF,  # mov rdi, rbx (dest)
+                0x48,
+                0x89,
+                0xD1,  # mov rcx, rdx (count)
+                0xF3,
+                0xA4,  # rep movsb
+                # Next section
+                0x48,
+                0x83,
+                0xC1,
+                0x28,  # add rcx, 0x28 (sizeof(IMAGE_SECTION_HEADER))
+                0x48,
+                0xFF,
+                0xCA,  # dec rdx
+                0xEB,
+                0xD8,  # jmp loop_start
+                # loop_end:
+            ]
+        )
 
     def _generate_process_relocations(self) -> bytes:
         """Generate code to process relocations (x64 version)"""
-        return bytes([
-            # Process base relocations if image base changed
-            0x48, 0x8B, 0x47, 0x30,         # mov rax, [rdi+0x30] (ImageBase from optional header)
-            0x48, 0x39, 0xC3,               # cmp rbx, rax (compare actual base with preferred)
-            0x74, 0x20,                     # je no_relocations (if same, skip)
-            # Calculate delta
-            0x48, 0x29, 0xC3,               # sub rbx, rax (delta = actual - preferred)
-            # Get relocation table
-            0x48, 0x8B, 0x87, 0xA0, 0x00, 0x00, 0x00,  # mov rax, [rdi+0xA0] (reloc RVA)
-            0x48, 0x85, 0xC0,               # test rax, rax
-            0x74, 0x10,                     # jz no_relocations
-            # Process relocations (simplified - would need full implementation)
-            0x48, 0x01, 0xF8,               # add rax, rdi (reloc table address)
-            0x48, 0x8B, 0x10,               # mov rdx, [rax] (first reloc block)
-            # Additional relocation processing would go here
-            # no_relocations:
-        ])
+        return bytes(
+            [
+                # Process base relocations if image base changed
+                0x48,
+                0x8B,
+                0x47,
+                0x30,  # mov rax, [rdi+0x30] (ImageBase from optional header)
+                0x48,
+                0x39,
+                0xC3,  # cmp rbx, rax (compare actual base with preferred)
+                0x74,
+                0x20,  # je no_relocations (if same, skip)
+                # Calculate delta
+                0x48,
+                0x29,
+                0xC3,  # sub rbx, rax (delta = actual - preferred)
+                # Get relocation table
+                0x48,
+                0x8B,
+                0x87,
+                0xA0,
+                0x00,
+                0x00,
+                0x00,  # mov rax, [rdi+0xA0] (reloc RVA)
+                0x48,
+                0x85,
+                0xC0,  # test rax, rax
+                0x74,
+                0x10,  # jz no_relocations
+                # Process relocations (simplified - would need full implementation)
+                0x48,
+                0x01,
+                0xF8,  # add rax, rdi (reloc table address)
+                0x48,
+                0x8B,
+                0x10,  # mov rdx, [rax] (first reloc block)
+                # Additional relocation processing would go here
+                # no_relocations:
+            ]
+        )
 
     def _generate_resolve_imports(self) -> bytes:
         """Generate code to resolve imports (x64 version)"""
-        return bytes([
-            # Walk import table and resolve function addresses
-            0x48, 0x8B, 0x87, 0x90, 0x00, 0x00, 0x00,  # mov rax, [rdi+0x90] (import table RVA)
-            0x48, 0x85, 0xC0,               # test rax, rax
-            0x74, 0x30,                     # jz no_imports
-            0x48, 0x01, 0xF8,               # add rax, rdi (import table address)
-            # import_loop:
-            0x48, 0x8B, 0x08,               # mov rcx, [rax] (DLL name RVA)
-            0x48, 0x85, 0xC9,               # test rcx, rcx
-            0x74, 0x25,                     # jz imports_done
-            0x48, 0x01, 0xF9,               # add rcx, rdi (DLL name address)
-            # Call LoadLibraryA (address resolved at runtime)
-            0x48, 0x8B, 0x15, 0x00, 0x00, 0x00, 0x00,  # mov rdx, [rel loadlibrary_addr]
-            0xFF, 0xD2,                     # call rdx (LoadLibraryA)
-            0x48, 0x89, 0xC2,               # mov rdx, rax (DLL handle)
-            # Process functions in this DLL (simplified)
-            0x48, 0x8B, 0x70, 0x10,         # mov rsi, [rax+0x10] (FirstThunk - IAT)
-            0x48, 0x01, 0xFE,               # add rsi, rdi (IAT address)
-            # Additional function resolution would go here
-            # Next import descriptor
-            0x48, 0x83, 0xC0, 0x14,         # add rax, 0x14 (sizeof(IMAGE_IMPORT_DESCRIPTOR))
-            0xEB, 0xD8,                     # jmp import_loop
-            # no_imports / imports_done:
-        ])
+        return bytes(
+            [
+                # Walk import table and resolve function addresses
+                0x48,
+                0x8B,
+                0x87,
+                0x90,
+                0x00,
+                0x00,
+                0x00,  # mov rax, [rdi+0x90] (import table RVA)
+                0x48,
+                0x85,
+                0xC0,  # test rax, rax
+                0x74,
+                0x30,  # jz no_imports
+                0x48,
+                0x01,
+                0xF8,  # add rax, rdi (import table address)
+                # import_loop:
+                0x48,
+                0x8B,
+                0x08,  # mov rcx, [rax] (DLL name RVA)
+                0x48,
+                0x85,
+                0xC9,  # test rcx, rcx
+                0x74,
+                0x25,  # jz imports_done
+                0x48,
+                0x01,
+                0xF9,  # add rcx, rdi (DLL name address)
+                # Call LoadLibraryA (address resolved at runtime)
+                0x48,
+                0x8B,
+                0x15,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov rdx, [rel loadlibrary_addr]
+                0xFF,
+                0xD2,  # call rdx (LoadLibraryA)
+                0x48,
+                0x89,
+                0xC2,  # mov rdx, rax (DLL handle)
+                # Process functions in this DLL (simplified)
+                0x48,
+                0x8B,
+                0x70,
+                0x10,  # mov rsi, [rax+0x10] (FirstThunk - IAT)
+                0x48,
+                0x01,
+                0xFE,  # add rsi, rdi (IAT address)
+                # Additional function resolution would go here
+                # Next import descriptor
+                0x48,
+                0x83,
+                0xC0,
+                0x14,  # add rax, 0x14 (sizeof(IMAGE_IMPORT_DESCRIPTOR))
+                0xEB,
+                0xD8,  # jmp import_loop
+                # no_imports / imports_done:
+            ]
+        )
 
     def _generate_execute_tls_callbacks(self) -> bytes:
         """Generate code to execute TLS callbacks (x64 version)"""
-        return bytes([
-            # Execute TLS callbacks if present
-            0x48, 0x8B, 0x87, 0x98, 0x00, 0x00, 0x00,  # mov rax, [rdi+0x98] (TLS table RVA)
-            0x48, 0x85, 0xC0,               # test rax, rax
-            0x74, 0x20,                     # jz no_tls_callbacks
-            0x48, 0x01, 0xF8,               # add rax, rdi (TLS table address)
-            # Get callback array
-            0x48, 0x8B, 0x50, 0x18,         # mov rdx, [rax+0x18] (AddressOfCallBacks)
-            0x48, 0x85, 0xD2,               # test rdx, rdx
-            0x74, 0x12,                     # jz no_tls_callbacks
-            # callback_loop:
-            0x48, 0x8B, 0x0A,               # mov rcx, [rdx] (callback address)
-            0x48, 0x85, 0xC9,               # test rcx, rcx
-            0x74, 0x08,                     # jz callbacks_done
-            0xFF, 0xD1,                     # call rcx (execute callback)
-            0x48, 0x83, 0xC2, 0x08,         # add rdx, 8 (next callback)
-            0xEB, 0xF0,                     # jmp callback_loop
-            # no_tls_callbacks / callbacks_done:
-        ])
+        return bytes(
+            [
+                # Execute TLS callbacks if present
+                0x48,
+                0x8B,
+                0x87,
+                0x98,
+                0x00,
+                0x00,
+                0x00,  # mov rax, [rdi+0x98] (TLS table RVA)
+                0x48,
+                0x85,
+                0xC0,  # test rax, rax
+                0x74,
+                0x20,  # jz no_tls_callbacks
+                0x48,
+                0x01,
+                0xF8,  # add rax, rdi (TLS table address)
+                # Get callback array
+                0x48,
+                0x8B,
+                0x50,
+                0x18,  # mov rdx, [rax+0x18] (AddressOfCallBacks)
+                0x48,
+                0x85,
+                0xD2,  # test rdx, rdx
+                0x74,
+                0x12,  # jz no_tls_callbacks
+                # callback_loop:
+                0x48,
+                0x8B,
+                0x0A,  # mov rcx, [rdx] (callback address)
+                0x48,
+                0x85,
+                0xC9,  # test rcx, rcx
+                0x74,
+                0x08,  # jz callbacks_done
+                0xFF,
+                0xD1,  # call rcx (execute callback)
+                0x48,
+                0x83,
+                0xC2,
+                0x08,  # add rdx, 8 (next callback)
+                0xEB,
+                0xF0,  # jmp callback_loop
+                # no_tls_callbacks / callbacks_done:
+            ]
+        )
 
     def _generate_call_dllmain(self) -> bytes:
         """Generate code to call DllMain (x64 version)"""
-        return bytes([
-            # Call DllMain with DLL_PROCESS_ATTACH
-            # rcx = hModule, rdx = DLL_PROCESS_ATTACH (1), r8 = NULL
-            0x48, 0x89, 0xF9,               # mov rcx, rdi (image base)
-            0x48, 0xC7, 0xC2, 0x01, 0x00, 0x00, 0x00,  # mov rdx, 1
-            0x4D, 0x31, 0xC0,               # xor r8, r8
-
-            # Get entry point and call it
-            0x48, 0x8B, 0x47, 0x28,         # mov rax, [rdi+0x28] (AddressOfEntryPoint)
-            0x48, 0x01, 0xF8,               # add rax, rdi
-            0xFF, 0xD0,                     # call rax
-        ])
+        return bytes(
+            [
+                # Call DllMain with DLL_PROCESS_ATTACH
+                # rcx = hModule, rdx = DLL_PROCESS_ATTACH (1), r8 = NULL
+                0x48,
+                0x89,
+                0xF9,  # mov rcx, rdi (image base)
+                0x48,
+                0xC7,
+                0xC2,
+                0x01,
+                0x00,
+                0x00,
+                0x00,  # mov rdx, 1
+                0x4D,
+                0x31,
+                0xC0,  # xor r8, r8
+                # Get entry point and call it
+                0x48,
+                0x8B,
+                0x47,
+                0x28,  # mov rax, [rdi+0x28] (AddressOfEntryPoint)
+                0x48,
+                0x01,
+                0xF8,  # add rax, rdi
+                0xFF,
+                0xD0,  # call rax
+            ]
+        )
 
     # 32-bit versions of the helper functions
     def _generate_parse_pe_headers_x86(self) -> bytes:
         """Generate code to parse PE headers (x86 version)"""
-        return bytes([
-            0x66, 0x81, 0x3E, 0x4D, 0x5A,   # cmp word ptr [esi], 0x5A4D
-            0x75, 0x15,                     # jne error_exit
-            0x8B, 0x46, 0x3C,               # mov eax, [esi+0x3C]
-            0x01, 0xF0,                     # add eax, esi
-            0x89, 0xC7,                     # mov edi, eax
-            0x81, 0x3F, 0x50, 0x45, 0x00, 0x00,  # cmp dword ptr [edi], 0x4550
-            0x75, 0x05,                     # jne error_exit
-            0x90, 0x90, 0x90,               # nops
-        ])
+        return bytes(
+            [
+                0x66,
+                0x81,
+                0x3E,
+                0x4D,
+                0x5A,  # cmp word ptr [esi], 0x5A4D
+                0x75,
+                0x15,  # jne error_exit
+                0x8B,
+                0x46,
+                0x3C,  # mov eax, [esi+0x3C]
+                0x01,
+                0xF0,  # add eax, esi
+                0x89,
+                0xC7,  # mov edi, eax
+                0x81,
+                0x3F,
+                0x50,
+                0x45,
+                0x00,
+                0x00,  # cmp dword ptr [edi], 0x4550
+                0x75,
+                0x05,  # jne error_exit
+                0x90,
+                0x90,
+                0x90,  # nops
+            ]
+        )
 
     def _generate_allocate_image_memory_x86(self) -> bytes:
         """Generate code to allocate memory for PE image (x86 version)"""
-        return bytes([
-            # Get SizeOfImage from optional header
-            0x8B, 0x47, 0x50,               # mov eax, [edi+0x50] (SizeOfImage)
-            0x50,                           # push eax (dwSize)
-            0x68, 0x00, 0x30, 0x00, 0x00,   # push 0x3000 (MEM_COMMIT | MEM_RESERVE)
-            0x68, 0x40, 0x00, 0x00, 0x00,   # push 0x40 (PAGE_EXECUTE_READWRITE)
-            0x6A, 0x00,                     # push 0 (lpAddress - let system choose)
-            # Call VirtualAlloc (address would be resolved dynamically)
-            0x8B, 0x15, 0x00, 0x00, 0x00, 0x00,  # mov edx, [virtualalloc_addr]
-            0xFF, 0xD2,                     # call edx (VirtualAlloc)
-            0x83, 0xC4, 0x10,               # add esp, 0x10 (clean stack)
-            0x89, 0xC3,                     # mov ebx, eax (save image base)
-        ])
+        return bytes(
+            [
+                # Get SizeOfImage from optional header
+                0x8B,
+                0x47,
+                0x50,  # mov eax, [edi+0x50] (SizeOfImage)
+                0x50,  # push eax (dwSize)
+                0x68,
+                0x00,
+                0x30,
+                0x00,
+                0x00,  # push 0x3000 (MEM_COMMIT | MEM_RESERVE)
+                0x68,
+                0x40,
+                0x00,
+                0x00,
+                0x00,  # push 0x40 (PAGE_EXECUTE_READWRITE)
+                0x6A,
+                0x00,  # push 0 (lpAddress - let system choose)
+                # Call VirtualAlloc (address would be resolved dynamically)
+                0x8B,
+                0x15,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov edx, [virtualalloc_addr]
+                0xFF,
+                0xD2,  # call edx (VirtualAlloc)
+                0x83,
+                0xC4,
+                0x10,  # add esp, 0x10 (clean stack)
+                0x89,
+                0xC3,  # mov ebx, eax (save image base)
+            ]
+        )
 
     def _generate_map_sections_x86(self) -> bytes:
         """Generate code to map PE sections (x86 version)"""
-        return bytes([
-            # Get number of sections from COFF header
-            0x0F, 0xB7, 0x47, 0x06,         # movzx eax, word ptr [edi+6] (NumberOfSections)
-            0x89, 0xC2,                     # mov edx, eax (section counter)
-            0x8D, 0x4F, 0xF8,               # lea ecx, [edi+0xF8] (first section header)
-
-            # Section mapping loop
-            # loop_start:
-            0x85, 0xD2,                     # test edx, edx
-            0x74, 0x20,                     # jz loop_end
-
-            # Copy section data
-            0x8B, 0x41, 0x14,               # mov eax, [ecx+0x14] (PointerToRawData)
-            0x01, 0xF0,                     # add eax, esi (source: file data + offset)
-            0x8B, 0x59, 0x0C,               # mov ebx, [ecx+0x0C] (VirtualAddress)
-            0x01, 0xFB,                     # add ebx, edi (dest: image base + RVA)
-            0x8B, 0x51, 0x10,               # mov edx, [ecx+0x10] (SizeOfRawData)
-
-            # memcpy loop (simplified)
-            0x89, 0xD1,                     # mov ecx, edx
-            0xF3, 0xA4,                     # rep movsb
-
-            # Next section
-            0x83, 0xC1, 0x28,               # add ecx, 0x28 (sizeof(IMAGE_SECTION_HEADER))
-            0x4A,                           # dec edx
-            0xEB, 0xE0,                     # jmp loop_start
-            # loop_end:
-        ])
+        return bytes(
+            [
+                # Get number of sections from COFF header
+                0x0F,
+                0xB7,
+                0x47,
+                0x06,  # movzx eax, word ptr [edi+6] (NumberOfSections)
+                0x89,
+                0xC2,  # mov edx, eax (section counter)
+                0x8D,
+                0x4F,
+                0xF8,  # lea ecx, [edi+0xF8] (first section header)
+                # Section mapping loop
+                # loop_start:
+                0x85,
+                0xD2,  # test edx, edx
+                0x74,
+                0x20,  # jz loop_end
+                # Copy section data
+                0x8B,
+                0x41,
+                0x14,  # mov eax, [ecx+0x14] (PointerToRawData)
+                0x01,
+                0xF0,  # add eax, esi (source: file data + offset)
+                0x8B,
+                0x59,
+                0x0C,  # mov ebx, [ecx+0x0C] (VirtualAddress)
+                0x01,
+                0xFB,  # add ebx, edi (dest: image base + RVA)
+                0x8B,
+                0x51,
+                0x10,  # mov edx, [ecx+0x10] (SizeOfRawData)
+                # memcpy loop (simplified)
+                0x89,
+                0xD1,  # mov ecx, edx
+                0xF3,
+                0xA4,  # rep movsb
+                # Next section
+                0x83,
+                0xC1,
+                0x28,  # add ecx, 0x28 (sizeof(IMAGE_SECTION_HEADER))
+                0x4A,  # dec edx
+                0xEB,
+                0xE0,  # jmp loop_start
+                # loop_end:
+            ]
+        )
 
     def _generate_process_relocations_x86(self) -> bytes:
         """Generate code to process relocations (x86 version)"""
-        return bytes([
-            # Calculate relocation delta
-            0x8B, 0x47, 0x34,               # mov eax, [edi+0x34] (ImageBase from optional header)
-            0x29, 0xC3,                     # sub ebx, eax (delta = new_base - preferred_base)
-            0x74, 0x30,                     # jz no_relocations (if delta == 0, no relocs needed)
-
-            # Get relocation table
-            0x8B, 0x87, 0xA0, 0x00, 0x00, 0x00,  # mov eax, [edi+0xA0] (BaseReloc RVA)
-            0x85, 0xC0,                     # test eax, eax
-            0x74, 0x25,                     # jz no_relocations
-            0x01, 0xF8,                     # add eax, edi (reloc table address)
-
-            # Process relocation entries
-            # reloc_loop:
-            0x8B, 0x48, 0x04,               # mov ecx, [eax+4] (SizeOfBlock)
-            0x85, 0xC9,                     # test ecx, ecx
-            0x74, 0x18,                     # jz reloc_done
-
-            0x8B, 0x10,                     # mov edx, [eax] (VirtualAddress)
-            0x01, 0xFA,                     # add edx, edi (page base)
-            0x83, 0xC0, 0x08,               # add eax, 8 (skip header)
-            0x83, 0xE9, 0x08,               # sub ecx, 8 (remaining size)
-            0xC1, 0xE9, 0x01,               # shr ecx, 1 (number of entries)
-
-            # Process entries in this block
-            # entry_loop:
-            0x0F, 0xB7, 0x30,               # movzx esi, word ptr [eax]
-            0xF7, 0xC6, 0x00, 0x30,         # test esi, 0x3000 (reloc type)
-            0x74, 0x06,                     # jz skip_entry
-            0x81, 0xE6, 0xFF, 0x0F,         # and esi, 0x0FFF (offset)
-            0x01, 0x1C, 0x32,               # add [edx+esi], ebx (apply relocation)
-
-            # skip_entry:
-            0x83, 0xC0, 0x02,               # add eax, 2
-            0x49,                           # dec ecx
-            0x75, 0xEE,                     # jnz entry_loop
-            0xEB, 0xD8,                     # jmp reloc_loop
-
-            # no_relocations / reloc_done:
-        ])
+        return bytes(
+            [
+                # Calculate relocation delta
+                0x8B,
+                0x47,
+                0x34,  # mov eax, [edi+0x34] (ImageBase from optional header)
+                0x29,
+                0xC3,  # sub ebx, eax (delta = new_base - preferred_base)
+                0x74,
+                0x30,  # jz no_relocations (if delta == 0, no relocs needed)
+                # Get relocation table
+                0x8B,
+                0x87,
+                0xA0,
+                0x00,
+                0x00,
+                0x00,  # mov eax, [edi+0xA0] (BaseReloc RVA)
+                0x85,
+                0xC0,  # test eax, eax
+                0x74,
+                0x25,  # jz no_relocations
+                0x01,
+                0xF8,  # add eax, edi (reloc table address)
+                # Process relocation entries
+                # reloc_loop:
+                0x8B,
+                0x48,
+                0x04,  # mov ecx, [eax+4] (SizeOfBlock)
+                0x85,
+                0xC9,  # test ecx, ecx
+                0x74,
+                0x18,  # jz reloc_done
+                0x8B,
+                0x10,  # mov edx, [eax] (VirtualAddress)
+                0x01,
+                0xFA,  # add edx, edi (page base)
+                0x83,
+                0xC0,
+                0x08,  # add eax, 8 (skip header)
+                0x83,
+                0xE9,
+                0x08,  # sub ecx, 8 (remaining size)
+                0xC1,
+                0xE9,
+                0x01,  # shr ecx, 1 (number of entries)
+                # Process entries in this block
+                # entry_loop:
+                0x0F,
+                0xB7,
+                0x30,  # movzx esi, word ptr [eax]
+                0xF7,
+                0xC6,
+                0x00,
+                0x30,  # test esi, 0x3000 (reloc type)
+                0x74,
+                0x06,  # jz skip_entry
+                0x81,
+                0xE6,
+                0xFF,
+                0x0F,  # and esi, 0x0FFF (offset)
+                0x01,
+                0x1C,
+                0x32,  # add [edx+esi], ebx (apply relocation)
+                # skip_entry:
+                0x83,
+                0xC0,
+                0x02,  # add eax, 2
+                0x49,  # dec ecx
+                0x75,
+                0xEE,  # jnz entry_loop
+                0xEB,
+                0xD8,  # jmp reloc_loop
+                # no_relocations / reloc_done:
+            ]
+        )
 
     def _generate_resolve_imports_x86(self) -> bytes:
         """Generate code to resolve imports (x86 version)"""
-        return bytes([
-            # Get import table from data directories
-            0x8B, 0x87, 0x88, 0x00, 0x00, 0x00,  # mov eax, [edi+0x88] (Import RVA)
-            0x85, 0xC0,                     # test eax, eax
-            0x74, 0x40,                     # jz no_imports
-            0x01, 0xF8,                     # add eax, edi (import table address)
-
-            # Process import descriptors
-            # import_loop:
-            0x8B, 0x48, 0x0C,               # mov ecx, [eax+0xC] (Name RVA)
-            0x85, 0xC9,                     # test ecx, ecx
-            0x74, 0x35,                     # jz imports_done
-
-            0x01, 0xF9,                     # add ecx, edi (DLL name address)
-            # Call LoadLibraryA(dll_name) - would need to resolve LoadLibraryA first
-            0x51,                           # push ecx
-            0x8B, 0x15, 0x00, 0x00, 0x00, 0x00,  # mov edx, [loadlibrary_addr]
-            0xFF, 0xD2,                     # call edx (LoadLibraryA)
-            0x89, 0xC2,                     # mov edx, eax (DLL handle)
-
-            # Get import lookup table
-            0x8B, 0x48, 0x00,               # mov ecx, [eax+0] (OriginalFirstThunk or FirstThunk)
-            0x85, 0xC9,                     # test ecx, ecx
-            0x74, 0x20,                     # jz next_import
-            0x01, 0xF9,                     # add ecx, edi (lookup table address)
-
-            0x8B, 0x70, 0x10,               # mov esi, [eax+0x10] (FirstThunk - IAT)
-            0x01, 0xFE,                     # add esi, edi (IAT address)
-
-            # Resolve functions in this DLL
-            # func_loop:
-            0x8B, 0x19,                     # mov ebx, [ecx]
-            0x85, 0xDB,                     # test ebx, ebx
-            0x74, 0x10,                     # jz next_import
-
-            0x01, 0xFB,                     # add ebx, edi (function name address)
-            0x83, 0xC3, 0x02,               # add ebx, 2 (skip hint)
-            # Call GetProcAddress(dll_handle, func_name)
-            0x53,                           # push ebx
-            0x52,                           # push edx
-            0x8B, 0x15, 0x00, 0x00, 0x00, 0x00,  # mov edx, [getprocaddress_addr]
-            0xFF, 0xD2,                     # call edx (GetProcAddress)
-            0x89, 0x06,                     # mov [esi], eax (store in IAT)
-
-            0x83, 0xC1, 0x04,               # add ecx, 4 (next lookup entry)
-            0x83, 0xC6, 0x04,               # add esi, 4 (next IAT entry)
-            0xEB, 0xE8,                     # jmp func_loop
-
-            # next_import:
-            0x83, 0xC0, 0x14,               # add eax, 0x14 (sizeof(IMAGE_IMPORT_DESCRIPTOR))
-            0xEB, 0xC1,                     # jmp import_loop
-
-            # no_imports / imports_done:
-        ])
+        return bytes(
+            [
+                # Get import table from data directories
+                0x8B,
+                0x87,
+                0x88,
+                0x00,
+                0x00,
+                0x00,  # mov eax, [edi+0x88] (Import RVA)
+                0x85,
+                0xC0,  # test eax, eax
+                0x74,
+                0x40,  # jz no_imports
+                0x01,
+                0xF8,  # add eax, edi (import table address)
+                # Process import descriptors
+                # import_loop:
+                0x8B,
+                0x48,
+                0x0C,  # mov ecx, [eax+0xC] (Name RVA)
+                0x85,
+                0xC9,  # test ecx, ecx
+                0x74,
+                0x35,  # jz imports_done
+                0x01,
+                0xF9,  # add ecx, edi (DLL name address)
+                # Call LoadLibraryA(dll_name) - would need to resolve LoadLibraryA first
+                0x51,  # push ecx
+                0x8B,
+                0x15,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov edx, [loadlibrary_addr]
+                0xFF,
+                0xD2,  # call edx (LoadLibraryA)
+                0x89,
+                0xC2,  # mov edx, eax (DLL handle)
+                # Get import lookup table
+                0x8B,
+                0x48,
+                0x00,  # mov ecx, [eax+0] (OriginalFirstThunk or FirstThunk)
+                0x85,
+                0xC9,  # test ecx, ecx
+                0x74,
+                0x20,  # jz next_import
+                0x01,
+                0xF9,  # add ecx, edi (lookup table address)
+                0x8B,
+                0x70,
+                0x10,  # mov esi, [eax+0x10] (FirstThunk - IAT)
+                0x01,
+                0xFE,  # add esi, edi (IAT address)
+                # Resolve functions in this DLL
+                # func_loop:
+                0x8B,
+                0x19,  # mov ebx, [ecx]
+                0x85,
+                0xDB,  # test ebx, ebx
+                0x74,
+                0x10,  # jz next_import
+                0x01,
+                0xFB,  # add ebx, edi (function name address)
+                0x83,
+                0xC3,
+                0x02,  # add ebx, 2 (skip hint)
+                # Call GetProcAddress(dll_handle, func_name)
+                0x53,  # push ebx
+                0x52,  # push edx
+                0x8B,
+                0x15,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # mov edx, [getprocaddress_addr]
+                0xFF,
+                0xD2,  # call edx (GetProcAddress)
+                0x89,
+                0x06,  # mov [esi], eax (store in IAT)
+                0x83,
+                0xC1,
+                0x04,  # add ecx, 4 (next lookup entry)
+                0x83,
+                0xC6,
+                0x04,  # add esi, 4 (next IAT entry)
+                0xEB,
+                0xE8,  # jmp func_loop
+                # next_import:
+                0x83,
+                0xC0,
+                0x14,  # add eax, 0x14 (sizeof(IMAGE_IMPORT_DESCRIPTOR))
+                0xEB,
+                0xC1,  # jmp import_loop
+                # no_imports / imports_done:
+            ]
+        )
 
     def _generate_execute_tls_callbacks_x86(self) -> bytes:
         """Generate code to execute TLS callbacks (x86 version)"""
-        return bytes([
-            # Get TLS table from data directories
-            0x8B, 0x87, 0x98, 0x00, 0x00, 0x00,  # mov eax, [edi+0x98] (TLS RVA)
-            0x85, 0xC0,                     # test eax, eax
-            0x74, 0x20,                     # jz no_tls_callbacks
-            0x01, 0xF8,                     # add eax, edi (TLS directory address)
-
-            # Get TLS callbacks array
-            0x8B, 0x48, 0x0C,               # mov ecx, [eax+0xC] (AddressOfCallBacks)
-            0x85, 0xC9,                     # test ecx, ecx
-            0x74, 0x15,                     # jz no_tls_callbacks
-
-            # Execute callbacks
-            # callback_loop:
-            0x8B, 0x11,                     # mov edx, [ecx]
-            0x85, 0xD2,                     # test edx, edx
-            0x74, 0x0C,                     # jz callbacks_done
-
-            # Call TLS callback (hModule, DLL_PROCESS_ATTACH, NULL)
-            0x6A, 0x00,                     # push 0
-            0x6A, 0x01,                     # push 1 (DLL_PROCESS_ATTACH)
-            0x57,                           # push edi (hModule)
-            0xFF, 0xD2,                     # call edx
-
-            0x83, 0xC1, 0x04,               # add ecx, 4 (next callback)
-            0xEB, 0xEE,                     # jmp callback_loop
-
-            # no_tls_callbacks / callbacks_done:
-        ])
+        return bytes(
+            [
+                # Get TLS table from data directories
+                0x8B,
+                0x87,
+                0x98,
+                0x00,
+                0x00,
+                0x00,  # mov eax, [edi+0x98] (TLS RVA)
+                0x85,
+                0xC0,  # test eax, eax
+                0x74,
+                0x20,  # jz no_tls_callbacks
+                0x01,
+                0xF8,  # add eax, edi (TLS directory address)
+                # Get TLS callbacks array
+                0x8B,
+                0x48,
+                0x0C,  # mov ecx, [eax+0xC] (AddressOfCallBacks)
+                0x85,
+                0xC9,  # test ecx, ecx
+                0x74,
+                0x15,  # jz no_tls_callbacks
+                # Execute callbacks
+                # callback_loop:
+                0x8B,
+                0x11,  # mov edx, [ecx]
+                0x85,
+                0xD2,  # test edx, edx
+                0x74,
+                0x0C,  # jz callbacks_done
+                # Call TLS callback (hModule, DLL_PROCESS_ATTACH, NULL)
+                0x6A,
+                0x00,  # push 0
+                0x6A,
+                0x01,  # push 1 (DLL_PROCESS_ATTACH)
+                0x57,  # push edi (hModule)
+                0xFF,
+                0xD2,  # call edx
+                0x83,
+                0xC1,
+                0x04,  # add ecx, 4 (next callback)
+                0xEB,
+                0xEE,  # jmp callback_loop
+                # no_tls_callbacks / callbacks_done:
+            ]
+        )
 
     def _generate_call_dllmain_x86(self) -> bytes:
         """Generate code to call DllMain (x86 version)"""
-        return bytes([
-            0x6A, 0x00,                     # push 0 (lpvReserved)
-            0x6A, 0x01,                     # push 1 (DLL_PROCESS_ATTACH)
-            0x57,                           # push edi (hModule)
-            0x8B, 0x47, 0x28,               # mov eax, [edi+0x28] (AddressOfEntryPoint)
-            0x01, 0xF8,                     # add eax, edi
-            0xFF, 0xD0,                     # call eax
-            0x83, 0xC4, 0x0C,               # add esp, 0x0C (clean stack)
-        ])
+        return bytes(
+            [
+                0x6A,
+                0x00,  # push 0 (lpvReserved)
+                0x6A,
+                0x01,  # push 1 (DLL_PROCESS_ATTACH)
+                0x57,  # push edi (hModule)
+                0x8B,
+                0x47,
+                0x28,  # mov eax, [edi+0x28] (AddressOfEntryPoint)
+                0x01,
+                0xF8,  # add eax, edi
+                0xFF,
+                0xD0,  # call eax
+                0x83,
+                0xC4,
+                0x0C,  # add esp, 0x0C (clean stack)
+            ]
+        )
 
     def inject_reflective_dll_from_file(self, target_name: str, dll_path: str) -> bool:
         """Reflective DLL injection from file path
@@ -3149,13 +3637,19 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                 # Unlink from all three lists
                 success = True
                 success &= self._unlink_from_list(process_handle, target_module, "InLoadOrderLinks")
-                success &= self._unlink_from_list(process_handle, target_module, "InMemoryOrderLinks")
-                success &= self._unlink_from_list(process_handle, target_module, "InInitializationOrderLinks")
+                success &= self._unlink_from_list(
+                    process_handle, target_module, "InMemoryOrderLinks"
+                )
+                success &= self._unlink_from_list(
+                    process_handle, target_module, "InInitializationOrderLinks"
+                )
 
                 if success:
                     logger.info("Successfully unlinked %s from PEB", dll_name)
                 else:
-                    logger.warning("Partial PEB unlinking - some lists may still contain the module")
+                    logger.warning(
+                        "Partial PEB unlinking - some lists may still contain the module"
+                    )
 
                 return success
 
@@ -3330,7 +3824,9 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
                     ctypes.byref(bytes_read),
                 )
 
-                module_name = name_buffer.raw[:name_length.value].decode("utf-16-le", errors="ignore")
+                module_name = name_buffer.raw[: name_length.value].decode(
+                    "utf-16-le", errors="ignore"
+                )
             else:
                 module_name = "Unknown"
 
@@ -3344,8 +3840,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.debug("Failed to read LDR entry: %s", e)
             return None
 
-    def _unlink_from_list(self, process_handle: int, module: dict,
-                         list_name: str) -> bool:
+    def _unlink_from_list(self, process_handle: int, module: dict, list_name: str) -> bool:
         """Unlink module from specific list"""
         try:
             # List offsets in LDR_DATA_TABLE_ENTRY
@@ -3472,8 +3967,7 @@ console.log("[*] Advanced Adobe Creative Cloud bypass active");
             logger.error("Kernel injection exception: %s", e)
             return False
 
-    def inject_early_bird(self, target_exe: str, dll_path: str,
-                         command_line: str = None) -> bool:
+    def inject_early_bird(self, target_exe: str, dll_path: str, command_line: str = None) -> bool:
         """Use Early Bird injection technique
 
         Args:

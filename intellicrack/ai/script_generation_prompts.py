@@ -1,4 +1,3 @@
-
 """Specialized Prompts for AI Script Generation
 
 Copyright (C) 2025 Zachary Flint
@@ -73,7 +72,6 @@ Your expertise covers:
 - Real-time binary analysis
 
 Generate complete, working Frida scripts only.""",
-
                 "user_template": """Target Binary: {binary_name}
 Protection Types: {protection_types}
 Analysis Data: {analysis_summary}
@@ -97,7 +95,6 @@ Generate a complete Frida JavaScript script that:
 
 Return ONLY the complete Frida script code.""",
             },
-
             PromptType.FRIDA_ADVANCED: {
                 "system": """You are an autonomous senior Frida expert specializing in complex protection bypass and advanced hooking techniques.
 
@@ -119,7 +116,6 @@ Advanced capabilities to utilize:
 - Cryptographic function replacement
 
 Generate production-grade Frida scripts with advanced techniques.""",
-
                 "user_template": """Target Binary: {binary_name}
 Complex Protection Analysis:
 {detailed_analysis}
@@ -146,7 +142,6 @@ Generate an advanced Frida script that:
 
 Return ONLY the complete advanced Frida script code.""",
             },
-
             PromptType.GHIDRA_BASIC: {
                 "system": """You are an autonomous Ghidra Python expert for automated binary analysis and patching.
 
@@ -168,7 +163,6 @@ Your expertise includes:
 - Control flow analysis
 
 Generate complete, working Ghidra Python scripts only.""",
-
                 "user_template": """Target Binary: {binary_name}
 Analysis Requirements: {analysis_requirements}
 Protection Information: {protection_info}
@@ -193,7 +187,6 @@ Generate a complete Ghidra Python script that:
 
 Return ONLY the complete Ghidra Python script code.""",
             },
-
             PromptType.GHIDRA_ADVANCED: {
                 "system": """You are a senior Ghidra developer specializing in complex binary analysis, advanced patching, and automated reverse engineering workflows.
 
@@ -216,7 +209,6 @@ Advanced capabilities to implement:
 - Complex patching with safety verification
 
 Generate enterprise-grade Ghidra automation scripts.""",
-
                 "user_template": """Target Binary: {binary_name}
 Complex Analysis Requirements:
 {complex_analysis}
@@ -244,7 +236,6 @@ Generate an advanced Ghidra Python script that:
 
 Return ONLY the complete advanced Ghidra Python script code.""",
             },
-
             PromptType.ANALYSIS: {
                 "system": """You are an autonomous binary protection expert specializing in identifying and categorizing protection mechanisms.
 
@@ -258,7 +249,6 @@ Analyze binary data and identify:
 - Obfuscation techniques
 
 Provide detailed analysis with actionable bypass strategies.""",
-
                 "user_template": """Binary Analysis Data:
 {binary_data}
 
@@ -271,7 +261,6 @@ Provide comprehensive protection analysis including:
 
 Return analysis in structured JSON format.""",
             },
-
             PromptType.REFINEMENT: {
                 "system": """You are an autonomous script debugging and optimization expert.
 
@@ -284,7 +273,6 @@ CRITICAL REQUIREMENTS:
 - Add proper error handling and edge case management
 
 Your task is to refine and improve existing scripts based on test results and feedback.""",
-
                 "user_template": """Original Script:
 {original_script}
 
@@ -307,7 +295,6 @@ Provide a complete refined script that:
 
 Return ONLY the complete refined script code.""",
             },
-
             PromptType.VALIDATION: {
                 "system": """You are a code validation specialist for Frida and Ghidra scripts.
 
@@ -320,7 +307,6 @@ Analyze scripts for:
 - Compatibility problems
 
 Provide detailed validation results with specific recommendations.""",
-
                 "user_template": """Script Type: {script_type}
 Script Content:
 {script_content}
@@ -350,11 +336,9 @@ Return validation results in structured JSON format.""",
         # Format user template if provided
         if "user_template" in prompt_data and kwargs:
             try:
-                prompt_data["user_template"] = prompt_data["user_template"].format(
-                    **kwargs)
+                prompt_data["user_template"] = prompt_data["user_template"].format(**kwargs)
             except KeyError as e:
-                self.logger.error(
-                    "Key error in script_generation_prompts: %s", e)
+                self.logger.error("Key error in script_generation_prompts: %s", e)
                 # If a required key is missing, return the template with placeholders
                 # This allows the caller to see what keys are needed
 
@@ -362,16 +346,21 @@ Return validation results in structured JSON format.""",
 
     def get_frida_prompt(self, complexity: str = "basic", **kwargs) -> dict[str, str]:
         """Get Frida-specific prompt."""
-        prompt_type = PromptType.FRIDA_ADVANCED if complexity == "advanced" else PromptType.FRIDA_BASIC
+        prompt_type = (
+            PromptType.FRIDA_ADVANCED if complexity == "advanced" else PromptType.FRIDA_BASIC
+        )
         return self.get_prompt(prompt_type, **kwargs)
 
     def get_ghidra_prompt(self, complexity: str = "basic", **kwargs) -> dict[str, str]:
         """Get Ghidra-specific prompt."""
-        prompt_type = PromptType.GHIDRA_ADVANCED if complexity == "advanced" else PromptType.GHIDRA_BASIC
+        prompt_type = (
+            PromptType.GHIDRA_ADVANCED if complexity == "advanced" else PromptType.GHIDRA_BASIC
+        )
         return self.get_prompt(prompt_type, **kwargs)
 
-    def build_context_data(self, binary_analysis: dict[str, Any],
-                           protection_types: list[str] = None) -> dict[str, str]:
+    def build_context_data(
+        self, binary_analysis: dict[str, Any], protection_types: list[str] = None
+    ) -> dict[str, str]:
         """Build context data for prompt formatting."""
         context = {
             "binary_name": binary_analysis.get("binary_info", {}).get("name", "unknown"),
@@ -380,18 +369,33 @@ Return validation results in structured JSON format.""",
             "file_type": binary_analysis.get("binary_info", {}).get("type", "PE"),
             "entry_point": "0x401000",  # Default
             "protection_types": ", ".join(protection_types or ["license_check"]),
-            "key_functions": ", ".join([f["name"] for f in binary_analysis.get("functions", [])[:10]]),
+            "key_functions": ", ".join(
+                [f["name"] for f in binary_analysis.get("functions", [])[:10]]
+            ),
             "imports": ", ".join(binary_analysis.get("imports", [])[:15]),
-            "license_strings": ", ".join([s for s in binary_analysis.get("strings", [])
-                                          if any(keyword in s.lower() for keyword in
-                                                 ["license", "trial", "demo", "expire"])]),
+            "license_strings": ", ".join(
+                [
+                    s
+                    for s in binary_analysis.get("strings", [])
+                    if any(
+                        keyword in s.lower() for keyword in ["license", "trial", "demo", "expire"]
+                    )
+                ]
+            ),
             "analysis_summary": self._summarize_analysis(binary_analysis),
-            "functionality_requirements": self._build_functionality_requirements(protection_types or []),
+            "functionality_requirements": self._build_functionality_requirements(
+                protection_types or []
+            ),
             # Example addresses
             "key_addresses": ", ".join(["0x401000", "0x401200", "0x401400"]),
-            "protection_functions": ", ".join([f["name"] for f in binary_analysis.get("functions", [])
-                                               if "license" in f.get("name", "").lower() or
-                                               "check" in f.get("name", "").lower()]),
+            "protection_functions": ", ".join(
+                [
+                    f["name"]
+                    for f in binary_analysis.get("functions", [])
+                    if "license" in f.get("name", "").lower()
+                    or "check" in f.get("name", "").lower()
+                ]
+            ),
             "patching_objectives": self._build_patching_objectives(protection_types or []),
         }
 
@@ -418,16 +422,12 @@ Return validation results in structured JSON format.""",
 
         for ptype in protection_types:
             if "license" in ptype.lower():
-                requirements.append(
-                    "- Hook license validation functions and force success")
-                requirements.append(
-                    "- Monitor registry/file access for license storage")
+                requirements.append("- Hook license validation functions and force success")
+                requirements.append("- Monitor registry/file access for license storage")
                 requirements.append("- Bypass string comparison checks")
             elif "trial" in ptype.lower() or "time" in ptype.lower():
-                requirements.append(
-                    "- Hook time-related functions (GetSystemTime, etc.)")
-                requirements.append(
-                    "- Manipulate time values to prevent expiration")
+                requirements.append("- Hook time-related functions (GetSystemTime, etc.)")
+                requirements.append("- Manipulate time values to prevent expiration")
                 requirements.append("- Monitor trial timer mechanisms")
             elif "network" in ptype.lower():
                 requirements.append("- Intercept network validation calls")
@@ -435,10 +435,8 @@ Return validation results in structured JSON format.""",
                 requirements.append("- Block outbound license verification")
             elif "debug" in ptype.lower():
                 requirements.append("- Bypass debugger detection mechanisms")
-                requirements.append(
-                    "- Hook IsDebuggerPresent and related functions")
-                requirements.append(
-                    "- Manipulate PEB flags and debug registers")
+                requirements.append("- Hook IsDebuggerPresent and related functions")
+                requirements.append("- Manipulate PEB flags and debug registers")
 
         if not requirements:
             requirements = [
@@ -455,17 +453,13 @@ Return validation results in structured JSON format.""",
 
         for ptype in protection_types:
             if "license" in ptype.lower():
-                objectives.append(
-                    "- Patch license check jumps to always succeed")
-                objectives.append(
-                    "- Modify string comparisons to return equal")
-                objectives.append(
-                    "- Replace license validation with NOP instructions")
+                objectives.append("- Patch license check jumps to always succeed")
+                objectives.append("- Modify string comparisons to return equal")
+                objectives.append("- Replace license validation with NOP instructions")
             elif "trial" in ptype.lower():
                 objectives.append("- Patch time check comparisons")
                 objectives.append("- Modify trial expiration logic")
-                objectives.append(
-                    "- Replace time-based jumps with unconditional success")
+                objectives.append("- Replace time-based jumps with unconditional success")
             elif "network" in ptype.lower():
                 objectives.append("- Patch network calls to return success")
                 objectives.append("- Modify validation responses")
@@ -493,6 +487,7 @@ Return validation results in structured JSON format.""",
 
         # Extract format placeholders
         import re
+
         placeholders = re.findall(r"\{(\w+)\}", template)
         return list(set(placeholders))
 

@@ -26,8 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 class AnalysisStatsGenerator:
-    """Utility class for generating analysis statistics and reports.
-    """
+    """Utility class for generating analysis statistics and reports."""
 
     @staticmethod
     def count_by_attribute(items: list[dict[str, Any]], attribute: str) -> dict[str, int]:
@@ -59,8 +58,7 @@ class AnalysisStatsGenerator:
             return {}
 
     @staticmethod
-    def calculate_distribution(items: list[dict[str, Any]],
-                             attribute: str) -> dict[str, float]:
+    def calculate_distribution(items: list[dict[str, Any]], attribute: str) -> dict[str, float]:
         """Calculate percentage distribution of an attribute.
 
         Args:
@@ -89,8 +87,7 @@ class AnalysisStatsGenerator:
             return {}
 
     @staticmethod
-    def aggregate_numeric_stats(items: list[dict[str, Any]],
-                              attribute: str) -> dict[str, float]:
+    def aggregate_numeric_stats(items: list[dict[str, Any]], attribute: str) -> dict[str, float]:
         """Calculate numeric statistics for an attribute.
 
         Args:
@@ -137,8 +134,9 @@ class AnalysisStatsGenerator:
             }
 
     @staticmethod
-    def generate_correlation_matrix(items: list[dict[str, Any]],
-                                  attributes: list[str]) -> dict[str, dict[str, float]]:
+    def generate_correlation_matrix(
+        items: list[dict[str, Any]], attributes: list[str]
+    ) -> dict[str, dict[str, float]]:
         """Generate correlation matrix between numeric attributes.
 
         Args:
@@ -193,7 +191,9 @@ class AnalysisStatsGenerator:
             mean2 = sum(values2) / len(values2)
 
             # Calculate correlation components
-            numerator = sum((x - mean1) * (y - mean2) for x, y in zip(values1, values2, strict=False))
+            numerator = sum(
+                (x - mean1) * (y - mean2) for x, y in zip(values1, values2, strict=False)
+            )
             sum_sq1 = sum((x - mean1) ** 2 for x in values1)
             sum_sq2 = sum((y - mean2) ** 2 for y in values2)
 
@@ -209,10 +209,12 @@ class AnalysisStatsGenerator:
             return 0.0
 
     @staticmethod
-    def generate_time_series_stats(items: list[dict[str, Any]],
-                                 time_attribute: str = "timestamp",
-                                 value_attribute: str = "value",
-                                 interval_seconds: int = 3600) -> dict[str, Any]:
+    def generate_time_series_stats(
+        items: list[dict[str, Any]],
+        time_attribute: str = "timestamp",
+        value_attribute: str = "value",
+        interval_seconds: int = 3600,
+    ) -> dict[str, Any]:
         """Generate time series statistics.
 
         Args:
@@ -230,10 +232,7 @@ class AnalysisStatsGenerator:
             time_buckets = defaultdict(list)
 
             for item in items:
-                if (isinstance(item, dict) and
-                    time_attribute in item and
-                    value_attribute in item):
-
+                if isinstance(item, dict) and time_attribute in item and value_attribute in item:
                     timestamp = item[time_attribute]
                     value = item[value_attribute]
 
@@ -271,8 +270,9 @@ class AnalysisStatsGenerator:
             }
 
     @staticmethod
-    def safe_stats_generation(stats_function: Callable[[], Any],
-                            default_return: Any | None = None) -> Any:
+    def safe_stats_generation(
+        stats_function: Callable[[], Any], default_return: Any | None = None
+    ) -> Any:
         """Safely execute a statistics generation function with error handling.
 
         Args:
@@ -290,8 +290,9 @@ class AnalysisStatsGenerator:
             return default_return
 
     @staticmethod
-    def generate_summary_report(items: list[dict[str, Any]],
-                              title: str = "Analysis Summary") -> str:
+    def generate_summary_report(
+        items: list[dict[str, Any]], title: str = "Analysis Summary"
+    ) -> str:
         """Generate a text summary report.
 
         Args:
@@ -341,13 +342,15 @@ class AnalysisStatsGenerator:
 
                 if len(numeric_values) > len(items) * 0.3:  # Mostly numeric
                     stats = AnalysisStatsGenerator.aggregate_numeric_stats(items, attr)
-                    report_lines.extend([
-                        f"  Count: {stats['count']}",
-                        f"  Min: {stats['min']:.2f}",
-                        f"  Max: {stats['max']:.2f}",
-                        f"  Average: {stats['avg']:.2f}",
-                        f"  Sum: {stats['sum']:.2f}",
-                    ])
+                    report_lines.extend(
+                        [
+                            f"  Count: {stats['count']}",
+                            f"  Min: {stats['min']:.2f}",
+                            f"  Max: {stats['max']:.2f}",
+                            f"  Average: {stats['avg']:.2f}",
+                            f"  Sum: {stats['sum']:.2f}",
+                        ]
+                    )
                 else:
                     # Categorical data
                     counts = AnalysisStatsGenerator.count_by_attribute(items, attr)
@@ -366,8 +369,7 @@ class AnalysisStatsGenerator:
             return f"{title}\n{'=' * len(title)}\n\nError generating report: {e}"
 
     @staticmethod
-    def calculate_growth_rate(current_value: float,
-                            previous_value: float) -> float:
+    def calculate_growth_rate(current_value: float, previous_value: float) -> float:
         """Calculate growth rate between two values.
 
         Args:
@@ -390,8 +392,7 @@ class AnalysisStatsGenerator:
             return 0.0
 
     @staticmethod
-    def detect_outliers(values: list[int | float],
-                       method: str = "iqr") -> list[int]:
+    def detect_outliers(values: list[int | float], method: str = "iqr") -> list[int]:
         """Detect outliers in a list of numeric values.
 
         Args:
@@ -431,7 +432,7 @@ class AnalysisStatsGenerator:
                 # Z-score method
                 mean_val = sum(values) / len(values)
                 variance = sum((x - mean_val) ** 2 for x in values) / len(values)
-                std_dev = variance ** 0.5
+                std_dev = variance**0.5
 
                 if std_dev > 0:
                     for i, value in enumerate(values):
@@ -446,8 +447,9 @@ class AnalysisStatsGenerator:
             return []
 
     @staticmethod
-    def generate_percentiles(values: list[int | float],
-                           percentiles: list[int] = None) -> dict[int, float]:
+    def generate_percentiles(
+        values: list[int | float], percentiles: list[int] = None
+    ) -> dict[int, float]:
         """Calculate percentiles for a list of values.
 
         Args:
@@ -481,8 +483,10 @@ class AnalysisStatsGenerator:
                         upper_idx = min(lower_idx + 1, n - 1)
                         weight = index - lower_idx
 
-                        result[p] = (sorted_values[lower_idx] * (1 - weight) +
-                                   sorted_values[upper_idx] * weight)
+                        result[p] = (
+                            sorted_values[lower_idx] * (1 - weight)
+                            + sorted_values[upper_idx] * weight
+                        )
 
             return result
 
@@ -492,8 +496,7 @@ class AnalysisStatsGenerator:
 
 
 class PerformanceTracker:
-    """Track performance metrics for analysis operations.
-    """
+    """Track performance metrics for analysis operations."""
 
     def __init__(self):
         """Initialize the performance tracker with empty metrics and timing data."""

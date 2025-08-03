@@ -34,6 +34,7 @@ class C2Manager:
         self.protocols = {}
         self.sessions = {}
         self.logger = get_logger(__name__)
+
     def start_server(self, config):
         """Start C2 server with given configuration."""
         try:
@@ -42,7 +43,9 @@ class C2Manager:
 
             # Check if server started successfully
             if not result or not result.get("success", True):
-                raise Exception(f"Server failed to start: {result.get('error', 'Unknown error') if result else 'No response'}")
+                raise Exception(
+                    f"Server failed to start: {result.get('error', 'Unknown error') if result else 'No response'}"
+                )
 
             return {
                 "success": True,
@@ -69,29 +72,45 @@ class C2Manager:
 
     def get_server_status(self):
         """Get the current server status and active sessions."""
-        active_sessions = self.sessions.get_active_sessions() if hasattr(self.sessions, "get_active_sessions") else []
+        active_sessions = (
+            self.sessions.get_active_sessions()
+            if hasattr(self.sessions, "get_active_sessions")
+            else []
+        )
         return {
             "running": self.server is not None,
             "active_sessions": len(active_sessions),
-            "total_connections": self.sessions.total_connections if hasattr(self.sessions, "total_connections") else 0,
-            "sessions": [{
-                "id": session.get("id", "unknown"),
-                "remote_ip": session.get("remote_ip", "unknown"),
-                "platform": session.get("platform", "unknown"),
-            } for session in active_sessions],
+            "total_connections": self.sessions.total_connections
+            if hasattr(self.sessions, "total_connections")
+            else 0,
+            "sessions": [
+                {
+                    "id": session.get("id", "unknown"),
+                    "remote_ip": session.get("remote_ip", "unknown"),
+                    "platform": session.get("platform", "unknown"),
+                }
+                for session in active_sessions
+            ],
         }
 
     def wait_for_callback(self, session_id: str = None, timeout: int = 300) -> dict[str, Any]:
         """Wait for a callback from an agent."""
         try:
             import time
+
             start_time = time.time()
 
-            self.logger.info(f"Waiting for callback from session {session_id or 'any'} with timeout {timeout}s")
+            self.logger.info(
+                f"Waiting for callback from session {session_id or 'any'} with timeout {timeout}s"
+            )
 
             while time.time() - start_time < timeout:
                 # Check for active sessions
-                active_sessions = self.sessions.get_active_sessions() if hasattr(self.sessions, "get_active_sessions") else []
+                active_sessions = (
+                    self.sessions.get_active_sessions()
+                    if hasattr(self.sessions, "get_active_sessions")
+                    else []
+                )
 
                 if session_id:
                     # Wait for specific session
@@ -124,7 +143,9 @@ class C2Manager:
             self.logger.error("Exception in c2_manager: %s", e)
             return {"success": False, "error": str(e)}
 
-    def establish_session(self, target_info: dict[str, Any], payload_info: dict[str, Any]) -> dict[str, Any]:
+    def establish_session(
+        self, target_info: dict[str, Any], payload_info: dict[str, Any]
+    ) -> dict[str, Any]:
         """Establish a C2 session with a target."""
         try:
             import time
@@ -132,7 +153,9 @@ class C2Manager:
 
             session_id = str(uuid.uuid4())
 
-            self.logger.info(f"Establishing C2 session {session_id} with target {target_info.get('target_ip', 'unknown')}")
+            self.logger.info(
+                f"Establishing C2 session {session_id} with target {target_info.get('target_ip', 'unknown')}"
+            )
 
             # Create session info
             session_info = {

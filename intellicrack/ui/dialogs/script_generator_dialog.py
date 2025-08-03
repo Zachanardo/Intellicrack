@@ -1,4 +1,5 @@
 """Script generator dialog for creating analysis scripts."""
+
 import os
 import time
 
@@ -52,8 +53,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
 try:
     from PyQt6.QtGui import QSyntaxHighlighter, QTextCharFormat
     from PyQt6.QtWidgets import QPlainTextEdit
@@ -74,8 +73,19 @@ class PythonHighlighter(QSyntaxHighlighter):
         keyword_format.setColor(QColor(128, 0, 255))
         keyword_format.setFontWeight(QFont.Bold)
         keywords = [
-            "def", "class", "if", "else", "elif", "while", "for",
-            "try", "except", "import", "from", "return", "with",
+            "def",
+            "class",
+            "if",
+            "else",
+            "elif",
+            "while",
+            "for",
+            "try",
+            "except",
+            "import",
+            "from",
+            "return",
+            "with",
         ]
         for _keyword in keywords:
             pattern = f"\\b{_keyword}\\b"
@@ -95,6 +105,7 @@ class PythonHighlighter(QSyntaxHighlighter):
     def highlightBlock(self, text):
         """Highlight a block of text."""
         import re
+
         for pattern, text_format in self.highlighting_rules:
             for _match in re.finditer(pattern, text):
                 start, end = _match.span()
@@ -142,7 +153,9 @@ class ScriptGeneratorWorker(QThread):
             protection_info = {
                 "type": self.kwargs.get("protection_type", "license"),
                 "methods": self.kwargs.get("methods", ["patch"]),
-                "target_platform": "frida" if self.kwargs.get("language") == "javascript" else "python",
+                "target_platform": "frida"
+                if self.kwargs.get("language") == "javascript"
+                else "python",
             }
 
             # Generate script using AI
@@ -161,7 +174,9 @@ class ScriptGeneratorWorker(QThread):
             self.script_generated.emit(result)
 
         except Exception as e:
-            self.logger.warning(f"AI script generation failed: {e}. Falling back to template-based generation.")
+            self.logger.warning(
+                f"AI script generation failed: {e}. Falling back to template-based generation."
+            )
             # Fallback to template-based generation
             from ...utils.exploitation import generate_bypass_script
 
@@ -287,12 +302,14 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         type_layout = QVBoxLayout(type_group)
 
         self.script_type_combo = QComboBox()
-        self.script_type_combo.addItems([
-            "Bypass Script",
-            "Exploit Script",
-            "Exploit Strategy",
-            "Custom Script",
-        ])
+        self.script_type_combo.addItems(
+            [
+                "Bypass Script",
+                "Exploit Script",
+                "Exploit Strategy",
+                "Custom Script",
+            ]
+        )
         self.script_type_combo.currentTextChanged.connect(self.on_script_type_changed)
 
         type_layout.addWidget(self.script_type_combo)
@@ -311,7 +328,9 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         # Generate button
         self.generate_btn = QPushButton("Generate Script")
         self.generate_btn.clicked.connect(self.generate_script)
-        self.generate_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 10px; }")
+        self.generate_btn.setStyleSheet(
+            "QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 10px; }"
+        )
         left_layout.addWidget(self.generate_btn)
 
         left_layout.addStretch()
@@ -364,13 +383,15 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         # Exploit type
         layout.addWidget(QLabel("Exploit Type:"), 0, 0)
         self.exploit_type = QComboBox()
-        self.exploit_type.addItems([
-            "License Bypass",
-            "Trial Extension",
-            "Feature Unlock",
-            "Authentication Bypass",
-            "Custom Exploit",
-        ])
+        self.exploit_type.addItems(
+            [
+                "License Bypass",
+                "Trial Extension",
+                "Feature Unlock",
+                "Authentication Bypass",
+                "Custom Exploit",
+            ]
+        )
         layout.addWidget(self.exploit_type, 0, 1)
 
         # Target function
@@ -400,13 +421,15 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         # Strategy type
         layout.addWidget(QLabel("Strategy Type:"), 0, 0)
         self.strategy_type = QComboBox()
-        self.strategy_type.addItems([
-            "Comprehensive Analysis",
-            "Quick Bypass",
-            "Stealth Approach",
-            "Brute Force",
-            "Custom Strategy",
-        ])
+        self.strategy_type.addItems(
+            [
+                "Comprehensive Analysis",
+                "Quick Bypass",
+                "Stealth Approach",
+                "Brute Force",
+                "Custom Strategy",
+            ]
+        )
         layout.addWidget(self.strategy_type, 0, 1)
 
         # Analysis depth
@@ -513,7 +536,6 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         """Connect internal signals."""
         self.binary_path_edit.textChanged.connect(self.on_binary_path_changed)
 
-
     def on_binary_path_changed(self, text):
         """Handle binary path change."""
         self.binary_path = text
@@ -613,7 +635,9 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         self.script_display.setPlainText(script_content)
 
         # Display documentation
-        doc_content = result.get("documentation", result.get("description", "No documentation available"))
+        doc_content = result.get(
+            "documentation", result.get("description", "No documentation available")
+        )
         self.doc_display.setPlainText(doc_content)
 
         # Display template if available
@@ -629,6 +653,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         if script_content:
             try:
                 from PyQt6.QtWidgets import QApplication
+
                 QApplication.clipboard().setText(script_content)
                 self.status_label.setText("Script copied to clipboard")
             except (OSError, ValueError, RuntimeError) as e:
@@ -660,7 +685,10 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         default_name = f"{script_type.lower().replace(' ', '_')}_{int(time.time())}.{ext}"
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Script", default_name, filter_str,
+            self,
+            "Save Script",
+            default_name,
+            filter_str,
         )
 
         if file_path:
@@ -675,7 +703,8 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
     def test_script(self):
         """Test the generated script (placeholder)."""
         QMessageBox.information(
-            self, "Test Script",
+            self,
+            "Test Script",
             "Script testing functionality would be implemented here.\n\n"
             "This would include:\n"
             "• Syntax validation\n"
@@ -699,7 +728,11 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
             script_type = self.script_type_combo.currentText()
             # Check if bypass_language exists and use it, otherwise detect from content
             if hasattr(self, "bypass_language") and self.bypass_language.isVisible():
-                language = "javascript" if "javascript" in self.bypass_language.currentText().lower() else "python"
+                language = (
+                    "javascript"
+                    if "javascript" in self.bypass_language.currentText().lower()
+                    else "python"
+                )
             # Auto-detect language from script type and content
             elif "frida" in script_type.lower() or "javascript" in script_type.lower():
                 language = "javascript"
@@ -733,7 +766,8 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
                 # Show warning if security issues found
                 if analysis_result.get("security_issues"):
                     QMessageBox.warning(
-                        self, "Security Issues",
+                        self,
+                        "Security Issues",
                         f"Found {len(analysis_result['security_issues'])} security issue(s) in the script.\n"
                         "Please review the analysis results.",
                     )
@@ -755,7 +789,9 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         lines.append(f"Language: {analysis_result.get('language', 'Unknown')}")
         lines.append(f"Lines of Code: {analysis_result.get('lines_of_code', 0)}")
         lines.append(f"Complexity: {analysis_result.get('complexity', 'Unknown')}")
-        lines.append(f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}")
+        lines.append(
+            f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}"
+        )
         lines.append("")
 
         # Insights

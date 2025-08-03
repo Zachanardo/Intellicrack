@@ -9,7 +9,7 @@
 - **Status**: ✅ **ALL CONFIRMED FALSE POSITIVES**
 - **Root Cause**: Known limitation of pylint with PyQt5 dynamic imports
 - **Evidence**: All PyQt5 imports tested successfully at runtime
-- **Test Results**: 
+- **Test Results**:
   - PyQt5.QtCore: ✅ All imports work (QTimer, QThread, pyqtSignal, Qt, etc.)
   - PyQt5.QtGui: ✅ All imports work (QKeySequence, QColor, QFont, QPainter, etc.)
   - PyQt5.QtWidgets: ✅ All imports work (QApplication, QDialog, QMessageBox, etc.)
@@ -18,7 +18,7 @@
 - **File**: `intellicrack/utils/exploitation.py:1431`
 - **Reported Error**: `No name 'get_file_entropy' in module 'intellicrack.utils.binary_analysis'`
 - **Status**: ✅ **CONFIRMED FALSE POSITIVE**
-- **Evidence**: 
+- **Evidence**:
   - Function correctly imported from `binary_utils` (not `binary_analysis`)
   - Both `analyze_patterns` and `get_file_entropy` imports work correctly at runtime
   - Error appears to be from outdated pylint cache
@@ -31,7 +31,7 @@ This is a well-documented issue with pylint and PyQt5. PyQt5 uses dynamic import
 **Tested Import Examples:**
 ```python
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, Qt
-from PyQt5.QtGui import QKeySequence, QColor, QFont, QPainter  
+from PyQt5.QtGui import QKeySequence, QColor, QFont, QPainter
 from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox
 # All imports successful at runtime
 ```

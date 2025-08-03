@@ -180,6 +180,7 @@ class EmulatorRequiredDecorator:
     @staticmethod
     def requires_qemu(func):
         """Decorator for functions requiring QEMU."""
+
         def wrapper(self, *args, **kwargs):
             from ..core.processing.emulator_manager import get_emulator_manager
 
@@ -192,18 +193,21 @@ class EmulatorRequiredDecorator:
                 feature_name = func.__name__.replace("_", " ").title()
                 if show_emulator_warning(self, "QEMU", feature_name):
                     if not manager.ensure_qemu_running(self.binary_path):
-                        QMessageBox.critical(self, "QEMU Error",
-                                           "Failed to start QEMU. Check the logs for details.")
+                        QMessageBox.critical(
+                            self, "QEMU Error", "Failed to start QEMU. Check the logs for details."
+                        )
                         return None
                 else:
                     return None
 
             return func(self, *args, **kwargs)
+
         return wrapper
 
     @staticmethod
     def requires_qiling(func):
         """Decorator for functions requiring Qiling."""
+
         def wrapper(self, *args, **kwargs):
             from ..core.processing.emulator_manager import get_emulator_manager
 
@@ -213,9 +217,13 @@ class EmulatorRequiredDecorator:
 
             manager = get_emulator_manager()
             if not manager.ensure_qiling_ready(self.binary_path):
-                QMessageBox.critical(self, "Qiling Error",
-                                   "Failed to initialize Qiling. Ensure it's installed: pip install qiling")
+                QMessageBox.critical(
+                    self,
+                    "Qiling Error",
+                    "Failed to initialize Qiling. Ensure it's installed: pip install qiling",
+                )
                 return None
 
             return func(self, *args, **kwargs)
+
         return wrapper

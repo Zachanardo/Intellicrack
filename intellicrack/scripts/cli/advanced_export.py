@@ -33,18 +33,21 @@ logger = logging.getLogger(__name__)
 # Optional imports for enhanced export capabilities
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
 
 try:
     from jinja2 import Template
+
     JINJA2_AVAILABLE = True
 except ImportError:
     JINJA2_AVAILABLE = False
 
 try:
     import xlsxwriter
+
     XLSX_AVAILABLE = True
 except ImportError:
     XLSX_AVAILABLE = False
@@ -145,7 +148,9 @@ class AdvancedExporter:
                 "metadata": self.export_metadata,
                 "executive_summary": {
                     "total_vulnerabilities": len(vuln_data.get("vulnerabilities", [])),
-                    "critical_count": self._count_vulnerabilities_by_severity(vuln_data, "critical"),
+                    "critical_count": self._count_vulnerabilities_by_severity(
+                        vuln_data, "critical"
+                    ),
                     "high_count": self._count_vulnerabilities_by_severity(vuln_data, "high"),
                     "medium_count": self._count_vulnerabilities_by_severity(vuln_data, "medium"),
                     "low_count": self._count_vulnerabilities_by_severity(vuln_data, "low"),
@@ -357,12 +362,14 @@ class AdvancedExporter:
             workbook = xlsxwriter.Workbook(output_path)
 
             # Define formats
-            header_format = workbook.add_format({
-                "bold": True,
-                "bg_color": "#4472C4",
-                "font_color": "white",
-                "border": 1,
-            })
+            header_format = workbook.add_format(
+                {
+                    "bold": True,
+                    "bg_color": "#4472C4",
+                    "font_color": "white",
+                    "border": 1,
+                }
+            )
 
             cell_format = workbook.add_format({"border": 1})
 
@@ -393,7 +400,9 @@ class AdvancedExporter:
             "file_info": {
                 "name": os.path.basename(self.binary_path),
                 "path": self.binary_path,
-                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0,
+                "size": os.path.getsize(self.binary_path)
+                if os.path.exists(self.binary_path)
+                else 0,
             },
             "analysis_overview": {},
             "key_findings": [],
@@ -413,14 +422,18 @@ class AdvancedExporter:
             if isinstance(vuln_data, dict) and "vulnerabilities" in vuln_data:
                 vuln_count = len(vuln_data["vulnerabilities"])
                 if vuln_count > 0:
-                    summary["key_findings"].append(f"{vuln_count} potential vulnerabilities detected")
+                    summary["key_findings"].append(
+                        f"{vuln_count} potential vulnerabilities detected"
+                    )
 
         if "protections" in self.analysis_results:
             prot_data = self.analysis_results["protections"]
             if isinstance(prot_data, dict):
                 enabled_protections = [k for k, v in prot_data.items() if v]
                 if enabled_protections:
-                    summary["key_findings"].append(f"Security protections: {', '.join(enabled_protections)}")
+                    summary["key_findings"].append(
+                        f"Security protections: {', '.join(enabled_protections)}"
+                    )
 
         return summary
 
@@ -465,12 +478,14 @@ class AdvancedExporter:
                 recommendations.append("Enable stack canaries for buffer overflow protection")
 
         # General recommendations
-        recommendations.extend([
-            "Regular security audits and penetration testing",
-            "Keep all dependencies and libraries updated",
-            "Implement proper error handling and logging",
-            "Use secure coding practices and code reviews",
-        ])
+        recommendations.extend(
+            [
+                "Regular security audits and penetration testing",
+                "Keep all dependencies and libraries updated",
+                "Implement proper error handling and logging",
+                "Use secure coding practices and code reviews",
+            ]
+        )
 
         return recommendations
 
@@ -481,7 +496,9 @@ class AdvancedExporter:
             "analysis_date": self.export_metadata["export_time"],
             "binary_info": {
                 "name": os.path.basename(self.binary_path),
-                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0,
+                "size": os.path.getsize(self.binary_path)
+                if os.path.exists(self.binary_path)
+                else 0,
             },
             "risk_assessment": self._assess_overall_risk(),
             "key_findings": self._extract_key_findings(),
@@ -522,7 +539,9 @@ class AdvancedExporter:
         for step in summary_data["next_steps"]:
             content += f"- {step}\n"
 
-        content += f"\n---\n*Generated by Intellicrack CLI v{self.export_metadata['export_version']}*\n"
+        content += (
+            f"\n---\n*Generated by Intellicrack CLI v{self.export_metadata['export_version']}*\n"
+        )
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(content)
@@ -581,7 +600,9 @@ class AdvancedExporter:
         recommendations_html = "".join(f"<li>{rec}</li>" for rec in summary_data["recommendations"])
 
         risk_level = summary_data["risk_assessment"]["level"]
-        risk_class = risk_level.lower() if risk_level.lower() in ["high", "medium", "low"] else "medium"
+        risk_class = (
+            risk_level.lower() if risk_level.lower() in ["high", "medium", "low"] else "medium"
+        )
 
         html_content = html_template.format(
             title=summary_data["title"],
@@ -780,14 +801,16 @@ KEY FINDINGS
             writer.writeheader()
             for vuln in vulns:
                 if isinstance(vuln, dict):
-                    writer.writerow({
-                        "severity": vuln.get("severity", "Unknown"),
-                        "type": vuln.get("type", "Unknown"),
-                        "location": vuln.get("location", "Unknown"),
-                        "description": vuln.get("description", "No description"),
-                        "impact": vuln.get("impact", "Unknown"),
-                        "recommendation": vuln.get("recommendation", "Review manually"),
-                    })
+                    writer.writerow(
+                        {
+                            "severity": vuln.get("severity", "Unknown"),
+                            "type": vuln.get("type", "Unknown"),
+                            "location": vuln.get("location", "Unknown"),
+                            "description": vuln.get("description", "No description"),
+                            "impact": vuln.get("impact", "Unknown"),
+                            "recommendation": vuln.get("recommendation", "Review manually"),
+                        }
+                    )
 
         return True
 
@@ -803,17 +826,19 @@ KEY FINDINGS
         formatted = []
         for vuln in vulns:
             if isinstance(vuln, dict):
-                formatted.append({
-                    "id": len(formatted) + 1,
-                    "severity": vuln.get("severity", "Unknown"),
-                    "type": vuln.get("type", "Unknown"),
-                    "location": vuln.get("location", "Unknown"),
-                    "description": vuln.get("description", "No description available"),
-                    "impact": vuln.get("impact", "Potential security compromise"),
-                    "recommendation": vuln.get("recommendation", "Manual review required"),
-                    "cve_references": vuln.get("cve_references", []),
-                    "exploit_likelihood": vuln.get("exploit_likelihood", "Unknown"),
-                })
+                formatted.append(
+                    {
+                        "id": len(formatted) + 1,
+                        "severity": vuln.get("severity", "Unknown"),
+                        "type": vuln.get("type", "Unknown"),
+                        "location": vuln.get("location", "Unknown"),
+                        "description": vuln.get("description", "No description available"),
+                        "impact": vuln.get("impact", "Potential security compromise"),
+                        "recommendation": vuln.get("recommendation", "Manual review required"),
+                        "cve_references": vuln.get("cve_references", []),
+                        "exploit_likelihood": vuln.get("exploit_likelihood", "Unknown"),
+                    }
+                )
 
         return formatted
 
@@ -860,13 +885,15 @@ KEY FINDINGS
 
                 for string_item in strings_data:
                     if isinstance(string_item, dict):
-                        writer.writerow([
-                            string_item.get("value", ""),
-                            string_item.get("address", ""),
-                            string_item.get("section", ""),
-                            string_item.get("type", ""),
-                            string_item.get("length", 0),
-                        ])
+                        writer.writerow(
+                            [
+                                string_item.get("value", ""),
+                                string_item.get("address", ""),
+                                string_item.get("section", ""),
+                                string_item.get("type", ""),
+                                string_item.get("length", 0),
+                            ]
+                        )
                     else:
                         # Fallback for simple string list
                         writer.writerow([str(string_item), "", "", "", len(str(string_item))])
@@ -891,12 +918,14 @@ KEY FINDINGS
                     if isinstance(functions, list):
                         for func in functions:
                             if isinstance(func, dict):
-                                writer.writerow([
-                                    library,
-                                    func.get("name", ""),
-                                    func.get("address", ""),
-                                    func.get("ordinal", ""),
-                                ])
+                                writer.writerow(
+                                    [
+                                        library,
+                                        func.get("name", ""),
+                                        func.get("address", ""),
+                                        func.get("ordinal", ""),
+                                    ]
+                                )
                             else:
                                 writer.writerow([library, str(func), "", ""])
                     else:
@@ -928,9 +957,17 @@ KEY FINDINGS
                 strings = self.analysis_results.get("strings", [])
                 imports = self.analysis_results.get("imports", {})
 
-                writer.writerow(["Vulnerabilities", len(vulnerabilities), f"Found {len(vulnerabilities)} vulnerabilities"])
+                writer.writerow(
+                    [
+                        "Vulnerabilities",
+                        len(vulnerabilities),
+                        f"Found {len(vulnerabilities)} vulnerabilities",
+                    ]
+                )
                 writer.writerow(["Strings", len(strings), f"Extracted {len(strings)} strings"])
-                writer.writerow(["Imports", len(imports), f"Found {len(imports)} imported libraries"])
+                writer.writerow(
+                    ["Imports", len(imports), f"Found {len(imports)} imported libraries"]
+                )
 
             return success
         except Exception as e:
@@ -981,17 +1018,21 @@ KEY FINDINGS
 
         return rules
 
-    def _create_summary_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Summary"):
+    def _create_summary_sheet(
+        self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Summary"
+    ):
         """Create summary sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
 
             # Header format
-            header_format = workbook.add_format({
-                "bold": True,
-                "bg_color": "#D7E4BC",
-                "border": 1,
-            })
+            header_format = workbook.add_format(
+                {
+                    "bold": True,
+                    "bg_color": "#D7E4BC",
+                    "border": 1,
+                }
+            )
 
             # Write headers
             headers = ["Category", "Count", "Status", "Risk Level"]
@@ -1014,7 +1055,9 @@ KEY FINDINGS
             worksheet.write(row, 0, "Vulnerabilities")
             worksheet.write(row, 1, vuln_count)
             worksheet.write(row, 2, "Found" if vuln_count > 0 else "None")
-            worksheet.write(row, 3, "High" if vuln_count > 5 else "Medium" if vuln_count > 0 else "Low")
+            worksheet.write(
+                row, 3, "High" if vuln_count > 5 else "Medium" if vuln_count > 0 else "Low"
+            )
             row += 1
 
             # Protections
@@ -1022,24 +1065,34 @@ KEY FINDINGS
             worksheet.write(row, 0, "Protections")
             worksheet.write(row, 1, len(protections))
             worksheet.write(row, 2, "Detected" if protections else "None")
-            worksheet.write(row, 3, "High" if len(protections) > 3 else "Medium" if protections else "Low")
+            worksheet.write(
+                row, 3, "High" if len(protections) > 3 else "Medium" if protections else "Low"
+            )
 
             return worksheet
         except Exception as e:
             print(f"Failed to create summary sheet: {e}")
             return None
 
-    def _create_vulnerabilities_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Vulnerabilities"):
+    def _create_vulnerabilities_sheet(
+        self,
+        workbook,
+        header_format=None,
+        cell_format=None,
+        worksheet_name: str = "Vulnerabilities",
+    ):
         """Create vulnerabilities sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
 
             # Header format
-            header_format = workbook.add_format({
-                "bold": True,
-                "bg_color": "#FFB3B3",
-                "border": 1,
-            })
+            header_format = workbook.add_format(
+                {
+                    "bold": True,
+                    "bg_color": "#FFB3B3",
+                    "border": 1,
+                }
+            )
 
             # Write headers
             headers = ["Type", "Severity", "Description", "Location", "Recommendation"]
@@ -1064,17 +1117,21 @@ KEY FINDINGS
             print(f"Failed to create vulnerabilities sheet: {e}")
             return None
 
-    def _create_strings_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Strings"):
+    def _create_strings_sheet(
+        self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Strings"
+    ):
         """Create strings sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
 
             # Header format
-            header_format = workbook.add_format({
-                "bold": True,
-                "bg_color": "#B3D9FF",
-                "border": 1,
-            })
+            header_format = workbook.add_format(
+                {
+                    "bold": True,
+                    "bg_color": "#B3D9FF",
+                    "border": 1,
+                }
+            )
 
             # Write headers
             headers = ["String", "Address", "Section", "Type", "Length"]
@@ -1102,17 +1159,21 @@ KEY FINDINGS
             print(f"Failed to create strings sheet: {e}")
             return None
 
-    def _create_imports_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Imports"):
+    def _create_imports_sheet(
+        self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Imports"
+    ):
         """Create imports sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
 
             # Header format
-            header_format = workbook.add_format({
-                "bold": True,
-                "bg_color": "#FFE6B3",
-                "border": 1,
-            })
+            header_format = workbook.add_format(
+                {
+                    "bold": True,
+                    "bg_color": "#FFE6B3",
+                    "border": 1,
+                }
+            )
 
             # Write headers
             headers = ["Library", "Function", "Address", "Ordinal"]
@@ -1145,17 +1206,21 @@ KEY FINDINGS
             print(f"Failed to create imports sheet: {e}")
             return None
 
-    def _create_statistics_sheet(self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Statistics"):
+    def _create_statistics_sheet(
+        self, workbook, header_format=None, cell_format=None, worksheet_name: str = "Statistics"
+    ):
         """Create statistics sheet for Excel export."""
         try:
             worksheet = workbook.add_worksheet(worksheet_name)
 
             # Header format
-            header_format = workbook.add_format({
-                "bold": True,
-                "bg_color": "#E6E6FA",
-                "border": 1,
-            })
+            header_format = workbook.add_format(
+                {
+                    "bold": True,
+                    "bg_color": "#E6E6FA",
+                    "border": 1,
+                }
+            )
 
             # Write headers
             headers = ["Metric", "Value", "Category", "Notes"]
@@ -1198,8 +1263,9 @@ def get_available_formats() -> list[str]:
     return formats
 
 
-def export_analysis_results(binary_path: str, analysis_results: dict[str, Any],
-                          output_path: str, format_type: str, **kwargs) -> bool:
+def export_analysis_results(
+    binary_path: str, analysis_results: dict[str, Any], output_path: str, format_type: str, **kwargs
+) -> bool:
     """Export analysis results in specified format.
 
     Args:

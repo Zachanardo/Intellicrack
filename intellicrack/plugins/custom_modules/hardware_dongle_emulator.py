@@ -85,7 +85,9 @@ class DongleSpec:
     def __post_init__(self):
         """Initialize dongle specification with generated serial number if not provided."""
         if not self.serial_number:
-            self.serial_number = f"{self.vendor_id:04X}{self.product_id:04X}{random.randint(1000, 9999)}"
+            self.serial_number = (
+                f"{self.vendor_id:04X}{self.product_id:04X}{random.randint(1000, 9999)}"
+            )
 
 
 @dataclass
@@ -107,7 +109,7 @@ class DongleMemory:
         if address < 0 or address + length > self.size:
             raise ValueError("Memory access out of bounds")
 
-        return bytes(self.data[address:address + length])
+        return bytes(self.data[address : address + length])
 
     def write(self, address: int, data: bytes) -> bool:
         """Write to dongle memory"""
@@ -119,7 +121,7 @@ class DongleMemory:
             if not (address + len(data) <= start or address >= end):
                 return False  # Attempting to write to read-only memory
 
-        self.data[address:address + len(data)] = data
+        self.data[address : address + len(data)] = data
         return True
 
 
@@ -136,10 +138,10 @@ class CryptoEngine:
         result = bytearray()
 
         for i in range(0, len(data), 8):
-            v0, v1 = struct.unpack(">2I", data[i:i+8])
+            v0, v1 = struct.unpack(">2I", data[i : i + 8])
 
             total = 0
-            delta = 0x9e3779b9
+            delta = 0x9E3779B9
 
             for _ in range(32):
                 total += delta
@@ -159,10 +161,10 @@ class CryptoEngine:
         result = bytearray()
 
         for i in range(0, len(data), 8):
-            v0, v1 = struct.unpack(">2I", data[i:i+8])
+            v0, v1 = struct.unpack(">2I", data[i : i + 8])
 
             total = 0xC6EF3720  # delta * 32
-            delta = 0x9e3779b9
+            delta = 0x9E3779B9
 
             for _ in range(32):
                 v1 -= ((v0 << 4) + key_ints[2]) ^ (v0 + total) ^ ((v0 >> 5) + key_ints[3])
@@ -399,7 +401,7 @@ class HASPEmulator(BaseDongleEmulator):
             return b"\x00\x00\x00\x01"  # Error
 
         session_id, address, length = struct.unpack("<III", data[:12])
-        write_data = data[12:12+length]
+        write_data = data[12 : 12 + length]
 
         try:
             success = self.write_memory(address, write_data)
@@ -450,7 +452,7 @@ class SentinelEmulator(BaseDongleEmulator):
 
         self.cell_data[1] = {
             "data": b"SENTINEL_KEY_DATA___" + b"\x00" * 40,
-            "permissions": "R",   # Read-only
+            "permissions": "R",  # Read-only
             "algorithm": "NONE",
         }
 
@@ -514,6 +516,7 @@ class USBDongleDriver:
         try:
             import usb.core
             import usb.util
+
             self.usb = usb
             self.usb_backend = "pyusb"
             self.logger.info("Using pyusb for USB communication")
@@ -522,6 +525,7 @@ class USBDongleDriver:
                 # Fallback to Windows WinUSB
                 import win32api
                 import win32file
+
                 self.win32file = win32file
                 self.win32api = win32api
                 self.usb_backend = "winusb"
@@ -576,8 +580,9 @@ class USBDongleDriver:
             del self.dongles[device_id]
             self.logger.info(f"Unregistered USB dongle {device_id}")
 
-    def find_dongles(self, vendor_id: int | None = None,
-                     product_id: int | None = None) -> list[BaseDongleEmulator]:
+    def find_dongles(
+        self, vendor_id: int | None = None, product_id: int | None = None
+    ) -> list[BaseDongleEmulator]:
         """Find USB dongles matching criteria"""
         found = []
 
@@ -617,9 +622,16 @@ class USBDongleDriver:
 
         return found
 
-    def control_transfer(self, vendor_id: int, product_id: int,
-                        request_type: int, request: int,
-                        value: int, index: int, data: bytes) -> bytes:
+    def control_transfer(
+        self,
+        vendor_id: int,
+        product_id: int,
+        request_type: int,
+        request: int,
+        value: int,
+        index: int,
+        data: bytes,
+    ) -> bytes:
         """Perform real USB control transfer"""
         dongles = self.find_dongles(vendor_id, product_id)
         if not dongles:
@@ -690,15 +702,18 @@ class USBDongleDriver:
             # Real hardware ID from USB device
             if hasattr(dongle, "_usb_device") and dongle._usb_device:
                 device = dongle._usb_device
-                hw_id = f"{device.idVendor:04X}:{device.idProduct:04X}:{device.bus}:{device.address}"
+                hw_id = (
+                    f"{device.idVendor:04X}:{device.idProduct:04X}:{device.bus}:{device.address}"
+                )
                 return hw_id.encode()
             return b"EMULATED:0000:0000:00:00"
 
         else:
-            return b"\xFF"  # Unknown request
+            return b"\xff"  # Unknown request
 
-    def bulk_transfer(self, vendor_id: int, product_id: int,
-                     endpoint: int, data: bytes = None, length: int = 0) -> bytes:
+    def bulk_transfer(
+        self, vendor_id: int, product_id: int, endpoint: int, data: bytes = None, length: int = 0
+    ) -> bytes:
         """Perform USB bulk transfer for high-speed data"""
         dongles = self.find_dongles(vendor_id, product_id)
         if not dongles:
@@ -745,12 +760,14 @@ class ParallelPortEmulator:
     def _init_port_access(self):
         """Initialize platform-specific parallel port access"""
         import platform
+
         system = platform.system()
 
         if system == "Windows":
             try:
                 # Try inpout32/inpoutx64 for direct port access
                 import ctypes
+
                 if platform.machine().endswith("64"):
                     self.inpout = ctypes.WinDLL("inpoutx64.dll")
                 else:
@@ -763,6 +780,7 @@ class ParallelPortEmulator:
                 try:
                     # Try Windows WinIO
                     import win32file
+
                     self.win32file = win32file
                     self.port_backend = "winio"
                     self.logger.info("Using WinIO for parallel port access")
@@ -773,12 +791,14 @@ class ParallelPortEmulator:
             try:
                 # Linux parallel port via /dev/parport
                 import os
+
                 if os.path.exists("/dev/parport0"):
                     self.port_backend = "linux_parport"
                     self.logger.info("Using Linux /dev/parport0")
                 else:
                     # Try ioperm for direct port access
                     import ctypes
+
                     libc = ctypes.CDLL("libc.so.6")
                     # Request I/O permissions for parallel port range
                     if libc.ioperm(self.port_address, 3, 1) == 0:
@@ -807,9 +827,9 @@ class ParallelPortEmulator:
         # Standard parallel port dongle initialization sequence
         init_sequence = [
             (self.port_address + 2, 0x04),  # Set control register
-            (self.port_address, 0x00),      # Clear data register
+            (self.port_address, 0x00),  # Clear data register
             (self.port_address + 2, 0x0C),  # Enable bidirectional mode
-            (self.port_address, 0xAA),      # Send presence check pattern
+            (self.port_address, 0xAA),  # Send presence check pattern
         ]
 
         for port, value in init_sequence:
@@ -908,6 +928,7 @@ class ParallelPortEmulator:
     def _linux_port_read(self, port: int) -> int:
         """Linux-specific port read using ctypes"""
         import ctypes
+
         libc = ctypes.CDLL("libc.so.6")
 
         # Define inb function
@@ -920,6 +941,7 @@ class ParallelPortEmulator:
     def _linux_port_write(self, port: int, value: int):
         """Linux-specific port write using ctypes"""
         import ctypes
+
         libc = ctypes.CDLL("libc.so.6")
 
         # Define outb function
@@ -1035,16 +1057,17 @@ class DongleRegistryManager:
 
         try:
             # Create device key
-            key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE,
-                                 f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}")
+            key = winreg.CreateKey(
+                winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}"
+            )
 
             # Set device description
-            winreg.SetValueEx(key, "DeviceDesc", 0, winreg.REG_SZ,
-                            f"{spec.dongle_type.value} Dongle")
+            winreg.SetValueEx(
+                key, "DeviceDesc", 0, winreg.REG_SZ, f"{spec.dongle_type.value} Dongle"
+            )
 
             # Set hardware ID
-            winreg.SetValueEx(key, "HardwareID", 0, winreg.REG_MULTI_SZ,
-                            [device_key])
+            winreg.SetValueEx(key, "HardwareID", 0, winreg.REG_MULTI_SZ, [device_key])
 
             # Set service name
             winreg.SetValueEx(key, "Service", 0, winreg.REG_SZ, "usbhub")
@@ -1059,18 +1082,18 @@ class DongleRegistryManager:
         try:
             # HASP entries
             if spec.dongle_type in [DongleType.HASP_HL, DongleType.HASP_4]:
-                hasp_key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE,
-                                          r"SOFTWARE\Aladdin Knowledge Systems\HASP")
-                winreg.SetValueEx(hasp_key, "InstallPath", 0, winreg.REG_SZ,
-                                r"C:\Windows\System32")
+                hasp_key = winreg.CreateKey(
+                    winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Aladdin Knowledge Systems\HASP"
+                )
+                winreg.SetValueEx(hasp_key, "InstallPath", 0, winreg.REG_SZ, r"C:\Windows\System32")
                 winreg.CloseKey(hasp_key)
 
             # Sentinel entries
             elif spec.dongle_type.value.startswith("Sentinel"):
-                sent_key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE,
-                                          r"SOFTWARE\Rainbow Technologies\Sentinel")
-                winreg.SetValueEx(sent_key, "InstallPath", 0, winreg.REG_SZ,
-                                r"C:\Windows\System32")
+                sent_key = winreg.CreateKey(
+                    winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Rainbow Technologies\Sentinel"
+                )
+                winreg.SetValueEx(sent_key, "InstallPath", 0, winreg.REG_SZ, r"C:\Windows\System32")
                 winreg.CloseKey(sent_key)
 
         except Exception as e:
@@ -1083,8 +1106,9 @@ class DongleRegistryManager:
 
             # Remove USB entries
             try:
-                winreg.DeleteKey(winreg.HKEY_LOCAL_MACHINE,
-                               f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}")
+                winreg.DeleteKey(
+                    winreg.HKEY_LOCAL_MACHINE, f"SYSTEM\\CurrentControlSet\\Enum\\{device_key}"
+                )
             except FileNotFoundError:
                 pass
 
@@ -1130,8 +1154,7 @@ class DongleAPIHooker:
         ]
 
         for func_name in hasp_functions:
-            self._install_function_hook("hasp_rt.dll", func_name,
-                                      self._hasp_api_handler)
+            self._install_function_hook("hasp_rt.dll", func_name, self._hasp_api_handler)
 
     def _hook_sentinel_apis(self):
         """Hook Sentinel API functions"""
@@ -1144,8 +1167,7 @@ class DongleAPIHooker:
         ]
 
         for func_name in sentinel_functions:
-            self._install_function_hook("sx32w.dll", func_name,
-                                      self._sentinel_api_handler)
+            self._install_function_hook("sx32w.dll", func_name, self._sentinel_api_handler)
 
     def _install_function_hook(self, dll_name: str, func_name: str, handler: Callable):
         """Install hook for specific function"""
@@ -1227,7 +1249,6 @@ class HardwareDongleEmulator:
                 algorithms=["TEA", "AES"],
                 features={"rtc": True, "counter": True},
             ),
-
             DongleType.HASP_4: DongleSpec(
                 dongle_type=DongleType.HASP_4,
                 interface=DongleInterface.PARALLEL_PORT,
@@ -1237,7 +1258,6 @@ class HardwareDongleEmulator:
                 algorithms=["DES", "XOR"],
                 features={"memory": True},
             ),
-
             DongleType.SENTINEL_SUPER_PRO: DongleSpec(
                 dongle_type=DongleType.SENTINEL_SUPER_PRO,
                 interface=DongleInterface.USB,
@@ -1247,7 +1267,6 @@ class HardwareDongleEmulator:
                 algorithms=["DES", "3DES"],
                 features={"cells": True, "algorithms": True},
             ),
-
             DongleType.CODEOMETER: DongleSpec(
                 dongle_type=DongleType.CODEOMETER,
                 interface=DongleInterface.USB,
@@ -1257,7 +1276,6 @@ class HardwareDongleEmulator:
                 algorithms=["AES", "RSA"],
                 features={"secure_element": True, "certificates": True},
             ),
-
             DongleType.ROCKEY: DongleSpec(
                 dongle_type=DongleType.ROCKEY,
                 interface=DongleInterface.USB,
@@ -1269,8 +1287,7 @@ class HardwareDongleEmulator:
             ),
         }
 
-    def create_dongle(self, dongle_type: DongleType,
-                     custom_spec: DongleSpec | None = None) -> str:
+    def create_dongle(self, dongle_type: DongleType, custom_spec: DongleSpec | None = None) -> str:
         """Create and start dongle emulation"""
         spec = custom_spec or self.predefined_dongles.get(dongle_type)
         if not spec:
@@ -1570,8 +1587,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Hardware Dongle Emulator")
-    parser.add_argument("--create", choices=[dt.value for dt in DongleType],
-                       help="Create dongle emulation")
+    parser.add_argument(
+        "--create", choices=[dt.value for dt in DongleType], help="Create dongle emulation"
+    )
     parser.add_argument("--list", action="store_true", help="List active dongles")
     parser.add_argument("--test", help="Test dongle by ID")
     parser.add_argument("--export", help="Export dongle configurations")

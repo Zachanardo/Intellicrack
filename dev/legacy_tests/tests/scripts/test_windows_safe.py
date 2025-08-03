@@ -13,33 +13,33 @@ def main():
     """Test Windows platform."""
     try:
         print("Testing Windows platform with WARP...")
-        
+
         from PyQt6.QtWidgets import QApplication, QMainWindow
         from PyQt6.QtCore import QTimer
-        
+
         print("Creating QApplication...")
         app = QApplication(sys.argv)
         print("✓ QApplication created!")
-        
+
         print("Creating window...")
         window = QMainWindow()
         window.setWindowTitle("Test")
         window.resize(400, 300)
         print("✓ Window created!")
-        
+
         print("Showing window...")
         window.show()
         print("✓ Window shown!")
-        
+
         # Auto-close after 2 seconds
         QTimer.singleShot(2000, app.quit)
-        
+
         print("Starting event loop...")
         result = app.exec()
         print(f"✓ Event loop finished with code: {result}")
-        
+
         return result
-        
+
     except Exception as e:
         print(f"✗ Error: {e}")
         import traceback

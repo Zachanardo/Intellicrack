@@ -14,6 +14,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 def check_dependencies() -> dict[str, bool]:
     """Check for required dependencies."""
     print("[DEPS] Starting dependency checks...")
@@ -50,6 +51,7 @@ def check_dependencies() -> dict[str, bool]:
     # Check QEMU
     try:
         import shutil
+
         qemu_found = shutil.which("qemu-system-x86_64") is not None
         dependencies["QEMU"] = qemu_found
         if not qemu_found:
@@ -62,13 +64,17 @@ def check_dependencies() -> dict[str, bool]:
     try:
         # Configure TensorFlow to prevent GPU initialization issues
         import os
+
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+        os.environ["CUDA_VISIBLE_DEVICES"] = (
+            "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+        )
 
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ["MKL_THREADING_LAYER"] = "GNU"
 
         import tensorflow as tf
+
         # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
         tf.config.set_visible_devices([], "GPU")
 
@@ -89,7 +95,9 @@ def check_dependencies() -> dict[str, bool]:
             logger.info(f"TensorFlow {tf_version} verified (GPU: {gpu_available}, tensor ops: ✓)")
         else:
             dependencies["TensorFlow"] = False
-            logger.error(f"TensorFlow tensor operation failed: expected {expected_sum}, got {actual_sum}")
+            logger.error(
+                f"TensorFlow tensor operation failed: expected {expected_sum}, got {actual_sum}"
+            )
             return dependencies
 
         # Check if models can be loaded
@@ -133,7 +141,9 @@ def check_dependencies() -> dict[str, bool]:
                 context_params.n_ctx = original_ctx_size
 
                 dependencies["llama-cpp-python"] = True
-                logger.info(f"LLM Manager available with llama-cpp backend (ctx_size: {original_ctx_size}, gpu_layers: {original_gpu_layers})")
+                logger.info(
+                    f"LLM Manager available with llama-cpp backend (ctx_size: {original_ctx_size}, gpu_layers: {original_gpu_layers})"
+                )
             except Exception as param_error:
                 dependencies["llama-cpp-python"] = False
                 logger.error(f"llama-cpp parameter validation failed: {param_error}")
@@ -148,6 +158,7 @@ def check_dependencies() -> dict[str, bool]:
         logger.warning(f"llama-cpp initialization failed: {e}")
 
     return dependencies
+
 
 def check_data_paths() -> dict[str, tuple[str, bool]]:
     """Check and create required data paths."""
@@ -184,6 +195,7 @@ def check_data_paths() -> dict[str, tuple[str, bool]]:
 
     return paths
 
+
 def check_qemu_setup() -> bool:
     """Check QEMU setup without auto-downloading."""
     from ..utils.path_resolver import get_qemu_images_dir
@@ -200,7 +212,9 @@ def check_qemu_setup() -> bool:
 
     # Check for existing images
     qemu_dir = get_qemu_images_dir()
-    existing_images = list(qemu_dir.glob("*.qcow2")) + list(qemu_dir.glob("*.img")) + list(qemu_dir.glob("*.iso"))
+    existing_images = (
+        list(qemu_dir.glob("*.qcow2")) + list(qemu_dir.glob("*.img")) + list(qemu_dir.glob("*.iso"))
+    )
 
     if existing_images:
         logger.info(f"Found {len(existing_images)} QEMU images")
@@ -210,6 +224,7 @@ def check_qemu_setup() -> bool:
         logger.info("Use the QEMU setup tools to download/create images if needed")
         return False
     return False
+
 
 def create_minimal_qemu_disk() -> Path | None:
     """Create a real QEMU disk image automatically."""
@@ -247,11 +262,13 @@ def create_minimal_qemu_disk() -> Path | None:
         logger.info("Install QEMU: https://www.qemu.org/download/")
         return None
 
+
 def check_protection_models() -> bool:
     """Check if protection detection models exist."""
     # ML models removed - using LLM-only approach with native ICP Engine for protection detection
     logger.info("Protection detection using native ICP Engine - ML models removed")
     return True
+
 
 def validate_flask_server() -> dict[str, any]:
     """Validate Flask server can be initialized for web UI."""
@@ -289,18 +306,23 @@ def validate_flask_server() -> dict[str, any]:
             "max_upload_mb": 0,
         }
 
+
 def validate_tensorflow_models() -> dict[str, any]:
     """Validate TensorFlow and check model compatibility."""
     try:
         # Configure TensorFlow to prevent GPU initialization issues
         import os
+
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+        os.environ["CUDA_VISIBLE_DEVICES"] = (
+            "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+        )
 
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ["MKL_THREADING_LAYER"] = "GNU"
 
         import tensorflow as tf
+
         # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
         tf.config.set_visible_devices([], "GPU")
 
@@ -316,11 +338,13 @@ def validate_tensorflow_models() -> dict[str, any]:
         }
 
         # Test model building capability
-        test_model = tf.keras.Sequential([
-            tf.keras.layers.Dense(64, activation="relu", input_shape=(10,)),
-            tf.keras.layers.Dense(32, activation="relu"),
-            tf.keras.layers.Dense(1, activation="sigmoid"),
-        ])
+        test_model = tf.keras.Sequential(
+            [
+                tf.keras.layers.Dense(64, activation="relu", input_shape=(10,)),
+                tf.keras.layers.Dense(32, activation="relu"),
+                tf.keras.layers.Dense(1, activation="sigmoid"),
+            ]
+        )
         test_model.compile(optimizer="adam", loss="binary_crossentropy")
 
         # Test prediction capability
@@ -340,7 +364,9 @@ def validate_tensorflow_models() -> dict[str, any]:
                     tf_info["model_prediction_test"] = f"✗ Invalid output range: {output_value}"
             else:
                 tf_info["model_building"] = False
-                tf_info["model_prediction_test"] = f"✗ Wrong output shape: {test_output.shape} vs {expected_shape}"
+                tf_info["model_prediction_test"] = (
+                    f"✗ Wrong output shape: {test_output.shape} vs {expected_shape}"
+                )
         else:
             tf_info["model_building"] = False
             tf_info["model_prediction_test"] = "✗ No valid output"
@@ -355,6 +381,7 @@ def validate_tensorflow_models() -> dict[str, any]:
             "gpu_available": False,
             "error": str(e),
         }
+
 
 def validate_llama_cpp() -> dict[str, any]:
     """Validate llama-cpp-python installation and capabilities."""
@@ -409,6 +436,7 @@ def validate_llama_cpp() -> dict[str, any]:
             "error": str(e),
         }
 
+
 def perform_startup_checks() -> dict[str, any]:
     """Perform all startup checks."""
     print("[STARTUP] Performing startup checks...")
@@ -417,6 +445,7 @@ def perform_startup_checks() -> dict[str, any]:
     # Validate configuration first
     print("[STARTUP] Validating configuration...")
     from intellicrack.config import get_config
+
     config = get_config()
     config_valid = config.validate_config()
     if not config_valid:
@@ -508,13 +537,17 @@ def get_system_health_report() -> dict[str, any]:
     try:
         # Configure TensorFlow to prevent GPU initialization issues
         import os
+
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+        os.environ["CUDA_VISIBLE_DEVICES"] = (
+            "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+        )
 
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ["MKL_THREADING_LAYER"] = "GNU"
 
         import tensorflow as tf
+
         # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
         tf.config.set_visible_devices([], "GPU")
 
@@ -552,10 +585,12 @@ def get_system_health_report() -> dict[str, any]:
 
     # Add disk space info for data directories
     from ..utils.path_resolver import get_data_dir
+
     data_dir = get_data_dir()
 
     try:
         import shutil
+
         disk_usage = shutil.disk_usage(data_dir)
         report["disk_space"] = {
             "data_directory": str(data_dir),

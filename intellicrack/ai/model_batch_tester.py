@@ -179,8 +179,7 @@ class ModelBatchTester:
 
         """
         self.test_suites[suite_id] = test_cases
-        logger.info(
-            f"Added test suite '{suite_id}' with {len(test_cases)} tests")
+        logger.info(f"Added test suite '{suite_id}' with {len(test_cases)} tests")
 
     def load_test_suite_from_file(self, file_path: str | Path) -> str:
         """Load test suite from JSON file.
@@ -253,8 +252,7 @@ class ModelBatchTester:
             # Build messages
             messages = []
             if test_case.system_prompt:
-                messages.append(LLMMessage(
-                    role="system", content=test_case.system_prompt))
+                messages.append(LLMMessage(role="system", content=test_case.system_prompt))
             messages.append(LLMMessage(role="user", content=test_case.prompt))
 
             # Get model config and update parameters
@@ -278,8 +276,7 @@ class ModelBatchTester:
 
             inference_time = time.time() - start_time
             output = response.content
-            tokens_generated = response.usage.get(
-                "completion_tokens", 0) if response.usage else 0
+            tokens_generated = response.usage.get("completion_tokens", 0) if response.usage else 0
 
             # End performance tracking
             perf_metrics = self.performance_monitor.end_inference(
@@ -300,12 +297,14 @@ class ModelBatchTester:
             if test_case.expected_patterns:
                 pattern_matches = {}
                 for pattern in test_case.expected_patterns:
-                    pattern_matches[pattern] = pattern.lower(
-                    ) in output.lower()
+                    pattern_matches[pattern] = pattern.lower() in output.lower()
 
                 all_patterns_found = all(pattern_matches.values())
-                passed_validation = all_patterns_found if passed_validation is None else (
-                    passed_validation and all_patterns_found)
+                passed_validation = (
+                    all_patterns_found
+                    if passed_validation is None
+                    else (passed_validation and all_patterns_found)
+                )
                 validation_details["pattern_matches"] = pattern_matches
 
             return TestResult(
@@ -395,15 +394,17 @@ class ModelBatchTester:
                     except Exception as e:
                         logger.error("Exception in model_batch_tester: %s", e)
                         # Handle timeout or other errors
-                        results.append(TestResult(
-                            test_id=test_case.test_id,
-                            model_id=model_id,
-                            success=False,
-                            output="",
-                            inference_time=self.timeout_per_test,
-                            tokens_generated=0,
-                            error=f"Test failed: {e!s}",
-                        ))
+                        results.append(
+                            TestResult(
+                                test_id=test_case.test_id,
+                                model_id=model_id,
+                                success=False,
+                                output="",
+                                inference_time=self.timeout_per_test,
+                                tokens_generated=0,
+                                error=f"Test failed: {e!s}",
+                            )
+                        )
 
                     completed_tests += 1
                     if progress_callback:
@@ -436,8 +437,7 @@ class ModelBatchTester:
         )
 
         self.test_reports.append(report)
-        logger.info(
-            f"Batch test completed: {total_tests} tests in {duration:.2f}s")
+        logger.info(f"Batch test completed: {total_tests} tests in {duration:.2f}s")
 
         return report
 
@@ -467,18 +467,23 @@ class ModelBatchTester:
                 "success": sum(1 for r in model_results if r.success),
                 "failed": sum(1 for r in model_results if not r.success),
                 "validation_passed": sum(1 for r in model_results if r.passed_validation is True),
-                "avg_inference_time": sum(r.inference_time for r in model_results) / len(model_results) if model_results else 0,
+                "avg_inference_time": sum(r.inference_time for r in model_results)
+                / len(model_results)
+                if model_results
+                else 0,
                 "avg_tokens_per_second": sum(
                     r.tokens_generated / r.inference_time
                     for r in model_results
                     if r.success and r.inference_time > 0
-                ) / len([r for r in model_results if r.success]) if any(r.success for r in model_results) else 0,
+                )
+                / len([r for r in model_results if r.success])
+                if any(r.success for r in model_results)
+                else 0,
             }
 
         # Per-test statistics
         for test_case in test_cases:
-            test_results = [
-                r for r in results if r.test_id == test_case.test_id]
+            test_results = [r for r in results if r.test_id == test_case.test_id]
 
             summary["tests"][test_case.test_id] = {
                 "total": len(test_results),
@@ -521,8 +526,12 @@ class ModelBatchTester:
         for model_id in model_ids:
             model_summary = report.summary["models"][model_id]
             comparison["models"][model_id] = {
-                "success_rate": model_summary["success"] / model_summary["total"] if model_summary["total"] > 0 else 0,
-                "validation_rate": model_summary["validation_passed"] / model_summary["success"] if model_summary["success"] > 0 else 0,
+                "success_rate": model_summary["success"] / model_summary["total"]
+                if model_summary["total"] > 0
+                else 0,
+                "validation_rate": model_summary["validation_passed"] / model_summary["success"]
+                if model_summary["success"] > 0
+                else 0,
                 "avg_inference_time": model_summary["avg_inference_time"],
                 "avg_tokens_per_second": model_summary["avg_tokens_per_second"],
             }
@@ -544,8 +553,7 @@ class ModelBatchTester:
                     reverse=True,
                 )
 
-            comparison["rankings"][metric] = [
-                model_id for model_id, _ in ranked]
+            comparison["rankings"][metric] = [model_id for model_id, _ in ranked]
 
         # Overall winner (based on validation rate primarily)
         if comparison["rankings"].get("validation_rate"):
@@ -666,10 +674,10 @@ class ModelBatchTester:
 """
 
         for model_id, stats in report.summary["models"].items():
-            success_rate = (stats["success"] / stats["total"]
-                            * 100) if stats["total"] > 0 else 0
+            success_rate = (stats["success"] / stats["total"] * 100) if stats["total"] > 0 else 0
             validation_rate = (
-                stats["validation_passed"] / stats["success"] * 100) if stats["success"] > 0 else 0
+                (stats["validation_passed"] / stats["success"] * 100) if stats["success"] > 0 else 0
+            )
 
             html += f"""
         <tr>
@@ -699,9 +707,16 @@ class ModelBatchTester:
         for result in report.results:
             status_class = "success" if result.success else "failed"
             status_text = "Success" if result.success else "Failed"
-            validation_text = "✓" if result.passed_validation else "✗" if result.passed_validation is False else "-"
-            output_preview = result.output[:100] + \
-                "..." if len(result.output) > 100 else result.output
+            validation_text = (
+                "✓"
+                if result.passed_validation
+                else "✗"
+                if result.passed_validation is False
+                else "-"
+            )
+            output_preview = (
+                result.output[:100] + "..." if len(result.output) > 100 else result.output
+            )
             output_preview = output_preview.replace("\n", " ")
 
             html += f"""

@@ -36,32 +36,32 @@ class TestAnalysisTab:
             dos_header += b'\xb8\x00\x00\x00\x00\x00\x00\x00\x40\x00\x00\x00\x00\x00\x00\x00'
             dos_header += b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
             dos_header += b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00'
-            
+
             # DOS stub
             dos_stub = b'\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21'
             dos_stub += b'This program cannot be run in DOS mode.\r\r\n$\x00\x00\x00\x00\x00\x00\x00'
-            
+
             # PE signature and header
             pe_signature = b'PE\x00\x00'
             coff_header = b'\x4c\x01\x03\x00' + b'\x00' * 16  # Machine, sections, etc.
-            
+
             # Optional header
             optional_header = b'\x0b\x01' + b'\x00' * 222  # Magic + rest of optional header
-            
+
             # Section headers (3 sections)
             section_headers = b'\x00' * (40 * 3)  # 3 sections, 40 bytes each
-            
+
             # Combine all parts
             pe_data = dos_header + dos_stub
             pe_data += b'\x00' * (0x80 - len(pe_data))  # Pad to PE offset
             pe_data += pe_signature + coff_header + optional_header + section_headers
             pe_data += b'\x00' * 1000  # Section data
-            
+
             temp_file.write(pe_data)
             temp_file_path = temp_file.name
-            
+
         yield temp_file_path
-        
+
         if os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
 
@@ -69,12 +69,12 @@ class TestAnalysisTab:
         """Test that analysis tab initializes with REAL Qt components."""
         assert isinstance(self.tab, QWidget)
         assert self.tab.isVisible()
-        
+
         # Check for analysis components
         text_edits = self.tab.findChildren(QTextEdit)
         buttons = self.tab.findChildren(QPushButton)
         progress_bars = self.tab.findChildren(QProgressBar)
-        
+
         # Should have UI elements for analysis
         assert len(text_edits) > 0 or len(buttons) > 0, "Should have analysis interface components"
 
@@ -86,11 +86,11 @@ class TestAnalysisTab:
             text = button.text().lower()
             if 'analyze' in text or 'start' in text or 'run' in text:
                 start_buttons.append(button)
-        
+
         if start_buttons:
             start_button = start_buttons[0]
             assert start_button.isEnabled() or not start_button.isEnabled()  # Valid state
-            
+
             # Button should be functional
             original_text = start_button.text()
             assert isinstance(original_text, str)
@@ -102,11 +102,11 @@ class TestAnalysisTab:
         if hasattr(self.tab, 'load_file'):
             self.tab.load_file(sample_pe_file)
             qtbot.wait(300)
-            
+
             # Verify file is loaded
             if hasattr(self.tab, 'current_file'):
                 assert self.tab.current_file == sample_pe_file
-                
+
         elif hasattr(self.tab, 'set_binary'):
             self.tab.set_binary(sample_pe_file)
             qtbot.wait(300)
@@ -118,25 +118,25 @@ class TestAnalysisTab:
             self.tab.load_file(sample_pe_file)
         elif hasattr(self.tab, 'set_binary'):
             self.tab.set_binary(sample_pe_file)
-        
+
         qtbot.wait(300)
-        
+
         # Find and trigger analysis
         analyze_buttons = []
         for button in self.tab.findChildren(QPushButton):
             text = button.text().lower()
             if 'analyze' in text:
                 analyze_buttons.append(button)
-        
+
         if analyze_buttons:
             analyze_button = analyze_buttons[0]
-            
+
             # Mock the actual analysis to prevent long-running operations
             with patch('intellicrack.core.analysis.analysis_orchestrator.AnalysisOrchestrator') as mock_orchestrator:
                 mock_instance = MagicMock()
                 mock_orchestrator.return_value = mock_instance
                 mock_instance.run_analysis.return_value = {"status": "completed", "results": {}}
-                
+
                 if analyze_button.isEnabled():
                     qtbot.mouseClick(analyze_button, Qt.MouseButton.LeftButton)
                     qtbot.wait(100)
@@ -144,10 +144,10 @@ class TestAnalysisTab:
     def test_progress_tracking_real_updates(self, qtbot):
         """Test REAL progress tracking during analysis."""
         progress_bars = self.tab.findChildren(QProgressBar)
-        
+
         if progress_bars:
             progress_bar = progress_bars[0]
-            
+
             # Test progress updates
             test_values = [0, 25, 50, 75, 100]
             for value in test_values:
@@ -155,17 +155,17 @@ class TestAnalysisTab:
                     self.tab.update_progress(value)
                 elif hasattr(progress_bar, 'setValue'):
                     progress_bar.setValue(value)
-                
+
                 qtbot.wait(50)
                 assert 0 <= progress_bar.value() <= 100
 
     def test_results_display_real_analysis_output(self, qtbot):
         """Test REAL analysis results display."""
         results_displays = self.tab.findChildren(QTextEdit)
-        
+
         if results_displays:
             results_display = results_displays[0]
-            
+
             # Test displaying analysis results
             test_results = {
                 "file_type": "PE32 executable",
@@ -173,11 +173,11 @@ class TestAnalysisTab:
                 "imports": ["kernel32.dll", "user32.dll"],
                 "entropy": 6.2
             }
-            
+
             if hasattr(self.tab, 'display_results'):
                 self.tab.display_results(test_results)
                 qtbot.wait(100)
-                
+
                 # Check if results are displayed
                 displayed_text = results_display.toPlainText()
                 assert isinstance(displayed_text, str)
@@ -186,21 +186,21 @@ class TestAnalysisTab:
         """Test REAL analysis options and configuration."""
         # Find configuration checkboxes
         checkboxes = self.tab.findChildren(QCheckBox)
-        
+
         analysis_options = []
         for checkbox in checkboxes:
             text = checkbox.text().lower()
             option_keywords = ['static', 'dynamic', 'entropy', 'string', 'import', 'export']
             if any(keyword in text for keyword in option_keywords):
                 analysis_options.append(checkbox)
-        
+
         # Test toggling analysis options
         for checkbox in analysis_options:
             original_state = checkbox.isChecked()
-            
+
             qtbot.mouseClick(checkbox, Qt.MouseButton.LeftButton)
             qtbot.wait(50)
-            
+
             new_state = checkbox.isChecked()
             assert new_state != original_state
 
@@ -211,9 +211,9 @@ class TestAnalysisTab:
             self.tab.load_file(sample_pe_file)
         elif hasattr(self.tab, 'set_binary'):
             self.tab.set_binary(sample_pe_file)
-        
+
         qtbot.wait(300)
-        
+
         # Test protection detection
         if hasattr(self.tab, 'detect_protection'):
             with patch('intellicrack.protection.protection_detector.ProtectionDetector') as mock_detector:
@@ -224,7 +224,7 @@ class TestAnalysisTab:
                     "protections": ["ASLR", "DEP"],
                     "obfuscation": False
                 }
-                
+
                 self.tab.detect_protection()
                 qtbot.wait(100)
 
@@ -236,21 +236,21 @@ class TestAnalysisTab:
             text = button.text().lower()
             if 'export' in text or 'save' in text:
                 export_buttons.append(button)
-        
+
         if export_buttons:
             export_button = export_buttons[0]
-            
+
             with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as temp_file:
                 export_path = temp_file.name
-            
+
             try:
                 with patch('PyQt6.QtWidgets.QFileDialog.getSaveFileName') as mock_dialog:
                     mock_dialog.return_value = (export_path, '')
-                    
+
                     if export_button.isEnabled():
                         qtbot.mouseClick(export_button, Qt.MouseButton.LeftButton)
                         qtbot.wait(100)
-                        
+
             finally:
                 if os.path.exists(export_path):
                     os.unlink(export_path)
@@ -260,12 +260,12 @@ class TestAnalysisTab:
         # Check for visualization components
         from PyQt6.QtWidgets import QGraphicsView
         graphics_views = self.tab.findChildren(QGraphicsView)
-        
+
         # Check for entropy visualizer
         if hasattr(self.tab, 'entropy_visualizer'):
             entropy_viz = self.tab.entropy_visualizer
             assert entropy_viz is not None
-            
+
             # Test data visualization
             test_entropy_data = [0.1, 0.5, 0.8, 0.3, 0.9, 0.2, 0.7, 0.4]
             if hasattr(entropy_viz, 'update_data'):
@@ -275,21 +275,21 @@ class TestAnalysisTab:
     def test_sub_tabs_real_analysis_categories(self, qtbot):
         """Test REAL sub-tabs for different analysis categories."""
         tab_widgets = self.tab.findChildren(QTabWidget)
-        
+
         if tab_widgets:
             analysis_tabs = tab_widgets[0]
             tab_count = analysis_tabs.count()
-            
+
             if tab_count > 0:
                 # Test switching between analysis tabs
                 for i in range(tab_count):
                     analysis_tabs.setCurrentIndex(i)
                     qtbot.wait(50)
-                    
+
                     current_widget = analysis_tabs.currentWidget()
                     assert current_widget is not None
                     assert current_widget.isVisible()
-                    
+
                     tab_title = analysis_tabs.tabText(i)
                     assert isinstance(tab_title, str)
                     assert len(tab_title) > 0
@@ -300,10 +300,10 @@ class TestAnalysisTab:
         if hasattr(self.tab, 'analysis_started'):
             signal_received = []
             self.tab.analysis_started.connect(lambda msg: signal_received.append(msg))
-            
+
             self.tab.analysis_started.emit("Test analysis started")
             qtbot.wait(50)
-            
+
             assert len(signal_received) == 1
             assert signal_received[0] == "Test analysis started"
 
@@ -311,14 +311,14 @@ class TestAnalysisTab:
         """Test REAL error handling during analysis failures."""
         # Test invalid file handling
         invalid_file = "/nonexistent/file.exe"
-        
+
         if hasattr(self.tab, 'load_file'):
             try:
                 self.tab.load_file(invalid_file)
                 qtbot.wait(100)
             except (OSError, ValueError):
                 pass  # Expected for invalid file
-        
+
         # Test analysis error handling
         if hasattr(self.tab, 'handle_analysis_error'):
             test_error = "Analysis failed: Invalid PE format"
@@ -333,16 +333,16 @@ class TestAnalysisTab:
             large_data = b'MZ\x90\x00' + b'\x00' * (5 * 1024 * 1024 - 4)
             temp_file.write(large_data)
             large_file_path = temp_file.name
-        
+
         try:
             # Test loading large file
             if hasattr(self.tab, 'load_file'):
                 self.tab.load_file(large_file_path)
                 qtbot.wait(1000)  # Allow time for loading
-                
+
                 # Should handle large file without crashing
                 assert self.tab.isVisible()
-                
+
         finally:
             if os.path.exists(large_file_path):
                 os.unlink(large_file_path)
@@ -350,28 +350,28 @@ class TestAnalysisTab:
     def test_real_data_validation_no_placeholder_content(self, qtbot):
         """Test that tab displays REAL analysis data, not placeholder content."""
         placeholder_indicators = [
-            "TODO", "PLACEHOLDER", "XXX", "FIXME", 
+            "TODO", "PLACEHOLDER", "XXX", "FIXME",
             "Not implemented", "Coming soon", "Mock data",
             "Sample analysis", "Dummy results"
         ]
-        
+
         def check_widget_content(widget):
             """Check widget for placeholder content."""
             if hasattr(widget, 'text'):
                 text = widget.text()
                 for indicator in placeholder_indicators:
                     assert indicator not in text, f"Placeholder found: {text}"
-                    
+
             if hasattr(widget, 'toPlainText'):
                 text = widget.toPlainText()
                 for indicator in placeholder_indicators:
                     assert indicator not in text, f"Placeholder found: {text}"
-                    
+
             if hasattr(widget, 'windowTitle'):
                 title = widget.windowTitle()
                 for indicator in placeholder_indicators:
                     assert indicator not in title, f"Placeholder found in title: {title}"
-        
+
         check_widget_content(self.tab)
         for child in self.tab.findChildren(object):
             check_widget_content(child)
@@ -380,12 +380,12 @@ class TestAnalysisTab:
         """Test REAL context integration with shared application state."""
         if hasattr(self.tab, 'shared_context'):
             context = self.tab.shared_context
-            
+
             # Test context updates
             if context and hasattr(context, 'set_current_file'):
                 test_file = "/test/binary.exe"
                 context.set_current_file(test_file)
-                
+
                 if hasattr(context, 'get_current_file'):
                     current_file = context.get_current_file()
                     assert current_file == test_file
@@ -393,18 +393,18 @@ class TestAnalysisTab:
     def test_performance_real_analysis_speed(self, qtbot, sample_pe_file):
         """Test REAL performance of analysis operations."""
         import time
-        
+
         # Load file and measure time
         start_time = time.time()
-        
+
         if hasattr(self.tab, 'load_file'):
             self.tab.load_file(sample_pe_file)
         elif hasattr(self.tab, 'set_binary'):
             self.tab.set_binary(sample_pe_file)
-        
+
         qtbot.wait(500)
-        
+
         load_time = time.time() - start_time
-        
+
         # File loading should be reasonably fast (under 1 second for small file)
         assert load_time < 1.0, f"File loading too slow: {load_time}s"

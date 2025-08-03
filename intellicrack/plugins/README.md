@@ -88,7 +88,7 @@ class MyCustomPlugin(PluginBase):
         self.version = "1.0.0"
         self.description = "Description of what the plugin does"
         self.author = "Your Name"
-    
+
     def run(self, binary_path, **kwargs):
         """Main plugin execution method"""
         # Your analysis logic here
@@ -97,11 +97,11 @@ class MyCustomPlugin(PluginBase):
             'results': {},
             'errors': []
         }
-    
+
     def validate_input(self, binary_path):
         """Validate input before processing"""
         return os.path.exists(binary_path)
-    
+
     def get_config_schema(self):
         """Return configuration schema for the plugin"""
         return {

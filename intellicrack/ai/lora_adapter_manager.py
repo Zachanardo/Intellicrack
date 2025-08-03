@@ -31,6 +31,7 @@ logger = get_logger(__name__)
 HAS_TORCH = False
 try:
     import torch
+
     HAS_TORCH = True
 except ImportError as e:
     logger.error("Import error in lora_adapter_manager: %s", e)
@@ -47,6 +48,7 @@ try:
         get_peft_model,
         prepare_model_for_kbit_training,
     )
+
     HAS_PEFT = True
 except ImportError as e:
     logger.error("Import error in lora_adapter_manager: %s", e)
@@ -61,6 +63,7 @@ except ImportError as e:
 
 try:
     from transformers import AutoModelForCausalLM, AutoTokenizer
+
     HAS_TRANSFORMERS = True
 except ImportError as e:
     logger.error("Import error in lora_adapter_manager: %s", e)
@@ -141,8 +144,7 @@ class LoRAAdapterManager:
 
         # Default target modules for common architectures
         if target_modules is None:
-            target_modules = self._get_default_target_modules(
-                kwargs.get("model_type"))
+            target_modules = self._get_default_target_modules(kwargs.get("model_type"))
 
         try:
             if adapter_type == "adalora":
@@ -189,7 +191,15 @@ class LoRAAdapterManager:
         # Common patterns for different architectures
         default_patterns = {
             "llama": ["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "down_proj", "up_proj"],
-            "mistral": ["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "down_proj", "up_proj"],
+            "mistral": [
+                "q_proj",
+                "v_proj",
+                "k_proj",
+                "o_proj",
+                "gate_proj",
+                "down_proj",
+                "up_proj",
+            ],
             "gpt2": ["c_attn", "c_proj", "c_fc"],
             "gpt_neox": ["query_key_value", "dense", "dense_h_to_4h", "dense_4h_to_h"],
             "bloom": ["query_key_value", "dense", "dense_h_to_4h", "dense_4h_to_h"],
@@ -228,12 +238,10 @@ class LoRAAdapterManager:
 
         try:
             # Apply LoRA
-            peft_model = get_peft_model(
-                model, lora_config, adapter_name=adapter_name)
+            peft_model = get_peft_model(model, lora_config, adapter_name=adapter_name)
 
             # Log adapter information
-            trainable_params = sum(
-                p.numel() for p in peft_model.parameters() if p.requires_grad)
+            trainable_params = sum(p.numel() for p in peft_model.parameters() if p.requires_grad)
             total_params = sum(p.numel() for p in peft_model.parameters())
 
             logger.info(
@@ -454,15 +462,16 @@ class LoRAAdapterManager:
                 new_adapter_name,
             )
 
-            logger.info(
-                f"Merged {len(adapter_names)} adapters into '{new_adapter_name}'")
+            logger.info(f"Merged {len(adapter_names)} adapters into '{new_adapter_name}'")
             return True
 
         except Exception as e:
             logger.error(f"Failed to merge adapters: {e}")
             return False
 
-    def compare_adapter_configs(self, config1_path: str | Path, config2_path: str | Path) -> dict[str, Any]:
+    def compare_adapter_configs(
+        self, config1_path: str | Path, config2_path: str | Path
+    ) -> dict[str, Any]:
         """Compare two PEFT adapter configurations.
 
         Args:
@@ -684,7 +693,9 @@ class LoRAAdapterManager:
             if hasattr(peft_config, "r"):
                 results["config_details"]["rank"] = peft_config.r
                 if peft_config.r > 64:
-                    results["warnings"].append(f"Very high LoRA rank ({peft_config.r}) may use excessive memory")
+                    results["warnings"].append(
+                        f"Very high LoRA rank ({peft_config.r}) may use excessive memory"
+                    )
 
             if hasattr(peft_config, "target_modules"):
                 results["config_details"]["target_modules"] = peft_config.target_modules
@@ -721,8 +732,7 @@ class LoRAAdapterManager:
         for key in list(self.loaded_adapters.keys())[:to_remove]:
             del self.loaded_adapters[key]
 
-        logger.info(
-            f"Cleaned up adapter cache, kept {keep_recent} recent adapters")
+        logger.info(f"Cleaned up adapter cache, kept {keep_recent} recent adapters")
 
 
 # Global instance

@@ -297,10 +297,15 @@ class BatchAnalysisWidget(QWidget):
         options_layout.addWidget(self.max_threads_spin)
 
         self.file_filter_combo = QComboBox()
-        self.file_filter_combo.addItems([
-            "All Files", "PE Files (*.exe, *.dll)", "Archives (*.zip, *.rar)",
-            "Scripts (*.js, *.py)", "Documents (*.pdf, *.doc)",
-        ])
+        self.file_filter_combo.addItems(
+            [
+                "All Files",
+                "PE Files (*.exe, *.dll)",
+                "Archives (*.zip, *.rar)",
+                "Scripts (*.js, *.py)",
+                "Documents (*.pdf, *.doc)",
+            ]
+        )
         options_layout.addWidget(self.file_filter_combo)
 
         options_layout.addStretch()
@@ -345,8 +350,17 @@ class BatchAnalysisWidget(QWidget):
 
         # Set columns
         headers = [
-            "File Name", "Path", "Size", "Status", "Type", "Architecture",
-            "Protections", "ICP Detections", "Confidence", "Time (s)", "Details",
+            "File Name",
+            "Path",
+            "Size",
+            "Status",
+            "Type",
+            "Architecture",
+            "Protections",
+            "ICP Detections",
+            "Confidence",
+            "Time (s)",
+            "Details",
         ]
         table.setColumnCount(len(headers))
         table.setHorizontalHeaderLabels(headers)
@@ -561,12 +575,25 @@ class BatchAnalysisWidget(QWidget):
             writer = csv.writer(csvfile)
 
             # Write header
-            writer.writerow([
-                "File Name", "File Path", "Size (bytes)", "Status", "File Type",
-                "Architecture", "Is Packed", "Is Protected", "Protection Count",
-                "ICP Detections", "Confidence Score", "Entropy", "Analysis Time (s)",
-                "Protections", "Error Message",
-            ])
+            writer.writerow(
+                [
+                    "File Name",
+                    "File Path",
+                    "Size (bytes)",
+                    "Status",
+                    "File Type",
+                    "Architecture",
+                    "Is Packed",
+                    "Is Protected",
+                    "Protection Count",
+                    "ICP Detections",
+                    "Confidence Score",
+                    "Entropy",
+                    "Analysis Time (s)",
+                    "Protections",
+                    "Error Message",
+                ]
+            )
 
             # Write data
             for result in self.results:
@@ -574,23 +601,25 @@ class BatchAnalysisWidget(QWidget):
                 if result.protections:
                     protection_names = [p.get("name", "Unknown") for p in result.protections]
 
-                writer.writerow([
-                    os.path.basename(result.file_path),
-                    result.file_path,
-                    result.file_size,
-                    result.status,
-                    result.file_type,
-                    result.architecture,
-                    result.is_packed,
-                    result.is_protected,
-                    len(result.protections),
-                    result.icp_detections,
-                    f"{result.confidence_score:.2f}",
-                    f"{result.entropy:.2f}",
-                    f"{result.analysis_time:.2f}",
-                    "; ".join(protection_names),
-                    result.error_message,
-                ])
+                writer.writerow(
+                    [
+                        os.path.basename(result.file_path),
+                        result.file_path,
+                        result.file_size,
+                        result.status,
+                        result.file_type,
+                        result.architecture,
+                        result.is_packed,
+                        result.is_protected,
+                        len(result.protections),
+                        result.icp_detections,
+                        f"{result.confidence_score:.2f}",
+                        f"{result.entropy:.2f}",
+                        f"{result.analysis_time:.2f}",
+                        "; ".join(protection_names),
+                        result.error_message,
+                    ]
+                )
 
     @pyqtSlot(int, int)
     def _on_progress_updated(self, current: int, total: int):
@@ -777,7 +806,11 @@ class BatchAnalysisWidget(QWidget):
         failed = total - successful
 
         avg_time = sum(r.analysis_time for r in self.results) / total if total > 0 else 0
-        avg_confidence = sum(r.confidence_score for r in self.results if r.success) / successful if successful > 0 else 0
+        avg_confidence = (
+            sum(r.confidence_score for r in self.results if r.success) / successful
+            if successful > 0
+            else 0
+        )
 
         return {
             "total_files": total,

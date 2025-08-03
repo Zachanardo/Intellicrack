@@ -696,26 +696,26 @@ class TestPerformanceBenchmarks(unittest.TestCase):
             metrics.duration = 10 + i  # 10, 11, 12
             metrics.memory_delta = i  # 0, 1, 2
             benchmark.results.append(metrics)
-            
+
     def test_frida_performance_optimizer(self):
         """Test FridaPerformanceOptimizer functionality"""
         optimizer = FridaPerformanceOptimizer()
-        
+
         # Test baseline measurement
         optimizer.measure_baseline()
         self.assertGreater(optimizer.baseline_memory, 0)
         self.assertGreaterEqual(optimizer.baseline_cpu, 0)
-        
+
         # Test optimization settings
         optimizer.set_optimization_level("aggressive")
         self.assertEqual(optimizer.optimization_level, "aggressive")
-        
+
         # Test hook filtering based on category
         should_hook_critical = optimizer.should_hook_function(
             "kernel32.dll", "VirtualProtect", HookCategory.CRITICAL
         )
         self.assertTrue(should_hook_critical)  # Critical should always be hooked
-        
+
         # Test memory limit enforcement
         optimizer.memory_limit_mb = 100
         with patch.object(optimizer, 'get_current_memory') as mock_mem:
@@ -724,18 +724,18 @@ class TestPerformanceBenchmarks(unittest.TestCase):
                 "user32.dll", "GetWindowText", HookCategory.LOW
             )
             self.assertFalse(should_hook_low)  # Low priority should be skipped when over limit
-            
+
     def test_hook_category_priorities(self):
         """Test HookCategory priority ordering"""
         # Test category values (higher value = higher priority)
         self.assertGreater(HookCategory.CRITICAL.value, HookCategory.HIGH.value)
         self.assertGreater(HookCategory.HIGH.value, HookCategory.MEDIUM.value)
         self.assertGreater(HookCategory.MEDIUM.value, HookCategory.LOW.value)
-        
+
         # Test category filtering in optimizer
         optimizer = FridaPerformanceOptimizer()
         optimizer.minimum_category = HookCategory.MEDIUM
-        
+
         # Should hook medium and above
         self.assertTrue(optimizer.should_hook_category(HookCategory.CRITICAL))
         self.assertTrue(optimizer.should_hook_category(HookCategory.HIGH))

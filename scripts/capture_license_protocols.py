@@ -13,6 +13,7 @@ from pathlib import Path
 # Scapy is optional - we'll create raw PCAP if not available
 try:
     from scapy.all import Ether, wrpcap
+
     SCAPY_AVAILABLE = True
 except ImportError:
     SCAPY_AVAILABLE = False
@@ -28,12 +29,15 @@ class PCAPWriter:
     def _write_header(self):
         """Write PCAP file header."""
         # PCAP Magic number, version, timezone, snaplen, network type
-        header = struct.pack("<IHHIIII",
-            0xa1b2c3d4,  # Magic number
-            2, 4,        # Version major, minor
-            0, 0,        # Timezone offset, accuracy
-            65535,       # Snaplen
-            1,            # Network type (Ethernet)
+        header = struct.pack(
+            "<IHHIIII",
+            0xA1B2C3D4,  # Magic number
+            2,
+            4,  # Version major, minor
+            0,
+            0,  # Timezone offset, accuracy
+            65535,  # Snaplen
+            1,  # Network type (Ethernet)
         )
         self.file.write(header)
 
@@ -46,9 +50,12 @@ class PCAPWriter:
         ts_usec = int((timestamp - ts_sec) * 1000000)
 
         # Packet header
-        header = struct.pack("<IIII",
-            ts_sec, ts_usec,     # Timestamp
-            len(data), len(data), # Captured length, actual length
+        header = struct.pack(
+            "<IIII",
+            ts_sec,
+            ts_usec,  # Timestamp
+            len(data),
+            len(data),  # Captured length, actual length
         )
 
         self.file.write(header)
@@ -81,11 +88,18 @@ def create_ip_packet(src_ip: str, dst_ip: str, protocol: int, payload: bytes) ->
     src_addr = struct.pack(">BBBB", *map(int, src_ip.split(".")))
     dst_addr = struct.pack(">BBBB", *map(int, dst_ip.split(".")))
 
-    header = struct.pack(">BBHHHBBH4s4s",
-        version_ihl, tos, total_length,
-        identification, flags_fragment,
-        ttl, protocol, checksum,
-        src_addr, dst_addr,
+    header = struct.pack(
+        ">BBHHHBBH4s4s",
+        version_ihl,
+        tos,
+        total_length,
+        identification,
+        flags_fragment,
+        ttl,
+        protocol,
+        checksum,
+        src_addr,
+        dst_addr,
     )
 
     # Calculate checksum
@@ -101,24 +115,31 @@ def ip_checksum(data: bytes) -> int:
         data += b"\x00"
 
     total = sum(struct.unpack(">%dH" % (len(data) // 2), data))
-    total = (total >> 16) + (total & 0xffff)
+    total = (total >> 16) + (total & 0xFFFF)
     total += total >> 16
 
-    return ~total & 0xffff
+    return ~total & 0xFFFF
 
 
-def create_tcp_packet(src_port: int, dst_port: int, seq: int, ack: int,
-                     flags: int, payload: bytes) -> bytes:
+def create_tcp_packet(
+    src_port: int, dst_port: int, seq: int, ack: int, flags: int, payload: bytes
+) -> bytes:
     """Create a TCP packet."""
     window = 8192
     checksum = 0
     urgent = 0
 
-    header = struct.pack(">HHIIBBHHH",
-        src_port, dst_port,
-        seq, ack,
-        0x50, flags,  # Header length (5 * 4 = 20 bytes), flags
-        window, checksum, urgent,
+    header = struct.pack(
+        ">HHIIBBHHH",
+        src_port,
+        dst_port,
+        seq,
+        ack,
+        0x50,
+        flags,  # Header length (5 * 4 = 20 bytes), flags
+        window,
+        checksum,
+        urgent,
     )
 
     return header + payload
@@ -139,7 +160,8 @@ def create_flexlm_handshake(client_ip: str, server_ip: str) -> list[tuple[bytes,
     timestamp = time.time()
 
     # Client hello
-    flexlm_hello = struct.pack(">HHI",
+    flexlm_hello = struct.pack(
+        ">HHI",
         0x0147,  # FlexLM version
         0x0001,  # Message type (hello)
         0x12345678,  # Transaction ID
@@ -154,7 +176,8 @@ def create_flexlm_handshake(client_ip: str, server_ip: str) -> list[tuple[bytes,
 
     # Server response
     timestamp += 0.1
-    flexlm_response = struct.pack(">HHI",
+    flexlm_response = struct.pack(
+        ">HHI",
         0x0147,  # FlexLM version
         0x0002,  # Message type (response)
         0x12345678,  # Transaction ID
@@ -169,7 +192,8 @@ def create_flexlm_handshake(client_ip: str, server_ip: str) -> list[tuple[bytes,
 
     # License request
     timestamp += 0.05
-    license_request = struct.pack(">HHI",
+    license_request = struct.pack(
+        ">HHI",
         0x0147,
         0x0010,  # License request
         0x12345679,
@@ -185,7 +209,8 @@ def create_flexlm_handshake(client_ip: str, server_ip: str) -> list[tuple[bytes,
 
     # License grant
     timestamp += 0.02
-    license_grant = struct.pack(">HHI",
+    license_grant = struct.pack(
+        ">HHI",
         0x0147,
         0x0011,  # License grant
         0x12345679,
@@ -278,7 +303,9 @@ def create_adobe_licensing(client_ip: str, server_ip: str) -> list[tuple[bytes, 
     adobe_response = b'<?xml version="1.0" encoding="UTF-8"?>'
     adobe_response += b"<License><Response>"
     adobe_response += b"<Status>Authorized</Status>"
-    adobe_response += b"<LicenseKey>" + hashlib.sha256(b"ADOBE_LICENSE").hexdigest().encode() + b"</LicenseKey>"
+    adobe_response += (
+        b"<LicenseKey>" + hashlib.sha256(b"ADOBE_LICENSE").hexdigest().encode() + b"</LicenseKey>"
+    )
     adobe_response += b"<Expiry>" + str(int(time.time() + 2592000)).encode() + b"</Expiry>"
     adobe_response += b"<Features>All</Features>"
     adobe_response += b"</Response></License>"
@@ -330,13 +357,15 @@ def create_kms_activation(client_ip: str, server_ip: str) -> list[tuple[bytes, f
     timestamp = time.time()
 
     # KMS RPC bind request
-    rpc_bind = struct.pack("<BBHHIHH",
-        5, 0,      # Version (2 bytes)
-        11,        # Packet type (bind) (2 bytes)
-        0x8000,    # Flags (2 bytes)
-        0xDEAD,    # Call ID (4 bytes)
-        0x5C,      # Frag length (2 bytes)
-        0,          # Auth length (2 bytes)
+    rpc_bind = struct.pack(
+        "<BBHHIHH",
+        5,
+        0,  # Version (2 bytes)
+        11,  # Packet type (bind) (2 bytes)
+        0x8000,  # Flags (2 bytes)
+        0xDEAD,  # Call ID (4 bytes)
+        0x5C,  # Frag length (2 bytes)
+        0,  # Auth length (2 bytes)
     )
 
     # Add KMS interface UUID
@@ -351,13 +380,15 @@ def create_kms_activation(client_ip: str, server_ip: str) -> list[tuple[bytes, f
 
     # KMS activation request
     timestamp += 0.1
-    activation_request = struct.pack("<BBHHIHH",
-        5, 0,      # Version (2 bytes)
-        0,         # Packet type (request) (2 bytes)
-        0x8003,    # Flags (2 bytes)
-        0xBEEF,    # Call ID (4 bytes)
-        0x100,     # Frag length (2 bytes)
-        0,          # Auth length (2 bytes)
+    activation_request = struct.pack(
+        "<BBHHIHH",
+        5,
+        0,  # Version (2 bytes)
+        0,  # Packet type (request) (2 bytes)
+        0x8003,  # Flags (2 bytes)
+        0xBEEF,  # Call ID (4 bytes)
+        0x100,  # Frag length (2 bytes)
+        0,  # Auth length (2 bytes)
     )
 
     # Add product key and hardware ID

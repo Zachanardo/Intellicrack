@@ -18,8 +18,7 @@ logger = get_logger(__name__)
 
 
 class IntellicrackHexProtectionIntegration(QObject):
-    """Integrates protection analysis hex viewer with Intellicrack's hex viewer
-    """
+    """Integrates protection analysis hex viewer with Intellicrack's hex viewer"""
 
     # Signals
     offset_requested = pyqtSignal(int)  # Request jump to offset
@@ -53,7 +52,10 @@ class IntellicrackHexProtectionIntegration(QObject):
             # Get protection viewer path
             protection_viewer_path = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "extensions", "engines", "protection_viewer", "protection_viewer.exe",
+                "extensions",
+                "engines",
+                "protection_viewer",
+                "protection_viewer.exe",
             )
 
             if not os.path.exists(protection_viewer_path):
@@ -67,7 +69,9 @@ class IntellicrackHexProtectionIntegration(QObject):
             if offset is not None:
                 # Try command-line offset support first
                 cmd.extend(["--offset", hex(offset)])
-                logger.info(f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer")
+                logger.info(
+                    f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer"
+                )
 
                 # Create offset sync file for advanced integration
                 try:
@@ -102,7 +106,10 @@ class IntellicrackHexProtectionIntegration(QObject):
         try:
             protection_viewer_path = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "extensions", "engines", "protection_viewer", "protection_viewer.exe",
+                "extensions",
+                "engines",
+                "protection_viewer",
+                "protection_viewer.exe",
             )
             sync_dir = os.path.join(os.path.dirname(protection_viewer_path), "sync")
             sync_file = os.path.join(sync_dir, "initial_offset.txt")
@@ -207,8 +214,7 @@ class IntellicrackHexProtectionIntegration(QObject):
 
 
 class ProtectionIntegrationWidget(QWidget):
-    """Widget for protection viewer hex viewer integration controls
-    """
+    """Widget for protection viewer hex viewer integration controls"""
 
     def __init__(self, hex_widget=None, parent=None):
         """Initialize protection viewer integration widget
@@ -237,7 +243,9 @@ class ProtectionIntegrationWidget(QWidget):
 
         self.open_in_protection_viewer_btn = QPushButton("Open in Protection Viewer")
         self.open_in_protection_viewer_btn.clicked.connect(self._open_in_protection_viewer)
-        self.open_in_protection_viewer_btn.setToolTip("Open current file in protection viewer (press H for hex viewer)")
+        self.open_in_protection_viewer_btn.setToolTip(
+            "Open current file in protection viewer (press H for hex viewer)"
+        )
         button_layout.addWidget(self.open_in_protection_viewer_btn)
 
         self.sync_sections_btn = QPushButton("Sync Sections")
@@ -278,7 +286,9 @@ class ProtectionIntegrationWidget(QWidget):
                     for name, offset in sections.items():
                         if hasattr(self.hex_widget, "add_bookmark"):
                             self.hex_widget.add_bookmark(offset, f"Section: {name}")
-                    self.info_label.setText(f"Synced {len(sections)} sections from protection viewer")
+                    self.info_label.setText(
+                        f"Synced {len(sections)} sections from protection viewer"
+                    )
                 else:
                     self.info_label.setText("No sections found")
             else:

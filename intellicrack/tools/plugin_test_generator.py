@@ -1,6 +1,5 @@
 """Plugin test generator for creating automated tests for plugins."""
 
-
 """
 Plugin Unit Test Generator for Intellicrack.
 
@@ -19,7 +18,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-
 
 
 class PluginTestGenerator:
@@ -119,23 +117,23 @@ if __name__ == '__main__':
             date=datetime.now().strftime("%Y-%m-%d"),
             imports=f"from {plugin_name} import {class_name}",
             class_name=class_name,
-            test_methods=test_methods
+            test_methods=test_methods,
         )
 
     def _extract_and_generate_tests(self, file_path, plugin_name, class_name):
         """Extract methods from plugin file and generate appropriate tests with comprehensive analysis"""
         import ast
-        
+
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
                 tree = ast.parse(content, filename=file_path)
-            
+
             test_methods = []
             class_node = None
             parent_classes = []
             imports = []
-            
+
             # First pass: collect imports and find the main class
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
@@ -155,7 +153,7 @@ if __name__ == '__main__':
                                 parent_classes.append(base.id)
                             elif isinstance(base, ast.Attribute):
                                 parent_classes.append(f"{base.value.id}.{base.attr}")
-            
+
             # If no class found, try to find any class with Plugin in the name
             if not class_node:
                 for node in ast.walk(tree):
@@ -164,7 +162,7 @@ if __name__ == '__main__':
                         class_name = node.name
                         ast.get_docstring(node)
                         break
-            
+
             # Always include basic initialization test
             test_methods.append("""
     def test_initialize(self):
@@ -173,12 +171,12 @@ if __name__ == '__main__':
         self.assertTrue(hasattr(self.plugin, 'run'))
         self.assertIsInstance(self.plugin.name, str)
         self.assertIsInstance(self.plugin.version, str)""")
-            
+
             if class_node:
                 # Analyze class attributes and methods
                 class_attributes = {}
                 methods_info = []
-                
+
                 for item in class_node.body:
                     if isinstance(item, ast.Assign):
                         # Class attributes
@@ -195,7 +193,7 @@ if __name__ == '__main__':
                                 elif isinstance(item.value, ast.Call):
                                     if hasattr(item.value.func, "id"):
                                         class_attributes[attr_name] = item.value.func.id
-                    
+
                     elif isinstance(item, ast.FunctionDef):
                         # Methods
                         method_info = {
@@ -204,52 +202,54 @@ if __name__ == '__main__':
                             "defaults": [self._get_default_value(d) for d in item.args.defaults],
                             "docstring": ast.get_docstring(item),
                             "is_async": isinstance(item, ast.AsyncFunctionDef),
-                            "decorators": [self._get_decorator_name(d) for d in item.decorator_list],
+                            "decorators": [
+                                self._get_decorator_name(d) for d in item.decorator_list
+                            ],
                             "returns": self._analyze_return_type(item),
-                            "raises": self._analyze_exceptions(item)
+                            "raises": self._analyze_exceptions(item),
                         }
                         methods_info.append(method_info)
-                        
+
                         # Generate test for each public method
                         if not item.name.startswith("_"):
                             test_method = self._generate_comprehensive_test_for_method(
                                 method_info, class_attributes, imports
                             )
                             test_methods.append(test_method)
-                
+
                 # Generate attribute tests if any class attributes exist
                 if class_attributes:
                     attr_test = self._generate_attribute_tests(class_attributes)
                     test_methods.append(attr_test)
-                
+
                 # Generate inheritance tests if parent classes exist
                 if parent_classes:
                     inheritance_test = self._generate_inheritance_tests(parent_classes)
                     test_methods.append(inheritance_test)
-                
+
                 # Generate plugin-specific tests based on detected patterns
                 plugin_tests = self._generate_plugin_specific_tests(methods_info, imports)
                 test_methods.extend(plugin_tests)
-            
+
             else:
                 # No class found, generate comprehensive fallback tests
                 test_methods.extend(self._generate_comprehensive_fallback_tests())
-            
+
             return "\n".join(test_methods)
-            
+
         except Exception as e:
             # Enhanced fallback with error information
             return self._generate_error_aware_fallback_tests(str(e))
-    
+
     def _generate_test_for_method(self, method_name, args):
         """Generate test method for a specific plugin method"""
         # Skip self parameter
         params = [arg.arg for arg in args.args[1:]]
-        
+
         test_body = []
         test_body.append(f"\n    def test_{method_name}(self):")
         test_body.append(f'        """Test {method_name} method"""')
-        
+
         # Generate appropriate test parameters based on parameter names
         test_params = []
         for param in params:
@@ -265,19 +265,19 @@ if __name__ == '__main__':
                 test_params.append("42")
             else:
                 test_params.append("None")
-        
+
         # Generate method call
         if test_params:
             params_str = ", ".join(test_params)
             test_body.append(f"        result = self.plugin.{method_name}({params_str})")
         else:
             test_body.append(f"        result = self.plugin.{method_name}()")
-        
+
         # Add assertions
         test_body.append("        self.assertIsNotNone(result)")
-        
+
         return "\n".join(test_body)
-    
+
     def _get_default_value(self, node):
         """Extract default value from AST node"""
         if isinstance(node, ast.Constant):
@@ -292,7 +292,7 @@ if __name__ == '__main__':
             return None
         else:
             return "None"
-    
+
     def _get_decorator_name(self, decorator):
         """Extract decorator name from AST node"""
         if isinstance(decorator, ast.Name):
@@ -305,7 +305,7 @@ if __name__ == '__main__':
             elif isinstance(decorator.func, ast.Attribute):
                 return f"{decorator.func.value.id}.{decorator.func.attr}"
         return "unknown_decorator"
-    
+
     def _analyze_return_type(self, func_node):
         """Analyze function return type from AST"""
         returns = []
@@ -326,7 +326,7 @@ if __name__ == '__main__':
                 else:
                     returns.append("None")
         return list(set(returns)) if returns else ["unknown"]
-    
+
     def _analyze_exceptions(self, func_node):
         """Analyze exceptions that might be raised"""
         exceptions = []
@@ -338,7 +338,7 @@ if __name__ == '__main__':
                     elif isinstance(node.exc, ast.Name):
                         exceptions.append(node.exc.id)
         return list(set(exceptions))
-    
+
     def _generate_comprehensive_test_for_method(self, method_info, class_attributes, imports):
         """Generate comprehensive test for a method based on its analysis"""
         method_name = method_info["name"]
@@ -347,24 +347,24 @@ if __name__ == '__main__':
         is_async = method_info["is_async"]
         returns = method_info["returns"]
         raises = method_info["raises"]
-        
+
         test_lines = []
         test_name = f"test_{method_name}"
-        
+
         # Handle async methods
         if is_async:
             test_lines.append(f"\n    async def {test_name}(self):")
         else:
             test_lines.append(f"\n    def {test_name}(self):")
-        
+
         test_lines.append(f'        """{docstring}"""')
-        
+
         # Generate test parameters based on comprehensive analysis
         test_params = []
         for i, arg in enumerate(args):
             param_value = self._generate_smart_test_param(arg, class_attributes, imports)
             test_params.append(param_value)
-        
+
         # Method call
         if test_params:
             params_str = ", ".join(test_params)
@@ -377,11 +377,11 @@ if __name__ == '__main__':
                 test_lines.append(f"        result = await self.plugin.{method_name}()")
             else:
                 test_lines.append(f"        result = self.plugin.{method_name}()")
-        
+
         # Generate assertions based on return type analysis
         if "None" not in returns:
             test_lines.append("        self.assertIsNotNone(result)")
-        
+
         if "dict" in returns:
             test_lines.append("        self.assertIsInstance(result, dict)")
         elif "list" in returns:
@@ -390,81 +390,83 @@ if __name__ == '__main__':
             test_lines.append("        self.assertIsInstance(result, str)")
         elif "int" in returns or "float" in returns:
             test_lines.append("        self.assertIsInstance(result, (int, float))")
-        
+
         # Add edge case tests
         if args:
             test_lines.extend(self._generate_edge_case_test(method_name, args, is_async))
-        
+
         # Add exception tests if exceptions are raised
         if raises:
             test_lines.extend(self._generate_exception_test(method_name, args, raises, is_async))
-        
+
         return "\n".join(test_lines)
-    
+
     def _generate_smart_test_param(self, param_name, class_attributes, imports):
         """Generate intelligent test parameters based on name and context"""
         param_lower = param_name.lower()
-        
+
         # Binary/file parameters
         if any(word in param_lower for word in ["binary", "file", "path", "exe", "dll"]):
             return "self.test_binary"
-        
+
         # Configuration parameters
         elif any(word in param_lower for word in ["options", "config", "settings", "params"]):
             return "self.test_options"
-        
+
         # Data/buffer parameters
         elif any(word in param_lower for word in ["data", "buffer", "bytes", "payload"]):
             return 'b"\\x4d\\x5a\\x90\\x00\\x03\\x00\\x00\\x00"  # MZ header'
-        
+
         # String parameters
         elif any(word in param_lower for word in ["string", "text", "name", "message"]):
             return f'"{param_name}_test"'
-        
+
         # Numeric parameters
         elif any(word in param_lower for word in ["size", "length", "count", "number", "int"]):
             return "1024"
-        
+
         # Address parameters
         elif any(word in param_lower for word in ["address", "addr", "offset", "rva"]):
             return "0x401000"
-        
+
         # Boolean parameters
         elif any(word in param_lower for word in ["enable", "disable", "is_", "has_", "should_"]):
             return "True"
-        
+
         # List parameters
         elif any(word in param_lower for word in ["list", "array", "items"]):
             return "[]"
-        
+
         # Dictionary parameters
         elif any(word in param_lower for word in ["dict", "map", "props", "attributes"]):
             return "{}"
-        
+
         # Module/plugin specific
         elif "frida" in imports or "frida" in param_lower:
             return "self.mock_frida_session"
         elif "ghidra" in imports or "ghidra" in param_lower:
             return "self.mock_ghidra_project"
-        
+
         # Default
         else:
             return "None"
-    
+
     def _generate_edge_case_test(self, method_name, args, is_async):
         """Generate edge case tests for method"""
         test_lines = []
         async_prefix = "async " if is_async else ""
-        
+
         test_lines.append(f"\n    {async_prefix}def test_{method_name}_edge_cases(self):")
         test_lines.append(f'        """Test {method_name} with edge case inputs"""')
-        
+
         # Test with None parameters
         none_params = ", ".join(["None"] * len(args))
         test_lines.append("        # Test with None parameters")
-        test_lines.append("        with self.assertRaises((TypeError, ValueError, AttributeError)):")
+        test_lines.append(
+            "        with self.assertRaises((TypeError, ValueError, AttributeError)):"
+        )
         test_lines.append(f"            {await_prefix}self.plugin.{method_name}({none_params})")
-        
+
         # Test with empty parameters
         test_lines.append("        # Test with empty parameters")
         empty_params = []
@@ -479,73 +481,78 @@ if __name__ == '__main__':
                 empty_params.append('b""')
             else:
                 empty_params.append("0")
-        
+
         if empty_params:
             empty_str = ", ".join(empty_params)
-            test_lines.append(f"        result = {await_prefix}self.plugin.{method_name}({empty_str})")
+            test_lines.append(
+                f"        result = {await_prefix}self.plugin.{method_name}({empty_str})"
+            )
             test_lines.append("        # Should handle empty inputs gracefully")
-        
+
         return test_lines
-    
+
     def _generate_exception_test(self, method_name, args, exceptions, is_async):
         """Generate exception handling tests"""
         test_lines = []
         async_prefix = "async " if is_async else ""
-        
+
         test_lines.append(f"\n    {async_prefix}def test_{method_name}_exceptions(self):")
         test_lines.append(f'        """Test {method_name} exception handling"""')
-        
+
         for exc in exceptions:
             test_lines.append(f"        # Test {exc} handling")
             test_lines.append(f"        # Create conditions that should raise {exc}")
-            
+
         return test_lines
-    
+
     def _generate_attribute_tests(self, class_attributes):
         """Generate tests for class attributes"""
-        test_lines = ["\n    def test_class_attributes(self):", '        """Test plugin class attributes"""']
-        
+        test_lines = [
+            "\n    def test_class_attributes(self):",
+            '        """Test plugin class attributes"""',
+        ]
+
         for attr, attr_type in class_attributes.items():
             test_lines.append(f'        self.assertTrue(hasattr(self.plugin, "{attr}"))')
             if attr_type != "unknown":
                 test_lines.append(f"        # Expected type: {attr_type}")
-        
+
         return "\n".join(test_lines)
-    
+
     def _generate_inheritance_tests(self, parent_classes):
         """Generate tests for class inheritance"""
         test_lines = ["\n    def test_inheritance(self):", '        """Test plugin inheritance"""']
-        
+
         for parent in parent_classes:
             if "." in parent:
                 module, cls = parent.rsplit(".", 1)
                 test_lines.append(f"        # Should inherit from {parent}")
             else:
                 test_lines.append(f"        # Should inherit from {parent}")
-        
+
         return "\n".join(test_lines)
-    
+
     def _generate_plugin_specific_tests(self, methods_info, imports):
         """Generate plugin-specific tests based on detected patterns"""
         tests = []
-        
+
         # Check for common plugin patterns
         method_names = [m["name"] for m in methods_info]
-        
+
         # Frida plugin tests
         if any("frida" in imp.lower() for imp in imports):
             tests.append(self._generate_frida_plugin_tests(method_names))
-        
+
         # Ghidra plugin tests
         if any("ghidra" in imp.lower() for imp in imports):
             tests.append(self._generate_ghidra_plugin_tests(method_names))
-        
+
         # Analysis plugin tests
         if any(name in method_names for name in ["analyze", "scan", "detect"]):
             tests.append(self._generate_analysis_plugin_tests(method_names))
-        
+
         return tests
-    
+
     def _generate_frida_plugin_tests(self, method_names):
         """Generate Frida-specific plugin tests"""
         return """
@@ -555,7 +562,7 @@ if __name__ == '__main__':
             script = self.plugin.generate_script(self.test_binary)
             self.assertIsInstance(script, str)
             self.assertIn('Interceptor', script)"""
-    
+
     def _generate_ghidra_plugin_tests(self, method_names):
         """Generate Ghidra-specific plugin tests"""
         return """
@@ -565,7 +572,7 @@ if __name__ == '__main__':
             result = self.plugin.analyze(self.test_binary)
             self.assertIsInstance(result, dict)
             self.assertIn('functions', result)"""
-    
+
     def _generate_analysis_plugin_tests(self, method_names):
         """Generate analysis-specific plugin tests"""
         return """
@@ -579,27 +586,28 @@ if __name__ == '__main__':
             for key in expected_keys:
                 if key in result:
                     self.assertIsNotNone(result[key])"""
-    
+
     def _generate_comprehensive_fallback_tests(self):
         """Generate comprehensive fallback tests when no class is found"""
-        return ["""
+        return [
+            """
     def test_module_imports(self):
         \"\"\"Test that module can be imported\"\"\"
         self.assertIsNotNone(self.plugin)
-        
+
     def test_required_attributes(self):
         \"\"\"Test for required plugin attributes\"\"\"
         required_attrs = ['name', 'version', 'description']
         for attr in required_attrs:
             self.assertTrue(hasattr(self.plugin, attr), f"Missing required attribute: {attr}")
-    
+
     def test_required_methods(self):
         \"\"\"Test for required plugin methods\"\"\"
         required_methods = ['run', 'initialize', 'cleanup']
         for method in required_methods:
             if hasattr(self.plugin, method):
                 self.assertTrue(callable(getattr(self.plugin, method)))
-    
+
     def test_plugin_execution(self):
         \"\"\"Test basic plugin execution\"\"\"
         try:
@@ -607,8 +615,9 @@ if __name__ == '__main__':
             self.assertIsNotNone(result)
             self.assertIsInstance(result, dict)
         except NotImplementedError:
-            self.skipTest("Plugin run method not implemented")"""]
-    
+            self.skipTest("Plugin run method not implemented")"""
+        ]
+
     def _generate_error_aware_fallback_tests(self, error_msg):
         """Generate fallback tests that acknowledge the parsing error"""
         return f"""
@@ -617,12 +626,12 @@ if __name__ == '__main__':
         # Note: File parsing failed with: {error_msg}
         # Running basic validation tests
         self.assertIsNotNone(self.plugin)
-        
+
     def test_basic_functionality(self):
         \"\"\"Test basic plugin functionality\"\"\"
         # Verify plugin has required interface
         self.assertTrue(hasattr(self.plugin, 'run') or hasattr(self.plugin, 'execute'))
-        
+
     def test_error_handling(self):
         \"\"\"Test plugin error handling\"\"\"
         # Test that plugin handles invalid input gracefully
@@ -644,38 +653,112 @@ class MockDataGenerator:
     def _load_pe_template(self):
         """Load a real PE file template"""
         # Minimal valid PE header structure
-        dos_header = bytearray([
-            0x4D, 0x5A,  # MZ signature
-            0x90, 0x00,  # Bytes on last page
-            0x03, 0x00,  # Pages in file
-            0x00, 0x00,  # Relocations
-            0x04, 0x00,  # Size of header in paragraphs
-            0x00, 0x00,  # Minimum extra paragraphs
-            0xFF, 0xFF,  # Maximum extra paragraphs
-            0x00, 0x00,  # Initial SS
-            0xB8, 0x00,  # Initial SP
-            0x00, 0x00,  # Checksum
-            0x00, 0x00,  # Initial IP
-            0x00, 0x00,  # Initial CS
-            0x40, 0x00,  # Addr of relocation table
-            0x00, 0x00,  # Overlay number
-        ])
+        dos_header = bytearray(
+            [
+                0x4D,
+                0x5A,  # MZ signature
+                0x90,
+                0x00,  # Bytes on last page
+                0x03,
+                0x00,  # Pages in file
+                0x00,
+                0x00,  # Relocations
+                0x04,
+                0x00,  # Size of header in paragraphs
+                0x00,
+                0x00,  # Minimum extra paragraphs
+                0xFF,
+                0xFF,  # Maximum extra paragraphs
+                0x00,
+                0x00,  # Initial SS
+                0xB8,
+                0x00,  # Initial SP
+                0x00,
+                0x00,  # Checksum
+                0x00,
+                0x00,  # Initial IP
+                0x00,
+                0x00,  # Initial CS
+                0x40,
+                0x00,  # Addr of relocation table
+                0x00,
+                0x00,  # Overlay number
+            ]
+        )
 
         # Fill to PE offset location
         dos_header.extend([0] * (0x3C - len(dos_header)))
         dos_header.extend([0x80, 0x00, 0x00, 0x00])  # PE offset at 0x80
 
         # DOS stub
-        dos_stub = bytearray([
-            0x0E, 0x1F, 0xBA, 0x0E, 0x00, 0xB4, 0x09, 0xCD,
-            0x21, 0xB8, 0x01, 0x4C, 0xCD, 0x21, 0x54, 0x68,
-            0x69, 0x73, 0x20, 0x70, 0x72, 0x6F, 0x67, 0x72,
-            0x61, 0x6D, 0x20, 0x63, 0x61, 0x6E, 0x6E, 0x6F,
-            0x74, 0x20, 0x62, 0x65, 0x20, 0x72, 0x75, 0x6E,
-            0x20, 0x69, 0x6E, 0x20, 0x44, 0x4F, 0x53, 0x20,
-            0x6D, 0x6F, 0x64, 0x65, 0x2E, 0x0D, 0x0D, 0x0A,
-            0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-        ])
+        dos_stub = bytearray(
+            [
+                0x0E,
+                0x1F,
+                0xBA,
+                0x0E,
+                0x00,
+                0xB4,
+                0x09,
+                0xCD,
+                0x21,
+                0xB8,
+                0x01,
+                0x4C,
+                0xCD,
+                0x21,
+                0x54,
+                0x68,
+                0x69,
+                0x73,
+                0x20,
+                0x70,
+                0x72,
+                0x6F,
+                0x67,
+                0x72,
+                0x61,
+                0x6D,
+                0x20,
+                0x63,
+                0x61,
+                0x6E,
+                0x6E,
+                0x6F,
+                0x74,
+                0x20,
+                0x62,
+                0x65,
+                0x20,
+                0x72,
+                0x75,
+                0x6E,
+                0x20,
+                0x69,
+                0x6E,
+                0x20,
+                0x44,
+                0x4F,
+                0x53,
+                0x20,
+                0x6D,
+                0x6F,
+                0x64,
+                0x65,
+                0x2E,
+                0x0D,
+                0x0D,
+                0x0A,
+                0x24,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+            ]
+        )
 
         dos_header.extend(dos_stub)
 
@@ -683,31 +766,80 @@ class MockDataGenerator:
         dos_header.extend([0] * (0x80 - len(dos_header)))
 
         # PE header
-        pe_header = bytearray([
-            0x50, 0x45, 0x00, 0x00,  # PE signature
-            0x4C, 0x01,  # Machine (i386)
-            0x03, 0x00,  # Number of sections
-            0x00, 0x00, 0x00, 0x00,  # TimeDateStamp
-            0x00, 0x00, 0x00, 0x00,  # PointerToSymbolTable
-            0x00, 0x00, 0x00, 0x00,  # NumberOfSymbols
-            0xE0, 0x00,  # SizeOfOptionalHeader
-            0x02, 0x01,  # Characteristics
-        ])
+        pe_header = bytearray(
+            [
+                0x50,
+                0x45,
+                0x00,
+                0x00,  # PE signature
+                0x4C,
+                0x01,  # Machine (i386)
+                0x03,
+                0x00,  # Number of sections
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # TimeDateStamp
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # PointerToSymbolTable
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # NumberOfSymbols
+                0xE0,
+                0x00,  # SizeOfOptionalHeader
+                0x02,
+                0x01,  # Characteristics
+            ]
+        )
 
         # Optional header (simplified)
-        optional_header = bytearray([
-            0x0B, 0x01,  # Magic (PE32)
-            0x0E, 0x00,  # Major/Minor linker version
-            0x00, 0x10, 0x00, 0x00,  # SizeOfCode
-            0x00, 0x10, 0x00, 0x00,  # SizeOfInitializedData
-            0x00, 0x00, 0x00, 0x00,  # SizeOfUninitializedData
-            0x00, 0x10, 0x00, 0x00,  # AddressOfEntryPoint
-            0x00, 0x10, 0x00, 0x00,  # BaseOfCode
-            0x00, 0x20, 0x00, 0x00,  # BaseOfData
-            0x00, 0x00, 0x40, 0x00,  # ImageBase
-            0x00, 0x10, 0x00, 0x00,  # SectionAlignment
-            0x00, 0x02, 0x00, 0x00,  # FileAlignment
-        ])
+        optional_header = bytearray(
+            [
+                0x0B,
+                0x01,  # Magic (PE32)
+                0x0E,
+                0x00,  # Major/Minor linker version
+                0x00,
+                0x10,
+                0x00,
+                0x00,  # SizeOfCode
+                0x00,
+                0x10,
+                0x00,
+                0x00,  # SizeOfInitializedData
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # SizeOfUninitializedData
+                0x00,
+                0x10,
+                0x00,
+                0x00,  # AddressOfEntryPoint
+                0x00,
+                0x10,
+                0x00,
+                0x00,  # BaseOfCode
+                0x00,
+                0x20,
+                0x00,
+                0x00,  # BaseOfData
+                0x00,
+                0x00,
+                0x40,
+                0x00,  # ImageBase
+                0x00,
+                0x10,
+                0x00,
+                0x00,  # SectionAlignment
+                0x00,
+                0x02,
+                0x00,
+                0x00,  # FileAlignment
+            ]
+        )
 
         # Extend with zeros to minimum size
         optional_header.extend([0] * (0xE0 - len(optional_header)))
@@ -717,27 +849,74 @@ class MockDataGenerator:
     def _load_elf_template(self):
         """Load a real ELF file template"""
         # ELF header for 64-bit
-        elf_header = bytearray([
-            0x7F, 0x45, 0x4C, 0x46,  # Magic
-            0x02,  # 64-bit
-            0x01,  # Little endian
-            0x01,  # ELF version
-            0x00,  # System V ABI
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  # Padding
-            0x02, 0x00,  # Executable file
-            0x3E, 0x00,  # x86-64
-            0x01, 0x00, 0x00, 0x00,  # Version
-            0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  # Entry point
-            0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  # Program header offset
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  # Section header offset
-            0x00, 0x00, 0x00, 0x00,  # Flags
-            0x40, 0x00,  # ELF header size
-            0x38, 0x00,  # Program header size
-            0x01, 0x00,  # Program header count
-            0x40, 0x00,  # Section header size
-            0x00, 0x00,  # Section header count
-            0x00, 0x00,  # Section name string table index
-        ])
+        elf_header = bytearray(
+            [
+                0x7F,
+                0x45,
+                0x4C,
+                0x46,  # Magic
+                0x02,  # 64-bit
+                0x01,  # Little endian
+                0x01,  # ELF version
+                0x00,  # System V ABI
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # Padding
+                0x02,
+                0x00,  # Executable file
+                0x3E,
+                0x00,  # x86-64
+                0x01,
+                0x00,
+                0x00,
+                0x00,  # Version
+                0x00,
+                0x10,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # Entry point
+                0x40,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # Program header offset
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # Section header offset
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # Flags
+                0x40,
+                0x00,  # ELF header size
+                0x38,
+                0x00,  # Program header size
+                0x01,
+                0x00,  # Program header count
+                0x40,
+                0x00,  # Section header size
+                0x00,
+                0x00,  # Section header count
+                0x00,
+                0x00,  # Section name string table index
+            ]
+        )
 
         return elf_header
 
@@ -747,23 +926,51 @@ class MockDataGenerator:
             base = bytearray(self.pe_template)
 
             # Add some sections
-            text_section = bytearray([
-                # .text section header
-                0x2E, 0x74, 0x65, 0x78, 0x74, 0x00, 0x00, 0x00,  # Name
-                0x00, 0x10, 0x00, 0x00,  # VirtualSize
-                0x00, 0x10, 0x00, 0x00,  # VirtualAddress
-                0x00, 0x10, 0x00, 0x00,  # SizeOfRawData
-                0x00, 0x04, 0x00, 0x00,  # PointerToRawData
-            ])
+            text_section = bytearray(
+                [
+                    # .text section header
+                    0x2E,
+                    0x74,
+                    0x65,
+                    0x78,
+                    0x74,
+                    0x00,
+                    0x00,
+                    0x00,  # Name
+                    0x00,
+                    0x10,
+                    0x00,
+                    0x00,  # VirtualSize
+                    0x00,
+                    0x10,
+                    0x00,
+                    0x00,  # VirtualAddress
+                    0x00,
+                    0x10,
+                    0x00,
+                    0x00,  # SizeOfRawData
+                    0x00,
+                    0x04,
+                    0x00,
+                    0x00,  # PointerToRawData
+                ]
+            )
 
             # Add some code
-            code = bytearray([
-                0x55,              # push ebp
-                0x89, 0xE5,        # mov ebp, esp
-                0xB8, 0x01, 0x00, 0x00, 0x00,  # mov eax, 1
-                0x5D,              # pop ebp
-                0xC3,              # ret
-            ])
+            code = bytearray(
+                [
+                    0x55,  # push ebp
+                    0x89,
+                    0xE5,  # mov ebp, esp
+                    0xB8,
+                    0x01,
+                    0x00,
+                    0x00,
+                    0x00,  # mov eax, 1
+                    0x5D,  # pop ebp
+                    0xC3,  # ret
+                ]
+            )
 
             # Pad to section alignment
             code.extend([0x90] * (0x200 - len(code)))  # NOP padding
@@ -778,23 +985,88 @@ class MockDataGenerator:
             base = bytearray(self.elf_template)
 
             # Add program header
-            program_header = bytearray([
-                0x01, 0x00, 0x00, 0x00,  # PT_LOAD
-                0x05, 0x00, 0x00, 0x00,  # Flags (R+X)
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  # Offset
-                0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,  # Virtual address
-                0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,  # Physical address
-                0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  # File size
-                0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  # Memory size
-                0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  # Alignment
-            ])
+            program_header = bytearray(
+                [
+                    0x01,
+                    0x00,
+                    0x00,
+                    0x00,  # PT_LOAD
+                    0x05,
+                    0x00,
+                    0x00,
+                    0x00,  # Flags (R+X)
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,  # Offset
+                    0x00,
+                    0x00,
+                    0x40,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,  # Virtual address
+                    0x00,
+                    0x00,
+                    0x40,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,  # Physical address
+                    0x00,
+                    0x02,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,  # File size
+                    0x00,
+                    0x02,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,  # Memory size
+                    0x00,
+                    0x10,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,  # Alignment
+                ]
+            )
 
             # Add some code
-            code = bytearray([
-                0x48, 0xC7, 0xC0, 0x01, 0x00, 0x00, 0x00,  # mov rax, 1
-                0x48, 0xC7, 0xC7, 0x00, 0x00, 0x00, 0x00,  # mov rdi, 0
-                0x0F, 0x05,  # syscall
-            ])
+            code = bytearray(
+                [
+                    0x48,
+                    0xC7,
+                    0xC0,
+                    0x01,
+                    0x00,
+                    0x00,
+                    0x00,  # mov rax, 1
+                    0x48,
+                    0xC7,
+                    0xC7,
+                    0x00,
+                    0x00,
+                    0x00,
+                    0x00,  # mov rdi, 0
+                    0x0F,
+                    0x05,  # syscall
+                ]
+            )
 
             base.extend(program_header)
             base.extend(code)
@@ -822,7 +1094,7 @@ class MockDataGenerator:
             "protocol": "TCP",
             "flags": "SYN",
             "length": 74,
-            "payload": ""
+            "payload": "",
         }
         packets.append(syn_packet)
 
@@ -836,7 +1108,7 @@ class MockDataGenerator:
             "protocol": "TCP",
             "flags": "SYN,ACK",
             "length": 74,
-            "payload": ""
+            "payload": "",
         }
         packets.append(syn_ack_packet)
 
@@ -850,7 +1122,7 @@ class MockDataGenerator:
             "protocol": "TCP",
             "flags": "ACK",
             "length": 66,
-            "payload": ""
+            "payload": "",
         }
         packets.append(ack_packet)
 
@@ -871,9 +1143,9 @@ class MockDataGenerator:
                 "cipher_suites": [
                     "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
                     "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-                    "TLS_RSA_WITH_AES_128_GCM_SHA256"
-                ]
-            }
+                    "TLS_RSA_WITH_AES_128_GCM_SHA256",
+                ],
+            },
         }
         packets.append(tls_hello)
 
@@ -888,10 +1160,10 @@ class MockDataGenerator:
                     "dst": "93.184.216.34:443",
                     "protocol": "HTTPS",
                     "packets": 4,
-                    "bytes": 731
+                    "bytes": 731,
                 }
             ],
-            "packets": packets
+            "packets": packets,
         }
 
     def create_mock_registry_data(self):
@@ -905,28 +1177,20 @@ class MockDataGenerator:
                 "RegisteredOrganization": "Test Organization",
                 "CurrentVersion": "6.3",
                 "CurrentBuild": "19043",
-                "InstallDate": 1609459200  # 2021-01-01
+                "InstallDate": 1609459200,  # 2021-01-01
             },
             "HKEY_LOCAL_MACHINE\\SOFTWARE\\TestApp": {
                 "InstallPath": "C:\\Program Files\\TestApp",
                 "Version": "1.0.0.0",
                 "License": "TRIAL",
                 "ExpiryDate": "2025-12-31",
-                "Features": {
-                    "Feature1": 1,
-                    "Feature2": 0,
-                    "Feature3": 1
-                }
+                "Features": {"Feature1": 1, "Feature2": 0, "Feature3": 1},
             },
             "HKEY_CURRENT_USER\\Software\\TestApp": {
                 "LastRun": "2025-01-19 10:30:00",
                 "UsageCount": 42,
-                "Settings": {
-                    "Theme": "dark",
-                    "AutoUpdate": True,
-                    "Language": "en-US"
-                }
-            }
+                "Settings": {"Theme": "dark", "AutoUpdate": True, "Language": "en-US"},
+            },
         }
 
 
@@ -939,14 +1203,7 @@ class PluginTestRunner:
     def run_tests(self, test_file, options=None):
         """Run tests from a test file"""
         # Implementation would actually run the tests
-        return {
-            "total": 10,
-            "passed": 8,
-            "failed": 1,
-            "skipped": 1,
-            "duration": 2.5,
-            "details": []
-        }
+        return {"total": 10, "passed": 8, "failed": 1, "skipped": 1, "duration": 2.5, "details": []}
 
 
 class TestCoverageAnalyzer:
@@ -963,5 +1220,5 @@ class TestCoverageAnalyzer:
             "line_coverage": 80.0,
             "branch_coverage": 71.0,
             "missing_lines": [45, 67, 89, 101],
-            "uncovered_functions": ["complex_function", "error_handler"]
+            "uncovered_functions": ["complex_function", "error_handler"],
         }

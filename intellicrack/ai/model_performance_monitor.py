@@ -50,6 +50,7 @@ try:
         memory_reserved,
         to_device,
     )
+
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     pass
@@ -62,6 +63,7 @@ HAS_PYNVML = False
 
 try:
     import numpy as np
+
     HAS_NUMPY = True
 except ImportError as e:
     logger.error("Import error in model_performance_monitor: %s", e)
@@ -69,6 +71,7 @@ except ImportError as e:
 
 try:
     import psutil
+
     HAS_PSUTIL = True
 except ImportError as e:
     logger.error("Import error in model_performance_monitor: %s", e)
@@ -76,6 +79,7 @@ except ImportError as e:
 
 try:
     import torch
+
     HAS_TORCH = True
 except ImportError as e:
     logger.error("Import error in model_performance_monitor: %s", e)
@@ -83,6 +87,7 @@ except ImportError as e:
 
 try:
     import pynvml
+
     HAS_PYNVML = True
 except ImportError as e:
     logger.error("Import error in model_performance_monitor: %s", e)
@@ -199,8 +204,7 @@ class ModelPerformanceMonitor:
                             error_rate=bench_data["error_rate"],
                             device=bench_data["device"],
                             quantization=bench_data.get("quantization"),
-                            benchmark_date=datetime.fromisoformat(
-                                bench_data["benchmark_date"]),
+                            benchmark_date=datetime.fromisoformat(bench_data["benchmark_date"]),
                         )
             except Exception as e:
                 logger.error(f"Failed to load benchmarks: {e}")
@@ -281,8 +285,7 @@ class ModelPerformanceMonitor:
         inference_time = end_time - context["start_time"]
 
         # Calculate metrics
-        tokens_per_second = tokens_generated / \
-            inference_time if inference_time > 0 else 0
+        tokens_per_second = tokens_generated / inference_time if inference_time > 0 else 0
 
         # Memory usage
         end_memory = self._get_memory_usage()
@@ -327,8 +330,7 @@ class ModelPerformanceMonitor:
 
         # Add to history
         if context["model_id"] not in self.metrics_history:
-            self.metrics_history[context["model_id"]
-                                 ] = deque(maxlen=self.history_size)
+            self.metrics_history[context["model_id"]] = deque(maxlen=self.history_size)
 
         self.metrics_history[context["model_id"]].append(metrics)
 
@@ -402,10 +404,8 @@ class ModelPerformanceMonitor:
             return
 
         # Calculate statistics
-        inference_times = [
-            m.inference_time for m in history if m.error is None]
-        tokens_per_second = [
-            m.tokens_per_second for m in history if m.error is None]
+        inference_times = [m.inference_time for m in history if m.error is None]
+        tokens_per_second = [m.tokens_per_second for m in history if m.error is None]
         memory_usage = [m.memory_used_mb + m.gpu_memory_mb for m in history]
 
         if not inference_times:
@@ -424,12 +424,25 @@ class ModelPerformanceMonitor:
         # Create/update benchmark
         self.benchmarks[model_id] = ModelBenchmark(
             model_id=model_id,
-            avg_tokens_per_second=(np.mean(tokens_per_second) if HAS_NUMPY and tokens_per_second else sum(
-                tokens_per_second)/len(tokens_per_second)) if tokens_per_second else 0,
-            avg_inference_time=(np.mean(inference_times) if HAS_NUMPY else sum(
-                inference_times)/len(inference_times)) if inference_times else 0,
-            avg_memory_mb=(np.mean(memory_usage) if HAS_NUMPY else sum(
-                memory_usage)/len(memory_usage)) if memory_usage else 0,
+            avg_tokens_per_second=(
+                np.mean(tokens_per_second)
+                if HAS_NUMPY and tokens_per_second
+                else sum(tokens_per_second) / len(tokens_per_second)
+            )
+            if tokens_per_second
+            else 0,
+            avg_inference_time=(
+                np.mean(inference_times)
+                if HAS_NUMPY
+                else sum(inference_times) / len(inference_times)
+            )
+            if inference_times
+            else 0,
+            avg_memory_mb=(
+                np.mean(memory_usage) if HAS_NUMPY else sum(memory_usage) / len(memory_usage)
+            )
+            if memory_usage
+            else 0,
             p50_latency=latencies[p50_idx] if p50_idx < len(latencies) else 0,
             p95_latency=latencies[p95_idx] if p95_idx < len(latencies) else 0,
             p99_latency=latencies[p99_idx] if p99_idx < len(latencies) else 0,
@@ -469,10 +482,24 @@ class ModelPerformanceMonitor:
             "model_id": model_id,
             "total_inferences": len(history),
             "recent_performance": {
-                "avg_tokens_per_second": (np.mean(recent_tps) if HAS_NUMPY else sum(recent_tps)/len(recent_tps)) if recent_tps else 0,
-                "avg_latency": (np.mean(recent_latency) if HAS_NUMPY else sum(recent_latency)/len(recent_latency)) if recent_latency else 0,
-                "min_latency": (np.min(recent_latency) if HAS_NUMPY else min(recent_latency)) if recent_latency else 0,
-                "max_latency": (np.max(recent_latency) if HAS_NUMPY else max(recent_latency)) if recent_latency else 0,
+                "avg_tokens_per_second": (
+                    np.mean(recent_tps) if HAS_NUMPY else sum(recent_tps) / len(recent_tps)
+                )
+                if recent_tps
+                else 0,
+                "avg_latency": (
+                    np.mean(recent_latency)
+                    if HAS_NUMPY
+                    else sum(recent_latency) / len(recent_latency)
+                )
+                if recent_latency
+                else 0,
+                "min_latency": (np.min(recent_latency) if HAS_NUMPY else min(recent_latency))
+                if recent_latency
+                else 0,
+                "max_latency": (np.max(recent_latency) if HAS_NUMPY else max(recent_latency))
+                if recent_latency
+                else 0,
             },
         }
 
@@ -551,15 +578,13 @@ class ModelPerformanceMonitor:
                 # Lower is better
                 best_model = min(
                     comparison["models"].items(),
-                    key=lambda x: x[1]["value"] if x[1]["value"] is not None else float(
-                        "inf"),
+                    key=lambda x: x[1]["value"] if x[1]["value"] is not None else float("inf"),
                 )
             else:
                 # Higher is better
                 best_model = max(
                     comparison["models"].items(),
-                    key=lambda x: x[1]["value"] if x[1]["value"] is not None else -
-                    float("inf"),
+                    key=lambda x: x[1]["value"] if x[1]["value"] is not None else -float("inf"),
                 )
 
             comparison["best_model"] = best_model[0]
@@ -673,28 +698,51 @@ class ModelPerformanceMonitor:
 
             with open(filepath, "w", newline="") as f:
                 writer = csv.writer(f)
-                writer.writerow([
-                    "model_id", "timestamp", "inference_time", "tokens_generated",
-                    "tokens_per_second", "memory_mb", "device", "quantization", "error",
-                ])
+                writer.writerow(
+                    [
+                        "model_id",
+                        "timestamp",
+                        "inference_time",
+                        "tokens_generated",
+                        "tokens_per_second",
+                        "memory_mb",
+                        "device",
+                        "quantization",
+                        "error",
+                    ]
+                )
 
                 if model_id and model_id in self.metrics_history:
                     for m in self.metrics_history[model_id]:
-                        writer.writerow([
-                            model_id, m.timestamp.isoformat(), m.inference_time,
-                            m.tokens_generated, m.tokens_per_second,
-                            m.memory_used_mb + m.gpu_memory_mb, m.device,
-                            m.quantization, m.error,
-                        ])
+                        writer.writerow(
+                            [
+                                model_id,
+                                m.timestamp.isoformat(),
+                                m.inference_time,
+                                m.tokens_generated,
+                                m.tokens_per_second,
+                                m.memory_used_mb + m.gpu_memory_mb,
+                                m.device,
+                                m.quantization,
+                                m.error,
+                            ]
+                        )
                 else:
                     for mid, history in self.metrics_history.items():
                         for m in history:
-                            writer.writerow([
-                                mid, m.timestamp.isoformat(), m.inference_time,
-                                m.tokens_generated, m.tokens_per_second,
-                                m.memory_used_mb + m.gpu_memory_mb, m.device,
-                                m.quantization, m.error,
-                            ])
+                            writer.writerow(
+                                [
+                                    mid,
+                                    m.timestamp.isoformat(),
+                                    m.inference_time,
+                                    m.tokens_generated,
+                                    m.tokens_per_second,
+                                    m.memory_used_mb + m.gpu_memory_mb,
+                                    m.device,
+                                    m.quantization,
+                                    m.error,
+                                ]
+                            )
 
             return filepath
 

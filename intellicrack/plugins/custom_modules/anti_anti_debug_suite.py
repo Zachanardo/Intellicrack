@@ -114,12 +114,13 @@ class WindowsAPIHooker:
                 self.original_functions[func_addr] = bytes(original_bytes)
 
             # Create hook code: xor eax, eax; ret (always return 0)
-            hook_code = b"\x33\xC0\xC3"  # xor eax,eax; ret
+            hook_code = b"\x33\xc0\xc3"  # xor eax,eax; ret
 
             # Make memory writable
             old_protect = ctypes.c_ulong()
             self.kernel32.VirtualProtect(
-                func_addr, len(hook_code),
+                func_addr,
+                len(hook_code),
                 0x40,  # PAGE_EXECUTE_READWRITE
                 ctypes.byref(old_protect),
             )
@@ -129,7 +130,8 @@ class WindowsAPIHooker:
 
             # Restore protection
             self.kernel32.VirtualProtect(
-                func_addr, len(hook_code),
+                func_addr,
+                len(hook_code),
                 old_protect.value,
                 ctypes.byref(old_protect),
             )
@@ -161,17 +163,23 @@ class WindowsAPIHooker:
 
             # Hook code: zero out the result and return success
             # mov dword ptr [edx], 0; xor eax, eax; ret
-            hook_code = b"\xC7\x02\x00\x00\x00\x00\x33\xC0\xC3"
+            hook_code = b"\xc7\x02\x00\x00\x00\x00\x33\xc0\xc3"
 
             old_protect = ctypes.c_ulong()
             self.kernel32.VirtualProtect(
-                func_addr, len(hook_code), 0x40, ctypes.byref(old_protect),
+                func_addr,
+                len(hook_code),
+                0x40,
+                ctypes.byref(old_protect),
             )
 
             ctypes.memmove(func_addr, hook_code, len(hook_code))
 
             self.kernel32.VirtualProtect(
-                func_addr, len(hook_code), old_protect.value, ctypes.byref(old_protect),
+                func_addr,
+                len(hook_code),
+                old_protect.value,
+                ctypes.byref(old_protect),
             )
 
             self.active_hooks.add("CheckRemoteDebuggerPresent")
@@ -225,17 +233,23 @@ class WindowsAPIHooker:
                 return False
 
             # Hook to just return without doing anything
-            hook_code = b"\xC3"  # ret
+            hook_code = b"\xc3"  # ret
 
             old_protect = ctypes.c_ulong()
             self.kernel32.VirtualProtect(
-                func_addr, 1, 0x40, ctypes.byref(old_protect),
+                func_addr,
+                1,
+                0x40,
+                ctypes.byref(old_protect),
             )
 
             ctypes.memmove(func_addr, hook_code, 1)
 
             self.kernel32.VirtualProtect(
-                func_addr, 1, old_protect.value, ctypes.byref(old_protect),
+                func_addr,
+                1,
+                old_protect.value,
+                ctypes.byref(old_protect),
             )
 
             self.active_hooks.add("OutputDebugStringA")
@@ -275,13 +289,19 @@ class WindowsAPIHooker:
             for func_addr, original_bytes in self.original_functions.items():
                 old_protect = ctypes.c_ulong()
                 self.kernel32.VirtualProtect(
-                    func_addr, len(original_bytes), 0x40, ctypes.byref(old_protect),
+                    func_addr,
+                    len(original_bytes),
+                    0x40,
+                    ctypes.byref(old_protect),
                 )
 
                 ctypes.memmove(func_addr, original_bytes, len(original_bytes))
 
                 self.kernel32.VirtualProtect(
-                    func_addr, len(original_bytes), old_protect.value, ctypes.byref(old_protect),
+                    func_addr,
+                    len(original_bytes),
+                    old_protect.value,
+                    ctypes.byref(old_protect),
                 )
 
             self.active_hooks.clear()
@@ -426,7 +446,9 @@ class PEBManipulator:
             )
 
             if success:
-                self.logger.info(f"Patched NtGlobalFlag: 0x{current_value.value:08X} -> 0x{new_value.value:08X}")
+                self.logger.info(
+                    f"Patched NtGlobalFlag: 0x{current_value.value:08X} -> 0x{new_value.value:08X}"
+                )
                 return True
 
         except Exception as e:
@@ -466,7 +488,9 @@ class PEBManipulator:
                 if heap_modified:
                     # Write back modified flags
                     ctypes.c_uint32.from_address(heap_addr).value = heap_flags
-                    self.logger.info(f"Heap flags patched: 0x{original_flags:08x} -> 0x{heap_flags:08x}")
+                    self.logger.info(
+                        f"Heap flags patched: 0x{original_flags:08x} -> 0x{heap_flags:08x}"
+                    )
                     return True
                 self.logger.info("No debug heap flags found to patch")
                 return False
@@ -697,6 +721,7 @@ class TimingNormalizer:
     def add_random_delays(self):
         """Add random delays to mask debugging overhead"""
         import random
+
         delay = random.uniform(0.001, 0.01)  # 1-10ms
         time.sleep(delay)
 
@@ -738,17 +763,14 @@ class MemoryPatcher:
                 b"\\xFF\\x15",  # call dword ptr [addr]
                 b"\\xFF\\x25",  # jmp dword ptr [addr]
             ],
-
             # INT 3 breakpoint detection
             "int3_detection": [
                 b"\\xCC",  # int 3
             ],
-
             # Debug trap flag
             "trap_flag": [
                 b"\\x9C\\x58\\x25\\x00\\x01\\x00\\x00",  # pushfd; pop eax; and eax, 100h
             ],
-
             # VM detection patterns
             "vm_detection": [
                 b"\\x0F\\x01\\x0D\\x00\\x00\\x00\\x00",  # sidt
@@ -825,11 +847,13 @@ class MemoryPatcher:
             )
 
             if success:
-                self.patches_applied.append({
-                    "address": address,
-                    "size": len(new_bytes),
-                    "timestamp": time.time(),
-                })
+                self.patches_applied.append(
+                    {
+                        "address": address,
+                        "size": len(new_bytes),
+                        "timestamp": time.time(),
+                    }
+                )
                 return True
 
         except Exception as e:
@@ -844,7 +868,7 @@ class MemoryPatcher:
     def patch_isdebuggerpresent_calls(self, address: int) -> bool:
         """Patch IsDebuggerPresent calls to return 0"""
         # Replace with: xor eax, eax; nop
-        return self.patch_memory_location(address, b"\x33\xC0\x90")
+        return self.patch_memory_location(address, b"\x33\xc0\x90")
 
     def scan_and_patch_module(self, module_name: str) -> list[str]:
         """Scan and patch a specific module"""
@@ -1254,7 +1278,6 @@ class TargetAnalyzer:
                 # Registry keys
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\VMware, Inc.\VMware Tools"),
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Oracle\VirtualBox Guest Additions"),
-
                 # Files
                 r"C:\windows\system32\drivers\vmmouse.sys",
                 r"C:\windows\system32\drivers\vmhgfs.sys",
@@ -1304,7 +1327,9 @@ class TargetAnalyzer:
             analysis_results["vm_environment"] = self.detect_vm_environment()
 
             # Remove duplicates
-            analysis_results["techniques_detected"] = list(set(analysis_results["techniques_detected"]))
+            analysis_results["techniques_detected"] = list(
+                set(analysis_results["techniques_detected"])
+            )
 
             # Determine risk level
             num_techniques = len(analysis_results["techniques_detected"])
@@ -1398,32 +1423,46 @@ class AntiAntiDebugSuite:
             if technique == AntiDebugTechnique.API_HOOKS:
                 results = self.api_hooker.install_all_hooks()
                 operation.details = "; ".join(results)
-                operation.result = BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                operation.result = (
+                    BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                )
 
             elif technique == AntiDebugTechnique.PEB_FLAGS:
                 results = self.peb_manipulator.patch_all_peb_flags()
                 operation.details = "; ".join(results)
-                operation.result = BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                operation.result = (
+                    BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                )
 
             elif technique == AntiDebugTechnique.HARDWARE_BREAKPOINTS:
                 success = self.hw_protector.clear_debug_registers()
                 operation.result = BypassResult.SUCCESS if success else BypassResult.FAILED
-                operation.details = "Hardware debug registers cleared" if success else "Failed to clear registers"
+                operation.details = (
+                    "Hardware debug registers cleared" if success else "Failed to clear registers"
+                )
 
             elif technique == AntiDebugTechnique.TIMING_CHECKS:
                 results = self.timing_normalizer.apply_timing_normalizations()
                 operation.details = "; ".join(results)
-                operation.result = BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                operation.result = (
+                    BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                )
 
             elif technique == AntiDebugTechnique.MEMORY_SCANNING:
                 results = self.memory_patcher.scan_all_modules()
                 operation.details = "; ".join(results)
-                operation.result = BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                operation.result = (
+                    BypassResult.SUCCESS if any("✓" in r for r in results) else BypassResult.FAILED
+                )
 
             elif technique == AntiDebugTechnique.EXCEPTION_HANDLING:
                 success = self.exception_handler.mask_debug_exceptions()
                 operation.result = BypassResult.SUCCESS if success else BypassResult.FAILED
-                operation.details = "Exception masking installed" if success else "Failed to install exception masking"
+                operation.details = (
+                    "Exception masking installed"
+                    if success
+                    else "Failed to install exception masking"
+                )
 
             elif technique == AntiDebugTechnique.PROCESS_ENVIRONMENT:
                 results = self.env_sanitizer.sanitize_all()
@@ -1532,7 +1571,9 @@ class AntiAntiDebugSuite:
 
     def get_report(self) -> dict[str, Any]:
         """Generate comprehensive bypass report"""
-        successful_bypasses = [op for op in self.bypass_history if op.result == BypassResult.SUCCESS]
+        successful_bypasses = [
+            op for op in self.bypass_history if op.result == BypassResult.SUCCESS
+        ]
         failed_bypasses = [op for op in self.bypass_history if op.result == BypassResult.FAILED]
 
         report = {
@@ -1541,7 +1582,9 @@ class AntiAntiDebugSuite:
                 "successful_bypasses": len(successful_bypasses),
                 "failed_bypasses": len(failed_bypasses),
                 "currently_active": len(self.active_bypasses),
-                "success_rate": len(successful_bypasses) / len(self.bypass_history) * 100 if self.bypass_history else 0,
+                "success_rate": len(successful_bypasses) / len(self.bypass_history) * 100
+                if self.bypass_history
+                else 0,
             },
             "active_bypasses": [bypass.value for bypass in self.active_bypasses],
             "bypass_history": [
@@ -1703,7 +1746,9 @@ def main():
 
             print("\nAnalysis Results:")
             print(f"  Risk Level: {analysis['risk_level']}")
-            print(f"  Techniques Detected: {', '.join(t.value for t in analysis['techniques_detected'])}")
+            print(
+                f"  Techniques Detected: {', '.join(t.value for t in analysis['techniques_detected'])}"
+            )
             print(f"  VM Environment: {analysis['vm_environment']}")
             print(f"  Recommended Bypasses: {', '.join(analysis['recommended_bypasses'])}")
 
@@ -1747,6 +1792,7 @@ def main():
         print(f"Error: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
 
     finally:

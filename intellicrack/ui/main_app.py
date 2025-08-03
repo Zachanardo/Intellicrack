@@ -1,4 +1,5 @@
 """Main application window for the Intellicrack UI."""
+
 from intellicrack.logger import logger
 
 """
@@ -68,10 +69,12 @@ def log_message(message: str) -> str:
     """Helper function for log message formatting"""
     return message
 
+
 # Windows API constants for dark mode support
 if os.name == "nt":
     try:
         from ctypes import byref, c_int, sizeof, windll
+
         DWMWA_USE_IMMERSIVE_DARK_MODE = 20
         HAS_CTYPES = True
     except ImportError as e:
@@ -120,6 +123,7 @@ import pickle
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
+
 def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
     # Serialize object
@@ -132,6 +136,7 @@ def secure_pickle_dump(obj, file_path):
     with open(file_path, "wb") as f:
         f.write(mac)
         f.write(data)
+
 
 def secure_pickle_load(file_path):
     """Securely load object with integrity verification."""
@@ -148,6 +153,7 @@ def secure_pickle_load(file_path):
     # Load object
     return pickle.loads(data)
 
+
 # PDF generation libraries are imported locally in _generate_pdf_report()
 # This reduces startup time and makes PDF dependencies optional
 
@@ -160,16 +166,19 @@ except ImportError as e:
 
 # Create mock functions if ctypes not available
 if not HAS_CTYPES:
+
     class MockWindll:
         """Mock windll for non-Windows platforms."""
 
         def __getattr__(self, _name):
             """Return a mock function for any attribute access."""
+
             class MockFunc:
                 """Mock function that accepts any arguments."""
 
                 def __call__(self, *args, **kwargs):
                     pass
+
             return MockFunc()
 
     def mock_byref(x):
@@ -263,6 +272,7 @@ try:  # pylint: disable=unused-argument
         QWizard,
         QWizardPage,
     )
+
     QtWidgets = __import__("PyQt6.QtWidgets", fromlist=[""])
 
     # Optional PyQt imports
@@ -281,6 +291,7 @@ try:  # pylint: disable=unused-argument
     try:
         from PyQt6.QtPdf import QPdfDocument
         from PyQt6.QtPdfWidgets import QPdfView
+
         HAS_PDF_SUPPORT = True
     except ImportError as e:
         if "QtPdf" in str(e):
@@ -315,6 +326,7 @@ try:  # pylint: disable=unused-argument
     )
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
+
     # Fallback for environments without PyQt6
     class QMainWindow:
         """Fallback QMainWindow class for environments without PyQt6."""
@@ -387,14 +399,17 @@ try:
     )
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
+
     # Define a dummy SplashScreen for environments without PyQt5
     class SplashScreen:
         """Fallback SplashScreen class for environments without PyQt6."""
 
         def show(self):
             """Show splash screen (no-op in fallback)."""
+
         def close(self):
             """Close splash screen (no-op in fallback)."""
+
     DistributedProcessingConfigDialog = None
     EmulatorStatusWidget = None
     add_emulator_tooltips = None
@@ -467,17 +482,21 @@ logger = logging.getLogger(__name__)
 #         """Dummy function when logger utils not available"""
 #         return 0, 0
 
+
 def initialize_comprehensive_logging():
     """Dummy function - comprehensive logging disabled for GUI compatibility"""
     return 0, 0
+
 
 # Import protection utilities
 try:
     from ..utils.protection_utils import inject_comprehensive_api_hooks
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
+
     def inject_comprehensive_api_hooks(app, *args, **kwargs):  # pylint: disable=unused-argument
         """Dummy function when protection utils not available"""
+
 
 # Import hex viewer integration
 try:
@@ -487,125 +506,140 @@ except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
     # Fallback functions will be defined below
 
+
 # Define fallback functions for hex viewer integration
 def _fallback_integrate_with_intellicrack(app, *args, **kwargs):  # pylint: disable=unused-argument
-        """Integrate hex viewer with Intellicrack when hex viewer not available"""
-        try:
-            # Initialize hex viewer integration if app has the capability
-            if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Integration] Starting hex viewer integration..."))
+    """Integrate hex viewer with Intellicrack when hex viewer not available"""
+    try:
+        # Initialize hex viewer integration if app has the capability
+        if hasattr(app, "update_output"):
+            app.update_output.emit(log_message("[Integration] Starting hex viewer integration..."))
 
-            # Set up basic hex viewer functionality
-            if hasattr(app, "hex_viewer_data"):
-                app.hex_viewer_data = {}
+        # Set up basic hex viewer functionality
+        if hasattr(app, "hex_viewer_data"):
+            app.hex_viewer_data = {}
 
-            # Configure binary loading for hex viewer
-            if hasattr(app, "binary_path") and app.binary_path:
-                try:
-                    with open(app.binary_path, "rb") as binary_file:
-                        data = binary_file.read(8192)  # Read first 8KB for quick view
-                        if hasattr(app, "hex_viewer_data"):
-                            app.hex_viewer_data["preview"] = data
-                        if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[Integration] Loaded {len(data)} bytes for hex view"))
-                except (OSError, ValueError, RuntimeError) as load_error:
-                    logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", load_error)
+        # Configure binary loading for hex viewer
+        if hasattr(app, "binary_path") and app.binary_path:
+            try:
+                with open(app.binary_path, "rb") as binary_file:
+                    data = binary_file.read(8192)  # Read first 8KB for quick view
+                    if hasattr(app, "hex_viewer_data"):
+                        app.hex_viewer_data["preview"] = data
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Integration] Error loading binary: {load_error}"))
+                        app.update_output.emit(
+                            log_message(f"[Integration] Loaded {len(data)} bytes for hex view")
+                        )
+            except (OSError, ValueError, RuntimeError) as load_error:
+                logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", load_error)
+                if hasattr(app, "update_output"):
+                    app.update_output.emit(
+                        log_message(f"[Integration] Error loading binary: {load_error}")
+                    )
 
-            # Enable analysis integration
-            if hasattr(app, "analyze_results"):
-                if not hasattr(app, "hex_analysis_enabled"):
-                    app.hex_analysis_enabled = True
-                    if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[Integration] Hex analysis integration enabled"))
+        # Enable analysis integration
+        if hasattr(app, "analyze_results"):
+            if not hasattr(app, "hex_analysis_enabled"):
+                app.hex_analysis_enabled = True
+                if hasattr(app, "update_output"):
+                    app.update_output.emit(
+                        log_message("[Integration] Hex analysis integration enabled")
+                    )
 
-            if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Integration] Hex viewer integration completed"))
+        if hasattr(app, "update_output"):
+            app.update_output.emit(log_message("[Integration] Hex viewer integration completed"))
 
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[Integration] Error during integration: {e}"))
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
+        if hasattr(app, "update_output"):
+            app.update_output.emit(log_message(f"[Integration] Error during integration: {e}"))
+
 
 def _fallback_register_hex_viewer_ai_tools(app, *args, **kwargs):  # pylint: disable=unused-argument
-        """Register AI tools for hex viewer analysis when hex viewer not available"""
-        try:
-            if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[AI Tools] Registering hex viewer AI tools..."))
+    """Register AI tools for hex viewer analysis when hex viewer not available"""
+    try:
+        if hasattr(app, "update_output"):
+            app.update_output.emit(log_message("[AI Tools] Registering hex viewer AI tools..."))
 
-            # Initialize AI tools registry
-            if not hasattr(app, "ai_tools_registry"):
-                app.ai_tools_registry = {}
+        # Initialize AI tools registry
+        if not hasattr(app, "ai_tools_registry"):
+            app.ai_tools_registry = {}
 
-            # Register binary analysis AI tool
-            app.ai_tools_registry["hex_binary_analysis"] = {
-                "name": "Binary Analysis Assistant",
-                "description": "AI-powered analysis of binary data in hex view",
-                "enabled": True,
-                "type": "analysis",
-            }
+        # Register binary analysis AI tool
+        app.ai_tools_registry["hex_binary_analysis"] = {
+            "name": "Binary Analysis Assistant",
+            "description": "AI-powered analysis of binary data in hex view",
+            "enabled": True,
+            "type": "analysis",
+        }
 
-            # Register pattern detection AI tool
-            app.ai_tools_registry["hex_pattern_detection"] = {
-                "name": "Pattern Detection",
-                "description": "Automatically detect patterns and structures in hex data",
-                "enabled": True,
-                "type": "detection",
-            }
+        # Register pattern detection AI tool
+        app.ai_tools_registry["hex_pattern_detection"] = {
+            "name": "Pattern Detection",
+            "description": "Automatically detect patterns and structures in hex data",
+            "enabled": True,
+            "type": "detection",
+        }
 
-            # Register anomaly detection AI tool
-            app.ai_tools_registry["hex_anomaly_detection"] = {
-                "name": "Anomaly Detection",
-                "description": "Identify unusual patterns and potential security issues",
-                "enabled": True,
-                "type": "security",
-            }
+        # Register anomaly detection AI tool
+        app.ai_tools_registry["hex_anomaly_detection"] = {
+            "name": "Anomaly Detection",
+            "description": "Identify unusual patterns and potential security issues",
+            "enabled": True,
+            "type": "security",
+        }
 
-            # Register code identification AI tool
-            app.ai_tools_registry["hex_code_identification"] = {
-                "name": "Code Identification",
-                "description": "Identify executable code sections and instruction patterns",
-                "enabled": True,
-                "type": "identification",
-            }
+        # Register code identification AI tool
+        app.ai_tools_registry["hex_code_identification"] = {
+            "name": "Code Identification",
+            "description": "Identify executable code sections and instruction patterns",
+            "enabled": True,
+            "type": "identification",
+        }
 
-            # Set up AI analysis integration
-            if hasattr(app, "binary_path") and app.binary_path:
+        # Set up AI analysis integration
+        if hasattr(app, "binary_path") and app.binary_path:
+            try:
+                # Enable AI-powered hex analysis
+                if not hasattr(app, "hex_ai_enabled"):
+                    app.hex_ai_enabled = True
+                    if hasattr(app, "update_output"):
+                        app.update_output.emit(
+                            log_message("[AI Tools] AI analysis enabled for hex viewer")
+                        )
+
+                # Initialize AI context for binary
+                file_size = 0
                 try:
-                    # Enable AI-powered hex analysis
-                    if not hasattr(app, "hex_ai_enabled"):
-                        app.hex_ai_enabled = True
-                        if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[AI Tools] AI analysis enabled for hex viewer"))
-
-                    # Initialize AI context for binary
-                    file_size = 0
-                    try:
-                        file_size = os.path.getsize(app.binary_path)
-                    except (OSError, ValueError, RuntimeError) as e:
-                        logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-
-                    app.ai_context = {
-                        "binary_path": app.binary_path,
-                        "file_size": file_size,
-                        "analysis_timestamp": time.time(),
-                        "tools_registered": len(app.ai_tools_registry),
-                    }
-
+                    file_size = os.path.getsize(app.binary_path)
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                    if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[AI Tools] Error setting up AI context: {e}"))
 
-            if hasattr(app, "update_output"):
-                tools_count = len(app.ai_tools_registry) if hasattr(app, "ai_tools_registry") else 0
-                app.update_output.emit(log_message(f"[AI Tools] Registered {tools_count} AI tools for hex viewer"))
+                app.ai_context = {
+                    "binary_path": app.binary_path,
+                    "file_size": file_size,
+                    "analysis_timestamp": time.time(),
+                    "tools_registered": len(app.ai_tools_registry),
+                }
 
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[AI Tools] Error registering AI tools: {e}"))
+            except (OSError, ValueError, RuntimeError) as e:
+                logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
+                if hasattr(app, "update_output"):
+                    app.update_output.emit(
+                        log_message(f"[AI Tools] Error setting up AI context: {e}")
+                    )
+
+        if hasattr(app, "update_output"):
+            tools_count = len(app.ai_tools_registry) if hasattr(app, "ai_tools_registry") else 0
+            app.update_output.emit(
+                log_message(f"[AI Tools] Registered {tools_count} AI tools for hex viewer")
+            )
+
+    except (OSError, ValueError, RuntimeError) as e:
+        logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
+        if hasattr(app, "update_output"):
+            app.update_output.emit(log_message(f"[AI Tools] Error registering AI tools: {e}"))
+
 
 # Assign fallback functions if imports failed
 if "integrate_with_intellicrack" not in locals():
@@ -618,12 +652,15 @@ try:
     from ..core.patching.memory_patcher import setup_memory_patching
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
+
     def setup_memory_patching(app, *args, **kwargs):
         """Set up memory patching capabilities when memory patcher not available"""
         _ = args, kwargs
         try:
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Memory Patch] Setting up memory patching system..."))
+                app.update_output.emit(
+                    log_message("[Memory Patch] Setting up memory patching system...")
+                )
 
             # Initialize memory patching configuration
             if not hasattr(app, "memory_patch_config"):
@@ -669,19 +706,23 @@ except ImportError as e:
                         app.memory_mapping["file_header"] = header.hex()
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Memory Patch] Mapped binary: {file_size} bytes"))
+                        app.update_output.emit(
+                            log_message(f"[Memory Patch] Mapped binary: {file_size} bytes")
+                        )
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Memory Patch] Error mapping binary: {e}"))
+                        app.update_output.emit(
+                            log_message(f"[Memory Patch] Error mapping binary: {e}")
+                        )
 
             # Initialize patching utilities
             app.patch_utilities = {
                 "nop_instruction": b"\x90",  # x86 NOP
-                "jump_instruction": b"\xEB",  # x86 short jump
-                "return_instruction": b"\xC3",  # x86 return
-                "breakpoint": b"\xCC",  # x86 int3
+                "jump_instruction": b"\xeb",  # x86 short jump
+                "return_instruction": b"\xc3",  # x86 return
+                "breakpoint": b"\xcc",  # x86 int3
             }
 
             # Set up patch validation
@@ -693,13 +734,22 @@ except ImportError as e:
             }
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Memory Patch] Memory patching system initialized"))
-                app.update_output.emit(log_message("[Memory Patch] Available tools: hex editor, pattern search, diff analysis"))
+                app.update_output.emit(
+                    log_message("[Memory Patch] Memory patching system initialized")
+                )
+                app.update_output.emit(
+                    log_message(
+                        "[Memory Patch] Available tools: hex editor, pattern search, diff analysis"
+                    )
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[Memory Patch] Error setting up memory patching: {e}"))
+                app.update_output.emit(
+                    log_message(f"[Memory Patch] Error setting up memory patching: {e}")
+                )
+
 
 def run_rop_chain_generator(app, *args, **kwargs):
     """Run ROP chain generator for exploit development when generator not available"""
@@ -718,7 +768,9 @@ def run_rop_chain_generator(app, *args, **kwargs):
         # Fallback implementation when core module not available
         try:
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[ROP Generator] Setting up ROP chain generation..."))
+                app.update_output.emit(
+                    log_message("[ROP Generator] Setting up ROP chain generation...")
+                )
 
             # Initialize ROP generator configuration
             if not hasattr(app, "rop_config"):
@@ -754,7 +806,10 @@ def run_rop_chain_generator(app, *args, **kwargs):
             if not hasattr(app, "gadget_patterns"):
                 app.gadget_patterns = {
                     "pop_ret": {"pattern": b"\\x58\\xC3", "description": "pop eax; ret"},
-                    "pop_pop_ret": {"pattern": b"\\x58\\x5B\\xC3", "description": "pop eax; pop ebx; ret"},
+                    "pop_pop_ret": {
+                        "pattern": b"\\x58\\x5B\\xC3",
+                        "description": "pop eax; pop ebx; ret",
+                    },
                     "mov_ret": {"pattern": b"\\x89\\xC3\\xC3", "description": "mov ebx, eax; ret"},
                     "add_ret": {"pattern": b"\\x01\\xD8\\xC3", "description": "add eax, ebx; ret"},
                     "jmp_eax": {"pattern": b"\\xFF\\xE0", "description": "jmp eax"},
@@ -766,7 +821,12 @@ def run_rop_chain_generator(app, *args, **kwargs):
                 app.chain_strategies = {
                     "license_bypass": {
                         "description": "Chain to bypass license validation",
-                        "steps": ["setup_registers", "load_bypass_value", "call_validation", "handle_result"],
+                        "steps": [
+                            "setup_registers",
+                            "load_bypass_value",
+                            "call_validation",
+                            "handle_result",
+                        ],
                     },
                     "shell_execution": {
                         "description": "Chain to execute shell commands",
@@ -774,7 +834,12 @@ def run_rop_chain_generator(app, *args, **kwargs):
                     },
                     "memory_manipulation": {
                         "description": "Chain to modify memory permissions",
-                        "steps": ["prepare_args", "call_mprotect", "verify_permissions", "continue_execution"],
+                        "steps": [
+                            "prepare_args",
+                            "call_mprotect",
+                            "verify_permissions",
+                            "continue_execution",
+                        ],
                     },
                 }
 
@@ -804,12 +869,22 @@ def run_rop_chain_generator(app, *args, **kwargs):
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[ROP Generator] Error setting exploitation context: {e}"))
+                        app.update_output.emit(
+                            log_message(f"[ROP Generator] Error setting exploitation context: {e}")
+                        )
 
             if hasattr(app, "update_output"):
                 targets_count = len(app.rop_targets) if hasattr(app, "rop_targets") else 0
-                app.update_output.emit(log_message(f"[ROP Generator] ROP chain generator initialized with {targets_count} target functions"))
-                app.update_output.emit(log_message("[ROP Generator] Available strategies: license bypass, shell execution, memory manipulation"))
+                app.update_output.emit(
+                    log_message(
+                        f"[ROP Generator] ROP chain generator initialized with {targets_count} target functions"
+                    )
+                )
+                app.update_output.emit(
+                    log_message(
+                        "[ROP Generator] Available strategies: license bypass, shell execution, memory manipulation"
+                    )
+                )
 
                 # Start real ROP gadget discovery and chain generation
                 _start_rop_analysis(app)
@@ -817,7 +892,10 @@ def run_rop_chain_generator(app, *args, **kwargs):
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[ROP Generator] Error setting up ROP generator: {e}"))
+                app.update_output.emit(
+                    log_message(f"[ROP Generator] Error setting up ROP generator: {e}")
+                )
+
 
 def _start_rop_analysis(app):
     """Start ROP gadget analysis and chain generation."""
@@ -832,14 +910,20 @@ def _start_rop_analysis(app):
                 # Add some realistic gadgets for demonstration
                 sample_gadgets = [
                     {"address": "0x401234", "gadget": "pop rax; ret", "type": "pop_ret"},
-                    {"address": "0x401567", "gadget": "pop rbx; pop rcx; ret", "type": "pop_pop_ret"},
+                    {
+                        "address": "0x401567",
+                        "gadget": "pop rbx; pop rcx; ret",
+                        "type": "pop_pop_ret",
+                    },
                     {"address": "0x401890", "gadget": "mov rax, rbx; ret", "type": "mov_ret"},
                     {"address": "0x401abc", "gadget": "add rax, rbx; ret", "type": "add_ret"},
                 ]
                 app.rop_gadgets.extend(sample_gadgets)
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[ROP Analysis] Found {len(sample_gadgets)} ROP gadgets"))
+                    app.update_output.emit(
+                        log_message(f"[ROP Analysis] Found {len(sample_gadgets)} ROP gadgets")
+                    )
 
         # Generate exploit chains
         if hasattr(app, "rop_chains") and hasattr(app, "chain_strategies"):
@@ -853,15 +937,20 @@ def _start_rop_analysis(app):
                 app.rop_chains.append(chain)
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[ROP Analysis] Generated {strategy_name} chain"))
+                    app.update_output.emit(
+                        log_message(f"[ROP Analysis] Generated {strategy_name} chain")
+                    )
 
         if hasattr(app, "update_output"):
-            app.update_output.emit(log_message("[ROP Analysis] ROP analysis completed successfully"))
+            app.update_output.emit(
+                log_message("[ROP Analysis] ROP analysis completed successfully")
+            )
 
     except (AttributeError, ValueError, TypeError, RuntimeError) as e:
         logger.error("(AttributeError, ValueError, TypeError, RuntimeError) in main_app.py: %s", e)
         if hasattr(app, "update_output"):
             app.update_output.emit(log_message(f"[ROP Analysis] Error during analysis: {e}"))
+
 
 def run_ssl_tls_interceptor(app, *args, **kwargs):
     """Run SSL/TLS interceptor for encrypted license verification when interceptor not available"""
@@ -870,33 +959,47 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
         from ..core.network.ssl_interceptor import SSLTLSInterceptor
 
         if hasattr(app, "update_output"):
-            app.update_output.emit(log_message("[SSL Interceptor] Starting SSL/TLS interception..."))
+            app.update_output.emit(
+                log_message("[SSL Interceptor] Starting SSL/TLS interception...")
+            )
 
         # Create and configure interceptor
-        interceptor = SSLTLSInterceptor({
-            "listen_ip": "127.0.0.1",
-            "listen_port": 8443,
-            "record_traffic": True,
-            "auto_respond": True,
-        })
+        interceptor = SSLTLSInterceptor(
+            {
+                "listen_ip": "127.0.0.1",
+                "listen_port": 8443,
+                "record_traffic": True,
+                "auto_respond": True,
+            }
+        )
 
         # Start interceptor
         if interceptor.start():
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[SSL Interceptor] SSL/TLS interceptor started successfully"))
-                app.update_output.emit(log_message("[SSL Interceptor] Proxy listening on 127.0.0.1:8443"))
-                app.update_output.emit(log_message("[SSL Interceptor] Configure target applications to use this proxy"))
+                app.update_output.emit(
+                    log_message("[SSL Interceptor] SSL/TLS interceptor started successfully")
+                )
+                app.update_output.emit(
+                    log_message("[SSL Interceptor] Proxy listening on 127.0.0.1:8443")
+                )
+                app.update_output.emit(
+                    log_message("[SSL Interceptor] Configure target applications to use this proxy")
+                )
 
             # Store interceptor for later access
             app.ssl_interceptor = interceptor
         elif hasattr(app, "update_output"):
-            app.update_output.emit(log_message("[SSL Interceptor] Failed to start SSL/TLS interceptor"))
+            app.update_output.emit(
+                log_message("[SSL Interceptor] Failed to start SSL/TLS interceptor")
+            )
 
     except ImportError:
         # Fallback implementation when core module not available
         try:
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[SSL Interceptor] Setting up SSL/TLS interception..."))
+                app.update_output.emit(
+                    log_message("[SSL Interceptor] Setting up SSL/TLS interception...")
+                )
 
             # Initialize SSL interception configuration
             if not hasattr(app, "ssl_config"):
@@ -907,12 +1010,17 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                     "ca_key_path": get_resource_path("ssl_certificates/ca.key"),
                     "record_traffic": True,
                     "auto_respond": True,
-                    "cipher_suites": ["TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256", "TLS_AES_128_GCM_SHA256"],
+                    "cipher_suites": [
+                        "TLS_AES_256_GCM_SHA384",
+                        "TLS_CHACHA20_POLY1305_SHA256",
+                        "TLS_AES_128_GCM_SHA256",
+                    ],
                 }
 
             # Initialize target hosts for interception
             if not hasattr(app, "ssl_target_hosts"):
                 from ..utils.system.windows_structures import COMMON_LICENSE_DOMAINS
+
                 app.ssl_target_hosts = COMMON_LICENSE_DOMAINS
 
             # Initialize traffic logging
@@ -924,7 +1032,11 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                 app.ssl_response_templates = {
                     "adobe_license": {
                         "status": "SUCCESS",
-                        "license": {"status": "ACTIVATED", "type": "PERMANENT", "expires": "2099-12-31"},
+                        "license": {
+                            "status": "ACTIVATED",
+                            "type": "PERMANENT",
+                            "expires": "2099-12-31",
+                        },
                         "isValid": True,
                         "expired": False,
                     },
@@ -953,7 +1065,11 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                 app.ssl_cert_tools = {
                     "ca_generator": {"enabled": True, "key_size": 2048, "validity_days": 3650},
                     "cert_validator": {"enabled": True, "check_expiry": True, "verify_chain": True},
-                    "cert_installer": {"enabled": True, "auto_trust": False, "backup_existing": True},
+                    "cert_installer": {
+                        "enabled": True,
+                        "auto_trust": False,
+                        "backup_existing": True,
+                    },
                 }
 
             # Initialize proxy server configuration
@@ -971,9 +1087,21 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
             if not hasattr(app, "ssl_analysis_tools"):
                 app.ssl_analysis_tools = {
                     "traffic_analyzer": {"enabled": True, "decode_json": True, "decode_xml": True},
-                    "certificate_analyzer": {"enabled": True, "check_validity": True, "extract_info": True},
-                    "protocol_analyzer": {"enabled": True, "detect_version": True, "analyze_handshake": True},
-                    "vulnerability_scanner": {"enabled": True, "check_weak_ciphers": True, "test_protocols": True},
+                    "certificate_analyzer": {
+                        "enabled": True,
+                        "check_validity": True,
+                        "extract_info": True,
+                    },
+                    "protocol_analyzer": {
+                        "enabled": True,
+                        "detect_version": True,
+                        "analyze_handshake": True,
+                    },
+                    "vulnerability_scanner": {
+                        "enabled": True,
+                        "check_weak_ciphers": True,
+                        "test_protocols": True,
+                    },
                 }
 
             # Set up interception context
@@ -990,19 +1118,38 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[SSL Interceptor] Error setting interception context: {e}"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[SSL Interceptor] Error setting interception context: {e}"
+                            )
+                        )
 
             if hasattr(app, "update_output"):
                 hosts_count = len(app.ssl_target_hosts) if hasattr(app, "ssl_target_hosts") else 0
-                app.update_output.emit(log_message(f"[SSL Interceptor] SSL/TLS interceptor initialized for {hosts_count} target hosts"))
-                app.update_output.emit(log_message("[SSL Interceptor] Listening on 127.0.0.1:8443 for proxy connections"))
-                app.update_output.emit(log_message("[SSL Interceptor] CA certificate will be generated if needed"))
-                app.update_output.emit(log_message("[SSL Interceptor] Traffic logging and analysis enabled"))
+                app.update_output.emit(
+                    log_message(
+                        f"[SSL Interceptor] SSL/TLS interceptor initialized for {hosts_count} target hosts"
+                    )
+                )
+                app.update_output.emit(
+                    log_message(
+                        "[SSL Interceptor] Listening on 127.0.0.1:8443 for proxy connections"
+                    )
+                )
+                app.update_output.emit(
+                    log_message("[SSL Interceptor] CA certificate will be generated if needed")
+                )
+                app.update_output.emit(
+                    log_message("[SSL Interceptor] Traffic logging and analysis enabled")
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[SSL Interceptor] Error setting up SSL interceptor: {e}"))
+                app.update_output.emit(
+                    log_message(f"[SSL Interceptor] Error setting up SSL interceptor: {e}")
+                )
+
 
 def run_ssl_tls_interceptor_fallback(app, *args, **kwargs):
     """Fallback function for SSL/TLS interceptor."""
@@ -1051,11 +1198,15 @@ def run_ssl_tls_interceptor_fallback(app, *args, **kwargs):
         return result
 
     except (OSError, AttributeError, ValueError, TypeError, RuntimeError) as ssl_error:
-        logger.error("(OSError, IOError, socket.error, AttributeError, ValueError, TypeError, RuntimeError) in main_app.py: %s", ssl_error)
+        logger.error(
+            "(OSError, IOError, socket.error, AttributeError, ValueError, TypeError, RuntimeError) in main_app.py: %s",
+            ssl_error,
+        )
         error_msg = f"Error in SSL/TLS interception: {ssl_error!s}"
         if hasattr(app, "update_output"):
             app.update_output.emit(f"[SSL/TLS] {error_msg}")
         return {"success": False, "error": error_msg}
+
 
 def run_protocol_fingerprinter(app, *args, **kwargs):
     """Run protocol fingerprinter for identifying proprietary license protocols when fingerprinter not available"""
@@ -1064,20 +1215,34 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
         from ..core.network.protocol_fingerprinter import ProtocolFingerprinter
 
         if hasattr(app, "update_output"):
-            app.update_output.emit(log_message("[Protocol Fingerprinter] Starting protocol fingerprinting..."))
+            app.update_output.emit(
+                log_message("[Protocol Fingerprinter] Starting protocol fingerprinting...")
+            )
 
         # Create and configure fingerprinter
-        fingerprinter = ProtocolFingerprinter({
-            "min_confidence": 0.7,
-            "max_fingerprints": 100,
-            "learning_mode": True,
-            "analysis_depth": 3,
-        })
+        fingerprinter = ProtocolFingerprinter(
+            {
+                "min_confidence": 0.7,
+                "max_fingerprints": 100,
+                "learning_mode": True,
+                "analysis_depth": 3,
+            }
+        )
 
         if hasattr(app, "update_output"):
-            app.update_output.emit(log_message("[Protocol Fingerprinter] Protocol fingerprinter initialized"))
-            app.update_output.emit(log_message("[Protocol Fingerprinter] Loaded signatures for FlexLM, HASP, Adobe, Autodesk, Microsoft KMS"))
-            app.update_output.emit(log_message("[Protocol Fingerprinter] Learning mode enabled for new protocol discovery"))
+            app.update_output.emit(
+                log_message("[Protocol Fingerprinter] Protocol fingerprinter initialized")
+            )
+            app.update_output.emit(
+                log_message(
+                    "[Protocol Fingerprinter] Loaded signatures for FlexLM, HASP, Adobe, Autodesk, Microsoft KMS"
+                )
+            )
+            app.update_output.emit(
+                log_message(
+                    "[Protocol Fingerprinter] Learning mode enabled for new protocol discovery"
+                )
+            )
 
         # Store fingerprinter for later access
         app.protocol_fingerprinter = fingerprinter
@@ -1087,7 +1252,9 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
         # Fallback implementation when core module not available
         try:
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Protocol Fingerprinter] Setting up protocol fingerprinting..."))
+                app.update_output.emit(
+                    log_message("[Protocol Fingerprinter] Setting up protocol fingerprinting...")
+                )
 
             # Initialize protocol fingerprinting configuration
             if not hasattr(app, "fingerprint_config"):
@@ -1224,14 +1391,36 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Protocol Fingerprinter] Error setting fingerprint context: {e}"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[Protocol Fingerprinter] Error setting fingerprint context: {e}"
+                            )
+                        )
 
             if hasattr(app, "update_output"):
-                protocols_count = len(app.protocol_signatures) if hasattr(app, "protocol_signatures") else 0
-                app.update_output.emit(log_message(f"[Protocol Fingerprinter] Protocol fingerprinter initialized with {protocols_count} known signatures"))
-                app.update_output.emit(log_message("[Protocol Fingerprinter] Supported protocols: FlexLM, HASP/Sentinel, Adobe, Autodesk, Microsoft KMS, JetBrains, CodeMeter"))
-                app.update_output.emit(log_message("[Protocol Fingerprinter] Learning mode enabled for automatic signature discovery"))
-                app.update_output.emit(log_message("[Protocol Fingerprinter] Traffic analysis and pattern matching ready"))
+                protocols_count = (
+                    len(app.protocol_signatures) if hasattr(app, "protocol_signatures") else 0
+                )
+                app.update_output.emit(
+                    log_message(
+                        f"[Protocol Fingerprinter] Protocol fingerprinter initialized with {protocols_count} known signatures"
+                    )
+                )
+                app.update_output.emit(
+                    log_message(
+                        "[Protocol Fingerprinter] Supported protocols: FlexLM, HASP/Sentinel, Adobe, Autodesk, Microsoft KMS, JetBrains, CodeMeter"
+                    )
+                )
+                app.update_output.emit(
+                    log_message(
+                        "[Protocol Fingerprinter] Learning mode enabled for automatic signature discovery"
+                    )
+                )
+                app.update_output.emit(
+                    log_message(
+                        "[Protocol Fingerprinter] Traffic analysis and pattern matching ready"
+                    )
+                )
 
                 # Start real protocol fingerprinting
                 _start_protocol_fingerprinting(app)
@@ -1239,13 +1428,20 @@ def run_protocol_fingerprinter(app, *args, **kwargs):
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[Protocol Fingerprinter] Error setting up protocol fingerprinter: {e}"))
+                app.update_output.emit(
+                    log_message(
+                        f"[Protocol Fingerprinter] Error setting up protocol fingerprinter: {e}"
+                    )
+                )
+
 
 def _start_protocol_fingerprinting(app):
     """Start protocol fingerprinting and signature analysis."""
     try:
         if hasattr(app, "update_output"):
-            app.update_output.emit(log_message("[Protocol Analysis] Starting signature analysis..."))
+            app.update_output.emit(
+                log_message("[Protocol Analysis] Starting signature analysis...")
+            )
 
         # Analyze protocol signatures if available
         if hasattr(app, "protocol_signatures"):
@@ -1254,55 +1450,92 @@ def _start_protocol_fingerprinting(app):
                 analysis_result = {
                     "protocol": protocol_name,
                     "signatures_count": len(signatures),
-                    "confidence": 0.85 + (len(signatures) * 0.02),  # Higher confidence for more signatures
+                    "confidence": 0.85
+                    + (len(signatures) * 0.02),  # Higher confidence for more signatures
                     "analyzed_at": time.time(),
                 }
                 analyzed_protocols.append(analysis_result)
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[Protocol Analysis] Analyzed {protocol_name}: {len(signatures)} signatures"))
+                    app.update_output.emit(
+                        log_message(
+                            f"[Protocol Analysis] Analyzed {protocol_name}: {len(signatures)} signatures"
+                        )
+                    )
 
         # Update fingerprint statistics
         if hasattr(app, "fingerprint_stats"):
-            app.fingerprint_stats["protocols_identified"] = len(analyzed_protocols) if "analyzed_protocols" in locals() else 0
-            app.fingerprint_stats["patterns_learned"] = sum(len(sigs) for sigs in app.protocol_signatures.values()) if hasattr(app, "protocol_signatures") else 0
-            app.fingerprint_stats["packets_analyzed"] = app.fingerprint_stats.get("packets_analyzed", 0) + 50  # Simulate packet analysis
+            app.fingerprint_stats["protocols_identified"] = (
+                len(analyzed_protocols) if "analyzed_protocols" in locals() else 0
+            )
+            app.fingerprint_stats["patterns_learned"] = (
+                sum(len(sigs) for sigs in app.protocol_signatures.values())
+                if hasattr(app, "protocol_signatures")
+                else 0
+            )
+            app.fingerprint_stats["packets_analyzed"] = (
+                app.fingerprint_stats.get("packets_analyzed", 0) + 50
+            )  # Simulate packet analysis
 
             # Calculate success rate based on confidence
             if "analyzed_protocols" in locals() and analyzed_protocols:
-                avg_confidence = sum(p["confidence"] for p in analyzed_protocols) / len(analyzed_protocols)
+                avg_confidence = sum(p["confidence"] for p in analyzed_protocols) / len(
+                    analyzed_protocols
+                )
                 app.fingerprint_stats["success_rate"] = avg_confidence
-                app.fingerprint_stats["confidence_scores"].extend([p["confidence"] for p in analyzed_protocols])
+                app.fingerprint_stats["confidence_scores"].extend(
+                    [p["confidence"] for p in analyzed_protocols]
+                )
 
         # Perform learning if enabled
         if hasattr(app, "protocol_learning") and app.protocol_learning.get("enabled", False):
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Protocol Analysis] Learning mode: discovering new patterns..."))
+                app.update_output.emit(
+                    log_message("[Protocol Analysis] Learning mode: discovering new patterns...")
+                )
 
             # Simulate learning new patterns
             if hasattr(app, "fingerprint_stats"):
                 app.fingerprint_stats["patterns_learned"] += 3
 
         if hasattr(app, "update_output"):
-            total_patterns = app.fingerprint_stats.get("patterns_learned", 0) if hasattr(app, "fingerprint_stats") else 0
-            app.update_output.emit(log_message(f"[Protocol Analysis] Protocol fingerprinting completed - {total_patterns} patterns analyzed"))
+            total_patterns = (
+                app.fingerprint_stats.get("patterns_learned", 0)
+                if hasattr(app, "fingerprint_stats")
+                else 0
+            )
+            app.update_output.emit(
+                log_message(
+                    f"[Protocol Analysis] Protocol fingerprinting completed - {total_patterns} patterns analyzed"
+                )
+            )
 
     except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+        logger.error(
+            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+            e,
+        )
         if hasattr(app, "update_output"):
-            app.update_output.emit(log_message(f"[Protocol Analysis] Error during fingerprinting: {e}"))
+            app.update_output.emit(
+                log_message(f"[Protocol Analysis] Error during fingerprinting: {e}")
+            )
+
 
 def run_cfg_explorer(app, *args, **kwargs):
     """Run CFG explorer for visual control flow analysis"""
     try:
         from ..utils.runtime.runner_functions import run_cfg_explorer as runner_cfg_explorer
+
         return runner_cfg_explorer(app, *args, **kwargs)
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
         # Fallback implementation
         if hasattr(app, "update_output"):
-            app.update_output.emit(log_message("[CFG Explorer] Starting control flow graph explorer..."))
+            app.update_output.emit(
+                log_message("[CFG Explorer] Starting control flow graph explorer...")
+            )
         return {"status": "success", "message": "CFG Explorer started (fallback mode)"}
+
 
 def run_cloud_license_hooker(app, *args, **kwargs):
     """Run cloud license hooker for intercepting cloud-based license verification when hooker not available"""
@@ -1311,7 +1544,9 @@ def run_cloud_license_hooker(app, *args, **kwargs):
         from ..core.network.cloud_license_hooker import run_cloud_license_generator
 
         if hasattr(app, "update_output"):
-            app.update_output.emit(log_message("[Cloud License Hooker] Starting cloud license response generation..."))
+            app.update_output.emit(
+                log_message("[Cloud License Hooker] Starting cloud license response generation...")
+            )
 
         # Use the core implementation
         run_cloud_license_generator(app)
@@ -1320,16 +1555,24 @@ def run_cloud_license_hooker(app, *args, **kwargs):
         if hasattr(app, "cloud_generator"):
             if app.cloud_generator.enable_network_api_hooks():
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Cloud License Hooker] Network API hooks enabled"))
+                    app.update_output.emit(
+                        log_message("[Cloud License Hooker] Network API hooks enabled")
+                    )
             elif hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Cloud License Hooker] API hooking framework not available, implementing fallback"))
+                app.update_output.emit(
+                    log_message(
+                        "[Cloud License Hooker] API hooking framework not available, implementing fallback"
+                    )
+                )
 
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
         # Fallback implementation when core module not available
         try:
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Cloud License Hooker] Setting up cloud license hooking..."))
+                app.update_output.emit(
+                    log_message("[Cloud License Hooker] Setting up cloud license hooking...")
+                )
 
             # Initialize cloud license hooking configuration
             if not hasattr(app, "cloud_license_config"):
@@ -1347,13 +1590,21 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                 app.cloud_license_services = {
                     "adobe": {
                         "name": "Adobe Creative Cloud",
-                        "endpoints": ["licensing.adobe.com", "lm.licenses.adobe.com", "activate.adobe.com"],
+                        "endpoints": [
+                            "licensing.adobe.com",
+                            "lm.licenses.adobe.com",
+                            "activate.adobe.com",
+                        ],
                         "protocols": ["https", "http"],
                         "response_format": "json",
                     },
                     "autodesk": {
                         "name": "Autodesk Licensing",
-                        "endpoints": ["lm.autodesk.com", "lmaccess.autodesk.com", "lmlicensing.autodesk.com"],
+                        "endpoints": [
+                            "lm.autodesk.com",
+                            "lmaccess.autodesk.com",
+                            "lmlicensing.autodesk.com",
+                        ],
                         "protocols": ["https", "http"],
                         "response_format": "json",
                     },
@@ -1365,7 +1616,11 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                     },
                     "microsoft": {
                         "name": "Microsoft Licensing",
-                        "endpoints": ["licensing.mp.microsoft.com", "activation.microsoft.com", "kms.microsoft.com"],
+                        "endpoints": [
+                            "licensing.mp.microsoft.com",
+                            "activation.microsoft.com",
+                            "kms.microsoft.com",
+                        ],
                         "protocols": ["https", "tcp"],
                         "response_format": "xml",
                     },
@@ -1406,7 +1661,11 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                             "license_type": "COMMERCIAL",
                             "expires": "2099-12-31T23:59:59.000Z",
                             "seat_count": 999,
-                            "features": {"AUTOCAD": "ENABLED", "MAYA": "ENABLED", "3DSMAX": "ENABLED"},
+                            "features": {
+                                "AUTOCAD": "ENABLED",
+                                "MAYA": "ENABLED",
+                                "3DSMAX": "ENABLED",
+                            },
                         },
                     },
                     "jetbrains": {
@@ -1441,12 +1700,24 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                 app.network_api_hooks = {
                     "winsock": {
                         "enabled": True,
-                        "functions": ["WSAStartup", "WSACleanup", "socket", "connect", "send", "recv"],
+                        "functions": [
+                            "WSAStartup",
+                            "WSACleanup",
+                            "socket",
+                            "connect",
+                            "send",
+                            "recv",
+                        ],
                         "hooked_count": 0,
                     },
                     "wininet": {
                         "enabled": True,
-                        "functions": ["InternetOpen", "InternetConnect", "HttpOpenRequest", "HttpSendRequest"],
+                        "functions": [
+                            "InternetOpen",
+                            "InternetConnect",
+                            "HttpOpenRequest",
+                            "HttpSendRequest",
+                        ],
                         "hooked_count": 0,
                     },
                     "ssl": {
@@ -1471,13 +1742,28 @@ def run_cloud_license_hooker(app, *args, **kwargs):
             if not hasattr(app, "request_patterns"):
                 app.request_patterns = {
                     "license_check_patterns": [
-                        "license", "activation", "authenticate", "verify", "check", "validate",
+                        "license",
+                        "activation",
+                        "authenticate",
+                        "verify",
+                        "check",
+                        "validate",
                     ],
                     "success_indicators": [
-                        "success", "valid", "activated", "authorized", "authenticated", "approved",
+                        "success",
+                        "valid",
+                        "activated",
+                        "authorized",
+                        "authenticated",
+                        "approved",
                     ],
                     "failure_indicators": [
-                        "error", "invalid", "expired", "unauthorized", "denied", "failed",
+                        "error",
+                        "invalid",
+                        "expired",
+                        "unauthorized",
+                        "denied",
+                        "failed",
                     ],
                 }
 
@@ -1495,15 +1781,41 @@ def run_cloud_license_hooker(app, *args, **kwargs):
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Cloud License Hooker] Error setting hooking context: {e}"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[Cloud License Hooker] Error setting hooking context: {e}"
+                            )
+                        )
 
             if hasattr(app, "update_output"):
-                services_count = len(app.cloud_license_services) if hasattr(app, "cloud_license_services") else 0
-                app.update_output.emit(log_message(f"[Cloud License Hooker] Cloud license hooker initialized for {services_count} services"))
-                app.update_output.emit(log_message("[Cloud License Hooker] Supported services: Adobe, Autodesk, JetBrains, Microsoft, FlexLM, HASP"))
-                app.update_output.emit(log_message("[Cloud License Hooker] Network API hooking enabled (Winsock, WinINet, SSL)"))
-                app.update_output.emit(log_message("[Cloud License Hooker] Traffic interception and response generation ready"))
-                app.update_output.emit(log_message("[Cloud License Hooker] Learning mode enabled for adaptive response generation"))
+                services_count = (
+                    len(app.cloud_license_services) if hasattr(app, "cloud_license_services") else 0
+                )
+                app.update_output.emit(
+                    log_message(
+                        f"[Cloud License Hooker] Cloud license hooker initialized for {services_count} services"
+                    )
+                )
+                app.update_output.emit(
+                    log_message(
+                        "[Cloud License Hooker] Supported services: Adobe, Autodesk, JetBrains, Microsoft, FlexLM, HASP"
+                    )
+                )
+                app.update_output.emit(
+                    log_message(
+                        "[Cloud License Hooker] Network API hooking enabled (Winsock, WinINet, SSL)"
+                    )
+                )
+                app.update_output.emit(
+                    log_message(
+                        "[Cloud License Hooker] Traffic interception and response generation ready"
+                    )
+                )
+                app.update_output.emit(
+                    log_message(
+                        "[Cloud License Hooker] Learning mode enabled for adaptive response generation"
+                    )
+                )
 
                 # Start real cloud license hooking
                 _start_cloud_license_hooking(app)
@@ -1511,13 +1823,20 @@ def run_cloud_license_hooker(app, *args, **kwargs):
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[Cloud License Hooker] Error setting up cloud license hooker: {e}"))
+                app.update_output.emit(
+                    log_message(
+                        f"[Cloud License Hooker] Error setting up cloud license hooker: {e}"
+                    )
+                )
+
 
 def _start_cloud_license_hooking(app):
     """Start cloud license hooking and response generation."""
     try:
         if hasattr(app, "update_output"):
-            app.update_output.emit(log_message("[Cloud Hook] Starting cloud license interception..."))
+            app.update_output.emit(
+                log_message("[Cloud Hook] Starting cloud license interception...")
+            )
 
         # Initialize hooking statistics
         if not hasattr(app, "cloud_hook_stats"):
@@ -1541,7 +1860,9 @@ def _start_cloud_license_hooking(app):
                 app.cloud_hook_stats["active_hooks"].append(hook_info)
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[Cloud Hook] Installed hook for {endpoint}"))
+                    app.update_output.emit(
+                        log_message(f"[Cloud Hook] Installed hook for {endpoint}")
+                    )
 
         # Simulate response generation
         if hasattr(app, "cloud_responses"):
@@ -1554,27 +1875,49 @@ def _start_cloud_license_hooking(app):
 
                     if hasattr(app, "update_output"):
                         data_size = len(str(response_data)) if response_data else 0
-                        app.update_output.emit(log_message(f"[Cloud Hook] Generated {response_type} response for {provider} ({data_size} bytes)"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[Cloud Hook] Generated {response_type} response for {provider} ({data_size} bytes)"
+                            )
+                        )
 
         # Update statistics
-        app.cloud_hook_stats["requests_intercepted"] = len(app.cloud_hook_stats["active_hooks"]) * 5  # Simulate intercepted requests
+        app.cloud_hook_stats["requests_intercepted"] = (
+            len(app.cloud_hook_stats["active_hooks"]) * 5
+        )  # Simulate intercepted requests
         if app.cloud_hook_stats["requests_intercepted"] > 0:
             app.cloud_hook_stats["success_rate"] = 0.92  # Simulate high success rate
 
         # Enable learning mode if configured
-        if hasattr(app, "cloud_license_learning") and app.cloud_license_learning.get("enabled", False):
+        if hasattr(app, "cloud_license_learning") and app.cloud_license_learning.get(
+            "enabled", False
+        ):
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Cloud Hook] Learning mode: analyzing traffic patterns..."))
-                app.update_output.emit(log_message("[Cloud Hook] Adaptive response generation enabled"))
+                app.update_output.emit(
+                    log_message("[Cloud Hook] Learning mode: analyzing traffic patterns...")
+                )
+                app.update_output.emit(
+                    log_message("[Cloud Hook] Adaptive response generation enabled")
+                )
 
         if hasattr(app, "update_output"):
             hooks_active = len(app.cloud_hook_stats["active_hooks"])
-            app.update_output.emit(log_message(f"[Cloud Hook] Cloud license hooking completed - {hooks_active} active hooks"))
+            app.update_output.emit(
+                log_message(
+                    f"[Cloud Hook] Cloud license hooking completed - {hooks_active} active hooks"
+                )
+            )
 
     except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+        logger.error(
+            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+            e,
+        )
         if hasattr(app, "update_output"):
-            app.update_output.emit(log_message(f"[Cloud Hook] Error during cloud license hooking: {e}"))
+            app.update_output.emit(
+                log_message(f"[Cloud Hook] Error during cloud license hooking: {e}")
+            )
+
 
 # Import runner utilities
 try:
@@ -1621,6 +1964,7 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import runner functions: %s", e)
+
     # Define dummy functions
     def run_rop_chain_generator_fallback(app, *args, **kwargs):
         """Fallback function for ROP chain generator."""
@@ -1631,18 +1975,22 @@ except ImportError as e:
 
             # Basic ROP gadget patterns
             gadget_patterns = {
-                "pop_ret": b"\x58\xC3",  # pop eax; ret
-                "pop_pop_ret": b"\x58\x5B\xC3",  # pop eax; pop ebx; ret
-                "mov_ret": b"\x89\xC3\xC3",  # mov ebx, eax; ret
-                "add_ret": b"\x01\xD8\xC3",  # add eax, ebx; ret
-                "jmp_eax": b"\xFF\xE0",  # jmp eax
-                "call_eax": b"\xFF\xD0",  # call eax
+                "pop_ret": b"\x58\xc3",  # pop eax; ret
+                "pop_pop_ret": b"\x58\x5b\xc3",  # pop eax; pop ebx; ret
+                "mov_ret": b"\x89\xc3\xc3",  # mov ebx, eax; ret
+                "add_ret": b"\x01\xd8\xc3",  # add eax, ebx; ret
+                "jmp_eax": b"\xff\xe0",  # jmp eax
+                "call_eax": b"\xff\xd0",  # call eax
             }
 
             # Real gadget search in binary
             found_gadgets = []
             try:
-                if hasattr(app, "binary_path") and app.binary_path and os.path.exists(app.binary_path):
+                if (
+                    hasattr(app, "binary_path")
+                    and app.binary_path
+                    and os.path.exists(app.binary_path)
+                ):
                     with open(app.binary_path, "rb") as binary_file:
                         binary_data = binary_file.read()
 
@@ -1673,9 +2021,21 @@ except ImportError as e:
                 else:
                     # No binary loaded - return empty results
                     app.update_output.emit(log_message("[ROP] No binary loaded for gadget search"))
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as gadget_error:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", gadget_error)
-                app.update_output.emit(log_message(f"[ROP] Error searching for gadgets: {gadget_error}"))
+            except (
+                AttributeError,
+                ValueError,
+                TypeError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as gadget_error:
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    gadget_error,
+                )
+                app.update_output.emit(
+                    log_message(f"[ROP] Error searching for gadgets: {gadget_error}")
+                )
                 found_gadgets.append(gadget)
 
             if hasattr(app, "update_output"):
@@ -1709,8 +2069,18 @@ except ImportError as e:
 
             return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as rop_error:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", rop_error)
+        except (
+            AttributeError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            KeyError,
+            OSError,
+        ) as rop_error:
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                rop_error,
+            )
             error_msg = f"Error in ROP chain generation: {rop_error!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[ROP Generator] {error_msg}")
@@ -1722,7 +2092,9 @@ except ImportError as e:
     def run_automated_patch_agent(app, *args, **kwargs):
         """Fallback function for automated patch agent."""
         from ..utils.exploitation.exploitation import run_automated_patch_agent as exploit_agent
+
         return exploit_agent(app, *args, **kwargs)
+
     def analyze_binary_internal(binary_path, flags=None):
         """Comprehensive binary analysis implementation."""
         results = []
@@ -1748,10 +2120,10 @@ except ImportError as e:
                     results.append("Type: Win32/Win64 executable")
                 if b"PE\x00\x00" in header[:512]:
                     pe_offset = header.find(b"PE\x00\x00")
-                    machine = int.from_bytes(header[pe_offset+4:pe_offset+6], "little")
+                    machine = int.from_bytes(header[pe_offset + 4 : pe_offset + 6], "little")
                     if machine == 0x8664:
                         results.append("Architecture: x86_64 (64-bit)")
-                    elif machine == 0x14c:
+                    elif machine == 0x14C:
                         results.append("Architecture: x86 (32-bit)")
             elif header[:4] == b"\x7fELF":
                 results.append("Format: ELF (Linux/Unix executable)")
@@ -1764,7 +2136,12 @@ except ImportError as e:
                     results.append("Endianness: Little-endian")
                 elif header[5] == 2:
                     results.append("Endianness: Big-endian")
-            elif header[:4] in [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"]:
+            elif header[:4] in [
+                b"\xfe\xed\xfa\xce",
+                b"\xce\xfa\xed\xfe",
+                b"\xfe\xed\xfa\xcf",
+                b"\xcf\xfa\xed\xfe",
+            ]:
                 results.append("Format: Mach-O (macOS executable)")
             else:
                 results.append("Format: Unknown/Data file")
@@ -1772,13 +2149,16 @@ except ImportError as e:
             # Calculate entropy
             import math
             from collections import Counter
+
             byte_counts = Counter(header)
             entropy = 0
             for count in byte_counts.values():
                 if count > 0:
                     p = count / len(header)
                     entropy -= p * math.log2(p)
-            results.append(f"Header entropy: {entropy:.2f} (high entropy may indicate packing/encryption)")
+            results.append(
+                f"Header entropy: {entropy:.2f} (high entropy may indicate packing/encryption)"
+            )
 
             # Search for interesting strings
             strings_found = []
@@ -1791,7 +2171,10 @@ except ImportError as e:
                 else:
                     if len(current_string) >= min_length:
                         string = "".join(current_string)
-                        if any(keyword in string.lower() for keyword in ["license", "key", "serial", "trial", "crack"]):
+                        if any(
+                            keyword in string.lower()
+                            for keyword in ["license", "key", "serial", "trial", "crack"]
+                        ):
                             strings_found.append(string)
                     current_string = []
 
@@ -1819,11 +2202,17 @@ except ImportError as e:
                     results.append("Performing deep analysis...")
                     # Read more of the file for deeper analysis
                     with open(binary_path, "rb") as f:
-                        data = f.read(min(file_size, 1024*1024))  # Read up to 1MB
+                        data = f.read(min(file_size, 1024 * 1024))  # Read up to 1MB
 
                     # Count suspicious API references
-                    suspicious_apis = [b"VirtualProtect", b"WriteProcessMemory", b"CreateRemoteThread",
-                                     b"SetWindowsHookEx", b"GetProcAddress", b"LoadLibrary"]
+                    suspicious_apis = [
+                        b"VirtualProtect",
+                        b"WriteProcessMemory",
+                        b"CreateRemoteThread",
+                        b"SetWindowsHookEx",
+                        b"GetProcAddress",
+                        b"LoadLibrary",
+                    ]
                     api_count = sum(1 for api in suspicious_apis if api in data)
                     if api_count > 0:
                         results.append(f"Suspicious API references: {api_count}")
@@ -1838,6 +2227,7 @@ except ImportError as e:
             # Add AI-powered analysis if available
             try:
                 from ..ai.ai_tools import analyze_with_ai
+
                 ai_analysis = analyze_with_ai(binary_path, analysis_type="binary")
                 if ai_analysis and not ai_analysis.get("error"):
                     results.append("\nAI Analysis:")
@@ -1856,11 +2246,22 @@ except ImportError as e:
             except (ImportError, AttributeError, ValueError, RuntimeError) as e:
                 logger.debug("AI analysis not available: %s", e)
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as analysis_error:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", analysis_error)
+        except (
+            AttributeError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            KeyError,
+            OSError,
+        ) as analysis_error:
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                analysis_error,
+            )
             results.append(f"Error during analysis: {analysis_error!s}")
 
         return results
+
     def enhanced_deep_license_analysis(binary_path):
         """Comprehensive license analysis implementation."""
         if not os.path.exists(binary_path):
@@ -1898,11 +2299,13 @@ except ImportError as e:
 
             for pattern, description in license_patterns:
                 if pattern in data:
-                    results["license_checks"].append({
-                        "pattern": pattern.decode("ascii", errors="ignore"),
-                        "description": description,
-                        "offset": hex(data.find(pattern)),
-                    })
+                    results["license_checks"].append(
+                        {
+                            "pattern": pattern.decode("ascii", errors="ignore"),
+                            "description": description,
+                            "offset": hex(data.find(pattern)),
+                        }
+                    )
 
             # Protection method detection
             protection_patterns = [
@@ -1918,10 +2321,12 @@ except ImportError as e:
 
             for pattern, description in protection_patterns:
                 if pattern in data:
-                    results["protection_methods"].append({
-                        "type": pattern.decode("ascii", errors="ignore"),
-                        "description": description,
-                    })
+                    results["protection_methods"].append(
+                        {
+                            "type": pattern.decode("ascii", errors="ignore"),
+                            "description": description,
+                        }
+                    )
 
             # Cryptographic algorithm detection
             crypto_patterns = [
@@ -1936,10 +2341,12 @@ except ImportError as e:
 
             for pattern, description in crypto_patterns:
                 if pattern in data:
-                    results["key_algorithms"].append({
-                        "algorithm": pattern.decode("ascii", errors="ignore"),
-                        "description": description,
-                    })
+                    results["key_algorithms"].append(
+                        {
+                            "algorithm": pattern.decode("ascii", errors="ignore"),
+                            "description": description,
+                        }
+                    )
 
             # Network license server patterns
             network_patterns = [
@@ -1954,10 +2361,12 @@ except ImportError as e:
 
             for pattern, description in network_patterns:
                 if pattern in data:
-                    results["network_calls"].append({
-                        "pattern": pattern.decode("ascii", errors="ignore"),
-                        "description": description,
-                    })
+                    results["network_calls"].append(
+                        {
+                            "pattern": pattern.decode("ascii", errors="ignore"),
+                            "description": description,
+                        }
+                    )
 
             # Registry key patterns (Windows)
             registry_patterns = [
@@ -1970,10 +2379,12 @@ except ImportError as e:
 
             for pattern, description in registry_patterns:
                 if pattern in data:
-                    results["registry_checks"].append({
-                        "pattern": pattern.decode("ascii", errors="ignore"),
-                        "description": description,
-                    })
+                    results["registry_checks"].append(
+                        {
+                            "pattern": pattern.decode("ascii", errors="ignore"),
+                            "description": description,
+                        }
+                    )
 
             # Time-based check patterns
             time_patterns = [
@@ -1986,10 +2397,12 @@ except ImportError as e:
 
             for pattern, description in time_patterns:
                 if pattern in data:
-                    results["time_checks"].append({
-                        "pattern": pattern.decode("ascii", errors="ignore"),
-                        "description": description,
-                    })
+                    results["time_checks"].append(
+                        {
+                            "pattern": pattern.decode("ascii", errors="ignore"),
+                            "description": description,
+                        }
+                    )
 
             # Hardware fingerprint patterns
             hardware_patterns = [
@@ -2003,20 +2416,22 @@ except ImportError as e:
 
             for pattern, description in hardware_patterns:
                 if pattern in data:
-                    results["hardware_checks"].append({
-                        "pattern": pattern.decode("ascii", errors="ignore"),
-                        "description": description,
-                    })
+                    results["hardware_checks"].append(
+                        {
+                            "pattern": pattern.decode("ascii", errors="ignore"),
+                            "description": description,
+                        }
+                    )
 
             # Calculate confidence score
             total_indicators = (
-                len(results["license_checks"]) * 3 +  # License checks weighted higher
-                len(results["protection_methods"]) * 2 +
-                len(results["key_algorithms"]) +
-                len(results["network_calls"]) +
-                len(results["registry_checks"]) +
-                len(results["time_checks"]) +
-                len(results["hardware_checks"])
+                len(results["license_checks"]) * 3  # License checks weighted higher
+                + len(results["protection_methods"]) * 2
+                + len(results["key_algorithms"])
+                + len(results["network_calls"])
+                + len(results["registry_checks"])
+                + len(results["time_checks"])
+                + len(results["hardware_checks"])
             )
 
             # Normalize to 0-100%
@@ -2028,7 +2443,11 @@ except ImportError as e:
                 "has_license_checks": len(results["license_checks"]) > 0,
                 "has_network_activation": len(results["network_calls"]) > 0,
                 "has_hardware_binding": len(results["hardware_checks"]) > 0,
-                "protection_level": "high" if total_indicators > 10 else "medium" if total_indicators > 5 else "low",
+                "protection_level": "high"
+                if total_indicators > 10
+                else "medium"
+                if total_indicators > 5
+                else "low",
             }
 
             # Add AI-powered analysis and suggestions
@@ -2045,18 +2464,33 @@ except ImportError as e:
                     }
 
                 # Get targeted suggestions for license analysis
-                context = "license protection analysis with " + results["summary"]["protection_level"] + " protection level"
+                context = (
+                    "license protection analysis with "
+                    + results["summary"]["protection_level"]
+                    + " protection level"
+                )
                 suggestions = get_ai_suggestions(context, domain="reverse_engineering")
                 results["ai_suggestions"] = suggestions[:5]
 
             except (ImportError, AttributeError, ValueError, RuntimeError) as e:
                 logger.debug("AI analysis not available for license analysis: %s", e)
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as license_error:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", license_error)
+        except (
+            AttributeError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            KeyError,
+            OSError,
+        ) as license_error:
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                license_error,
+            )
             results["error"] = f"Analysis error: {license_error!s}"
 
         return results
+
     def deep_runtime_monitoring(binary_path, timeout=30000):
         """Comprehensive runtime monitoring implementation."""
         results = []
@@ -2094,43 +2528,75 @@ except ImportError as e:
                             # Found our target process - monitor its connections
                             connections = proc.connections()
                             for conn in connections:
-                                monitored_apis.append({
-                                    "api": "connect",
-                                    "description": f"Network connection to {conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "Local connection",
-                                    "pid": proc_info["pid"],
-                                    "timestamp": time.time(),
-                                })
+                                monitored_apis.append(
+                                    {
+                                        "api": "connect",
+                                        "description": f"Network connection to {conn.raddr.ip}:{conn.raddr.port}"
+                                        if conn.raddr
+                                        else "Local connection",
+                                        "pid": proc_info["pid"],
+                                        "timestamp": time.time(),
+                                    }
+                                )
 
                             # Monitor file handles
                             try:
                                 open_files = proc.open_files()
                                 for file_handle in open_files:
-                                    monitored_apis.append({
-                                        "api": "CreateFileW",
-                                        "description": f"File access: {file_handle.path}",
-                                        "pid": proc_info["pid"],
-                                        "timestamp": time.time(),
-                                    })
+                                    monitored_apis.append(
+                                        {
+                                            "api": "CreateFileW",
+                                            "description": f"File access: {file_handle.path}",
+                                            "pid": proc_info["pid"],
+                                            "timestamp": time.time(),
+                                        }
+                                    )
                             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                                logger.error("(psutil.NoSuchProcess, psutil.AccessDenied) in main_app.py: %s", e)
+                                logger.error(
+                                    "(psutil.NoSuchProcess, psutil.AccessDenied) in main_app.py: %s",
+                                    e,
+                                )
 
                     except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) as e:
-                        logger.error("(psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) in main_app.py: %s", e)
+                        logger.error(
+                            "(psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess) in main_app.py: %s",
+                            e,
+                        )
                         continue
 
                 if not monitored_apis:
                     results.append("No active monitoring target found - no API calls detected")
                 else:
-                    results.append(f"Real-time monitoring detected {len(monitored_apis)} API operations")
+                    results.append(
+                        f"Real-time monitoring detected {len(monitored_apis)} API operations"
+                    )
 
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as monitor_error:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", monitor_error)
+            except (
+                AttributeError,
+                ValueError,
+                TypeError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as monitor_error:
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    monitor_error,
+                )
                 results.append(f"API monitoring error: {monitor_error}")
 
             # File operations
             file_ops = [
-                {"operation": "CreateFile", "path": "C:\\\\Windows\\\\System32\\\\license.dat", "access": "READ"},
-                {"operation": "ReadFile", "path": "C:\\\\Program Files\\\\App\\\\config.ini", "bytes": 1024},
+                {
+                    "operation": "CreateFile",
+                    "path": "C:\\\\Windows\\\\System32\\\\license.dat",
+                    "access": "READ",
+                },
+                {
+                    "operation": "ReadFile",
+                    "path": "C:\\\\Program Files\\\\App\\\\config.ini",
+                    "bytes": 1024,
+                },
                 {"operation": "WriteFile", "path": "%APPDATA%\\\\app_trial.key", "bytes": 64},
             ]
 
@@ -2163,13 +2629,17 @@ except ImportError as e:
 
                 op = random.choice(network_ops)
                 monitoring_data["network_connections"].append(op)
-                results.append(f"[Network] {op['operation']}: {op['host']}:{op.get('port', 'dynamic')}")
+                results.append(
+                    f"[Network] {op['operation']}: {op['host']}:{op.get('port', 'dynamic')}"
+                )
 
             # Time-based checks
             time_check_count = random.randint(5, 20)
             monitoring_data["time_checks"] = time_check_count
             if time_check_count > 10:
-                results.append(f"[Suspicious] High frequency of time checks detected: {time_check_count}")
+                results.append(
+                    f"[Suspicious] High frequency of time checks detected: {time_check_count}"
+                )
 
             # Crypto operations
             crypto_count = random.randint(0, 5)
@@ -2200,7 +2670,11 @@ except ImportError as e:
                 results.append("[License] Online license validation detected")
 
             # Anti-debugging detection
-            anti_debug_apis = ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess"]
+            anti_debug_apis = [
+                "IsDebuggerPresent",
+                "CheckRemoteDebuggerPresent",
+                "NtQueryInformationProcess",
+            ]
             if random.random() > 0.6:
                 api = random.choice(anti_debug_apis)
                 results.append(f"[Anti-Debug] {api} called - debugger detection")
@@ -2239,11 +2713,22 @@ except ImportError as e:
             if license_behaviors["debugger_detection"]:
                 results.append("- Use kernel-mode debugging or virtualization")
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as runtime_error:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", runtime_error)
+        except (
+            AttributeError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            KeyError,
+            OSError,
+        ) as runtime_error:
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                runtime_error,
+            )
             results.append(f"Error during monitoring: {runtime_error!s}")
 
         return results
+
 
 def _generate_ssl_certificates(cert_store_path):
     """Generate SSL certificates for interception."""
@@ -2273,36 +2758,51 @@ def _generate_ssl_certificates(cert_store_path):
             )
 
             # Generate CA certificate
-            subject = issuer = x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Security"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "Research"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack CA"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Root CA"),
-            ])
+            subject = issuer = x509.Name(
+                [
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Security"),
+                    x509.NameAttribute(NameOID.LOCALITY_NAME, "Research"),
+                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack CA"),
+                    x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Root CA"),
+                ]
+            )
 
-            ca_cert = x509.CertificateBuilder().subject_name(
-                subject,
-            ).issuer_name(
-                issuer,
-            ).public_key(
-                ca_key.public_key(),
-            ).serial_number(
-                x509.random_serial_number(),
-            ).not_valid_before(
-                datetime.utcnow(),
-            ).not_valid_after(
-                datetime.utcnow() + timedelta(days=3650),
-            ).add_extension(
-                x509.SubjectAlternativeName([
-                    x509.DNSName("localhost"),
-                    x509.DNSName("*.local"),
-                ]),
-                critical=False,
-            ).add_extension(
-                x509.BasicConstraints(ca=True, path_length=0),
-                critical=True,
-            ).sign(ca_key, hashes.SHA256())
+            ca_cert = (
+                x509.CertificateBuilder()
+                .subject_name(
+                    subject,
+                )
+                .issuer_name(
+                    issuer,
+                )
+                .public_key(
+                    ca_key.public_key(),
+                )
+                .serial_number(
+                    x509.random_serial_number(),
+                )
+                .not_valid_before(
+                    datetime.utcnow(),
+                )
+                .not_valid_after(
+                    datetime.utcnow() + timedelta(days=3650),
+                )
+                .add_extension(
+                    x509.SubjectAlternativeName(
+                        [
+                            x509.DNSName("localhost"),
+                            x509.DNSName("*.local"),
+                        ]
+                    ),
+                    critical=False,
+                )
+                .add_extension(
+                    x509.BasicConstraints(ca=True, path_length=0),
+                    critical=True,
+                )
+                .sign(ca_key, hashes.SHA256())
+            )
 
             # Generate server private key
             server_key = rsa.generate_private_key(
@@ -2311,63 +2811,89 @@ def _generate_ssl_certificates(cert_store_path):
             )
 
             # Generate server certificate
-            server_subject = x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Security"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "Research"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Server"),
-            ])
+            server_subject = x509.Name(
+                [
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Security"),
+                    x509.NameAttribute(NameOID.LOCALITY_NAME, "Research"),
+                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
+                    x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Server"),
+                ]
+            )
 
-            server_cert = x509.CertificateBuilder().subject_name(
-                server_subject,
-            ).issuer_name(
-                ca_cert.issuer,
-            ).public_key(
-                server_key.public_key(),
-            ).serial_number(
-                x509.random_serial_number(),
-            ).not_valid_before(
-                datetime.utcnow(),
-            ).not_valid_after(
-                datetime.utcnow() + timedelta(days=365),
-            ).add_extension(
-                x509.SubjectAlternativeName([
-                    x509.DNSName("localhost"),
-                    x509.DNSName("127.0.0.1"),
-                ]),
-                critical=False,
-            ).sign(ca_key, hashes.SHA256())
+            server_cert = (
+                x509.CertificateBuilder()
+                .subject_name(
+                    server_subject,
+                )
+                .issuer_name(
+                    ca_cert.issuer,
+                )
+                .public_key(
+                    server_key.public_key(),
+                )
+                .serial_number(
+                    x509.random_serial_number(),
+                )
+                .not_valid_before(
+                    datetime.utcnow(),
+                )
+                .not_valid_after(
+                    datetime.utcnow() + timedelta(days=365),
+                )
+                .add_extension(
+                    x509.SubjectAlternativeName(
+                        [
+                            x509.DNSName("localhost"),
+                            x509.DNSName("127.0.0.1"),
+                        ]
+                    ),
+                    critical=False,
+                )
+                .sign(ca_key, hashes.SHA256())
+            )
 
             # Write certificate files
             with open(ca_cert_path, "wb") as f:
                 f.write(ca_cert.public_bytes(serialization.Encoding.PEM))
             with open(ca_key_path, "wb") as f:
-                f.write(ca_key.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.TraditionalOpenSSL,
-                    encryption_algorithm=serialization.NoEncryption(),
-                ))
+                f.write(
+                    ca_key.private_bytes(
+                        encoding=serialization.Encoding.PEM,
+                        format=serialization.PrivateFormat.TraditionalOpenSSL,
+                        encryption_algorithm=serialization.NoEncryption(),
+                    )
+                )
             with open(server_cert_path, "wb") as f:
                 f.write(server_cert.public_bytes(serialization.Encoding.PEM))
             with open(server_key_path, "wb") as f:
-                f.write(server_key.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.TraditionalOpenSSL,
-                    encryption_algorithm=serialization.NoEncryption(),
-                ))
+                f.write(
+                    server_key.private_bytes(
+                        encoding=serialization.Encoding.PEM,
+                        format=serialization.PrivateFormat.TraditionalOpenSSL,
+                        encryption_algorithm=serialization.NoEncryption(),
+                    )
+                )
 
         except ImportError:
             logger.warning("cryptography not installed, using placeholder certificates")
             # Fallback to placeholder certificates
             with open(ca_cert_path, "w") as f:
-                f.write("-----BEGIN CERTIFICATE-----\n[Placeholder CA Certificate]\n-----END CERTIFICATE-----")
+                f.write(
+                    "-----BEGIN CERTIFICATE-----\n[Placeholder CA Certificate]\n-----END CERTIFICATE-----"
+                )
             with open(ca_key_path, "w") as f:
-                f.write("-----BEGIN PRIVATE KEY-----\n[Placeholder CA Key]\n-----END PRIVATE KEY-----")
+                f.write(
+                    "-----BEGIN PRIVATE KEY-----\n[Placeholder CA Key]\n-----END PRIVATE KEY-----"
+                )
             with open(server_cert_path, "w") as f:
-                f.write("-----BEGIN CERTIFICATE-----\n[Placeholder Server Certificate]\n-----END CERTIFICATE-----")
+                f.write(
+                    "-----BEGIN CERTIFICATE-----\n[Placeholder Server Certificate]\n-----END CERTIFICATE-----"
+                )
             with open(server_key_path, "w") as f:
-                f.write("-----BEGIN PRIVATE KEY-----\n[Placeholder Server Key]\n-----END PRIVATE KEY-----")
+                f.write(
+                    "-----BEGIN PRIVATE KEY-----\n[Placeholder Server Key]\n-----END PRIVATE KEY-----"
+                )
 
         return {
             "ca_cert": ca_cert_path,
@@ -2379,8 +2905,12 @@ def _generate_ssl_certificates(cert_store_path):
         }
 
     except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+        logger.error(
+            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+            e,
+        )
         return {"error": f"Certificate generation failed: {e}"}
+
 
 def _create_ssl_proxy_server(config):
     """Create SSL proxy server for traffic interception."""
@@ -2400,15 +2930,21 @@ def _create_ssl_proxy_server(config):
                 "status": "running",
                 "started_at": time.time(),
                 "connections": 0,
-                "certificate_store": config.get("certificate_store", get_resource_path("ssl_certificates/")),
+                "certificate_store": config.get(
+                    "certificate_store", get_resource_path("ssl_certificates/")
+                ),
                 "interceptor": interceptor,
             }
             return proxy_info
         return None
 
     except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+        logger.error(
+            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+            e,
+        )
         return None
+
 
 def _check_intercepted_traffic(proxy_server):
     """Check for intercepted SSL/TLS traffic."""
@@ -2441,7 +2977,10 @@ def _check_intercepted_traffic(proxy_server):
         return intercepted_requests
 
     except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+        logger.error(
+            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+            e,
+        )
         return []
 
     def run_protocol_fingerprinter_fallback(app, *args, **kwargs):
@@ -2468,7 +3007,7 @@ def _check_intercepted_traffic(proxy_server):
                     "protocol": "HASP",
                     "confidence": 0.87,
                     "port": 1947,
-                    "signatures": ["\x00\x00\x00\x0C", "HASP_LOGIN"],
+                    "signatures": ["\x00\x00\x00\x0c", "HASP_LOGIN"],
                     "version": "7.60",
                     "vendor": "SafeNet/Thales",
                 },
@@ -2510,12 +3049,24 @@ def _check_intercepted_traffic(proxy_server):
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[Protocol] {result['message']}")
                 if result["best_match"]:
-                    app.update_output.emit(f"[Protocol] Best match: {result['best_match']['protocol']} (confidence: {result['best_match']['confidence']:.0%})")
+                    app.update_output.emit(
+                        f"[Protocol] Best match: {result['best_match']['protocol']} (confidence: {result['best_match']['confidence']:.0%})"
+                    )
 
             return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as protocol_error:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", protocol_error)
+        except (
+            AttributeError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            KeyError,
+            OSError,
+        ) as protocol_error:
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                protocol_error,
+            )
             error_msg = f"Error in protocol fingerprinting: {protocol_error!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[Protocol] {error_msg}")
@@ -2533,13 +3084,16 @@ def _check_intercepted_traffic(proxy_server):
                 app.update_output.emit("[Cloud License] Starting cloud license API hooking...")
 
             # Target cloud services
-            target_services = kwargs.get("services", [
-                "licensing.adobe.com",
-                "activation.microsoft.com",
-                "license.autodesk.com",
-                "api.licenses.unity3d.com",
-                "licensing.jetbrains.com",
-            ])
+            target_services = kwargs.get(
+                "services",
+                [
+                    "licensing.adobe.com",
+                    "activation.microsoft.com",
+                    "license.autodesk.com",
+                    "api.licenses.unity3d.com",
+                    "licensing.jetbrains.com",
+                ],
+            )
 
             # Simulate API hook configuration
             hook_config = {
@@ -2558,7 +3112,11 @@ def _check_intercepted_traffic(proxy_server):
                     "endpoint": "/api/v1/validate",
                     "method": "POST",
                     "original_response": {"valid": False, "reason": "Invalid license"},
-                    "modified_response": {"valid": True, "expires": "2026-12-31", "features": ["all"]},
+                    "modified_response": {
+                        "valid": True,
+                        "expires": "2026-12-31",
+                        "features": ["all"],
+                    },
                     "status": "Modified",
                 },
                 {
@@ -2567,7 +3125,11 @@ def _check_intercepted_traffic(proxy_server):
                     "endpoint": "/license/check",
                     "method": "GET",
                     "original_response": {"activated": False},
-                    "modified_response": {"activated": True, "type": "Professional", "volume": True},
+                    "modified_response": {
+                        "activated": True,
+                        "type": "Professional",
+                        "volume": True,
+                    },
                     "status": "Modified",
                 },
                 {
@@ -2576,7 +3138,11 @@ def _check_intercepted_traffic(proxy_server):
                     "endpoint": "/subscription/verify",
                     "method": "POST",
                     "original_response": {"subscription": "expired"},
-                    "modified_response": {"subscription": "active", "tier": "premium", "seats": 999},
+                    "modified_response": {
+                        "subscription": "active",
+                        "tier": "premium",
+                        "seats": 999,
+                    },
                     "status": "Modified",
                 },
             ]
@@ -2612,13 +3178,25 @@ def _check_intercepted_traffic(proxy_server):
 
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[Cloud License] {result['message']}")
-                app.update_output.emit(f"[Cloud License] Intercepted and modified {result['total_intercepted']} API calls")
+                app.update_output.emit(
+                    f"[Cloud License] Intercepted and modified {result['total_intercepted']} API calls"
+                )
                 app.update_output.emit("[Cloud License] All bypass techniques operational")
 
             return result
 
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as cloud_error:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", cloud_error)
+        except (
+            AttributeError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            KeyError,
+            OSError,
+        ) as cloud_error:
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                cloud_error,
+            )
             error_msg = f"Error in cloud license hooking: {cloud_error!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[Cloud License] {error_msg}")
@@ -2632,11 +3210,14 @@ def _check_intercepted_traffic(proxy_server):
         """Run CFG explorer for visual control flow analysis when explorer not available"""
         try:
             from ..core.analysis.cfg_explorer import run_cfg_explorer as core_cfg_explorer
+
             return core_cfg_explorer(app, *args, **kwargs)
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[CFG Explorer] Starting control flow graph explorer..."))
+                app.update_output.emit(
+                    log_message("[CFG Explorer] Starting control flow graph explorer...")
+                )
 
             # Initialize CFG explorer configuration
             if not hasattr(app, "cfg_explorer_config"):
@@ -2662,9 +3243,12 @@ def _check_intercepted_traffic(proxy_server):
             # Check for available analysis tools (simplified checking)
             try:
                 import networkx
+
                 app.cfg_analysis_tools["networkx_available"] = True
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[CFG Explorer] NetworkX available for graph analysis"))
+                    app.update_output.emit(
+                        log_message("[CFG Explorer] NetworkX available for graph analysis")
+                    )
 
                 # Initialize NetworkX graph for CFG visualization
                 if not hasattr(app, "cfg_graph"):
@@ -2698,8 +3282,12 @@ def _check_intercepted_traffic(proxy_server):
                     metrics = {
                         "nodes": app.cfg_graph.number_of_nodes(),
                         "edges": app.cfg_graph.number_of_edges(),
-                        "density": networkx.density(app.cfg_graph) if app.cfg_graph.number_of_nodes() > 0 else 0,
-                        "is_connected": networkx.is_weakly_connected(app.cfg_graph) if app.cfg_graph.number_of_nodes() > 0 else False,
+                        "density": networkx.density(app.cfg_graph)
+                        if app.cfg_graph.number_of_nodes() > 0
+                        else 0,
+                        "is_connected": networkx.is_weakly_connected(app.cfg_graph)
+                        if app.cfg_graph.number_of_nodes() > 0
+                        else False,
                     }
 
                     # Find important nodes
@@ -2718,16 +3306,21 @@ def _check_intercepted_traffic(proxy_server):
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[CFG Explorer] NetworkX not available, using basic analysis"))
+                    app.update_output.emit(
+                        log_message("[CFG Explorer] NetworkX not available, using basic analysis")
+                    )
 
             try:
                 import matplotlib.pyplot
+
                 app.cfg_analysis_tools["matplotlib_available"] = True
 
                 # Function to visualize CFG using matplotlib
                 def visualize_cfg_with_matplotlib(save_path=None):
                     """Visualize CFG using matplotlib and networkx"""
-                    if not app.cfg_analysis_tools.get("networkx_available") or not hasattr(app, "cfg_graph"):
+                    if not app.cfg_analysis_tools.get("networkx_available") or not hasattr(
+                        app, "cfg_graph"
+                    ):
                         return {"error": "NetworkX not available or no graph data"}
 
                     if app.cfg_graph.number_of_nodes() == 0:
@@ -2755,10 +3348,13 @@ def _check_intercepted_traffic(proxy_server):
                             node_sizes.append(max(size, 300))
 
                         # Draw the graph
-                        networkx.draw_networkx_nodes(app.cfg_graph, pos,
-                                                   node_color=node_colors,
-                                                   node_size=node_sizes,
-                                                   alpha=0.8)
+                        networkx.draw_networkx_nodes(
+                            app.cfg_graph,
+                            pos,
+                            node_color=node_colors,
+                            node_size=node_sizes,
+                            alpha=0.8,
+                        )
 
                         # Draw edges with different styles for different types
                         edge_colors = []
@@ -2775,19 +3371,21 @@ def _check_intercepted_traffic(proxy_server):
                                 edge_colors.append("black")
                                 edge_styles.append("solid")
 
-                        networkx.draw_networkx_edges(app.cfg_graph, pos,
-                                                   edge_color=edge_colors,
-                                                   arrows=True,
-                                                   arrowsize=20,
-                                                   alpha=0.6)
+                        networkx.draw_networkx_edges(
+                            app.cfg_graph,
+                            pos,
+                            edge_color=edge_colors,
+                            arrows=True,
+                            arrowsize=20,
+                            alpha=0.6,
+                        )
 
                         # Draw labels
                         labels = {}
                         for node in app.cfg_graph.nodes():
                             labels[node] = app.cfg_graph.nodes[node].get("label", str(node))
 
-                        networkx.draw_networkx_labels(app.cfg_graph, pos, labels,
-                                                    font_size=8)
+                        networkx.draw_networkx_labels(app.cfg_graph, pos, labels, font_size=8)
 
                         matplotlib.pyplot.title("Control Flow Graph Visualization")
                         matplotlib.pyplot.axis("off")
@@ -2812,9 +3410,12 @@ def _check_intercepted_traffic(proxy_server):
 
             try:
                 import r2pipe
+
                 app.cfg_analysis_tools["radare2_available"] = True
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[CFG Explorer] Radare2 available for binary analysis"))
+                    app.update_output.emit(
+                        log_message("[CFG Explorer] Radare2 available for binary analysis")
+                    )
 
                 # Function to analyze binary with radare2
                 def analyze_with_r2pipe(binary_path):
@@ -2846,34 +3447,43 @@ def _check_intercepted_traffic(proxy_server):
                         func_edges = []
 
                         for func in functions[:50]:  # Limit to first 50 functions
-                            func_nodes.append({
-                                "address": hex(func.get("offset", 0)),
-                                "name": func.get("name", "unknown"),
-                                "size": func.get("size", 0),
-                                "type": "function",
-                                "confidence": 0.9,
-                            })
+                            func_nodes.append(
+                                {
+                                    "address": hex(func.get("offset", 0)),
+                                    "name": func.get("name", "unknown"),
+                                    "size": func.get("size", 0),
+                                    "type": "function",
+                                    "confidence": 0.9,
+                                }
+                            )
 
                             # Get function calls
                             calls = r2.cmdj(f'axfj @ {func.get("offset", 0)}')
                             for call in calls:
                                 if call.get("type") == "call":
-                                    func_edges.append({
-                                        "from": hex(func.get("offset", 0)),
-                                        "to": hex(call.get("to", 0)),
-                                        "type": "call",
-                                    })
+                                    func_edges.append(
+                                        {
+                                            "from": hex(func.get("offset", 0)),
+                                            "to": hex(call.get("to", 0)),
+                                            "type": "call",
+                                        }
+                                    )
 
                         # Find interesting strings (license-related)
                         license_strings = []
                         for s in strings:
                             string_val = s.get("string", "").lower()
-                            if any(kw in string_val for kw in ["license", "key", "serial", "activation", "trial"]):
-                                license_strings.append({
-                                    "address": hex(s.get("vaddr", 0)),
-                                    "string": s.get("string", ""),
-                                    "type": "license_related",
-                                })
+                            if any(
+                                kw in string_val
+                                for kw in ["license", "key", "serial", "activation", "trial"]
+                            ):
+                                license_strings.append(
+                                    {
+                                        "address": hex(s.get("vaddr", 0)),
+                                        "string": s.get("string", ""),
+                                        "type": "license_related",
+                                    }
+                                )
 
                         result = {
                             "status": "success",
@@ -2901,10 +3511,15 @@ def _check_intercepted_traffic(proxy_server):
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[CFG Explorer] Radare2 not available, using pattern-based analysis"))
+                    app.update_output.emit(
+                        log_message(
+                            "[CFG Explorer] Radare2 not available, using pattern-based analysis"
+                        )
+                    )
 
             try:
                 import capstone
+
                 app.cfg_analysis_tools["capstone_available"] = True
 
                 # Function to disassemble with capstone
@@ -2946,17 +3561,21 @@ def _check_intercepted_traffic(proxy_server):
                             if insn.mnemonic in ["jmp", "je", "jne", "jz", "jnz", "call", "ret"]:
                                 insn_dict["is_control_flow"] = True
                                 if current_block:
-                                    basic_blocks.append({
-                                        "start": current_block[0]["address"],
-                                        "end": insn_dict["address"],
-                                        "instructions": current_block + [insn_dict],
-                                    })
+                                    basic_blocks.append(
+                                        {
+                                            "start": current_block[0]["address"],
+                                            "end": insn_dict["address"],
+                                            "instructions": current_block + [insn_dict],
+                                        }
+                                    )
                                     current_block = []
                             else:
                                 current_block.append(insn_dict)
 
                             # Look for interesting patterns
-                            if any(kw in insn.op_str.lower() for kw in ["license", "key", "serial"]):
+                            if any(
+                                kw in insn.op_str.lower() for kw in ["license", "key", "serial"]
+                            ):
                                 insn_dict["interesting"] = "license_related"
 
                             instructions.append(insn_dict)
@@ -2967,11 +3586,13 @@ def _check_intercepted_traffic(proxy_server):
 
                         # Add final block
                         if current_block:
-                            basic_blocks.append({
-                                "start": current_block[0]["address"],
-                                "end": current_block[-1]["address"],
-                                "instructions": current_block,
-                            })
+                            basic_blocks.append(
+                                {
+                                    "start": current_block[0]["address"],
+                                    "end": current_block[-1]["address"],
+                                    "instructions": current_block,
+                                }
+                            )
 
                         return {
                             "status": "success",
@@ -3002,18 +3623,49 @@ def _check_intercepted_traffic(proxy_server):
             if not hasattr(app, "license_patterns"):
                 app.license_patterns = {
                     "keywords": [
-                        "license", "licens", "key", "serial", "activation", "activate",
-                        "register", "registr", "valid", "check", "verify", "auth",
-                        "trial", "demo", "expire", "expir", "cracked", "crack",
+                        "license",
+                        "licens",
+                        "key",
+                        "serial",
+                        "activation",
+                        "activate",
+                        "register",
+                        "registr",
+                        "valid",
+                        "check",
+                        "verify",
+                        "auth",
+                        "trial",
+                        "demo",
+                        "expire",
+                        "expir",
+                        "cracked",
+                        "crack",
                     ],
                     "api_calls": [
-                        "GetTickCount", "GetSystemTime", "GetLocalTime", "timeGetTime",
-                        "CreateMutex", "OpenMutex", "RegOpenKey", "RegQueryValue",
-                        "GetVolumeInformation", "GetUserName", "GetComputerName",
+                        "GetTickCount",
+                        "GetSystemTime",
+                        "GetLocalTime",
+                        "timeGetTime",
+                        "CreateMutex",
+                        "OpenMutex",
+                        "RegOpenKey",
+                        "RegQueryValue",
+                        "GetVolumeInformation",
+                        "GetUserName",
+                        "GetComputerName",
                     ],
                     "crypto_functions": [
-                        "CryptHashData", "CryptCreateHash", "MD5", "SHA1", "SHA256",
-                        "AES_Encrypt", "DES_Encrypt", "RSA_", "encrypt", "decrypt",
+                        "CryptHashData",
+                        "CryptCreateHash",
+                        "MD5",
+                        "SHA1",
+                        "SHA256",
+                        "AES_Encrypt",
+                        "DES_Encrypt",
+                        "RSA_",
+                        "encrypt",
+                        "decrypt",
                     ],
                 }
 
@@ -3029,15 +3681,26 @@ def _check_intercepted_traffic(proxy_server):
                     if binary_data[:2] == b"MZ":
                         binary_format = "PE"
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[CFG Explorer] Detected PE executable format"))
+                            app.update_output.emit(
+                                log_message("[CFG Explorer] Detected PE executable format")
+                            )
                     elif binary_data[:4] == b"\x7fELF":
                         binary_format = "ELF"
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[CFG Explorer] Detected ELF executable format"))
-                    elif binary_data[:4] in [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"]:
+                            app.update_output.emit(
+                                log_message("[CFG Explorer] Detected ELF executable format")
+                            )
+                    elif binary_data[:4] in [
+                        b"\xfe\xed\xfa\xce",
+                        b"\xce\xfa\xed\xfe",
+                        b"\xfe\xed\xfa\xcf",
+                        b"\xcf\xfa\xed\xfe",
+                    ]:
                         binary_format = "Mach-O"
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[CFG Explorer] Detected Mach-O executable format"))
+                            app.update_output.emit(
+                                log_message("[CFG Explorer] Detected Mach-O executable format")
+                            )
 
                     app.cfg_binary_format = binary_format
 
@@ -3050,42 +3713,64 @@ def _check_intercepted_traffic(proxy_server):
                         found_funcs = find_function_prologues(binary_data, base_address=0x400000)
 
                         for func in found_funcs:
-                            function_patterns.append({
-                                "address": hex(func["address"]),
-                                "pattern": func["pattern_hex"],
-                                "type": func["type"],
-                                "confidence": func["confidence"],
-                            })
+                            function_patterns.append(
+                                {
+                                    "address": hex(func["address"]),
+                                    "pattern": func["pattern_hex"],
+                                    "type": func["type"],
+                                    "confidence": func["confidence"],
+                                }
+                            )
 
                     # Store detected functions
                     app.cfg_detected_functions = function_patterns[:20]  # Keep top 20
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[CFG Explorer] Detected {len(app.cfg_detected_functions)} potential functions"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[CFG Explorer] Detected {len(app.cfg_detected_functions)} potential functions"
+                            )
+                        )
 
                     # Search for license-related patterns
                     license_hits = []
                     for keyword in app.license_patterns["keywords"]:
                         if keyword.encode("ascii", errors="ignore") in binary_data:
                             pos = binary_data.find(keyword.encode("ascii", errors="ignore"))
-                            license_hits.append({
-                                "keyword": keyword,
-                                "address": hex(0x400000 + pos),
-                                "context": binary_data[max(0, pos-10):pos+len(keyword)+10].hex(),
-                            })
+                            license_hits.append(
+                                {
+                                    "keyword": keyword,
+                                    "address": hex(0x400000 + pos),
+                                    "context": binary_data[
+                                        max(0, pos - 10) : pos + len(keyword) + 10
+                                    ].hex(),
+                                }
+                            )
 
                     app.cfg_license_hits = license_hits[:10]  # Keep top 10
 
                     if license_hits:
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[CFG Explorer] Found {len(license_hits)} license-related keywords"))
+                            app.update_output.emit(
+                                log_message(
+                                    f"[CFG Explorer] Found {len(license_hits)} license-related keywords"
+                                )
+                            )
                             for hit in license_hits[:3]:
-                                app.update_output.emit(log_message(f"[CFG Explorer] - '{hit['keyword']}' at {hit['address']}"))
+                                app.update_output.emit(
+                                    log_message(
+                                        f"[CFG Explorer] - '{hit['keyword']}' at {hit['address']}"
+                                    )
+                                )
 
                 except (OSError, ValueError, RuntimeError) as cfg_error:
-                    logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", cfg_error)
+                    logger.error(
+                        "(OSError, ValueError, RuntimeError) in main_app.py: %s", cfg_error
+                    )
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[CFG Explorer] Error analyzing binary: {cfg_error}"))
+                        app.update_output.emit(
+                            log_message(f"[CFG Explorer] Error analyzing binary: {cfg_error}")
+                        )
             elif hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[CFG Explorer] No binary loaded for analysis"))
 
@@ -3107,13 +3792,15 @@ def _check_intercepted_traffic(proxy_server):
 
                 # Create nodes for detected functions
                 for i, func in enumerate(app.cfg_detected_functions[:10]):
-                    sample_nodes.append({
-                        "id": f"func_{i}",
-                        "label": f"Function at {func['address']}",
-                        "address": func["address"],
-                        "type": "function",
-                        "confidence": func.get("confidence", 0.5),
-                    })
+                    sample_nodes.append(
+                        {
+                            "id": f"func_{i}",
+                            "label": f"Function at {func['address']}",
+                            "address": func["address"],
+                            "type": "function",
+                            "confidence": func.get("confidence", 0.5),
+                        }
+                    )
 
                 # Perform real CFG analysis to determine edges
                 sample_edges = _perform_real_cfg_analysis(app, sample_nodes)
@@ -3122,29 +3809,49 @@ def _check_intercepted_traffic(proxy_server):
                 app.cfg_graph_data["edges"] = sample_edges
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[CFG Explorer] Built CFG with {len(sample_nodes)} nodes and {len(sample_edges)} edges"))
+                    app.update_output.emit(
+                        log_message(
+                            f"[CFG Explorer] Built CFG with {len(sample_nodes)} nodes and {len(sample_edges)} edges"
+                        )
+                    )
 
             # Set up analysis results
             if not hasattr(app, "analyze_results"):
                 app.analyze_results = []
 
             app.analyze_results.append("\n=== CONTROL FLOW GRAPH EXPLORER ===")
-            app.analyze_results.append(f"Binary format: {getattr(app, 'cfg_binary_format', 'unknown')}")
+            app.analyze_results.append(
+                f"Binary format: {getattr(app, 'cfg_binary_format', 'unknown')}"
+            )
             app.analyze_results.append("Analysis tools available:")
-            app.analyze_results.append(f"- NetworkX: {app.cfg_analysis_tools['networkx_available']}")
+            app.analyze_results.append(
+                f"- NetworkX: {app.cfg_analysis_tools['networkx_available']}"
+            )
             app.analyze_results.append(f"- Radare2: {app.cfg_analysis_tools['radare2_available']}")
-            app.analyze_results.append(f"- Matplotlib: {app.cfg_analysis_tools['matplotlib_available']}")
-            app.analyze_results.append(f"- Capstone: {app.cfg_analysis_tools['capstone_available']}")
+            app.analyze_results.append(
+                f"- Matplotlib: {app.cfg_analysis_tools['matplotlib_available']}"
+            )
+            app.analyze_results.append(
+                f"- Capstone: {app.cfg_analysis_tools['capstone_available']}"
+            )
 
             if hasattr(app, "cfg_detected_functions"):
-                app.analyze_results.append(f"\nDetected functions: {len(app.cfg_detected_functions)}")
+                app.analyze_results.append(
+                    f"\nDetected functions: {len(app.cfg_detected_functions)}"
+                )
                 for func in app.cfg_detected_functions[:5]:
-                    app.analyze_results.append(f"- Function at {func['address']} (confidence: {func['confidence']:.2f})")
+                    app.analyze_results.append(
+                        f"- Function at {func['address']} (confidence: {func['confidence']:.2f})"
+                    )
                 if len(app.cfg_detected_functions) > 5:
-                    app.analyze_results.append(f"- ... and {len(app.cfg_detected_functions) - 5} more")
+                    app.analyze_results.append(
+                        f"- ... and {len(app.cfg_detected_functions) - 5} more"
+                    )
 
             if hasattr(app, "cfg_license_hits") and app.cfg_license_hits:
-                app.analyze_results.append(f"\nLicense-related patterns: {len(app.cfg_license_hits)}")
+                app.analyze_results.append(
+                    f"\nLicense-related patterns: {len(app.cfg_license_hits)}"
+                )
                 for hit in app.cfg_license_hits[:3]:
                     app.analyze_results.append(f"- '{hit['keyword']}' at {hit['address']}")
                 if len(app.cfg_license_hits) > 3:
@@ -3164,23 +3871,33 @@ def _check_intercepted_traffic(proxy_server):
             app.analyze_results.append("- Interactive exploration")
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[CFG Explorer] Control flow graph explorer initialized successfully"))
+                app.update_output.emit(
+                    log_message(
+                        "[CFG Explorer] Control flow graph explorer initialized successfully"
+                    )
+                )
 
         except (OSError, ValueError, RuntimeError) as explorer_error:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", explorer_error)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[CFG Explorer] Error running CFG explorer: {explorer_error}"))
+                app.update_output.emit(
+                    log_message(f"[CFG Explorer] Error running CFG explorer: {explorer_error}")
+                )
+
     def run_concolic_execution(app, *args, **kwargs):
         """Run concolic execution for precise path exploration when executor not available"""
         _ = args, kwargs
         try:
             from ..core.analysis.concolic_executor import ConcolicExecutor
+
             executor = ConcolicExecutor()
             return executor.analyze_binary(app.binary_path if hasattr(app, "binary_path") else None)
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Concolic] Starting concolic execution engine..."))
+                app.update_output.emit(
+                    log_message("[Concolic] Starting concolic execution engine...")
+                )
 
             # Initialize concolic execution configuration
             if not hasattr(app, "concolic_config"):
@@ -3218,9 +3935,12 @@ def _check_intercepted_traffic(proxy_server):
 
             try:
                 from manticore.native import Manticore
+
                 execution_engines["manticore"] = True
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Concolic] Manticore symbolic execution engine available"))
+                    app.update_output.emit(
+                        log_message("[Concolic] Manticore symbolic execution engine available")
+                    )
 
                 # Function for Manticore symbolic execution
                 def run_manticore_analysis(binary_path, argv=None, symbolic_inputs=None):
@@ -3232,7 +3952,9 @@ def _check_intercepted_traffic(proxy_server):
                         if symbolic_inputs:
                             for inp in symbolic_inputs:
                                 if inp["type"] == "stdin":
-                                    m.concrete_data = inp.get("initial_value", b"A" * inp.get("size", 32))
+                                    m.concrete_data = inp.get(
+                                        "initial_value", b"A" * inp.get("size", 32)
+                                    )
                                 elif inp["type"] == "argv":
                                     # Symbolic argv handling
                                     pass
@@ -3264,9 +3986,12 @@ def _check_intercepted_traffic(proxy_server):
 
             try:
                 import angr
+
                 execution_engines["angr"] = True
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Concolic] Angr binary analysis platform available"))
+                    app.update_output.emit(
+                        log_message("[Concolic] Angr binary analysis platform available")
+                    )
 
                 # Function for angr symbolic execution
                 def run_angr_analysis(binary_path, find_addrs=None, avoid_addrs=None):
@@ -3306,6 +4031,7 @@ def _check_intercepted_traffic(proxy_server):
 
             try:
                 import triton
+
                 execution_engines["triton"] = True
 
                 # Function for Triton symbolic execution
@@ -3354,6 +4080,7 @@ def _check_intercepted_traffic(proxy_server):
 
             try:
                 import z3
+
                 execution_engines["z3"] = True
 
                 # Function for Z3 constraint solving
@@ -3398,7 +4125,9 @@ def _check_intercepted_traffic(proxy_server):
                 if os.path.exists(os.path.join(scripts_dir, "simconcolic.py")):
                     execution_engines["simconcolic"] = True
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[Concolic] Simconcolic fallback engine available"))
+                        app.update_output.emit(
+                            log_message("[Concolic] Simconcolic fallback engine available")
+                        )
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
 
@@ -3430,11 +4159,13 @@ def _check_intercepted_traffic(proxy_server):
                         if b"PE\x00\x00" in binary_data:
                             pe_offset = binary_data.find(b"PE\x00\x00")
                             if pe_offset > 0 and pe_offset + 24 < len(binary_data):
-                                machine_type = int.from_bytes(binary_data[pe_offset+4:pe_offset+6], "little")
+                                machine_type = int.from_bytes(
+                                    binary_data[pe_offset + 4 : pe_offset + 6], "little"
+                                )
                                 if machine_type == 0x8664:  # IMAGE_FILE_MACHINE_AMD64
                                     binary_info["arch"] = "x86_64"
                                     binary_info["bits"] = 64
-                                elif machine_type == 0x014c:  # IMAGE_FILE_MACHINE_I386
+                                elif machine_type == 0x014C:  # IMAGE_FILE_MACHINE_I386
                                     binary_info["arch"] = "x86"
                                     binary_info["bits"] = 32
                     elif binary_data[:4] == b"\x7fELF":
@@ -3451,13 +4182,19 @@ def _check_intercepted_traffic(proxy_server):
                     app.concolic_binary_info = binary_info
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Concolic] Binary format: {binary_info['format']} ({binary_info['arch']}, {binary_info['bits']}-bit)"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[Concolic] Binary format: {binary_info['format']} ({binary_info['arch']}, {binary_info['bits']}-bit)"
+                            )
+                        )
 
                     # Find interesting analysis targets
                     from ..utils.analysis.pattern_search import find_license_patterns
 
                     # Look for common license/validation function patterns
-                    interesting_patterns = find_license_patterns(binary_data, base_address=0x400000, max_results=20)
+                    interesting_patterns = find_license_patterns(
+                        binary_data, base_address=0x400000, max_results=20
+                    )
 
                     # Look for comparison instructions that might be validation checks
                     x86_cmp_patterns = [
@@ -3465,8 +4202,8 @@ def _check_intercepted_traffic(proxy_server):
                         b"\x83\xf9",  # cmp ecx, imm8
                         b"\x39\xc0",  # cmp eax, eax
                         b"\x85\xc0",  # test eax, eax
-                        b"\x74",      # je short (incomplete - needs offset)
-                        b"\x75",      # jne short (incomplete - needs offset)
+                        b"\x74",  # je short (incomplete - needs offset)
+                        b"\x75",  # jne short (incomplete - needs offset)
                     ]
 
                     for pattern in x86_cmp_patterns:
@@ -3477,12 +4214,14 @@ def _check_intercepted_traffic(proxy_server):
                                 full_pattern = base_pattern + bytes([i])
                                 pos = binary_data.find(full_pattern)
                                 if pos != -1:
-                                    interesting_patterns.append({
-                                        "type": "comparison_instruction",
-                                        "pattern": full_pattern.hex(),
-                                        "address": hex(0x400000 + pos),
-                                        "instruction": "cmp/test/branch",
-                                    })
+                                    interesting_patterns.append(
+                                        {
+                                            "type": "comparison_instruction",
+                                            "pattern": full_pattern.hex(),
+                                            "address": hex(0x400000 + pos),
+                                            "instruction": "cmp/test/branch",
+                                        }
+                                    )
                                     if len(interesting_patterns) > 30:
                                         break
                             if len(interesting_patterns) > 30:
@@ -3490,39 +4229,63 @@ def _check_intercepted_traffic(proxy_server):
                         else:
                             pos = binary_data.find(pattern)
                             if pos != -1:
-                                interesting_patterns.append({
-                                    "type": "comparison_instruction",
-                                    "pattern": pattern.hex(),
-                                    "address": hex(0x400000 + pos),
-                                    "instruction": "cmp/test",
-                                })
+                                interesting_patterns.append(
+                                    {
+                                        "type": "comparison_instruction",
+                                        "pattern": pattern.hex(),
+                                        "address": hex(0x400000 + pos),
+                                        "instruction": "cmp/test",
+                                    }
+                                )
 
                     app.concolic_targets = interesting_patterns[:25]  # Keep top 25
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Concolic] Found {len(app.concolic_targets)} potential exploration targets"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[Concolic] Found {len(app.concolic_targets)} potential exploration targets"
+                            )
+                        )
 
                     # Report symbolic execution engine availability
-                    if execution_engines["manticore"] or execution_engines["angr"] or execution_engines["simconcolic"]:
+                    if (
+                        execution_engines["manticore"]
+                        or execution_engines["angr"]
+                        or execution_engines["simconcolic"]
+                    ):
                         # Symbolic execution engines available - real analysis will be performed
                         app.concolic_state["explored_paths"] = []
                         app.concolic_state["discovered_states"] = 0
                         app.concolic_state["terminated_states"] = 0
 
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[Concolic] Symbolic execution engines available - starting real path exploration"))
+                            app.update_output.emit(
+                                log_message(
+                                    "[Concolic] Symbolic execution engines available - starting real path exploration"
+                                )
+                            )
 
                         # Run actual concolic execution
                         _perform_real_concolic_execution(app, execution_engines)
                     elif hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[Concolic] No symbolic execution engines available - using pattern-based analysis"))
+                        app.update_output.emit(
+                            log_message(
+                                "[Concolic] No symbolic execution engines available - using pattern-based analysis"
+                            )
+                        )
 
                 except (OSError, ValueError, RuntimeError) as concolic_error:
-                    logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", concolic_error)
+                    logger.error(
+                        "(OSError, ValueError, RuntimeError) in main_app.py: %s", concolic_error
+                    )
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Concolic] Error analyzing binary: {concolic_error}"))
+                        app.update_output.emit(
+                            log_message(f"[Concolic] Error analyzing binary: {concolic_error}")
+                        )
             elif hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Concolic] No binary loaded for concolic execution"))
+                app.update_output.emit(
+                    log_message("[Concolic] No binary loaded for concolic execution")
+                )
 
             # Initialize constraint solving capabilities
             if not hasattr(app, "constraint_solver"):
@@ -3543,9 +4306,15 @@ def _check_intercepted_traffic(proxy_server):
 
                 if hasattr(app, "update_output"):
                     if app.constraint_solver["available_solvers"]:
-                        app.update_output.emit(log_message(f"[Concolic] Constraint solver available: {app.constraint_solver['current_solver']}"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[Concolic] Constraint solver available: {app.constraint_solver['current_solver']}"
+                            )
+                        )
                     else:
-                        app.update_output.emit(log_message("[Concolic] Using built-in constraint handling"))
+                        app.update_output.emit(
+                            log_message("[Concolic] Using built-in constraint handling")
+                        )
 
             # Set up analysis results
             if not hasattr(app, "analyze_results"):
@@ -3571,18 +4340,28 @@ def _check_intercepted_traffic(proxy_server):
                     target_types[target_type] = target_types.get(target_type, 0) + 1
 
                 for target_type, count in target_types.items():
-                    app.analyze_results.append(f"- {target_type.replace('_', ' ').title()}: {count}")
+                    app.analyze_results.append(
+                        f"- {target_type.replace('_', ' ').title()}: {count}"
+                    )
 
             if hasattr(app, "concolic_state") and app.concolic_state["explored_paths"]:
                 app.analyze_results.append("\nExecution path analysis:")
-                app.analyze_results.append(f"- Explored paths: {len(app.concolic_state['explored_paths'])}")
-                app.analyze_results.append(f"- Discovered states: {app.concolic_state['discovered_states']}")
-                app.analyze_results.append(f"- Terminated states: {app.concolic_state['terminated_states']}")
+                app.analyze_results.append(
+                    f"- Explored paths: {len(app.concolic_state['explored_paths'])}"
+                )
+                app.analyze_results.append(
+                    f"- Discovered states: {app.concolic_state['discovered_states']}"
+                )
+                app.analyze_results.append(
+                    f"- Terminated states: {app.concolic_state['terminated_states']}"
+                )
 
                 # Show sample paths
                 for i, path in enumerate(app.concolic_state["explored_paths"][:3]):
                     app.analyze_results.append(f"\nPath {i+1}:")
-                    app.analyze_results.append(f"- Target: {path['target_address']} ({path['target_type']})")
+                    app.analyze_results.append(
+                        f"- Target: {path['target_address']} ({path['target_type']})"
+                    )
                     app.analyze_results.append(f"- Depth: {path['execution_depth']}")
                     app.analyze_results.append(f"- Constraints: {len(path['constraints'])}")
                     app.analyze_results.append(f"- Branch coverage: {path['branch_coverage']:.2%}")
@@ -3600,12 +4379,16 @@ def _check_intercepted_traffic(proxy_server):
             app.analyze_results.append("- Input generation for reaching targets")
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Concolic] Concolic execution engine initialized successfully"))
+                app.update_output.emit(
+                    log_message("[Concolic] Concolic execution engine initialized successfully")
+                )
 
         except (OSError, ValueError, RuntimeError) as execution_error:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", execution_error)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[Concolic] Error running concolic execution: {execution_error}"))
+                app.update_output.emit(
+                    log_message(f"[Concolic] Error running concolic execution: {execution_error}")
+                )
 
     def _perform_real_concolic_execution(app, execution_engines):
         """Perform actual concolic/symbolic execution using available engines."""
@@ -3632,11 +4415,17 @@ def _check_intercepted_traffic(proxy_server):
 
                     if not angr:
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[Concolic] Angr not available, skipping symbolic execution"))
+                            app.update_output.emit(
+                                log_message(
+                                    "[Concolic] Angr not available, skipping symbolic execution"
+                                )
+                            )
                         return results
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[Concolic] Using angr for symbolic execution..."))
+                        app.update_output.emit(
+                            log_message("[Concolic] Using angr for symbolic execution...")
+                        )
 
                     # Create angr project
                     project = angr.Project(app.binary_path, auto_load_libs=False)
@@ -3665,12 +4454,24 @@ def _check_intercepted_traffic(proxy_server):
 
                                     def license_hook(state):
                                         if hasattr(app, "update_output"):
-                                            app.update_output.emit(log_message(f"[Concolic] Hit license check at {hex(state.addr)}"))
-                                        results["license_checks_bypassed"].append({
-                                            "address": hex(state.addr),
-                                            "constraints": [str(c) for c in state.solver.constraints[-5:]],
-                                            "input": state.solver.eval(symbolic_input, cast_to=bytes) if state.solver.satisfiable() else None,
-                                        })
+                                            app.update_output.emit(
+                                                log_message(
+                                                    f"[Concolic] Hit license check at {hex(state.addr)}"
+                                                )
+                                            )
+                                        results["license_checks_bypassed"].append(
+                                            {
+                                                "address": hex(state.addr),
+                                                "constraints": [
+                                                    str(c) for c in state.solver.constraints[-5:]
+                                                ],
+                                                "input": state.solver.eval(
+                                                    symbolic_input, cast_to=bytes
+                                                )
+                                                if state.solver.satisfiable()
+                                                else None,
+                                            }
+                                        )
 
                                     project.hook(addr, license_hook, length=5)
                                 except Exception as e:
@@ -3687,28 +4488,43 @@ def _check_intercepted_traffic(proxy_server):
                         # Check for interesting states
                         for state in simgr.active:
                             # Check if we can reach error conditions
-                            if state.addr in [0xdeadbeef, 0x41414141]:  # Common crash addresses
-                                results["vulnerabilities_found"].append({
-                                    "type": "crash",
-                                    "address": hex(state.addr),
-                                    "input": state.solver.eval(symbolic_input, cast_to=bytes) if state.solver.satisfiable() else None,
-                                })
+                            if state.addr in [0xDEADBEEF, 0x41414141]:  # Common crash addresses
+                                results["vulnerabilities_found"].append(
+                                    {
+                                        "type": "crash",
+                                        "address": hex(state.addr),
+                                        "input": state.solver.eval(symbolic_input, cast_to=bytes)
+                                        if state.solver.satisfiable()
+                                        else None,
+                                    }
+                                )
 
                             # Collect path constraints
-                            if len(results["constraint_solutions"]) < 10 and state.solver.satisfiable():
+                            if (
+                                len(results["constraint_solutions"]) < 10
+                                and state.solver.satisfiable()
+                            ):
                                 try:
                                     solution = state.solver.eval(symbolic_input, cast_to=bytes)
-                                    results["constraint_solutions"].append({
-                                        "path_id": state.history.lineage[0] if state.history.lineage else 0,
-                                        "constraints_count": len(state.solver.constraints),
-                                        "input": solution.hex(),
-                                        "reaches_address": hex(state.addr),
-                                    })
+                                    results["constraint_solutions"].append(
+                                        {
+                                            "path_id": state.history.lineage[0]
+                                            if state.history.lineage
+                                            else 0,
+                                            "constraints_count": len(state.solver.constraints),
+                                            "input": solution.hex(),
+                                            "reaches_address": hex(state.addr),
+                                        }
+                                    )
                                 except Exception as e:
                                     logger.debug(f"Failed to hook license check: {e}")
 
                         if hasattr(app, "update_output") and explored % 10 == 0:
-                            app.update_output.emit(log_message(f"[Concolic] Explored {explored} paths, active: {len(simgr.active)}"))
+                            app.update_output.emit(
+                                log_message(
+                                    f"[Concolic] Explored {explored} paths, active: {len(simgr.active)}"
+                                )
+                            )
 
                     results["paths_explored"] = explored
                     results["coverage_percentage"] = min(100, (explored / max_explore) * 100)
@@ -3718,19 +4534,35 @@ def _check_intercepted_traffic(proxy_server):
                         if state.solver.satisfiable():
                             try:
                                 input_bytes = state.solver.eval(symbolic_input, cast_to=bytes)
-                                results["interesting_inputs"].append({
-                                    "input": input_bytes.hex(),
-                                    "reaches": "program_end",
-                                    "constraints": len(state.solver.constraints),
-                                })
+                                results["interesting_inputs"].append(
+                                    {
+                                        "input": input_bytes.hex(),
+                                        "reaches": "program_end",
+                                        "constraints": len(state.solver.constraints),
+                                    }
+                                )
                             except Exception as e:
                                 logger.debug(f"Failed to collect state info: {e}")
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Concolic] Angr execution complete: {results['paths_explored']} paths explored"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[Concolic] Angr execution complete: {results['paths_explored']} paths explored"
+                            )
+                        )
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e,
+                    )
                     if hasattr(app, "update_output"):
                         app.update_output.emit(log_message(f"[Concolic] Angr execution error: {e}"))
 
@@ -3740,7 +4572,9 @@ def _check_intercepted_traffic(proxy_server):
                     from manticore.native import Manticore  # pylint: disable=import-error
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[Concolic] Using Manticore for concolic execution..."))
+                        app.update_output.emit(
+                            log_message("[Concolic] Using Manticore for concolic execution...")
+                        )
 
                     # Create Manticore instance
                     m = Manticore(app.binary_path)
@@ -3759,17 +4593,23 @@ def _check_intercepted_traffic(proxy_server):
                                     def comparison_hook(state):
                                         cpu = state.cpu
                                         if hasattr(app, "update_output"):
-                                            app.update_output.emit(log_message(f"[Concolic] Comparison at {hex(cpu.PC)}"))
+                                            app.update_output.emit(
+                                                log_message(
+                                                    f"[Concolic] Comparison at {hex(cpu.PC)}"
+                                                )
+                                            )
 
                                         # Try to find inputs that satisfy different branches
-                                        results["license_checks_bypassed"].append({
-                                            "address": hex(cpu.PC),
-                                            "type": "comparison",
-                                            "registers": {
-                                                "eax": cpu.EAX if hasattr(cpu, "EAX") else 0,
-                                                "ebx": cpu.EBX if hasattr(cpu, "EBX") else 0,
-                                            },
-                                        })
+                                        results["license_checks_bypassed"].append(
+                                            {
+                                                "address": hex(cpu.PC),
+                                                "type": "comparison",
+                                                "registers": {
+                                                    "eax": cpu.EAX if hasattr(cpu, "EAX") else 0,
+                                                    "ebx": cpu.EBX if hasattr(cpu, "EBX") else 0,
+                                                },
+                                            }
+                                        )
                                 except Exception as e:
                                     logger.debug(f"Failed to hook license check: {e}")
 
@@ -3786,15 +4626,33 @@ def _check_intercepted_traffic(proxy_server):
                         thread.join()
 
                     # Collect results
-                    results["paths_explored"] = len(m.terminated_states) if hasattr(m, "terminated_states") else 0
+                    results["paths_explored"] = (
+                        len(m.terminated_states) if hasattr(m, "terminated_states") else 0
+                    )
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Concolic] Manticore execution complete: {results['paths_explored']} paths"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[Concolic] Manticore execution complete: {results['paths_explored']} paths"
+                            )
+                        )
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e,
+                    )
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Concolic] Manticore execution error: {e}"))
+                        app.update_output.emit(
+                            log_message(f"[Concolic] Manticore execution error: {e}")
+                        )
 
             elif execution_engines["simconcolic"]:
                 # Use simconcolic fallback
@@ -3802,7 +4660,9 @@ def _check_intercepted_traffic(proxy_server):
                     from ..core.analysis.concolic_executor import ConcolicExecutor
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[Concolic] Using simconcolic for execution..."))
+                        app.update_output.emit(
+                            log_message("[Concolic] Using simconcolic for execution...")
+                        )
 
                     executor = ConcolicExecutor(app.binary_path)
                     paths = executor.explore_paths(max_paths=20)
@@ -3810,19 +4670,39 @@ def _check_intercepted_traffic(proxy_server):
                     results["paths_explored"] = len(paths)
                     for path in paths:
                         if path.get("reaches_target"):
-                            results["interesting_inputs"].append({
-                                "input": path.get("input", "").hex() if isinstance(path.get("input"), bytes) else str(path.get("input")),
-                                "reaches": path.get("target_address"),
-                                "path_id": path.get("id"),
-                            })
+                            results["interesting_inputs"].append(
+                                {
+                                    "input": path.get("input", "").hex()
+                                    if isinstance(path.get("input"), bytes)
+                                    else str(path.get("input")),
+                                    "reaches": path.get("target_address"),
+                                    "path_id": path.get("id"),
+                                }
+                            )
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Concolic] Simconcolic execution complete: {results['paths_explored']} paths"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[Concolic] Simconcolic execution complete: {results['paths_explored']} paths"
+                            )
+                        )
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e,
+                    )
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Concolic] Simconcolic execution error: {e}"))
+                        app.update_output.emit(
+                            log_message(f"[Concolic] Simconcolic execution error: {e}")
+                        )
 
             # Update app state with results
             app.concolic_state["explored_paths"] = results["paths_explored"]
@@ -3834,19 +4714,29 @@ def _check_intercepted_traffic(proxy_server):
                 app.analyze_results.append("\n=== CONCOLIC EXECUTION RESULTS ===")
                 app.analyze_results.append(f"Paths explored: {results['paths_explored']}")
                 app.analyze_results.append(f"Coverage: {results['coverage_percentage']:.1f}%")
-                app.analyze_results.append(f"Interesting inputs found: {len(results['interesting_inputs'])}")
-                app.analyze_results.append(f"License checks detected: {len(results['license_checks_bypassed'])}")
-                app.analyze_results.append(f"Potential vulnerabilities: {len(results['vulnerabilities_found'])}")
+                app.analyze_results.append(
+                    f"Interesting inputs found: {len(results['interesting_inputs'])}"
+                )
+                app.analyze_results.append(
+                    f"License checks detected: {len(results['license_checks_bypassed'])}"
+                )
+                app.analyze_results.append(
+                    f"Potential vulnerabilities: {len(results['vulnerabilities_found'])}"
+                )
 
                 if results["interesting_inputs"]:
                     app.analyze_results.append("\nInteresting Inputs:")
                     for inp in results["interesting_inputs"][:5]:
-                        app.analyze_results.append(f"- Input: {inp['input'][:32]}... reaches: {inp['reaches']}")
+                        app.analyze_results.append(
+                            f"- Input: {inp['input'][:32]}... reaches: {inp['reaches']}"
+                        )
 
                 if results["license_checks_bypassed"]:
                     app.analyze_results.append("\nLicense Checks Found:")
                     for check in results["license_checks_bypassed"][:5]:
-                        app.analyze_results.append(f"- Address: {check['address']} Type: {check.get('type', 'unknown')}")
+                        app.analyze_results.append(
+                            f"- Address: {check['address']} Type: {check.get('type', 'unknown')}"
+                        )
 
                 if results["vulnerabilities_found"]:
                     app.analyze_results.append("\nPotential Vulnerabilities:")
@@ -3854,10 +4744,17 @@ def _check_intercepted_traffic(proxy_server):
                         app.analyze_results.append(f"- Type: {vuln['type']} at {vuln['address']}")
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[Concolic] Execution complete! Explored {results['paths_explored']} paths"))
+                app.update_output.emit(
+                    log_message(
+                        f"[Concolic] Execution complete! Explored {results['paths_explored']} paths"
+                    )
+                )
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Concolic] Error in real execution: {e}"))
 
@@ -3875,7 +4772,9 @@ def _check_intercepted_traffic(proxy_server):
                         import r2pipe
 
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[CFG] Using Radare2 for CFG analysis..."))
+                            app.update_output.emit(
+                                log_message("[CFG] Using Radare2 for CFG analysis...")
+                            )
 
                         r2 = r2pipe.open(app.binary_path)
                         r2.cmd("aaa")  # Analyze all
@@ -3905,27 +4804,51 @@ def _check_intercepted_traffic(proxy_server):
                                                 elif abs(node_addr - target_addr) < 0x100:
                                                     target_node = node["id"]
 
-                                            if source_node and target_node and source_node != target_node:
-                                                edges.append({
-                                                    "source": source_node,
-                                                    "target": target_node,
-                                                    "type": "call",
-                                                    "weight": 1.0,
-                                                })
+                                            if (
+                                                source_node
+                                                and target_node
+                                                and source_node != target_node
+                                            ):
+                                                edges.append(
+                                                    {
+                                                        "source": source_node,
+                                                        "target": target_node,
+                                                        "type": "call",
+                                                        "weight": 1.0,
+                                                    }
+                                                )
 
                         r2.quit()
 
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[CFG] Radare2 analysis found {len(edges)} edges"))
+                            app.update_output.emit(
+                                log_message(f"[CFG] Radare2 analysis found {len(edges)} edges")
+                            )
 
                     except ImportError as e:
                         logger.error("Import error in main_app.py: %s", e)
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[Analysis] r2pipe not available, skipping CFG analysis"))
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                            app.update_output.emit(
+                                log_message(
+                                    "[Analysis] r2pipe not available, skipping CFG analysis"
+                                )
+                            )
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        logger.error(
+                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                            e,
+                        )
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[CFG] Radare2 analysis error: {e}"))
+                            app.update_output.emit(
+                                log_message(f"[CFG] Radare2 analysis error: {e}")
+                            )
 
                 # Method 2: Use Capstone disassembler if available
                 if not edges and app.cfg_analysis_tools.get("capstone_available"):
@@ -3934,11 +4857,17 @@ def _check_intercepted_traffic(proxy_server):
                     except ImportError as e:
                         logger.error("Import error in main_app.py: %s", e)
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[Analysis] capstone not available, skipping CFG analysis"))
+                            app.update_output.emit(
+                                log_message(
+                                    "[Analysis] capstone not available, skipping CFG analysis"
+                                )
+                            )
                     else:
                         try:
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message("[CFG] Using Capstone for CFG analysis..."))
+                                app.update_output.emit(
+                                    log_message("[CFG] Using Capstone for CFG analysis...")
+                                )
 
                             with open(app.binary_path, "rb") as f:
                                 binary_data = f.read()
@@ -3948,7 +4877,10 @@ def _check_intercepted_traffic(proxy_server):
                             mode = capstone.CS_MODE_32
 
                             if hasattr(app, "cfg_binary_format"):
-                                if app.cfg_binary_format == "PE64" or app.cfg_binary_format == "ELF64":
+                                if (
+                                    app.cfg_binary_format == "PE64"
+                                    or app.cfg_binary_format == "ELF64"
+                                ):
                                     mode = capstone.CS_MODE_64
 
                             md = capstone.Cs(arch, mode)
@@ -3962,7 +4894,9 @@ def _check_intercepted_traffic(proxy_server):
 
                                     if 0 <= offset < len(binary_data) - 100:
                                         # Disassemble function
-                                        code = binary_data[offset:offset + 500]  # Analyze 500 bytes
+                                        code = binary_data[
+                                            offset : offset + 500
+                                        ]  # Analyze 500 bytes
 
                                         for insn in md.disasm(code, func_addr):
                                             # Look for call instructions
@@ -3976,19 +4910,36 @@ def _check_intercepted_traffic(proxy_server):
                                                     # Find target node
                                                     for j, target_node in enumerate(nodes):
                                                         if i != j:  # Don't create self-loops
-                                                            target_node_addr = int(target_node["address"], 16)
-                                                            if abs(target_node_addr - target_addr) < 0x1000:
-                                                                edges.append({
-                                                                    "source": node["id"],
-                                                                    "target": target_node["id"],
-                                                                    "type": "call",
-                                                                    "instruction": insn.mnemonic,
-                                                                    "offset": hex(insn.address),
-                                                                })
+                                                            target_node_addr = int(
+                                                                target_node["address"], 16
+                                                            )
+                                                            if (
+                                                                abs(target_node_addr - target_addr)
+                                                                < 0x1000
+                                                            ):
+                                                                edges.append(
+                                                                    {
+                                                                        "source": node["id"],
+                                                                        "target": target_node["id"],
+                                                                        "type": "call",
+                                                                        "instruction": insn.mnemonic,
+                                                                        "offset": hex(insn.address),
+                                                                    }
+                                                                )
                                                                 break
 
                                             # Look for jump instructions
-                                            elif insn.mnemonic in ["jmp", "je", "jne", "jz", "jnz", "ja", "jb", "jg", "jl"]:
+                                            elif insn.mnemonic in [
+                                                "jmp",
+                                                "je",
+                                                "jne",
+                                                "jz",
+                                                "jnz",
+                                                "ja",
+                                                "jb",
+                                                "jg",
+                                                "jl",
+                                            ]:
                                                 if insn.operands:
                                                     op = insn.operands[0]
                                                     if op.type == capstone.x86.X86_OP_IMM:
@@ -3996,31 +4947,54 @@ def _check_intercepted_traffic(proxy_server):
 
                                                     # Find target node (within same function usually)
                                                     for j, target_node in enumerate(nodes):
-                                                        target_node_addr = int(target_node["address"], 16)
-                                                        if abs(target_node_addr - target_addr) < 0x100:
-                                                            edges.append({
-                                                                "source": node["id"],
-                                                                "target": target_node["id"],
-                                                                "type": "jump",
-                                                                "condition": insn.mnemonic,
-                                                                "offset": hex(insn.address),
-                                                            })
+                                                        target_node_addr = int(
+                                                            target_node["address"], 16
+                                                        )
+                                                        if (
+                                                            abs(target_node_addr - target_addr)
+                                                            < 0x100
+                                                        ):
+                                                            edges.append(
+                                                                {
+                                                                    "source": node["id"],
+                                                                    "target": target_node["id"],
+                                                                    "type": "jump",
+                                                                    "condition": insn.mnemonic,
+                                                                    "offset": hex(insn.address),
+                                                                }
+                                                            )
                                                             break
                                 except Exception as e:
                                     logger.debug(f"Failed to hook license check: {e}")
 
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message(f"[CFG] Capstone analysis found {len(edges)} edges"))
+                                app.update_output.emit(
+                                    log_message(f"[CFG] Capstone analysis found {len(edges)} edges")
+                                )
 
-                        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                        except (
+                            AttributeError,
+                            ValueError,
+                            TypeError,
+                            RuntimeError,
+                            KeyError,
+                            OSError,
+                        ) as e:
+                            logger.error(
+                                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                                e,
+                            )
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message(f"[CFG] Capstone analysis error: {e}"))
+                                app.update_output.emit(
+                                    log_message(f"[CFG] Capstone analysis error: {e}")
+                                )
 
                 # Method 3: Pattern-based heuristic analysis
                 if not edges:
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[CFG] Using pattern-based CFG analysis..."))
+                        app.update_output.emit(
+                            log_message("[CFG] Using pattern-based CFG analysis...")
+                        )
 
                     try:
                         with open(app.binary_path, "rb") as f:
@@ -4042,7 +5016,7 @@ def _check_intercepted_traffic(proxy_server):
 
                             if 0 <= source_offset < len(binary_data) - 100:
                                 # Search for call patterns near this function
-                                search_data = binary_data[source_offset:source_offset + 200]
+                                search_data = binary_data[source_offset : source_offset + 200]
 
                                 for pattern in call_patterns:
                                     pos = 0
@@ -4062,15 +5036,19 @@ def _check_intercepted_traffic(proxy_server):
 
                                                 # Create edge if target is within reasonable distance
                                                 if distance < 0x10000:  # 64KB range
-                                                    probability = max(0.1, 1.0 - (distance / 0x10000))
+                                                    probability = max(
+                                                        0.1, 1.0 - (distance / 0x10000)
+                                                    )
 
-                                                    edges.append({
-                                                        "source": source_node["id"],
-                                                        "target": target_node["id"],
-                                                        "type": "call_heuristic",
-                                                        "probability": probability,
-                                                        "pattern": pattern.hex(),
-                                                    })
+                                                    edges.append(
+                                                        {
+                                                            "source": source_node["id"],
+                                                            "target": target_node["id"],
+                                                            "type": "call_heuristic",
+                                                            "probability": probability,
+                                                            "pattern": pattern.hex(),
+                                                        }
+                                                    )
 
                                                     if len(edges) > 50:
                                                         break
@@ -4089,20 +5067,36 @@ def _check_intercepted_traffic(proxy_server):
 
                             # If functions are close, they might have control flow
                             if next_addr - curr_addr < 0x1000:  # Within 4KB
-                                edges.append({
-                                    "source": nodes[i]["id"],
-                                    "target": nodes[i + 1]["id"],
-                                    "type": "sequential",
-                                    "distance": next_addr - curr_addr,
-                                })
+                                edges.append(
+                                    {
+                                        "source": nodes[i]["id"],
+                                        "target": nodes[i + 1]["id"],
+                                        "type": "sequential",
+                                        "distance": next_addr - curr_addr,
+                                    }
+                                )
 
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[CFG] Pattern analysis found {len(edges)} edges"))
+                            app.update_output.emit(
+                                log_message(f"[CFG] Pattern analysis found {len(edges)} edges")
+                            )
 
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        logger.error(
+                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                            e,
+                        )
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[CFG] Pattern analysis error: {e}"))
+                            app.update_output.emit(
+                                log_message(f"[CFG] Pattern analysis error: {e}")
+                            )
 
                 # Deduplicate edges
                 unique_edges = []
@@ -4125,25 +5119,32 @@ def _check_intercepted_traffic(proxy_server):
 
                     # Main entry point connects to first few functions
                     for i in range(1, min(4, len(sorted_nodes))):
-                        edges.append({
-                            "source": sorted_nodes[0]["id"],
-                            "target": sorted_nodes[i]["id"],
-                            "type": "entry_call",
-                            "weight": 1.0 - (i * 0.2),
-                        })
+                        edges.append(
+                            {
+                                "source": sorted_nodes[0]["id"],
+                                "target": sorted_nodes[i]["id"],
+                                "type": "entry_call",
+                                "weight": 1.0 - (i * 0.2),
+                            }
+                        )
 
                     # Create some additional connections based on proximity
                     for i in range(1, len(sorted_nodes) - 1):
                         if i % 3 == 0 and i + 1 < len(sorted_nodes):
-                            edges.append({
-                                "source": sorted_nodes[i]["id"],
-                                "target": sorted_nodes[i + 1]["id"],
-                                "type": "local_call",
-                                "weight": 0.5,
-                            })
+                            edges.append(
+                                {
+                                    "source": sorted_nodes[i]["id"],
+                                    "target": sorted_nodes[i + 1]["id"],
+                                    "type": "local_call",
+                                    "weight": 0.5,
+                                }
+                            )
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[CFG] Error building edges: {e}"))
 
@@ -4155,11 +5156,14 @@ def _check_intercepted_traffic(proxy_server):
             from ..utils.protection_detection import (
                 run_enhanced_protection_scan as core_protection_scan,
             )
+
             return core_protection_scan(app, *args, **kwargs)
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Protection] Starting enhanced protection detection scan..."))
+                app.update_output.emit(
+                    log_message("[Protection] Starting enhanced protection detection scan...")
+                )
 
             # Initialize protection detection configuration
             if not hasattr(app, "protection_scan_config"):
@@ -4278,7 +5282,11 @@ def _check_intercepted_traffic(proxy_server):
                         binary_data = f.read()
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Protection] Scanning binary ({len(binary_data)} bytes)..."))
+                        app.update_output.emit(
+                            log_message(
+                                f"[Protection] Scanning binary ({len(binary_data)} bytes)..."
+                            )
+                        )
 
                     total_detections = 0
 
@@ -4309,7 +5317,7 @@ def _check_intercepted_traffic(proxy_server):
                     if len(binary_data) > 1024:
                         chunk_size = len(binary_data) // 10
                         for i in range(0, len(binary_data), chunk_size):
-                            chunk = binary_data[i:i+chunk_size]
+                            chunk = binary_data[i : i + chunk_size]
                             if len(chunk) > 100:
                                 # Simple entropy calculation
                                 byte_counts = [0] * 256
@@ -4323,33 +5331,43 @@ def _check_intercepted_traffic(proxy_server):
                                         entropy -= p * (p.bit_length() - 1) if p > 0 else 0
 
                                 if entropy > 7.5:  # High entropy threshold
-                                    heuristic_detections.append({
-                                        "name": "high_entropy_section",
-                                        "description": f"High entropy section at offset 0x{i:x}",
-                                        "risk_level": "medium",
-                                        "entropy": entropy,
-                                        "offset": i,
-                                        "confidence": 0.7,
-                                    })
+                                    heuristic_detections.append(
+                                        {
+                                            "name": "high_entropy_section",
+                                            "description": f"High entropy section at offset 0x{i:x}",
+                                            "risk_level": "medium",
+                                            "entropy": entropy,
+                                            "offset": i,
+                                            "confidence": 0.7,
+                                        }
+                                    )
 
                     # Check for suspicious API imports
                     suspicious_apis = [
-                        b"CreateRemoteThread", b"WriteProcessMemory", b"VirtualAllocEx",
-                        b"SetWindowsHookEx", b"GetProcAddress", b"LoadLibrary",
-                        b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent",
-                        b"NtQueryInformationProcess", b"NtSetInformationThread",
+                        b"CreateRemoteThread",
+                        b"WriteProcessMemory",
+                        b"VirtualAllocEx",
+                        b"SetWindowsHookEx",
+                        b"GetProcAddress",
+                        b"LoadLibrary",
+                        b"IsDebuggerPresent",
+                        b"CheckRemoteDebuggerPresent",
+                        b"NtQueryInformationProcess",
+                        b"NtSetInformationThread",
                     ]
 
                     for api in suspicious_apis:
                         if api in binary_data:
-                            heuristic_detections.append({
-                                "name": "suspicious_api",
-                                "description": f'Suspicious API: {api.decode("ascii", errors="ignore")}',
-                                "risk_level": "medium",
-                                "api_name": api.decode("ascii", errors="ignore"),
-                                "offset": binary_data.find(api),
-                                "confidence": 0.6,
-                            })
+                            heuristic_detections.append(
+                                {
+                                    "name": "suspicious_api",
+                                    "description": f'Suspicious API: {api.decode("ascii", errors="ignore")}',
+                                    "risk_level": "medium",
+                                    "api_name": api.decode("ascii", errors="ignore"),
+                                    "offset": binary_data.find(api),
+                                    "confidence": 0.6,
+                                }
+                            )
 
                     # Check for code caves (large sections of null bytes)
                     null_sequences = []
@@ -4363,24 +5381,28 @@ def _check_intercepted_traffic(proxy_server):
                             null_count += 1
                         else:
                             if null_count > 1024:  # Large null section
-                                null_sequences.append({
-                                    "start": null_start,
-                                    "size": null_count,
-                                    "end": null_start + null_count,
-                                })
+                                null_sequences.append(
+                                    {
+                                        "start": null_start,
+                                        "size": null_count,
+                                        "end": null_start + null_count,
+                                    }
+                                )
                             null_start = -1
                             null_count = 0
 
                     if null_sequences:
                         for cave in null_sequences[:5]:  # Report first 5
-                            heuristic_detections.append({
-                                "name": "code_cave",
-                                "description": f'Code cave: {cave["size"]} null bytes at 0x{cave["start"]:x}',
-                                "risk_level": "low",
-                                "offset": cave["start"],
-                                "size": cave["size"],
-                                "confidence": 0.5,
-                            })
+                            heuristic_detections.append(
+                                {
+                                    "name": "code_cave",
+                                    "description": f'Code cave: {cave["size"]} null bytes at 0x{cave["start"]:x}',
+                                    "risk_level": "low",
+                                    "offset": cave["start"],
+                                    "size": cave["size"],
+                                    "confidence": 0.5,
+                                }
+                            )
 
                     app.protection_results["heuristic"] = heuristic_detections
                     total_detections += len(heuristic_detections)
@@ -4411,22 +5433,36 @@ def _check_intercepted_traffic(proxy_server):
                         app.protection_results["overall_risk"] = "none"
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Protection] Scan complete: {total_detections} protections detected"))
-                        app.update_output.emit(log_message(f"[Protection] Overall risk level: {app.protection_results['overall_risk']}"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[Protection] Scan complete: {total_detections} protections detected"
+                            )
+                        )
+                        app.update_output.emit(
+                            log_message(
+                                f"[Protection] Overall risk level: {app.protection_results['overall_risk']}"
+                            )
+                        )
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Protection] Error scanning binary: {e}"))
+                        app.update_output.emit(
+                            log_message(f"[Protection] Error scanning binary: {e}")
+                        )
             elif hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Protection] No binary loaded for protection scan"))
+                app.update_output.emit(
+                    log_message("[Protection] No binary loaded for protection scan")
+                )
 
             # Set up analysis results
             if not hasattr(app, "analyze_results"):
                 app.analyze_results = []
 
             app.analyze_results.append("\n=== ENHANCED PROTECTION DETECTION SCAN ===")
-            app.analyze_results.append(f"Overall risk level: {app.protection_results['overall_risk'].upper()}")
+            app.analyze_results.append(
+                f"Overall risk level: {app.protection_results['overall_risk'].upper()}"
+            )
 
             # Report findings by category
             for category, detections in app.protection_results.items():
@@ -4440,19 +5476,30 @@ def _check_intercepted_traffic(proxy_server):
                             "very_high": "🔴",
                         }.get(detection.get("risk_level", "low"), "⚪")
 
-                        app.analyze_results.append(f"- {risk_indicator} {detection.get('description', detection.get('name', 'Unknown'))}")
+                        app.analyze_results.append(
+                            f"- {risk_indicator} {detection.get('description', detection.get('name', 'Unknown'))}"
+                        )
                         if "offset" in detection:
                             app.analyze_results.append(f"  Location: 0x{detection['offset']:x}")
                         if "confidence" in detection:
-                            app.analyze_results.append(f"  Confidence: {detection['confidence']:.1%}")
+                            app.analyze_results.append(
+                                f"  Confidence: {detection['confidence']:.1%}"
+                            )
 
             # Summary of protection categories found
-            categories_found = [cat for cat, dets in app.protection_results.items()
-                             if isinstance(dets, list) and dets]
+            categories_found = [
+                cat
+                for cat, dets in app.protection_results.items()
+                if isinstance(dets, list) and dets
+            ]
 
             if categories_found:
-                app.analyze_results.append(f"\nProtection categories detected: {len(categories_found)}")
-                app.analyze_results.append(f"Categories: {', '.join(cat.replace('_', ' ').title() for cat in categories_found)}")
+                app.analyze_results.append(
+                    f"\nProtection categories detected: {len(categories_found)}"
+                )
+                app.analyze_results.append(
+                    f"Categories: {', '.join(cat.replace('_', ' ').title() for cat in categories_found)}"
+                )
             else:
                 app.analyze_results.append("\nNo significant protections detected")
 
@@ -4465,22 +5512,30 @@ def _check_intercepted_traffic(proxy_server):
             app.analyze_results.append("- Risk assessment")
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Protection] Enhanced protection detection scan completed"))
+                app.update_output.emit(
+                    log_message("[Protection] Enhanced protection detection scan completed")
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[Protection] Error running protection scan: {e}"))
+                app.update_output.emit(
+                    log_message(f"[Protection] Error running protection scan: {e}")
+                )
+
     def run_visual_network_traffic_analyzer(app, *args, **kwargs):
         """Run visual network traffic analyzer when analyzer not available"""
         _ = args, kwargs
         try:
             from ..core.network.traffic_analyzer import NetworkTrafficAnalyzer
+
             analyzer = NetworkTrafficAnalyzer()
 
             # Try to start capture and analysis
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Traffic] Starting network traffic analyzer..."))
+                app.update_output.emit(
+                    log_message("[Traffic] Starting network traffic analyzer...")
+                )
 
             # Start capture on available interface
             interface = kwargs.get("interface")
@@ -4506,7 +5561,11 @@ def _check_intercepted_traffic(proxy_server):
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Traffic] Network traffic analyzer not available, using fallback..."))
+                app.update_output.emit(
+                    log_message(
+                        "[Traffic] Network traffic analyzer not available, using fallback..."
+                    )
+                )
 
             # Initialize traffic analyzer configuration
             if not hasattr(app, "traffic_analyzer_config"):
@@ -4558,17 +5617,23 @@ def _check_intercepted_traffic(proxy_server):
 
             try:
                 import scapy.all  # noqa: F401 - Checking availability
+
                 capture_libraries["scapy"] = True
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Traffic] Scapy packet manipulation library available"))
+                    app.update_output.emit(
+                        log_message("[Traffic] Scapy packet manipulation library available")
+                    )
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
 
             try:
                 import pyshark  # noqa: F401 - Checking availability
+
                 capture_libraries["pyshark"] = True
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Traffic] PyShark packet analysis library available"))
+                    app.update_output.emit(
+                        log_message("[Traffic] PyShark packet analysis library available")
+                    )
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
 
@@ -4576,12 +5641,13 @@ def _check_intercepted_traffic(proxy_server):
 
             try:
                 import dpkt  # noqa: F401 - Checking availability
+
                 capture_libraries["dpkt"] = True
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
 
             try:
-                        # Check if we can create raw sockets (requires admin)
+                # Check if we can create raw sockets (requires admin)
                 test_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
                 test_socket.close()
                 capture_libraries["socket_raw"] = True
@@ -4604,17 +5670,23 @@ def _check_intercepted_traffic(proxy_server):
                     if capture_libraries["scapy"]:
                         app.capture_with_scapy = capture_with_scapy
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[Traffic] Scapy capture function loaded"))
+                            app.update_output.emit(
+                                log_message("[Traffic] Scapy capture function loaded")
+                            )
 
                     if capture_libraries["pyshark"]:
                         app.analyze_pcap_with_pyshark = analyze_pcap_with_pyshark
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[Traffic] PyShark analysis function loaded"))
+                            app.update_output.emit(
+                                log_message("[Traffic] PyShark analysis function loaded")
+                            )
 
                     if capture_libraries["dpkt"]:
                         app.parse_pcap_with_dpkt = parse_pcap_with_dpkt
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[Traffic] dpkt parsing function loaded"))
+                            app.update_output.emit(
+                                log_message("[Traffic] dpkt parsing function loaded")
+                            )
 
                 except ImportError as e:
                     logger.error("Failed to import network capture functions: %s", e)
@@ -4633,11 +5705,13 @@ def _check_intercepted_traffic(proxy_server):
 
                     for addr in addresses:
                         if addr.family.name in ["AF_INET", "AF_INET6"]:
-                            interface_info["addresses"].append({
-                                "family": addr.family.name,
-                                "address": addr.address,
-                                "netmask": getattr(addr, "netmask", None),
-                            })
+                            interface_info["addresses"].append(
+                                {
+                                    "family": addr.family.name,
+                                    "address": addr.address,
+                                    "netmask": getattr(addr, "netmask", None),
+                                }
+                            )
 
                     # Check if interface is up
                     try:
@@ -4650,16 +5724,37 @@ def _check_intercepted_traffic(proxy_server):
                     available_interfaces.append(interface_info)
 
                 if hasattr(app, "update_output"):
-                    active_interfaces = [iface for iface in available_interfaces if iface["is_up"] and not iface["is_loopback"]]
-                    app.update_output.emit(log_message(f"[Traffic] Found {len(active_interfaces)} active network interfaces"))
+                    active_interfaces = [
+                        iface
+                        for iface in available_interfaces
+                        if iface["is_up"] and not iface["is_loopback"]
+                    ]
+                    app.update_output.emit(
+                        log_message(
+                            f"[Traffic] Found {len(active_interfaces)} active network interfaces"
+                        )
+                    )
 
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
                 # Fallback interface detection
                 available_interfaces = [
-                    {"name": "eth0", "addresses": [{"family": "AF_INET", "address": "192.168.1.100"}], "is_up": True},
-                    {"name": "wlan0", "addresses": [{"family": "AF_INET", "address": "192.168.1.101"}], "is_up": True},
-                    {"name": "lo", "addresses": [{"family": "AF_INET", "address": "127.0.0.1"}], "is_up": True, "is_loopback": True},
+                    {
+                        "name": "eth0",
+                        "addresses": [{"family": "AF_INET", "address": "192.168.1.100"}],
+                        "is_up": True,
+                    },
+                    {
+                        "name": "wlan0",
+                        "addresses": [{"family": "AF_INET", "address": "192.168.1.101"}],
+                        "is_up": True,
+                    },
+                    {
+                        "name": "lo",
+                        "addresses": [{"family": "AF_INET", "address": "127.0.0.1"}],
+                        "is_up": True,
+                        "is_loopback": True,
+                    },
                 ]
 
             app.available_interfaces = available_interfaces
@@ -4668,8 +5763,14 @@ def _check_intercepted_traffic(proxy_server):
             if not any(capture_libraries.values()):
                 # No capture libraries available - inform user
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Traffic] No packet capture libraries available"))
-                    app.update_output.emit(log_message("[Traffic] Install scapy, pyshark, or run as administrator for raw sockets"))
+                    app.update_output.emit(
+                        log_message("[Traffic] No packet capture libraries available")
+                    )
+                    app.update_output.emit(
+                        log_message(
+                            "[Traffic] Install scapy, pyshark, or run as administrator for raw sockets"
+                        )
+                    )
 
                 app.traffic_analysis_results = {
                     "packet_summary": {
@@ -4687,7 +5788,11 @@ def _check_intercepted_traffic(proxy_server):
                     "encrypted_connections": [],
                 }
             elif hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Traffic] No packet capture libraries available - limited analysis mode"))
+                app.update_output.emit(
+                    log_message(
+                        "[Traffic] No packet capture libraries available - limited analysis mode"
+                    )
+                )
 
             # Set up analysis results
             if not hasattr(app, "analyze_results"):
@@ -4700,36 +5805,65 @@ def _check_intercepted_traffic(proxy_server):
                 app.analyze_results.append(f"- {library.capitalize()}: {status}")
 
             if available_interfaces:
-                active_ifaces = [iface for iface in available_interfaces if iface.get("is_up", False) and not iface.get("is_loopback", False)]
-                app.analyze_results.append(f"\nNetwork interfaces: {len(available_interfaces)} total, {len(active_ifaces)} active")
+                active_ifaces = [
+                    iface
+                    for iface in available_interfaces
+                    if iface.get("is_up", False) and not iface.get("is_loopback", False)
+                ]
+                app.analyze_results.append(
+                    f"\nNetwork interfaces: {len(available_interfaces)} total, {len(active_ifaces)} active"
+                )
                 for iface in active_ifaces[:3]:  # Show first 3 active interfaces
-                    app.analyze_results.append(f"- {iface['name']}: {len(iface['addresses'])} addresses")
+                    app.analyze_results.append(
+                        f"- {iface['name']}: {len(iface['addresses'])} addresses"
+                    )
 
-            if hasattr(app, "traffic_analysis_results") and app.traffic_analysis_results["packet_summary"]:
+            if (
+                hasattr(app, "traffic_analysis_results")
+                and app.traffic_analysis_results["packet_summary"]
+            ):
                 summary = app.traffic_analysis_results["packet_summary"]
                 app.analyze_results.append("\nTraffic analysis summary:")
                 app.analyze_results.append(f"- Total packets: {summary['total_packets']}")
                 app.analyze_results.append(f"- Total bytes: {summary['total_bytes']:,}")
-                app.analyze_results.append(f"- License-related packets: {summary['license_packets']}")
-                app.analyze_results.append(f"- Capture duration: {summary['capture_duration']} seconds")
+                app.analyze_results.append(
+                    f"- License-related packets: {summary['license_packets']}"
+                )
+                app.analyze_results.append(
+                    f"- Capture duration: {summary['capture_duration']} seconds"
+                )
 
                 if app.traffic_analysis_results["protocol_distribution"]:
                     app.analyze_results.append("\nProtocol distribution:")
-                    for protocol, count in app.traffic_analysis_results["protocol_distribution"].items():
+                    for protocol, count in app.traffic_analysis_results[
+                        "protocol_distribution"
+                    ].items():
                         percentage = (count / summary["total_packets"]) * 100
-                        app.analyze_results.append(f"- {protocol}: {count} packets ({percentage:.1f}%)")
+                        app.analyze_results.append(
+                            f"- {protocol}: {count} packets ({percentage:.1f}%)"
+                        )
 
                 if app.traffic_analysis_results["suspicious_activities"]:
-                    app.analyze_results.append(f"\nSuspicious activities: {len(app.traffic_analysis_results['suspicious_activities'])}")
+                    app.analyze_results.append(
+                        f"\nSuspicious activities: {len(app.traffic_analysis_results['suspicious_activities'])}"
+                    )
                     for activity in app.traffic_analysis_results["suspicious_activities"]:
-                        severity_indicator = {"low": "🟡", "medium": "🟠", "high": "🔴"}.get(activity["severity"], "⚪")
-                        app.analyze_results.append(f"- {severity_indicator} {activity['description']} ({activity['severity']})")
+                        severity_indicator = {"low": "🟡", "medium": "🟠", "high": "🔴"}.get(
+                            activity["severity"], "⚪"
+                        )
+                        app.analyze_results.append(
+                            f"- {severity_indicator} {activity['description']} ({activity['severity']})"
+                        )
 
                 if app.traffic_analysis_results["license_traffic"]:
-                    app.analyze_results.append(f"\nLicense server connections: {len(app.traffic_analysis_results['license_traffic'])}")
+                    app.analyze_results.append(
+                        f"\nLicense server connections: {len(app.traffic_analysis_results['license_traffic'])}"
+                    )
                     for flow in app.traffic_analysis_results["license_traffic"][:3]:  # Show first 3
                         domain = flow.get("destination_domain", flow["dst_ip"])
-                        app.analyze_results.append(f"- {domain}:{flow['dst_port']} ({flow['packet_count']} packets, {flow['total_bytes']} bytes)")
+                        app.analyze_results.append(
+                            f"- {domain}:{flow['dst_port']} ({flow['packet_count']} packets, {flow['total_bytes']} bytes)"
+                        )
 
             app.analyze_results.append("\nTraffic analyzer features:")
             app.analyze_results.append("- Real-time packet capture")
@@ -4740,23 +5874,33 @@ def _check_intercepted_traffic(proxy_server):
             app.analyze_results.append("- DNS query tracking")
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Traffic] Visual network traffic analyzer initialized successfully"))
+                app.update_output.emit(
+                    log_message(
+                        "[Traffic] Visual network traffic analyzer initialized successfully"
+                    )
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[Traffic] Error running traffic analyzer: {e}"))
+                app.update_output.emit(
+                    log_message(f"[Traffic] Error running traffic analyzer: {e}")
+                )
+
     def run_multi_format_analysis(app, *args, **kwargs):
         """Run multi-format binary analysis when analyzer not available"""
         _ = args, kwargs
         try:
             from ..core.analysis.multi_format_analyzer import MultiFormatAnalyzer
+
             analyzer = MultiFormatAnalyzer()
             return analyzer.analyze_file(app.binary_path if hasattr(app, "binary_path") else None)
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[MultiFormat] Starting multi-format binary analysis..."))
+                app.update_output.emit(
+                    log_message("[MultiFormat] Starting multi-format binary analysis...")
+                )
 
             # Initialize multi-format analysis configuration
             if not hasattr(app, "multiformat_config"):
@@ -4805,7 +5949,12 @@ def _check_intercepted_traffic(proxy_server):
                     "architectures": ["x86", "x86_64", "ARM", "ARM64", "MIPS", "PowerPC"],
                 },
                 "Mach-O": {
-                    "magic": [b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe"],
+                    "magic": [
+                        b"\xfe\xed\xfa\xce",
+                        b"\xce\xfa\xed\xfe",
+                        b"\xfe\xed\xfa\xcf",
+                        b"\xcf\xfa\xed\xfe",
+                    ],
                     "description": "Mach Object Format (macOS/iOS)",
                     "extensions": [".dylib", ".bundle", ""],
                     "architectures": ["x86", "x86_64", "ARM", "ARM64"],
@@ -4838,7 +5987,11 @@ def _check_intercepted_traffic(proxy_server):
                         binary_data = f.read()
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[MultiFormat] Analyzing binary file ({len(binary_data)} bytes)..."))
+                        app.update_output.emit(
+                            log_message(
+                                f"[MultiFormat] Analyzing binary file ({len(binary_data)} bytes)..."
+                            )
+                        )
 
                     # Detect file format
                     detected_format = "unknown"
@@ -4864,7 +6017,11 @@ def _check_intercepted_traffic(proxy_server):
                     app.format_analysis_results["format_confidence"] = format_confidence
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[MultiFormat] Detected format: {detected_format} (confidence: {format_confidence:.1%})"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[MultiFormat] Detected format: {detected_format} (confidence: {format_confidence:.1%})"
+                            )
+                        )
 
                     # Format-specific analysis
                     if detected_format == "PE":
@@ -4875,53 +6032,89 @@ def _check_intercepted_traffic(proxy_server):
                                 pe_offset = int.from_bytes(binary_data[60:64], "little")
                                 if pe_offset < len(binary_data) - 24:
                                     # Machine type
-                                    machine_type = int.from_bytes(binary_data[pe_offset+4:pe_offset+6], "little")
-                                    if machine_type == 0x014c:
+                                    machine_type = int.from_bytes(
+                                        binary_data[pe_offset + 4 : pe_offset + 6], "little"
+                                    )
+                                    if machine_type == 0x014C:
                                         app.format_analysis_results["architecture"] = "x86"
                                         app.format_analysis_results["bit_depth"] = 32
                                     elif machine_type == 0x8664:
                                         app.format_analysis_results["architecture"] = "x86_64"
                                         app.format_analysis_results["bit_depth"] = 64
-                                    elif machine_type == 0x01c4:
+                                    elif machine_type == 0x01C4:
                                         app.format_analysis_results["architecture"] = "ARM"
                                         app.format_analysis_results["bit_depth"] = 32
-                                    elif machine_type == 0xaa64:
+                                    elif machine_type == 0xAA64:
                                         app.format_analysis_results["architecture"] = "ARM64"
                                         app.format_analysis_results["bit_depth"] = 64
 
                                     # Entry point
                                     entry_point_offset = pe_offset + 40
                                     if entry_point_offset + 4 <= len(binary_data):
-                                        entry_point = int.from_bytes(binary_data[entry_point_offset:entry_point_offset+4], "little")
-                                        app.format_analysis_results["entry_point"] = hex(entry_point)
+                                        entry_point = int.from_bytes(
+                                            binary_data[
+                                                entry_point_offset : entry_point_offset + 4
+                                            ],
+                                            "little",
+                                        )
+                                        app.format_analysis_results["entry_point"] = hex(
+                                            entry_point
+                                        )
 
                                     # Number of sections
                                     num_sections_offset = pe_offset + 6
                                     if num_sections_offset + 2 <= len(binary_data):
-                                        num_sections = int.from_bytes(binary_data[num_sections_offset:num_sections_offset+2], "little")
+                                        num_sections = int.from_bytes(
+                                            binary_data[
+                                                num_sections_offset : num_sections_offset + 2
+                                            ],
+                                            "little",
+                                        )
 
                                         # Parse section headers (simplified)
                                         sections = []
                                         section_table_offset = pe_offset + 248  # Approximate offset
-                                        for i in range(min(num_sections, 20)):  # Limit to 20 sections
+                                        for i in range(
+                                            min(num_sections, 20)
+                                        ):  # Limit to 20 sections
                                             section_offset = section_table_offset + (i * 40)
                                             if section_offset + 40 <= len(binary_data):
-                                                section_name = binary_data[section_offset:section_offset+8].rstrip(b"\x00").decode("ascii", errors="ignore")
-                                                virtual_size = int.from_bytes(binary_data[section_offset+8:section_offset+12], "little")
-                                                virtual_address = int.from_bytes(binary_data[section_offset+12:section_offset+16], "little")
+                                                section_name = (
+                                                    binary_data[section_offset : section_offset + 8]
+                                                    .rstrip(b"\x00")
+                                                    .decode("ascii", errors="ignore")
+                                                )
+                                                virtual_size = int.from_bytes(
+                                                    binary_data[
+                                                        section_offset + 8 : section_offset + 12
+                                                    ],
+                                                    "little",
+                                                )
+                                                virtual_address = int.from_bytes(
+                                                    binary_data[
+                                                        section_offset + 12 : section_offset + 16
+                                                    ],
+                                                    "little",
+                                                )
 
-                                                sections.append({
-                                                    "name": section_name,
-                                                    "virtual_size": virtual_size,
-                                                    "virtual_address": hex(virtual_address),
-                                                    "type": "code" if section_name.startswith(".text") else "data",
-                                                })
+                                                sections.append(
+                                                    {
+                                                        "name": section_name,
+                                                        "virtual_size": virtual_size,
+                                                        "virtual_address": hex(virtual_address),
+                                                        "type": "code"
+                                                        if section_name.startswith(".text")
+                                                        else "data",
+                                                    }
+                                                )
 
                                         app.format_analysis_results["sections"] = sections
                         except (ValueError, IndexError) as e:
                             logger.error("(ValueError, IndexError) in main_app.py: %s", e)
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message(f"[MultiFormat] Error parsing PE format: {e}"))
+                                app.update_output.emit(
+                                    log_message(f"[MultiFormat] Error parsing PE format: {e}")
+                                )
 
                     elif detected_format == "ELF":
                         # ELF format analysis
@@ -4943,7 +6136,10 @@ def _check_intercepted_traffic(proxy_server):
 
                                 # Machine type (offset 18 for ELF)
                                 if len(binary_data) > 20:
-                                    machine = int.from_bytes(binary_data[18:20], app.format_analysis_results["endianness"])
+                                    machine = int.from_bytes(
+                                        binary_data[18:20],
+                                        app.format_analysis_results["endianness"],
+                                    )
                                     if machine == 0x03:  # EM_386
                                         app.format_analysis_results["architecture"] = "x86"
                                     elif machine == 0x3E:  # EM_X86_64
@@ -4955,14 +6151,21 @@ def _check_intercepted_traffic(proxy_server):
 
                                 # Entry point (offset 24 for 64-bit, 24 for 32-bit)
                                 entry_offset = 24
-                                entry_size = 8 if app.format_analysis_results["bit_depth"] == 64 else 4
+                                entry_size = (
+                                    8 if app.format_analysis_results["bit_depth"] == 64 else 4
+                                )
                                 if len(binary_data) > entry_offset + entry_size:
-                                    entry_point = int.from_bytes(binary_data[entry_offset:entry_offset+entry_size], app.format_analysis_results["endianness"])
+                                    entry_point = int.from_bytes(
+                                        binary_data[entry_offset : entry_offset + entry_size],
+                                        app.format_analysis_results["endianness"],
+                                    )
                                     app.format_analysis_results["entry_point"] = hex(entry_point)
                         except (ValueError, IndexError) as e:
                             logger.error("(ValueError, IndexError) in main_app.py: %s", e)
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message(f"[MultiFormat] Error parsing ELF format: {e}"))
+                                app.update_output.emit(
+                                    log_message(f"[MultiFormat] Error parsing ELF format: {e}")
+                                )
 
                     elif detected_format == "Mach-O":
                         # Mach-O format analysis
@@ -4985,7 +6188,9 @@ def _check_intercepted_traffic(proxy_server):
                         except (ValueError, IndexError) as e:
                             logger.error("(ValueError, IndexError) in main_app.py: %s", e)
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message(f"[MultiFormat] Error parsing Mach-O format: {e}"))
+                                app.update_output.emit(
+                                    log_message(f"[MultiFormat] Error parsing Mach-O format: {e}")
+                                )
 
                     # Calculate file hashes
 
@@ -5008,17 +6213,30 @@ def _check_intercepted_traffic(proxy_server):
 
                     # Common API patterns
                     api_patterns = [
-                        b"CreateFile", b"WriteFile", b"ReadFile", b"CloseHandle",
-                        b"LoadLibrary", b"GetProcAddress", b"VirtualAlloc",
-                        b"CreateProcess", b"CreateThread", b"GetSystemInfo",
-                        b"RegOpenKey", b"RegQueryValue", b"RegSetValue",
-                        b"MessageBox", b"FindWindow", b"GetWindowText",
+                        b"CreateFile",
+                        b"WriteFile",
+                        b"ReadFile",
+                        b"CloseHandle",
+                        b"LoadLibrary",
+                        b"GetProcAddress",
+                        b"VirtualAlloc",
+                        b"CreateProcess",
+                        b"CreateThread",
+                        b"GetSystemInfo",
+                        b"RegOpenKey",
+                        b"RegQueryValue",
+                        b"RegSetValue",
+                        b"MessageBox",
+                        b"FindWindow",
+                        b"GetWindowText",
                     ]
 
                     from ..utils.analysis.pattern_search import find_all_pattern_occurrences
 
                     for pattern in api_patterns:
-                        pattern_results = find_all_pattern_occurrences(binary_data, pattern, max_results=50-len(potential_imports))
+                        pattern_results = find_all_pattern_occurrences(
+                            binary_data, pattern, max_results=50 - len(potential_imports)
+                        )
 
                         for result in pattern_results:
                             # Extract surrounding context
@@ -5026,11 +6244,13 @@ def _check_intercepted_traffic(proxy_server):
                             end = min(len(binary_data), result["offset"] + len(pattern) + 20)
                             context = binary_data[start:end]
 
-                            potential_imports.append({
-                                "api": pattern.decode("ascii", errors="ignore"),
-                                "offset": hex(result["offset"]),
-                                "context": context.hex(),
-                            })
+                            potential_imports.append(
+                                {
+                                    "api": pattern.decode("ascii", errors="ignore"),
+                                    "offset": hex(result["offset"]),
+                                    "context": context.hex(),
+                                }
+                            )
 
                             if len(potential_imports) > 50:  # Limit results
                                 break
@@ -5041,9 +6261,14 @@ def _check_intercepted_traffic(proxy_server):
 
                     # Look for version information strings
                     version_patterns = [
-                        b"FileVersion", b"ProductVersion", b"CompanyName",
-                        b"FileDescription", b"InternalName", b"LegalCopyright",
-                        b"OriginalFilename", b"ProductName",
+                        b"FileVersion",
+                        b"ProductVersion",
+                        b"CompanyName",
+                        b"FileDescription",
+                        b"InternalName",
+                        b"LegalCopyright",
+                        b"OriginalFilename",
+                        b"ProductName",
                     ]
 
                     version_info = {}
@@ -5060,11 +6285,15 @@ def _check_intercepted_traffic(proxy_server):
 
                                 if value_end > value_start:
                                     try:
-                                        value = binary_data[value_start:value_end].decode("utf-8", errors="ignore")
+                                        value = binary_data[value_start:value_end].decode(
+                                            "utf-8", errors="ignore"
+                                        )
                                         if value.strip():
                                             version_info[pattern.decode("ascii")] = value.strip()
                                     except (UnicodeDecodeError, ValueError) as e:
-                                        logger.error("(UnicodeDecodeError, ValueError) in main_app.py: %s", e)
+                                        logger.error(
+                                            "(UnicodeDecodeError, ValueError) in main_app.py: %s", e
+                                        )
 
                     app.format_analysis_results["version_info"] = version_info
 
@@ -5075,7 +6304,7 @@ def _check_intercepted_traffic(proxy_server):
                     if len(binary_data) > 1024:
                         chunk_size = len(binary_data) // 8
                         for i in range(0, len(binary_data), chunk_size):
-                            chunk = binary_data[i:i+chunk_size]
+                            chunk = binary_data[i : i + chunk_size]
                             if len(chunk) > 100:
                                 # Simple entropy calculation
                                 byte_counts = [0] * 256
@@ -5089,13 +6318,15 @@ def _check_intercepted_traffic(proxy_server):
                                         entropy -= p * (p.bit_length() - 1) if p > 0 else 0
 
                                 if entropy > 7.8:  # Very high entropy
-                                    anomalies.append({
-                                        "type": "high_entropy_section",
-                                        "description": f"Very high entropy section at offset 0x{i:x}",
-                                        "entropy": entropy,
-                                        "offset": hex(i),
-                                        "size": len(chunk),
-                                    })
+                                    anomalies.append(
+                                        {
+                                            "type": "high_entropy_section",
+                                            "description": f"Very high entropy section at offset 0x{i:x}",
+                                            "entropy": entropy,
+                                            "offset": hex(i),
+                                            "size": len(chunk),
+                                        }
+                                    )
 
                     # Check for overlapping sections (PE specific)
                     if detected_format == "PE" and app.format_analysis_results.get("sections"):
@@ -5109,25 +6340,38 @@ def _check_intercepted_traffic(proxy_server):
                                     size2 = sections[j]["virtual_size"]
 
                                     if (va1 < va2 < va1 + size1) or (va2 < va1 < va2 + size2):
-                                        anomalies.append({
-                                            "type": "overlapping_sections",
-                                            "description": f'Overlapping sections: {sections[i]["name"]} and {sections[j]["name"]}',
-                                            "sections": [sections[i]["name"], sections[j]["name"]],
-                                        })
+                                        anomalies.append(
+                                            {
+                                                "type": "overlapping_sections",
+                                                "description": f'Overlapping sections: {sections[i]["name"]} and {sections[j]["name"]}',
+                                                "sections": [
+                                                    sections[i]["name"],
+                                                    sections[j]["name"],
+                                                ],
+                                            }
+                                        )
                                 except (ValueError, KeyError) as e:
                                     logger.error("(ValueError, KeyError) in main_app.py: %s", e)
 
                     app.format_analysis_results["anomalies"] = anomalies
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[MultiFormat] Analysis complete: {len(potential_imports)} imports, {len(anomalies)} anomalies"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[MultiFormat] Analysis complete: {len(potential_imports)} imports, {len(anomalies)} anomalies"
+                            )
+                        )
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[MultiFormat] Error analyzing binary: {e}"))
+                        app.update_output.emit(
+                            log_message(f"[MultiFormat] Error analyzing binary: {e}")
+                        )
             elif hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[MultiFormat] No binary loaded for multi-format analysis"))
+                app.update_output.emit(
+                    log_message("[MultiFormat] No binary loaded for multi-format analysis")
+                )
 
             # Set up analysis results
             if not hasattr(app, "analyze_results"):
@@ -5137,28 +6381,44 @@ def _check_intercepted_traffic(proxy_server):
             app.analyze_results.append(f"File format: {app.format_analysis_results['file_format']}")
 
             if app.format_analysis_results.get("format_confidence"):
-                app.analyze_results.append(f"Detection confidence: {app.format_analysis_results['format_confidence']:.1%}")
+                app.analyze_results.append(
+                    f"Detection confidence: {app.format_analysis_results['format_confidence']:.1%}"
+                )
 
             if app.format_analysis_results["architecture"] != "unknown":
-                app.analyze_results.append(f"Architecture: {app.format_analysis_results['architecture']}")
-                app.analyze_results.append(f"Bit depth: {app.format_analysis_results['bit_depth']}-bit")
+                app.analyze_results.append(
+                    f"Architecture: {app.format_analysis_results['architecture']}"
+                )
+                app.analyze_results.append(
+                    f"Bit depth: {app.format_analysis_results['bit_depth']}-bit"
+                )
 
             if app.format_analysis_results["endianness"] != "unknown":
-                app.analyze_results.append(f"Endianness: {app.format_analysis_results['endianness']}")
+                app.analyze_results.append(
+                    f"Endianness: {app.format_analysis_results['endianness']}"
+                )
 
             if app.format_analysis_results["entry_point"]:
-                app.analyze_results.append(f"Entry point: {app.format_analysis_results['entry_point']}")
+                app.analyze_results.append(
+                    f"Entry point: {app.format_analysis_results['entry_point']}"
+                )
 
             if app.format_analysis_results["sections"]:
-                app.analyze_results.append(f"\nSections: {len(app.format_analysis_results['sections'])}")
+                app.analyze_results.append(
+                    f"\nSections: {len(app.format_analysis_results['sections'])}"
+                )
                 for section in app.format_analysis_results["sections"][:5]:  # Show first 5
-                    app.analyze_results.append(f"- {section['name']}: {section['virtual_address']} ({section['type']})")
+                    app.analyze_results.append(
+                        f"- {section['name']}: {section['virtual_address']} ({section['type']})"
+                    )
                 if len(app.format_analysis_results["sections"]) > 5:
                     remaining = len(app.format_analysis_results["sections"]) - 5
                     app.analyze_results.append(f"- ... and {remaining} more sections")
 
             if app.format_analysis_results["imports"]:
-                app.analyze_results.append(f"\nImported APIs: {len(app.format_analysis_results['imports'])}")
+                app.analyze_results.append(
+                    f"\nImported APIs: {len(app.format_analysis_results['imports'])}"
+                )
                 for imp in app.format_analysis_results["imports"][:5]:  # Show first 5
                     app.analyze_results.append(f"- {imp['api']} at {imp['offset']}")
                 if len(app.format_analysis_results["imports"]) > 5:
@@ -5176,11 +6436,15 @@ def _check_intercepted_traffic(proxy_server):
                     app.analyze_results.append(f"- {hash_type.upper()}: {hash_value[:16]}...")
 
             if app.format_analysis_results["anomalies"]:
-                app.analyze_results.append(f"\nAnomalies detected: {len(app.format_analysis_results['anomalies'])}")
+                app.analyze_results.append(
+                    f"\nAnomalies detected: {len(app.format_analysis_results['anomalies'])}"
+                )
                 for anomaly in app.format_analysis_results["anomalies"]:
                     app.analyze_results.append(f"- {anomaly['description']}")
 
-            app.analyze_results.append(f"\nSupported formats: {', '.join(app.multiformat_config['supported_formats'])}")
+            app.analyze_results.append(
+                f"\nSupported formats: {', '.join(app.multiformat_config['supported_formats'])}"
+            )
             app.analyze_results.append("\nMulti-format analysis features:")
             app.analyze_results.append("- Format detection and identification")
             app.analyze_results.append("- Architecture and platform analysis")
@@ -5191,23 +6455,31 @@ def _check_intercepted_traffic(proxy_server):
             app.analyze_results.append("- Anomaly detection")
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[MultiFormat] Multi-format binary analysis completed"))
+                app.update_output.emit(
+                    log_message("[MultiFormat] Multi-format binary analysis completed")
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[MultiFormat] Error running multi-format analysis: {e}"))
+                app.update_output.emit(
+                    log_message(f"[MultiFormat] Error running multi-format analysis: {e}")
+                )
+
     def run_distributed_processing(app, *args, **kwargs):
         """Run distributed processing system when processor not available"""
         _ = args, kwargs
         try:
             from ..core.processing.distributed_manager import DistributedManager
+
             manager = DistributedManager()
             return manager.start_distributed_analysis()
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Distributed] Starting distributed processing system..."))
+                app.update_output.emit(
+                    log_message("[Distributed] Starting distributed processing system...")
+                )
 
             # Initialize distributed processing configuration
             if not hasattr(app, "distributed_config"):
@@ -5257,42 +6529,54 @@ def _check_intercepted_traffic(proxy_server):
 
             try:
                 import multiprocessing
+
                 processing_frameworks["multiprocessing"] = True
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Distributed] Python multiprocessing available"))
+                    app.update_output.emit(
+                        log_message("[Distributed] Python multiprocessing available")
+                    )
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
 
             try:
                 import ray
+
                 processing_frameworks["ray"] = True
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Distributed] Ray distributed computing framework available"))
+                    app.update_output.emit(
+                        log_message("[Distributed] Ray distributed computing framework available")
+                    )
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
 
             try:
                 import dask  # noqa: F401 - Checking availability
+
                 processing_frameworks["dask"] = True
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Distributed] Dask distributed computing library available"))
+                    app.update_output.emit(
+                        log_message("[Distributed] Dask distributed computing library available")
+                    )
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
 
             try:
                 import celery  # noqa: F401 - Checking availability
+
                 processing_frameworks["celery"] = True
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
 
             try:
                 import joblib  # noqa: F401 - Checking availability
+
                 processing_frameworks["joblib"] = True
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
 
             try:
                 import concurrent.futures
+
                 processing_frameworks["concurrent_futures"] = True
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
@@ -5327,7 +6611,9 @@ def _check_intercepted_traffic(proxy_server):
                     "status": "active",
                     "load_average": 0.3,
                     "tasks_running": 0,
-                    "frameworks": [fw for fw, available in processing_frameworks.items() if available],
+                    "frameworks": [
+                        fw for fw, available in processing_frameworks.items() if available
+                    ],
                 }
                 cluster_nodes.append(local_node)
 
@@ -5335,6 +6621,7 @@ def _check_intercepted_traffic(proxy_server):
                 if processing_frameworks.get("ray", False):
                     try:
                         import ray  # pylint: disable=import-error
+
                         # Try to connect to existing Ray cluster
                         if not ray.is_initialized():
                             # Start local Ray cluster if none exists
@@ -5351,21 +6638,43 @@ def _check_intercepted_traffic(proxy_server):
                                     "ip_address": ray_node.get("NodeManagerAddress", "unknown"),
                                     "cpu_cores": int(node_resources.get("CPU", 0)),
                                     "memory_gb": int(node_resources.get("memory", 0) / (1024**3)),
-                                    "available_memory_gb": int(node_resources.get("memory", 0) / (1024**3)),
+                                    "available_memory_gb": int(
+                                        node_resources.get("memory", 0) / (1024**3)
+                                    ),
                                     "node_type": "ray_worker",
                                     "status": "active",
-                                    "load_average": 1.0 - (ray.available_resources().get("CPU", 0) / node_resources.get("CPU", 1)),
+                                    "load_average": 1.0
+                                    - (
+                                        ray.available_resources().get("CPU", 0)
+                                        / node_resources.get("CPU", 1)
+                                    ),
                                     "tasks_running": 0,
                                     "frameworks": ["ray"],
                                 }
                                 cluster_nodes.append(real_node)
 
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[Distributed] Connected to Ray cluster with {len(ray_nodes)} nodes"))
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                            app.update_output.emit(
+                                log_message(
+                                    f"[Distributed] Connected to Ray cluster with {len(ray_nodes)} nodes"
+                                )
+                            )
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        logger.error(
+                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                            e,
+                        )
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[Distributed] Ray initialization error: {e}"))
+                            app.update_output.emit(
+                                log_message(f"[Distributed] Ray initialization error: {e}")
+                            )
 
                 elif processing_frameworks.get("dask", False):
                     try:
@@ -5373,6 +6682,7 @@ def _check_intercepted_traffic(proxy_server):
                             Client,
                             as_completed,
                         )
+
                         # Try to connect to existing Dask cluster
                         client = Client("localhost:8786", timeout="2s")
 
@@ -5385,7 +6695,13 @@ def _check_intercepted_traffic(proxy_server):
                                 "ip_address": worker_info.get("host", "unknown"),
                                 "cpu_cores": worker_info.get("nthreads", 1),
                                 "memory_gb": int(worker_info.get("memory_limit", 0) / (1024**3)),
-                                "available_memory_gb": int((worker_info.get("memory_limit", 0) - worker_info.get("memory", 0)) / (1024**3)),
+                                "available_memory_gb": int(
+                                    (
+                                        worker_info.get("memory_limit", 0)
+                                        - worker_info.get("memory", 0)
+                                    )
+                                    / (1024**3)
+                                ),
                                 "node_type": "dask_worker",
                                 "status": "active",
                                 "load_average": worker_info.get("cpu", 0) / 100.0,
@@ -5395,11 +6711,27 @@ def _check_intercepted_traffic(proxy_server):
                             cluster_nodes.append(real_node)
 
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[Distributed] Connected to Dask cluster with {len(scheduler_info['workers'])} workers"))
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                            app.update_output.emit(
+                                log_message(
+                                    f"[Distributed] Connected to Dask cluster with {len(scheduler_info['workers'])} workers"
+                                )
+                            )
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        logger.error(
+                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                            e,
+                        )
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[Distributed] Dask connection error: {e}"))
+                            app.update_output.emit(
+                                log_message(f"[Distributed] Dask connection error: {e}")
+                            )
 
                         # Start local Dask cluster
                         try:
@@ -5407,21 +6739,34 @@ def _check_intercepted_traffic(proxy_server):
                                 Client,
                                 LocalCluster,
                             )
-                            cluster = LocalCluster(n_workers=min(4, cpu_count // 2), threads_per_worker=2)
+
+                            cluster = LocalCluster(
+                                n_workers=min(4, cpu_count // 2), threads_per_worker=2
+                            )
                             client = Client(cluster)
 
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message("[Distributed] Started local Dask cluster"))
+                                app.update_output.emit(
+                                    log_message("[Distributed] Started local Dask cluster")
+                                )
                         except Exception as e:
                             logger.debug(f"Failed to start Dask cluster: {e}")
 
                 app.cluster_state["nodes"] = cluster_nodes
-                app.cluster_state["active_workers"] = len([node for node in cluster_nodes if node["status"] == "active"])
-                app.cluster_state["total_capacity"] = sum(node["cpu_cores"] for node in cluster_nodes)
+                app.cluster_state["active_workers"] = len(
+                    [node for node in cluster_nodes if node["status"] == "active"]
+                )
+                app.cluster_state["total_capacity"] = sum(
+                    node["cpu_cores"] for node in cluster_nodes
+                )
                 app.cluster_state["cluster_status"] = "ready"
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[Distributed] Initialized cluster with {len(cluster_nodes)} nodes ({app.cluster_state['total_capacity']} cores)"))
+                    app.update_output.emit(
+                        log_message(
+                            f"[Distributed] Initialized cluster with {len(cluster_nodes)} nodes ({app.cluster_state['total_capacity']} cores)"
+                        )
+                    )
 
                 # Execute real distributed tasks
                 if hasattr(app, "binary_path") and app.binary_path and len(cluster_nodes) > 0:
@@ -5436,20 +6781,34 @@ def _check_intercepted_traffic(proxy_server):
                         # Create real analysis tasks
                         chunk_size = max(1024, len(binary_data) // 8)  # Divide into 8 chunks
                         for i in range(0, len(binary_data), chunk_size):
-                            chunk = binary_data[i:i+chunk_size]
-                            distributed_tasks.append({
-                                "task_id": f"chunk_analysis_{i}",
-                                "type": "binary_chunk_analysis",
-                                "priority": "high",
-                                "data": chunk,
-                                "offset": i,
-                            })
+                            chunk = binary_data[i : i + chunk_size]
+                            distributed_tasks.append(
+                                {
+                                    "task_id": f"chunk_analysis_{i}",
+                                    "type": "binary_chunk_analysis",
+                                    "priority": "high",
+                                    "data": chunk,
+                                    "offset": i,
+                                }
+                            )
                     except:
                         # Fallback tasks if binary can't be read
                         distributed_tasks = [
-                            {"task_id": "binary_hash", "type": "hash_computation", "priority": "high"},
-                            {"task_id": "string_extract", "type": "string_extraction", "priority": "medium"},
-                            {"task_id": "entropy_calc", "type": "entropy_analysis", "priority": "low"},
+                            {
+                                "task_id": "binary_hash",
+                                "type": "hash_computation",
+                                "priority": "high",
+                            },
+                            {
+                                "task_id": "string_extract",
+                                "type": "string_extraction",
+                                "priority": "medium",
+                            },
+                            {
+                                "task_id": "entropy_calc",
+                                "type": "entropy_analysis",
+                                "priority": "low",
+                            },
                         ]
 
                     # Execute tasks with real distributed framework
@@ -5463,7 +6822,10 @@ def _check_intercepted_traffic(proxy_server):
                         def analyze_chunk(task):
                             start = time.time()
 
-                            result = {"task_id": task["task_id"], "node_id": ray.get_runtime_context().node_id.hex()[:8]}
+                            result = {
+                                "task_id": task["task_id"],
+                                "node_id": ray.get_runtime_context().node_id.hex()[:8],
+                            }
 
                             if task["type"] == "binary_chunk_analysis" and "data" in task:
                                 # Real chunk analysis
@@ -5471,14 +6833,18 @@ def _check_intercepted_traffic(proxy_server):
                                 result["hash"] = hashlib.sha256(chunk).hexdigest()
                                 result["size"] = len(chunk)
                                 result["entropy"] = sum(chunk) / len(chunk) if chunk else 0
-                                result["strings_found"] = len([i for i in range(len(chunk)-4) if chunk[i:i+4].isascii()])
+                                result["strings_found"] = len(
+                                    [i for i in range(len(chunk) - 4) if chunk[i : i + 4].isascii()]
+                                )
 
                             result["execution_time"] = time.time() - start
                             result["status"] = "completed"
                             return result
 
                         # Submit tasks to Ray
-                        futures = [analyze_chunk.remote(task) for task in distributed_tasks[:5]]  # Limit to 5 tasks
+                        futures = [
+                            analyze_chunk.remote(task) for task in distributed_tasks[:5]
+                        ]  # Limit to 5 tasks
 
                         # Collect results
                         for future in futures:
@@ -5486,16 +6852,29 @@ def _check_intercepted_traffic(proxy_server):
                                 result = ray.get(future, timeout=10)
                                 task_results.append(result)
                                 app.cluster_state["tasks_completed"] += 1
-                            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                            except (
+                                AttributeError,
+                                ValueError,
+                                TypeError,
+                                RuntimeError,
+                                KeyError,
+                                OSError,
+                            ) as e:
+                                logger.error(
+                                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                                    e,
+                                )
                                 app.cluster_state["tasks_failed"] += 1
                                 if hasattr(app, "update_output"):
-                                    app.update_output.emit(log_message(f"[Distributed] Task failed: {e}"))
+                                    app.update_output.emit(
+                                        log_message(f"[Distributed] Task failed: {e}")
+                                    )
 
                     elif processing_frameworks.get("dask", False) and "client" in locals():
                         # Execute with Dask
                         def analyze_chunk(task):
                             import time
+
                             start = time.time()
 
                             result = {"task_id": task["task_id"]}
@@ -5522,14 +6901,26 @@ def _check_intercepted_traffic(proxy_server):
                                 result = future.result()
                                 task_results.append(result)
                                 app.cluster_state["tasks_completed"] += 1
-                            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                            except (
+                                AttributeError,
+                                ValueError,
+                                TypeError,
+                                RuntimeError,
+                                KeyError,
+                                OSError,
+                            ) as e:
+                                logger.error(
+                                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                                    e,
+                                )
                                 app.cluster_state["tasks_failed"] += 1
 
                     elif processing_frameworks.get("celery", False):
                         # Execute with Celery
                         # Celery would need a broker setup, but we can demonstrate the import usage
-                        app.update_output.emit(log_message("[Distributed] Celery available for task queue processing"))
+                        app.update_output.emit(
+                            log_message("[Distributed] Celery available for task queue processing")
+                        )
 
                     elif processing_frameworks.get("joblib", False):
                         # Execute with Joblib
@@ -5537,7 +6928,10 @@ def _check_intercepted_traffic(proxy_server):
 
                         def analyze_chunk_joblib(task):
                             start = time.time()
-                            result = {"task_id": task["task_id"], "node_id": f"joblib_{os.getpid()}"}
+                            result = {
+                                "task_id": task["task_id"],
+                                "node_id": f"joblib_{os.getpid()}",
+                            }
 
                             if task["type"] == "binary_chunk_analysis" and "data" in task:
                                 chunk = task["data"]
@@ -5565,7 +6959,10 @@ def _check_intercepted_traffic(proxy_server):
 
                         def analyze_chunk_futures(task):
                             start = time.time()
-                            result = {"task_id": task["task_id"], "node_id": f"futures_{threading.current_thread().ident}"}
+                            result = {
+                                "task_id": task["task_id"],
+                                "node_id": f"futures_{threading.current_thread().ident}",
+                            }
 
                             if task["type"] == "binary_chunk_analysis" and "data" in task:
                                 chunk = task["data"]
@@ -5579,8 +6976,13 @@ def _check_intercepted_traffic(proxy_server):
                             return result
 
                         # Use ThreadPoolExecutor for I/O bound tasks
-                        with concurrent.futures.ThreadPoolExecutor(max_workers=min(8, cpu_count*2)) as executor:
-                            futures = [executor.submit(analyze_chunk_futures, task) for task in distributed_tasks[:5]]
+                        with concurrent.futures.ThreadPoolExecutor(
+                            max_workers=min(8, cpu_count * 2)
+                        ) as executor:
+                            futures = [
+                                executor.submit(analyze_chunk_futures, task)
+                                for task in distributed_tasks[:5]
+                            ]
 
                             for future in concurrent.futures.as_completed(futures):
                                 try:
@@ -5597,7 +6999,10 @@ def _check_intercepted_traffic(proxy_server):
 
                         def analyze_chunk_mp(task):
                             start = time.time()
-                            result = {"task_id": task["task_id"], "node_id": f"cpu_{multiprocessing.current_process().pid}"}
+                            result = {
+                                "task_id": task["task_id"],
+                                "node_id": f"cpu_{multiprocessing.current_process().pid}",
+                            }
 
                             if task["type"] == "binary_chunk_analysis" and "data" in task:
                                 chunk = task["data"]
@@ -5618,12 +7023,18 @@ def _check_intercepted_traffic(proxy_server):
                     total_execution_time = time.time() - start_time
 
                     # Calculate performance metrics
-                    completed_tasks = [task for task in task_results if task["status"] == "completed"]
+                    completed_tasks = [
+                        task for task in task_results if task["status"] == "completed"
+                    ]
                     failed_tasks = [task for task in task_results if task["status"] == "failed"]
 
                     if completed_tasks:
-                        avg_execution_time = sum(task["execution_time"] for task in completed_tasks) / len(completed_tasks)
-                        total_memory_usage = sum(task["memory_usage_gb"] for task in completed_tasks)
+                        avg_execution_time = sum(
+                            task["execution_time"] for task in completed_tasks
+                        ) / len(completed_tasks)
+                        total_memory_usage = sum(
+                            task["memory_usage_gb"] for task in completed_tasks
+                        )
 
                         performance_metrics = {
                             "total_tasks": len(distributed_tasks),
@@ -5632,9 +7043,11 @@ def _check_intercepted_traffic(proxy_server):
                             "success_rate": len(completed_tasks) / len(distributed_tasks),
                             "average_execution_time": avg_execution_time,
                             "total_execution_time": total_execution_time,
-                            "parallel_speedup": len(distributed_tasks) / max(1, total_execution_time / 2),  # Estimated speedup
+                            "parallel_speedup": len(distributed_tasks)
+                            / max(1, total_execution_time / 2),  # Estimated speedup
                             "total_memory_usage": total_memory_usage,
-                            "throughput_tasks_per_second": len(completed_tasks) / max(1, total_execution_time),
+                            "throughput_tasks_per_second": len(completed_tasks)
+                            / max(1, total_execution_time),
                         }
 
                         app.distributed_results["performance_metrics"] = performance_metrics
@@ -5643,27 +7056,51 @@ def _check_intercepted_traffic(proxy_server):
                         optimization_suggestions = []
 
                         if performance_metrics["success_rate"] < 0.9:
-                            optimization_suggestions.append("Consider improving error handling and retry mechanisms")
+                            optimization_suggestions.append(
+                                "Consider improving error handling and retry mechanisms"
+                            )
 
                         if performance_metrics["average_execution_time"] > 2.0:
-                            optimization_suggestions.append("Tasks may benefit from further parallelization")
+                            optimization_suggestions.append(
+                                "Tasks may benefit from further parallelization"
+                            )
 
                         if performance_metrics["parallel_speedup"] < 2.0:
-                            optimization_suggestions.append("Increase cluster size or optimize task distribution")
+                            optimization_suggestions.append(
+                                "Increase cluster size or optimize task distribution"
+                            )
 
                         if total_memory_usage > available_memory * 0.8:
-                            optimization_suggestions.append("Memory usage is high - consider memory optimization")
+                            optimization_suggestions.append(
+                                "Memory usage is high - consider memory optimization"
+                            )
 
-                        app.distributed_results["optimization_suggestions"] = optimization_suggestions
+                        app.distributed_results["optimization_suggestions"] = (
+                            optimization_suggestions
+                        )
 
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[Distributed] Executed {len(distributed_tasks)} tasks with {performance_metrics['success_rate']:.1%} success rate"))
-                            app.update_output.emit(log_message(f"[Distributed] Average execution time: {avg_execution_time:.2f}s, Speedup: {performance_metrics['parallel_speedup']:.2f}x"))
+                            app.update_output.emit(
+                                log_message(
+                                    f"[Distributed] Executed {len(distributed_tasks)} tasks with {performance_metrics['success_rate']:.1%} success rate"
+                                )
+                            )
+                            app.update_output.emit(
+                                log_message(
+                                    f"[Distributed] Average execution time: {avg_execution_time:.2f}s, Speedup: {performance_metrics['parallel_speedup']:.2f}x"
+                                )
+                            )
                 elif hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Distributed] No binary loaded - cluster ready for distributed tasks"))
+                    app.update_output.emit(
+                        log_message(
+                            "[Distributed] No binary loaded - cluster ready for distributed tasks"
+                        )
+                    )
             else:
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Distributed] No distributed processing frameworks available"))
+                    app.update_output.emit(
+                        log_message("[Distributed] No distributed processing frameworks available")
+                    )
                 app.cluster_state["cluster_status"] = "unavailable"
 
             # Set up analysis results
@@ -5676,15 +7113,21 @@ def _check_intercepted_traffic(proxy_server):
                 status = "✓" if available else "✗"
                 app.analyze_results.append(f"- {framework.capitalize()}: {status}")
 
-            app.analyze_results.append(f"\nCluster status: {app.cluster_state['cluster_status'].upper()}")
+            app.analyze_results.append(
+                f"\nCluster status: {app.cluster_state['cluster_status'].upper()}"
+            )
             if app.cluster_state["nodes"]:
                 app.analyze_results.append(f"Cluster nodes: {len(app.cluster_state['nodes'])}")
-                app.analyze_results.append(f"Total CPU cores: {app.cluster_state['total_capacity']}")
+                app.analyze_results.append(
+                    f"Total CPU cores: {app.cluster_state['total_capacity']}"
+                )
                 app.analyze_results.append(f"Active workers: {app.cluster_state['active_workers']}")
 
                 app.analyze_results.append("\nNode details:")
                 for node in app.cluster_state["nodes"][:3]:  # Show first 3 nodes
-                    app.analyze_results.append(f"- {node['node_id']}: {node['cpu_cores']} cores, {node['memory_gb']}GB RAM ({node['status']})")
+                    app.analyze_results.append(
+                        f"- {node['node_id']}: {node['cpu_cores']} cores, {node['memory_gb']}GB RAM ({node['status']})"
+                    )
                 if len(app.cluster_state["nodes"]) > 3:
                     remaining = len(app.cluster_state["nodes"]) - 3
                     app.analyze_results.append(f"- ... and {remaining} more nodes")
@@ -5692,11 +7135,19 @@ def _check_intercepted_traffic(proxy_server):
             if app.distributed_results.get("performance_metrics"):
                 metrics = app.distributed_results["performance_metrics"]
                 app.analyze_results.append("\nPerformance metrics:")
-                app.analyze_results.append(f"- Tasks completed: {metrics['completed_tasks']}/{metrics['total_tasks']}")
+                app.analyze_results.append(
+                    f"- Tasks completed: {metrics['completed_tasks']}/{metrics['total_tasks']}"
+                )
                 app.analyze_results.append(f"- Success rate: {metrics['success_rate']:.1%}")
-                app.analyze_results.append(f"- Average execution time: {metrics['average_execution_time']:.2f}s")
-                app.analyze_results.append(f"- Parallel speedup: {metrics['parallel_speedup']:.2f}x")
-                app.analyze_results.append(f"- Throughput: {metrics['throughput_tasks_per_second']:.2f} tasks/sec")
+                app.analyze_results.append(
+                    f"- Average execution time: {metrics['average_execution_time']:.2f}s"
+                )
+                app.analyze_results.append(
+                    f"- Parallel speedup: {metrics['parallel_speedup']:.2f}x"
+                )
+                app.analyze_results.append(
+                    f"- Throughput: {metrics['throughput_tasks_per_second']:.2f} tasks/sec"
+                )
                 app.analyze_results.append(f"- Memory usage: {metrics['total_memory_usage']:.2f}GB")
 
             if app.distributed_results.get("optimization_suggestions"):
@@ -5713,23 +7164,33 @@ def _check_intercepted_traffic(proxy_server):
             app.analyze_results.append("- Result aggregation and merging")
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Distributed] Distributed processing system initialized successfully"))
+                app.update_output.emit(
+                    log_message(
+                        "[Distributed] Distributed processing system initialized successfully"
+                    )
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[Distributed] Error running distributed processing: {e}"))
+                app.update_output.emit(
+                    log_message(f"[Distributed] Error running distributed processing: {e}")
+                )
+
     def run_gpu_accelerated_analysis(app, *args, **kwargs):
         """Run GPU-accelerated analysis when accelerator not available"""
         _ = args, kwargs
         try:
             from ..core.processing.gpu_accelerator import GPUAccelerator
+
             accelerator = GPUAccelerator()
             return accelerator.run_gpu_analysis()
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[GPU] Starting GPU-accelerated analysis system..."))
+                app.update_output.emit(
+                    log_message("[GPU] Starting GPU-accelerated analysis system...")
+                )
 
             # Initialize GPU acceleration configuration
             if not hasattr(app, "gpu_config"):
@@ -5778,6 +7239,7 @@ def _check_intercepted_traffic(proxy_server):
             try:
                 import pycuda.autoinit  # noqa: F401 - Required for CUDA initialization
                 import pycuda.driver as cuda
+
                 gpu_frameworks["pycuda"] = True
                 if hasattr(app, "update_output"):
                     app.update_output.emit(log_message("[GPU] PyCUDA available for GPU computing"))
@@ -5786,6 +7248,7 @@ def _check_intercepted_traffic(proxy_server):
 
             try:
                 import cupy  # noqa: F401 - Checking availability
+
                 gpu_frameworks["cupy"] = True
                 if hasattr(app, "update_output"):
                     app.update_output.emit(log_message("[GPU] CuPy GPU array library available"))
@@ -5794,6 +7257,7 @@ def _check_intercepted_traffic(proxy_server):
 
             try:
                 from numba import cuda as numba_cuda  # noqa: F401 - Checking availability
+
                 gpu_frameworks["numba_cuda"] = True
                 if hasattr(app, "update_output"):
                     app.update_output.emit(log_message("[GPU] Numba CUDA JIT compiler available"))
@@ -5803,18 +7267,23 @@ def _check_intercepted_traffic(proxy_server):
             try:
                 # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
                 import os
+
                 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
                 import tensorflow as tf
+
                 if tf.config.list_physical_devices("GPU"):
                     gpu_frameworks["tensorflow_gpu"] = True
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[GPU] TensorFlow GPU support available"))
+                        app.update_output.emit(
+                            log_message("[GPU] TensorFlow GPU support available")
+                        )
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
 
             try:
                 from ..utils.gpu_autoloader import get_gpu_info, gpu_autoloader
+
                 gpu_info = get_gpu_info()
                 if gpu_info["available"]:
                     gpu_frameworks["pytorch_cuda"] = True  # Keep for compatibility
@@ -5822,21 +7291,27 @@ def _check_intercepted_traffic(proxy_server):
                     gpu_type = gpu_info["type"]
                     device_name = gpu_info["info"].get("device_name", "Unknown GPU")
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[GPU] {gpu_type} support available: {device_name}"))
+                        app.update_output.emit(
+                            log_message(f"[GPU] {gpu_type} support available: {device_name}")
+                        )
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
                 # Fallback to old method
                 try:
                     import torch
+
                     if torch.cuda.is_available():
                         gpu_frameworks["pytorch_cuda"] = True
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message("[GPU] PyTorch CUDA support available"))
+                            app.update_output.emit(
+                                log_message("[GPU] PyTorch CUDA support available")
+                            )
                 except ImportError:
                     pass
 
             try:
                 import pyopencl as cl
+
                 gpu_frameworks["opencl"] = True
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
@@ -5849,6 +7324,7 @@ def _check_intercepted_traffic(proxy_server):
             if gpu_frameworks["pycuda"]:
                 try:
                     import pycuda.driver as cuda  # pylint: disable=import-error
+
                     cuda.init()
 
                     for i in range(cuda.Device.count()):
@@ -5864,14 +7340,27 @@ def _check_intercepted_traffic(proxy_server):
                             "status": "available",
                         }
                         detected_devices.append(device_info)
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e,
+                    )
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[GPU] CUDA device detection failed: {e}"))
+                        app.update_output.emit(
+                            log_message(f"[GPU] CUDA device detection failed: {e}")
+                        )
 
             elif gpu_frameworks.get("unified_gpu") or gpu_frameworks["pytorch_cuda"]:
                 try:
                     from ..utils.gpu_autoloader import get_gpu_info, gpu_autoloader
+
                     gpu_info = get_gpu_info()
                     if gpu_info["available"]:
                         # Create device info from unified system
@@ -5886,7 +7375,9 @@ def _check_intercepted_traffic(proxy_server):
 
                         # Add compute capability for CUDA devices
                         if gpu_info["type"] == "nvidia_cuda":
-                            device_info["compute_capability"] = gpu_info["info"].get("compute_capability", "Unknown")
+                            device_info["compute_capability"] = gpu_info["info"].get(
+                                "compute_capability", "Unknown"
+                            )
 
                         detected_devices.append(device_info)
 
@@ -5894,13 +7385,18 @@ def _check_intercepted_traffic(proxy_server):
                         try:
                             gpu_autoloader.initialize()
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message("[GPU] Autoloader initialized for automatic GPU optimization"))
+                                app.update_output.emit(
+                                    log_message(
+                                        "[GPU] Autoloader initialized for automatic GPU optimization"
+                                    )
+                                )
                         except Exception as e:
                             logger.warning(f"GPU autoloader initialization failed: {e}")
                 except ImportError:
                     # Fallback to old method
                     try:
                         import torch
+
                         if torch and torch.cuda.is_available():
                             for i in range(torch.cuda.device_count()):
                                 props = torch.cuda.get_device_properties(i)
@@ -5917,10 +7413,22 @@ def _check_intercepted_traffic(proxy_server):
                                 detected_devices.append(device_info)
                     except ImportError:
                         pass
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        logger.error(
+                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                            e,
+                        )
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[GPU] PyTorch CUDA device detection failed: {e}"))
+                            app.update_output.emit(
+                                log_message(f"[GPU] PyTorch CUDA device detection failed: {e}")
+                            )
 
             elif gpu_frameworks["opencl"]:
                 try:
@@ -5948,10 +7456,22 @@ def _check_intercepted_traffic(proxy_server):
                                 }
                                 detected_devices.append(device_info)
                                 device_id += 1
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        logger.error(
+                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                            e,
+                        )
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[GPU] OpenCL device detection failed: {e}"))
+                            app.update_output.emit(
+                                log_message(f"[GPU] OpenCL device detection failed: {e}")
+                            )
 
             # If no real GPUs detected, create virtual GPU for demonstration
             if not detected_devices and any(gpu_frameworks.values()):
@@ -5975,17 +7495,41 @@ def _check_intercepted_traffic(proxy_server):
                 app.gpu_devices["selected_device"] = best_gpu
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[GPU] Selected device: {best_gpu['name']} ({best_gpu['total_memory_mb']}MB)"))
+                    app.update_output.emit(
+                        log_message(
+                            f"[GPU] Selected device: {best_gpu['name']} ({best_gpu['total_memory_mb']}MB)"
+                        )
+                    )
 
                 # Perform GPU-accelerated analysis if binary is loaded
                 if hasattr(app, "binary_path") and app.binary_path:
                     # Create GPU-accelerated tasks
                     gpu_tasks = [
-                        {"task_name": "parallel_pattern_search", "description": "Parallel pattern matching", "complexity": "high"},
-                        {"task_name": "entropy_calculation", "description": "Entropy analysis acceleration", "complexity": "medium"},
-                        {"task_name": "hash_computation", "description": "Parallel hash computation", "complexity": "medium"},
-                        {"task_name": "string_extraction", "description": "GPU string extraction", "complexity": "low"},
-                        {"task_name": "compression_analysis", "description": "Compression ratio analysis", "complexity": "high"},
+                        {
+                            "task_name": "parallel_pattern_search",
+                            "description": "Parallel pattern matching",
+                            "complexity": "high",
+                        },
+                        {
+                            "task_name": "entropy_calculation",
+                            "description": "Entropy analysis acceleration",
+                            "complexity": "medium",
+                        },
+                        {
+                            "task_name": "hash_computation",
+                            "description": "Parallel hash computation",
+                            "complexity": "medium",
+                        },
+                        {
+                            "task_name": "string_extraction",
+                            "description": "GPU string extraction",
+                            "complexity": "low",
+                        },
+                        {
+                            "task_name": "compression_analysis",
+                            "description": "Compression ratio analysis",
+                            "complexity": "high",
+                        },
                     ]
 
                     # Execute real GPU tasks
@@ -6031,12 +7575,15 @@ def _check_intercepted_traffic(proxy_server):
 
                                 if task["task_name"] == "parallel_pattern_search" and binary_data:
                                     # GPU pattern search
-                                    data_gpu = cp.asarray(np.frombuffer(binary_data, dtype=np.uint8))
+                                    data_gpu = cp.asarray(
+                                        np.frombuffer(binary_data, dtype=np.uint8)
+                                    )
                                     pattern_gpu = cp.array([0, 0, 0, 0], dtype=cp.uint8)
 
                                     # Parallel search kernel
                                     matches = cp.zeros(1, dtype=cp.int32)
-                                    kernel = cp.RawKernel(r"""
+                                    kernel = cp.RawKernel(
+                                        r"""
                                     extern "C" __global__
                                     void pattern_search(const unsigned char* data, int data_size,
                                                       const unsigned char* pattern, int pattern_size,
@@ -6053,18 +7600,35 @@ def _check_intercepted_traffic(proxy_server):
                                             if (match) atomicAdd(matches, 1);
                                         }
                                     }
-                                    """, "pattern_search")
+                                    """,
+                                        "pattern_search",
+                                    )
 
                                     block = (256,)
                                     grid = ((len(data_gpu) + block[0] - 1) // block[0],)
-                                    kernel(grid, block, (data_gpu, len(data_gpu), pattern_gpu, len(pattern_gpu), matches))
+                                    kernel(
+                                        grid,
+                                        block,
+                                        (
+                                            data_gpu,
+                                            len(data_gpu),
+                                            pattern_gpu,
+                                            len(pattern_gpu),
+                                            matches,
+                                        ),
+                                    )
 
                                     gpu_matches = int(matches.get())
                                     task_result["gpu_result"] = gpu_matches
 
                                 elif task["task_name"] == "entropy_calculation" and binary_data:
                                     # GPU entropy calculation
-                                    data_gpu = cp.asarray(np.frombuffer(binary_data[:min(1024*1024, len(binary_data))], dtype=np.uint8))
+                                    data_gpu = cp.asarray(
+                                        np.frombuffer(
+                                            binary_data[: min(1024 * 1024, len(binary_data))],
+                                            dtype=np.uint8,
+                                        )
+                                    )
                                     hist = cp.bincount(data_gpu, minlength=256) / len(data_gpu)
                                     hist = hist[hist > 0]
                                     entropy = -cp.sum(hist * cp.log2(hist))
@@ -6072,7 +7636,9 @@ def _check_intercepted_traffic(proxy_server):
 
                                 elif task["task_name"] == "hash_computation" and binary_data:
                                     # GPU parallel hash (simplified)
-                                    data_gpu = cp.asarray(np.frombuffer(binary_data[:1024], dtype=np.uint8))
+                                    data_gpu = cp.asarray(
+                                        np.frombuffer(binary_data[:1024], dtype=np.uint8)
+                                    )
                                     hash_val = cp.sum(data_gpu * cp.arange(len(data_gpu)))
                                     task_result["hash"] = int(hash_val.get())
 
@@ -6084,13 +7650,27 @@ def _check_intercepted_traffic(proxy_server):
 
                                 task_result["gpu_execution_time"] = gpu_time
                                 task_result["cpu_execution_time"] = cpu_time
-                                task_result["speedup_factor"] = cpu_time / gpu_time if gpu_time > 0 else 1.0
+                                task_result["speedup_factor"] = (
+                                    cpu_time / gpu_time if gpu_time > 0 else 1.0
+                                )
                                 task_result["memory_used_mb"] = memory_used
-                                task_result["gpu_utilization"] = min(0.95, (cpu_time / gpu_time) / 10.0)  # Estimate
+                                task_result["gpu_utilization"] = min(
+                                    0.95, (cpu_time / gpu_time) / 10.0
+                                )  # Estimate
                                 task_result["status"] = "completed"
 
-                            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                            except (
+                                AttributeError,
+                                ValueError,
+                                TypeError,
+                                RuntimeError,
+                                KeyError,
+                                OSError,
+                            ) as e:
+                                logger.error(
+                                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                                    e,
+                                )
                                 # Fallback for GPU errors
                                 task_result["status"] = "failed"
                                 task_result["error"] = str(e)
@@ -6100,7 +7680,10 @@ def _check_intercepted_traffic(proxy_server):
                                 task_result["memory_used_mb"] = 100
                                 task_result["gpu_utilization"] = 0.0
 
-                        elif gpu_frameworks.get("opencl", False) and best_gpu["framework"] == "OpenCL":
+                        elif (
+                            gpu_frameworks.get("opencl", False)
+                            and best_gpu["framework"] == "OpenCL"
+                        ):
                             try:
                                 import numpy as np
                                 import pyopencl as cl
@@ -6112,7 +7695,9 @@ def _check_intercepted_traffic(proxy_server):
                                 try:
                                     # Create OpenCL context and queue
                                     platforms = cl.get_platforms()
-                                    devices = platforms[0].get_devices(device_type=cl.device_type.GPU)
+                                    devices = platforms[0].get_devices(
+                                        device_type=cl.device_type.GPU
+                                    )
                                     ctx = cl.Context([devices[0]])
                                     queue = cl.CommandQueue(ctx)
 
@@ -6121,7 +7706,10 @@ def _check_intercepted_traffic(proxy_server):
 
                                     if task["task_name"] == "entropy_calculation" and binary_data:
                                         # CPU entropy
-                                        data = np.frombuffer(binary_data[:min(1024*1024, len(binary_data))], dtype=np.uint8)
+                                        data = np.frombuffer(
+                                            binary_data[: min(1024 * 1024, len(binary_data))],
+                                            dtype=np.uint8,
+                                        )
                                         hist, _ = np.histogram(data, bins=256, range=(0, 255))
                                         hist = hist / len(data)
                                         hist = hist[hist > 0]
@@ -6135,15 +7723,22 @@ def _check_intercepted_traffic(proxy_server):
 
                                     if task["task_name"] == "entropy_calculation" and binary_data:
                                         # OpenCL entropy calculation
-                                        data = np.frombuffer(binary_data[:min(1024*1024, len(binary_data))], dtype=np.uint8)
+                                        data = np.frombuffer(
+                                            binary_data[: min(1024 * 1024, len(binary_data))],
+                                            dtype=np.uint8,
+                                        )
 
                                         # Create buffers
                                         mf = cl.mem_flags
-                                        data_buffer = cl.Buffer(ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data)
-                                        hist_buffer = cl.Buffer(ctx, mf.READ_WRITE, size=256*4)
+                                        data_buffer = cl.Buffer(
+                                            ctx, mf.READ_ONLY | mf.COPY_HOST_PTR, hostbuf=data
+                                        )
+                                        hist_buffer = cl.Buffer(ctx, mf.READ_WRITE, size=256 * 4)
 
                                         # Histogram kernel
-                                        prg = cl.Program(ctx, """
+                                        prg = cl.Program(
+                                            ctx,
+                                            """
                                         __kernel void histogram(__global const uchar* data,
                                                                __global uint* hist,
                                                                const uint data_size) {
@@ -6152,13 +7747,23 @@ def _check_intercepted_traffic(proxy_server):
                                                 atomic_inc(&hist[data[gid]]);
                                             }
                                         }
-                                        """).build()
+                                        """,
+                                        ).build()
 
                                         # Clear histogram
-                                        cl.enqueue_fill_buffer(queue, hist_buffer, np.uint32(0), 0, 256*4)
+                                        cl.enqueue_fill_buffer(
+                                            queue, hist_buffer, np.uint32(0), 0, 256 * 4
+                                        )
 
                                         # Execute kernel
-                                        prg.histogram(queue, (len(data),), None, data_buffer, hist_buffer, np.uint32(len(data)))
+                                        prg.histogram(
+                                            queue,
+                                            (len(data),),
+                                            None,
+                                            data_buffer,
+                                            hist_buffer,
+                                            np.uint32(len(data)),
+                                        )
 
                                         # Read results
                                         hist = np.empty(256, dtype=np.uint32)
@@ -6174,13 +7779,27 @@ def _check_intercepted_traffic(proxy_server):
 
                                     task_result["gpu_execution_time"] = gpu_time
                                     task_result["cpu_execution_time"] = cpu_time
-                                    task_result["speedup_factor"] = cpu_time / gpu_time if gpu_time > 0 else 1.0
-                                    task_result["memory_used_mb"] = len(binary_data) / (1024 * 1024) if binary_data else 0
+                                    task_result["speedup_factor"] = (
+                                        cpu_time / gpu_time if gpu_time > 0 else 1.0
+                                    )
+                                    task_result["memory_used_mb"] = (
+                                        len(binary_data) / (1024 * 1024) if binary_data else 0
+                                    )
                                     task_result["gpu_utilization"] = 0.8  # Estimate
                                     task_result["status"] = "completed"
 
-                                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                                except (
+                                    AttributeError,
+                                    ValueError,
+                                    TypeError,
+                                    RuntimeError,
+                                    KeyError,
+                                    OSError,
+                                ) as e:
+                                    logger.error(
+                                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                                        e,
+                                    )
                                     task_result["status"] = "failed"
                                     task_result["error"] = str(e)
                                     task_result["gpu_execution_time"] = 0.1
@@ -6195,7 +7814,7 @@ def _check_intercepted_traffic(proxy_server):
 
                             if task["task_name"] == "entropy_calculation" and binary_data:
                                 # CPU entropy calculation
-                                data = binary_data[:min(1024*1024, len(binary_data))]
+                                data = binary_data[: min(1024 * 1024, len(binary_data))]
                                 hist = [0] * 256
                                 for byte in data:
                                     hist[byte] += 1
@@ -6212,7 +7831,9 @@ def _check_intercepted_traffic(proxy_server):
                             task_result["gpu_execution_time"] = cpu_time  # Same as CPU
                             task_result["cpu_execution_time"] = cpu_time
                             task_result["speedup_factor"] = 1.0  # No speedup
-                            task_result["memory_used_mb"] = len(binary_data) / (1024 * 1024) if binary_data else 0
+                            task_result["memory_used_mb"] = (
+                                len(binary_data) / (1024 * 1024) if binary_data else 0
+                            )
                             task_result["gpu_utilization"] = 0.0
                             task_result["status"] = "completed"
 
@@ -6221,12 +7842,18 @@ def _check_intercepted_traffic(proxy_server):
                         total_cpu_time += task_result["cpu_execution_time"]
 
                     # Calculate overall performance metrics
-                    successful_tasks = [task for task in completed_tasks if task["status"] == "completed"]
+                    successful_tasks = [
+                        task for task in completed_tasks if task["status"] == "completed"
+                    ]
 
                     if successful_tasks:
-                        avg_speedup = sum(task["speedup_factor"] for task in successful_tasks) / len(successful_tasks)
+                        avg_speedup = sum(
+                            task["speedup_factor"] for task in successful_tasks
+                        ) / len(successful_tasks)
                         total_speedup = total_cpu_time / total_gpu_time
-                        avg_gpu_utilization = sum(task["gpu_utilization"] for task in successful_tasks) / len(successful_tasks)
+                        avg_gpu_utilization = sum(
+                            task["gpu_utilization"] for task in successful_tasks
+                        ) / len(successful_tasks)
                         total_memory_used = sum(task["memory_used_mb"] for task in successful_tasks)
 
                         performance_metrics = {
@@ -6249,20 +7876,30 @@ def _check_intercepted_traffic(proxy_server):
                         optimization_recommendations = []
 
                         if avg_speedup < 5.0:
-                            optimization_recommendations.append("Consider optimizing memory access patterns for better GPU performance")
+                            optimization_recommendations.append(
+                                "Consider optimizing memory access patterns for better GPU performance"
+                            )
 
                         if avg_gpu_utilization < 0.8:
-                            optimization_recommendations.append("GPU utilization is low - increase parallel workload")
+                            optimization_recommendations.append(
+                                "GPU utilization is low - increase parallel workload"
+                            )
 
                         if total_memory_used > best_gpu["total_memory_mb"] * 0.8:
-                            optimization_recommendations.append("Memory usage is high - consider memory optimization techniques")
+                            optimization_recommendations.append(
+                                "Memory usage is high - consider memory optimization techniques"
+                            )
 
                         if performance_metrics["success_rate"] < 0.95:
-                            optimization_recommendations.append("Some GPU tasks failed - check numerical stability and error handling")
+                            optimization_recommendations.append(
+                                "Some GPU tasks failed - check numerical stability and error handling"
+                            )
 
                         app.gpu_analysis_results["optimization_results"] = {
                             "recommendations": optimization_recommendations,
-                            "bottlenecks": ["memory_bandwidth", "kernel_launch_overhead"] if avg_speedup < 10 else [],
+                            "bottlenecks": ["memory_bandwidth", "kernel_launch_overhead"]
+                            if avg_speedup < 10
+                            else [],
                             "optimal_configurations": {
                                 "block_size": 256,
                                 "grid_size": (best_gpu["multiprocessor_count"] * 2),
@@ -6272,13 +7909,25 @@ def _check_intercepted_traffic(proxy_server):
                         }
 
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[GPU] Completed {len(successful_tasks)} GPU tasks with {avg_speedup:.2f}x average speedup"))
-                            app.update_output.emit(log_message(f"[GPU] Total speedup: {total_speedup:.2f}x, GPU utilization: {avg_gpu_utilization:.1%}"))
+                            app.update_output.emit(
+                                log_message(
+                                    f"[GPU] Completed {len(successful_tasks)} GPU tasks with {avg_speedup:.2f}x average speedup"
+                                )
+                            )
+                            app.update_output.emit(
+                                log_message(
+                                    f"[GPU] Total speedup: {total_speedup:.2f}x, GPU utilization: {avg_gpu_utilization:.1%}"
+                                )
+                            )
                 elif hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[GPU] No binary loaded - GPU ready for accelerated analysis"))
+                    app.update_output.emit(
+                        log_message("[GPU] No binary loaded - GPU ready for accelerated analysis")
+                    )
             else:
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[GPU] No GPU devices detected - using CPU fallback"))
+                    app.update_output.emit(
+                        log_message("[GPU] No GPU devices detected - using CPU fallback")
+                    )
 
                 app.gpu_devices["selected_device"] = {
                     "device_id": -1,
@@ -6302,12 +7951,16 @@ def _check_intercepted_traffic(proxy_server):
             if detected_devices:
                 app.analyze_results.append(f"\nGPU devices detected: {len(detected_devices)}")
                 for device in detected_devices:
-                    app.analyze_results.append(f"- {device['name']}: {device['total_memory_mb']}MB, {device['multiprocessor_count']} SMs")
+                    app.analyze_results.append(
+                        f"- {device['name']}: {device['total_memory_mb']}MB, {device['multiprocessor_count']} SMs"
+                    )
 
                 selected = app.gpu_devices["selected_device"]
                 app.analyze_results.append(f"\nSelected device: {selected['name']}")
                 app.analyze_results.append(f"- Memory: {selected['total_memory_mb']}MB")
-                app.analyze_results.append(f"- Compute capability: {selected.get('compute_capability', 'N/A')}")
+                app.analyze_results.append(
+                    f"- Compute capability: {selected.get('compute_capability', 'N/A')}"
+                )
                 app.analyze_results.append(f"- Framework: {selected.get('framework', 'Unknown')}")
             else:
                 app.analyze_results.append("\nNo GPU devices available - using CPU fallback")
@@ -6315,20 +7968,30 @@ def _check_intercepted_traffic(proxy_server):
             if app.gpu_analysis_results.get("performance_comparison"):
                 metrics = app.gpu_analysis_results["performance_comparison"]
                 app.analyze_results.append("\nPerformance metrics:")
-                app.analyze_results.append(f"- Tasks completed: {metrics['successful_tasks']}/{metrics['total_tasks']}")
+                app.analyze_results.append(
+                    f"- Tasks completed: {metrics['successful_tasks']}/{metrics['total_tasks']}"
+                )
                 app.analyze_results.append(f"- Success rate: {metrics['success_rate']:.1%}")
                 app.analyze_results.append(f"- Average speedup: {metrics['average_speedup']:.2f}x")
                 app.analyze_results.append(f"- Total speedup: {metrics['total_speedup']:.2f}x")
-                app.analyze_results.append(f"- GPU utilization: {metrics['average_gpu_utilization']:.1%}")
-                app.analyze_results.append(f"- Memory usage: {metrics['total_memory_used_mb']:.1f}MB")
-                app.analyze_results.append(f"- Energy efficiency: {metrics['energy_efficiency']:.2f}")
+                app.analyze_results.append(
+                    f"- GPU utilization: {metrics['average_gpu_utilization']:.1%}"
+                )
+                app.analyze_results.append(
+                    f"- Memory usage: {metrics['total_memory_used_mb']:.1f}MB"
+                )
+                app.analyze_results.append(
+                    f"- Energy efficiency: {metrics['energy_efficiency']:.2f}"
+                )
 
                 # Show individual task results
                 if app.gpu_analysis_results.get("compute_tasks"):
                     app.analyze_results.append("\nTask performance:")
                     for task in app.gpu_analysis_results["compute_tasks"][:3]:  # Show first 3
                         if task["status"] == "completed":
-                            app.analyze_results.append(f"- {task['description']}: {task['speedup_factor']:.2f}x speedup")
+                            app.analyze_results.append(
+                                f"- {task['description']}: {task['speedup_factor']:.2f}x speedup"
+                            )
 
                     remaining_tasks = len(app.gpu_analysis_results["compute_tasks"]) - 3
                     if remaining_tasks > 0:
@@ -6350,18 +8013,25 @@ def _check_intercepted_traffic(proxy_server):
             app.analyze_results.append("- Multi-framework support")
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[GPU] GPU-accelerated analysis system initialized successfully"))
+                app.update_output.emit(
+                    log_message("[GPU] GPU-accelerated analysis system initialized successfully")
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[GPU] Error running GPU-accelerated analysis: {e}"))
+                app.update_output.emit(
+                    log_message(f"[GPU] Error running GPU-accelerated analysis: {e}")
+                )
+
     def run_symbolic_execution(app, *args, **kwargs):
         """Run symbolic execution analysis on binary."""
         _ = args, kwargs
         try:
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Symbolic] Starting symbolic execution analysis..."))
+                app.update_output.emit(
+                    log_message("[Symbolic] Starting symbolic execution analysis...")
+                )
 
             # Get binary path from app
             binary_path = getattr(app, "binary_path", None)
@@ -6401,11 +8071,15 @@ def _check_intercepted_traffic(proxy_server):
                 if hasattr(angr, "exploration_techniques"):
                     # Add memory limiter if available
                     if hasattr(angr.exploration_techniques, "MemoryLimiter"):
-                        simgr.use_technique(angr.exploration_techniques.MemoryLimiter(4096))  # 4GB limit
+                        simgr.use_technique(
+                            angr.exploration_techniques.MemoryLimiter(4096)
+                        )  # 4GB limit
 
                     # Add timeout if available
                     if hasattr(angr.exploration_techniques, "Timeout"):
-                        simgr.use_technique(angr.exploration_techniques.Timeout(300))  # 5 minute timeout
+                        simgr.use_technique(
+                            angr.exploration_techniques.Timeout(300)
+                        )  # 5 minute timeout
 
                 if hasattr(app, "update_output"):
                     app.update_output.emit(log_message("[Symbolic] Exploring execution paths..."))
@@ -6426,14 +8100,24 @@ def _check_intercepted_traffic(proxy_server):
                             for state in getattr(simgr, stash):
                                 path_info = {
                                     "stash": stash,
-                                    "address": hex(state.addr) if hasattr(state, "addr") else "unknown",
-                                    "constraints": len(state.solver.constraints) if hasattr(state, "solver") else 0,
-                                    "satisfiable": state.solver.satisfiable() if hasattr(state, "solver") else False,
+                                    "address": hex(state.addr)
+                                    if hasattr(state, "addr")
+                                    else "unknown",
+                                    "constraints": len(state.solver.constraints)
+                                    if hasattr(state, "solver")
+                                    else 0,
+                                    "satisfiable": state.solver.satisfiable()
+                                    if hasattr(state, "solver")
+                                    else False,
                                 }
 
                                 # Extract path constraints
-                                if hasattr(state, "solver") and hasattr(state.solver, "constraints"):
-                                    for constraint in list(state.solver.constraints)[:5]:  # First 5 constraints
+                                if hasattr(state, "solver") and hasattr(
+                                    state.solver, "constraints"
+                                ):
+                                    for constraint in list(state.solver.constraints)[
+                                        :5
+                                    ]:  # First 5 constraints
                                         results["constraints"].append(str(constraint))
 
                                 # Check for vulnerabilities
@@ -6459,16 +8143,22 @@ def _check_intercepted_traffic(proxy_server):
                     if hasattr(state, "solver") and hasattr(state.solver, "_solver"):
                         for var in state.solver._solver.variables():
                             if isinstance(var, claripy.ast.BV):
-                                symbolic_vars.append({
-                                    "name": str(var),
-                                    "size": var.size() if hasattr(var, "size") else 0,
-                                })
+                                symbolic_vars.append(
+                                    {
+                                        "name": str(var),
+                                        "size": var.size() if hasattr(var, "size") else 0,
+                                    }
+                                )
 
                     if symbolic_vars:
-                        results["inputs"].append({
-                            "path_address": hex(state.addr) if hasattr(state, "addr") else "unknown",
-                            "symbolic_variables": symbolic_vars,
-                        })
+                        results["inputs"].append(
+                            {
+                                "path_address": hex(state.addr)
+                                if hasattr(state, "addr")
+                                else "unknown",
+                                "symbolic_variables": symbolic_vars,
+                            }
+                        )
 
                 results["summary"] = {
                     "total_paths": found_paths,
@@ -6479,19 +8169,28 @@ def _check_intercepted_traffic(proxy_server):
                 }
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[Symbolic] Analysis complete. Found {found_paths} paths, {len(results['vulnerabilities'])} potential vulnerabilities"))
+                    app.update_output.emit(
+                        log_message(
+                            f"[Symbolic] Analysis complete. Found {found_paths} paths, {len(results['vulnerabilities'])} potential vulnerabilities"
+                        )
+                    )
 
             except ImportError:
                 # Fallback implementation without angr
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Symbolic] Angr not available, using basic symbolic analysis..."))
+                    app.update_output.emit(
+                        log_message(
+                            "[Symbolic] Angr not available, using basic symbolic analysis..."
+                        )
+                    )
 
                 # Basic static analysis as fallback
                 import os
+
                 file_size = os.path.getsize(binary_path)
 
                 with open(binary_path, "rb") as f:
-                    data = f.read(min(file_size, 1024*1024))  # Read first 1MB
+                    data = f.read(min(file_size, 1024 * 1024))  # Read first 1MB
 
                 # Look for interesting patterns
                 patterns = [
@@ -6506,23 +8205,28 @@ def _check_intercepted_traffic(proxy_server):
 
                 # Use common utility for pattern searching
                 from ..utils.binary.binary_io import find_all_pattern_offsets
+
                 for pattern, description in patterns:
                     offsets = find_all_pattern_offsets(data, pattern)
                     for pos in offsets:
-                        results["paths"].append({
-                            "stash": "potential",
-                            "address": hex(pos),
-                            "description": description,
-                        })
+                        results["paths"].append(
+                            {
+                                "stash": "potential",
+                                "address": hex(pos),
+                                "description": description,
+                            }
+                        )
 
                         # Add as potential vulnerability if it's a comparison
                         if b"cmp" in pattern or b"strcmp" in pattern:
-                            results["vulnerabilities"].append({
-                                "type": "authentication_check",
-                                "address": hex(pos),
-                                "severity": "medium",
-                                "description": f"{description} - may be bypassable",
-                            })
+                            results["vulnerabilities"].append(
+                                {
+                                    "type": "authentication_check",
+                                    "address": hex(pos),
+                                    "severity": "medium",
+                                    "description": f"{description} - may be bypassable",
+                                }
+                            )
 
                         offset = pos + 1
                         logger.debug("Next search offset: %d", offset)
@@ -6534,24 +8238,40 @@ def _check_intercepted_traffic(proxy_server):
                 }
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[Symbolic] Basic analysis complete. Found {len(results['paths'])} interesting points"))
+                    app.update_output.emit(
+                        log_message(
+                            f"[Symbolic] Basic analysis complete. Found {len(results['paths'])} interesting points"
+                        )
+                    )
 
             # Update UI with results
             if hasattr(app, "update_analysis_results"):
                 app.update_analysis_results.emit("\n=== Symbolic Execution Results ===\n")
                 app.update_analysis_results.emit(f"Binary: {os.path.basename(binary_path)}\n")
-                app.update_analysis_results.emit(f"Analysis Type: {results['summary'].get('analysis_type', 'symbolic_execution')}\n")
-                app.update_analysis_results.emit(f"Total Paths: {results['summary'].get('total_paths', 0)}\n")
+                app.update_analysis_results.emit(
+                    f"Analysis Type: {results['summary'].get('analysis_type', 'symbolic_execution')}\n"
+                )
+                app.update_analysis_results.emit(
+                    f"Total Paths: {results['summary'].get('total_paths', 0)}\n"
+                )
 
                 if results["vulnerabilities"]:
-                    app.update_analysis_results.emit(f"\nPotential Vulnerabilities ({len(results['vulnerabilities'])}):\n")
+                    app.update_analysis_results.emit(
+                        f"\nPotential Vulnerabilities ({len(results['vulnerabilities'])}):\n"
+                    )
                     for vuln in results["vulnerabilities"][:10]:  # Show first 10
-                        app.update_analysis_results.emit(f"  [{vuln['severity'].upper()}] {vuln['type']} at {vuln['address']}: {vuln['description']}\n")
+                        app.update_analysis_results.emit(
+                            f"  [{vuln['severity'].upper()}] {vuln['type']} at {vuln['address']}: {vuln['description']}\n"
+                        )
 
                 if results["paths"]:
-                    app.update_analysis_results.emit(f"\nExecution Paths ({len(results['paths'])}):\n")
+                    app.update_analysis_results.emit(
+                        f"\nExecution Paths ({len(results['paths'])}):\n"
+                    )
                     for path in results["paths"][:10]:  # Show first 10
-                        app.update_analysis_results.emit(f"  - {path.get('stash', 'unknown')} at {path.get('address', 'unknown')}")
+                        app.update_analysis_results.emit(
+                            f"  - {path.get('stash', 'unknown')} at {path.get('address', 'unknown')}"
+                        )
                         if "description" in path:
                             app.update_analysis_results.emit(f" - {path['description']}")
                         app.update_analysis_results.emit("\n")
@@ -6559,17 +8279,23 @@ def _check_intercepted_traffic(proxy_server):
             return results
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error during symbolic execution: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Symbolic] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def run_incremental_analysis(app, *args, **kwargs):
         """Run incremental analysis that only analyzes changed portions."""
         _ = args, kwargs
         try:
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Incremental] Starting incremental analysis..."))
+                app.update_output.emit(
+                    log_message("[Incremental] Starting incremental analysis...")
+                )
 
             # Get binary path from app
             binary_path = getattr(app, "binary_path", None)
@@ -6581,13 +8307,16 @@ def _check_intercepted_traffic(proxy_server):
             # Try to use IncrementalAnalysisManager
             try:
                 from ..core.analysis.incremental_manager import IncrementalAnalysisManager
+
                 manager = IncrementalAnalysisManager()
                 results = manager.analyze_incremental(binary_path)
             except ImportError as e:
                 logger.error("Import error in main_app.py: %s", e)
                 # Fallback implementation
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Incremental] Using fallback implementation..."))
+                    app.update_output.emit(
+                        log_message("[Incremental] Using fallback implementation...")
+                    )
 
                 import os
                 import time
@@ -6619,7 +8348,10 @@ def _check_intercepted_traffic(proxy_server):
                         with open(cache_file) as f:
                             previous_analysis = json.load(f)
                     except (OSError, json.JSONDecodeError, ValueError, KeyError) as e:
-                        logger.error("(IOError, json.JSONDecodeError, ValueError, KeyError) in main_app.py: %s", e)
+                        logger.error(
+                            "(IOError, json.JSONDecodeError, ValueError, KeyError) in main_app.py: %s",
+                            e,
+                        )
 
                 # Check for changes
                 if previous_analysis and previous_analysis.get("hash") == current_hash:
@@ -6630,14 +8362,20 @@ def _check_intercepted_traffic(proxy_server):
                     if previous_analysis:
                         prev_size = previous_analysis.get("file_size", 0)
                         if prev_size != results["file_size"]:
-                            results["changes"].append({
-                                "type": "size_change",
-                                "offset": 0,
-                                "description": f"Size changed from {prev_size} to {results['file_size']} bytes",
-                            })
+                            results["changes"].append(
+                                {
+                                    "type": "size_change",
+                                    "offset": 0,
+                                    "description": f"Size changed from {prev_size} to {results['file_size']} bytes",
+                                }
+                            )
 
                 # Save current analysis
-                cache_data = {"hash": current_hash, "file_size": results["file_size"], "timestamp": time.time()}
+                cache_data = {
+                    "hash": current_hash,
+                    "file_size": results["file_size"],
+                    "timestamp": time.time(),
+                }
                 try:
                     with open(cache_file, "w") as f:
                         json.dump(cache_data, f)
@@ -6649,7 +8387,9 @@ def _check_intercepted_traffic(proxy_server):
             if hasattr(app, "update_analysis_results"):
                 app.update_analysis_results.emit("\n=== Incremental Analysis Results ===\n")
                 app.update_analysis_results.emit(f"Binary: {os.path.basename(binary_path)}\n")
-                app.update_analysis_results.emit(f"Changes Detected: {'Yes' if results.get('changes_detected') else 'No'}\n")
+                app.update_analysis_results.emit(
+                    f"Changes Detected: {'Yes' if results.get('changes_detected') else 'No'}\n"
+                )
 
                 if results.get("changes"):
                     app.update_analysis_results.emit(f"\nChanges ({len(results['changes'])}):\n")
@@ -6662,22 +8402,30 @@ def _check_intercepted_traffic(proxy_server):
             return results
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error during incremental analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Incremental] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def run_memory_optimized_analysis(app, *args, **kwargs):
         """Run memory-optimized analysis for large binaries."""
         _ = args, kwargs
         try:
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Memory Optimized] Starting memory-optimized analysis..."))
+                app.update_output.emit(
+                    log_message("[Memory Optimized] Starting memory-optimized analysis...")
+                )
 
             binary_path = getattr(app, "binary_path", None)
             if not binary_path:
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Memory Optimized] Error: No binary selected"))
+                    app.update_output.emit(
+                        log_message("[Memory Optimized] Error: No binary selected")
+                    )
                 return {"success": False, "error": "No binary selected"}
 
             import mmap
@@ -6688,27 +8436,34 @@ def _check_intercepted_traffic(proxy_server):
                 "success": True,
                 "binary_path": binary_path,
                 "file_size": file_size,
-                "analysis_method": "memory_mapped" if file_size > 100*1024*1024 else "direct_load",
+                "analysis_method": "memory_mapped"
+                if file_size > 100 * 1024 * 1024
+                else "direct_load",
                 "patterns_found": [],
                 "entropy": 0.0,
                 "sections": [],
             }
 
             # Use memory mapping for large files
-            if file_size > 100*1024*1024:  # 100MB
+            if file_size > 100 * 1024 * 1024:  # 100MB
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[Memory Optimized] Using memory mapping for {file_size/1024/1024:.1f}MB file"))
+                    app.update_output.emit(
+                        log_message(
+                            f"[Memory Optimized] Using memory mapping for {file_size/1024/1024:.1f}MB file"
+                        )
+                    )
 
                 with open(binary_path, "rb") as f:
                     with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mmapped_file:
                         # Calculate entropy of first chunk
-                        chunk = mmapped_file[:min(1024*1024, file_size)]  # First 1MB
+                        chunk = mmapped_file[: min(1024 * 1024, file_size)]  # First 1MB
                         entropy = 0.0
                         byte_counts = {}
                         for byte in chunk:
                             byte_counts[byte] = byte_counts.get(byte, 0) + 1
 
                         import math
+
                         for count in byte_counts.values():
                             if count > 0:
                                 freq = count / len(chunk)
@@ -6725,20 +8480,24 @@ def _check_intercepted_traffic(proxy_server):
                             (b"expire", "Expiration check"),
                         ]
 
-                        window_size = 1024*1024  # 1MB window
-                        for i in range(0, file_size, window_size//2):  # 50% overlap
-                            window = mmapped_file[i:i+window_size]
+                        window_size = 1024 * 1024  # 1MB window
+                        for i in range(0, file_size, window_size // 2):  # 50% overlap
+                            window = mmapped_file[i : i + window_size]
                             for pattern, description in patterns:
                                 if pattern in window:
-                                    results["patterns_found"].append({
-                                        "pattern": pattern.decode("ascii", errors="ignore"),
-                                        "description": description,
-                                        "offset": i + window.find(pattern),
-                                    })
+                                    results["patterns_found"].append(
+                                        {
+                                            "pattern": pattern.decode("ascii", errors="ignore"),
+                                            "description": description,
+                                            "offset": i + window.find(pattern),
+                                        }
+                                    )
             else:
                 # Direct load for smaller files
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Memory Optimized] Using direct load for small file"))
+                    app.update_output.emit(
+                        log_message("[Memory Optimized] Using direct load for small file")
+                    )
 
                 with open(binary_path, "rb") as f:
                     data = f.read()
@@ -6757,11 +8516,13 @@ def _check_intercepted_traffic(proxy_server):
                     for pattern, description in patterns:
                         offset = data.find(pattern)
                         if offset != -1:
-                            results["patterns_found"].append({
-                                "pattern": pattern.decode("ascii", errors="ignore"),
-                                "description": description,
-                                "offset": offset,
-                            })
+                            results["patterns_found"].append(
+                                {
+                                    "pattern": pattern.decode("ascii", errors="ignore"),
+                                    "description": description,
+                                    "offset": offset,
+                                }
+                            )
 
             # Update UI
             if hasattr(app, "update_analysis_results"):
@@ -6772,9 +8533,13 @@ def _check_intercepted_traffic(proxy_server):
                 app.update_analysis_results.emit(f"Entropy: {results['entropy']:.3f}\n")
 
                 if results["patterns_found"]:
-                    app.update_analysis_results.emit(f"\nPatterns Found ({len(results['patterns_found'])}):\n")
+                    app.update_analysis_results.emit(
+                        f"\nPatterns Found ({len(results['patterns_found'])}):\n"
+                    )
                     for pattern in results["patterns_found"][:10]:
-                        app.update_analysis_results.emit(f"  - '{pattern['pattern']}' at 0x{pattern['offset']:08x}: {pattern['description']}\n")
+                        app.update_analysis_results.emit(
+                            f"  - '{pattern['pattern']}' at 0x{pattern['offset']:08x}: {pattern['description']}\n"
+                        )
 
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[Memory Optimized] Analysis complete"))
@@ -6782,11 +8547,15 @@ def _check_intercepted_traffic(proxy_server):
             return results
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error during memory-optimized analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Memory Optimized] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def run_qemu_analysis(app, *args, **kwargs):
         """Run QEMU-based full system analysis."""
         _ = args, kwargs
@@ -6818,7 +8587,9 @@ def _check_intercepted_traffic(proxy_server):
                 logger.error("Import error in main_app.py: %s", e)
                 # Fallback implementation
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[QEMU] QemuEmulator not available, using simulation..."))
+                    app.update_output.emit(
+                        log_message("[QEMU] QemuEmulator not available, using simulation...")
+                    )
 
                 import os
                 import time
@@ -6846,9 +8617,24 @@ def _check_intercepted_traffic(proxy_server):
 
                 # Simulate memory access patterns
                 results["memory_accesses"] = [
-                    {"address": "0x00401000", "type": "read", "size": 4, "description": "Code section read"},
-                    {"address": "0x00402000", "type": "write", "size": 8, "description": "Data section write"},
-                    {"address": "0x7fff0000", "type": "read", "size": 64, "description": "Stack access"},
+                    {
+                        "address": "0x00401000",
+                        "type": "read",
+                        "size": 4,
+                        "description": "Code section read",
+                    },
+                    {
+                        "address": "0x00402000",
+                        "type": "write",
+                        "size": 8,
+                        "description": "Data section write",
+                    },
+                    {
+                        "address": "0x7fff0000",
+                        "type": "read",
+                        "size": 64,
+                        "description": "Stack access",
+                    },
                 ]
 
                 # Behavioral analysis
@@ -6868,13 +8654,19 @@ def _check_intercepted_traffic(proxy_server):
             if hasattr(app, "update_analysis_results"):
                 app.update_analysis_results.emit("\n=== QEMU Analysis Results ===\n")
                 app.update_analysis_results.emit(f"Binary: {os.path.basename(binary_path)}\n")
-                app.update_analysis_results.emit(f"Emulation Time: {results.get('emulation_time', 0):.1f} seconds\n")
-                app.update_analysis_results.emit(f"Instructions Executed: {results.get('instructions_executed', 0):,}\n")
+                app.update_analysis_results.emit(
+                    f"Emulation Time: {results.get('emulation_time', 0):.1f} seconds\n"
+                )
+                app.update_analysis_results.emit(
+                    f"Instructions Executed: {results.get('instructions_executed', 0):,}\n"
+                )
 
                 if results.get("system_calls"):
                     app.update_analysis_results.emit("\nSystem Calls Detected:\n")
                     for syscall in results["system_calls"][:10]:
-                        app.update_analysis_results.emit(f"  - {syscall['syscall']}: {syscall['count']} calls ({syscall['purpose']})\n")
+                        app.update_analysis_results.emit(
+                            f"  - {syscall['syscall']}: {syscall['count']} calls ({syscall['purpose']})\n"
+                        )
 
                 if results.get("behavioral_analysis"):
                     app.update_analysis_results.emit("\nBehavioral Analysis:\n")
@@ -6887,11 +8679,15 @@ def _check_intercepted_traffic(proxy_server):
             return results
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error during QEMU analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[QEMU] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def run_selected_analysis(app, *args, **kwargs):
         """Run user-selected analysis type."""
         _ = args, kwargs
@@ -6902,7 +8698,9 @@ def _check_intercepted_traffic(proxy_server):
             binary_path = getattr(app, "binary_path", None)
             if not binary_path:
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Selected Analysis] Error: No binary selected"))
+                    app.update_output.emit(
+                        log_message("[Selected Analysis] Error: No binary selected")
+                    )
                 return {"success": False, "error": "No binary selected"}
 
             # Get analysis type from kwargs or default
@@ -6911,29 +8709,47 @@ def _check_intercepted_traffic(proxy_server):
             # Map analysis types to functions
             analysis_map = {
                 "basic": lambda: {"type": "basic", "result": "Basic static analysis complete"},
-                "advanced": lambda: {"type": "advanced", "result": "Advanced analysis with decompilation"},
-                "vulnerability": lambda: {"type": "vulnerability", "result": "Security vulnerability scan complete"},
-                "license": lambda: {"type": "license", "result": "License mechanism analysis complete"},
-                "protection": lambda: {"type": "protection", "result": "Protection scheme analysis complete"},
+                "advanced": lambda: {
+                    "type": "advanced",
+                    "result": "Advanced analysis with decompilation",
+                },
+                "vulnerability": lambda: {
+                    "type": "vulnerability",
+                    "result": "Security vulnerability scan complete",
+                },
+                "license": lambda: {
+                    "type": "license",
+                    "result": "License mechanism analysis complete",
+                },
+                "protection": lambda: {
+                    "type": "protection",
+                    "result": "Protection scheme analysis complete",
+                },
             }
 
             # Run selected analysis
             if analysis_type in analysis_map:
                 result = analysis_map[analysis_type]()
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[Selected Analysis] Running {analysis_type} analysis..."))
+                    app.update_output.emit(
+                        log_message(f"[Selected Analysis] Running {analysis_type} analysis...")
+                    )
 
                 # Add common analysis data
-                result.update({
-                    "success": True,
-                    "binary_path": binary_path,
-                    "file_size": os.path.getsize(binary_path),
-                    "timestamp": time.time(),
-                })
+                result.update(
+                    {
+                        "success": True,
+                        "binary_path": binary_path,
+                        "file_size": os.path.getsize(binary_path),
+                        "timestamp": time.time(),
+                    }
+                )
 
                 # Update UI
                 if hasattr(app, "update_analysis_results"):
-                    app.update_analysis_results.emit(f"\n=== {analysis_type.title()} Analysis Results ===\n")
+                    app.update_analysis_results.emit(
+                        f"\n=== {analysis_type.title()} Analysis Results ===\n"
+                    )
                     app.update_analysis_results.emit(f"Binary: {os.path.basename(binary_path)}\n")
                     app.update_analysis_results.emit(f"Result: {result['result']}\n")
 
@@ -6944,17 +8760,23 @@ def _check_intercepted_traffic(proxy_server):
             return {"success": False, "error": error_msg}
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error during selected analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Selected Analysis] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def run_network_license_server(app, *args, **kwargs):
         """Start network license server emulator."""
         _ = args, kwargs
         try:
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[License Server] Starting network license server..."))
+                app.update_output.emit(
+                    log_message("[License Server] Starting network license server...")
+                )
 
             # Try to use actual license server emulator
             try:
@@ -6997,19 +8819,36 @@ def _check_intercepted_traffic(proxy_server):
                     }
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[License Server] Server started on port {server.port}"))
-                        app.update_output.emit(log_message(f"[License Server] Protocol: {server.protocol} compatible"))
-                        app.update_output.emit(log_message(f"[License Server] Features loaded: {len(active_features)}"))
-                        app.update_output.emit(log_message("[License Server] DNS redirection enabled"))
-                        app.update_output.emit(log_message("[License Server] Traffic recording enabled"))
+                        app.update_output.emit(
+                            log_message(f"[License Server] Server started on port {server.port}")
+                        )
+                        app.update_output.emit(
+                            log_message(f"[License Server] Protocol: {server.protocol} compatible")
+                        )
+                        app.update_output.emit(
+                            log_message(f"[License Server] Features loaded: {len(active_features)}")
+                        )
+                        app.update_output.emit(
+                            log_message("[License Server] DNS redirection enabled")
+                        )
+                        app.update_output.emit(
+                            log_message("[License Server] Traffic recording enabled")
+                        )
                 else:
                     raise RuntimeError("Failed to start license server")
 
             except (ImportError, RuntimeError, AttributeError, ValueError, OSError) as e:
-                logger.error("(ImportError, RuntimeError, AttributeError, ValueError, OSError) in main_app.py: %s", e)
+                logger.error(
+                    "(ImportError, RuntimeError, AttributeError, ValueError, OSError) in main_app.py: %s",
+                    e,
+                )
                 # Robust fallback implementation - still functional
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[License Server] Primary server failed ({e!s}), using fallback implementation..."))
+                    app.update_output.emit(
+                        log_message(
+                            f"[License Server] Primary server failed ({e!s}), using fallback implementation..."
+                        )
+                    )
 
                 # Create a minimal license server using socket
 
@@ -7044,10 +8883,22 @@ def _check_intercepted_traffic(proxy_server):
                             self.server_thread.start()
 
                             return True
-                        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                        except (
+                            AttributeError,
+                            ValueError,
+                            TypeError,
+                            RuntimeError,
+                            KeyError,
+                            OSError,
+                        ) as e:
+                            self.logger.error(
+                                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                                e,
+                            )
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message(f"[License Server] Socket error: {e!s}"))
+                                app.update_output.emit(
+                                    log_message(f"[License Server] Socket error: {e!s}")
+                                )
                             return False
 
                     def _handle_connections(self):
@@ -7055,7 +8906,9 @@ def _check_intercepted_traffic(proxy_server):
                             try:
                                 client_socket, address = self.server_socket.accept()
                                 if hasattr(app, "update_output"):
-                                    app.update_output.emit(log_message(f"[License Server] Connection from {address}"))
+                                    app.update_output.emit(
+                                        log_message(f"[License Server] Connection from {address}")
+                                    )
 
                                 # Handle the connection in a new thread
                                 client_thread = threading.Thread(
@@ -7073,13 +8926,19 @@ def _check_intercepted_traffic(proxy_server):
                             # Use address to log client information
                             client_ip, client_port = address
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message(f"[License Server] New connection from {client_ip}:{client_port}"))
+                                app.update_output.emit(
+                                    log_message(
+                                        f"[License Server] New connection from {client_ip}:{client_port}"
+                                    )
+                                )
 
                             # Receive request
                             data = client_socket.recv(4096)
                             if data:
                                 # Track client-specific metrics
-                                self.client_stats[client_ip] = self.client_stats.get(client_ip, 0) + 1
+                                self.client_stats[client_ip] = (
+                                    self.client_stats.get(client_ip, 0) + 1
+                                )
                                 # Generate response based on protocol
                                 if b"flexlm" in data.lower() or b"license" in data.lower():
                                     # FlexLM-style response
@@ -7106,11 +8965,27 @@ def _check_intercepted_traffic(proxy_server):
                                 client_socket.sendall(response)
 
                                 if hasattr(app, "update_output"):
-                                    app.update_output.emit(log_message(f"[License Server] Sent license response to {address}"))
-                        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                                    app.update_output.emit(
+                                        log_message(
+                                            f"[License Server] Sent license response to {address}"
+                                        )
+                                    )
+                        except (
+                            AttributeError,
+                            ValueError,
+                            TypeError,
+                            RuntimeError,
+                            KeyError,
+                            OSError,
+                        ) as e:
+                            logger.error(
+                                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                                e,
+                            )
                             if hasattr(app, "update_output"):
-                                app.update_output.emit(log_message(f"[License Server] Client error: {e!s}"))
+                                app.update_output.emit(
+                                    log_message(f"[License Server] Client error: {e!s}")
+                                )
                         finally:
                             client_socket.close()
 
@@ -7137,8 +9012,12 @@ def _check_intercepted_traffic(proxy_server):
                     }
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[License Server] Fallback server listening on port 27000"))
-                        app.update_output.emit(log_message("[License Server] Protocol: FlexLM compatible"))
+                        app.update_output.emit(
+                            log_message("[License Server] Fallback server listening on port 27000")
+                        )
+                        app.update_output.emit(
+                            log_message("[License Server] Protocol: FlexLM compatible")
+                        )
                         app.update_output.emit(log_message("[License Server] Features loaded: 3"))
                 else:
                     # Last resort - report configuration only
@@ -7156,9 +9035,15 @@ def _check_intercepted_traffic(proxy_server):
                     }
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message("[License Server] Server configured (port may be in use)"))
-                        app.update_output.emit(log_message("[License Server] Protocol: FlexLM compatible"))
-                        app.update_output.emit(log_message("[License Server] Features configured: 3"))
+                        app.update_output.emit(
+                            log_message("[License Server] Server configured (port may be in use)")
+                        )
+                        app.update_output.emit(
+                            log_message("[License Server] Protocol: FlexLM compatible")
+                        )
+                        app.update_output.emit(
+                            log_message("[License Server] Features configured: 3")
+                        )
 
             # Update UI
             if hasattr(app, "update_analysis_results"):
@@ -7170,7 +9055,9 @@ def _check_intercepted_traffic(proxy_server):
                 if "features" in result:
                     app.update_analysis_results.emit("\nAvailable Features:\n")
                     for feature in result["features"]:
-                        app.update_analysis_results.emit(f"  - {feature['name']} v{feature['version']}: {feature['count']} licenses\n")
+                        app.update_analysis_results.emit(
+                            f"  - {feature['name']} v{feature['version']}: {feature['count']} licenses\n"
+                        )
 
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[License Server] Server started successfully"))
@@ -7178,15 +9065,20 @@ def _check_intercepted_traffic(proxy_server):
             return result
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error starting license server: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[License Server] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def run_frida_analysis(app, *args, **kwargs):
         """Run Frida-based dynamic analysis."""
         _ = args, kwargs  # Unused fallback function parameters
         import os
+
         try:
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[Frida] Starting Frida analysis..."))
@@ -7462,7 +9354,9 @@ def _check_intercepted_traffic(proxy_server):
                     session = device.attach(pid)
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Frida] Spawned process with PID: {pid}"))
+                        app.update_output.emit(
+                            log_message(f"[Frida] Spawned process with PID: {pid}")
+                        )
                 else:
                     # Try to attach to existing process by name
                     process_name = os.path.basename(binary_path)
@@ -7478,7 +9372,11 @@ def _check_intercepted_traffic(proxy_server):
                         session = device.attach(target_process.pid)
                         pid = target_process.pid
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[Frida] Attached to existing process: {target_process.name} (PID: {pid})"))
+                            app.update_output.emit(
+                                log_message(
+                                    f"[Frida] Attached to existing process: {target_process.name} (PID: {pid})"
+                                )
+                            )
                     else:
                         raise Exception(f"Process {process_name} not found")
 
@@ -7499,7 +9397,9 @@ def _check_intercepted_traffic(proxy_server):
                         data_info = {
                             "size": len(data),
                             "type": type(data).__name__,
-                            "preview": data[:16].hex() if isinstance(data, bytes) else str(data)[:50],
+                            "preview": data[:16].hex()
+                            if isinstance(data, bytes)
+                            else str(data)[:50],
                         }
                         messages.append({"type": "data", "info": data_info})
 
@@ -7527,7 +9427,9 @@ def _check_intercepted_traffic(proxy_server):
                             detected_behaviors.add("Registry-based activation check")
 
                         elif msg_type == "crypto_operation":
-                            detected_behaviors.add("Cryptographic operations (license key validation)")
+                            detected_behaviors.add(
+                                "Cryptographic operations (license key validation)"
+                            )
 
                         elif msg_type == "network_operation":
                             detected_behaviors.add("Network communication (online activation)")
@@ -7553,7 +9455,9 @@ def _check_intercepted_traffic(proxy_server):
 
                 # Let it run and collect data
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Frida] Instrumentation active, collecting data..."))
+                    app.update_output.emit(
+                        log_message("[Frida] Instrumentation active, collecting data...")
+                    )
 
                 # Run for a configurable duration
                 run_duration = kwargs.get("duration", 5)
@@ -7569,11 +9473,31 @@ def _check_intercepted_traffic(proxy_server):
                     "license_checks": license_checks,
                     "detected_behaviors": list(detected_behaviors),
                     "hooked_functions": [
-                        {"category": "String Operations", "count": api_hooks.get("stringOps", 0), "purpose": "License key validation"},
-                        {"category": "File Operations", "count": api_hooks.get("fileOps", 0), "purpose": "License file access"},
-                        {"category": "Registry Operations", "count": api_hooks.get("registryOps", 0), "purpose": "Windows activation"},
-                        {"category": "Crypto Operations", "count": api_hooks.get("cryptoOps", 0), "purpose": "Key validation"},
-                        {"category": "Network Operations", "count": api_hooks.get("networkOps", 0), "purpose": "Online activation"},
+                        {
+                            "category": "String Operations",
+                            "count": api_hooks.get("stringOps", 0),
+                            "purpose": "License key validation",
+                        },
+                        {
+                            "category": "File Operations",
+                            "count": api_hooks.get("fileOps", 0),
+                            "purpose": "License file access",
+                        },
+                        {
+                            "category": "Registry Operations",
+                            "count": api_hooks.get("registryOps", 0),
+                            "purpose": "Windows activation",
+                        },
+                        {
+                            "category": "Crypto Operations",
+                            "count": api_hooks.get("cryptoOps", 0),
+                            "purpose": "Key validation",
+                        },
+                        {
+                            "category": "Network Operations",
+                            "count": api_hooks.get("networkOps", 0),
+                            "purpose": "Online activation",
+                        },
                     ],
                     "process_info": messages[0]["payload"]["processInfo"] if messages else {},
                 }
@@ -7588,7 +9512,11 @@ def _check_intercepted_traffic(proxy_server):
                 logger.error("Import error in main_app.py: %s", e)
                 # Comprehensive fallback implementation without Frida
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Frida] Frida not available, using advanced fallback instrumentation..."))
+                    app.update_output.emit(
+                        log_message(
+                            "[Frida] Frida not available, using advanced fallback instrumentation..."
+                        )
+                    )
 
                 # Advanced static + dynamic analysis fallback
 
@@ -7618,11 +9546,13 @@ def _check_intercepted_traffic(proxy_server):
                             detected_behaviors.append(behavior)
                             # Find offset
                             offset = binary_data.find(pattern)
-                            instrumentation_points.append({
-                                "offset": f"0x{offset:08x}",
-                                "pattern": pattern.decode("utf-8", errors="ignore"),
-                                "behavior": behavior,
-                            })
+                            instrumentation_points.append(
+                                {
+                                    "offset": f"0x{offset:08x}",
+                                    "pattern": pattern.decode("utf-8", errors="ignore"),
+                                    "behavior": behavior,
+                                }
+                            )
 
                     # Try dynamic analysis with debugger if available
                     try:
@@ -7638,10 +9568,13 @@ def _check_intercepted_traffic(proxy_server):
                             quit
                             """
 
-                            proc = subprocess.run(["gdb", "-batch", "-x", "-"],
-                                                check=False, input=gdb_script.encode(),
-                                                capture_output=True,
-                                                timeout=5)
+                            proc = subprocess.run(
+                                ["gdb", "-batch", "-x", "-"],
+                                check=False,
+                                input=gdb_script.encode(),
+                                capture_output=True,
+                                timeout=5,
+                            )
 
                             if proc.returncode == 0:
                                 output = proc.stdout.decode("utf-8", errors="ignore")
@@ -7650,18 +9583,35 @@ def _check_intercepted_traffic(proxy_server):
                                 functions = re.findall(func_pattern, output)
 
                                 for func in functions:
-                                    if any(keyword in func.lower() for keyword in ["license", "check", "valid", "serial"]):
-                                        instrumentation_points.append({
-                                            "function": func,
-                                            "type": "license_related_function",
-                                        })
+                                    if any(
+                                        keyword in func.lower()
+                                        for keyword in ["license", "check", "valid", "serial"]
+                                    ):
+                                        instrumentation_points.append(
+                                            {
+                                                "function": func,
+                                                "type": "license_related_function",
+                                            }
+                                        )
                     except Exception as e:
                         logger.debug(f"Failed to analyze license function: {e}")
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e,
+                    )
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Frida] Fallback analysis error: {e!s}"))
+                        app.update_output.emit(
+                            log_message(f"[Frida] Fallback analysis error: {e!s}")
+                        )
 
                 # Create comprehensive fallback result
                 result = {
@@ -7669,13 +9619,29 @@ def _check_intercepted_traffic(proxy_server):
                     "fallback_mode": True,
                     "instrumentation_points": instrumentation_points,
                     "hooked_functions": [
-                        {"function": "License validation", "calls": len([p for p in instrumentation_points if "license" in str(p).lower()]), "purpose": "License checks"},
-                        {"function": "File operations", "calls": 8, "purpose": "License file access"},
-                        {"function": "Registry operations", "calls": 12, "purpose": "Windows activation"},
+                        {
+                            "function": "License validation",
+                            "calls": len(
+                                [p for p in instrumentation_points if "license" in str(p).lower()]
+                            ),
+                            "purpose": "License checks",
+                        },
+                        {
+                            "function": "File operations",
+                            "calls": 8,
+                            "purpose": "License file access",
+                        },
+                        {
+                            "function": "Registry operations",
+                            "calls": 12,
+                            "purpose": "Windows activation",
+                        },
                         {"function": "Crypto operations", "calls": 5, "purpose": "Key validation"},
                         {"function": "Time checks", "calls": 3, "purpose": "Trial period"},
                     ],
-                    "detected_behaviors": detected_behaviors if detected_behaviors else [
+                    "detected_behaviors": detected_behaviors
+                    if detected_behaviors
+                    else [
                         "Static analysis: License validation routines detected",
                         "Pattern matching: Serial number checking found",
                         "Binary inspection: Trial period mechanisms identified",
@@ -7694,16 +9660,22 @@ def _check_intercepted_traffic(proxy_server):
                     if result.get("hooked_functions"):
                         app.update_analysis_results.emit("\nHooked Functions:\n")
                         for func in result["hooked_functions"]:
-                            app.update_analysis_results.emit(f"  - {func['function']}: {func['calls']} calls - {func['purpose']}\n")
+                            app.update_analysis_results.emit(
+                                f"  - {func['function']}: {func['calls']} calls - {func['purpose']}\n"
+                            )
 
                     if result.get("detected_behaviors"):
                         app.update_analysis_results.emit("\nDetected Behaviors:\n")
                         for behavior in result["detected_behaviors"]:
                             app.update_analysis_results.emit(f"  - {behavior}\n")
                 else:
-                    app.update_analysis_results.emit(f"APIs Hooked: {', '.join(result.get('apis_hooked', []))}\n")
+                    app.update_analysis_results.emit(
+                        f"APIs Hooked: {', '.join(result.get('apis_hooked', []))}\n"
+                    )
                     if result.get("messages"):
-                        app.update_analysis_results.emit(f"\nCaptured {len(result['messages'])} API calls\n")
+                        app.update_analysis_results.emit(
+                            f"\nCaptured {len(result['messages'])} API calls\n"
+                        )
 
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[Frida] Analysis complete"))
@@ -7711,11 +9683,15 @@ def _check_intercepted_traffic(proxy_server):
             return result
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error during Frida analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Frida] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def run_dynamic_instrumentation(app, *args, **kwargs):
         """Run dynamic instrumentation on binary."""
         _ = args, kwargs  # Unused fallback function parameters
@@ -7741,10 +9717,30 @@ def _check_intercepted_traffic(proxy_server):
 
             # Simulate instrumentation points
             instrumentation_points = [
-                {"address": "0x00401234", "type": "function_entry", "name": "check_license", "hits": 1},
-                {"address": "0x00401567", "type": "comparison", "name": "license_valid_check", "hits": 1},
-                {"address": "0x00401890", "type": "function_call", "name": "decrypt_key", "hits": 3},
-                {"address": "0x00402000", "type": "memory_write", "name": "license_flag_set", "hits": 1},
+                {
+                    "address": "0x00401234",
+                    "type": "function_entry",
+                    "name": "check_license",
+                    "hits": 1,
+                },
+                {
+                    "address": "0x00401567",
+                    "type": "comparison",
+                    "name": "license_valid_check",
+                    "hits": 1,
+                },
+                {
+                    "address": "0x00401890",
+                    "type": "function_call",
+                    "name": "decrypt_key",
+                    "hits": 3,
+                },
+                {
+                    "address": "0x00402000",
+                    "type": "memory_write",
+                    "name": "license_flag_set",
+                    "hits": 1,
+                },
             ]
 
             results["instrumentation_points"] = instrumentation_points
@@ -7768,8 +9764,18 @@ def _check_intercepted_traffic(proxy_server):
 
             # Simulate memory operations
             results["memory_operations"] = [
-                {"type": "allocation", "size": 4096, "address": "0x10000000", "purpose": "License data buffer"},
-                {"type": "write", "address": "0x10000100", "size": 256, "data_type": "encrypted_key"},
+                {
+                    "type": "allocation",
+                    "size": 4096,
+                    "address": "0x10000000",
+                    "purpose": "License data buffer",
+                },
+                {
+                    "type": "write",
+                    "address": "0x10000100",
+                    "size": 256,
+                    "data_type": "encrypted_key",
+                },
                 {"type": "read", "address": "0x00403000", "size": 64, "data_type": "hardware_id"},
             ]
 
@@ -7777,16 +9783,24 @@ def _check_intercepted_traffic(proxy_server):
             if hasattr(app, "update_analysis_results"):
                 app.update_analysis_results.emit("\n=== Dynamic Instrumentation Results ===\n")
                 app.update_analysis_results.emit(f"Binary: {os.path.basename(binary_path)}\n")
-                app.update_analysis_results.emit(f"Execution Time: {results['runtime_behavior']['execution_time']:.1f}s\n")
-                app.update_analysis_results.emit(f"Instructions Traced: {results['runtime_behavior']['instructions_traced']:,}\n")
+                app.update_analysis_results.emit(
+                    f"Execution Time: {results['runtime_behavior']['execution_time']:.1f}s\n"
+                )
+                app.update_analysis_results.emit(
+                    f"Instructions Traced: {results['runtime_behavior']['instructions_traced']:,}\n"
+                )
 
                 app.update_analysis_results.emit("\nInstrumentation Points:\n")
                 for point in results["instrumentation_points"]:
-                    app.update_analysis_results.emit(f"  - {point['address']}: {point['name']} ({point['type']}) - Hit {point['hits']} times\n")
+                    app.update_analysis_results.emit(
+                        f"  - {point['address']}: {point['name']} ({point['type']}) - Hit {point['hits']} times\n"
+                    )
 
                 app.update_analysis_results.emit("\nTop API Calls:\n")
                 for api in results["api_calls"]:
-                    app.update_analysis_results.emit(f"  - {api['api']}: {api['count']} calls - {api['purpose']}\n")
+                    app.update_analysis_results.emit(
+                        f"  - {api['api']}: {api['count']} calls - {api['purpose']}\n"
+                    )
 
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[Dynamic] Instrumentation complete"))
@@ -7794,11 +9808,15 @@ def _check_intercepted_traffic(proxy_server):
             return results
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error during dynamic instrumentation: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Dynamic] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def run_frida_script(app, *args, **kwargs):
         """Execute custom Frida script on target with optional QEMU testing."""
         _ = args  # Unused fallback function parameters
@@ -7806,6 +9824,7 @@ def _check_intercepted_traffic(proxy_server):
             # Initialize ScriptExecutionManager if not already done
             if not hasattr(app, "script_execution_manager"):
                 from ..core.execution import ScriptExecutionManager
+
                 app.script_execution_manager = ScriptExecutionManager(app)
 
             if hasattr(app, "update_output"):
@@ -7885,7 +9904,9 @@ def _check_intercepted_traffic(proxy_server):
 
             elif results.get("cancelled"):
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message("[Frida Script] Execution cancelled by user"))
+                    app.update_output.emit(
+                        log_message("[Frida Script] Execution cancelled by user")
+                    )
 
             elif results.get("qemu_failed"):
                 if hasattr(app, "update_output"):
@@ -7899,11 +9920,15 @@ def _check_intercepted_traffic(proxy_server):
             return results
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error executing Frida script: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Frida Script] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def run_deep_cfg_analysis(app, *args, **kwargs):
         """Run deep control flow graph analysis."""
         _ = args, kwargs  # Unused fallback function parameters
@@ -7920,6 +9945,7 @@ def _check_intercepted_traffic(proxy_server):
             # Try to use CFGExplorer
             try:
                 from ..core.analysis.cfg_explorer import CFGExplorer
+
                 explorer = CFGExplorer()
                 results = explorer.analyze_cfg(binary_path)
             except ImportError as e:
@@ -7941,10 +9967,34 @@ def _check_intercepted_traffic(proxy_server):
 
                 # Simulate function discovery
                 functions = [
-                    {"name": "main", "address": "0x00401000", "size": 245, "blocks": 8, "cyclomatic_complexity": 5},
-                    {"name": "check_license", "address": "0x00401100", "size": 180, "blocks": 6, "cyclomatic_complexity": 4},
-                    {"name": "validate_key", "address": "0x00401200", "size": 120, "blocks": 4, "cyclomatic_complexity": 3},
-                    {"name": "decrypt_data", "address": "0x00401300", "size": 200, "blocks": 7, "cyclomatic_complexity": 5},
+                    {
+                        "name": "main",
+                        "address": "0x00401000",
+                        "size": 245,
+                        "blocks": 8,
+                        "cyclomatic_complexity": 5,
+                    },
+                    {
+                        "name": "check_license",
+                        "address": "0x00401100",
+                        "size": 180,
+                        "blocks": 6,
+                        "cyclomatic_complexity": 4,
+                    },
+                    {
+                        "name": "validate_key",
+                        "address": "0x00401200",
+                        "size": 120,
+                        "blocks": 4,
+                        "cyclomatic_complexity": 3,
+                    },
+                    {
+                        "name": "decrypt_data",
+                        "address": "0x00401300",
+                        "size": 200,
+                        "blocks": 7,
+                        "cyclomatic_complexity": 5,
+                    },
                 ]
 
                 results["functions"] = functions
@@ -7953,8 +10003,18 @@ def _check_intercepted_traffic(proxy_server):
 
                 # Simulate loop detection
                 results["loops"] = [
-                    {"function": "decrypt_data", "start": "0x00401320", "end": "0x00401380", "iterations": "dynamic"},
-                    {"function": "validate_key", "start": "0x00401220", "end": "0x00401250", "iterations": "16"},
+                    {
+                        "function": "decrypt_data",
+                        "start": "0x00401320",
+                        "end": "0x00401380",
+                        "iterations": "dynamic",
+                    },
+                    {
+                        "function": "validate_key",
+                        "start": "0x00401220",
+                        "end": "0x00401250",
+                        "iterations": "16",
+                    },
                 ]
 
                 # Simulate call graph
@@ -7967,8 +10027,11 @@ def _check_intercepted_traffic(proxy_server):
 
                 # Complexity metrics
                 results["complexity_metrics"] = {
-                    "total_cyclomatic_complexity": sum(f["cyclomatic_complexity"] for f in functions),
-                    "average_complexity": sum(f["cyclomatic_complexity"] for f in functions) / len(functions),
+                    "total_cyclomatic_complexity": sum(
+                        f["cyclomatic_complexity"] for f in functions
+                    ),
+                    "average_complexity": sum(f["cyclomatic_complexity"] for f in functions)
+                    / len(functions),
                     "max_complexity": max(f["cyclomatic_complexity"] for f in functions),
                     "call_depth": 3,
                 }
@@ -7983,12 +10046,18 @@ def _check_intercepted_traffic(proxy_server):
 
                 app.update_analysis_results.emit("\nFunction Analysis:\n")
                 for func in results["functions"]:
-                    app.update_analysis_results.emit(f"  - {func['name']} @ {func['address']}: {func['size']} bytes, {func['blocks']} blocks, complexity: {func['cyclomatic_complexity']}\n")
+                    app.update_analysis_results.emit(
+                        f"  - {func['name']} @ {func['address']}: {func['size']} bytes, {func['blocks']} blocks, complexity: {func['cyclomatic_complexity']}\n"
+                    )
 
                 if results["loops"]:
-                    app.update_analysis_results.emit(f"\nLoops Detected ({len(results['loops'])}):\n")
+                    app.update_analysis_results.emit(
+                        f"\nLoops Detected ({len(results['loops'])}):\n"
+                    )
                     for loop in results["loops"]:
-                        app.update_analysis_results.emit(f"  - In {loop['function']}: {loop['start']} -> {loop['end']} ({loop['iterations']} iterations)\n")
+                        app.update_analysis_results.emit(
+                            f"  - In {loop['function']}: {loop['start']} -> {loop['end']} ({loop['iterations']} iterations)\n"
+                        )
 
                 app.update_analysis_results.emit("\nComplexity Metrics:\n")
                 for metric, value in results["complexity_metrics"].items():
@@ -8000,11 +10069,15 @@ def _check_intercepted_traffic(proxy_server):
             return results
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error during deep CFG analysis: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Deep CFG] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def detect_packing(binary_path):
         """Fallback function for packing detection using entropy analysis and signature detection."""
         import os
@@ -8037,7 +10110,9 @@ def _check_intercepted_traffic(proxy_server):
                     for count in byte_counts:
                         if count > 0:
                             frequency = float(count) / sample_len
-                            entropy -= frequency * (frequency.bit_length() - 1) if frequency > 0 else 0
+                            entropy -= (
+                                frequency * (frequency.bit_length() - 1) if frequency > 0 else 0
+                            )
 
                     # High entropy indicates potential packing
                     if entropy > 7.5:
@@ -8068,10 +10143,10 @@ def _check_intercepted_traffic(proxy_server):
                         pe_offset = struct.unpack("<L", dos_header[60:64])[0]
 
                         if pe_offset < file_size - 4:
-                            pe_signature = file_data[pe_offset:pe_offset+4]
+                            pe_signature = file_data[pe_offset : pe_offset + 4]
                             if pe_signature == b"PE\x00\x00":
                                 # Check for suspicious section characteristics
-                                coff_header = file_data[pe_offset+4:pe_offset+24]
+                                coff_header = file_data[pe_offset + 4 : pe_offset + 24]
                                 num_sections = struct.unpack("<H", coff_header[2:4])[0]
 
                                 # Look for packed section indicators
@@ -8085,14 +10160,26 @@ def _check_intercepted_traffic(proxy_server):
                                 for i in range(min(num_sections, 10)):  # Check first 10 sections
                                     section_start = sections_start + (i * 40)
                                     if section_start + 40 <= file_size:
-                                        section_name = file_data[section_start:section_start+8].rstrip(b"\x00")
-                                        suspicious_names = [b"UPX", b"FSG", b".packed", b"themida", b"vmprotect"]
+                                        section_name = file_data[
+                                            section_start : section_start + 8
+                                        ].rstrip(b"\x00")
+                                        suspicious_names = [
+                                            b"UPX",
+                                            b"FSG",
+                                            b".packed",
+                                            b"themida",
+                                            b"vmprotect",
+                                        ]
 
                                         for sus_name in suspicious_names:
                                             if sus_name.lower() in section_name.lower():
-                                                detected_packers.append(f"Suspicious section: {section_name.decode('ascii', errors='ignore')}")
+                                                detected_packers.append(
+                                                    f"Suspicious section: {section_name.decode('ascii', errors='ignore')}"
+                                                )
                     except (struct.error, UnicodeDecodeError, IndexError) as e:
-                        logger.error("(struct.error, UnicodeDecodeError, IndexError) in main_app.py: %s", e)
+                        logger.error(
+                            "(struct.error, UnicodeDecodeError, IndexError) in main_app.py: %s", e
+                        )
 
                 # Runtime packer detection heuristics
                 imports = []
@@ -8110,7 +10197,9 @@ def _check_intercepted_traffic(proxy_server):
                 if not detected_packers:
                     # Additional checks for obfuscation
                     if b"\x00" * 50 in file_data:
-                        detected_packers.append("Large null byte sequences - possible overlay/padding")
+                        detected_packers.append(
+                            "Large null byte sequences - possible overlay/padding"
+                        )
                     else:
                         detected_packers.append("No obvious packing detected")
 
@@ -8119,6 +10208,7 @@ def _check_intercepted_traffic(proxy_server):
             detected_packers.append(f"Analysis error: {e!s}")
 
         return detected_packers
+
     def decrypt_embedded_script(binary_path):
         """Fallback function for embedded script detection and decryption using pattern analysis."""
         import os
@@ -8146,10 +10236,24 @@ def _check_intercepted_traffic(proxy_server):
             for match in base64_matches[:5]:  # Limit to first 5 matches
                 try:
                     decoded = base64.b64decode(match)
-                    if len(decoded) > 10 and any(char in decoded for char in [b"<script", b"function", b"var ", b"eval("]):
-                        decryption_results.append(f"Base64 decoded script found: {decoded[:100]}...")
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                    if len(decoded) > 10 and any(
+                        char in decoded for char in [b"<script", b"function", b"var ", b"eval("]
+                    ):
+                        decryption_results.append(
+                            f"Base64 decoded script found: {decoded[:100]}..."
+                        )
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e,
+                    )
                     continue
 
             # Pattern 2: Hex encoded content
@@ -8160,10 +10264,23 @@ def _check_intercepted_traffic(proxy_server):
                 try:
                     decoded = binascii.unhexlify(match)
                     decoded_text = decoded.decode("utf-8", errors="ignore")
-                    if any(keyword in decoded_text.lower() for keyword in ["script", "function", "eval", "document"]):
+                    if any(
+                        keyword in decoded_text.lower()
+                        for keyword in ["script", "function", "eval", "document"]
+                    ):
                         decryption_results.append(f"Hex decoded script: {decoded_text[:100]}...")
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e,
+                    )
                     continue
 
             # Pattern 3: XOR encrypted content (common single-byte XOR)
@@ -8177,8 +10294,13 @@ def _check_intercepted_traffic(proxy_server):
                     decrypted_text = decrypted.decode("utf-8", errors="ignore")
                     script_indicators = ["function", "script", "eval(", "document.", "window."]
 
-                    if sum(indicator in decrypted_text.lower() for indicator in script_indicators) >= 2:
-                        decryption_results.append(f"XOR key {xor_key} revealed script: {decrypted_text[:100]}...")
+                    if (
+                        sum(indicator in decrypted_text.lower() for indicator in script_indicators)
+                        >= 2
+                    ):
+                        decryption_results.append(
+                            f"XOR key {xor_key} revealed script: {decrypted_text[:100]}..."
+                        )
                         break  # Found one, don't continue testing
 
                 except (UnicodeDecodeError, MemoryError) as e:
@@ -8196,11 +10318,26 @@ def _check_intercepted_traffic(proxy_server):
                         else:
                             shifted_text += char
 
-                    if any(indicator in shifted_text.lower() for indicator in ["script", "function", "eval"]):
-                        decryption_results.append(f"Caesar cipher (shift {shift}) revealed: {shifted_text[:100]}...")
+                    if any(
+                        indicator in shifted_text.lower()
+                        for indicator in ["script", "function", "eval"]
+                    ):
+                        decryption_results.append(
+                            f"Caesar cipher (shift {shift}) revealed: {shifted_text[:100]}..."
+                        )
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e,
+                    )
                     continue
 
             # Pattern 5: Embedded PowerShell or batch scripts
@@ -8242,15 +10379,21 @@ def _check_intercepted_traffic(proxy_server):
             for pattern in string_patterns:
                 matches = re.findall(pattern, text_data)
                 if matches:
-                    decryption_results.append(f"String obfuscation detected: {len(matches)} instances of {pattern}")
+                    decryption_results.append(
+                        f"String obfuscation detected: {len(matches)} instances of {pattern}"
+                    )
 
             # Final assessment
             if not decryption_results:
                 # Check for general obfuscation indicators
                 if len(re.findall(r"[A-Za-z0-9+/]{50,}", text_data)) > 5:
-                    decryption_results.append("Multiple long encoded strings detected - possible obfuscation")
+                    decryption_results.append(
+                        "Multiple long encoded strings detected - possible obfuscation"
+                    )
                 elif file_data.count(b"\x00") > len(file_data) * 0.3:
-                    decryption_results.append("High null byte content - binary data or padding detected")
+                    decryption_results.append(
+                        "High null byte content - binary data or padding detected"
+                    )
                 else:
                     decryption_results.append("No embedded scripts or obvious obfuscation detected")
 
@@ -8259,6 +10402,7 @@ def _check_intercepted_traffic(proxy_server):
             decryption_results.append(f"Decryption analysis error: {e!s}")
 
         return decryption_results
+
     def scan_for_bytecode_protectors(binary_path):
         """Fallback function for bytecode protector scanning using signature and pattern analysis."""
         import os
@@ -8321,11 +10465,13 @@ def _check_intercepted_traffic(proxy_server):
             # Signature scanning
             for signature, protector_name in all_signatures.items():
                 if signature.lower() in file_data.lower():
-                    scan_results["protectors_detected"].append({
-                        "name": protector_name,
-                        "type": "signature_match",
-                        "confidence": "high",
-                    })
+                    scan_results["protectors_detected"].append(
+                        {
+                            "name": protector_name,
+                            "type": "signature_match",
+                            "confidence": "high",
+                        }
+                    )
 
             # File format detection
             if file_data.startswith(b"MZ"):
@@ -8347,7 +10493,9 @@ def _check_intercepted_traffic(proxy_server):
 
                     # Check for obfuscated metadata
                     if file_data.count(b"\x00") > file_size * 0.4:
-                        scan_results["protection_indicators"].append("High null byte ratio - possible metadata obfuscation")
+                        scan_results["protection_indicators"].append(
+                            "High null byte ratio - possible metadata obfuscation"
+                        )
                         scan_results["risk_level"] = "medium"
 
             elif file_data.startswith(b"\xca\xfe\xba\xbe"):
@@ -8369,7 +10517,9 @@ def _check_intercepted_traffic(proxy_server):
 
                 # Lack of debug info suggests obfuscation
                 if debug_info_count == 0:
-                    scan_results["protection_indicators"].append("No debug information - likely obfuscated")
+                    scan_results["protection_indicators"].append(
+                        "No debug information - likely obfuscated"
+                    )
                     scan_results["risk_level"] = "medium"
 
             elif file_data.startswith(b"\x03\xf3\r\n") or file_data.startswith(b"\xe3\x00\r\n"):
@@ -8378,7 +10528,9 @@ def _check_intercepted_traffic(proxy_server):
 
                 # Check for Python protection
                 if b"__pycache__" not in file_data and file_size < 1000:
-                    scan_results["protection_indicators"].append("Stripped Python bytecode - possible protection")
+                    scan_results["protection_indicators"].append(
+                        "Stripped Python bytecode - possible protection"
+                    )
 
             # Generic bytecode protection indicators
             protection_patterns = [
@@ -8411,7 +10563,9 @@ def _check_intercepted_traffic(proxy_server):
                         entropy -= freq * (freq.bit_length() - 1) if freq > 0 else 0
 
                 if entropy > 7.0:
-                    scan_results["protection_indicators"].append(f"High entropy ({entropy:.2f}) - likely encrypted/packed")
+                    scan_results["protection_indicators"].append(
+                        f"High entropy ({entropy:.2f}) - likely encrypted/packed"
+                    )
                     scan_results["risk_level"] = "high"
 
             # String obfuscation detection
@@ -8421,16 +10575,22 @@ def _check_intercepted_traffic(proxy_server):
                 # Look for base64 patterns
                 base64_matches = re.findall(r"[A-Za-z0-9+/]{20,}={0,2}", text_data)
                 if len(base64_matches) > 10:
-                    scan_results["protection_indicators"].append(f"Multiple base64 strings ({len(base64_matches)}) - possible string obfuscation")
+                    scan_results["protection_indicators"].append(
+                        f"Multiple base64 strings ({len(base64_matches)}) - possible string obfuscation"
+                    )
 
                 # Look for hex patterns
                 hex_matches = re.findall(r"[0-9a-fA-F]{20,}", text_data)
                 if len(hex_matches) > 5:
-                    scan_results["protection_indicators"].append(f"Multiple hex strings ({len(hex_matches)}) - possible encoding")
+                    scan_results["protection_indicators"].append(
+                        f"Multiple hex strings ({len(hex_matches)}) - possible encoding"
+                    )
 
             except UnicodeDecodeError as e:
                 logger.error("UnicodeDecodeError in main_app.py: %s", e)
-                scan_results["protection_indicators"].append("Binary content with encoding issues - possible protection")
+                scan_results["protection_indicators"].append(
+                    "Binary content with encoding issues - possible protection"
+                )
 
             # Risk assessment
             if len(scan_results["protectors_detected"]) > 0:
@@ -8451,6 +10611,7 @@ def _check_intercepted_traffic(proxy_server):
             scan_results["error"] = f"Scan error: {e!s}"
 
         return scan_results
+
     class AdvancedVulnerabilityEngine:
         """Fallback class for vulnerability engine."""
 
@@ -8462,6 +10623,7 @@ def _check_intercepted_traffic(proxy_server):
             try:
                 # Basic file checks
                 import os
+
                 if not os.path.exists(binary_path):
                     return [{"type": "error", "message": "Binary file not found"}]
 
@@ -8473,51 +10635,67 @@ def _check_intercepted_traffic(proxy_server):
 
                 # Check for common vulnerable patterns
                 if b"strcpy" in header or b"sprintf" in header:
-                    vulnerabilities.append({
-                        "type": "buffer_overflow",
-                        "severity": "high",
-                        "message": "Potentially unsafe string functions detected",
-                        "offset": header.find(b"strcpy") if b"strcpy" in header else header.find(b"sprintf"),
-                    })
+                    vulnerabilities.append(
+                        {
+                            "type": "buffer_overflow",
+                            "severity": "high",
+                            "message": "Potentially unsafe string functions detected",
+                            "offset": header.find(b"strcpy")
+                            if b"strcpy" in header
+                            else header.find(b"sprintf"),
+                        }
+                    )
 
                 # Check for format string vulnerabilities
                 if b"printf" in header and b"%s" in header:
-                    vulnerabilities.append({
-                        "type": "format_string",
-                        "severity": "medium",
-                        "message": "Potential format string vulnerability",
-                        "offset": header.find(b"printf"),
-                    })
+                    vulnerabilities.append(
+                        {
+                            "type": "format_string",
+                            "severity": "medium",
+                            "message": "Potential format string vulnerability",
+                            "offset": header.find(b"printf"),
+                        }
+                    )
 
                 # Check for hardcoded credentials
                 common_passwords = [b"password", b"admin", b"root", b"secret", b"12345"]
                 for pwd in common_passwords:
                     if pwd in header:
-                        vulnerabilities.append({
-                            "type": "hardcoded_credential",
-                            "severity": "high",
-                            "message": f"Possible hardcoded credential: {pwd.decode('utf-8', errors='ignore')}",
-                            "offset": header.find(pwd),
-                        })
+                        vulnerabilities.append(
+                            {
+                                "type": "hardcoded_credential",
+                                "severity": "high",
+                                "message": f"Possible hardcoded credential: {pwd.decode('utf-8', errors='ignore')}",
+                                "offset": header.find(pwd),
+                            }
+                        )
 
                 # Add basic file info
-                vulnerabilities.append({
-                    "type": "info",
-                    "severity": "info",
-                    "message": f"File size: {file_size} bytes",
-                    "offset": 0,
-                })
+                vulnerabilities.append(
+                    {
+                        "type": "info",
+                        "severity": "info",
+                        "message": f"File size: {file_size} bytes",
+                        "offset": 0,
+                    }
+                )
 
             except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
-                vulnerabilities.append({
-                    "type": "error",
-                    "severity": "error",
-                    "message": f"Scan error: {e!s}",
-                    "offset": 0,
-                })
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e,
+                )
+                vulnerabilities.append(
+                    {
+                        "type": "error",
+                        "severity": "error",
+                        "message": f"Scan error: {e!s}",
+                        "offset": 0,
+                    }
+                )
 
             return vulnerabilities
+
     def bypass_tpm_protection(app, *args, **kwargs):
         """Fallback function for TPM protection bypass."""
         # Use app parameter to log if available
@@ -8535,6 +10713,7 @@ def _check_intercepted_traffic(proxy_server):
             "target": str(target),
             "options_provided": bool(options),
         }
+
     def bypass_vm_detection(app, *args, **kwargs):
         """Fallback function for VM detection bypass."""
         # Use app parameter for logging and status updates
@@ -8564,6 +10743,7 @@ def _check_intercepted_traffic(proxy_server):
             "aggressive_mode": aggressive_mode,
         }
 
+
 # Import plugin utilities
 try:
     from ..plugins import (
@@ -8576,6 +10756,7 @@ try:
     )
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
+
     def run_frida_plugin_from_file(app, *args, **kwargs):
         """Run a Frida plugin from file when plugin system not available."""
         _ = args, kwargs  # Unused fallback function parameters
@@ -8595,7 +10776,9 @@ except ImportError as e:
 
             if not os.path.exists(plugin_path):
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[Frida Plugin] Plugin file not found: {plugin_path}"))
+                    app.update_output.emit(
+                        log_message(f"[Frida Plugin] Plugin file not found: {plugin_path}")
+                    )
                 return {"success": False, "error": "Plugin file not found"}
 
             # Read plugin content
@@ -8632,19 +10815,27 @@ except ImportError as e:
                 app.update_analysis_results.emit(f"Plugin: {result['plugin_name']}\n")
                 app.update_analysis_results.emit(f"Size: {result['plugin_size']} bytes\n")
                 app.update_analysis_results.emit(f"Hooks: {result['analysis']['hooks']}\n")
-                app.update_analysis_results.emit(f"Functions Targeted: {', '.join(result['analysis']['functions_hooked'])}\n")
+                app.update_analysis_results.emit(
+                    f"Functions Targeted: {', '.join(result['analysis']['functions_hooked'])}\n"
+                )
 
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[Frida Plugin] Plugin analyzed (no binary selected for execution)"))
+                app.update_output.emit(
+                    log_message("[Frida Plugin] Plugin analyzed (no binary selected for execution)")
+                )
 
             return result
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error loading Frida plugin: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Frida Plugin] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def run_ghidra_plugin_from_file(app, *args, **kwargs):
         """Run a Ghidra plugin from file with optional QEMU testing."""
         _ = args  # Unused fallback function parameters
@@ -8652,6 +10843,7 @@ except ImportError as e:
             # Initialize ScriptExecutionManager if not already done
             if not hasattr(app, "script_execution_manager"):
                 from ..core.execution import ScriptExecutionManager
+
                 app.script_execution_manager = ScriptExecutionManager(app)
 
             if hasattr(app, "update_output"):
@@ -8669,7 +10861,9 @@ except ImportError as e:
 
             if not os.path.exists(plugin_path):
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[Ghidra Plugin] Plugin file not found: {plugin_path}"))
+                    app.update_output.emit(
+                        log_message(f"[Ghidra Plugin] Plugin file not found: {plugin_path}")
+                    )
                 return {"success": False, "error": "Plugin file not found"}
 
             # Determine plugin type
@@ -8702,7 +10896,9 @@ except ImportError as e:
             if result.get("success") and hasattr(app, "update_analysis_results"):
                 app.update_analysis_results.emit("\n=== Ghidra Script Execution ===\n")
                 app.update_analysis_results.emit(f"Script: {plugin_name}\n")
-                app.update_analysis_results.emit(f"Type: {'Python' if plugin_ext == '.py' else 'Java'}\n")
+                app.update_analysis_results.emit(
+                    f"Type: {'Python' if plugin_ext == '.py' else 'Java'}\n"
+                )
 
                 if "output" in result:
                     app.update_analysis_results.emit("\nExecution Output:\n")
@@ -8714,23 +10910,35 @@ except ImportError as e:
 
             if hasattr(app, "update_output"):
                 if result.get("success"):
-                    app.update_output.emit(log_message("[Ghidra Plugin] Script executed successfully"))
+                    app.update_output.emit(
+                        log_message("[Ghidra Plugin] Script executed successfully")
+                    )
                 else:
-                    app.update_output.emit(log_message(f"[Ghidra Plugin] Execution failed: {result.get('error', 'Unknown error')}"))
+                    app.update_output.emit(
+                        log_message(
+                            f"[Ghidra Plugin] Execution failed: {result.get('error', 'Unknown error')}"
+                        )
+                    )
 
             return result
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error loading Ghidra plugin: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Ghidra Plugin] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def load_plugins(app, *args, **kwargs):
         """Dummy function when plugin system not available"""
         # Use app parameter for UI updates
         if app and hasattr(app, "update_output"):
-            app.update_output.emit(log_message("[Plugins] Plugin system not available, using fallback"))
+            app.update_output.emit(
+                log_message("[Plugins] Plugin system not available, using fallback")
+            )
 
         # Extract plugin directory from parameters
         plugin_dir = args[0] if args else kwargs.get("plugin_dir", "plugins")
@@ -8744,7 +10952,9 @@ except ImportError as e:
 
             # Log attempt for each type
             if app and hasattr(app, "log_message"):
-                app.log_message(f"Attempting to load {plugin_type} plugins from {plugin_dir}", "info")
+                app.log_message(
+                    f"Attempting to load {plugin_type} plugins from {plugin_dir}", "info"
+                )
 
         return {
             "plugins": loaded_plugins,
@@ -8754,6 +10964,7 @@ except ImportError as e:
             "success": False,
             "reason": "Plugin system module not available",
         }
+
     def create_sample_plugins(app, *args, **kwargs):
         """Create sample plugin files when plugin system not available."""
         _ = args, kwargs  # Unused fallback function parameters
@@ -8969,18 +11180,30 @@ analyze_license_checks()
 
             # Update UI
             if hasattr(app, "update_output"):
-                app.update_output.emit(log_message(f"[Plugins] Created {len(result['plugins_created'])} sample plugins in {plugins_dir}"))
+                app.update_output.emit(
+                    log_message(
+                        f"[Plugins] Created {len(result['plugins_created'])} sample plugins in {plugins_dir}"
+                    )
+                )
                 for plugin in result["plugins_created"]:
-                    app.update_output.emit(log_message(f"[Plugins] - {os.path.basename(plugin['path'])} ({plugin['type']}): {plugin['size']} bytes"))
+                    app.update_output.emit(
+                        log_message(
+                            f"[Plugins] - {os.path.basename(plugin['path'])} ({plugin['type']}): {plugin['size']} bytes"
+                        )
+                    )
 
             return result
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error creating sample plugins: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Plugins] {error_msg}"))
             return {"success": False, "error": error_msg}
+
     def run_plugin(app, *args, **kwargs):
         """Run a plugin by name when plugin system not available."""
         _ = args, kwargs  # Unused fallback function parameters
@@ -9051,19 +11274,26 @@ analyze_license_checks()
 
                 # Update UI
                 if hasattr(app, "update_analysis_results"):
-                    app.update_analysis_results.emit(f"\n=== Plugin Execution: {result['plugin_name']} ===\n")
+                    app.update_analysis_results.emit(
+                        f"\n=== Plugin Execution: {result['plugin_name']} ===\n"
+                    )
                     app.update_analysis_results.emit(f"Result: {result['result']}\n")
                     app.update_analysis_results.emit("\nDetails:\n")
                     for detail in result["details"]:
                         app.update_analysis_results.emit(f"  - {detail}\n")
-                    app.update_analysis_results.emit(f"\nExecution Time: {result['execution_time']:.1f}s\n")
+                    app.update_analysis_results.emit(
+                        f"\nExecution Time: {result['execution_time']:.1f}s\n"
+                    )
 
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(log_message(f"[Plugin] {plugin_info['name']} executed successfully"))
+                    app.update_output.emit(
+                        log_message(f"[Plugin] {plugin_info['name']} executed successfully")
+                    )
 
             else:
                 # Try to load and execute actual plugin
                 from ..plugins.plugin_system import PluginSystem
+
                 try:
                     plugin_system = PluginSystem()
                     plugin_path = plugin_system.find_plugin(plugin_name)
@@ -9076,7 +11306,8 @@ analyze_license_checks()
                         binary_path = getattr(app, "binary_path", "")
                         proc = subprocess.run(
                             ["python", plugin_path, binary_path or ""],
-                            check=False, capture_output=True,
+                            check=False,
+                            capture_output=True,
                             text=True,
                             timeout=30,
                         )
@@ -9086,11 +11317,15 @@ analyze_license_checks()
                         result = {
                             "success": proc.returncode == 0,
                             "plugin_name": plugin_name,
-                            "result": proc.stdout if proc.stdout else f"Plugin '{plugin_name}' executed",
+                            "result": proc.stdout
+                            if proc.stdout
+                            else f"Plugin '{plugin_name}' executed",
                             "details": [
                                 f"Plugin loaded from: {plugin_path}",
                                 f"Exit code: {proc.returncode}",
-                                f"Output length: {len(proc.stdout)} chars" if proc.stdout else "No output",
+                                f"Output length: {len(proc.stdout)} chars"
+                                if proc.stdout
+                                else "No output",
                             ],
                             "execution_time": execution_time,
                             "stderr": proc.stderr if proc.stderr else None,
@@ -9098,8 +11333,12 @@ analyze_license_checks()
 
                         # Update UI with real results
                         if hasattr(app, "update_analysis_results"):
-                            app.update_analysis_results.emit(f"\n=== Plugin Execution: {plugin_name} ===\n")
-                            app.update_analysis_results.emit(f"Status: {'Success' if result['success'] else 'Failed'}\n")
+                            app.update_analysis_results.emit(
+                                f"\n=== Plugin Execution: {plugin_name} ===\n"
+                            )
+                            app.update_analysis_results.emit(
+                                f"Status: {'Success' if result['success'] else 'Failed'}\n"
+                            )
                             if result["stderr"]:
                                 app.update_analysis_results.emit(f"Error: {result['stderr']}\n")
                             if proc.stdout:
@@ -9107,7 +11346,11 @@ analyze_license_checks()
 
                         if hasattr(app, "update_output"):
                             status = "completed" if result["success"] else "failed"
-                            app.update_output.emit(log_message(f"[Plugin] '{plugin_name}' {status} (execution time: {execution_time:.2f}s)"))
+                            app.update_output.emit(
+                                log_message(
+                                    f"[Plugin] '{plugin_name}' {status} (execution time: {execution_time:.2f}s)"
+                                )
+                            )
 
                     else:
                         # Plugin not found - return error
@@ -9123,10 +11366,22 @@ analyze_license_checks()
                         }
 
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(log_message(f"[Plugin] Error: Plugin '{plugin_name}' not found"))
+                            app.update_output.emit(
+                                log_message(f"[Plugin] Error: Plugin '{plugin_name}' not found")
+                            )
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as plugin_error:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", plugin_error)
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as plugin_error:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        plugin_error,
+                    )
                     # Plugin execution failed
                     result = {
                         "success": False,
@@ -9140,24 +11395,32 @@ analyze_license_checks()
                     }
 
                     if hasattr(app, "update_output"):
-                        app.update_output.emit(log_message(f"[Plugin] Error executing '{plugin_name}': {plugin_error}"))
+                        app.update_output.emit(
+                            log_message(f"[Plugin] Error executing '{plugin_name}': {plugin_error}")
+                        )
 
             return result
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             error_msg = f"Error running plugin: {e!s}"
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[Plugin] {error_msg}"))
             return {"success": False, "error": error_msg}
+
 
 # Import protection detection handlers
 try:
     from .protection_detection_handlers import ProtectionDetectionHandlers
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
+
     class ProtectionDetectionHandlers:
         """Dummy class when protection detection handlers not available"""
+
 
 # Define missing network capture functions
 def start_network_capture(app=None, interface=None, **kwargs):
@@ -9165,10 +11428,13 @@ def start_network_capture(app=None, interface=None, **kwargs):
     logger.debug(f"start_network_capture called with kwargs: {kwargs}")
     try:
         from ..core.network.traffic_analyzer import NetworkTrafficAnalyzer
+
         analyzer = NetworkTrafficAnalyzer()
         success = analyzer.start_capture(interface)
         if app:
-            app.update_output.emit(f"[Network] Network capture {'started' if success else 'failed to start'}")
+            app.update_output.emit(
+                f"[Network] Network capture {'started' if success else 'failed to start'}"
+            )
         return {"success": success}
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
@@ -9176,16 +11442,20 @@ def start_network_capture(app=None, interface=None, **kwargs):
             app.update_output.emit("[Network] Error: NetworkTrafficAnalyzer not available")
         return {"success": False, "error": "NetworkTrafficAnalyzer not available"}
 
+
 def stop_network_capture(app=None, **kwargs):
     """Stop network packet capture."""
     logger.debug(f"stop_network_capture called with kwargs: {kwargs}")
     try:
         from ..core.network.traffic_analyzer import NetworkTrafficAnalyzer
+
         _analyzer = NetworkTrafficAnalyzer()
         # Note: NetworkTrafficAnalyzer doesn't have stop_capture method,
         # capture runs in threads that complete automatically based on max_packets
         if app:
-            app.update_output.emit("[Network] Network capture stop requested (capture will complete automatically)")
+            app.update_output.emit(
+                "[Network] Network capture stop requested (capture will complete automatically)"
+            )
         return {"success": True}
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
@@ -9193,11 +11463,13 @@ def stop_network_capture(app=None, **kwargs):
             app.update_output.emit("[Network] Error: NetworkTrafficAnalyzer not available")
         return {"success": False, "error": "NetworkTrafficAnalyzer not available"}
 
+
 def clear_network_capture(app=None, **kwargs):
     """Clear network capture data."""
     logger.debug(f"clear_network_capture called with kwargs: {kwargs}")
     try:
         from ..core.network.traffic_analyzer import NetworkTrafficAnalyzer
+
         analyzer = NetworkTrafficAnalyzer()
         analyzer.captured_packets = []
         if app:
@@ -9209,11 +11481,13 @@ def clear_network_capture(app=None, **kwargs):
             app.update_output.emit("[Network] Error: NetworkTrafficAnalyzer not available")
         return {"success": False, "error": "NetworkTrafficAnalyzer not available"}
 
+
 def start_license_server(app=None, **kwargs):
     """Start license server emulator."""
     logger.debug(f"start_license_server called with kwargs: {kwargs}")
     try:
         from ..core.network.license_server_emulator import NetworkLicenseServerEmulator
+
         server = NetworkLicenseServerEmulator()
         server.start()
         if app:
@@ -9225,12 +11499,14 @@ def start_license_server(app=None, **kwargs):
             app.update_output.emit("[License Server] Error: License server not available")
         return {"success": False, "error": "License server not available"}
 
+
 def stop_license_server(app=None, **kwargs):
     """Stop license server emulator."""
     logger.debug(f"stop_license_server called with kwargs: {kwargs}")
     if app:
         app.update_output.emit("[License Server] License server stopped")
     return {"success": True}
+
 
 def test_license_server(app=None, **kwargs):
     """Test license server functionality."""
@@ -9239,12 +11515,14 @@ def test_license_server(app=None, **kwargs):
         app.update_output.emit("[License Server] Testing license server functionality...")
     return {"success": True}
 
+
 def launch_protocol_tool(app=None, **kwargs):
     """Launch protocol analysis tool."""
     logger.debug(f"launch_protocol_tool called with kwargs: {kwargs}")
     if app:
         app.update_output.emit("[Protocol] Launching protocol analysis tool...")
     return {"success": True}
+
 
 def update_protocol_tool_description(app=None, **kwargs):
     """Update protocol tool description."""
@@ -9271,12 +11549,14 @@ def update_protocol_tool_description(app=None, **kwargs):
         "description_provided": description is not None,
     }
 
+
 def generate_report(app=None, **kwargs):
     """Generate analysis report."""
     logger.debug(f"generate_report called with kwargs: {kwargs}")
     if app:
         app.update_output.emit("[Report] Generating analysis report...")
     return {"success": True}
+
 
 def view_report(app=None, **kwargs):
     """View generated report."""
@@ -9285,12 +11565,14 @@ def view_report(app=None, **kwargs):
         app.update_output.emit("[Report] Opening report viewer...")
     return {"success": True}
 
+
 def export_report(app=None, **kwargs):
     """Export report to file."""
     logger.debug(f"export_report called with kwargs: {kwargs}")
     if app:
         app.update_output.emit("[Report] Exporting report...")
     return {"success": True}
+
 
 def delete_report(app=None, **kwargs):
     """Delete generated report."""
@@ -9299,15 +11581,18 @@ def delete_report(app=None, **kwargs):
         app.update_output.emit("[Report] Report deleted")
     return {"success": True}
 
+
 def show_enhanced_hex_viewer(file_path=None):
     """Show enhanced hex viewer dialog."""
     try:
         from ..hexview.hex_dialog import show_hex_viewer
+
         return show_hex_viewer(file_path)
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
         print("Enhanced hex viewer not available")
         return None
+
 
 # Missing utility functions
 def compute_file_hash(file_path, algorithm="sha256"):
@@ -9321,6 +11606,7 @@ def compute_file_hash(file_path, algorithm="sha256"):
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
         return f"Error computing hash: {e}"
+
 
 def get_file_icon(file_path):
     """Get file icon for the given file path."""
@@ -9336,7 +11622,12 @@ def get_file_icon(file_path):
         if file_info.exists():
             return icon_provider.icon(file_info)
         # Return appropriate icon based on extension
-        if file_info.suffix().lower() in ["exe", "dll", "so", "dylib"] or file_info.suffix().lower() in ["txt", "log", "md"]:
+        if file_info.suffix().lower() in [
+            "exe",
+            "dll",
+            "so",
+            "dylib",
+        ] or file_info.suffix().lower() in ["txt", "log", "md"]:
             return icon_provider.icon(QFileIconProvider.File)
         if file_info.isDir():
             return icon_provider.icon(QFileIconProvider.Folder)
@@ -9346,28 +11637,37 @@ def get_file_icon(file_path):
         logger.error("Import error in main_app.py: %s", e)
         # Fallback if Qt is not available
         import os
+
         if os.path.isdir(file_path):
             return "folder_icon"
         if file_path.endswith((".exe", ".dll", ".so")):
             return "binary_icon"
         return "file_icon"
     except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+        logger.error(
+            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+            e,
+        )
         return None
+
 
 def run_external_tool(tool_name, *args, **kwargs):
     """Run external tool."""
     _ = kwargs  # Unused fallback function parameters
     try:
-        result = subprocess.run([tool_name] + list(args), capture_output=True, text=True, timeout=30, check=False)
+        result = subprocess.run(
+            [tool_name] + list(args), capture_output=True, text=True, timeout=30, check=False
+        )
         return {"stdout": result.stdout, "stderr": result.stderr, "returncode": result.returncode}
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
         return {"error": str(e)}
 
+
 def dispatch_tool(tool_name, *args, **kwargs):
     """Dispatch tool execution."""
     return run_external_tool(tool_name, *args, **kwargs)
+
 
 def load_ai_model(model_path):
     """Load AI model with support for multiple formats and frameworks."""
@@ -9393,10 +11693,12 @@ def load_ai_model(model_path):
             try:
                 # Try unified GPU system first
                 from ..utils.gpu_autoloader import get_device, get_gpu_info
+
                 gpu_info = get_gpu_info()
                 device_str = gpu_info.get("device", "cpu")
 
                 import torch
+
                 # Load model to the appropriate device
                 model = torch.load(model_path, map_location=device_str)
                 print(f"Loaded PyTorch model from {model_path} to device: {device_str}")
@@ -9411,6 +11713,7 @@ def load_ai_model(model_path):
                 # Fallback to CPU loading
                 try:
                     import torch
+
                     model = torch.load(model_path, map_location="cpu")
                     print(f"Loaded PyTorch model from {model_path} (fallback to CPU)")
                     return model
@@ -9418,7 +11721,10 @@ def load_ai_model(model_path):
                     logger.error("Import error in main_app.py: %s", e)
                     print("PyTorch not available for loading .pth/.pt models")
             except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e,
+                )
                 print(f"Error loading PyTorch model: {e}")
 
         # Try TensorFlow/Keras models
@@ -9426,13 +11732,16 @@ def load_ai_model(model_path):
             try:
                 # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
                 import os
+
                 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
                 import tensorflow as tf
+
                 if hasattr(tf, "keras"):
                     model = tf.keras.models.load_model(model_path)
                 else:
                     from tensorflow import keras
+
                     model = keras.models.load_model(model_path)
                 print(f"Loaded TensorFlow/Keras model from {model_path}")
                 return model
@@ -9440,7 +11749,10 @@ def load_ai_model(model_path):
                 logger.error("Import error in main_app.py: %s", e)
                 print("TensorFlow not available for loading .h5/.keras models")
             except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e,
+                )
                 print(f"Error loading TensorFlow model: {e}")
 
         # Try ONNX models
@@ -9448,6 +11760,7 @@ def load_ai_model(model_path):
             try:
                 import onnx
                 import onnxruntime as ort
+
                 # Load and verify ONNX model
                 onnx_model = onnx.load(model_path)
                 onnx.checker.check_model(onnx_model)
@@ -9459,7 +11772,10 @@ def load_ai_model(model_path):
                 logger.error("Import error in main_app.py: %s", e)
                 print("ONNX/ONNXRuntime not available for loading .onnx models")
             except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e,
+                )
                 print(f"Error loading ONNX model: {e}")
 
         # Try pickle for generic Python objects
@@ -9469,12 +11785,16 @@ def load_ai_model(model_path):
                 print(f"Loaded pickle model from {model_path}")
                 return model
             except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e,
+                )
                 print(f"Error loading pickle model: {e}")
 
         # Try to load with ModelManager if available
         try:
             from ..ai.model_manager_module import ModelManager
+
             model_manager = ModelManager()
             model = model_manager.load_model(model_path)
             if model:
@@ -9483,7 +11803,10 @@ def load_ai_model(model_path):
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             print(f"Error loading via ModelManager: {e}")
 
         # Fallback: try joblib regardless of extension
@@ -9493,9 +11816,14 @@ def load_ai_model(model_path):
                 print(f"Loaded model with joblib fallback from {model_path}")
                 return model
             except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e,
+                )
 
-        print(f"Unable to load model from {model_path} - unsupported format or missing dependencies")
+        print(
+            f"Unable to load model from {model_path} - unsupported format or missing dependencies"
+        )
         return None
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -9503,12 +11831,14 @@ def load_ai_model(model_path):
         print(f"Error loading model: {e}")
         return None
 
+
 def run_pdf_report_generator(app=None, **kwargs):
     """Generate PDF report."""
     _ = kwargs  # Unused fallback function parameters
     if app:
         app.update_output.emit("[Report] Generating PDF report...")
     return {"success": True, "message": "PDF report generation completed"}
+
 
 def apply_parsed_patch_instructions_with_validation(instructions, binary_path):
     """Apply parsed patch instructions with validation."""
@@ -9537,7 +11867,9 @@ def apply_parsed_patch_instructions_with_validation(instructions, binary_path):
                 elif patch_type == "jmp":
                     applied_patches.append(f"JMP patch at offset 0x{offset:08x}")
                 elif patch_type == "data":
-                    applied_patches.append(f"Data patch at offset 0x{offset:08x} ({len(data)} bytes)")
+                    applied_patches.append(
+                        f"Data patch at offset 0x{offset:08x} ({len(data)} bytes)"
+                    )
                 else:
                     errors.append(f"Unknown patch type: {patch_type} at index {idx}")
     else:
@@ -9557,9 +11889,11 @@ def apply_parsed_patch_instructions_with_validation(instructions, binary_path):
         "total_instructions": len(instructions) if isinstance(instructions, list) else 1,
     }
 
+
 def parse_patch_instructions(instructions):
     """Parse patch instructions."""
     return {"parsed": instructions, "valid": True}
+
 
 def simulate_patch_and_verify(patch_data, binary_path):
     """Simulate patch application and verify."""
@@ -9610,7 +11944,10 @@ def simulate_patch_and_verify(patch_data, binary_path):
         simulation_results["file_size"] = file_size
         simulation_results["verification_steps"].append(f"File size check: {file_size} bytes")
     except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+        logger.error(
+            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+            e,
+        )
         simulation_results["potential_issues"].append(f"File access error: {e!s}")
 
     # Determine success based on issues found
@@ -9623,39 +11960,48 @@ def simulate_patch_and_verify(patch_data, binary_path):
         "issues_found": len(simulation_results["potential_issues"]),
     }
 
+
 # Removed local placeholder functions - using proper imports instead
+
 
 # Missing plugin system functions
 def plugin_system_run_custom_plugin(plugin_name, *args, **kwargs):
     """Run custom plugin through plugin system."""
     try:
         from ..plugins.plugin_system import run_plugin
+
         return run_plugin(plugin_name, *args, **kwargs)
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
         return {"error": "Plugin system not available"}
 
+
 def plugin_system_run_frida(script_name, *args, **kwargs):
     """Run Frida script through plugin system."""
     try:
         from ..plugins.plugin_system import run_frida_plugin_from_file
+
         return run_frida_plugin_from_file(script_name, *args, **kwargs)
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
         return {"error": "Frida plugin system not available"}
 
+
 def plugin_system_run_ghidra(script_name, *args, **kwargs):
     """Run Ghidra script through plugin system."""
     try:
         from ..plugins.plugin_system import run_ghidra_plugin_from_file
+
         return run_ghidra_plugin_from_file(script_name, *args, **kwargs)
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
         return {"error": "Ghidra plugin system not available"}
 
+
 def plugin_system_run_plugin(plugin_name, *args, **kwargs):
     """Run plugin through plugin system."""
     return plugin_system_run_custom_plugin(plugin_name, *args, **kwargs)
+
 
 # Missing dialog classes with fallbacks
 class WorkerThread(QThread):
@@ -9681,7 +12027,10 @@ class WorkerThread(QThread):
             result = self.func(*self.args, **self.kwargs)
             self.result.emit(result)
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.error.emit(str(e))
         finally:
             self.is_running = False
@@ -9693,7 +12042,9 @@ class WorkerThread(QThread):
             self.requestInterruption()
             self.wait(3000)  # Wait up to 3 seconds for graceful shutdown
 
+
 # VisualPatchEditorDialog - using proper import from dialogs module
+
 
 class ModelFinetuningDialog(QDialog):
     """Production-grade model finetuning dialog."""
@@ -9743,7 +12094,9 @@ class ModelFinetuningDialog(QDialog):
         params_layout.addRow("Optimizer:", self.optimizer_combo)
 
         self.loss_function_combo = QComboBox()
-        self.loss_function_combo.addItems(["categorical_crossentropy", "binary_crossentropy", "mse", "mae"])
+        self.loss_function_combo.addItems(
+            ["categorical_crossentropy", "binary_crossentropy", "mse", "mae"]
+        )
         self.loss_function_combo.setCurrentText("categorical_crossentropy")
         params_layout.addRow("Loss Function:", self.loss_function_combo)
 
@@ -9754,7 +12107,9 @@ class ModelFinetuningDialog(QDialog):
 
         self.output_directory_edit = QLineEdit()
         self.output_directory_edit.setPlaceholderText("Output directory for trained models...")
-        self.output_directory_edit.setText(os.path.join(os.path.dirname(__file__), "..", "models", "trained"))
+        self.output_directory_edit.setText(
+            os.path.join(os.path.dirname(__file__), "..", "models", "trained")
+        )
         params_layout.addRow("Output Directory:", self.output_directory_edit)
 
         # Buttons
@@ -9793,17 +12148,25 @@ class ModelFinetuningDialog(QDialog):
             # In a production implementation, this would start actual training
             # For now, show the configuration that would be used
             config_str = "\n".join([f"{key}: {value}" for key, value in config_info.items()])
-            QMessageBox.information(self, "Training Configuration",
-                                  f"Model training would start with configuration:\n\n{config_str}\n\n"
-                                  "This is a production-ready framework ready for ML backend integration.")
+            QMessageBox.information(
+                self,
+                "Training Configuration",
+                f"Model training would start with configuration:\n\n{config_str}\n\n"
+                "This is a production-ready framework ready for ML backend integration.",
+            )
             self.accept()
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             QMessageBox.critical(self, "Error", f"Training failed: {e!s}")
+
 
 # Try to import Llama from llama-cpp-python, fallback to production-grade placeholder
 try:
     from llama_cpp import Llama
+
     LLAMA_CPP_AVAILABLE = True
 except ImportError:
     LLAMA_CPP_AVAILABLE = False
@@ -9817,16 +12180,20 @@ except ImportError:
             self.logger = logging.getLogger("Intellicrack.LlamaFallback")
             self.model_path = kwargs.get("model_path", "unknown")
             self.logger.warning("llama-cpp-python not available - using fallback implementation")
-            self.logger.info("To enable full LLM functionality, install: pip install llama-cpp-python")
+            self.logger.info(
+                "To enable full LLM functionality, install: pip install llama-cpp-python"
+            )
 
         def __call__(self, prompt="", **kwargs):
             """Generate completion with proper error handling."""
             self.logger.debug("LLM completion requested (fallback mode)")
             return {
-                "choices": [{
-                    "text": f"LLM Backend Unavailable - Install llama-cpp-python for AI functionality\nPrompt was: {prompt[:100]}...",
-                    "finish_reason": "fallback_mode",
-                }],
+                "choices": [
+                    {
+                        "text": f"LLM Backend Unavailable - Install llama-cpp-python for AI functionality\nPrompt was: {prompt[:100]}...",
+                        "finish_reason": "fallback_mode",
+                    }
+                ],
                 "usage": {"total_tokens": 0},
                 "model": "fallback",
             }
@@ -9949,14 +12316,19 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
     def start_network_capture(self):
         """Start capturing network traffic"""
         try:
-            interface = self.interface_combo.currentText() if hasattr(self, "interface_combo") else "eth0"
+            interface = (
+                self.interface_combo.currentText() if hasattr(self, "interface_combo") else "eth0"
+            )
             filter_text = self.filter_input.text() if hasattr(self, "filter_input") else ""
 
-            self.update_output.emit(f"[Network] Starting capture on {interface} with filter: {filter_text if filter_text else 'none'}")
+            self.update_output.emit(
+                f"[Network] Starting capture on {interface} with filter: {filter_text if filter_text else 'none'}"
+            )
 
             # Initialize traffic analyzer if needed
             if self.traffic_analyzer is None:
                 from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
+
                 self.traffic_analyzer = NetworkTrafficAnalyzer()
 
             # Clear existing table data
@@ -9975,6 +12347,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             # Start a timer to periodically update the UI with captured packets
             if self.packet_update_timer is None:
                 from PyQt6.QtCore import QTimer
+
                 self.packet_update_timer = QTimer()
                 self.packet_update_timer.timeout.connect(self._update_packet_display)
 
@@ -10051,10 +12424,14 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
             # Common license server ports
             license_ports = {
-                27000: "FlexLM", 27001: "FlexLM",
-                1947: "HASP/Sentinel", 6001: "Sentinel",
-                22350: "CodeMeter", 2080: "Autodesk",
-                1688: "Microsoft KMS", 5093: "Sentinel RMS",
+                27000: "FlexLM",
+                27001: "FlexLM",
+                1947: "HASP/Sentinel",
+                6001: "Sentinel",
+                22350: "CodeMeter",
+                2080: "Autodesk",
+                1688: "Microsoft KMS",
+                5093: "Sentinel RMS",
             }
 
             # Analyze each captured packet
@@ -10069,39 +12446,64 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
                         # Check for license server ports
                         if src_port in license_ports:
-                            license_patterns["license_servers"].append({
-                                "port": src_port,
-                                "type": license_ports[src_port],
-                                "direction": "response",
-                            })
+                            license_patterns["license_servers"].append(
+                                {
+                                    "port": src_port,
+                                    "type": license_ports[src_port],
+                                    "direction": "response",
+                                }
+                            )
                         if dst_port in license_ports:
-                            license_patterns["license_servers"].append({
-                                "port": dst_port,
-                                "type": license_ports[dst_port],
-                                "direction": "request",
-                            })
+                            license_patterns["license_servers"].append(
+                                {
+                                    "port": dst_port,
+                                    "type": license_ports[dst_port],
+                                    "direction": "request",
+                                }
+                            )
 
                         # Check for encrypted traffic
                         if protocol in ["TLS", "SSL"] or dst_port in [443, 8443]:
-                            license_patterns["encrypted_connections"].append({
-                                "port": dst_port,
-                                "protocol": protocol,
-                            })
+                            license_patterns["encrypted_connections"].append(
+                                {
+                                    "port": dst_port,
+                                    "protocol": protocol,
+                                }
+                            )
 
                         # Look for authentication patterns in payload
                         if payload:
                             payload_str = payload.decode("utf-8", errors="ignore").lower()
-                            auth_keywords = ["license", "auth", "token", "key", "serial", "activate"]
+                            auth_keywords = [
+                                "license",
+                                "auth",
+                                "token",
+                                "key",
+                                "serial",
+                                "activate",
+                            ]
                             for keyword in auth_keywords:
                                 if keyword in payload_str:
-                                    license_patterns["auth_attempts"].append({
-                                        "keyword": keyword,
-                                        "port": dst_port,
-                                    })
+                                    license_patterns["auth_attempts"].append(
+                                        {
+                                            "keyword": keyword,
+                                            "port": dst_port,
+                                        }
+                                    )
                                     break
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e,
+                    )
                     continue
 
             # Generate analysis report
@@ -10135,7 +12537,10 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.update_output.emit(log_message("[Network] Traffic analysis complete"))
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(log_message(f"[Network] Analysis error: {e}"))
             self.update_analysis_results.emit(f"Traffic analysis failed: {e}\n")
 
@@ -10182,7 +12587,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     # Scapy can provide more detailed packet analysis
                 elif self.capture_libraries.get("pyshark"):
                     # Use pyshark for Wireshark-like analysis
-                    self.update_output.emit("[Network] Using PyShark for Wireshark-compatible analysis")
+                    self.update_output.emit(
+                        "[Network] Using PyShark for Wireshark-compatible analysis"
+                    )
                     # PyShark provides Wireshark dissectors
                 elif self.capture_libraries.get("dpkt"):
                     # Use dpkt for fast packet parsing
@@ -10190,7 +12597,10 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     # dpkt is good for high-speed packet processing
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(f"[Network] Capture thread error: {e!s}")
             self.traffic_analyzer.capturing = False
 
@@ -10215,7 +12625,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 self.traffic_table.insertRow(row_position)
 
                 # Format packet data for display
-                time_str = datetime.datetime.fromtimestamp(packet.get("timestamp", 0)).strftime("%H:%M:%S.%f")[:-3]
+                time_str = datetime.datetime.fromtimestamp(packet.get("timestamp", 0)).strftime(
+                    "%H:%M:%S.%f"
+                )[:-3]
                 src_addr = packet.get("src", "Unknown")
                 dst_addr = packet.get("dst", "Unknown")
                 protocol = packet.get("protocol", "Unknown")
@@ -10233,7 +12645,11 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     src_port = packet.get("sport", 0)
                     dst_port = packet.get("dport", 0)
                     flags = packet.get("tcp_flags", "")
-                    info = f"{src_port} → {dst_port} [{flags}]" if flags else f"{src_port} → {dst_port}"
+                    info = (
+                        f"{src_port} → {dst_port} [{flags}]"
+                        if flags
+                        else f"{src_port} → {dst_port}"
+                    )
                 else:
                     info = str(packet.get("info", packet.get("summary", "")))
 
@@ -10249,7 +12665,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     for col in range(5):
                         item = self.traffic_table.item(row_position, col)
                         if item:
-                            item.setBackground(QColor(255, 200, 200))  # Light red for license traffic
+                            item.setBackground(
+                                QColor(255, 200, 200)
+                            )  # Light red for license traffic
                 elif protocol == "HTTP":
                     for col in range(5):
                         item = self.traffic_table.item(row_position, col)
@@ -10268,7 +12686,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             # Stop timer if capture is done
             if not self.traffic_analyzer.capturing and self.packet_update_timer is not None:
                 self.packet_update_timer.stop()
-                self.update_output.emit(f"[Network] Capture complete. Total packets: {len(packets)}")
+                self.update_output.emit(
+                    f"[Network] Capture complete. Total packets: {len(packets)}"
+                )
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error(f"Error updating packet display: {e!s}")
@@ -10354,7 +12774,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.logger.debug(f"QMainWindow initialized, parent: {self.parent()}")
         self.logger.debug(f"Initial visibility: {self.isVisible()}")
         self.logger.debug(f"Initial window state: {self.windowState()}")
-        self.logger.info("IntellicrackApp constructor called. Initializing main application window.")
+        self.logger.info(
+            "IntellicrackApp constructor called. Initializing main application window."
+        )
 
         # Initialize core components
         self.app_context = get_app_context()
@@ -10362,7 +12784,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.logger.info("Initialized AppContext and TaskManager for state management")
 
         # Initialize the ModelManager
-        models_dir = CONFIG.get("model_repositories", {}).get("local", {}).get("models_directory", "models")
+        models_dir = (
+            CONFIG.get("model_repositories", {}).get("local", {}).get("models_directory", "models")
+        )
         if ModelManager is not None:
             self.model_manager = ModelManager(models_dir)
         else:
@@ -10373,11 +12797,13 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         try:
             self.logger.info("Initializing AI Orchestrator for agentic environment...")
             from ..ai.orchestrator import get_orchestrator
+
             self.ai_orchestrator = get_orchestrator()
             self.logger.info("AI Orchestrator initialized successfully - agentic environment ready")
 
             # Initialize coordination layer for intelligent AI workflows
             from ..ai.coordination_layer import AICoordinationLayer
+
             self.ai_coordinator = AICoordinationLayer(
                 shared_context=self.ai_orchestrator.shared_context,
                 event_bus=self.ai_orchestrator.event_bus,
@@ -10385,11 +12811,16 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.logger.info("AI Coordination Layer initialized successfully")
 
             # Set up AI event subscriptions for UI integration
-            self.ai_orchestrator.event_bus.subscribe("task_complete", self._on_ai_task_complete, "main_ui")
-            self.ai_orchestrator.event_bus.subscribe("coordinated_analysis_complete", self._on_coordinated_analysis_complete, "main_ui")
+            self.ai_orchestrator.event_bus.subscribe(
+                "task_complete", self._on_ai_task_complete, "main_ui"
+            )
+            self.ai_orchestrator.event_bus.subscribe(
+                "coordinated_analysis_complete", self._on_coordinated_analysis_complete, "main_ui"
+            )
 
             # Initialize Exploitation Orchestrator for advanced AI-guided exploitation
             from ..ai.exploitation_orchestrator import ExploitationOrchestrator
+
             self.exploitation_orchestrator = ExploitationOrchestrator(ai_model=None)
             self.logger.info("Exploitation Orchestrator initialized successfully")
 
@@ -10436,18 +12867,23 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         # Initialize important properties
         self.binary_path = None
-        self.selected_model_path = CONFIG.get("selected_model_path") # Initialize from config
+        self.selected_model_path = CONFIG.get("selected_model_path")  # Initialize from config
         if self.selected_model_path is not None and os.path.exists(self.selected_model_path):
             # Update the label in settings if the path is valid
             if hasattr(self, "custom_model_path_label"):
                 self.custom_model_path_label.setText(os.path.basename(self.selected_model_path))
-            self.update_output.emit(log_message(f"[AI Model] Loaded saved model path from config: {self.selected_model_path}"))
+            self.update_output.emit(
+                log_message(
+                    f"[AI Model] Loaded saved model path from config: {self.selected_model_path}"
+                )
+            )
         else:
-            self.selected_model_path = None # Ensure it's None if path is invalid or not set
+            self.selected_model_path = None  # Ensure it's None if path is invalid or not set
             if hasattr(self, "custom_model_path_label"):
                 self.custom_model_path_label.setText("None")
-            self.update_output.emit(log_message("[AI Model] No saved model path found or path is invalid."))
-
+            self.update_output.emit(
+                log_message("[AI Model] No saved model path found or path is invalid.")
+            )
 
         self.chat_history = []
         self.frida_sessions = {}
@@ -10481,7 +12917,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.run_cfg_explorer = partial(run_cfg_explorer, self)
         self.run_concolic_execution = partial(run_concolic_execution, self)
         self.run_enhanced_protection_scan = partial(run_enhanced_protection_scan, self)
-        self.run_visual_network_traffic_analyzer = partial(run_visual_network_traffic_analyzer, self)
+        self.run_visual_network_traffic_analyzer = partial(
+            run_visual_network_traffic_analyzer, self
+        )
         self.run_multi_format_analysis = partial(run_multi_format_analysis, self)
         self.run_distributed_processing = partial(run_distributed_processing, self)
         self.run_gpu_accelerated_analysis = partial(run_gpu_accelerated_analysis, self)
@@ -10499,28 +12937,45 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         # Bind new exploitation handler methods
         from . import exploitation_handlers
-        self.generate_advanced_payload = partial(exploitation_handlers.generate_advanced_payload, self)
+
+        self.generate_advanced_payload = partial(
+            exploitation_handlers.generate_advanced_payload, self
+        )
         self.test_generated_payload = partial(exploitation_handlers.test_generated_payload, self)
         self.start_c2_server = partial(exploitation_handlers.start_c2_server, self)
         self.stop_c2_server = partial(exploitation_handlers.stop_c2_server, self)
         self.open_c2_management = partial(exploitation_handlers.open_c2_management, self)
         self.establish_persistence = partial(exploitation_handlers.establish_persistence, self)
         self.escalate_privileges = partial(exploitation_handlers.escalate_privileges, self)
-        self.perform_lateral_movement = partial(exploitation_handlers.perform_lateral_movement, self)
+        self.perform_lateral_movement = partial(
+            exploitation_handlers.perform_lateral_movement, self
+        )
         self.harvest_credentials = partial(exploitation_handlers.harvest_credentials, self)
         self.collect_system_info = partial(exploitation_handlers.collect_system_info, self)
         self.cleanup_exploitation = partial(exploitation_handlers.cleanup_exploitation, self)
-        self.open_vulnerability_research = partial(exploitation_handlers.open_vulnerability_research, self)
-        self.run_quick_vulnerability_analysis = partial(exploitation_handlers.run_quick_vulnerability_analysis, self)
+        self.open_vulnerability_research = partial(
+            exploitation_handlers.open_vulnerability_research, self
+        )
+        self.run_quick_vulnerability_analysis = partial(
+            exploitation_handlers.run_quick_vulnerability_analysis, self
+        )
         self.run_ai_guided_analysis = partial(exploitation_handlers.run_ai_guided_analysis, self)
         self.test_aslr_bypass = partial(exploitation_handlers.test_aslr_bypass, self)
         self.test_dep_bypass = partial(exploitation_handlers.test_dep_bypass, self)
         self.test_cfi_bypass = partial(exploitation_handlers.test_cfi_bypass, self)
         self.test_cet_bypass = partial(exploitation_handlers.test_cet_bypass, self)
-        self.test_stack_canary_bypass = partial(exploitation_handlers.test_stack_canary_bypass, self)
-        self.run_full_automated_exploitation = partial(exploitation_handlers.run_full_automated_exploitation, self)
-        self.run_ai_orchestrated_campaign = partial(exploitation_handlers.run_ai_orchestrated_campaign, self)
-        self.save_exploitation_output = partial(exploitation_handlers.save_exploitation_output, self)
+        self.test_stack_canary_bypass = partial(
+            exploitation_handlers.test_stack_canary_bypass, self
+        )
+        self.run_full_automated_exploitation = partial(
+            exploitation_handlers.run_full_automated_exploitation, self
+        )
+        self.run_ai_orchestrated_campaign = partial(
+            exploitation_handlers.run_ai_orchestrated_campaign, self
+        )
+        self.save_exploitation_output = partial(
+            exploitation_handlers.save_exploitation_output, self
+        )
 
         # -------------------------------
         # Method Binding
@@ -10557,6 +13012,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         # Initialize AI components
         try:
             from ..ai.autonomous_agent import AutonomousAgent
+
             self.autonomous_agent = AutonomousAgent()
             logger.info("AutonomousAgent initialized successfully")
         except (OSError, ValueError, RuntimeError) as e:
@@ -10564,13 +13020,17 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             logger.warning("Failed to initialize AutonomousAgent: %s", e)
 
         try:
-            self.memory_optimized_loader = MemoryOptimizedBinaryLoader() if MemoryOptimizedBinaryLoader else None
+            self.memory_optimized_loader = (
+                MemoryOptimizedBinaryLoader() if MemoryOptimizedBinaryLoader else None
+            )
         except (OSError, ValueError, RuntimeError) as e:
             self.memory_optimized_loader = None
             logger.warning("Failed to initialize MemoryOptimizedBinaryLoader: %s", e)
 
         try:
-            self.symbolic_execution_engine = SymbolicExecutionEngine("") if SymbolicExecutionEngine else None
+            self.symbolic_execution_engine = (
+                SymbolicExecutionEngine("") if SymbolicExecutionEngine else None
+            )
         except (OSError, ValueError, RuntimeError) as e:
             self.symbolic_execution_engine = None
             logger.warning("Failed to initialize SymbolicExecutionEngine: %s", e)
@@ -10582,7 +13042,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             logger.warning("Failed to initialize TaintAnalysisEngine: %s", e)
 
         try:
-            self.concolic_execution_engine = ConcolicExecutionEngine("") if ConcolicExecutionEngine else None
+            self.concolic_execution_engine = (
+                ConcolicExecutionEngine("") if ConcolicExecutionEngine else None
+            )
         except (OSError, ValueError, RuntimeError) as e:
             self.concolic_execution_engine = None
             logger.warning("Failed to initialize ConcolicExecutionEngine: %s", e)
@@ -10594,7 +13056,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             logger.warning("Failed to initialize ROPChainGenerator: %s", e)
 
         try:
-            self.distributed_processing_manager = DistributedProcessingManager() if DistributedProcessingManager else None
+            self.distributed_processing_manager = (
+                DistributedProcessingManager() if DistributedProcessingManager else None
+            )
         except (OSError, ValueError, RuntimeError) as e:
             self.distributed_processing_manager = None
             logger.warning("Failed to initialize DistributedProcessingManager: %s", e)
@@ -10608,6 +13072,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         # Initialize network components
         try:
             from ..core.network.traffic_analyzer import NetworkTrafficAnalyzer
+
             self.network_traffic_analyzer = NetworkTrafficAnalyzer()
         except (OSError, ValueError, RuntimeError) as e:
             self.network_traffic_analyzer = None
@@ -10615,6 +13080,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         try:
             from ..core.network.ssl_interceptor import SSLTLSInterceptor
+
             self.ssl_interceptor = SSLTLSInterceptor()
         except (OSError, ValueError, RuntimeError) as e:
             self.ssl_interceptor = None
@@ -10622,6 +13088,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         try:
             from ..core.network.protocol_fingerprinter import ProtocolFingerprinter
+
             self.protocol_fingerprinter = ProtocolFingerprinter()
         except (OSError, ValueError, RuntimeError) as e:
             self.protocol_fingerprinter = None
@@ -10629,6 +13096,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         try:
             from ..core.network.license_server_emulator import NetworkLicenseServerEmulator
+
             self.network_license_server = NetworkLicenseServerEmulator()
         except (OSError, ValueError, RuntimeError) as e:
             self.network_license_server = None
@@ -10648,7 +13116,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         else:
             self.pdf_report_generator = None
             print("[INIT] PDFReportGenerator not available - reporting features limited")
-            self.logger.warning("PDFReportGenerator not available - reporting features will be limited")
+            self.logger.warning(
+                "PDFReportGenerator not available - reporting features will be limited"
+            )
 
         # Create central widget and layout
         print("[INIT] Creating central widget...")
@@ -10739,8 +13209,12 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         # Create new modular tabs with lazy loading
         self.dashboard_tab = DashboardTab(shared_context, self) if DashboardTab else QWidget()
         self.analysis_tab = AnalysisTab(shared_context, self) if AnalysisTab else QWidget()
-        self.exploitation_tab = ExploitationTab(shared_context, self) if ExploitationTab else QWidget()
-        self.ai_assistant_tab = AIAssistantTab(shared_context, self) if AIAssistantTab else QWidget()
+        self.exploitation_tab = (
+            ExploitationTab(shared_context, self) if ExploitationTab else QWidget()
+        )
+        self.ai_assistant_tab = (
+            AIAssistantTab(shared_context, self) if AIAssistantTab else QWidget()
+        )
         self.tools_tab = ToolsTab(shared_context, self) if ToolsTab else QWidget()
         self.settings_tab = SettingsTab(shared_context, self) if SettingsTab else QWidget()
 
@@ -10847,11 +13321,14 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         # Initialize plugins
         try:
             from ..plugins.plugin_system import create_sample_plugins
+
             create_sample_plugins()
             self.available_plugins = self.load_available_plugins()
-            self.logger.info(f"Loaded {len(self.available_plugins.get('custom', []))} custom plugins, "
-                           f"{len(self.available_plugins.get('frida', []))} Frida scripts, "
-                           f"{len(self.available_plugins.get('ghidra', []))} Ghidra scripts")
+            self.logger.info(
+                f"Loaded {len(self.available_plugins.get('custom', []))} custom plugins, "
+                f"{len(self.available_plugins.get('frida', []))} Frida scripts, "
+                f"{len(self.available_plugins.get('ghidra', []))} Ghidra scripts"
+            )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.warning("Plugin initialization failed: %s", e)
             self.available_plugins = {"custom": [], "frida": [], "ghidra": []}
@@ -10965,12 +13442,13 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         layout.addWidget(dashboard_overview_group)
         layout.addWidget(quick_actions_group)
 
-
-
     def select_binary(self):
         """Open a file dialog to select a binary for analysis."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Binary", "", "Executable Files (*.exe *.dll *.so);;All Files (*)",
+            self,
+            "Select Binary",
+            "",
+            "Executable Files (*.exe *.dll *.so);;All Files (*)",
         )
 
         if file_path:
@@ -10997,12 +13475,17 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     # Use placeholder icon
                     self.file_icon_label.setPixmap(self._create_icon_pixmap())
             except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e,
+                )
                 # Fallback to text icon
                 self.file_icon_label.setText("📄")
 
             # Update file info text
-            self.file_info_text.setText(f"File: {file_name}\nPath: {file_path}\nSize: {file_size} bytes")
+            self.file_info_text.setText(
+                f"File: {file_name}\nPath: {file_path}\nSize: {file_size} bytes"
+            )
 
     def clear_binary(self):
         """Clear the selected binary."""
@@ -11038,14 +13521,18 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         # Use index to track selection history
         if not hasattr(self, "analysis_type_history"):
             self.analysis_type_history = []
-        self.analysis_type_history.append({
-            "index": index,
-            "type": analysis_type,
-            "timestamp": time.time(),
-        })
+        self.analysis_type_history.append(
+            {
+                "index": index,
+                "type": analysis_type,
+                "timestamp": time.time(),
+            }
+        )
 
         # Update status based on index
-        self.status_bar.showMessage(f"Analysis type changed to: {analysis_type} (index: {index})", 3000)
+        self.status_bar.showMessage(
+            f"Analysis type changed to: {analysis_type} (index: {index})", 3000
+        )
 
         # Update UI based on selected analysis type
         if analysis_type == "License Analysis":
@@ -11189,7 +13676,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         ghidra_script_layout.addWidget(ghidra_script_combo)
 
         run_script_btn = QPushButton("Run Selected Ghidra Script")
-        run_script_btn.clicked.connect(lambda: self.run_ghidra_plugin_from_file(ghidra_script_combo.currentText()))
+        run_script_btn.clicked.connect(
+            lambda: self.run_ghidra_plugin_from_file(ghidra_script_combo.currentText())
+        )
 
         ghidra_layout.addLayout(ghidra_script_layout)
         ghidra_layout.addWidget(run_script_btn)
@@ -11282,7 +13771,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         reset_agent_btn.setToolTip("Reset AI agent for a new analysis task")
 
         run_vuln_analysis_btn = QPushButton("Run AI Vulnerability Analysis")
-        run_vuln_analysis_btn.clicked.connect(lambda: self.execute_autonomous_task("vulnerability_analysis"))
+        run_vuln_analysis_btn.clicked.connect(
+            lambda: self.execute_autonomous_task("vulnerability_analysis")
+        )
         run_vuln_analysis_btn.setToolTip("Use AI to analyze vulnerabilities in the binary")
 
         ai_session_layout.addWidget(save_session_btn)
@@ -11348,7 +13839,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         frida_script_layout.addWidget(frida_script_combo)
 
         run_frida_btn = QPushButton("Run Selected Frida Script")
-        run_frida_btn.clicked.connect(lambda: self.run_frida_plugin_from_file(frida_script_combo.currentText()))
+        run_frida_btn.clicked.connect(
+            lambda: self.run_frida_plugin_from_file(frida_script_combo.currentText())
+        )
 
         frida_layout.addWidget(api_hooking_btn)
         frida_layout.addLayout(hooking_options_layout)
@@ -11598,7 +14091,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         self.patch_plan_table = QTableWidget()
         self.patch_plan_table.setColumnCount(6)
-        self.patch_plan_table.setHorizontalHeaderLabels(["ID", "Address", "Original Bytes (Hex)", "New Bytes (Hex)", "Description", "Status"])
+        self.patch_plan_table.setHorizontalHeaderLabels(
+            ["ID", "Address", "Original Bytes (Hex)", "New Bytes (Hex)", "Description", "Status"]
+        )
         self.patch_plan_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.patch_plan_table.setEditTriggers(QTableWidget.NoEditTriggers)
         patch_plan_layout.addWidget(self.patch_plan_table)
@@ -11688,7 +14183,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         strategy_layout.addWidget(strategy_combo)
 
         generate_launcher_btn = QPushButton("Generate Launcher Script")
-        generate_launcher_btn.clicked.connect(lambda: self.generate_launcher_script(strategy_combo.currentText()))
+        generate_launcher_btn.clicked.connect(
+            lambda: self.generate_launcher_script(strategy_combo.currentText())
+        )
 
         setup_memory_btn = QPushButton("Setup Memory Patching Environment")
         setup_memory_btn.clicked.connect(self.setup_memory_patching)
@@ -11735,10 +14232,18 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         payload_config_layout.addWidget(QLabel("Payload Type:"), 0, 0)
         self.payload_type_combo = QComboBox()
-        self.payload_type_combo.addItems([
-            "Reverse Shell", "Bind Shell", "Meterpreter", "Staged Payload",
-            "License Bypass", "Function Hijack", "Code Cave", "Custom Shellcode",
-        ])
+        self.payload_type_combo.addItems(
+            [
+                "Reverse Shell",
+                "Bind Shell",
+                "Meterpreter",
+                "Staged Payload",
+                "License Bypass",
+                "Function Hijack",
+                "Code Cave",
+                "Custom Shellcode",
+            ]
+        )
         payload_config_layout.addWidget(self.payload_type_combo, 0, 1)
 
         payload_config_layout.addWidget(QLabel("Architecture:"), 0, 2)
@@ -11873,9 +14378,14 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         research_layout = QHBoxLayout()
         research_layout.addWidget(QLabel("Campaign Type:"))
         self.research_type_combo = QComboBox()
-        self.research_type_combo.addItems([
-            "Binary Analysis", "Fuzzing", "Patch Analysis", "Hybrid Research",
-        ])
+        self.research_type_combo.addItems(
+            [
+                "Binary Analysis",
+                "Fuzzing",
+                "Patch Analysis",
+                "Hybrid Research",
+            ]
+        )
         research_layout.addWidget(self.research_type_combo)
         vuln_research_layout.addLayout(research_layout)
 
@@ -12196,7 +14706,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         # Live Traffic Display table
         self.traffic_table = QTableWidget()
         self.traffic_table.setColumnCount(5)
-        self.traffic_table.setHorizontalHeaderLabels(["Time", "Source", "Destination", "Protocol", "Info"])
+        self.traffic_table.setHorizontalHeaderLabels(
+            ["Time", "Source", "Destination", "Protocol", "Info"]
+        )
         traffic_layout.addWidget(self.traffic_table)
 
         # Analysis buttons
@@ -12352,8 +14864,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
     def open_plugin_documentation(self, topic):
         """Open plugin documentation for the specified topic"""
-        doc_path = os.path.join(os.path.dirname(__file__),
-                               "..", "..", "docs", "development", "plugins.md")
+        doc_path = os.path.join(
+            os.path.dirname(__file__), "..", "..", "docs", "development", "plugins.md"
+        )
         if os.path.exists(doc_path):
             # Open in system browser
             QDesktopServices.openUrl(QUrl.fromLocalFile(doc_path))
@@ -12447,7 +14960,9 @@ class Plugin:
             """,
         }
 
-        return help_topics.get(topic, f"<h2>{topic}</h2><p>No help available for this topic yet.</p>")
+        return help_topics.get(
+            topic, f"<h2>{topic}</h2><p>No help available for this topic yet.</p>"
+        )
 
     def analyze_process_behavior(self):
         """Analyze live process behavior using dynamic analysis."""
@@ -12478,16 +14993,22 @@ class Plugin:
             )
 
             # Log the analysis start
-            self.update_output.emit(f"[Process Analysis] Starting analysis of process: {process_name}")
+            self.update_output.emit(
+                f"[Process Analysis] Starting analysis of process: {process_name}"
+            )
 
             # In a real implementation, this would start dynamic analysis
             # For now, just provide a placeholder implementation
             self.update_output.emit("[Process Analysis] Dynamic analysis capabilities available")
-            self.update_output.emit("[Process Analysis] To implement: Frida instrumentation, API hooking, memory monitoring")
+            self.update_output.emit(
+                "[Process Analysis] To implement: Frida instrumentation, API hooking, memory monitoring"
+            )
 
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
-            QMessageBox.warning(self, "Error", "PyQt6 components not available for process analysis dialog")
+            QMessageBox.warning(
+                self, "Error", "PyQt6 components not available for process analysis dialog"
+            )
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error(f"Error in process behavior analysis: {e}")
             if hasattr(self, "update_output"):
@@ -12529,12 +15050,18 @@ class Plugin:
             for keyword in keyword_list:
                 self.update_output.emit(f"[Memory Scan] Searching for: {keyword}")
 
-            self.update_output.emit("[Memory Scan] Frida-based memory scanning capabilities available")
-            self.update_output.emit("[Memory Scan] To implement: Memory pattern matching, live scanning, result filtering")
+            self.update_output.emit(
+                "[Memory Scan] Frida-based memory scanning capabilities available"
+            )
+            self.update_output.emit(
+                "[Memory Scan] To implement: Memory pattern matching, live scanning, result filtering"
+            )
 
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
-            QMessageBox.warning(self, "Error", "PyQt6 components not available for memory scan dialog")
+            QMessageBox.warning(
+                self, "Error", "PyQt6 components not available for memory scan dialog"
+            )
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.logger.error(f"Error in memory keyword scan: {e}")
             if hasattr(self, "update_output"):
@@ -12730,10 +15257,12 @@ class Plugin:
                 file_name = plugin_data.get("file", "").lower()
 
                 # Show item if search text is found in any field
-                visible = (search_text in name or
-                          search_text in description or
-                          search_text in file_name or
-                          search_text == "")
+                visible = (
+                    search_text in name
+                    or search_text in description
+                    or search_text in file_name
+                    or search_text == ""
+                )
 
                 item.setHidden(not visible)
 
@@ -12774,7 +15303,11 @@ class Plugin:
         custom_dir_layout = QHBoxLayout()
         custom_dir_layout.addWidget(QLabel("Custom Plugins:"))
         custom_dir_edit = QLineEdit()
-        custom_dir_edit.setText(os.path.join(os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"))
+        custom_dir_edit.setText(
+            os.path.join(
+                os.path.dirname(__file__), "..", "..", "intellicrack", "plugins", "custom_modules"
+            )
+        )
         custom_dir_layout.addWidget(custom_dir_edit)
         dir_layout.addLayout(custom_dir_layout)
 
@@ -12878,10 +15411,14 @@ class Plugin:
         binary_hex_buttons_layout = QHBoxLayout()
 
         view_binary_btn = QPushButton("View Current Binary in Hex Editor")
-        view_binary_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(self.binary_path, True))
+        view_binary_btn.clicked.connect(
+            lambda: self.show_enhanced_hex_viewer(self.binary_path, True)
+        )
 
         edit_binary_btn = QPushButton("Edit Current Binary in Hex Editor")
-        edit_binary_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(self.binary_path, False))
+        edit_binary_btn.clicked.connect(
+            lambda: self.show_enhanced_hex_viewer(self.binary_path, False)
+        )
 
         binary_hex_buttons_layout.addWidget(view_binary_btn)
         binary_hex_buttons_layout.addWidget(edit_binary_btn)
@@ -12891,6 +15428,7 @@ class Plugin:
 
         # Embedded Hex Viewer
         from intellicrack.ui.widgets.hex_viewer import HexViewerWidget
+
         self.hex_viewer_widget = HexViewerWidget()
         self.hex_viewer_widget.setMinimumHeight(300)
 
@@ -12933,7 +15471,9 @@ class Plugin:
 
         new_plugin_btn = QPushButton("➕ New Plugin")
         new_plugin_btn.setToolTip("Create a new plugin with the wizard")
-        new_plugin_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; padding: 6px 12px; border-radius: 4px; }")
+        new_plugin_btn.setStyleSheet(
+            "QPushButton { background-color: #4CAF50; color: white; padding: 6px 12px; border-radius: 4px; }"
+        )
         new_plugin_btn.clicked.connect(lambda: self.create_new_plugin("custom"))
 
         refresh_btn = QPushButton("🔄 Refresh")
@@ -12994,7 +15534,9 @@ class Plugin:
         frida_layout.addWidget(frida_search)
 
         frida_list = QListWidget()
-        frida_list.setToolTip("Available Frida scripts for runtime instrumentation\nDouble-click to view script details")
+        frida_list.setToolTip(
+            "Available Frida scripts for runtime instrumentation\nDouble-click to view script details"
+        )
         frida_layout.addWidget(frida_list)
 
         frida_buttons_layout = QHBoxLayout()
@@ -13047,7 +15589,9 @@ class Plugin:
         ghidra_layout.addWidget(ghidra_search)
 
         ghidra_list = QListWidget()
-        ghidra_list.setToolTip("Available Ghidra scripts for automated analysis\nDouble-click to view script details")
+        ghidra_list.setToolTip(
+            "Available Ghidra scripts for automated analysis\nDouble-click to view script details"
+        )
         ghidra_layout.addWidget(ghidra_list)
 
         ghidra_buttons_layout = QHBoxLayout()
@@ -13100,7 +15644,9 @@ class Plugin:
         custom_layout.addWidget(custom_search)
 
         custom_list = QListWidget()
-        custom_list.setToolTip("Your personal collection of custom analysis plugins\nDouble-click to view details")
+        custom_list.setToolTip(
+            "Your personal collection of custom analysis plugins\nDouble-click to view details"
+        )
         custom_layout.addWidget(custom_list)
 
         custom_buttons_layout = QHBoxLayout()
@@ -13188,7 +15734,9 @@ class Plugin:
         adobe_action_layout = QHBoxLayout()
         adobe_action_layout.addWidget(QLabel("Select Adobe Action:"))
         self.adobe_action_combo = QComboBox()
-        self.adobe_action_combo.addItems(["Deploy AdobeLicenseX", "Patch Adobe Licensing", "Reset Adobe Trial"])
+        self.adobe_action_combo.addItems(
+            ["Deploy AdobeLicenseX", "Patch Adobe Licensing", "Reset Adobe Trial"]
+        )
         adobe_action_layout.addWidget(self.adobe_action_combo)
 
         execute_adobe_btn = QPushButton("Execute Adobe Action")
@@ -13249,8 +15797,8 @@ class Plugin:
         # Dynamic key format templates
         key_formats = [
             "####-####-####-####",  # 16 char format
-            "###-#######-###",      # 13 char format
-            "#####-#####-#####",    # 15 char format
+            "###-#######-###",  # 13 char format
+            "#####-#####-#####",  # 15 char format
             "Custom",
         ]
         self.key_format_dropdown.addItems(key_formats)
@@ -13296,7 +15844,9 @@ class Plugin:
         template_layout = QHBoxLayout()
         template_layout.addWidget(QLabel("Report Template:"))
         self.report_template_combo = QComboBox()
-        self.report_template_combo.addItems(["Standard Analysis", "Extended Analysis", "Executive Summary", "Technical Details"])
+        self.report_template_combo.addItems(
+            ["Standard Analysis", "Extended Analysis", "Executive Summary", "Technical Details"]
+        )
         template_layout.addWidget(self.report_template_combo)
 
         format_layout = QHBoxLayout()
@@ -13520,13 +16070,15 @@ class Plugin:
         hex_layout.addWidget(display_group)
 
         # Features description
-        features_label = QLabel("<b>Features:</b><ul>"
-                               "<li>Memory-efficient file handling</li>"
-                               "<li>Multiple display modes</li>"
-                               "<li>Search functionality</li>"
-                               "<li>Region highlighting</li>"
-                               "<li>Customizable display options</li>"
-                               "</ul>")
+        features_label = QLabel(
+            "<b>Features:</b><ul>"
+            "<li>Memory-efficient file handling</li>"
+            "<li>Multiple display modes</li>"
+            "<li>Search functionality</li>"
+            "<li>Region highlighting</li>"
+            "<li>Customizable display options</li>"
+            "</ul>"
+        )
         features_label.setWordWrap(True)
         hex_layout.addWidget(features_label)
 
@@ -13671,7 +16223,9 @@ class Plugin:
 
         sections_table = QTableWidget()
         sections_table.setColumnCount(5)
-        sections_table.setHorizontalHeaderLabels(["Name", "Virtual Address", "Size", "Characteristics", "Entropy"])
+        sections_table.setHorizontalHeaderLabels(
+            ["Name", "Virtual Address", "Size", "Characteristics", "Entropy"]
+        )
 
         # Placeholder section data
         sections_table.setRowCount(4)
@@ -13725,7 +16279,9 @@ class Plugin:
         process_layout = QHBoxLayout()
 
         process_combo = QComboBox()
-        process_combo.addItems(["explorer.exe (PID: 1234)", "chrome.exe (PID: 2345)", "notepad.exe (PID: 3456)"])
+        process_combo.addItems(
+            ["explorer.exe (PID: 1234)", "chrome.exe (PID: 2345)", "notepad.exe (PID: 3456)"]
+        )
         refresh_process_btn = QPushButton("Refresh")
         attach_btn = QPushButton("Attach")
 
@@ -13781,7 +16337,9 @@ class Plugin:
         memory_patch_layout.addWidget(QLabel("<h2>Memory Patcher</h2>"))
         memory_patch_layout.addWidget(QLabel("Patch memory in running processes"))
 
-        memory_patch_layout.addWidget(QLabel("<i>This tool will be integrated in a future update.</i>"))
+        memory_patch_layout.addWidget(
+            QLabel("<i>This tool will be integrated in a future update.</i>")
+        )
         memory_patch_layout.addStretch(1)
 
         # Add all widgets to stacked widget
@@ -13793,6 +16351,7 @@ class Plugin:
 
         # Memory Dump tool
         from intellicrack.ui.widgets.memory_dumper import MemoryDumperWidget
+
         self.memory_dumper_widget = MemoryDumperWidget()
         self.binary_tool_stack.addWidget(self.memory_dumper_widget)
 
@@ -13815,7 +16374,10 @@ class Plugin:
     def select_binary_tool_file(self):
         """Select a file for binary tools."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select File", "", "All Files (*)",
+            self,
+            "Select File",
+            "",
+            "All Files (*)",
         )
 
         if file_path:
@@ -13825,8 +16387,9 @@ class Plugin:
             file_size = file_info.size()
 
             self.binary_tool_file_label.setText(file_name)
-            self.binary_tool_file_info.setText(f"Path: {file_path}\nSize: {file_size} bytes\nType: Binary File")
-
+            self.binary_tool_file_info.setText(
+                f"Path: {file_path}\nSize: {file_size} bytes\nType: Binary File"
+            )
 
     def show_current_binary_in_hex(self, read_only=True):
         """Show the current binary in hex viewer."""
@@ -13917,14 +16480,37 @@ class Plugin:
         # Packet list
         packet_list = QTableWidget()
         packet_list.setColumnCount(6)
-        packet_list.setHorizontalHeaderLabels(["No.", "Time", "Source", "Destination", "Protocol", "Info"])
+        packet_list.setHorizontalHeaderLabels(
+            ["No.", "Time", "Source", "Destination", "Protocol", "Info"]
+        )
 
         # Add some placeholder packets
         packet_list.setRowCount(5)
         packets = [
-            ["1", "0.000000", "192.168.1.100", "93.184.216.34", "TCP", "59102 → 80 [SYN] Seq=0 Win=64240 Len=0"],
-            ["2", "0.025114", "93.184.216.34", "192.168.1.100", "TCP", "80 → 59102 [SYN, ACK] Seq=0 Ack=1 Win=65535 Len=0"],
-            ["3", "0.025303", "192.168.1.100", "93.184.216.34", "TCP", "59102 → 80 [ACK] Seq=1 Ack=1 Win=64240 Len=0"],
+            [
+                "1",
+                "0.000000",
+                "192.168.1.100",
+                "93.184.216.34",
+                "TCP",
+                "59102 → 80 [SYN] Seq=0 Win=64240 Len=0",
+            ],
+            [
+                "2",
+                "0.025114",
+                "93.184.216.34",
+                "192.168.1.100",
+                "TCP",
+                "80 → 59102 [SYN, ACK] Seq=0 Ack=1 Win=65535 Len=0",
+            ],
+            [
+                "3",
+                "0.025303",
+                "192.168.1.100",
+                "93.184.216.34",
+                "TCP",
+                "59102 → 80 [ACK] Seq=1 Ack=1 Win=64240 Len=0",
+            ],
             ["4", "0.034563", "192.168.1.100", "93.184.216.34", "HTTP", "GET / HTTP/1.1"],
             ["5", "0.154387", "93.184.216.34", "192.168.1.100", "HTTP", "HTTP/1.1 200 OK"],
         ]
@@ -13956,7 +16542,9 @@ class Plugin:
         raw_packet = QTextEdit()
         raw_packet.setReadOnly(True)
         raw_packet.setFont(QFont("Courier New", 10))
-        raw_packet.setText("00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00\n00 3c 00 00 40 00 40 06 00 00 c0 a8 01 64 5d b8\nd8 22 e6 ce 00 50 00 00 00 00 00 00 00 00 80 02\nfa f0 00 00 00 00 02 04 05 b4 04 02 08 0a 00 00\n00 00 00 00 00 00 01 03 03 07")
+        raw_packet.setText(
+            "00 00 00 00 00 00 00 00 00 00 00 00 08 00 45 00\n00 3c 00 00 40 00 40 06 00 00 c0 a8 01 64 5d b8\nd8 22 e6 ce 00 50 00 00 00 00 00 00 00 00 80 02\nfa f0 00 00 00 00 02 04 05 b4 04 02 08 0a 00 00\n00 00 00 00 00 00 01 03 03 07"
+        )
 
         traffic_display_splitter.addWidget(packet_list)
         traffic_display_splitter.addWidget(packet_details)
@@ -14148,7 +16736,9 @@ class Plugin:
         # Request/response list
         request_list = QTableWidget()
         request_list.setColumnCount(5)
-        request_list.setHorizontalHeaderLabels(["#", "Host", "Method/Status", "URL/Content", "Size"])
+        request_list.setHorizontalHeaderLabels(
+            ["#", "Host", "Method/Status", "URL/Content", "Size"]
+        )
 
         # Sample intercepted requests
         request_list.setRowCount(3)
@@ -14172,7 +16762,9 @@ class Plugin:
         request_layout = QVBoxLayout(request_tab)
 
         request_headers = QTextEdit()
-        request_headers.setPlainText("GET /index.html HTTP/1.1\nHost: example.com\nUser-Agent: Mozilla/5.0\nAccept: text/html")
+        request_headers.setPlainText(
+            "GET /index.html HTTP/1.1\nHost: example.com\nUser-Agent: Mozilla/5.0\nAccept: text/html"
+        )
 
         request_layout.addWidget(QLabel("Request Headers:"))
         request_layout.addWidget(request_headers)
@@ -14188,13 +16780,17 @@ class Plugin:
         response_layout = QVBoxLayout(response_tab)
 
         response_headers = QTextEdit()
-        response_headers.setPlainText("HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 15824\nConnection: close")
+        response_headers.setPlainText(
+            "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 15824\nConnection: close"
+        )
 
         response_layout.addWidget(QLabel("Response Headers:"))
         response_layout.addWidget(response_headers)
 
         response_body = QTextEdit()
-        response_body.setPlainText("<html>\n  <head>\n    <title>Example Domain</title>\n  </head>\n  <body>\n    <h1>Example Domain</h1>\n    <p>This domain is for use in examples.</p>\n  </body>\n</html>")
+        response_body.setPlainText(
+            "<html>\n  <head>\n    <title>Example Domain</title>\n  </head>\n  <body>\n    <h1>Example Domain</h1>\n    <p>This domain is for use in examples.</p>\n  </body>\n</html>"
+        )
 
         response_layout.addWidget(QLabel("Response Body:"))
         response_layout.addWidget(response_body)
@@ -14331,7 +16927,11 @@ class Plugin:
         plugin_list.setRowCount(6)
         sample_plugins = [
             ["License Finder", "Available", "Locates license verification routines in binaries"],
-            ["Network Interceptor", "Installed", "Intercepts and modifies network traffic with SSL support"],
+            [
+                "Network Interceptor",
+                "Installed",
+                "Intercepts and modifies network traffic with SSL support",
+            ],
             ["String Decryptor", "Available", "Automatically decrypts obfuscated strings"],
             ["Adobe CC Bypass", "Installed", "Sample Frida script for Adobe CC apps"],
             ["Binary Differ", "Installed", "Compares binaries and identifies differences"],
@@ -14374,11 +16974,17 @@ class Plugin:
 
         edit_plugin_btn = QPushButton("Edit Plugin")
         edit_plugin_btn.setIcon(QIcon.fromTheme("document-edit"))
-        edit_plugin_btn.clicked.connect(lambda: self.edit_plugin_file("intellicrack/plugins/custom_modules/demo_plugin.py"))
+        edit_plugin_btn.clicked.connect(
+            lambda: self.edit_plugin_file("intellicrack/plugins/custom_modules/demo_plugin.py")
+        )
 
         uninstall_plugin_btn = QPushButton("Uninstall")
         uninstall_plugin_btn.setIcon(QIcon.fromTheme("edit-delete"))
-        uninstall_plugin_btn.clicked.connect(lambda: QMessageBox.information(self, "Uninstall", "Plugin uninstall functionality would be implemented here"))
+        uninstall_plugin_btn.clicked.connect(
+            lambda: QMessageBox.information(
+                self, "Uninstall", "Plugin uninstall functionality would be implemented here"
+            )
+        )
 
         info_right.addWidget(run_plugin_btn)
         info_right.addWidget(edit_plugin_btn)
@@ -14395,7 +17001,9 @@ class Plugin:
         description_text = QTextEdit()
         description_text.setReadOnly(True)
         description_text.setMaximumHeight(100)
-        description_text.setText("License Finder locates license verification routines in binaries. It finds code paths related to license checks, activation verifications, and trial limitations.")
+        description_text.setText(
+            "License Finder locates license verification routines in binaries. It finds code paths related to license checks, activation verifications, and trial limitations."
+        )
         details_layout.addWidget(description_text)
 
         # Usage
@@ -14403,7 +17011,9 @@ class Plugin:
         usage_text = QTextEdit()
         usage_text.setReadOnly(True)
         usage_text.setMaximumHeight(80)
-        usage_text.setText("1. Select a binary file to analyze\n2. Run the plugin\n3. Review the identified license check locations\n4. Export results or use with patcher")
+        usage_text.setText(
+            "1. Select a binary file to analyze\n2. Run the plugin\n3. Review the identified license check locations\n4. Export results or use with patcher"
+        )
         details_layout.addWidget(usage_text)
 
         # Add to content splitter
@@ -14536,16 +17146,18 @@ class Plugin:
         preset_layout = QHBoxLayout()
         preset_layout.addWidget(QLabel("Preset:"))
         preset_combo = QComboBox()
-        preset_combo.addItems([
-            "Select a preset query...",
-            "Analyze this binary for license checks",
-            "Generate a patch plan",
-            "Explain this assembly code",
-            "How does this protection work?",
-            "Suggest memory locations to patch",
-            "What APIs are used by this function?",
-            "Help me bypass this protection",
-        ])
+        preset_combo.addItems(
+            [
+                "Select a preset query...",
+                "Analyze this binary for license checks",
+                "Generate a patch plan",
+                "Explain this assembly code",
+                "How does this protection work?",
+                "Suggest memory locations to patch",
+                "What APIs are used by this function?",
+                "Help me bypass this protection",
+            ]
+        )
         preset_combo.currentIndexChanged.connect(self.handle_preset_query)
 
         preset_layout.addWidget(preset_combo, 1)
@@ -14639,12 +17251,24 @@ class Plugin:
         self.log_output.setLineWrapMode(QTextEdit.NoWrap)
         self.log_output.setFont(QFont("Courier New", 9))
         # Add sample log messages
-        self.log_output.append("<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:45] Application started</span>")
-        self.log_output.append("<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:46] Loading configuration from intellicrack_config.json</span>")
-        self.log_output.append("<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:47] Initializing UI components</span>")
-        self.log_output.append("<span style='color:#CC7F00;'>[WARNING] [2023-05-16 12:30:48] Could not load recent files list</span>")
-        self.log_output.append("<span style='color:#CC0000;'>[ERROR] [2023-05-16 12:30:50] Failed to initialize OpenGL context</span>")
-        self.log_output.append("<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:52] Using software rendering fallback</span>")
+        self.log_output.append(
+            "<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:45] Application started</span>"
+        )
+        self.log_output.append(
+            "<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:46] Loading configuration from intellicrack_config.json</span>"
+        )
+        self.log_output.append(
+            "<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:47] Initializing UI components</span>"
+        )
+        self.log_output.append(
+            "<span style='color:#CC7F00;'>[WARNING] [2023-05-16 12:30:48] Could not load recent files list</span>"
+        )
+        self.log_output.append(
+            "<span style='color:#CC0000;'>[ERROR] [2023-05-16 12:30:50] Failed to initialize OpenGL context</span>"
+        )
+        self.log_output.append(
+            "<span style='color:#007F00;'>[INFO] [2023-05-16 12:30:52] Using software rendering fallback</span>"
+        )
 
         log_display_layout.addWidget(log_level_group, 1)
         log_display_layout.addWidget(self.log_output, 4)
@@ -14728,7 +17352,9 @@ class Plugin:
         )
 
         # Also add to logs
-        self.log_output.append("<span style='color:#007F00;'>[INFO] [2023-05-16 12:31:30] Assistant query processed</span>")
+        self.log_output.append(
+            "<span style='color:#007F00;'>[INFO] [2023-05-16 12:31:30] Assistant query processed</span>"
+        )
 
     def _get_ai_response(self, user_message):
         """Get response from LLM backend asynchronously."""
@@ -14741,14 +17367,20 @@ class Plugin:
                 context_info.append(f"Currently analyzing binary: {self.current_binary_path}")
 
             # Get basic analysis information if available
-            if hasattr(self, "analysis_results_text") and hasattr(self.analysis_results_text, "toPlainText"):
+            if hasattr(self, "analysis_results_text") and hasattr(
+                self.analysis_results_text, "toPlainText"
+            ):
                 analysis_text = self.analysis_results_text.toPlainText()
                 if analysis_text and len(analysis_text) > 10:
                     # Include a summary of recent analysis results
-                    analysis_summary = analysis_text[:500] + "..." if len(analysis_text) > 500 else analysis_text
+                    analysis_summary = (
+                        analysis_text[:500] + "..." if len(analysis_text) > 500 else analysis_text
+                    )
                     context_info.append(f"Recent analysis results: {analysis_summary}")
 
-            context = "\n".join(context_info) if context_info else "No active binary analysis session."
+            context = (
+                "\n".join(context_info) if context_info else "No active binary analysis session."
+            )
 
             # Create system prompt for binary analysis assistant
             system_prompt = """You are an autonomous binary analysis expert integrated into Intellicrack, a comprehensive binary analysis platform. You excel at complete autonomous execution of binary analysis workflows, taking full ownership of tasks and chaining tools to deliver comprehensive results.
@@ -14794,33 +17426,43 @@ Please provide a helpful, technical response that assists with the binary analys
             # Use QDateTime for Qt-compatible timestamp formatting
             qt_timestamp = QDateTime.currentDateTime()
 
-            self.ai_conversation_history.append({
-                "role": "user",
-                "content": user_message,
-                "timestamp": datetime.datetime.now().isoformat(),
-                "qt_timestamp": qt_timestamp.toString(Qt.ISODate),
-            })
+            self.ai_conversation_history.append(
+                {
+                    "role": "user",
+                    "content": user_message,
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "qt_timestamp": qt_timestamp.toString(Qt.ISODate),
+                }
+            )
 
-            self.ai_conversation_history.append({
-                "role": "assistant",
-                "content": response,
-                "timestamp": datetime.datetime.now().isoformat(),
-                "qt_timestamp": qt_timestamp.addSecs(1).toString(Qt.ISODate),  # Add 1 second for response
-            })
+            self.ai_conversation_history.append(
+                {
+                    "role": "assistant",
+                    "content": response,
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "qt_timestamp": qt_timestamp.addSecs(1).toString(
+                        Qt.ISODate
+                    ),  # Add 1 second for response
+                }
+            )
 
             # Also update autonomous agent's conversation history if available
             if self.autonomous_agent:
                 try:
-                    self.autonomous_agent.conversation_history.append({
-                        "role": "user",
-                        "content": user_message,
-                        "timestamp": datetime.datetime.now().isoformat(),
-                    })
-                    self.autonomous_agent.conversation_history.append({
-                        "role": "assistant",
-                        "content": response,
-                        "timestamp": datetime.datetime.now().isoformat(),
-                    })
+                    self.autonomous_agent.conversation_history.append(
+                        {
+                            "role": "user",
+                            "content": user_message,
+                            "timestamp": datetime.datetime.now().isoformat(),
+                        }
+                    )
+                    self.autonomous_agent.conversation_history.append(
+                        {
+                            "role": "assistant",
+                            "content": response,
+                            "timestamp": datetime.datetime.now().isoformat(),
+                        }
+                    )
                 except Exception as e:
                     logger.debug(f"Could not update agent conversation history: {e}")
 
@@ -14894,28 +17536,39 @@ Please describe what you'd like to accomplish with your binary analysis, and I'l
             self.update_output.emit("[INFO] Starting concolic execution for license bypass...")
 
             # Check if concolic execution engine is available
-            if not hasattr(self, "concolic_execution_engine") or self.concolic_execution_engine is None:
+            if (
+                not hasattr(self, "concolic_execution_engine")
+                or self.concolic_execution_engine is None
+            ):
                 QMessageBox.warning(self, "Error", "Concolic execution engine not available")
                 return
 
             # Create a new engine instance for this binary
             from intellicrack.core.analysis.concolic_executor import ConcolicExecutionEngine
+
             engine = ConcolicExecutionEngine(self.binary_path, max_iterations=50, timeout=60)
 
             if not engine.manticore_available:
                 import platform
+
                 if platform.system() == "Windows":
                     # On Windows, suggest using angr instead
-                    QMessageBox.information(self, "Platform Note",
+                    QMessageBox.information(
+                        self,
+                        "Platform Note",
                         "Concolic execution via Manticore is not available on Windows.\n"
                         "Please use the Symbolic Execution (angr) option instead, "
-                        "which provides equivalent functionality with native Windows support.")
+                        "which provides equivalent functionality with native Windows support.",
+                    )
                 else:
                     # On Linux/Unix, suggest installing manticore
-                    QMessageBox.warning(self, "Missing Dependency",
+                    QMessageBox.warning(
+                        self,
+                        "Missing Dependency",
                         "Manticore is not installed.\n"
                         "Install it with: pip install manticore\n"
-                        "Or use Symbolic Execution (angr) as an alternative.")
+                        "Or use Symbolic Execution (angr) as an alternative.",
+                    )
                 return
 
             # Run license bypass analysis
@@ -14932,14 +17585,21 @@ Arguments: {results.get('argv', [])}
 Description: {results.get('description', 'License bypass successful')}"""
 
                     QMessageBox.information(self, "Concolic Analysis Success", bypass_info)
-                    self.update_output.emit(f"[SUCCESS] {results.get('description', 'License bypass found')}")
+                    self.update_output.emit(
+                        f"[SUCCESS] {results.get('description', 'License bypass found')}"
+                    )
                 else:
-                    QMessageBox.information(self, "Concolic Analysis Complete",
-                                          "Analysis completed but no license bypass found")
+                    QMessageBox.information(
+                        self,
+                        "Concolic Analysis Complete",
+                        "Analysis completed but no license bypass found",
+                    )
                     self.update_output.emit("[INFO] No license bypass patterns detected")
             else:
                 error_msg = results.get("error", "Unknown error during analysis")
-                QMessageBox.warning(self, "Analysis Error", f"Concolic analysis failed: {error_msg}")
+                QMessageBox.warning(
+                    self, "Analysis Error", f"Concolic analysis failed: {error_msg}"
+                )
                 self.update_output.emit(f"[ERROR] Concolic analysis failed: {error_msg}")
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -15246,6 +17906,7 @@ Description: {results.get('description', 'License bypass successful')}"""
         """Create a placeholder image when an image is missing."""
         try:
             from PIL import Image, ImageDraw, ImageFont
+
             HAS_PIL = True
         except ImportError:
             HAS_PIL = False
@@ -15255,7 +17916,6 @@ Description: {results.get('description', 'License bypass successful')}"""
             return None
 
         try:
-
             # Create a new image with a gray background
             img = Image.new("RGB", (400, 200), color=(200, 200, 200))
             draw = ImageDraw.Draw(img)
@@ -15264,7 +17924,10 @@ Description: {results.get('description', 'License bypass successful')}"""
             try:
                 font = ImageFont.truetype("arial.ttf", 20)
             except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                self.logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e,
+                )
                 font = ImageFont.load_default()
 
             # Draw the placeholder text
@@ -15272,6 +17935,7 @@ Description: {results.get('description', 'License bypass successful')}"""
 
             # Convert to bytes
             import io
+
             img_byte_array = io.BytesIO()
             img.save(img_byte_array, format="PNG")
             return img_byte_array.getvalue()
@@ -15292,10 +17956,10 @@ Description: {results.get('description', 'License bypass successful')}"""
 
         painter = QPainter(pixmap)
         painter.setPen(QPen(Qt.GlobalColor.gray, 2))
-        painter.drawRect(2, 2, size-4, size-4)
+        painter.drawRect(2, 2, size - 4, size - 4)
         painter.setPen(QPen(Qt.GlobalColor.gray, 1))
-        painter.drawLine(2, 2, size-2, size-2)
-        painter.drawLine(2, size-2, size-2, 2)
+        painter.drawLine(2, 2, size - 2, size - 2)
+        painter.drawLine(2, size - 2, size - 2, 2)
         painter.end()
 
         return pixmap
@@ -15431,7 +18095,9 @@ Description: {results.get('description', 'License bypass successful')}"""
         else:
             self.ui_scale_slider.setValue(100)  # Default value
         self.scale_value_label = QLabel(f"{self.ui_scale_slider.value()}%")
-        self.ui_scale_slider.valueChanged.connect(lambda value: self.scale_value_label.setText(f"{value}%"))
+        self.ui_scale_slider.valueChanged.connect(
+            lambda value: self.scale_value_label.setText(f"{value}%")
+        )
         ui_scale_layout.addWidget(self.ui_scale_slider)
         ui_scale_layout.addWidget(self.scale_value_label)
 
@@ -15542,7 +18208,9 @@ Description: {results.get('description', 'License bypass successful')}"""
         check_dependencies_btn.clicked.connect(self.check_dependencies_ui)
 
         install_dependencies_btn = QPushButton("Install/Update Selected Dependencies")
-        install_dependencies_btn.clicked.connect(lambda: self.install_dependencies(["psutil", "requests", "pefile", "capstone"]))
+        install_dependencies_btn.clicked.connect(
+            lambda: self.install_dependencies(["psutil", "requests", "pefile", "capstone"])
+        )
 
         dependency_layout.addWidget(check_dependencies_btn)
         dependency_layout.addWidget(install_dependencies_btn)
@@ -15586,7 +18254,15 @@ Description: {results.get('description', 'License bypass successful')}"""
         preset_profile_layout = QHBoxLayout()
         preset_profile_layout.addWidget(QLabel("Apply Preset Profile:"))
         preset_profile_combo = QComboBox()
-        preset_profile_combo.addItems(["Default", "Maximum Security", "Performance Optimized", "Deep Analysis", "Basic Analysis"])
+        preset_profile_combo.addItems(
+            [
+                "Default",
+                "Maximum Security",
+                "Performance Optimized",
+                "Deep Analysis",
+                "Basic Analysis",
+            ]
+        )
         preset_profile_combo.currentTextChanged.connect(self.apply_config_preset)
         preset_profile_layout.addWidget(preset_profile_combo)
 
@@ -15666,7 +18342,9 @@ Description: {results.get('description', 'License bypass successful')}"""
 
         model_layout.addWidget(QLabel("Primary Model:"), 0, 0)
         primary_model_combo = QComboBox()
-        primary_model_combo.addItems(["Claude-3 Opus", "Claude-3 Sonnet", "GPT-4", "GPT-3.5 Turbo", "Local LLama"])
+        primary_model_combo.addItems(
+            ["Claude-3 Opus", "Claude-3 Sonnet", "GPT-4", "GPT-3.5 Turbo", "Local LLama"]
+        )
         model_layout.addWidget(primary_model_combo, 0, 1)
 
         model_layout.addWidget(QLabel("Local Model:"), 1, 0)
@@ -15716,7 +18394,9 @@ Description: {results.get('description', 'License bypass successful')}"""
 
         params_layout.addWidget(QLabel("Context Window:"), 2, 0)
         context_combo = QComboBox()
-        context_combo.addItems(["4K tokens", "8K tokens", "16K tokens", "100K tokens", "Maximum available"])
+        context_combo.addItems(
+            ["4K tokens", "8K tokens", "16K tokens", "100K tokens", "Maximum available"]
+        )
         params_layout.addWidget(context_combo, 2, 1)
 
         params_layout.addWidget(QLabel("Preset Style:"), 3, 0)
@@ -15733,7 +18413,15 @@ Description: {results.get('description', 'License bypass successful')}"""
 
         templates_layout.addWidget(QLabel("Selected Template:"))
         template_combo = QComboBox()
-        template_combo.addItems(["Binary Analysis", "License Finding", "Protection Analysis", "Assembly Explanation", "Custom"])
+        template_combo.addItems(
+            [
+                "Binary Analysis",
+                "License Finding",
+                "Protection Analysis",
+                "Assembly Explanation",
+                "Custom",
+            ]
+        )
         templates_layout.addWidget(template_combo)
 
         template_edit = QTextEdit()
@@ -15870,7 +18558,9 @@ Description: {results.get('description', 'License bypass successful')}"""
 
         memory_layout.addWidget(QLabel("Cache Size:"), 1, 0)
         cache_combo = QComboBox()
-        cache_combo.addItems(["Small (256MB)", "Medium (512MB)", "Large (1GB)", "Extra Large (2GB)"])
+        cache_combo.addItems(
+            ["Small (256MB)", "Medium (512MB)", "Large (1GB)", "Extra Large (2GB)"]
+        )
         memory_layout.addWidget(cache_combo, 1, 1)
 
         memory_group.setLayout(memory_layout)
@@ -15905,7 +18595,9 @@ Description: {results.get('description', 'License bypass successful')}"""
         gpu_device_layout = QHBoxLayout()
         gpu_device_layout.addWidget(QLabel("GPU Device:"))
         gpu_device_combo = QComboBox()
-        gpu_device_combo.addItems(["NVIDIA GeForce RTX 3080", "Intel Integrated Graphics", "AMD Radeon RX 6800"])
+        gpu_device_combo.addItems(
+            ["NVIDIA GeForce RTX 3080", "Intel Integrated Graphics", "AMD Radeon RX 6800"]
+        )
         gpu_device_layout.addWidget(gpu_device_combo)
         gpu_layout.addLayout(gpu_device_layout)
 
@@ -15933,7 +18625,10 @@ Description: {results.get('description', 'License bypass successful')}"""
         config_manager = get_config()
         tools = [
             ("Ghidra Path:", config_manager.get_tool_path("ghidra") or "Not found - click Browse"),
-            ("Radare2 Path:", config_manager.get_tool_path("radare2") or "Not found - click Browse"),
+            (
+                "Radare2 Path:",
+                config_manager.get_tool_path("radare2") or "Not found - click Browse",
+            ),
             ("Frida Path:", config_manager.get_tool_path("frida") or "Not found - click Browse"),
         ]
 
@@ -16087,10 +18782,15 @@ Description: {results.get('description', 'License bypass successful')}"""
         self.statusBar().showMessage("Ready")
 
         self.available_plugins = load_plugins()
-        if isinstance(self.available_plugins, dict) and sum(len(plugins)
-                                                            for plugins in self.available_plugins.values()) > 0:
-            self.update_output.emit(log_message(
-                f"Loaded {sum(len(plugins) for plugins in self.available_plugins.values())} plugins"))
+        if (
+            isinstance(self.available_plugins, dict)
+            and sum(len(plugins) for plugins in self.available_plugins.values()) > 0
+        ):
+            self.update_output.emit(
+                log_message(
+                    f"Loaded {sum(len(plugins) for plugins in self.available_plugins.values())} plugins"
+                )
+            )
 
         # Initialize enhanced hex viewer integration
         try:
@@ -16103,14 +18803,16 @@ Description: {results.get('description', 'License bypass successful')}"""
             # Initialize hex viewer dialogs list
             self._hex_viewer_dialogs = []
 
-            self.update_output.emit(log_message("[Hex Viewer] Enhanced hex viewer functionality initialized"))
+            self.update_output.emit(
+                log_message("[Hex Viewer] Enhanced hex viewer functionality initialized")
+            )
             logger.info("Enhanced hex viewer functionality fully integrated")
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(f"[Hex Viewer] Error initializing enhanced hex viewer: {e!s}"))
+            self.update_output.emit(
+                log_message(f"[Hex Viewer] Error initializing enhanced hex viewer: {e!s}")
+            )
             logger.error("Error initializing enhanced hex viewer: %s", e)
             logger.error(traceback.format_exc())
-
-
 
     # Add stub methods for functions that don't exist but are referenced elsewhere
     def create_new_plugin(self, plugin_type):
@@ -16132,7 +18834,10 @@ Description: {results.get('description', 'License bypass successful')}"""
             self.logger.error("Import error in main_app.py: %s", e)
             # Fallback to simple creation
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output(f"[Plugins] Error with wizard: {e}")
 
         # Fallback to original implementation
@@ -16164,7 +18869,6 @@ function main() {
 
 // Start the script
 main();""",
-
             "ghidra": """//Ghidra script template
 //Description: Add your description here
 
@@ -16189,7 +18893,6 @@ public class NewGhidraScript extends GhidraScript {
         }
     }
 }""",
-
             "custom": """# Custom Python plugin template
 # Description: Add your description here
 
@@ -16247,7 +18950,9 @@ def register():
 
         # Get plugin name from user
         plugin_name, ok = QInputDialog.getText(
-            self, f"New {plugin_type.title()} Plugin", "Enter plugin name:",
+            self,
+            f"New {plugin_type.title()} Plugin",
+            "Enter plugin name:",
         )
 
         if not ok or not plugin_name:
@@ -16313,7 +19018,10 @@ def register():
             self.logger.error("Import error in main_app.py: %s", e)
             # Fallback to simple editor
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output(f"[Plugins] Error with enhanced editor: {e}")
 
         try:
@@ -16443,7 +19151,9 @@ def register():
         try:
             if os.path.abspath(file_path) != os.path.abspath(dest_file):
                 shutil.copy2(file_path, dest_file)
-                self.update_output.emit(log_message(f"Imported {plugin_type} plugin to {dest_file}"))
+                self.update_output.emit(
+                    log_message(f"Imported {plugin_type} plugin to {dest_file}")
+                )
             else:
                 self.update_output.emit(log_message("File is already in the plugins directory"))
 
@@ -16458,10 +19168,13 @@ def register():
         """Run a built-in plugin by name."""
         try:
             from ..plugins.plugin_system import run_plugin as plugin_system_run_plugin
+
             plugin_system_run_plugin(self, plugin_name)
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Plugin] Error running plugin {plugin_name}: {e}"))
+            self.update_output.emit(
+                log_message(f"[Plugin] Error running plugin {plugin_name}: {e}")
+            )
 
     def run_custom_plugin(self, plugin_name):
         """Run a custom Python plugin with optional QEMU testing."""
@@ -16469,10 +19182,12 @@ def register():
             # Initialize ScriptExecutionManager if not already done
             if not hasattr(self, "script_execution_manager"):
                 from ..core.execution import ScriptExecutionManager
+
                 self.script_execution_manager = ScriptExecutionManager(self)
 
             # First load plugins to get available plugins
             from ..plugins.plugin_system import load_plugins
+
             available_plugins = load_plugins()
 
             # Find the plugin in custom plugins
@@ -16484,7 +19199,9 @@ def register():
                     # Read plugin content
                     plugin_path = plugin_info.get("path", "")
                     if not plugin_path:
-                        self.update_output.emit(log_message(f"[Plugin] No path for plugin '{plugin_name}'"))
+                        self.update_output.emit(
+                            log_message(f"[Plugin] No path for plugin '{plugin_name}'")
+                        )
                         return
 
                     try:
@@ -16510,26 +19227,48 @@ def register():
                     )
 
                     if result.get("success"):
-                        self.update_output.emit(log_message(f"[Plugin] Successfully executed '{plugin_name}'"))
+                        self.update_output.emit(
+                            log_message(f"[Plugin] Successfully executed '{plugin_name}'")
+                        )
                     else:
-                        self.update_output.emit(log_message(f"[Plugin] Execution failed: {result.get('error', 'Unknown error')}"))
+                        self.update_output.emit(
+                            log_message(
+                                f"[Plugin] Execution failed: {result.get('error', 'Unknown error')}"
+                            )
+                        )
                     return
 
             if not plugin_found:
                 # Try using the imported run_custom_plugin function as fallback
-                self.update_output.emit(log_message(f"[Plugin] Plugin '{plugin_name}' not found in loaded plugins, trying direct execution"))
+                self.update_output.emit(
+                    log_message(
+                        f"[Plugin] Plugin '{plugin_name}' not found in loaded plugins, trying direct execution"
+                    )
+                )
                 try:
                     result = run_custom_plugin(plugin_name, app=self, binary_path=target_binary)
                     if result and result.get("success"):
-                        self.update_output.emit(log_message(f"[Plugin] Direct execution of '{plugin_name}' succeeded"))
+                        self.update_output.emit(
+                            log_message(f"[Plugin] Direct execution of '{plugin_name}' succeeded")
+                        )
                     else:
-                        error_msg = result.get("error", "Unknown error") if result else "No result returned"
-                        self.update_output.emit(log_message(f"[Plugin] Direct execution failed: {error_msg}"))
+                        error_msg = (
+                            result.get("error", "Unknown error") if result else "No result returned"
+                        )
+                        self.update_output.emit(
+                            log_message(f"[Plugin] Direct execution failed: {error_msg}")
+                        )
                 except Exception as e:
-                    self.update_output.emit(log_message(f"[Plugin] Custom plugin '{plugin_name}' not found or failed: {e}"))
+                    self.update_output.emit(
+                        log_message(
+                            f"[Plugin] Custom plugin '{plugin_name}' not found or failed: {e}"
+                        )
+                    )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Plugin] Error running custom plugin {plugin_name}: {e}"))
+            self.update_output.emit(
+                log_message(f"[Plugin] Error running custom plugin {plugin_name}: {e}")
+            )
 
     def run_frida_plugin_from_file(self, plugin_path):
         """Run a Frida script plugin from file."""
@@ -16547,13 +19286,17 @@ def register():
                 if os.path.exists(full_path):
                     plugin_path = full_path
                 else:
-                    self.update_output.emit(log_message(f"[Plugin] Frida script not found: {plugin_path}"))
+                    self.update_output.emit(
+                        log_message(f"[Plugin] Frida script not found: {plugin_path}")
+                    )
                     return
 
             plugin_system_run_frida(self, plugin_path)
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Plugin] Error running Frida plugin {plugin_path}: {e}"))
+            self.update_output.emit(
+                log_message(f"[Plugin] Error running Frida plugin {plugin_path}: {e}")
+            )
 
     def run_ghidra_plugin_from_file(self, plugin_path):
         """Run a Ghidra script plugin from file."""
@@ -16571,18 +19314,23 @@ def register():
                 if os.path.exists(full_path):
                     plugin_path = full_path
                 else:
-                    self.update_output.emit(log_message(f"[Plugin] Ghidra script not found: {plugin_path}"))
+                    self.update_output.emit(
+                        log_message(f"[Plugin] Ghidra script not found: {plugin_path}")
+                    )
                     return
 
             plugin_system_run_ghidra(self, plugin_path)
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Plugin] Error running Ghidra plugin {plugin_path}: {e}"))
+            self.update_output.emit(
+                log_message(f"[Plugin] Error running Ghidra plugin {plugin_path}: {e}")
+            )
 
     def load_available_plugins(self):
         """Load and return available plugins."""
         try:
             from ..plugins.plugin_system import load_plugins
+
             return load_plugins()
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
@@ -16616,7 +19364,11 @@ def register():
         try:
             from ..plugins.plugin_system import run_plugin_remotely
 
-            self.update_output.emit(log_message(f"[Plugin] Preparing remote execution for {plugin_info.get('name', 'Unknown')}..."))
+            self.update_output.emit(
+                log_message(
+                    f"[Plugin] Preparing remote execution for {plugin_info.get('name', 'Unknown')}..."
+                )
+            )
             results = run_plugin_remotely(self, plugin_info)
 
             if results:
@@ -16633,6 +19385,7 @@ def register():
         """Show the plugin manager dialog."""
         try:
             from .dialogs.plugin_manager_dialog import PluginManagerDialog
+
             dialog = PluginManagerDialog(self)
             if hasattr(dialog, "exec_") or hasattr(dialog, "exec"):
                 dialog.exec()
@@ -16652,8 +19405,14 @@ def register():
                 self.update_output.emit(log_message("[Test] Testing sandboxed plugin execution..."))
                 self.run_plugin_in_sandbox(demo_plugin_path, "analyze", "test_binary.exe")
             else:
-                self.update_output.emit(log_message("[Test] Demo plugin not found for sandbox test"))
-                QMessageBox.warning(self, "Test Failed", "Demo plugin not found. Please ensure plugins are properly initialized.")
+                self.update_output.emit(
+                    log_message("[Test] Demo plugin not found for sandbox test")
+                )
+                QMessageBox.warning(
+                    self,
+                    "Test Failed",
+                    "Demo plugin not found. Please ensure plugins are properly initialized.",
+                )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Test] Sandbox test failed: {e}"))
@@ -16673,11 +19432,14 @@ def register():
                 self.run_plugin_remotely(plugin_info)
             else:
                 self.update_output.emit(log_message("[Test] Demo plugin not found for remote test"))
-                QMessageBox.information(self, "Remote Test",
+                QMessageBox.information(
+                    self,
+                    "Remote Test",
                     "Remote plugin execution test requires:\n"
                     "1. Demo plugin to be available\n"
                     "2. Remote plugins enabled in settings\n"
-                    "3. Remote server running on target host")
+                    "3. Remote server running on target host",
+                )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Test] Remote test failed: {e}"))
@@ -16708,11 +19470,19 @@ def register():
                     recent_action.setShortcut(f"Ctrl+{idx+1}")
 
                 # Set priority based on how recent the file is
-                recent_action.setPriority(QAction.Priority(QAction.HighPriority if idx == 0 else
-                                                          QAction.NormalPriority if idx < 3 else
-                                                          QAction.LowPriority))
+                recent_action.setPriority(
+                    QAction.Priority(
+                        QAction.HighPriority
+                        if idx == 0
+                        else QAction.NormalPriority
+                        if idx < 3
+                        else QAction.LowPriority
+                    )
+                )
 
-                recent_action.triggered.connect(lambda _checked, path=file_path: self.load_binary(path))
+                recent_action.triggered.connect(
+                    lambda _checked, path=file_path: self.load_binary(path)
+                )
                 recent_menu.addAction(recent_action)
 
                 # Log recently loaded files
@@ -16747,9 +19517,17 @@ def register():
         edit_menu.addAction(preferences_action)
 
         config_profiles_menu = edit_menu.addMenu("Configuration Profiles")
-        for profile in ["Default Configuration", "Maximum Security", "Performance Optimized", "Deep Analysis", "Basic Analysis"]:
+        for profile in [
+            "Default Configuration",
+            "Maximum Security",
+            "Performance Optimized",
+            "Deep Analysis",
+            "Basic Analysis",
+        ]:
             profile_action = QAction(profile, self)
-            profile_action.triggered.connect(lambda _checked, p=profile: self.apply_config_preset(p))
+            profile_action.triggered.connect(
+                lambda _checked, p=profile: self.apply_config_preset(p)
+            )
             config_profiles_menu.addAction(profile_action)
 
         # View menu
@@ -16757,15 +19535,21 @@ def register():
 
         # Tab navigation actions
         dashboard_action = QAction("Dashboard", self)
-        dashboard_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.project_dashboard_tab)))
+        dashboard_action.triggered.connect(
+            lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.project_dashboard_tab))
+        )
         view_menu.addAction(dashboard_action)
 
         analysis_results_action = QAction("Analysis Results", self)
-        analysis_results_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.analysis_tab)))
+        analysis_results_action.triggered.connect(
+            lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.analysis_tab))
+        )
         view_menu.addAction(analysis_results_action)
 
         live_logs_action = QAction("Live Logs", self)
-        live_logs_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.logs_tab)))
+        live_logs_action.triggered.connect(
+            lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.logs_tab))
+        )
         view_menu.addAction(live_logs_action)
 
         # Add Hex Viewer tab to View menu
@@ -16790,15 +19574,30 @@ def register():
         analysis_menu.addAction(basic_analysis_action)
 
         deep_analysis_menu = analysis_menu.addMenu("Deep Analysis")
-        for analysis_type in ["License Logic", "Runtime Monitoring", "CFG Structure", "Packing Detection",
-                              "Taint Analysis", "Symbolic Execution", "Concolic Execution", "ROP Chain Analysis",
-                              "Memory Optimization", "Incremental Analysis", "Distributed Processing", "GPU Acceleration"]:
+        for analysis_type in [
+            "License Logic",
+            "Runtime Monitoring",
+            "CFG Structure",
+            "Packing Detection",
+            "Taint Analysis",
+            "Symbolic Execution",
+            "Concolic Execution",
+            "ROP Chain Analysis",
+            "Memory Optimization",
+            "Incremental Analysis",
+            "Distributed Processing",
+            "GPU Acceleration",
+        ]:
             analysis_action = QAction(analysis_type, self)
-            analysis_action.triggered.connect(lambda _checked, a=analysis_type: self.handle_deep_analysis_mode(a))
+            analysis_action.triggered.connect(
+                lambda _checked, a=analysis_type: self.handle_deep_analysis_mode(a)
+            )
             deep_analysis_menu.addAction(analysis_action)
 
         custom_analysis_action = QAction("Custom Analysis", self)
-        custom_analysis_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.analysis_tab)))
+        custom_analysis_action.triggered.connect(
+            lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.analysis_tab))
+        )
         analysis_menu.addAction(custom_analysis_action)
 
         similarity_search_action = QAction("Similarity Search", self)
@@ -16818,13 +19617,18 @@ def register():
 
         ai_vuln_action = QAction("AI Vulnerability Analysis", self)
         ai_vuln_action.setToolTip("Use AI to analyze vulnerabilities")
-        ai_vuln_action.triggered.connect(lambda: self.execute_autonomous_task("vulnerability_analysis"))
+        ai_vuln_action.triggered.connect(
+            lambda: self.execute_autonomous_task("vulnerability_analysis")
+        )
         ai_analysis_menu.addAction(ai_vuln_action)
 
         ai_script_gen_action = QAction("AI Script Generation", self)
         ai_script_gen_action.setToolTip("Generate exploitation scripts using AI")
-        ai_script_gen_action.triggered.connect(lambda: self.execute_autonomous_task("script_generation",
-                                                                                   "Generate exploitation scripts for the loaded binary"))
+        ai_script_gen_action.triggered.connect(
+            lambda: self.execute_autonomous_task(
+                "script_generation", "Generate exploitation scripts for the loaded binary"
+            )
+        )
         ai_analysis_menu.addAction(ai_script_gen_action)
 
         ai_analysis_menu.addSeparator()
@@ -16869,10 +19673,18 @@ def register():
         tools_menu = menubar.addMenu("Tools")
 
         network_tools_menu = tools_menu.addMenu("Network Tools")
-        for network_tool in ["License Server Emulator", "SSL/TLS Interceptor", "Cloud Response Generator",
-                           "Protocol Fingerprinter", "Network Traffic Analyzer"]:
+        for network_tool in [
+            "License Server Emulator",
+            "SSL/TLS Interceptor",
+            "Cloud Response Generator",
+            "Protocol Fingerprinter",
+            "Network Traffic Analyzer",
+        ]:
             tool_action = QAction(network_tool, self)
-            tool_action.triggered.connect(lambda _checked, t=network_tool: self.network_tools_combo.setCurrentText(t) or self.launch_network_tool())
+            tool_action.triggered.connect(
+                lambda _checked, t=network_tool: self.network_tools_combo.setCurrentText(t)
+                or self.launch_network_tool()
+            )
             network_tools_menu.addAction(tool_action)
 
         license_analysis_action = QAction("License Analysis", self)
@@ -16880,11 +19692,15 @@ def register():
         tools_menu.addAction(license_analysis_action)
 
         plugin_management_action = QAction("Plugin Management", self)
-        plugin_management_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.plugins_tab)))
+        plugin_management_action.triggered.connect(
+            lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.plugins_tab))
+        )
         tools_menu.addAction(plugin_management_action)
 
         model_management_action = QAction("Model Management", self)
-        model_management_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.settings_tab)))
+        model_management_action.triggered.connect(
+            lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.settings_tab))
+        )
         tools_menu.addAction(model_management_action)
 
         # AI Model Configuration
@@ -16963,13 +19779,21 @@ def register():
         # View current binary button
         if self.binary_path is not None and self.binary_path:
             current_binary_btn = QPushButton("View Current Binary")
-            current_binary_btn.setToolTip(f"View the current binary: {os.path.basename(self.binary_path)}")
-            current_binary_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(self.binary_path, True))
+            current_binary_btn.setToolTip(
+                f"View the current binary: {os.path.basename(self.binary_path)}"
+            )
+            current_binary_btn.clicked.connect(
+                lambda: self.show_enhanced_hex_viewer(self.binary_path, True)
+            )
             file_layout.addWidget(current_binary_btn)
 
             edit_binary_btn = QPushButton("Edit Current Binary")
-            edit_binary_btn.setToolTip(f"Edit the current binary: {os.path.basename(self.binary_path)}")
-            edit_binary_btn.clicked.connect(lambda: self.show_enhanced_hex_viewer(self.binary_path, False))
+            edit_binary_btn.setToolTip(
+                f"Edit the current binary: {os.path.basename(self.binary_path)}"
+            )
+            edit_binary_btn.clicked.connect(
+                lambda: self.show_enhanced_hex_viewer(self.binary_path, False)
+            )
             file_layout.addWidget(edit_binary_btn)
 
         file_box.setLayout(file_layout)
@@ -17044,7 +19868,8 @@ def register():
         with the current binary path and editable mode.
         """
         return self.show_enhanced_hex_viewer(
-            self.binary_path if self.binary_path is not None else None, False,
+            self.binary_path if self.binary_path is not None else None,
+            False,
         )
 
     def show_enhanced_hex_viewer(self, file_path=None, read_only=False):
@@ -17071,6 +19896,7 @@ def register():
 
             # Call the function from hexview.integration
             from ..hexview.integration import show_enhanced_hex_viewer as hex_viewer_func
+
             dialog = hex_viewer_func(self, file_path, read_only)
 
             # Keep track of the dialog to prevent garbage collection
@@ -17078,7 +19904,11 @@ def register():
                 self._hex_viewer_dialogs = []
             self._hex_viewer_dialogs.append(dialog)
 
-            self.update_output.emit(log_message(f"[Hex Viewer] Opened {os.path.basename(file_path)} in {'read-only' if read_only else 'editable'} mode"))
+            self.update_output.emit(
+                log_message(
+                    f"[Hex Viewer] Opened {os.path.basename(file_path)} in {'read-only' if read_only else 'editable'} mode"
+                )
+            )
             logger.info("Opened enhanced hex viewer for %s", file_path)
         except (OSError, ValueError, RuntimeError) as e:
             QMessageBox.critical(
@@ -17098,7 +19928,9 @@ def register():
         # Dashboard action
         dashboard_action = QAction("Dashboard", self)
         dashboard_action.setToolTip("Go to Dashboard")
-        dashboard_action.triggered.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.project_dashboard_tab)))
+        dashboard_action.triggered.connect(
+            lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.project_dashboard_tab))
+        )
         toolbar.addAction(dashboard_action)
 
         toolbar.addSeparator()
@@ -17151,8 +19983,6 @@ def register():
         # Hex Viewer button removed (now using dedicated tab)
         # add_hex_viewer_toolbar_button(self, toolbar)
         logger.debug("Hex Viewer toolbar button not added (using dedicated tab instead)")
-
-
 
     def append_output(self, text):
         """Adds text to the output panel and scrolls to the bottom.
@@ -17252,12 +20082,15 @@ def register():
         try:
             # Ensure logs directory exists
             from intellicrack.utils.core.plugin_paths import get_logs_dir
+
             logs_dir = str(get_logs_dir())
             if not os.path.exists(logs_dir):
                 os.makedirs(logs_dir)
 
             # Set log file path with today's date
-            log_file = os.path.join(logs_dir, f"intellicrack_status_{datetime.datetime.now().strftime('%Y-%m-%d')}.log")
+            log_file = os.path.join(
+                logs_dir, f"intellicrack_status_{datetime.datetime.now().strftime('%Y-%m-%d')}.log"
+            )
 
             # Append log with timestamp
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -17270,8 +20103,7 @@ def register():
             # Don't let logging errors interrupt the application flow
 
     def save_analysis_results(self):
-        """Save analysis results to a file.
-        """
+        """Save analysis results to a file."""
         if not hasattr(self, "analyze_results") or not self.analyze_results:
             self.update_output.emit(log_message("No analysis results to save."))
             return
@@ -17290,7 +20122,8 @@ def register():
             # Determine format based on extension
             if filename.lower().endswith(".html"):
                 # Create HTML report
-                html = """
+                html = (
+                    """
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -17304,13 +20137,18 @@ def register():
                 </head>
                 <body>
                     <h1>Intellicrack Analysis Results</h1>
-                    <p>Generated on """ + time.strftime("%Y-%m-%d %H:%M:%S") + """</p>
+                    <p>Generated on """
+                    + time.strftime("%Y-%m-%d %H:%M:%S")
+                    + """</p>
                     <div class="section">
-                        <pre>""" + "\n".join(self.analyze_results) + """</pre>
+                        <pre>"""
+                    + "\n".join(self.analyze_results)
+                    + """</pre>
                     </div>
                 </body>
                 </html>
                 """
+                )
 
                 with open(filename, "w", encoding="utf-8") as f:
                     f.write(html)
@@ -17324,7 +20162,6 @@ def register():
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"Error saving analysis results: {e}"))
-
 
     def apply_dark_theme(self):
         """Apply dark theme to entire application"""
@@ -17548,8 +20385,18 @@ def register():
                             byref(c_int(1)),  # 1 for dark mode
                             sizeof(c_int),
                         )
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        logger.error(
+                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                            e,
+                        )
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                     # If it fails, just log and continue
@@ -17686,10 +20533,13 @@ def register():
 
     def show_documentation(self):
         """Show documentation dialog"""
-        QMessageBox.information(self, "Documentation",
-                               "The Intellicrack documentation can be accessed online at:\n"
-                               "https://intellicrack.docs.example.com\n\n"
-                               "Local documentation can be found in the docs/ folder of your installation directory.")
+        QMessageBox.information(
+            self,
+            "Documentation",
+            "The Intellicrack documentation can be accessed online at:\n"
+            "https://intellicrack.docs.example.com\n\n"
+            "Local documentation can be found in the docs/ folder of your installation directory.",
+        )
 
     def show_tutorials(self):
         """Show tutorials dialog"""
@@ -17705,9 +20555,12 @@ def register():
 
         tutorial_list = "\n".join([f"• {t}" for t in tutorials])
 
-        QMessageBox.information(self, "Tutorials",
-                               f"The following tutorials are available:\n\n{tutorial_list}\n\n"
-                               "Access tutorials from our website at:\nhttps://intellicrack.tutorials.example.com")
+        QMessageBox.information(
+            self,
+            "Tutorials",
+            f"The following tutorials are available:\n\n{tutorial_list}\n\n"
+            "Access tutorials from our website at:\nhttps://intellicrack.tutorials.example.com",
+        )
 
     def apply_appearance_settings(self):
         """Apply UI appearance settings like theme, scale and font size"""
@@ -17760,10 +20613,17 @@ def register():
             os.environ["QT_SCALE_FACTOR"] = str(scale_factor)
 
             # Show message that restart is required for scale changes
-            QMessageBox.information(self, "Scale Change",
-                "UI scale changes will take effect after restarting the application.")
+            QMessageBox.information(
+                self,
+                "Scale Change",
+                "UI scale changes will take effect after restarting the application.",
+            )
 
-        self.update_output.emit(log_message(f"[Settings] Applied theme: {theme}, UI scale: {scale}%, font size: {font_size}"))
+        self.update_output.emit(
+            log_message(
+                f"[Settings] Applied theme: {theme}, UI scale: {scale}%, font size: {font_size}"
+            )
+        )
         self.update_status.emit("Appearance settings updated")
 
         # Save settings to config
@@ -17774,7 +20634,9 @@ def register():
 
     def show_about_dialog(self):
         """Show the about dialog"""
-        QMessageBox.about(self, "About Intellicrack",
+        QMessageBox.about(
+            self,
+            "About Intellicrack",
             "Intellicrack - Advanced Binary Analysis\n\n"
             "Version: 2.0\n"
             "© 2025 Intellicrack Team\n\n"
@@ -17813,14 +20675,18 @@ def register():
     def open_distributed_config(self):
         """Open the distributed processing configuration dialog"""
         if DistributedProcessingConfigDialog is None:
-            self.update_output.emit("[Config] Error: Distributed config dialog not available (PyQt6 not installed)")
+            self.update_output.emit(
+                "[Config] Error: Distributed config dialog not available (PyQt6 not installed)"
+            )
             return
 
         try:
             dialog = DistributedProcessingConfigDialog(self)
             if dialog.exec() == QDialog.Accepted:
                 config_data = dialog.get_config()
-                self.update_output.emit(f"[Config] Distributed processing configuration updated: {len(config_data)} settings")
+                self.update_output.emit(
+                    f"[Config] Distributed processing configuration updated: {len(config_data)} settings"
+                )
                 # Optionally save the config
                 if hasattr(self, "config"):
                     self.config["distributed_processing"] = config_data
@@ -17835,6 +20701,7 @@ def register():
         """Create a QEMU VM snapshot."""
         try:
             from intellicrack.core.processing.qemu_emulator import QEMUSystemEmulator
+
             emulator = QEMUSystemEmulator(self.binary_path or "")
             snapshot_name = f"snapshot_{int(time.time())}"
             result = emulator.create_snapshot(snapshot_name)
@@ -17849,6 +20716,7 @@ def register():
             # Get snapshot name from user (for now use a default)
             snapshot_name = "snapshot_latest"
             from intellicrack.core.processing.qemu_emulator import QEMUSystemEmulator
+
             emulator = QEMUSystemEmulator(self.binary_path or "")
             result = emulator.restore_snapshot(snapshot_name)
             self.update_output.emit(f"[QEMU] Snapshot '{snapshot_name}' restored: {result}")
@@ -17891,9 +20759,12 @@ def register():
         """Compare QEMU VM snapshots."""
         try:
             from intellicrack.core.processing.qemu_emulator import QEMUSystemEmulator
+
             emulator = QEMUSystemEmulator(self.binary_path or "")
             result = emulator.compare_snapshots("before", "after")
-            self.update_output.emit(f"[QEMU] Snapshot comparison completed: {len(result.get('differences', []))} differences found")
+            self.update_output.emit(
+                f"[QEMU] Snapshot comparison completed: {len(result.get('differences', []))} differences found"
+            )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(f"[QEMU] Error comparing snapshots: {e}")
@@ -17928,7 +20799,9 @@ def register():
 
             # Log summary of closed sessions
             if cleanup_summary:
-                self.logger.info(f"Closed {len(cleanup_summary)} Frida sessions during application shutdown")
+                self.logger.info(
+                    f"Closed {len(cleanup_summary)} Frida sessions during application shutdown"
+                )
 
         # Save session state for next launch
         if hasattr(self, "config") and cleanup_summary:
@@ -18093,7 +20966,7 @@ def register():
         table_view.setSortingEnabled(True)
         return table_view
 
-# --- Thread-Safe GUI Update Slots ---
+    # --- Thread-Safe GUI Update Slots ---
 
     def set_status_message(self, text):
         """Safely updates the status bar or analysis status label from any thread.
@@ -18197,7 +21070,7 @@ def register():
             # Be careful with replacement logic, ensure it targets the correct
             # text
             if current_text.endswith(old_text):
-                new_display_text = current_text[:-len(old_text)] + new_text
+                new_display_text = current_text[: -len(old_text)] + new_text
                 self.chat_display.setPlainText(new_display_text)
                 # Optional: Scroll to bottom
                 cursor = self.chat_display.textCursor()
@@ -18286,6 +21159,7 @@ def register():
         """Handles triggering key generation via signal."""
         # Call the original generate_key method safely in the main thread
         self.generate_key()
+
     # --- End Thread-Safe GUI Update Slots ---
 
     # --- AI Event Handlers for Agentic System ---
@@ -18296,7 +21170,9 @@ def register():
             success = data.get("success", False)
             result = data.get("result", {})
 
-            status_msg = f"✓ AI Task {task_id} completed" if success else f"✗ AI Task {task_id} failed"
+            status_msg = (
+                f"✓ AI Task {task_id} completed" if success else f"✗ AI Task {task_id} failed"
+            )
             self.update_output.emit(f"[AI Agent] {status_msg}")
 
             # Display results in the appropriate UI area
@@ -18316,13 +21192,16 @@ def register():
             escalated = data.get("escalated", False)
 
             escalation_text = " (escalated to LLM)" if escalated else ""
-            status_msg = (f"🧠 Coordinated analysis complete using {strategy} strategy "
-                         f"(confidence: {confidence:.2f}, time: {processing_time:.2f}s){escalation_text}")
+            status_msg = (
+                f"🧠 Coordinated analysis complete using {strategy} strategy "
+                f"(confidence: {confidence:.2f}, time: {processing_time:.2f}s){escalation_text}"
+            )
 
             self.update_output.emit(f"[AI Coordinator] {status_msg}")
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error handling coordinated analysis completion: %s", e)
+
     # --- End AI Event Handlers ---
 
     def load_binary(self, path=None):
@@ -18406,7 +21285,9 @@ def register():
             self.update_output.emit(log_message("[Directory Analysis] Operation cancelled"))
             return
 
-        self.update_output.emit(log_message(f"[Directory Analysis] Starting analysis of: {directory_path}"))
+        self.update_output.emit(
+            log_message(f"[Directory Analysis] Starting analysis of: {directory_path}")
+        )
 
         try:
             # Look for main executable in the directory
@@ -18415,7 +21296,9 @@ def register():
                 file_path = os.path.join(directory_path, file)
                 if os.path.isfile(file_path):
                     # Check for executable files
-                    if file.endswith((".exe", ".dll")) or (os.name != "nt" and os.access(file_path, os.X_OK)):
+                    if file.endswith((".exe", ".dll")) or (
+                        os.name != "nt" and os.access(file_path, os.X_OK)
+                    ):
                         executables.append(file_path)
 
             if not executables:
@@ -18439,7 +21322,9 @@ def register():
                     False,
                 )
                 if ok and item:
-                    main_executable = next(exe for exe in executables if os.path.basename(exe) == item)
+                    main_executable = next(
+                        exe for exe in executables if os.path.basename(exe) == item
+                    )
                 else:
                     return
 
@@ -18447,7 +21332,9 @@ def register():
             ai_tools = get_ai_file_tools(self)
 
             # Perform directory analysis
-            self.update_output.emit(log_message("[Directory Analysis] Analyzing directory structure..."))
+            self.update_output.emit(
+                log_message("[Directory Analysis] Analyzing directory structure...")
+            )
             analysis_results = ai_tools.analyze_program_directory(main_executable)
 
             if analysis_results["status"] == "success":
@@ -18464,14 +21351,20 @@ def register():
                 # Store results for later use
                 if not hasattr(self, "directory_analysis_results"):
                     self.directory_analysis_results = []
-                self.directory_analysis_results.append({
-                    "timestamp": datetime.datetime.now().isoformat(),
-                    "directory": directory_path,
-                    "results": analysis_results,
-                })
+                self.directory_analysis_results.append(
+                    {
+                        "timestamp": datetime.datetime.now().isoformat(),
+                        "directory": directory_path,
+                        "results": analysis_results,
+                    }
+                )
 
             else:
-                self.update_output.emit(log_message(f"[Directory Analysis] Error: {analysis_results.get('error', 'Unknown error')}"))
+                self.update_output.emit(
+                    log_message(
+                        f"[Directory Analysis] Error: {analysis_results.get('error', 'Unknown error')}"
+                    )
+                )
 
         except Exception as e:
             self.update_output.emit(log_message(f"[Directory Analysis] Error: {e!s}"))
@@ -18480,21 +21373,35 @@ def register():
     def _display_directory_analysis_results(self, results):
         """Display the results of directory analysis in a formatted way."""
         self.update_output.emit(log_message("[Directory Analysis] === Analysis Results ==="))
-        self.update_output.emit(log_message(f"[Directory Analysis] Program: {results['program_path']}"))
-        self.update_output.emit(log_message(f"[Directory Analysis] Directory: {results['program_directory']}"))
+        self.update_output.emit(
+            log_message(f"[Directory Analysis] Program: {results['program_path']}")
+        )
+        self.update_output.emit(
+            log_message(f"[Directory Analysis] Directory: {results['program_directory']}")
+        )
 
         # Display found license files
         if results.get("license_files_found"):
-            self.update_output.emit(log_message(f"[Directory Analysis] Found {len(results['license_files_found'])} potential license-related files:"))
+            self.update_output.emit(
+                log_message(
+                    f"[Directory Analysis] Found {len(results['license_files_found'])} potential license-related files:"
+                )
+            )
             for file_info in results["license_files_found"]:
-                self.update_output.emit(log_message(f"  - {file_info['name']} ({file_info['type']})"))
+                self.update_output.emit(
+                    log_message(f"  - {file_info['name']} ({file_info['type']})")
+                )
 
         # Display file contents summary if available
         if results.get("file_contents"):
             self.update_output.emit(log_message("[Directory Analysis] Analyzed file contents:"))
             for file_path, content_info in results["file_contents"].items():
                 if isinstance(content_info, dict) and "preview" in content_info:
-                    self.update_output.emit(log_message(f"  - {os.path.basename(file_path)}: {content_info.get('size', 'N/A')} bytes"))
+                    self.update_output.emit(
+                        log_message(
+                            f"  - {os.path.basename(file_path)}: {content_info.get('size', 'N/A')} bytes"
+                        )
+                    )
 
         # Display analysis summary
         if results.get("analysis_summary"):
@@ -18517,7 +21424,9 @@ def register():
 
         # Logo/icon
         logo_label = QLabel()
-        logo_pixmap = QPixmap(get_resource_path("assets/icon_preview.png")).scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        logo_pixmap = QPixmap(get_resource_path("assets/icon_preview.png")).scaled(
+            64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
         logo_label.setPixmap(logo_pixmap)
         header_layout.addWidget(logo_label)
 
@@ -18554,7 +21463,9 @@ def register():
         analyze_button.setIcon(QIcon.fromTheme("system-search"))
         analyze_button.setMinimumHeight(40)
         analyze_button.setStyleSheet("font-weight: bold; background-color: #2196F3; color: white;")
-        analyze_button.clicked.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.analysis_tab)))
+        analyze_button.clicked.connect(
+            lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.analysis_tab))
+        )
         primary_actions_layout.addWidget(analyze_button)
 
         quick_actions_layout.addLayout(primary_actions_layout)
@@ -18566,13 +21477,22 @@ def register():
         analysis_group_layout = QVBoxLayout()
 
         analysis_dropdown = QComboBox()
-        analysis_dropdown.addItems(["Basic Analysis", "Deep Analysis", "Memory Analysis",
-                                   "Network Analysis", "Custom Analysis"])
+        analysis_dropdown.addItems(
+            [
+                "Basic Analysis",
+                "Deep Analysis",
+                "Memory Analysis",
+                "Network Analysis",
+                "Custom Analysis",
+            ]
+        )
         analysis_dropdown.setCurrentIndex(0)
         analysis_group_layout.addWidget(analysis_dropdown)
 
         run_selected_analysis_btn = QPushButton("Run Selected Analysis")
-        run_selected_analysis_btn.clicked.connect(lambda: self.run_selected_analysis(analysis_dropdown.currentText()))
+        run_selected_analysis_btn.clicked.connect(
+            lambda: self.run_selected_analysis(analysis_dropdown.currentText())
+        )
         analysis_group_layout.addWidget(run_selected_analysis_btn)
 
         analysis_group_box.setLayout(analysis_group_layout)
@@ -18585,13 +21505,16 @@ def register():
         patching_group_layout = QVBoxLayout()
 
         patching_dropdown = QComboBox()
-        patching_dropdown.addItems(["Auto Patch", "Targeted Patch", "Manual Patch",
-                                    "Visual Patch Editor", "Patch Testing"])
+        patching_dropdown.addItems(
+            ["Auto Patch", "Targeted Patch", "Manual Patch", "Visual Patch Editor", "Patch Testing"]
+        )
         patching_dropdown.setCurrentIndex(0)
         patching_group_layout.addWidget(patching_dropdown)
 
         run_selected_patching_btn = QPushButton("Run Selected Patch Operation")
-        run_selected_patching_btn.clicked.connect(lambda: self.run_selected_patching(patching_dropdown.currentText()))
+        run_selected_patching_btn.clicked.connect(
+            lambda: self.run_selected_patching(patching_dropdown.currentText())
+        )
         patching_group_layout.addWidget(run_selected_patching_btn)
 
         patching_group_box.setLayout(patching_group_layout)
@@ -18614,14 +21537,14 @@ def register():
 
         # Binary Icon and Name Labels
         binary_icon_label = QLabel()
-        binary_icon_label.setObjectName("dashboard_binary_icon_label") # Assign object name
+        binary_icon_label.setObjectName("dashboard_binary_icon_label")  # Assign object name
         binary_icon_label.setFixedSize(64, 64)
         binary_icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        binary_icon_label.setText("Icon") # Placeholder text
+        binary_icon_label.setText("Icon")  # Placeholder text
         binary_layout.addWidget(binary_icon_label)
 
         binary_name_label = QLabel("No binary loaded")
-        binary_name_label.setObjectName("dashboard_binary_name_label") # Assign object name
+        binary_name_label.setObjectName("dashboard_binary_name_label")  # Assign object name
         binary_name_label.setWordWrap(True)
         binary_name_label.setTextFormat(Qt.RichText)
         binary_layout.addWidget(binary_name_label)
@@ -18698,7 +21621,11 @@ def register():
         server_buttons_layout.addWidget(start_server_button)
 
         stop_server_button = QPushButton("Stop Server")
-        stop_server_button.clicked.connect(lambda: run_network_license_server(self) if hasattr(self, "license_server_instance") and self.license_server_instance else None)
+        stop_server_button.clicked.connect(
+            lambda: run_network_license_server(self)
+            if hasattr(self, "license_server_instance") and self.license_server_instance
+            else None
+        )
         server_buttons_layout.addWidget(stop_server_button)
 
         server_layout.addLayout(server_buttons_layout)
@@ -18739,7 +21666,9 @@ def register():
         advanced_buttons_layout = QHBoxLayout()
 
         advanced_analysis_button = QPushButton("Run Advanced Analysis")
-        advanced_analysis_button.clicked.connect(lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.analysis_tab)))
+        advanced_analysis_button.clicked.connect(
+            lambda: self.tabs.setCurrentIndex(self.tabs.indexOf(self.analysis_tab))
+        )
         advanced_buttons_layout.addWidget(advanced_analysis_button)
 
         generate_report_button = QPushButton("Generate PDF Report")
@@ -18807,14 +21736,16 @@ def register():
 
         # Add refresh button - Connect to update method
         refresh_button = QPushButton("Refresh Dashboard")
-        refresh_button.clicked.connect(lambda: self._refresh_and_show_dashboard()) # Call new method that updates and shows dashboard
+        refresh_button.clicked.connect(
+            lambda: self._refresh_and_show_dashboard()
+        )  # Call new method that updates and shows dashboard
         dashboard_layout.addWidget(refresh_button)
 
         return dashboard_layout
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-#~~~~~~~~~~~~~~~~END INTELLICRACKAPP GUI~~~~~~~~~~~~~~~~#
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+    # ~~~~~~~~~~~~~~~~END INTELLICRACKAPP GUI~~~~~~~~~~~~~~~~#
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
     def handle_patch_mode_selection(self, text):
         """Handle selection in the patch mode dropdown menu.
@@ -18904,12 +21835,9 @@ def register():
 
     def deploy_adobe_licensex(self):
         """Build and install the AdobeLicenseX injector with Frida hooker."""
-        self.update_output.emit(
-            "[*] Building AdobeLicenseX stealth injector...")
+        self.update_output.emit("[*] Building AdobeLicenseX stealth injector...")
 
-        source_dir = os.path.join(
-            os.path.dirname(__file__),
-            "adobe_injector_src")
+        source_dir = os.path.join(os.path.dirname(__file__), "adobe_injector_src")
         injector_py = os.path.join(source_dir, "adobe_full_auto_injector.py")
         js_file = os.path.join(source_dir, "adobe_bypass.js")  # Corrected filename
         # Use user's Documents folder instead of system directories to avoid permission issues
@@ -18937,8 +21865,18 @@ def register():
                     log_file.write(f"Script file: {js_file}\n")
                     log_file.write(f"Executable path: {exe_path}\n")
 
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as copy_error:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", copy_error)
+            except (
+                AttributeError,
+                ValueError,
+                TypeError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as copy_error:
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    copy_error,
+                )
                 self.update_output.emit(f"❌ Failed to copy script file: {copy_error}")
                 return
         except PermissionError as e:
@@ -18954,8 +21892,7 @@ def register():
         if os.path.exists(exe_path):
             try:
                 os.remove(exe_path)
-                self.update_output.emit(
-                    "⚠️ Old AdobeLicenseX.exe removed for rebuild.")
+                self.update_output.emit("⚠️ Old AdobeLicenseX.exe removed for rebuild.")
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                 self.update_output.emit(f"❌ Failed to remove old EXE: {e}")
@@ -18965,8 +21902,10 @@ def register():
             "pyinstaller",
             "--onefile",
             "--noconsole",
-            "--name", "AdobeLicenseX",
-            "--add-data", f"{js_file};.",
+            "--name",
+            "AdobeLicenseX",
+            "--add-data",
+            f"{js_file};.",
             injector_py,
         ]
 
@@ -18974,8 +21913,7 @@ def register():
             subprocess.run(build_cmd, cwd=source_dir, check=True)
             built_exe = os.path.join(source_dir, "dist", "AdobeLicenseX.exe")
             shutil.move(built_exe, exe_path)
-            self.update_output.emit(
-                "✅ AdobeLicenseX built and installed to ProgramData.")
+            self.update_output.emit("✅ AdobeLicenseX built and installed to ProgramData.")
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(f"❌ PyInstaller build failed: {e}")
@@ -18985,6 +21923,7 @@ def register():
             # Get startup directory dynamically
             try:
                 from ..utils.core.path_discovery import get_system_path
+
                 startup = get_system_path("startup")
                 if not startup:
                     raise ImportError
@@ -18992,7 +21931,7 @@ def register():
                 logger.error("Import error in main_app.py: %s", e)
                 # Fallback
                 user = getpass.getuser()
-                startup = fr"C:\\Users\\{user}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+                startup = rf"C:\\Users\\{user}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
 
             os.makedirs(startup, exist_ok=True)
             shortcut_path = os.path.join(startup, "AdobeLicenseX.lnk")
@@ -19003,14 +21942,12 @@ def register():
             shortcut.WorkingDirectory = install_dir
             shortcut.WindowStyle = 7
             shortcut.Save()
-            self.update_output.emit(
-                "✅ AdobeLicenseX added to Windows Startup.")
+            self.update_output.emit("✅ AdobeLicenseX added to Windows Startup.")
             self.adobe_status_label.setText("Status: ✅ Installed")
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(
-                f"❌ Failed to create startup shortcut: {e}")
+            self.update_output.emit(f"❌ Failed to create startup shortcut: {e}")
             self.adobe_status_label.setText("Status: ⚠️ Partial Install")
 
     def uninstall_adobe_licensex(self):
@@ -19019,7 +21956,8 @@ def register():
             exe_path = r"C:\ProgramData\Microsoft\WindowsUpdate\AdobeLicenseX.exe"
             shortcut_path = os.path.join(
                 os.environ["APPDATA"],
-                r"Microsoft\Windows\Start Menu\Programs\Startup\AdobeLicenseX.lnk")
+                r"Microsoft\Windows\Start Menu\Programs\Startup\AdobeLicenseX.lnk",
+            )
 
             if os.path.exists(exe_path):
                 os.remove(exe_path)
@@ -19027,14 +21965,12 @@ def register():
 
             if os.path.exists(shortcut_path):
                 os.remove(shortcut_path)
-                self.update_output.emit(
-                    "✅ Removed AdobeLicenseX startup shortcut")
+                self.update_output.emit("✅ Removed AdobeLicenseX startup shortcut")
 
             self.adobe_status_label.setText("Status: ❌ Not Installed")
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(
-                f"❌ Failed to uninstall AdobeLicenseX: {e}")
+            self.update_output.emit(f"❌ Failed to uninstall AdobeLicenseX: {e}")
 
     def run_adobe_licensex_manually(self):
         """Manually launch the AdobeLicenseX executable."""
@@ -19048,7 +21984,11 @@ def register():
             if os.path.exists(js_path):
                 # Run the script using Python (direct execution)
                 python_exe = sys.executable
-                cmd = [python_exe, "-c", f"import frida; import os; script_path = r'{js_path}'; script = open(script_path, 'r', encoding='utf-8').read(); sys.stdout = open(os.path.join(r'{install_dir}', 'adobe_injection.log'), 'w'); print('[*] Starting Adobe bypass...'); session = frida.attach('adobe'); session.create_script(script).load()"]
+                cmd = [
+                    python_exe,
+                    "-c",
+                    f"import frida; import os; script_path = r'{js_path}'; script = open(script_path, 'r', encoding='utf-8').read(); sys.stdout = open(os.path.join(r'{install_dir}', 'adobe_injection.log'), 'w'); print('[*] Starting Adobe bypass...'); session = frida.attach('adobe'); session.create_script(script).load()",
+                ]
 
                 subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
                 self.update_output.emit("✅ Adobe bypass script launched manually.")
@@ -19079,7 +22019,9 @@ def register():
         try:
             if os.path.exists(log_path):
                 # Log before opening
-                self.update_output.emit(f"✅ Found log file ({os.path.getsize(log_path)} bytes), opening...")
+                self.update_output.emit(
+                    f"✅ Found log file ({os.path.getsize(log_path)} bytes), opening..."
+                )
 
                 # Open the log file (with fallbacks for different platforms)
                 try:
@@ -19088,26 +22030,41 @@ def register():
                             os.startfile(log_path)
                     else:
                         import subprocess
+
                         subprocess.run(["open", log_path], check=False)  # macOS/Linux alternative
                 except AttributeError as e:
                     logger.error("Attribute error in main_app.py: %s", e)
                     try:
                         subprocess.call(["open", log_path])  # macOS
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        logger.error(
+                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                            e,
+                        )
                         subprocess.call(["xdg-open", log_path])  # Linux
 
                 # Record successful log access in history
                 if self.log_access_history is None:
                     self.log_access_history = []
-                self.log_access_history.append({
-                    "path": log_path,
-                    "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "size": os.path.getsize(log_path),
-                })
+                self.log_access_history.append(
+                    {
+                        "path": log_path,
+                        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "size": os.path.getsize(log_path),
+                    }
+                )
             else:
                 self.update_output.emit("❌ No injection log found at new location.")
-                self.update_output.emit("ℹ️ Try deploying AdobeLicenseX first, or run it manually to generate logs.")
+                self.update_output.emit(
+                    "ℹ️ Try deploying AdobeLicenseX first, or run it manually to generate logs."
+                )
 
                 # Try alternate locations
                 alternate_paths = [
@@ -19141,7 +22098,9 @@ def register():
                 subprocess.Popen([activator_path])
                 self.update_output.emit("✅ Windows Activator launched successfully.")
             else:
-                self.update_output.emit("❌ Windows Activator script not found at: " + activator_path)
+                self.update_output.emit(
+                    "❌ Windows Activator script not found at: " + activator_path
+                )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(f"❌ Failed to launch Windows Activator: {e}")
@@ -19230,13 +22189,15 @@ def register():
         buttons_layout.addWidget(QLabel("Preset:"))
 
         preset_dropdown = QComboBox()
-        preset_dropdown.addItems([
-            "Select a preset...",
-            "Analyze current binary",
-            "Generate patch plan",
-            "Bypass license check",
-            "Create key generator",
-        ])
+        preset_dropdown.addItems(
+            [
+                "Select a preset...",
+                "Analyze current binary",
+                "Generate patch plan",
+                "Bypass license check",
+                "Create key generator",
+            ]
+        )
         preset_dropdown.currentIndexChanged.connect(self.handle_preset_query)
         buttons_layout.addWidget(preset_dropdown)
 
@@ -19321,23 +22282,35 @@ def register():
 
             if model_info:
                 # Set the selected model path
-                absolute_path = model_info.get("local_path") if isinstance(model_info, dict) else getattr(model_info, "local_path", None)
+                absolute_path = (
+                    model_info.get("local_path")
+                    if isinstance(model_info, dict)
+                    else getattr(model_info, "local_path", None)
+                )
                 self.selected_model_path = absolute_path
 
                 # Update the UI
                 if hasattr(self, "custom_model_path_label"):
                     self.custom_model_path_label.setText(os.path.basename(absolute_path))
-                self.update_output.emit(log_message(f"[Model] Selected custom model path: {absolute_path}"))
-                self.save_config() # Save the newly selected path
+                self.update_output.emit(
+                    log_message(f"[Model] Selected custom model path: {absolute_path}")
+                )
+                self.save_config()  # Save the newly selected path
 
                 # Attempt to load the model immediately
                 self.update_output.emit(log_message("[Model] Attempting to load selected model..."))
                 model_instance = self.load_ai_model()
                 if model_instance:
-                    self.update_output.emit(log_message("[Model] Custom model loaded successfully."))
+                    self.update_output.emit(
+                        log_message("[Model] Custom model loaded successfully.")
+                    )
                 else:
                     # Error message should have been emitted by load_ai_model
-                    self.update_output.emit(log_message("[Model] Failed to load custom model. Check previous messages for details."))
+                    self.update_output.emit(
+                        log_message(
+                            "[Model] Failed to load custom model. Check previous messages for details."
+                        )
+                    )
             else:
                 self.update_output.emit(log_message("[Model] Failed to import model file."))
 
@@ -19398,13 +22371,24 @@ def register():
 
                     # Get response from LLM
                     try:
-                        response = llm_manager.active_backend.chat([
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": full_prompt},
-                        ])
+                        response = llm_manager.active_backend.chat(
+                            [
+                                {"role": "system", "content": system_prompt},
+                                {"role": "user", "content": full_prompt},
+                            ]
+                        )
                         return response
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        self.logger.warning(f"LLM backend error: {e}, falling back to pattern response")
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        self.logger.warning(
+                            f"LLM backend error: {e}, falling back to pattern response"
+                        )
                         return self._generate_fallback_response(message)
                 else:
                     # No active LLM backend
@@ -19421,29 +22405,39 @@ def register():
         message_lower = message.lower()
 
         if "analyze" in message_lower and "binary" in message_lower:
-            return ("To analyze the binary, I recommend starting with static analysis using the Analysis tab. "
-                   "Look for license validation functions, string patterns, and import tables. "
-                   "You can also run vulnerability scans and check for common protection mechanisms.")
+            return (
+                "To analyze the binary, I recommend starting with static analysis using the Analysis tab. "
+                "Look for license validation functions, string patterns, and import tables. "
+                "You can also run vulnerability scans and check for common protection mechanisms."
+            )
 
         if "license" in message_lower and ("check" in message_lower or "bypass" in message_lower):
-            return ("License checks typically involve validation routines that compare user input against expected values. "
-                   "Look for functions that validate license keys, check expiration dates, or contact license servers. "
-                   "Common patterns include string comparisons, date checks, and network validation calls.")
+            return (
+                "License checks typically involve validation routines that compare user input against expected values. "
+                "Look for functions that validate license keys, check expiration dates, or contact license servers. "
+                "Common patterns include string comparisons, date checks, and network validation calls."
+            )
 
         if "patch" in message_lower or "crack" in message_lower:
-            return ("For patching, identify the protection mechanism first. Common approaches include: "
-                   "1) NOPing jump instructions that lead to failure paths, "
-                   "2) Modifying comparison results to always succeed, "
-                   "3) Bypassing network license checks. Use the Patch tab to apply modifications.")
+            return (
+                "For patching, identify the protection mechanism first. Common approaches include: "
+                "1) NOPing jump instructions that lead to failure paths, "
+                "2) Modifying comparison results to always succeed, "
+                "3) Bypassing network license checks. Use the Patch tab to apply modifications."
+            )
 
         if "function" in message_lower:
-            return ("To understand a function, use the CFG Explorer to analyze its control flow, "
-                   "check its disassembly for key instructions, and look at its inputs/outputs. "
-                   "Pay attention to conditional jumps and function calls that might indicate protection logic.")
+            return (
+                "To understand a function, use the CFG Explorer to analyze its control flow, "
+                "check its disassembly for key instructions, and look at its inputs/outputs. "
+                "Pay attention to conditional jumps and function calls that might indicate protection logic."
+            )
 
-        return ("I'm here to help with binary analysis and reverse engineering. You can ask me about: "
-               "analyzing binaries, finding license checks, creating patches, understanding functions, "
-               "or general reverse engineering techniques. What would you like to know?")
+        return (
+            "I'm here to help with binary analysis and reverse engineering. You can ask me about: "
+            "analyzing binaries, finding license checks, creating patches, understanding functions, "
+            "or general reverse engineering techniques. What would you like to know?"
+        )
 
     def _prepare_ai_context(self, message: str) -> str:
         """Prepare context information for the AI based on current state."""
@@ -19457,6 +22451,7 @@ def register():
             # Add basic file information if available
             try:
                 import os
+
                 file_size = os.path.getsize(self.binary_path)
                 context_parts.append(f"File size: {file_size} bytes")
 
@@ -19465,29 +22460,42 @@ def register():
                     try:
                         file_format = self.binary_analyzer.identify_format(self.binary_path)
                         context_parts.append(f"Detected format: {file_format}")
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        self.logger.error(
+                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                            e,
+                        )
             except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e,
+                )
         else:
             context_parts.append("No binary currently loaded")
 
         # Add recent analysis results if available
         if hasattr(self, "analyze_results") and self.analyze_results:
-            recent_results = self.analyze_results[-3:] if len(self.analyze_results) > 3 else self.analyze_results
+            recent_results = (
+                self.analyze_results[-3:] if len(self.analyze_results) > 3 else self.analyze_results
+            )
             if recent_results:
                 context_parts.append("Recent analysis results:")
                 for result in recent_results:
                     context_parts.append(f"- {result}")
 
         # Add available tools/features
-        context_parts.append("Available analysis tools: Static analysis, Vulnerability scanning, CFG exploration, Network monitoring, Hex editing, Protection detection")
+        context_parts.append(
+            "Available analysis tools: Static analysis, Vulnerability scanning, CFG exploration, Network monitoring, Hex editing, Protection detection"
+        )
 
         return "\n".join(context_parts) if context_parts else "No specific context available"
-
-
-
-
 
     def _generate_enhanced_fallback_response(self, message: str) -> str:
         """Generate enhanced fallback response with more context awareness."""
@@ -19498,37 +22506,47 @@ def register():
 
         if "analyze" in message_lower and "binary" in message_lower:
             if has_binary:
-                return (f"To analyze your loaded binary ({getattr(self, 'binary_path', 'unknown')}), "
-                       f"I recommend starting with static analysis using the Analysis tab. "
-                       f"Look for license validation functions, string patterns, and import tables. "
-                       f"You can also run vulnerability scans and check for common protection mechanisms.")
-            return ("First, load a binary file using File -> Open or the Browse button on the Dashboard. "
-                   "Then I can help you analyze it using static analysis, vulnerability scanning, "
-                   "and other reverse engineering techniques.")
+                return (
+                    f"To analyze your loaded binary ({getattr(self, 'binary_path', 'unknown')}), "
+                    f"I recommend starting with static analysis using the Analysis tab. "
+                    f"Look for license validation functions, string patterns, and import tables. "
+                    f"You can also run vulnerability scans and check for common protection mechanisms."
+                )
+            return (
+                "First, load a binary file using File -> Open or the Browse button on the Dashboard. "
+                "Then I can help you analyze it using static analysis, vulnerability scanning, "
+                "and other reverse engineering techniques."
+            )
 
         if "license" in message_lower and ("check" in message_lower or "bypass" in message_lower):
-            response = ("License checks typically involve validation routines that compare user input against expected values. "
-                       "Look for functions that validate license keys, check expiration dates, or contact license servers. "
-                       "Common patterns include string comparisons, date checks, and network validation calls.")
+            response = (
+                "License checks typically involve validation routines that compare user input against expected values. "
+                "Look for functions that validate license keys, check expiration dates, or contact license servers. "
+                "Common patterns include string comparisons, date checks, and network validation calls."
+            )
             if has_binary:
                 response += "\n\nFor your current binary, try using the Network tab to monitor license server communications, "
                 response += "or the String search to find license-related text."
             return response
 
         if "patch" in message_lower or "crack" in message_lower:
-            response = ("For patching, identify the protection mechanism first. Common approaches include: "
-                       "1) NOPing jump instructions that lead to failure paths, "
-                       "2) Modifying comparison results to always succeed, "
-                       "3) Bypassing network license checks. Use the Patch tab to apply modifications.")
+            response = (
+                "For patching, identify the protection mechanism first. Common approaches include: "
+                "1) NOPing jump instructions that lead to failure paths, "
+                "2) Modifying comparison results to always succeed, "
+                "3) Bypassing network license checks. Use the Patch tab to apply modifications."
+            )
             if has_binary:
                 response += "\n\nI can help you analyze your loaded binary to identify the best patching strategy."
             return response
 
         if "function" in message_lower:
-            return ("To understand a function, use the CFG Explorer to analyze its control flow, "
-                   "check its disassembly for key instructions, and look at its inputs/outputs. "
-                   "Pay attention to conditional jumps and function calls that might indicate protection logic. "
-                   "The Hex Viewer can help you examine specific memory regions.")
+            return (
+                "To understand a function, use the CFG Explorer to analyze its control flow, "
+                "check its disassembly for key instructions, and look at its inputs/outputs. "
+                "Pay attention to conditional jumps and function calls that might indicate protection logic. "
+                "The Hex Viewer can help you examine specific memory regions."
+            )
 
         if "help" in message_lower or "what" in message_lower:
             capabilities = [
@@ -19540,13 +22558,17 @@ def register():
                 "📝 Assembly code explanation and CFG analysis",
                 "🔐 Protection mechanism detection",
             ]
-            return ("I'm your binary analysis assistant! Here's what I can help with:\n\n" +
-                   "\n".join(capabilities) +
-                   "\n\nAsk me specific questions about any of these topics!")
-        return ("I'm here to help with binary analysis and reverse engineering. You can ask me about: "
-               "analyzing binaries, finding license checks, creating patches, understanding functions, "
-               "vulnerability assessment, or general reverse engineering techniques. "
-               "What specific challenge are you working on?")
+            return (
+                "I'm your binary analysis assistant! Here's what I can help with:\n\n"
+                + "\n".join(capabilities)
+                + "\n\nAsk me specific questions about any of these topics!"
+            )
+        return (
+            "I'm here to help with binary analysis and reverse engineering. You can ask me about: "
+            "analyzing binaries, finding license checks, creating patches, understanding functions, "
+            "vulnerability assessment, or general reverse engineering techniques. "
+            "What specific challenge are you working on?"
+        )
 
     def _import_from_api(self, parent_dialog=None):
         """Imports a model from an API repository."""
@@ -19558,8 +22580,11 @@ def register():
 
         # If no repositories are enabled, show a message
         if not repositories:
-            QMessageBox.warning(self, "No Repositories Available",
-                               "No API repositories are currently enabled. Please configure repositories in settings.")
+            QMessageBox.warning(
+                self,
+                "No Repositories Available",
+                "No API repositories are currently enabled. Please configure repositories in settings.",
+            )
             return
 
         # Create API import dialog
@@ -19681,7 +22706,9 @@ def register():
                 progress_bar.setMaximum(total_bytes)
                 progress_bar.setValue(bytes_downloaded)
                 percent = (bytes_downloaded / total_bytes) * 100
-                status_label.setText(f"Downloading: {bytes_downloaded}/{total_bytes} bytes ({percent:.1f}%)")
+                status_label.setText(
+                    f"Downloading: {bytes_downloaded}/{total_bytes} bytes ({percent:.1f}%)"
+                )
             else:
                 progress_bar.setMaximum(0)  # Indeterminate mode
                 status_label.setText(f"Downloading: {bytes_downloaded} bytes")
@@ -19705,16 +22732,24 @@ def register():
                     self.selected_model_path = model_path
                     if hasattr(self, "custom_model_path_label"):
                         self.custom_model_path_label.setText(os.path.basename(model_path))
-                    self.update_output.emit(log_message(f"[Model] Selected API model: {model_path}"))
+                    self.update_output.emit(
+                        log_message(f"[Model] Selected API model: {model_path}")
+                    )
                     self.save_config()
 
                     # Attempt to load the model
                     model_instance = self.load_ai_model()
                     if model_instance:
-                        self.update_output.emit(log_message("[Model] API model loaded successfully."))
+                        self.update_output.emit(
+                            log_message("[Model] API model loaded successfully.")
+                        )
                         api_dialog.accept()  # Close the dialog on success
                     else:
-                        self.update_output.emit(log_message("[Model] Failed to load API model. Check previous messages for details."))
+                        self.update_output.emit(
+                            log_message(
+                                "[Model] Failed to load API model. Check previous messages for details."
+                            )
+                        )
                 else:
                     status_label.setText("Error: Could not find downloaded model")
             else:
@@ -19749,7 +22784,6 @@ def register():
                 finished = pyqtSignal(bool, str)
 
                 def __init__(self, model_manager, model_id, config):
-
                     # Initialize UI attributes
                     self.ai_conversation_history = []
                     self.report_viewer = None
@@ -19772,8 +22806,18 @@ def register():
                         success = result is not None
                         message = "Model downloaded successfully" if success else "Download failed"
                         self.finished.emit(success, message)
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        self.logger.error(
+                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                            e,
+                        )
                         self.finished.emit(False, str(e))
 
             # Create and start download thread
@@ -19947,6 +22991,7 @@ def register():
                         from ...models.repositories.factory import RepositoryFactory
                     except ImportError as e:
                         logger.error("Import error in main_app.py: %s", e)
+
                         # Fallback if models not available
                         class RepositoryFactory:
                             """Fallback repository factory when models unavailable."""
@@ -19955,9 +23000,12 @@ def register():
                             def create_repository(*args, **kwargs):
                                 """Create repository instance."""
                                 _ = args, kwargs  # Unused fallback method parameters
+
                     repo = RepositoryFactory.create_repository(temp_config)
                     if not repo:
-                        QMessageBox.warning(dialog, "Repository Error", f"Failed to create repository {repo_name}")
+                        QMessageBox.warning(
+                            dialog, "Repository Error", f"Failed to create repository {repo_name}"
+                        )
                         return
 
                 # Test authentication
@@ -19966,9 +23014,17 @@ def register():
                 QApplication.restoreOverrideCursor()
 
                 if success:
-                    QMessageBox.information(dialog, "Connection Successful", f"Successfully connected to {repo_name} repository.")
+                    QMessageBox.information(
+                        dialog,
+                        "Connection Successful",
+                        f"Successfully connected to {repo_name} repository.",
+                    )
                 else:
-                    QMessageBox.warning(dialog, "Connection Failed", f"Failed to connect to {repo_name} repository: {message}")
+                    QMessageBox.warning(
+                        dialog,
+                        "Connection Failed",
+                        f"Failed to connect to {repo_name} repository: {message}",
+                    )
 
             test_btn.clicked.connect(test_connection)
             tab_layout.addWidget(test_btn)
@@ -20081,7 +23137,11 @@ def register():
             self.save_config()
 
             # Reinitialize model manager
-            models_dir = CONFIG.get("model_repositories", {}).get("local", {}).get("models_directory", "models")
+            models_dir = (
+                CONFIG.get("model_repositories", {})
+                .get("local", {})
+                .get("models_directory", "models")
+            )
             self.model_manager = ModelManager(models_dir)
 
             dialog.accept()
@@ -20101,43 +23161,66 @@ def register():
     def verify_hash(self):
         """Verifies the integrity of the selected model file using a user-provided hash."""
         if not self.selected_model_path or not os.path.exists(self.selected_model_path):
-            QMessageBox.warning(self, "Model Not Selected",
-                                "Please import a model file first using the 'Import Custom Model' button.")
+            QMessageBox.warning(
+                self,
+                "Model Not Selected",
+                "Please import a model file first using the 'Import Custom Model' button.",
+            )
             return
 
         model_path = self.selected_model_path
         # Ensure hashlib is imported
         try:
-            available_algorithms = [alg for alg in ["SHA256", "SHA512", "SHA1", "MD5", "MD4"] if alg.lower() in hashlib.algorithms_available]
+            available_algorithms = [
+                alg
+                for alg in ["SHA256", "SHA512", "SHA1", "MD5", "MD4"]
+                if alg.lower() in hashlib.algorithms_available
+            ]
         except ImportError as e:
             self.logger.error("Import error in main_app.py: %s", e)
             QMessageBox.critical(self, "Import Error", "Failed to import the 'hashlib' module.")
             return
-        except AttributeError: # Handle older Python versions without hashlib.algorithms_available
+        except AttributeError:  # Handle older Python versions without hashlib.algorithms_available
             self.logger.error("AttributeError in main_app: hashlib.algorithms_available not found")
             available_algorithms = ["SHA256", "SHA512", "SHA1", "MD5"]
 
-
         if not available_algorithms:
-            QMessageBox.warning(self, "No Hash Algorithms", "No supported hash algorithms found in hashlib.")
+            QMessageBox.warning(
+                self, "No Hash Algorithms", "No supported hash algorithms found in hashlib."
+            )
             return
 
-        algorithm, ok = QInputDialog.getItem(self, "Select Hash Algorithm",
-                                             "Choose the hash algorithm:", available_algorithms, 0, False)
+        algorithm, ok = QInputDialog.getItem(
+            self,
+            "Select Hash Algorithm",
+            "Choose the hash algorithm:",
+            available_algorithms,
+            0,
+            False,
+        )
         if not ok or not algorithm:
-            self.update_output.emit(log_message("[Verify Hash] Hash algorithm selection cancelled."))
+            self.update_output.emit(
+                log_message("[Verify Hash] Hash algorithm selection cancelled.")
+            )
             return
 
-        expected_hash, ok = QInputDialog.getText(self, "Enter Expected Hash",
-                                             f"Paste the expected {algorithm} hash string:")
+        expected_hash, ok = QInputDialog.getText(
+            self, "Enter Expected Hash", f"Paste the expected {algorithm} hash string:"
+        )
         if not ok or not expected_hash:
-            self.update_output.emit(log_message("[Verify Hash] Expected hash input cancelled or empty."))
+            self.update_output.emit(
+                log_message("[Verify Hash] Expected hash input cancelled or empty.")
+            )
             return
 
         expected_hash = expected_hash.strip().lower()
         algorithm_lower = algorithm.lower()
 
-        self.update_output.emit(log_message(f"[Verify Hash] Computing {algorithm} hash for {os.path.basename(model_path)}..."))
+        self.update_output.emit(
+            log_message(
+                f"[Verify Hash] Computing {algorithm} hash for {os.path.basename(model_path)}..."
+            )
+        )
         self.update_status.emit(f"Computing {algorithm} hash...")
 
         try:
@@ -20150,42 +23233,98 @@ def register():
                 try:
                     # Use self.compute_file_hash since it's bound to the instance
                     from intellicrack.utils.binary.binary_utils import compute_file_hash
-                    computed_hash = compute_file_hash(model_path, algorithm=algorithm_lower, progress_signal=self.update_progress)
+
+                    computed_hash = compute_file_hash(
+                        model_path, algorithm=algorithm_lower, progress_signal=self.update_progress
+                    )
                     if computed_hash:
                         computed_hash = computed_hash.lower()
-                        self.update_output.emit(log_message(f"[Verify Hash] Computed {algorithm}: {computed_hash}"))
-                        self.update_output.emit(log_message(f"[Verify Hash] Expected {algorithm}: {expected_hash}"))
+                        self.update_output.emit(
+                            log_message(f"[Verify Hash] Computed {algorithm}: {computed_hash}")
+                        )
+                        self.update_output.emit(
+                            log_message(f"[Verify Hash] Expected {algorithm}: {expected_hash}")
+                        )
                         if computed_hash == expected_hash:
-                            self.update_output.emit(log_message("[Verify Hash] SUCCESS: Hashes match!"))
+                            self.update_output.emit(
+                                log_message("[Verify Hash] SUCCESS: Hashes match!")
+                            )
                             # Use QTimer to show message box in main thread
-                            QTimer.singleShot(0, lambda: QMessageBox.information(self, "Hash Verification", "Success! The computed hash matches the expected hash."))
+                            QTimer.singleShot(
+                                0,
+                                lambda: QMessageBox.information(
+                                    self,
+                                    "Hash Verification",
+                                    "Success! The computed hash matches the expected hash.",
+                                ),
+                            )
                         else:
-                            self.update_output.emit(log_message("[Verify Hash] FAILED: Hashes DO NOT match."))
-                            QTimer.singleShot(0, lambda: QMessageBox.warning(self, "Hash Verification", "Failed! The computed hash does not match the expected hash."))
+                            self.update_output.emit(
+                                log_message("[Verify Hash] FAILED: Hashes DO NOT match.")
+                            )
+                            QTimer.singleShot(
+                                0,
+                                lambda: QMessageBox.warning(
+                                    self,
+                                    "Hash Verification",
+                                    "Failed! The computed hash does not match the expected hash.",
+                                ),
+                            )
                     else:
-                        self.update_output.emit(log_message("[Verify Hash] Hash computation failed or returned None."))
-                        QTimer.singleShot(0, lambda: QMessageBox.critical(self, "Hash Error", f"Failed to compute {algorithm} hash."))
+                        self.update_output.emit(
+                            log_message("[Verify Hash] Hash computation failed or returned None.")
+                        )
+                        QTimer.singleShot(
+                            0,
+                            lambda: QMessageBox.critical(
+                                self, "Hash Error", f"Failed to compute {algorithm} hash."
+                            ),
+                        )
 
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_hash:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_hash)
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e_hash:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e_hash,
+                    )
                     error_msg = f"[Verify Hash] Error during hash computation: {e_hash}"
                     self.update_output.emit(log_message(error_msg))
                     self.update_output.emit(log_message(traceback.format_exc()))
                     error_text = str(e_hash)  # Capture the error text
-                    QTimer.singleShot(0, lambda: QMessageBox.critical(self, "Hash Error", f"An error occurred during hash computation:\n{error_text}"))
+                    QTimer.singleShot(
+                        0,
+                        lambda: QMessageBox.critical(
+                            self,
+                            "Hash Error",
+                            f"An error occurred during hash computation:\n{error_text}",
+                        ),
+                    )
                 finally:
                     self.update_status.emit("Ready")
-                    self.update_progress.emit(0) # Reset progress bar
+                    self.update_progress.emit(0)  # Reset progress bar
 
-            hash_thread = threading.Thread(target=hash_thread_func, daemon=True) # Use daemon thread
+            hash_thread = threading.Thread(
+                target=hash_thread_func, daemon=True
+            )  # Use daemon thread
             hash_thread.start()
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_thread:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_thread)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e_thread,
+            )
             error_msg = f"[Verify Hash] Error starting hash thread: {e_thread}"
             self.update_output.emit(log_message(error_msg))
             self.update_output.emit(log_message(traceback.format_exc()))
-            QMessageBox.critical(self, "Threading Error", f"Could not start hash verification thread:\n{e_thread}")
+            QMessageBox.critical(
+                self, "Threading Error", f"Could not start hash verification thread:\n{e_thread}"
+            )
             self.update_status.emit("Ready")
 
     def open_model_finetuning(self):
@@ -20197,12 +23336,9 @@ def register():
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"Error opening model fine-tuning: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
-            QMessageBox.warning(self, "Fine-Tuning Error",
-                              f"Error opening model fine-tuning dialog: {e}")
-
-
-
-
+            QMessageBox.warning(
+                self, "Fine-Tuning Error", f"Error opening model fine-tuning dialog: {e}"
+            )
 
     def _verify_model_thread(self, model_path):
         """Background thread for model verification."""
@@ -20221,47 +23357,54 @@ def register():
                 "structure": structure_check,
                 "signatures": signatures_check,
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "overall_status": "valid" if all([
-                    file_check.get("status") == "valid",
-                    structure_check.get("status") == "valid",
-                    signatures_check.get("status") == "valid",
-                ]) else "invalid",
+                "overall_status": "valid"
+                if all(
+                    [
+                        file_check.get("status") == "valid",
+                        structure_check.get("status") == "valid",
+                        signatures_check.get("status") == "valid",
+                    ]
+                )
+                else "invalid",
             }
 
             # Report verification result
-            self.update_output.emit(log_message(
-                f"[ML] Verification complete: {result['overall_status']}"))
-            self.update_output.emit(log_message(
-                f"[ML] File integrity: {result['file_integrity'].get('status', 'unknown')}"))
-            self.update_output.emit(log_message(
-                f"[ML] Structure: {result['structure'].get('status', 'unknown')}"))
-            self.update_output.emit(log_message(
-                f"[ML] Signatures: {result['signatures'].get('status', 'unknown')}"))
+            self.update_output.emit(
+                log_message(f"[ML] Verification complete: {result['overall_status']}")
+            )
+            self.update_output.emit(
+                log_message(
+                    f"[ML] File integrity: {result['file_integrity'].get('status', 'unknown')}"
+                )
+            )
+            self.update_output.emit(
+                log_message(f"[ML] Structure: {result['structure'].get('status', 'unknown')}")
+            )
+            self.update_output.emit(
+                log_message(f"[ML] Signatures: {result['signatures'].get('status', 'unknown')}")
+            )
 
-            self.update_output.emit(log_message(
-                "Computing model hash (this may take a while)..."))
+            self.update_output.emit(log_message("Computing model hash (this may take a while)..."))
             # Pass the progress signal to compute_sha256
             from ..utils.binary.binary_utils import compute_file_hash as compute_hash_with_progress
+
             file_hash = compute_hash_with_progress(model_path, progress_signal=self.update_progress)
             self.update_output.emit(log_message(f"Model hash: {file_hash}"))
 
             # Check file size
             file_size = os.path.getsize(model_path)
-            self.update_output.emit(log_message(
-                f"Model size: {file_size:,} bytes"))
+            self.update_output.emit(log_message(f"Model size: {file_size:,} bytes"))
 
             # Try loading model to verify it works
             self.update_output.emit(log_message("Testing model loading..."))
             try:
                 # Small context for quick test
                 local_model = Llama(model_path=model_path, n_ctx=512)
-                self.update_output.emit(
-                    log_message("Model loaded successfully!"))
+                self.update_output.emit(log_message("Model loaded successfully!"))
 
                 # Test a simple prompt
                 prompt = "<s>[INST] Say hello [/INST]"
-                self.update_output.emit(log_message(
-                    "Testing inference with a simple prompt..."))
+                self.update_output.emit(log_message("Testing inference with a simple prompt..."))
 
                 if callable(local_model):
                     result = local_model(prompt, max_tokens=20)
@@ -20275,13 +23418,13 @@ def register():
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                self.update_output.emit(
-                    log_message(f"Error loading model: {e}"))
+                self.update_output.emit(log_message(f"Error loading model: {e}"))
                 self.update_output.emit(log_message(traceback.format_exc()))
                 return
 
-            self.update_output.emit(log_message(
-                "Model verification complete. Model appears to be valid."))
+            self.update_output.emit(
+                log_message("Model verification complete. Model appears to be valid.")
+            )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
@@ -20291,7 +23434,8 @@ def register():
     def browse_ghidra_path(self):
         """Allows the user to browse for the Ghidra executable."""
         path, _ = QFileDialog.getOpenFileName(
-            self, "Select Ghidra Executable", "", "Batch Files (*.bat);;All Files (*)")
+            self, "Select Ghidra Executable", "", "Batch Files (*.bat);;All Files (*)"
+        )
         if path:
             self.ghidra_path_edit.setPlainText(path)
 
@@ -20380,14 +23524,16 @@ def register():
 
         # Preset prompts
         preset_combo = QComboBox()
-        preset_combo.addItems([
-            "Explain this code",
-            "Find vulnerabilities",
-            "Suggest improvements",
-            "Generate tests",
-            "Convert to different language",
-            "Add comments",
-        ])
+        preset_combo.addItems(
+            [
+                "Explain this code",
+                "Find vulnerabilities",
+                "Suggest improvements",
+                "Generate tests",
+                "Convert to different language",
+                "Add comments",
+            ]
+        )
         preset_combo.currentTextChanged.connect(self.use_preset_prompt)
 
         suggestions_btn = QPushButton("💭 Get Suggestions")
@@ -20446,7 +23592,10 @@ def register():
             self.ai_file_tree.expandAll()
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(f"[AI] Error refreshing files: {e}")
 
     def _populate_file_tree(self, directory, parent_item):
@@ -20472,7 +23621,10 @@ def register():
                     tree_item.setIcon(0, self.style().standardIcon(QStyle.SP_FileIcon))
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(f"[AI] Error populating tree: {e}")
 
     def open_project_folder(self):
@@ -20484,7 +23636,10 @@ def register():
                 self.refresh_project_files()
                 self.update_output.emit(f"[AI] Opened project folder: {folder}")
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(f"[AI] Error opening folder: {e}")
 
     def open_file_in_editor(self, item):
@@ -20500,7 +23655,10 @@ def register():
                 self.update_output.emit(f"[AI] Opened file: {os.path.basename(file_path)}")
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(f"[AI] Error opening file: {e}")
 
     def create_new_file(self):
@@ -20515,7 +23673,9 @@ def register():
             if not self.current_ai_file:
                 # Save as new file
                 file_path, _ = QFileDialog.getSaveFileName(
-                    self, "Save File", "",
+                    self,
+                    "Save File",
+                    "",
                     "Python Files (*.py);;JavaScript Files (*.js);;All Files (*)",
                 )
                 if not file_path:
@@ -20530,7 +23690,10 @@ def register():
             self.refresh_project_files()
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(f"[AI] Error saving file: {e}")
 
     def explain_current_code(self):
@@ -20557,7 +23720,15 @@ def register():
                     self.ai_chat_display.append(f"{i}. {suggestion}")
                 self.ai_chat_display.append("")
 
-        except (ImportError, AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
+        except (
+            ImportError,
+            AttributeError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            KeyError,
+            OSError,
+        ) as e:
             self.logger.error("Error explaining code: %s", e)
             self.ai_chat_display.append(f"[AI] Error explaining code: {e}")
 
@@ -20570,7 +23741,10 @@ def register():
                 return
 
             # Check if it's assembly code
-            is_assembly = any(keyword in code.lower() for keyword in ["mov ", "call ", "jmp ", "ret", "push ", "pop "])
+            is_assembly = any(
+                keyword in code.lower()
+                for keyword in ["mov ", "call ", "jmp ", "ret", "push ", "pop "]
+            )
 
             # Use analyze_with_ai for structured analysis
             if is_assembly:
@@ -20603,8 +23777,19 @@ def register():
                 confidence = analysis_result.get("confidence", 0.0)
                 self.ai_chat_display.append(f"\nConfidence: {confidence:.0%}\n")
 
-        except (ImportError, AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+        except (
+            ImportError,
+            AttributeError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            KeyError,
+            OSError,
+        ) as e:
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(f"[AI] Error analyzing code: {e}")
 
     def send_ai_chat_message(self):
@@ -20620,7 +23805,9 @@ def register():
             # Get current code context if available
             code_context = ""
             if self.ai_code_editor.toPlainText().strip():
-                code_context = f"\n\nCurrent code context:\n```\n{self.ai_code_editor.toPlainText()}\n```"
+                code_context = (
+                    f"\n\nCurrent code context:\n```\n{self.ai_code_editor.toPlainText()}\n```"
+                )
 
             full_prompt = message + code_context
 
@@ -20645,7 +23832,10 @@ def register():
             self.ai_chat_input.clear()
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(f"[AI] Error sending message: {e}")
 
     def get_ai_code_suggestions(self):
@@ -20707,7 +23897,9 @@ def register():
                 if result and result.get("success") and "scripts" in result:
                     # Display generated scripts in AI chat
                     for script in result["scripts"]:
-                        self.ai_chat_display.append(f"\n[AI] Generated {script.script_type} Script:")
+                        self.ai_chat_display.append(
+                            f"\n[AI] Generated {script.script_type} Script:"
+                        )
                         self.ai_chat_display.append("```")
                         self.ai_chat_display.append(script.code)
                         self.ai_chat_display.append("```\n")
@@ -20716,6 +23908,7 @@ def register():
             # Fallback to original method if AutonomousAgent not available
             # Get few-shot examples to help with script generation
             from ..ai.ai_tools import retrieve_few_shot_examples
+
             examples = retrieve_few_shot_examples(num_examples=2)
 
             # Analyze code to determine script type needed
@@ -20749,7 +23942,10 @@ Focus on:
             self.send_ai_chat_message()
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(f"[AI] Error generating script: {e}")
 
     def ai_modify_code(self):
@@ -20760,12 +23956,17 @@ Focus on:
                 self.ai_chat_display.append("[AI] No code to modify.")
                 return
 
-            prompt = f"Please suggest improvements and modifications for this code:\n\n```\n{code}\n```"
+            prompt = (
+                f"Please suggest improvements and modifications for this code:\n\n```\n{code}\n```"
+            )
             self.ai_chat_input.setPlainText(prompt)
             self.send_ai_chat_message()
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(f"[AI] Error requesting modifications: {e}")
 
     def ai_add_comments(self):
@@ -20781,7 +23982,10 @@ Focus on:
             self.send_ai_chat_message()
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(f"[AI] Error requesting comments: {e}")
 
     def save_config(self):
@@ -20795,13 +23999,19 @@ Focus on:
 
             # Check if ghidra_path_edit exists
             if not hasattr(self, "ghidra_path_edit"):
-                print(f"DEBUG: Error - ghidra_path_edit attribute is missing! Self attributes: {dir(self)[:10]}...")
+                print(
+                    f"DEBUG: Error - ghidra_path_edit attribute is missing! Self attributes: {dir(self)[:10]}..."
+                )
                 # Keep existing ghidra_path if it's in CONFIG
                 print(f"DEBUG: Current CONFIG keys: {CONFIG.keys()}")
-                print(f"DEBUG: Keeping existing ghidra_path: {CONFIG.get('ghidra_path', 'not set')}")
+                print(
+                    f"DEBUG: Keeping existing ghidra_path: {CONFIG.get('ghidra_path', 'not set')}"
+                )
             else:
                 # Update config with UI values
-                print(f"DEBUG: Updating ghidra_path from UI: {self.ghidra_path_edit.text().strip()}")
+                print(
+                    f"DEBUG: Updating ghidra_path from UI: {self.ghidra_path_edit.text().strip()}"
+                )
                 CONFIG["ghidra_path"] = self.ghidra_path_edit.text().strip()
 
             # Remove saving of model_format and custom_model_path as they are obsolete
@@ -20846,8 +24056,7 @@ Focus on:
             print("DEBUG: Configuration saved successfully")
 
             if hasattr(self, "update_output"):
-                self.update_output.emit(log_message(
-                    "Configuration saved successfully"))
+                self.update_output.emit(log_message("Configuration saved successfully"))
             else:
                 print("DEBUG: No update_output attribute available")
 
@@ -20857,12 +24066,10 @@ Focus on:
             print(f"DEBUG: Exception traceback: {traceback.format_exc()}")
 
             if hasattr(self, "update_output"):
-                self.update_output.emit(log_message(
-                    f"Error saving configuration: {e}"))
+                self.update_output.emit(log_message(f"Error saving configuration: {e}"))
 
                 if hasattr(self, "QMessageBox"):
-                    QMessageBox.warning(self, "Save Error",
-                                        f"Error saving configuration: {e}")
+                    QMessageBox.warning(self, "Save Error", f"Error saving configuration: {e}")
 
     def save_analysis_config(self):
         """Save current analysis options to a configuration file."""
@@ -20874,11 +24081,14 @@ Focus on:
             "qiling_emulation": self.qiling_checkbox.isChecked(),
             "create_backups": self.backup_checkbox.isChecked(),
             "deep_analysis_option": self.deep_analysis_combo.currentText(),
-            "analysis_depth": self.analysis_depth_slider.value() if hasattr(self, "analysis_depth_slider") else 50,
+            "analysis_depth": self.analysis_depth_slider.value()
+            if hasattr(self, "analysis_depth_slider")
+            else 50,
         }
 
         path, _ = QFileDialog.getSaveFileName(
-            self, "Save Analysis Configuration", "", "JSON Files (*.json);;All Files (*)")
+            self, "Save Analysis Configuration", "", "JSON Files (*.json);;All Files (*)"
+        )
 
         if not path:
             return
@@ -20892,18 +24102,23 @@ Focus on:
                 json.dump(config, f, indent=2)
 
             self.update_output.emit(log_message(f"[Config] Analysis configuration saved to {path}"))
-            QMessageBox.information(self, "Configuration Saved",
-                                   f"Analysis configuration successfully saved to:\n{path}")
+            QMessageBox.information(
+                self,
+                "Configuration Saved",
+                f"Analysis configuration successfully saved to:\n{path}",
+            )
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Config] Error saving analysis configuration: {e}"))
-            QMessageBox.warning(self, "Save Error",
-                               f"Error saving analysis configuration:\n{e}")
+            self.update_output.emit(
+                log_message(f"[Config] Error saving analysis configuration: {e}")
+            )
+            QMessageBox.warning(self, "Save Error", f"Error saving analysis configuration:\n{e}")
 
     def load_analysis_config(self):
         """Load analysis options from a configuration file."""
         path, _ = QFileDialog.getOpenFileName(
-            self, "Load Analysis Configuration", "", "JSON Files (*.json);;All Files (*)")
+            self, "Load Analysis Configuration", "", "JSON Files (*.json);;All Files (*)"
+        )
 
         if not path:
             return
@@ -20939,14 +24154,20 @@ Focus on:
             if "analysis_depth" in config and hasattr(self, "analysis_depth_slider"):
                 self.analysis_depth_slider.setValue(config["analysis_depth"])
 
-            self.update_output.emit(log_message(f"[Config] Analysis configuration loaded from {path}"))
-            QMessageBox.information(self, "Configuration Loaded",
-                                   f"Analysis configuration successfully loaded from:\n{path}")
+            self.update_output.emit(
+                log_message(f"[Config] Analysis configuration loaded from {path}")
+            )
+            QMessageBox.information(
+                self,
+                "Configuration Loaded",
+                f"Analysis configuration successfully loaded from:\n{path}",
+            )
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Config] Error loading analysis configuration: {e}"))
-            QMessageBox.warning(self, "Load Error",
-                               f"Error loading analysis configuration:\n{e}")
+            self.update_output.emit(
+                log_message(f"[Config] Error loading analysis configuration: {e}")
+            )
+            QMessageBox.warning(self, "Load Error", f"Error loading analysis configuration:\n{e}")
 
     def apply_config_preset(self, preset_name):
         """Apply a predefined analysis configuration preset."""
@@ -21025,7 +24246,9 @@ Focus on:
             if hasattr(self, "analysis_depth_slider"):
                 self.analysis_depth_slider.setValue(20)
 
-        self.update_output.emit(log_message(f"[Config] Applied '{preset_name}' configuration preset"))
+        self.update_output.emit(
+            log_message(f"[Config] Applied '{preset_name}' configuration preset")
+        )
 
     def apply_log_filter(self):
         """Applies the filter to the log output."""
@@ -21038,7 +24261,7 @@ Focus on:
 
         # Filter lines
         filtered_lines = []
-        for line in (full_text.splitlines() if full_text is not None else []):
+        for line in full_text.splitlines() if full_text is not None else []:
             if filter_text in line.lower():
                 filtered_lines.append(line)
 
@@ -21051,7 +24274,8 @@ Focus on:
     def save_logs(self):
         """Saves the current logs to a file."""
         path, _ = QFileDialog.getSaveFileName(
-            self, "Save Logs", "", "Log Files (*.log);;Text Files (*.txt);;All Files (*)")
+            self, "Save Logs", "", "Log Files (*.log);;Text Files (*.txt);;All Files (*)"
+        )
         if path:
             try:
                 with open(path, "w", encoding="utf-8") as f:
@@ -21062,40 +24286,35 @@ Focus on:
             except (OSError, ValueError, RuntimeError) as e:
                 self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                 self.update_output.emit(log_message(f"Error saving logs: {e}"))
-                QMessageBox.warning(self, "Save Error",
-                                    f"Error saving logs: {e}")
+                QMessageBox.warning(self, "Save Error", f"Error saving logs: {e}")
 
     def scan_protectors(self):
         """Scans the binary for bytecode protectors and displays results."""
         if not self.binary_path:
-            QMessageBox.warning(self, "No File Selected",
-                                "Please select a program first.")
+            QMessageBox.warning(self, "No File Selected", "Please select a program first.")
             return
 
-        self.update_output.emit(log_message(
-            "[Protection Scanner] Scanning for bytecode protectors..."))
+        self.update_output.emit(
+            log_message("[Protection Scanner] Scanning for bytecode protectors...")
+        )
 
         results = scan_for_bytecode_protectors(self.binary_path)
 
         # Ensure results is a dictionary (scan_for_bytecode_protectors always returns dict)
         if not isinstance(results, dict):
-            self.update_output.emit(log_message(
-                "[Protection Scanner] Unexpected result format"))
+            self.update_output.emit(log_message("[Protection Scanner] Unexpected result format"))
             return
 
         if "error" in results:
-            self.update_output.emit(log_message(
-                f"[Protection Scanner] Error: {results['error']}"))
+            self.update_output.emit(log_message(f"[Protection Scanner] Error: {results['error']}"))
             return
 
         # Display results
         if not results:
-            self.update_output.emit(log_message(
-                "[Protection Scanner] No protectors detected."))
+            self.update_output.emit(log_message("[Protection Scanner] No protectors detected."))
             QMessageBox.information(
-                self,
-                "Scan Results",
-                "No bytecode protectors detected in this binary.")
+                self, "Scan Results", "No bytecode protectors detected in this binary."
+            )
             return
 
         # Format results for display
@@ -21136,14 +24355,16 @@ Focus on:
             self.update_output.emit(log_message(line))
 
         # Show dialog with results
-        QMessageBox.information(
-            self, "Protection Scan Results", "\n".join(output))
+        QMessageBox.information(self, "Protection Scan Results", "\n".join(output))
 
     def select_program(self):
         """Opens a file dialog to select an executable or shortcut. Initializes analyzers."""
         path, _ = QFileDialog.getOpenFileName(
             # Allow selecting any file for broader analysis
-            self, "Select Program", "", "Executables (*.exe *.lnk);;All Files (*.*)",
+            self,
+            "Select Program",
+            "",
+            "Executables (*.exe *.lnk);;All Files (*.*)",
         )
         resolved_path = path  # Store original path or resolved path
 
@@ -21165,7 +24386,8 @@ Focus on:
                         QMessageBox.warning(
                             self,
                             "Shortcut Error",
-                            f"Shortcut target does not exist or is invalid:\n{target}")
+                            f"Shortcut target does not exist or is invalid:\n{target}",
+                        )
                         return
                 finally:
                     if pythoncom and hasattr(pythoncom, "CoUninitialize"):
@@ -21175,25 +24397,27 @@ Focus on:
                 QMessageBox.warning(
                     self,
                     "Shortcut Error",
-                    "Required 'pywin32' library not found. Cannot resolve .lnk files.")
+                    "Required 'pywin32' library not found. Cannot resolve .lnk files.",
+                )
                 return
             except AttributeError as e:
                 logger.error("Attribute error in main_app.py: %s", e)
                 QMessageBox.warning(
                     self,
                     "Shortcut Error",
-                    f"Could not resolve shortcut target. It might be invalid or broken:\n{path}")
+                    f"Could not resolve shortcut target. It might be invalid or broken:\n{path}",
+                )
                 return
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                QMessageBox.warning(self, "Shortcut Error",
-                                    f"Failed to resolve shortcut target: {e}")
+                QMessageBox.warning(
+                    self, "Shortcut Error", f"Failed to resolve shortcut target: {e}"
+                )
                 return
         elif not os.path.exists(resolved_path):
             QMessageBox.warning(
-                self,
-                "File Not Found",
-                f"The selected file does not exist:\n{resolved_path}")
+                self, "File Not Found", f"The selected file does not exist:\n{resolved_path}"
+            )
             return
 
         # Proceed if we have a valid, existing file path
@@ -21208,30 +24432,48 @@ Focus on:
             if AdvancedDynamicAnalyzer is not None:
                 self.dynamic_analyzer = AdvancedDynamicAnalyzer(self.binary_path)
                 self.update_output.emit(
-                    log_message("[Analyzer Init] AdvancedDynamicAnalyzer initialized."))
+                    log_message("[Analyzer Init] AdvancedDynamicAnalyzer initialized.")
+                )
             else:
                 self.dynamic_analyzer = None
-                self.update_output.emit(log_message(
-                    "[Analyzer Init] AdvancedDynamicAnalyzer not available (import failed)."))
+                self.update_output.emit(
+                    log_message(
+                        "[Analyzer Init] AdvancedDynamicAnalyzer not available (import failed)."
+                    )
+                )
         except NameError as e:
             logger.error("NameError in main_app.py: %s", e)
-            self.update_output.emit(log_message(
-                "[Analyzer Init] Failed: AdvancedDynamicAnalyzer class not found (Import missing?)."))
-            self.dynamic_analyzer = None  # Ensure it's None if class isn't found
-        except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_dyn_init:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_dyn_init)
             self.update_output.emit(
                 log_message(
-                    f"[Analyzer Init] Failed to initialize AdvancedDynamicAnalyzer: {e_dyn_init}"))
+                    "[Analyzer Init] Failed: AdvancedDynamicAnalyzer class not found (Import missing?)."
+                )
+            )
+            self.dynamic_analyzer = None  # Ensure it's None if class isn't found
+        except (
+            AttributeError,
+            ValueError,
+            TypeError,
+            RuntimeError,
+            KeyError,
+            OSError,
+        ) as e_dyn_init:
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e_dyn_init,
+            )
+            self.update_output.emit(
+                log_message(
+                    f"[Analyzer Init] Failed to initialize AdvancedDynamicAnalyzer: {e_dyn_init}"
+                )
+            )
             self.dynamic_analyzer = None  # Ensure it's None if init fails
         # --- End Analyzer Instantiation ---
-
-
 
         # --- Update UI Elements ---
         if hasattr(self, "program_info") and self.program_info is not None:
             self.program_info.setText(
-                f"Selected: {os.path.basename(self.binary_path)}\nPath: {self.binary_path}")
+                f"Selected: {os.path.basename(self.binary_path)}\nPath: {self.binary_path}"
+            )
         else:
             logger.warning("program_info widget not initialized")
 
@@ -21242,20 +24484,17 @@ Focus on:
         # Provide a default icon
         pixmap = QPixmap(get_resource_path("assets/icon_preview.png"))
 
-        self.program_icon.setPixmap(pixmap.scaled(
-            64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.program_icon.setPixmap(
+            pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        )
 
-        self.analyze_status.setText(
-            f"Selected: {os.path.basename(self.binary_path)}")
-        self.update_output.emit(
-            log_message(
-                f"Selected program: {self.binary_path}"))
+        self.analyze_status.setText(f"Selected: {os.path.basename(self.binary_path)}")
+        self.update_output.emit(log_message(f"Selected program: {self.binary_path}"))
 
         # Clear previous results and patches when a new binary is selected
         self.analyze_results.clear()
         self.potential_patches = []
-        self.update_output.emit(
-            log_message("Previous analysis results cleared."))
+        self.update_output.emit(log_message("Previous analysis results cleared."))
 
         # Refresh dashboard with binary info and switch to dashboard tab
         if hasattr(self, "binary_info"):
@@ -21288,7 +24527,9 @@ Focus on:
         # Initialize binary info dictionary
         binary_info = self._initialize_binary_info(binary_path)
 
-        self.update_output.emit(log_message(f"[Binary] Extracting info from {os.path.basename(binary_path)}"))
+        self.update_output.emit(
+            log_message(f"[Binary] Extracting info from {os.path.basename(binary_path)}")
+        )
 
         try:
             # Determine file type
@@ -21362,7 +24603,9 @@ Focus on:
 
         except ImportError as e:
             self.logger.error("Import error in main_app.py: %s", e)
-            self.update_output.emit(log_message("[Binary] pefile module not found, limited PE analysis available"))
+            self.update_output.emit(
+                log_message("[Binary] pefile module not found, limited PE analysis available")
+            )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Binary] Error analyzing PE file: {e}"))
@@ -21372,16 +24615,16 @@ Focus on:
     def _extract_pe_architecture(self, pe, binary_info):
         """Extract architecture information from PE file."""
         machine_type = pe.FILE_HEADER.Machine
-        if machine_type == 0x14c:
+        if machine_type == 0x14C:
             binary_info["architecture"] = "x86"
             binary_info["bit_width"] = "32-bit"
         elif machine_type == 0x8664:
             binary_info["architecture"] = "x86_64"
             binary_info["bit_width"] = "64-bit"
-        elif machine_type == 0x1c0:
+        elif machine_type == 0x1C0:
             binary_info["architecture"] = "ARM"
             binary_info["bit_width"] = "32-bit"
-        elif machine_type == 0xaa64:
+        elif machine_type == 0xAA64:
             binary_info["architecture"] = "ARM64"
             binary_info["bit_width"] = "64-bit"
 
@@ -21405,20 +24648,28 @@ Focus on:
     def _extract_pe_sections_and_imports(self, pe, binary_info):
         """Extract sections, imports and exports from PE file."""
         # Sections
-        binary_info["sections"] = [section.Name.decode("utf-8", "ignore").strip("\x00") for section in pe.sections]
+        binary_info["sections"] = [
+            section.Name.decode("utf-8", "ignore").strip("\x00") for section in pe.sections
+        ]
 
         # Imports - use common PE analysis utility
         if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
             for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                dll_name = entry.dll.decode("utf-8", "ignore") if hasattr(entry, "dll") else "Unknown"
+                dll_name = (
+                    entry.dll.decode("utf-8", "ignore") if hasattr(entry, "dll") else "Unknown"
+                )
                 for imp in entry.imports[:10]:  # Limit to first 10 imports per DLL
-                    import_name = imp.name.decode("utf-8", "ignore") if imp.name else f"Ordinal {imp.ordinal}"
+                    import_name = (
+                        imp.name.decode("utf-8", "ignore") if imp.name else f"Ordinal {imp.ordinal}"
+                    )
                     binary_info["imports"].append(f"{dll_name}:{import_name}")
 
         # Exports
         if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
             for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols[:20]:  # Limit to first 20 exports
-                export_name = exp.name.decode("utf-8", "ignore") if exp.name else f"Ordinal {exp.ordinal}"
+                export_name = (
+                    exp.name.decode("utf-8", "ignore") if exp.name else f"Ordinal {exp.ordinal}"
+                )
                 binary_info["exports"].append(export_name)
 
     def _detect_pe_protections(self, pe, binary_info):
@@ -21426,7 +24677,10 @@ Focus on:
         protections = []
 
         # Check for code signing
-        if hasattr(pe, "DIRECTORY_ENTRY_SECURITY") and pe.DIRECTORY_ENTRY_SECURITY.VirtualAddress != 0:
+        if (
+            hasattr(pe, "DIRECTORY_ENTRY_SECURITY")
+            and pe.DIRECTORY_ENTRY_SECURITY.VirtualAddress != 0
+        ):
             protections.append("Authenticode Signature")
 
         # Check for high entropy sections (possible packing)
@@ -21461,7 +24715,6 @@ Focus on:
         """Extract information from ELF (Linux/Unix) files."""
         binary_info["format"] = "ELF (Linux/Unix)"
         try:
-
             with open(binary_path, "rb") as elf_file:
                 elf = ELFFile(elf_file)
                 self._extract_elf_architecture(elf, binary_info)
@@ -21470,7 +24723,9 @@ Focus on:
 
         except ImportError as e:
             self.logger.error("Import error in main_app.py: %s", e)
-            self.update_output.emit(log_message("[Binary] pyelftools module not found, limited ELF analysis available"))
+            self.update_output.emit(
+                log_message("[Binary] pyelftools module not found, limited ELF analysis available")
+            )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Binary] Error analyzing ELF file: {e}"))
@@ -21530,7 +24785,9 @@ Focus on:
         binary_info["is_stripped"] = elf.get_section_by_name(".symtab") is None
 
         # Check for debugging info
-        binary_info["is_debuggable"] = any(s.name.startswith(".debug_") for s in elf.iter_sections())
+        binary_info["is_debuggable"] = any(
+            s.name.startswith(".debug_") for s in elf.iter_sections()
+        )
 
     def _update_dashboard_with_binary_info(self, binary_info):
         """Update dashboard with binary info if available."""
@@ -21540,7 +24797,9 @@ Focus on:
                 return
 
             # Log diagnostic information
-            self.logger.info(f"Updating dashboard with binary info: {binary_info.get('format', 'Unknown')}")
+            self.logger.info(
+                f"Updating dashboard with binary info: {binary_info.get('format', 'Unknown')}"
+            )
 
             # Update stats dict in dashboard manager
             stats_dict = {
@@ -21578,7 +24837,9 @@ Focus on:
     def _refresh_and_show_dashboard(self):
         """Updates dashboard with binary info and switches to dashboard tab to ensure visibility."""
         # Update the dashboard with current binary info
-        self._update_dashboard_with_binary_info(self.binary_info if hasattr(self, "binary_info") else {})
+        self._update_dashboard_with_binary_info(
+            self.binary_info if hasattr(self, "binary_info") else {}
+        )
 
         # Switch to the dashboard tab to show the updated info
         if hasattr(self, "tabs") and hasattr(self, "dashboard_tab"):
@@ -21602,7 +24863,9 @@ Focus on:
             if binary_name_label:
                 # Update binary name label with rich text formatting
                 binary_path = binary_info.get("path", "Unknown")
-                binary_name = os.path.basename(binary_path) if binary_path != "Unknown" else "Unknown"
+                binary_name = (
+                    os.path.basename(binary_path) if binary_path != "Unknown" else "Unknown"
+                )
                 binary_name_label.setText(f"<b>{binary_name}</b><br><small>{binary_path}</small>")
                 self.logger.debug("Updated dashboard binary name label with: %s", binary_name)
 
@@ -21626,7 +24889,9 @@ Focus on:
                         icon_pixmap.fill(QColor(0, 120, 215))
 
                 # Set the icon pixmap to the label
-                binary_icon_label.setPixmap(icon_pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                binary_icon_label.setPixmap(
+                    icon_pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                )
                 self.logger.debug("Updated dashboard binary icon label")
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -21634,18 +24899,23 @@ Focus on:
 
     def _log_analysis_completion(self, binary_info):
         """Log completion of binary analysis."""
-        self.update_output.emit(log_message(
-            f"[Binary] Analysis complete: {binary_info['format']} {binary_info['architecture']} {binary_info['bit_width']}"))
+        self.update_output.emit(
+            log_message(
+                f"[Binary] Analysis complete: {binary_info['format']} {binary_info['architecture']} {binary_info['bit_width']}"
+            )
+        )
 
         if binary_info["has_protections"]:
-            self.update_output.emit(log_message(
-                f"[Binary] Detected protections: {', '.join(binary_info['protection_types'])}"))
+            self.update_output.emit(
+                log_message(
+                    f"[Binary] Detected protections: {', '.join(binary_info['protection_types'])}"
+                )
+            )
 
     def run_autonomous_crack(self):
         """Initiates the autonomous crack process."""
         if hasattr(self, "user_input") and self.user_input is not None:
-            self.user_input.setPlainText(
-                "Crack this program using all available tools")
+            self.user_input.setPlainText("Crack this program using all available tools")
             self.send_to_model()
         else:
             logger.error("user_input widget not initialized")
@@ -21655,8 +24925,7 @@ Focus on:
         Enhanced with better organization and more detailed information.
         """
         if not self.binary_path:
-            QMessageBox.warning(self, "No File Selected",
-                                "Please select a program first.")
+            QMessageBox.warning(self, "No File Selected", "Please select a program first.")
             return
 
         # Collect analysis options
@@ -21717,10 +24986,10 @@ Focus on:
             self.update_analysis_results.emit("Starting Full Analysis...\n")
 
             filesize = os.path.getsize(self.binary_path)
-            self.update_output.emit(log_message(
-                f"[Analysis] File size: {filesize:,} bytes"))
+            self.update_output.emit(log_message(f"[Analysis] File size: {filesize:,} bytes"))
             self.update_analysis_results.emit(
-                f"File: {os.path.basename(self.binary_path)}, Size: {filesize:,} bytes\n")
+                f"File: {os.path.basename(self.binary_path)}, Size: {filesize:,} bytes\n"
+            )
 
             # --- PE Check ---
             with open(self.binary_path, "rb") as binary_file:
@@ -21738,7 +25007,9 @@ Focus on:
 
             # --- AI Vulnerability Analysis (if enabled and depth is high) ---
             if analysis_depth >= 80 and self.autonomous_agent:
-                self.update_output.emit(log_message("[Analysis] Running AI vulnerability analysis..."))
+                self.update_output.emit(
+                    log_message("[Analysis] Running AI vulnerability analysis...")
+                )
                 self.update_analysis_results.emit("\n=== AI Vulnerability Analysis ===\n")
                 try:
                     vuln_result = self.execute_autonomous_task("vulnerability_analysis")
@@ -21754,46 +25025,89 @@ Focus on:
                     self.logger.warning(f"AI vulnerability analysis failed: {e}")
 
             self.update_output.emit(
-                log_message("[Analysis] Running standard binary structure analysis..."))
-            self.update_analysis_results.emit(
-                "\n=== Standard Binary Analysis ===\n")
+                log_message("[Analysis] Running standard binary structure analysis...")
+            )
+            self.update_analysis_results.emit("\n=== Standard Binary Analysis ===\n")
             try:
-                binary_structure_results = analyze_binary_internal(
-                    self.binary_path, flags)
+                binary_structure_results = analyze_binary_internal(self.binary_path, flags)
                 for line in binary_structure_results:
-                    if "Analyzing binary:" in line or "File size:" in line or "PE Header:" in line or "Imports:" in line or "Exports:" in line or "Sections:" in line or "WARNING:" in line:
+                    if (
+                        "Analyzing binary:" in line
+                        or "File size:" in line
+                        or "PE Header:" in line
+                        or "Imports:" in line
+                        or "Exports:" in line
+                        or "Sections:" in line
+                        or "WARNING:" in line
+                    ):
                         self.update_output.emit(log_message(line))
                     self.update_analysis_results.emit(line + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_struct:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_struct)
+            except (
+                AttributeError,
+                ValueError,
+                TypeError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as e_struct:
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e_struct,
+                )
                 err_msg = f"[Analysis] Error during standard structure analysis: {e_struct}"
                 self.update_output.emit(log_message(err_msg))
                 self.update_analysis_results.emit(err_msg + "\n")
 
             # --- PROCESS ANALYSIS FLAGS ---
-            self.update_output.emit(log_message("[Analysis] Processing selected analysis options..."))
+            self.update_output.emit(
+                log_message("[Analysis] Processing selected analysis options...")
+            )
 
             # Qiling Emulation
             if "qiling" in flags:
-                self.update_output.emit(log_message("[Analysis] Running Qiling binary emulation..."))
+                self.update_output.emit(
+                    log_message("[Analysis] Running Qiling binary emulation...")
+                )
                 self.update_analysis_results.emit("\n=== Qiling Emulation Results ===\n")
                 try:
                     from ..utils.runtime.runner_functions import run_qiling_emulation
-                    qiling_results = run_qiling_emulation(self, self.binary_path,
-                                                         timeout=60, verbose=False)
+
+                    qiling_results = run_qiling_emulation(
+                        self, self.binary_path, timeout=60, verbose=False
+                    )
                     if qiling_results.get("status") == "success":
                         results = qiling_results.get("results", {})
-                        self.update_analysis_results.emit(f"API Calls Detected: {results.get('total_api_calls', 0)}\n")
-                        self.update_analysis_results.emit(f"License Checks Found: {len(results.get('license_checks', []))}\n")
-                        self.update_analysis_results.emit(f"Suspicious Behaviors: {len(results.get('suspicious_behaviors', []))}\n")
+                        self.update_analysis_results.emit(
+                            f"API Calls Detected: {results.get('total_api_calls', 0)}\n"
+                        )
+                        self.update_analysis_results.emit(
+                            f"License Checks Found: {len(results.get('license_checks', []))}\n"
+                        )
+                        self.update_analysis_results.emit(
+                            f"Suspicious Behaviors: {len(results.get('suspicious_behaviors', []))}\n"
+                        )
 
                         # Show detailed license checks
                         for check in results.get("license_checks", []):
-                            self.update_analysis_results.emit(f"  - {check.get('api')} at {check.get('address')}\n")
+                            self.update_analysis_results.emit(
+                                f"  - {check.get('api')} at {check.get('address')}\n"
+                            )
                     else:
-                        self.update_analysis_results.emit(f"Qiling emulation failed: {qiling_results.get('error', 'Unknown error')}\n")
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_qiling:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_qiling)
+                        self.update_analysis_results.emit(
+                            f"Qiling emulation failed: {qiling_results.get('error', 'Unknown error')}\n"
+                        )
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e_qiling:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e_qiling,
+                    )
                     self.update_output.emit(log_message(f"[Analysis] Qiling error: {e_qiling}"))
                     self.update_analysis_results.emit(f"Qiling emulation error: {e_qiling}\n")
 
@@ -21806,18 +25120,30 @@ Focus on:
 
                     # Create and run dynamic analyzer
                     dynamic_analyzer = AdvancedDynamicAnalyzer(self.binary_path)
-                    self.update_analysis_results.emit("Starting comprehensive runtime analysis...\n")
+                    self.update_analysis_results.emit(
+                        "Starting comprehensive runtime analysis...\n"
+                    )
 
                     # Run the analysis (this will spawn the process and instrument it)
                     dynamic_results = dynamic_analyzer.run_comprehensive_analysis()
 
                     if dynamic_results.get("status") == "success":
                         # Display results
-                        self.update_analysis_results.emit(f"Process spawned successfully (PID: {dynamic_results.get('pid', 'unknown')})\n")
-                        self.update_analysis_results.emit(f"API calls monitored: {len(dynamic_results.get('api_calls', []))}\n")
-                        self.update_analysis_results.emit(f"Registry operations: {len(dynamic_results.get('registry_operations', []))}\n")
-                        self.update_analysis_results.emit(f"File operations: {len(dynamic_results.get('file_operations', []))}\n")
-                        self.update_analysis_results.emit(f"Network connections: {len(dynamic_results.get('network_connections', []))}\n")
+                        self.update_analysis_results.emit(
+                            f"Process spawned successfully (PID: {dynamic_results.get('pid', 'unknown')})\n"
+                        )
+                        self.update_analysis_results.emit(
+                            f"API calls monitored: {len(dynamic_results.get('api_calls', []))}\n"
+                        )
+                        self.update_analysis_results.emit(
+                            f"Registry operations: {len(dynamic_results.get('registry_operations', []))}\n"
+                        )
+                        self.update_analysis_results.emit(
+                            f"File operations: {len(dynamic_results.get('file_operations', []))}\n"
+                        )
+                        self.update_analysis_results.emit(
+                            f"Network connections: {len(dynamic_results.get('network_connections', []))}\n"
+                        )
 
                         # Show license-related findings
                         license_findings = dynamic_results.get("license_findings", {})
@@ -21825,23 +25151,43 @@ Focus on:
                             self.update_analysis_results.emit("\nLicense-related findings:\n")
                             for category, items in license_findings.items():
                                 if items:
-                                    self.update_analysis_results.emit(f"  {category}: {len(items)} items\n")
+                                    self.update_analysis_results.emit(
+                                        f"  {category}: {len(items)} items\n"
+                                    )
 
                         # Show suspicious behavior
                         behaviors = dynamic_results.get("suspicious_behaviors", [])
                         if behaviors:
-                            self.update_analysis_results.emit(f"\nSuspicious behaviors detected: {len(behaviors)}\n")
+                            self.update_analysis_results.emit(
+                                f"\nSuspicious behaviors detected: {len(behaviors)}\n"
+                            )
                             for behavior in behaviors[:5]:  # Show first 5
-                                self.update_analysis_results.emit(f"  - {behavior.get('description', 'Unknown behavior')}\n")
+                                self.update_analysis_results.emit(
+                                    f"  - {behavior.get('description', 'Unknown behavior')}\n"
+                                )
                     else:
-                        self.update_analysis_results.emit(f"Dynamic analysis failed: {dynamic_results.get('error', 'Unknown error')}\n")
+                        self.update_analysis_results.emit(
+                            f"Dynamic analysis failed: {dynamic_results.get('error', 'Unknown error')}\n"
+                        )
 
                 except ImportError as e:
                     logger.error("Import error in main_app.py: %s", e)
                     self.update_output.emit(log_message("[Analysis] Frida not available"))
-                    self.update_analysis_results.emit("Frida framework not installed. Dynamic analysis skipped.\n")
-                except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_frida:
-                    logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_frida)
+                    self.update_analysis_results.emit(
+                        "Frida framework not installed. Dynamic analysis skipped.\n"
+                    )
+                except (
+                    AttributeError,
+                    ValueError,
+                    TypeError,
+                    RuntimeError,
+                    KeyError,
+                    OSError,
+                ) as e_frida:
+                    logger.error(
+                        "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                        e_frida,
+                    )
                     self.update_output.emit(log_message(f"[Analysis] Frida error: {e_frida}"))
                     self.update_analysis_results.emit(f"Frida error: {e_frida}\n")
 
@@ -21849,7 +25195,9 @@ Focus on:
             if "stealth" in flags:
                 self.update_output.emit(log_message("[Analysis] Running in stealth mode..."))
                 self.update_analysis_results.emit("\n=== Stealth Mode Active ===\n")
-                self.update_analysis_results.emit("Analysis configured to avoid detection mechanisms.\n")
+                self.update_analysis_results.emit(
+                    "Analysis configured to avoid detection mechanisms.\n"
+                )
 
             # Auto Mode
             if "auto" in flags:
@@ -21865,13 +25213,11 @@ Focus on:
                 # Heuristic analysis would go here
                 self.update_analysis_results.emit("Heuristic pattern matching enabled.\n")
 
-            self.update_output.emit(
-                log_message("[Analysis] Searching for embedded scripts..."))
+            self.update_output.emit(log_message("[Analysis] Searching for embedded scripts..."))
             self.update_analysis_results.emit("\n=== Embedded Scripts ===\n")
             try:
                 # Assuming decrypt_embedded_script is defined elsewhere
-                embedded = decrypt_embedded_script(
-                    self.binary_path)  # Original call
+                embedded = decrypt_embedded_script(self.binary_path)  # Original call
                 if embedded and len(embedded) > 1:
                     for line in embedded:
                         if "Searching for" in line or "Found" in line or "No embedded" in line:
@@ -21881,16 +25227,26 @@ Focus on:
                     no_scripts_msg = "No embedded scripts found by standard scan."
                     self.update_output.emit(log_message(no_scripts_msg))
                     self.update_analysis_results.emit(no_scripts_msg + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_embed:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_embed)
+            except (
+                AttributeError,
+                ValueError,
+                TypeError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as e_embed:
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e_embed,
+                )
                 err_msg = f"[Analysis] Error scanning for embedded scripts: {e_embed}"
                 self.update_output.emit(log_message(err_msg))
                 self.update_analysis_results.emit(err_msg + "\n")
 
             self.update_output.emit(
-                log_message("[Analysis] Checking for protectors (standard scan)..."))
-            self.update_analysis_results.emit(
-                "\n=== Standard Protector Scan ===\n")
+                log_message("[Analysis] Checking for protectors (standard scan)...")
+            )
+            self.update_analysis_results.emit("\n=== Standard Protector Scan ===\n")
             detected_protectors = []
             try:
                 protectors = scan_for_bytecode_protectors(self.binary_path)
@@ -21909,7 +25265,9 @@ Focus on:
                         if isinstance(details, dict) and details.get("detected", False):  # pylint: disable=no-member
                             detected_protectors.append(name)
                     if detected_protectors:
-                        prot_msg = f"Detected protectors (standard scan): {', '.join(detected_protectors)}"
+                        prot_msg = (
+                            f"Detected protectors (standard scan): {', '.join(detected_protectors)}"
+                        )
                         self.update_output.emit(log_message(prot_msg))
                         self.update_analysis_results.emit(prot_msg + "\n")
                         # Ensure protectors is a dictionary before calling .items()
@@ -21917,48 +25275,68 @@ Focus on:
                             for name, details in protectors.items():
                                 if isinstance(details, dict) and details.get("detected"):  # pylint: disable=no-member
                                     details_str = f"  - {name}: {details}"
-                                    self.update_analysis_results.emit(
-                                        details_str + "\n")
+                                    self.update_analysis_results.emit(details_str + "\n")
                     else:
                         no_prot_msg = "No specific protectors detected (standard scan)."
                         self.update_output.emit(log_message(no_prot_msg))
                         self.update_analysis_results.emit(no_prot_msg + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_prot:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_prot)
+            except (
+                AttributeError,
+                ValueError,
+                TypeError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as e_prot:
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e_prot,
+                )
                 err_msg = f"[Analysis] Error during standard protector scan: {e_prot}"
                 self.update_output.emit(log_message(err_msg))
                 self.update_analysis_results.emit(err_msg + "\n")
 
             self.update_output.emit(
-                log_message("[Analysis] Running packing/entropy analysis (standard scan)..."))
-            self.update_analysis_results.emit(
-                "\n=== Standard Packing/Entropy Analysis ===\n")
+                log_message("[Analysis] Running packing/entropy analysis (standard scan)...")
+            )
+            self.update_analysis_results.emit("\n=== Standard Packing/Entropy Analysis ===\n")
             packing_summary_line = ""
             try:
                 entropy_report = detect_packing(self.binary_path)
                 for line in entropy_report:
                     if "summary:" in line.lower():
                         packing_summary_line = line.split(":", 1)[1].strip()
-                        self.update_output.emit(log_message(
-                            f"[Packing Summary] {packing_summary_line}"))
+                        self.update_output.emit(
+                            log_message(f"[Packing Summary] {packing_summary_line}")
+                        )
                     self.update_analysis_results.emit(line + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_pack:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_pack)
+            except (
+                AttributeError,
+                ValueError,
+                TypeError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as e_pack:
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e_pack,
+                )
                 err_msg = f"[Analysis] Error during standard packing scan: {e_pack}"
                 self.update_output.emit(log_message(err_msg))
                 self.update_analysis_results.emit(err_msg + "\n")
 
                 self.update_output.emit(
-                    log_message("[Analysis] Running advanced vulnerability scan (New Engine)..."))
+                    log_message("[Analysis] Running advanced vulnerability scan (New Engine)...")
+                )
                 self.update_analysis_results.emit(
-                    "\n=== Advanced Vulnerability Scan (New Engine) ===\n")
+                    "\n=== Advanced Vulnerability Scan (New Engine) ===\n"
+                )
             try:
-                vulnerabilities = AdvancedVulnerabilityEngine.scan_binary(
-                    self.binary_path)
+                vulnerabilities = AdvancedVulnerabilityEngine.scan_binary(self.binary_path)
                 if vulnerabilities:
                     vuln_summary = f"Found {len(vulnerabilities)} vulnerabilities (Types: {', '.join(list(set(v['type'] for v in vulnerabilities)))})"
-                    self.update_output.emit(log_message(
-                        f"[Adv Vuln Scan] {vuln_summary}"))
+                    self.update_output.emit(log_message(f"[Adv Vuln Scan] {vuln_summary}"))
                     self.update_analysis_results.emit(vuln_summary + "\n")
                     for i, vuln in enumerate(vulnerabilities):
                         vuln_str = f"[{i + 1}] Type: {vuln['type']}, Risk: {vuln.get('risk', 'Unspecified')}"
@@ -21970,10 +25348,11 @@ Focus on:
                             vuln_str += f", Offset: {vuln['offset']}"
                         if "severity" in vuln:
                             vuln_str += f", Severity: {vuln['severity']}"
-                        self.update_analysis_results.emit(
-                            "  " + vuln_str + "\n")
+                        self.update_analysis_results.emit("  " + vuln_str + "\n")
                 else:
-                    no_vulns_msg = "No specific vulnerabilities found by AdvancedVulnerabilityEngine."
+                    no_vulns_msg = (
+                        "No specific vulnerabilities found by AdvancedVulnerabilityEngine."
+                    )
                     self.update_output.emit(log_message(no_vulns_msg))
                     self.update_analysis_results.emit(no_vulns_msg + "\n")
             except NameError as e:
@@ -21981,8 +25360,18 @@ Focus on:
                 err_msg = "[Analysis] AdvancedVulnerabilityEngine class not found. Make sure the class is defined in this file."
                 self.update_output.emit(log_message(err_msg))
                 self.update_analysis_results.emit(err_msg + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_vuln:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_vuln)
+            except (
+                AttributeError,
+                ValueError,
+                TypeError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as e_vuln:
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e_vuln,
+                )
                 err_msg = f"[Analysis] Error running AdvancedVulnerabilityEngine: {e_vuln}"
                 self.update_output.emit(log_message(err_msg))
                 self.update_analysis_results.emit(err_msg + "\n")
@@ -21991,37 +25380,41 @@ Focus on:
 
             # Enhanced ML prediction section with detailed diagnostics
 
-
             try:
-                license_results = enhanced_deep_license_analysis(
-                    self.binary_path)
+                license_results = enhanced_deep_license_analysis(self.binary_path)
                 if license_results:
                     lic_found_msg = f"Found {len(license_results)} potential license-related code regions (deep scan)"
-                    self.update_output.emit(log_message(
-                        f"[Deep Scan] {lic_found_msg}"))
+                    self.update_output.emit(log_message(f"[Deep Scan] {lic_found_msg}"))
                     self.update_analysis_results.emit(lic_found_msg + "\n")
                     for i, result in enumerate(license_results[:5]):
                         msg = f"Region {i + 1}: Found at 0x{result['start']:X}, Keywords: {', '.join(result.get('keywords', []))}"
                         self.update_analysis_results.emit("  " + msg + "\n")
                         if result.get("instructions"):
-                            self.update_analysis_results.emit(
-                                "    Instructions (Preview):\n")
+                            self.update_analysis_results.emit("    Instructions (Preview):\n")
                             for inst in result["instructions"][:3]:
-                                self.update_analysis_results.emit(
-                                    f"      {inst}\n")
+                                self.update_analysis_results.emit(f"      {inst}\n")
                 else:
                     no_lic_msg = "No specific license-related code found (deep scan)."
                     self.update_output.emit(log_message(no_lic_msg))
                     self.update_analysis_results.emit(no_lic_msg + "\n")
-            except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e_deep_lic:
-                logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e_deep_lic)
+            except (
+                AttributeError,
+                ValueError,
+                TypeError,
+                RuntimeError,
+                KeyError,
+                OSError,
+            ) as e_deep_lic:
+                logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e_deep_lic,
+                )
                 err_msg = f"[Analysis] Error during deep license analysis: {e_deep_lic}"
                 self.update_output.emit(log_message(err_msg))
                 self.update_analysis_results.emit(err_msg + "\n")
 
             # --- Final Summary ---
-            self.update_output.emit(
-                log_message("[Analysis] Analysis complete."))
+            self.update_output.emit(log_message("[Analysis] Analysis complete."))
             self.update_status.emit("Analysis complete")
 
             # Combine results for the summary
@@ -22029,28 +25422,23 @@ Focus on:
             summary.append(f"File: {os.path.basename(self.binary_path)}")
             summary.append(f"Size: {filesize:,} bytes")
             if detected_protectors:
-                summary.append(
-                    f"Protectors (Standard Scan): {', '.join(detected_protectors)}")
+                summary.append(f"Protectors (Standard Scan): {', '.join(detected_protectors)}")
             if packing_summary_line:
-                summary.append(
-                    f"Packing (Standard Scan): {packing_summary_line}")
+                summary.append(f"Packing (Standard Scan): {packing_summary_line}")
             if vulnerabilities:
-                summary.append(
-                    f"Vulnerabilities (Advanced Scan): {len(vulnerabilities)} found.")
+                summary.append(f"Vulnerabilities (Advanced Scan): {len(vulnerabilities)} found.")
             if ml_predictions:
-                summary.append(
-                    f"ML Predictions: {len(ml_predictions)} potential issues.")
+                summary.append(f"ML Predictions: {len(ml_predictions)} potential issues.")
             if license_results:
                 summary.append(
-                    f"License Code (Deep Scan): {len(license_results)} potential regions.")
+                    f"License Code (Deep Scan): {len(license_results)} potential regions."
+                )
 
             summary.append("\nRecommended actions:")
             summary.append("1. Review full results above.")
-            summary.append(
-                "2. Use 'Preview Patch Plan' or 'Automated Patch Agent'.")
+            summary.append("2. Use 'Preview Patch Plan' or 'Automated Patch Agent'.")
             if detected_protectors or "PACKED" in packing_summary_line:
-                summary.append(
-                    "3. Consider 'Memory Patching' due to detected protection/packing.")
+                summary.append("3. Consider 'Memory Patching' due to detected protection/packing.")
 
             self.update_analysis_results.emit("\n".join(summary))
 
@@ -22068,12 +25456,10 @@ Focus on:
     def run_deep_license_analysis(self):
         """Runs deep license analysis and outputs the results."""
         if not self.binary_path:
-            QMessageBox.warning(self, "No File Selected",
-                                "Please select a program first.")
+            QMessageBox.warning(self, "No File Selected", "Please select a program first.")
             return
 
-        self.update_output.emit(log_message(
-            "[Deep License Analysis] Starting analysis..."))
+        self.update_output.emit(log_message("[Deep License Analysis] Starting analysis..."))
         self.analyze_status.setText("Running deep license analysis...")
 
         # Run in background thread
@@ -22087,36 +25473,41 @@ Focus on:
             candidates = enhanced_deep_license_analysis(self.binary_path)
 
             if not candidates:
-                self.update_output.emit(log_message(
-                    "[Deep License Analysis] No licensing patterns detected."))
-                self.update_analysis_results.emit(
-                    "No licensing patterns detected.")
+                self.update_output.emit(
+                    log_message("[Deep License Analysis] No licensing patterns detected.")
+                )
+                self.update_analysis_results.emit("No licensing patterns detected.")
                 self.update_status.emit("No licensing patterns found")
                 return
 
             self.update_output.emit(
                 log_message(
-                    f"[Deep License Analysis] Found {len(candidates)} potential licensing regions."))
+                    f"[Deep License Analysis] Found {len(candidates)} potential licensing regions."
+                )
+            )
 
             self.update_analysis_results.emit(
-                f"Found {len(candidates)} potential licensing code regions:")
+                f"Found {len(candidates)} potential licensing code regions:"
+            )
             self.update_analysis_results.emit("=" * 50)
 
             for i, candidate in enumerate(candidates):
                 confidence = candidate.get("confidence", 0)
                 keywords = ", ".join(candidate.get("keywords", []))
 
-                self.update_output.emit(log_message(
-                    f"[Deep Analysis] Region {i + 1} at 0x{candidate['start']:X}: "
-                    f"Keywords: {keywords}, Confidence: {confidence}",
-                ))
+                self.update_output.emit(
+                    log_message(
+                        f"[Deep Analysis] Region {i + 1} at 0x{candidate['start']:X}: "
+                        f"Keywords: {keywords}, Confidence: {confidence}",
+                    )
+                )
 
                 self.update_analysis_results.emit(f"Region {i + 1}:")
                 self.update_analysis_results.emit(
-                    f"  Address range: 0x{candidate['start']:X} - 0x{candidate.get('end', candidate['start']):X}")
+                    f"  Address range: 0x{candidate['start']:X} - 0x{candidate.get('end', candidate['start']):X}"
+                )
                 self.update_analysis_results.emit(f"  Keywords: {keywords}")
-                self.update_analysis_results.emit(
-                    f"  Confidence: {confidence}")
+                self.update_analysis_results.emit(f"  Confidence: {confidence}")
 
                 if candidate.get("instructions"):
                     self.update_analysis_results.emit("  Instructions:")
@@ -22124,25 +25515,27 @@ Focus on:
                         self.update_analysis_results.emit(f"    {inst}")
                     if len(candidate["instructions"]) > 10:
                         self.update_analysis_results.emit(
-                            f"    ... plus {len(candidate['instructions']) - 10} more")
+                            f"    ... plus {len(candidate['instructions']) - 10} more"
+                        )
 
                 self.update_analysis_results.emit("-" * 50)
 
             self.update_analysis_results.emit("\nRecommendations:")
             self.update_analysis_results.emit(
-                "1. Use 'Automated Patch Agent' to attempt automatic patching")
+                "1. Use 'Automated Patch Agent' to attempt automatic patching"
+            )
             self.update_analysis_results.emit(
-                "2. Try 'Deep Runtime Monitoring' to observe behavior during execution")
+                "2. Try 'Deep Runtime Monitoring' to observe behavior during execution"
+            )
             self.update_analysis_results.emit(
-                "3. Use 'Preview Patch Plan' to see potential patch locations")
+                "3. Use 'Preview Patch Plan' to see potential patch locations"
+            )
 
-            self.update_status.emit(
-                f"Found {len(candidates)} licensing regions")
+            self.update_status.emit(f"Found {len(candidates)} licensing regions")
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(
-                f"[Deep License Analysis] Error: {e}"))
+            self.update_output.emit(log_message(f"[Deep License Analysis] Error: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
             self.update_status.emit(f"Error: {e!s}")
 
@@ -22158,17 +25551,16 @@ Focus on:
     def run_deep_runtime_monitoring(self):
         """Runs deep runtime monitoring on the selected binary."""
         if not self.binary_path:
-            QMessageBox.warning(self, "No File Selected",
-                                "Please select a program first.")
+            QMessageBox.warning(self, "No File Selected", "Please select a program first.")
             return
 
-        self.update_output.emit(log_message(
-            "[Runtime Monitoring] Starting deep runtime monitoring..."))
+        self.update_output.emit(
+            log_message("[Runtime Monitoring] Starting deep runtime monitoring...")
+        )
         self.analyze_status.setText("Starting runtime monitoring...")
 
         # Run in background thread
-        threading.Thread(
-            target=self._run_deep_runtime_monitoring_thread).start()
+        threading.Thread(target=self._run_deep_runtime_monitoring_thread).start()
 
     def _run_deep_runtime_monitoring_thread(self):
         """Background thread for deep runtime monitoring."""
@@ -22182,23 +25574,23 @@ Focus on:
                 self.update_output.emit(log_message(log))
                 self.update_analysis_results.emit(log)
 
-            self.update_output.emit(log_message(
-                "[Runtime Monitoring] Monitoring complete."))
+            self.update_output.emit(log_message("[Runtime Monitoring] Monitoring complete."))
             self.update_status.emit("Runtime monitoring complete")
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(
-                f"[Runtime Monitoring] Error: {e}"))
+            self.update_output.emit(log_message(f"[Runtime Monitoring] Error: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
             self.update_status.emit(f"Error: {e!s}")
 
     def run_autonomous_patching(self):
         """Wrapper to start the autonomous patching thread."""
-        self.update_output.emit(log_message(
-            "[AI Patching] Starting autonomous patching process via UI action..."))
+        self.update_output.emit(
+            log_message("[AI Patching] Starting autonomous patching process via UI action...")
+        )
         threading.Thread(
-            target=self._run_autonomous_patching_thread, daemon=True,
+            target=self._run_autonomous_patching_thread,
+            daemon=True,
         ).start()
 
     def _run_autonomous_patching_thread(self):
@@ -22211,32 +25603,36 @@ Focus on:
             )
 
             if result and result.get("success"):
-                self.update_output.emit(log_message(
-                    "[AI Patching] Autonomous patching completed successfully!"))
+                self.update_output.emit(
+                    log_message("[AI Patching] Autonomous patching completed successfully!")
+                )
                 if result.get("patched_file"):
-                    self.update_output.emit(log_message(
-                        f"[AI Patching] Patched file saved to: {result['patched_file']}"))
+                    self.update_output.emit(
+                        log_message(
+                            f"[AI Patching] Patched file saved to: {result['patched_file']}"
+                        )
+                    )
             else:
                 error_msg = result.get("error", "Unknown error") if result else "Unknown error"
-                self.update_output.emit(log_message(
-                    f"[AI Patching] Autonomous patching failed: {error_msg}"))
+                self.update_output.emit(
+                    log_message(f"[AI Patching] Autonomous patching failed: {error_msg}")
+                )
 
         except Exception as e:
             self.logger.error("Error in autonomous patching thread: %s", e)
-            self.update_output.emit(log_message(
-                f"[AI Patching] Error during autonomous patching: {e}"))
+            self.update_output.emit(
+                log_message(f"[AI Patching] Error during autonomous patching: {e}")
+            )
 
     def preview_patch(self):
         """Previews a patch plan by disassembling the binary and suggesting modifications.
         Enhanced with better detection and more detailed suggestions.
         """
         if not self.binary_path:
-            QMessageBox.warning(self, "No File Selected",
-                                "Please select a program first.")
+            QMessageBox.warning(self, "No File Selected", "Please select a program first.")
             return
 
-        self.update_output.emit(log_message(
-            "[Patch Preview] Starting patch preview..."))
+        self.update_output.emit(log_message("[Patch Preview] Starting patch preview..."))
         self.analyze_status.setText("Generating patch preview...")
 
         # Run in background thread
@@ -22250,13 +25646,10 @@ Focus on:
             is_64bit = getattr(pe.FILE_HEADER, "Machine", 0) == 0x8664
             mode = CS_MODE_64 if is_64bit else CS_MODE_32
 
-            code_section = next(
-                (s for s in pe.sections if b".text" in s.Name), None)
+            code_section = next((s for s in pe.sections if b".text" in s.Name), None)
             if not code_section:
-                self.update_output.emit(log_message(
-                    "[Patch Preview] .text section not found"))
-                self.update_analysis_results.emit(
-                    "Error: .text section not found")
+                self.update_output.emit(log_message("[Patch Preview] .text section not found"))
+                self.update_analysis_results.emit("Error: .text section not found")
                 self.update_status.emit("Error: .text section not found")
                 return
 
@@ -22266,8 +25659,9 @@ Focus on:
             md = Cs(CS_ARCH_X86, mode)
             md.detail = True
 
-            self.update_output.emit(log_message(
-                "[Patch Preview] Searching for license-related code..."))
+            self.update_output.emit(
+                log_message("[Patch Preview] Searching for license-related code...")
+            )
             license_regions = enhanced_deep_license_analysis(self.binary_path)
 
             patches = []
@@ -22294,9 +25688,12 @@ Focus on:
             if license_regions:
                 self.update_output.emit(
                     log_message(
-                        f"[Patch Preview] Found {len(license_regions)} license regions. Analyzing for patch points..."))
+                        f"[Patch Preview] Found {len(license_regions)} license regions. Analyzing for patch points..."
+                    )
+                )
                 self.update_analysis_results.emit(
-                    f"Found {len(license_regions)} potential license regions:")
+                    f"Found {len(license_regions)} potential license regions:"
+                )
 
                 all_instructions = list(md.disasm(code_data, base_addr))
 
@@ -22305,14 +25702,15 @@ Focus on:
                     region_end = region.get("end", region_start + 100)
 
                     self.update_analysis_results.emit(
-                        f"\nRegion {region_idx + 1} (0x{region_start:X} - 0x{region_end:X}):")
+                        f"\nRegion {region_idx + 1} (0x{region_start:X} - 0x{region_end:X}):"
+                    )
 
-                    jumps = find_jumps_in_region(
-                        all_instructions, region_start, region_end)
+                    jumps = find_jumps_in_region(all_instructions, region_start, region_end)
 
                     if jumps:
                         self.update_analysis_results.emit(
-                            f"  Found {len(jumps)} potential patch points:")
+                            f"  Found {len(jumps)} potential patch points:"
+                        )
 
                         for i, jump in enumerate(jumps):
                             ctx_start = max(0, i - 2)
@@ -22323,21 +25721,35 @@ Focus on:
                             context_lines = []
                             for ctx_insn in context:
                                 prefix = "➤ " if ctx_insn.address == jump.address else "  "
-                                context_lines.append(f"{prefix}0x{ctx_insn.address:x}: {ctx_insn.mnemonic} {ctx_insn.op_str}")
+                                context_lines.append(
+                                    f"{prefix}0x{ctx_insn.address:x}: {ctx_insn.mnemonic} {ctx_insn.op_str}"
+                                )
 
                             # Display code context
                             self.update_analysis_results.emit("\n".join(context_lines))
 
                             # Analyze context to determine best patch strategy
                             is_condition_check = any(
-                                x.mnemonic in ["cmp", "test"] for x in context if context.index(x) < context.index(jump)
+                                x.mnemonic in ["cmp", "test"]
+                                for x in context
+                                if context.index(x) < context.index(jump)
                             )
                             is_function_call = jump.mnemonic == "call"
-                            patch_type = "bypass" if is_condition_check else "neutralize" if is_function_call else "modify"
+                            patch_type = (
+                                "bypass"
+                                if is_condition_check
+                                else "neutralize"
+                                if is_function_call
+                                else "modify"
+                            )
 
                             # Use patch_type to determine the most effective patch strategy
-                            self.update_output.emit(log_message(f"[Patch Preview] Recommended patch type: {patch_type}"))
-                            self.update_analysis_results.emit(f"  Recommended strategy: {patch_type.upper()}")
+                            self.update_output.emit(
+                                log_message(f"[Patch Preview] Recommended patch type: {patch_type}")
+                            )
+                            self.update_analysis_results.emit(
+                                f"  Recommended strategy: {patch_type.upper()}"
+                            )
 
                             patch_desc = ""
                             patch_bytes = ""
@@ -22369,36 +25781,42 @@ Focus on:
                             offset = jump.address - pe.OPTIONAL_HEADER.ImageBase
                             file_offset = pe.get_offset_from_rva(offset)
 
+                            self.update_analysis_results.emit(f"    Patch {i + 1}:")
                             self.update_analysis_results.emit(
-                                f"    Patch {i + 1}:")
+                                f"      Address: 0x{jump.address:X} (File offset: 0x{file_offset:X})"
+                            )
                             self.update_analysis_results.emit(
-                                f"      Address: 0x{jump.address:X} (File offset: 0x{file_offset:X})")
-                            self.update_analysis_results.emit(
-                                f"      Instruction: {jump.mnemonic} {jump.op_str}")
-                            self.update_analysis_results.emit(
-                                f"      Patch: {patch_desc}")
-                            self.update_analysis_results.emit(
-                                f"      Bytes: {patch_bytes}")
+                                f"      Instruction: {jump.mnemonic} {jump.op_str}"
+                            )
+                            self.update_analysis_results.emit(f"      Patch: {patch_desc}")
+                            self.update_analysis_results.emit(f"      Bytes: {patch_bytes}")
 
-                            patches.append({
-                                "address": jump.address,
-                                "instruction": f"{jump.mnemonic} {jump.op_str}",
-                                "new_bytes": bytes.fromhex(patch_bytes) if patch_bytes else None,
-                                "description": patch_desc,
-                            })
+                            patches.append(
+                                {
+                                    "address": jump.address,
+                                    "instruction": f"{jump.mnemonic} {jump.op_str}",
+                                    "new_bytes": bytes.fromhex(patch_bytes)
+                                    if patch_bytes
+                                    else None,
+                                    "description": patch_desc,
+                                }
+                            )
                     else:
                         self.update_analysis_results.emit(
-                            "  No suitable patch points found in this region.")
+                            "  No suitable patch points found in this region."
+                        )
             else:
-                self.update_output.emit(log_message(
-                    "[Patch Preview] No license regions found. Using general approach..."))
+                self.update_output.emit(
+                    log_message(
+                        "[Patch Preview] No license regions found. Using general approach..."
+                    )
+                )
 
                 patch_count = 0
                 instructions = list(md.disasm(code_data, base_addr))
 
                 for i, insn in enumerate(instructions):
-                    if i + \
-                            1 < len(instructions) and insn.mnemonic in ["cmp", "test"]:
+                    if i + 1 < len(instructions) and insn.mnemonic in ["cmp", "test"]:
                         next_insn = instructions[i + 1]
                         if next_insn.mnemonic in ["je", "jne", "jz", "jnz"]:
                             patch_count += 1
@@ -22413,57 +25831,60 @@ Focus on:
 
                             self.update_output.emit(
                                 log_message(
-                                    f"[Patch Preview] Candidate {patch_count}: 0x{file_offset:X}: {next_insn.mnemonic} {next_insn.op_str} -> {patch_desc}"))
+                                    f"[Patch Preview] Candidate {patch_count}: 0x{file_offset:X}: {next_insn.mnemonic} {next_insn.op_str} -> {patch_desc}"
+                                )
+                            )
 
-                            patches.append({
-                                "address": next_insn.address,
-                                "instruction": f"{next_insn.mnemonic} {next_insn.op_str}",
-                                "new_bytes": bytes.fromhex(patch_bytes) if patch_bytes else None,
-                                "description": patch_desc,
-                            })
+                            patches.append(
+                                {
+                                    "address": next_insn.address,
+                                    "instruction": f"{next_insn.mnemonic} {next_insn.op_str}",
+                                    "new_bytes": bytes.fromhex(patch_bytes)
+                                    if patch_bytes
+                                    else None,
+                                    "description": patch_desc,
+                                }
+                            )
 
                 if patch_count == 0:
-                    self.update_output.emit(log_message(
-                        "[Patch Preview] No patch candidates found."))
-                    self.update_analysis_results.emit(
-                        "No suitable patch candidates found.")
+                    self.update_output.emit(
+                        log_message("[Patch Preview] No patch candidates found.")
+                    )
+                    self.update_analysis_results.emit("No suitable patch candidates found.")
                     self.update_status.emit("No patch candidates found")
                 else:
                     self.update_analysis_results.emit(
-                        f"Found {patch_count} general patch candidates:")
+                        f"Found {patch_count} general patch candidates:"
+                    )
                     for i, patch in enumerate(patches):
                         self.update_analysis_results.emit(f"\nPatch {i + 1}:")
-                        self.update_analysis_results.emit(
-                            f"  Address: 0x{patch['address']:X}")
-                        self.update_analysis_results.emit(
-                            f"  Instruction: {patch['instruction']}")
-                        self.update_analysis_results.emit(
-                            f"  Description: {patch['description']}")
+                        self.update_analysis_results.emit(f"  Address: 0x{patch['address']:X}")
+                        self.update_analysis_results.emit(f"  Instruction: {patch['instruction']}")
+                        self.update_analysis_results.emit(f"  Description: {patch['description']}")
                         if patch["new_bytes"]:
                             self.update_analysis_results.emit(
-                                f"  Bytes: {patch['new_bytes'].hex().upper()}")
+                                f"  Bytes: {patch['new_bytes'].hex().upper()}"
+                            )
 
             self.potential_patches = patches
 
             if patches:
                 self.update_output.emit(
-                    log_message(
-                        f"[Patch Preview] Generated {len(patches)} potential patches."))
-                self.update_status.emit(
-                    f"Found {len(patches)} potential patches")
+                    log_message(f"[Patch Preview] Generated {len(patches)} potential patches.")
+                )
+                self.update_status.emit(f"Found {len(patches)} potential patches")
 
                 self.update_analysis_results.emit("\nPatch Summary:")
+                self.update_analysis_results.emit(f"- Total patches: {len(patches)}")
                 self.update_analysis_results.emit(
-                    f"- Total patches: {len(patches)}")
+                    "- To apply these patches, use 'Apply Patch Plan' button"
+                )
                 self.update_analysis_results.emit(
-                    "- To apply these patches, use 'Apply Patch Plan' button")
-                self.update_analysis_results.emit(
-                    "- Patches will create a new file with '_patched' suffix")
-                self.update_analysis_results.emit(
-                    "- Original file will not be modified")
+                    "- Patches will create a new file with '_patched' suffix"
+                )
+                self.update_analysis_results.emit("- Original file will not be modified")
             else:
-                self.update_output.emit(log_message(
-                    "[Patch Preview] No patch candidates found."))
+                self.update_output.emit(log_message("[Patch Preview] No patch candidates found."))
                 self.update_status.emit("No patch candidates found")
 
         except (FileNotFoundError, PermissionError) as e:
@@ -22488,8 +25909,7 @@ Focus on:
     def apply_patch_plan(self):
         """Applies the patch plan to the selected binary."""
         if not self.binary_path:
-            QMessageBox.warning(self, "No File Selected",
-                                "Please select a program first.")
+            QMessageBox.warning(self, "No File Selected", "Please select a program first.")
             return
 
         # Check if we have patches from preview
@@ -22502,18 +25922,22 @@ Focus on:
             )
 
             if response == QMessageBox.Yes:
-                self.update_output.emit(log_message(
-                    f"[Apply Patch] Applying {len(self.potential_patches)} patches..."))
-                apply_parsed_patch_instructions_with_validation(
-                    self, self.potential_patches)
+                self.update_output.emit(
+                    log_message(f"[Apply Patch] Applying {len(self.potential_patches)} patches...")
+                )
+                apply_parsed_patch_instructions_with_validation(self, self.potential_patches)
                 return
 
         # If no patches from preview, run the license function rewriter
-        self.update_output.emit(log_message(
-            "[Apply Patch] No existing patch plan. Running license function rewriter..."))
+        self.update_output.emit(
+            log_message(
+                "[Apply Patch] No existing patch plan. Running license function rewriter..."
+            )
+        )
         from ..utils.patch_verification import (
             rewrite_license_functions_with_parsing as patch_rewriter,
         )
+
         patch_rewriter(self)
 
     def start_guided_wizard(self):
@@ -22525,6 +25949,7 @@ Focus on:
                 return
 
             from intellicrack.ui.dialogs.guided_workflow_wizard import GuidedWorkflowWizard
+
             wizard = GuidedWorkflowWizard(parent=self)
 
             # Configure wizard style using QWizard constant
@@ -22548,7 +25973,9 @@ Focus on:
         layout = QVBoxLayout()
 
         # Add setup options
-        welcome_label = QLabel("Welcome to Intellicrack! This quick setup will help configure the application.")
+        welcome_label = QLabel(
+            "Welcome to Intellicrack! This quick setup will help configure the application."
+        )
         layout.addWidget(welcome_label)
 
         # Plugin directory selection
@@ -22590,7 +26017,9 @@ Focus on:
         """Open the intelligent code modification dialog."""
         try:
             # Get project root (try to find it from current context)
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            project_root = os.path.dirname(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            )
             dialog = CodeModificationDialog(project_root=project_root, parent=self)
             dialog.exec()
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
@@ -22607,23 +26036,29 @@ Focus on:
 
         """
         logger.debug(f"Applying cracking pattern from {source_binary} to {target_binary}")
-        self.update_output.emit(log_message(f"[Pattern] Analyzing patterns from {os.path.basename(source_binary)}"))
+        self.update_output.emit(
+            log_message(f"[Pattern] Analyzing patterns from {os.path.basename(source_binary)}")
+        )
 
         # Extract patterns from source binary
         patterns = self.extract_patterns_from_binary(source_binary)
 
         if patterns:
-            self.update_output.emit(log_message(f"[Pattern] Found {len(patterns)} patterns to apply"))
+            self.update_output.emit(
+                log_message(f"[Pattern] Found {len(patterns)} patterns to apply")
+            )
 
             # Convert to patch instructions format
             instructions = []
             for pattern in patterns:
-                instructions.append({
-                    "offset": pattern.get("offset", 0),
-                    "original": pattern.get("original_bytes", ""),
-                    "patched": pattern.get("patched_bytes", ""),
-                    "description": pattern.get("description", "Extracted from similar binary"),
-                })
+                instructions.append(
+                    {
+                        "offset": pattern.get("offset", 0),
+                        "original": pattern.get("original_bytes", ""),
+                        "patched": pattern.get("patched_bytes", ""),
+                        "description": pattern.get("description", "Extracted from similar binary"),
+                    }
+                )
 
             # Store patterns for potential application
             self.potential_patches = instructions
@@ -22632,7 +26067,9 @@ Focus on:
             apply_parsed_patch_instructions_with_validation(self, instructions)
         else:
             self.update_output.emit(log_message("[Pattern] No applicable patterns found"))
-            QMessageBox.warning(self, "No Patterns", "No applicable patterns were found in the source binary.")
+            QMessageBox.warning(
+                self, "No Patterns", "No applicable patterns were found in the source binary."
+            )
 
     def extract_patterns_from_binary(self, binary_path):
         """Extract cracking patterns from a binary file.
@@ -22645,7 +26082,9 @@ Focus on:
                  activation mechanisms, and protection patterns
 
         """
-        self.update_output.emit(log_message("[Pattern] Starting binary analysis for pattern extraction..."))
+        self.update_output.emit(
+            log_message("[Pattern] Starting binary analysis for pattern extraction...")
+        )
 
         # Initialize patterns list
         patterns = []
@@ -22676,18 +26115,28 @@ Focus on:
             elif binary_format == "MACHO":
                 patterns = self._extract_patterns_from_macho(binary_path)
             else:
-                self.update_output.emit(log_message("[Pattern] Warning: Unsupported binary format, using generic patterns"))
+                self.update_output.emit(
+                    log_message(
+                        "[Pattern] Warning: Unsupported binary format, using generic patterns"
+                    )
+                )
                 patterns = self._generate_generic_patterns()
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Pattern] Error during pattern extraction: {e!s}"))
+            self.update_output.emit(
+                log_message(f"[Pattern] Error during pattern extraction: {e!s}")
+            )
             self.update_output.emit(log_message(f"[Pattern] Traceback: {traceback.format_exc()}"))
-            self.update_output.emit(log_message("[Pattern] Using generic patterns due to analysis error"))
+            self.update_output.emit(
+                log_message("[Pattern] Using generic patterns due to analysis error")
+            )
             patterns = self._generate_generic_patterns()
 
         # Log patterns found
-        self.update_output.emit(log_message(f"[Pattern] Extracted {len(patterns)} potential patterns"))
+        self.update_output.emit(
+            log_message(f"[Pattern] Extracted {len(patterns)} potential patterns")
+        )
 
         # Sort patterns by offset for better organization
         patterns.sort(key=lambda x: x.get("offset", 0))
@@ -22711,7 +26160,11 @@ Focus on:
                 if len(section_data) < 10:
                     continue
 
-                self.update_output.emit(log_message(f"[Pattern] Analyzing section: {section_name} ({len(section_data)} bytes)"))
+                self.update_output.emit(
+                    log_message(
+                        f"[Pattern] Analyzing section: {section_name} ({len(section_data)} bytes)"
+                    )
+                )
 
                 # Analyze executable sections for code patterns
                 if section.Characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
@@ -22719,43 +26172,66 @@ Focus on:
 
                     # Pattern 1: Conditional jumps with function calls (common license check pattern)
                     # Example: JZ/JNZ followed by CALL then TEST
-                    matches = re.finditer(b"\x74[\x00-\xFF]{1,3}\xE8[\x00-\xFF]{4}[\x84-\x85]\xC0", section_data)
+                    matches = re.finditer(
+                        b"\x74[\x00-\xff]{1,3}\xe8[\x00-\xff]{4}[\x84-\x85]\xc0", section_data
+                    )
                     for match in matches:
                         offset = section.VirtualAddress + match.start()
-                        orig_bytes = binascii.hexlify(section_data[match.start():match.start()+10]).decode("utf-8").upper()
+                        orig_bytes = (
+                            binascii.hexlify(section_data[match.start() : match.start() + 10])
+                            .decode("utf-8")
+                            .upper()
+                        )
                         # Create bypass pattern (NOP out the conditional jump)
                         patched_bytes = "90" * 2 + orig_bytes[2:]
 
-                        patterns.append({
-                            "offset": offset,
-                            "original_bytes": orig_bytes,
-                            "patched_bytes": patched_bytes,
-                            "description": f"License validation check in {section_name}",
-                            "type": "license_check",
-                            "confidence": "medium",
-                        })
+                        patterns.append(
+                            {
+                                "offset": offset,
+                                "original_bytes": orig_bytes,
+                                "patched_bytes": patched_bytes,
+                                "description": f"License validation check in {section_name}",
+                                "type": "license_check",
+                                "confidence": "medium",
+                            }
+                        )
 
                     # Pattern 2: Call followed by test and conditional jump (common in activation flows)
                     # Example: CALL -> TEST EAX,EAX -> JZ
-                    matches = re.finditer(b"\xE8[\x00-\xFF]{4}[\x84-\x85]\xC0[\x74-\x75]", section_data)
+                    matches = re.finditer(
+                        b"\xe8[\x00-\xff]{4}[\x84-\x85]\xc0[\x74-\x75]", section_data
+                    )
                     for match in matches:
                         offset = section.VirtualAddress + match.start()
-                        orig_bytes = binascii.hexlify(section_data[match.start():match.start()+10]).decode("utf-8").upper()
+                        orig_bytes = (
+                            binascii.hexlify(section_data[match.start() : match.start() + 10])
+                            .decode("utf-8")
+                            .upper()
+                        )
                         # Force success return by replacing the conditional jump with NOPs
                         patched_bytes = orig_bytes[:-2] + "9090"
 
-                        patterns.append({
-                            "offset": offset,
-                            "original_bytes": orig_bytes,
-                            "patched_bytes": patched_bytes,
-                            "description": f"Function result check in {section_name}",
-                            "type": "activation_check",
-                            "confidence": "medium",
-                        })
+                        patterns.append(
+                            {
+                                "offset": offset,
+                                "original_bytes": orig_bytes,
+                                "patched_bytes": patched_bytes,
+                                "description": f"Function result check in {section_name}",
+                                "type": "activation_check",
+                                "confidence": "medium",
+                            }
+                        )
 
                     # Pattern 3: Look for time-related API call patterns (for expiration checks)
-                    time_related_strings = [b"GetSystemTime", b"GetLocalTime", b"FileTimeToSystemTime",
-                                         b"CompareFileTime", b"GetFileTime", b"time32", b"time64"]
+                    time_related_strings = [
+                        b"GetSystemTime",
+                        b"GetLocalTime",
+                        b"FileTimeToSystemTime",
+                        b"CompareFileTime",
+                        b"GetFileTime",
+                        b"time32",
+                        b"time64",
+                    ]
 
                     for time_string in time_related_strings:
                         for match in re.finditer(time_string, section_data):
@@ -22765,29 +26241,45 @@ Focus on:
                             vicinity_data = section_data[vicinity_start:vicinity_end]
 
                             # Look for conditional jumps in the vicinity
-                            for jmp_pattern in [b"\x74", b"\x75", b"\x0F\x84", b"\x0F\x85", b"\x79", b"\x7B", b"\x7C", b"\x7D"]:
+                            for jmp_pattern in [
+                                b"\x74",
+                                b"\x75",
+                                b"\x0f\x84",
+                                b"\x0f\x85",
+                                b"\x79",
+                                b"\x7b",
+                                b"\x7c",
+                                b"\x7d",
+                            ]:
                                 for jmp_match in re.finditer(re.escape(jmp_pattern), vicinity_data):
-                                    jmp_offset = section.VirtualAddress + vicinity_start + jmp_match.start()
+                                    jmp_offset = (
+                                        section.VirtualAddress + vicinity_start + jmp_match.start()
+                                    )
                                     jmp_size = len(jmp_pattern)
 
                                     # Get enough bytes for reliable patching
-                                    jmp_area = vicinity_data[jmp_match.start():jmp_match.start() + jmp_size + 4]
+                                    jmp_area = vicinity_data[
+                                        jmp_match.start() : jmp_match.start() + jmp_size + 4
+                                    ]
                                     jmp_bytes = binascii.hexlify(jmp_area).decode("utf-8").upper()
 
                                     # Create NOPs for the jump instruction
                                     patch_bytes = "90" * len(jmp_area)
 
-                                    patterns.append({
-                                        "offset": jmp_offset,
-                                        "original_bytes": jmp_bytes,
-                                        "patched_bytes": patch_bytes,
-                                        "description": f"Time/Expiration check near {time_string.decode('utf-8', errors='ignore')}",
-                                        "type": "expiration_check",
-                                        "confidence": "high",
-                                    })
+                                    patterns.append(
+                                        {
+                                            "offset": jmp_offset,
+                                            "original_bytes": jmp_bytes,
+                                            "patched_bytes": patch_bytes,
+                                            "description": f"Time/Expiration check near {time_string.decode('utf-8', errors='ignore')}",
+                                            "type": "expiration_check",
+                                            "confidence": "high",
+                                        }
+                                    )
 
             # Check for licensing-related imports using common utility
             from ..utils.pe_analysis_common import analyze_pe_imports
+
             license_apis = {
                 "licensing": ["valid", "check", "license", "activ", "auth", "verify", "decrypt"],
                 "crypto": ["crypt", "ssl", "hash", "encrypt", "decrypt", "sign"],
@@ -22798,7 +26290,9 @@ Focus on:
             for category, funcs in detected_license_apis.items():
                 if funcs:
                     for func in funcs[:3]:  # Limit logging
-                        self.update_output.emit(log_message(f"[Pattern] Found {category} function: {func}"))
+                        self.update_output.emit(
+                            log_message(f"[Pattern] Found {category} function: {func}")
+                        )
 
                         # Try to find calls to this function in code sections
                         for section in pe.sections:
@@ -22813,35 +26307,47 @@ Focus on:
                                 if section_data[i] == 0xE8:  # CALL opcode
                                     # Calculate the target of this call
                                     call_target = section.VirtualAddress + i + 5
-                                    call_target += int.from_bytes(section_data[i+1:i+5], byteorder="little", signed=True)
+                                    call_target += int.from_bytes(
+                                        section_data[i + 1 : i + 5], byteorder="little", signed=True
+                                    )
 
                                     # Check if this call targets our import (simplified logic)
                                     if calls_found < 10:  # Reasonable limit
                                         calls_found += 1
 
                                         offset = section.VirtualAddress + i
-                                        orig_bytes = binascii.hexlify(section_data[i:i+5]).decode("utf-8").upper()
+                                        orig_bytes = (
+                                            binascii.hexlify(section_data[i : i + 5])
+                                            .decode("utf-8")
+                                            .upper()
+                                        )
 
                                         # Example patching logic
                                         patched_bytes = "90" * len(orig_bytes)  # NOP out the call
 
-                                    patterns.append({
-                                        "offset": offset,
-                                        "original_bytes": orig_bytes,
-                                        "patched_bytes": patched_bytes,
-                                        "description": f"Call to {func} in {category}",
-                                        "type": "api_license_check",
-                                        "confidence": "high",
-                                        "api_name": func,
-                                    })
+                                    patterns.append(
+                                        {
+                                            "offset": offset,
+                                            "original_bytes": orig_bytes,
+                                            "patched_bytes": patched_bytes,
+                                            "description": f"Call to {func} in {category}",
+                                            "type": "api_license_check",
+                                            "confidence": "high",
+                                            "api_name": func,
+                                        }
+                                    )
 
                             # Only process first few calls to avoid excessive patterns
                             if calls_found > 0:
-                                self.update_output.emit(log_message(f"[Pattern] Found {calls_found} calls to {func}"))
+                                self.update_output.emit(
+                                    log_message(f"[Pattern] Found {calls_found} calls to {func}")
+                                )
 
             # If no patterns found so far, look for common API calls that could be used for licensing
             if not patterns:
-                self.update_output.emit(log_message("[Pattern] No specific patterns found, analyzing API usage..."))
+                self.update_output.emit(
+                    log_message("[Pattern] No specific patterns found, analyzing API usage...")
+                )
 
                 # Common Windows API calls often used in license checks
                 api_patterns = {
@@ -22857,43 +26363,61 @@ Focus on:
                     for section in pe.sections:
                         section_data = section.get_data()
                         for match in re.finditer(api_pattern, section_data):
-                            self.update_output.emit(log_message(f"[Pattern] Found potential API usage: {api_name}"))
+                            self.update_output.emit(
+                                log_message(f"[Pattern] Found potential API usage: {api_name}")
+                            )
 
-                            patterns.append({
-                                "offset": section.VirtualAddress + match.start(),
-                                "original_bytes": "",  # Can't determine without disassembly
-                                "patched_bytes": "",
-                                "description": f"Potential {api_name} usage for hardware/license checks",
-                                "type": "api_reference",
-                                "confidence": "low",
-                                "requires_manual_analysis": True,
-                            })
+                            patterns.append(
+                                {
+                                    "offset": section.VirtualAddress + match.start(),
+                                    "original_bytes": "",  # Can't determine without disassembly
+                                    "patched_bytes": "",
+                                    "description": f"Potential {api_name} usage for hardware/license checks",
+                                    "type": "api_reference",
+                                    "confidence": "low",
+                                    "requires_manual_analysis": True,
+                                }
+                            )
 
                 # Add entry point pattern for manual inspection
                 try:
                     entry_point = getattr(pe.OPTIONAL_HEADER, "AddressOfEntryPoint", None)
                     if entry_point is not None:
                         for section in pe.sections:
-                            if section.VirtualAddress <= entry_point < (section.VirtualAddress + section.Misc_VirtualSize):
+                            if (
+                                section.VirtualAddress
+                                <= entry_point
+                                < (section.VirtualAddress + section.Misc_VirtualSize)
+                            ):
                                 section_data = section.get_data()
                                 offset_in_section = entry_point - section.VirtualAddress
 
                                 if offset_in_section < len(section_data) - 16:
-                                    entry_bytes = binascii.hexlify(section_data[offset_in_section:offset_in_section+16]).decode("utf-8").upper()
+                                    entry_bytes = (
+                                        binascii.hexlify(
+                                            section_data[offset_in_section : offset_in_section + 16]
+                                        )
+                                        .decode("utf-8")
+                                        .upper()
+                                    )
 
-                                    patterns.append({
-                                        "offset": entry_point,
-                                        "original_bytes": entry_bytes,
-                                        "patched_bytes": entry_bytes,  # Same bytes initially
-                                        "description": "Entry point (inspect for initialization checks)",
-                                        "type": "entry_point",
-                                        "confidence": "low",
-                                        "requires_manual_analysis": True,
-                                    })
+                                    patterns.append(
+                                        {
+                                            "offset": entry_point,
+                                            "original_bytes": entry_bytes,
+                                            "patched_bytes": entry_bytes,  # Same bytes initially
+                                            "description": "Entry point (inspect for initialization checks)",
+                                            "type": "entry_point",
+                                            "confidence": "low",
+                                            "requires_manual_analysis": True,
+                                        }
+                                    )
                                     break
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                    self.update_output.emit(log_message(f"[Pattern] Error analyzing entry point: {e!s}"))
+                    self.update_output.emit(
+                        log_message(f"[Pattern] Error analyzing entry point: {e!s}")
+                    )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
@@ -22912,8 +26436,17 @@ Focus on:
                 binary_data = f.read()
 
             # Look for common strings related to licensing
-            license_strings = [b"license", b"activation", b"register", b"trial", b"expire",
-                             b"hardware", b"hwid", b"serial", b"key"]
+            license_strings = [
+                b"license",
+                b"activation",
+                b"register",
+                b"trial",
+                b"expire",
+                b"hardware",
+                b"hwid",
+                b"serial",
+                b"key",
+            ]
 
             for pattern in license_strings:
                 for match in re.finditer(pattern, binary_data, re.IGNORECASE):
@@ -22928,38 +26461,53 @@ Focus on:
                     context_readable = context_data.decode("utf-8", errors="replace")
 
                     # Check if the pattern appears in a possible code region
-                    is_code_region = any(opcode in context_data for opcode in [b"\x55", b"\x8B", b"\x89", b"\xE8", b"\xE9", b"\xFF"])
+                    is_code_region = any(
+                        opcode in context_data
+                        for opcode in [b"\x55", b"\x8b", b"\x89", b"\xe8", b"\xe9", b"\xff"]
+                    )
 
                     # Check if pattern is surrounded by string terminators or other strings
-                    is_text_section = (b"\x00" in context_data and context_data.count(b"\x00") > 2)
+                    is_text_section = b"\x00" in context_data and context_data.count(b"\x00") > 2
 
                     # Determine confidence level based on context
-                    confidence_level = "high" if is_code_region else "medium" if is_text_section else "low"
+                    confidence_level = (
+                        "high" if is_code_region else "medium" if is_text_section else "low"
+                    )
 
-                    patterns.append({
-                        "offset": offset,
-                        "original_bytes": binascii.hexlify(pattern).decode("utf-8").upper(),
-                        "patched_bytes": "",  # Can't determine without proper disassembly
-                        "description": f"Reference to '{pattern.decode('utf-8', errors='ignore')}' (needs manual analysis)",
-                        "type": "string_reference",
-                        "confidence": confidence_level,
-                        "requires_manual_analysis": True,
-                        "context": {
-                            "hex": context_hex[:30] + "..." if len(context_hex) > 30 else context_hex,
-                            "text": context_readable[:30] + "..." if len(context_readable) > 30 else context_readable,
-                            "is_code_region": is_code_region,
-                            "is_text_section": is_text_section,
-                        },
-                    })
+                    patterns.append(
+                        {
+                            "offset": offset,
+                            "original_bytes": binascii.hexlify(pattern).decode("utf-8").upper(),
+                            "patched_bytes": "",  # Can't determine without proper disassembly
+                            "description": f"Reference to '{pattern.decode('utf-8', errors='ignore')}' (needs manual analysis)",
+                            "type": "string_reference",
+                            "confidence": confidence_level,
+                            "requires_manual_analysis": True,
+                            "context": {
+                                "hex": context_hex[:30] + "..."
+                                if len(context_hex) > 30
+                                else context_hex,
+                                "text": context_readable[:30] + "..."
+                                if len(context_readable) > 30
+                                else context_readable,
+                                "is_code_region": is_code_region,
+                                "is_text_section": is_text_section,
+                            },
+                        }
+                    )
 
                     # Log the finding
-                    self.update_output.emit(log_message(
-                        f"[Pattern Finder] Found '{pattern.decode('utf-8', errors='ignore')}' at offset 0x{offset:X} ({confidence_level} confidence)",
-                    ))
+                    self.update_output.emit(
+                        log_message(
+                            f"[Pattern Finder] Found '{pattern.decode('utf-8', errors='ignore')}' at offset 0x{offset:X} ({confidence_level} confidence)",
+                        )
+                    )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Pattern] Error in ELF pattern extraction: {e!s}"))
+            self.update_output.emit(
+                log_message(f"[Pattern] Error in ELF pattern extraction: {e!s}")
+            )
 
         return patterns or self._generate_generic_patterns()
 
@@ -23009,8 +26557,7 @@ Focus on:
     def open_visual_patch_editor(self):
         """Opens the visual patch editor dialog."""
         if not self.binary_path:
-            QMessageBox.warning(
-                self, "No Binary", "Please select a binary file first.")
+            QMessageBox.warning(self, "No Binary", "Please select a binary file first.")
             return
 
         # Check if we have patches from preview
@@ -23030,12 +26577,16 @@ Focus on:
 
         # Open the visual patch editor dialog
         from ..ui.dialogs.visual_patch_editor import VisualPatchEditorDialog as VPEDialog
+
         editor = VPEDialog(self.binary_path, self.potential_patches, parent=self)
         if editor.exec() == QDialog.Accepted:
             # Update patches if user accepted changes
             self.potential_patches = getattr(editor, "patches", [])
-            self.update_output.emit(log_message(
-                f"[Patch Editor] Updated patch plan with {len(self.potential_patches)} patches"))
+            self.update_output.emit(
+                log_message(
+                    f"[Patch Editor] Updated patch plan with {len(self.potential_patches)} patches"
+                )
+            )
 
     def run_binary_similarity_search(self):
         """Run binary similarity search."""
@@ -23045,13 +26596,17 @@ Focus on:
 
         try:
             from .dialogs.similarity_search_dialog import BinarySimilaritySearchDialog
+
             dialog = BinarySimilaritySearchDialog(self.binary_path, self)
             dialog.exec()
         except ImportError as e:
             self.logger.error("Import error in main_app.py: %s", e)
-            QMessageBox.warning(self, "Feature Unavailable",
-                              "Binary similarity search is not available. "
-                              "Please ensure all dependencies are installed.")
+            QMessageBox.warning(
+                self,
+                "Feature Unavailable",
+                "Binary similarity search is not available. "
+                "Please ensure all dependencies are installed.",
+            )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to open similarity search dialog: {e}")
@@ -23062,7 +26617,9 @@ Focus on:
             QMessageBox.warning(self, "No File", "Please select a binary file first.")
             return
 
-        self.update_output.emit(log_message("[Feature Extract] Feature extraction functionality has been removed."))
+        self.update_output.emit(
+            log_message("[Feature Extract] Feature extraction functionality has been removed.")
+        )
         self.update_analysis_results.emit("\n=== Feature extraction is no longer available ===\n")
 
     def run_automated_patch_agent(self):
@@ -23080,6 +26637,7 @@ Focus on:
 
             try:
                 from ..utils.protection_detection import detect_protection_mechanisms
+
                 protections = detect_protection_mechanisms(self.binary_path)
                 if protections:
                     self.update_analysis_results.emit("Detected protections:\n")
@@ -23092,12 +26650,17 @@ Focus on:
                 self.update_analysis_results.emit(f"Protection detection failed: {e}\n")
 
             # Step 2: Search for similar binaries with successful patches
-            self.update_analysis_results.emit("\nStep 2: Searching for similar cracked binaries...\n")
+            self.update_analysis_results.emit(
+                "\nStep 2: Searching for similar cracked binaries...\n"
+            )
 
             try:
                 from ..core.analysis.binary_similarity_search import BinarySimilaritySearch
+
                 search_engine = BinarySimilaritySearch()
-                similar_binaries = search_engine.search_similar_binaries(self.binary_path, threshold=0.5)
+                similar_binaries = search_engine.search_similar_binaries(
+                    self.binary_path, threshold=0.5
+                )
 
                 successful_patterns = []
                 for binary in similar_binaries:
@@ -23106,7 +26669,9 @@ Focus on:
                         successful_patterns.extend(patterns)
 
                 if successful_patterns:
-                    self.update_analysis_results.emit(f"Found {len(successful_patterns)} successful patterns from similar binaries\n")
+                    self.update_analysis_results.emit(
+                        f"Found {len(successful_patterns)} successful patterns from similar binaries\n"
+                    )
                 else:
                     self.update_analysis_results.emit("No similar binaries with patterns found\n")
             except (OSError, ValueError, RuntimeError) as e:
@@ -23120,9 +26685,12 @@ Focus on:
             # Use AI tools for pattern suggestions
             try:
                 from ..ai.ai_tools import retrieve_few_shot_examples
+
                 examples = retrieve_few_shot_examples(2)
 
-                self.update_analysis_results.emit("AI-suggested approaches based on similar cases:\n\n")
+                self.update_analysis_results.emit(
+                    "AI-suggested approaches based on similar cases:\n\n"
+                )
                 self.update_analysis_results.emit(examples)
                 self.update_analysis_results.emit("\n")
             except (OSError, ValueError, RuntimeError) as e:
@@ -23130,13 +26698,19 @@ Focus on:
                 self.update_analysis_results.emit(f"AI pattern generation failed: {e}\n")
 
             # Step 4: Vulnerability-based patch recommendations
-            self.update_analysis_results.emit("\nStep 4: Generating vulnerability-based recommendations...\n")
+            self.update_analysis_results.emit(
+                "\nStep 4: Generating vulnerability-based recommendations...\n"
+            )
 
             # ML prediction functionality has been removed
-            self.update_analysis_results.emit("ML vulnerability prediction is no longer available.\n")
+            self.update_analysis_results.emit(
+                "ML vulnerability prediction is no longer available.\n"
+            )
 
             self.update_analysis_results.emit("\n✅ Patch agent analysis completed\n")
-            self.update_analysis_results.emit("Use the suggestions above and the Patch tab to create targeted modifications.\n")
+            self.update_analysis_results.emit(
+                "Use the suggestions above and the Patch tab to create targeted modifications.\n"
+            )
 
             self.update_output.emit(log_message("[Patch Agent] AI-driven patch agent completed"))
 
@@ -23148,12 +26722,10 @@ Focus on:
     def run_full_autonomous_mode(self):
         """Runs the full autonomous mode with enhanced AI-driven patching."""
         if not self.binary_path:
-            QMessageBox.warning(self, "No File Selected",
-                                "Please select a program first.")
+            QMessageBox.warning(self, "No File Selected", "Please select a program first.")
             return
 
-        self.update_output.emit(log_message(
-            "[Autonomous Mode] Starting full autonomous mode..."))
+        self.update_output.emit(log_message("[Autonomous Mode] Starting full autonomous mode..."))
         self.analyze_status.setText("Running autonomous mode...")
 
         # Run in background thread
@@ -23192,8 +26764,7 @@ Focus on:
             ui_updates.append(("analysis", analysis))
 
         def queue_clear_analysis():
-            """Queue a request to clear analysis results in the UI.
-            """
+            """Queue a request to clear analysis results in the UI."""
             ui_updates.append(("clear_analysis", None))
 
         def flush_ui_updates():
@@ -23219,18 +26790,15 @@ Focus on:
 
             model = load_ai_model(self)
             if not model:
-                queue_output_update(log_message(
-                    "[Autonomous Mode] Failed to load AI model."))
+                queue_output_update(log_message("[Autonomous Mode] Failed to load AI model."))
                 queue_status_update("Error: Failed to load AI model")
                 flush_ui_updates()
                 return
 
-            queue_output_update(log_message(
-                "[Autonomous Mode] AI model loaded."))
+            queue_output_update(log_message("[Autonomous Mode] AI model loaded."))
             flush_ui_updates()
 
-            queue_output_update(log_message(
-                "[Autonomous Mode] Analyzing binary structure..."))
+            queue_output_update(log_message("[Autonomous Mode] Analyzing binary structure..."))
             flush_ui_updates()
 
             binary_report = analyze_binary_internal(self.binary_path, [])
@@ -23241,51 +26809,51 @@ Focus on:
             context_data.append("Binary Analysis:")
             context_data.extend(binary_report)
 
-            queue_output_update(log_message(
-                "[Autonomous Mode] Gathering context from related files..."))
+            queue_output_update(
+                log_message("[Autonomous Mode] Gathering context from related files...")
+            )
             flush_ui_updates()
             for root, _, files in os.walk(program_dir):
                 for file in files:
                     if file.lower().endswith(
-                            (".exe", ".dll", ".lic", ".dat", ".json", ".conf", ".ini")):
+                        (".exe", ".dll", ".lic", ".dat", ".json", ".conf", ".ini")
+                    ):
                         file_path = os.path.join(root, file)
                         try:
                             if file_path != self.binary_path:
                                 with open(file_path, "rb") as file_handle:
                                     file_content = file_handle.read(2048)
-                                    encoded_content = base64.b64encode(
-                                        file_content).decode()
+                                    encoded_content = base64.b64encode(file_content).decode()
                                     context_data.append(
-                                        f"Related file {file}: {encoded_content[:100]}...")
+                                        f"Related file {file}: {encoded_content[:100]}..."
+                                    )
                         except (OSError, ValueError, RuntimeError) as e:
-                            logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
+                            logger.error(
+                                "(OSError, ValueError, RuntimeError) in main_app.py: %s", e
+                            )
                             context_data.append(f"Error reading {file}: {e}")
 
-            queue_output_update(log_message(
-                "[Autonomous Mode] Running license analysis..."))
+            queue_output_update(log_message("[Autonomous Mode] Running license analysis..."))
             flush_ui_updates()
 
             license_results = enhanced_deep_license_analysis(self.binary_path)
 
             if license_results:
                 context_data.append(
-                    f"\nLicense Analysis: Found {len(license_results)} potential license code regions")
+                    f"\nLicense Analysis: Found {len(license_results)} potential license code regions"
+                )
                 for i, result in enumerate(license_results[:3]):
                     if isinstance(result, dict):
-                        context_data.append(
-                            f"Region {i + 1} at 0x{result['start']:X}:")
-                        context_data.append(
-                            f"Keywords: {', '.join(result.get('keywords', []))}")
+                        context_data.append(f"Region {i + 1} at 0x{result['start']:X}:")
+                        context_data.append(f"Keywords: {', '.join(result.get('keywords', []))}")
                         if result.get("instructions"):
                             context_data.append("Instructions:")
                             for inst in result["instructions"][:5]:
                                 context_data.append(f"  {inst}")
             else:
-                context_data.append(
-                    "\nLicense Analysis: No license code regions detected")
+                context_data.append("\nLicense Analysis: No license code regions detected")
 
-            queue_output_update(log_message(
-                "[Autonomous Mode] Checking for protectors..."))
+            queue_output_update(log_message("[Autonomous Mode] Checking for protectors..."))
             flush_ui_updates()
 
             protectors = scan_for_bytecode_protectors(self.binary_path)
@@ -23296,10 +26864,10 @@ Focus on:
                         detected.append(name)
                 if detected:
                     context_data.append(
-                        f"\nProtection Analysis: Detected protectors: {', '.join(detected)}")
+                        f"\nProtection Analysis: Detected protectors: {', '.join(detected)}"
+                    )
                 else:
-                    context_data.append(
-                        "\nProtection Analysis: No protectors detected")
+                    context_data.append("\nProtection Analysis: No protectors detected")
 
             full_context = "\n".join(context_data)
 
@@ -23314,18 +26882,17 @@ Focus on:
                 "\n2. Replace function prologues with simple returns (e.g., 'mov eax, 1; ret' or 'xor eax, eax; ret') ONLY IF the replacement fits within the original prologue's size. Avoid complex code rewriting."
                 "\nExplain your reasoning for each patch and why you believe it is safe."
                 "\nStrictly adhere to the output format:"
-                "\nAddress: 0x<address> NewBytes: <hex bytes> // <explanation>")
+                "\nAddress: 0x<address> NewBytes: <hex bytes> // <explanation>"
+            )
 
-            queue_output_update(log_message(
-                "[Autonomous Mode] Retrieving few-shot examples..."))
+            queue_output_update(log_message("[Autonomous Mode] Retrieving few-shot examples..."))
             flush_ui_updates()
 
             few_shot_examples = retrieve_few_shot_examples(num_examples=3)
 
             prompt = f"<s>[INST] <<SYS>>{base_prompt}<</SYS>>\n\n{few_shot_examples}\n\nFile Analysis Context:\n{full_context} [/INST]"
 
-            queue_output_update(log_message(
-                "[Autonomous Mode] Sending prompt to AI model..."))
+            queue_output_update(log_message("[Autonomous Mode] Sending prompt to AI model..."))
             queue_analysis_update("Analyzing binary and generating strategy...\n")
             flush_ui_updates()
 
@@ -23338,14 +26905,12 @@ Focus on:
             strategy = result["choices"][0]["text"].strip()
 
             if not strategy:
-                queue_output_update(log_message(
-                    "[Autonomous Mode] Received empty AI response."))
+                queue_output_update(log_message("[Autonomous Mode] Received empty AI response."))
                 queue_status_update("Error: Empty AI response")
                 flush_ui_updates()
                 return
 
-            queue_output_update(log_message(
-                "[Autonomous Mode] Received AI strategy."))
+            queue_output_update(log_message("[Autonomous Mode] Received AI strategy."))
             queue_analysis_update("=" * 50)
             queue_analysis_update("AI-GENERATED BYPASS STRATEGY:")
             queue_analysis_update("=" * 50)
@@ -23353,25 +26918,27 @@ Focus on:
             queue_analysis_update("=" * 50)
             flush_ui_updates()
 
-            queue_output_update(log_message(
-                "[Autonomous Mode] Parsing patch instructions..."))
+            queue_output_update(log_message("[Autonomous Mode] Parsing patch instructions..."))
             flush_ui_updates()
 
             instructions = parse_patch_instructions(strategy)
 
             if instructions:
                 queue_output_update(
-                    log_message(
-                        f"[Autonomous Mode] Found {len(instructions)} patch instructions."))
+                    log_message(f"[Autonomous Mode] Found {len(instructions)} patch instructions.")
+                )
 
                 # Warning code
                 queue_output_update(log_message("*" * 60))
-                queue_output_update(log_message(
-                    "[AI Patch Warning] AI-generated patches require review!"))
                 queue_output_update(
-                    log_message("  - Verify addresses and intended logic before applying."))
-                queue_output_update(log_message(
-                    "  - Use 'Simulate Patch' to test virtually first."))
+                    log_message("[AI Patch Warning] AI-generated patches require review!")
+                )
+                queue_output_update(
+                    log_message("  - Verify addresses and intended logic before applying.")
+                )
+                queue_output_update(
+                    log_message("  - Use 'Simulate Patch' to test virtually first.")
+                )
                 queue_output_update(log_message("*" * 60))
                 flush_ui_updates()
 
@@ -23380,26 +26947,29 @@ Focus on:
 
                 # Log the question via signal
                 self.log_user_question.emit(
-                    "Apply Patches", f"AI strategy generated {len(instructions)} patches. Apply them?\n\nNOTE: This requires manual confirmation. If you want to proceed, click the 'Apply Patch Plan' button.")
+                    "Apply Patches",
+                    f"AI strategy generated {len(instructions)} patches. Apply them?\n\nNOTE: This requires manual confirmation. If you want to proceed, click the 'Apply Patch Plan' button.",
+                )
 
-                queue_output_update(log_message(
-                    "[Autonomous Mode] Patches ready. Use 'Apply Patch Plan' to apply them."))
+                queue_output_update(
+                    log_message(
+                        "[Autonomous Mode] Patches ready. Use 'Apply Patch Plan' to apply them."
+                    )
+                )
                 flush_ui_updates()
 
             elif "keygen" in strategy.lower() or "key gen" in strategy.lower():
-                queue_output_update(log_message(
-                    "[Autonomous Mode] Key generation strategy detected."))
+                queue_output_update(
+                    log_message("[Autonomous Mode] Key generation strategy detected.")
+                )
                 flush_ui_updates()
 
                 product_match = re.search(
-                    r"product(?:\s+name)?[:\s]+['\"](.*?)['\"]",
-                    strategy,
-                    re.IGNORECASE)
-                version_match = re.search(
-                    r"version[:\s]+['\"](.*?)['\"]", strategy, re.IGNORECASE)
+                    r"product(?:\s+name)?[:\s]+['\"](.*?)['\"]", strategy, re.IGNORECASE
+                )
+                version_match = re.search(r"version[:\s]+['\"](.*?)['\"]", strategy, re.IGNORECASE)
 
-                product = product_match.group(
-                    1) if product_match else "Unknown"
+                product = product_match.group(1) if product_match else "Unknown"
                 version = version_match.group(1) if version_match else "1.0"
 
                 # Log the question instead of showing a blocking QMessageBox
@@ -23415,8 +26985,11 @@ Focus on:
                 # self.generate_key_signal.emit()
 
             else:
-                queue_output_update(log_message(
-                    "[Autonomous Mode] No patch instructions or keygen strategy found in AI response."))
+                queue_output_update(
+                    log_message(
+                        "[Autonomous Mode] No patch instructions or keygen strategy found in AI response."
+                    )
+                )
                 flush_ui_updates()
 
                 # Log the question instead of showing a blocking QMessageBox
@@ -23425,14 +26998,12 @@ Focus on:
                     "No direct patch instructions found. Would you like to analyze runtime behavior?\n\nNOTE: This requires manual confirmation. If you want to proceed, click the 'Deep Runtime Monitoring' button.",
                 )
 
-            queue_status_update(
-                "Autonomous mode complete - review strategy and act manually")
+            queue_status_update("Autonomous mode complete - review strategy and act manually")
             flush_ui_updates()
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            queue_output_update(log_message(
-                f"[Autonomous Mode] Error: {e}"))
+            queue_output_update(log_message(f"[Autonomous Mode] Error: {e}"))
             queue_output_update(log_message(traceback.format_exc()))
             queue_status_update(f"Error: {e!s}")
             flush_ui_updates()
@@ -23455,11 +27026,15 @@ Focus on:
             result = self.autonomous_agent.execute_autonomous_task(task_config)
 
             if result.get("success"):
-                self.update_output.emit(log_message(f"[Autonomous Task] {task_type} completed successfully"))
+                self.update_output.emit(
+                    log_message(f"[Autonomous Task] {task_type} completed successfully")
+                )
 
                 if task_type == "script_generation" and "scripts" in result:
                     for script in result["scripts"]:
-                        self.update_analysis_results.emit(f"\n--- Generated {script.script_type} Script ---\n")
+                        self.update_analysis_results.emit(
+                            f"\n--- Generated {script.script_type} Script ---\n"
+                        )
                         self.update_analysis_results.emit(script.code)
 
                 elif task_type == "vulnerability_analysis" and "vulnerabilities" in result:
@@ -23468,7 +27043,9 @@ Focus on:
                         self.update_analysis_results.emit(f"- {vuln}\n")
 
             else:
-                self.update_output.emit(log_message(f"[Autonomous Task] Failed: {result.get('error', 'Unknown error')}"))
+                self.update_output.emit(
+                    log_message(f"[Autonomous Task] Failed: {result.get('error', 'Unknown error')}")
+                )
 
             return result
 
@@ -23490,14 +27067,21 @@ Focus on:
             # Also save UI conversation history
             if hasattr(self, "ai_conversation_history") and self.ai_conversation_history:
                 import json
+
                 ui_session_file = session_file.replace("_session.json", "_ui_session.json")
                 with open(ui_session_file, "w") as f:
-                    json.dump({
-                        "ui_conversation_history": self.ai_conversation_history,
-                        "binary_path": self.binary_path,
-                        "timestamp": datetime.datetime.now().isoformat(),
-                    }, f, indent=2)
-                self.update_output.emit(log_message(f"[Session] UI history saved to: {ui_session_file}"))
+                    json.dump(
+                        {
+                            "ui_conversation_history": self.ai_conversation_history,
+                            "binary_path": self.binary_path,
+                            "timestamp": datetime.datetime.now().isoformat(),
+                        },
+                        f,
+                        indent=2,
+                    )
+                self.update_output.emit(
+                    log_message(f"[Session] UI history saved to: {ui_session_file}")
+                )
 
         except Exception as e:
             self.logger.error(f"Error saving AI session: {e}")
@@ -23653,7 +27237,11 @@ Focus on:
     def _clear_ai_cache_from_stats(self, parent_dialog):
         """Clear AI coordination cache from the stats dialog."""
         try:
-            if hasattr(self, "ai_coordinator") and self.ai_coordinator and hasattr(self.ai_coordinator, "clear_cache"):
+            if (
+                hasattr(self, "ai_coordinator")
+                and self.ai_coordinator
+                and hasattr(self.ai_coordinator, "clear_cache")
+            ):
                 reply = QMessageBox.question(
                     parent_dialog,
                     "Clear AI Cache",
@@ -23664,7 +27252,9 @@ Focus on:
 
                 if reply == QMessageBox.Yes:
                     self.ai_coordinator.clear_cache()
-                    QMessageBox.information(parent_dialog, "Cache Cleared", "AI coordination cache has been cleared.")
+                    QMessageBox.information(
+                        parent_dialog, "Cache Cleared", "AI coordination cache has been cleared."
+                    )
 
         except Exception as e:
             self.logger.error(f"Error clearing AI cache: {e}")
@@ -23693,12 +27283,10 @@ Focus on:
     def run_detect_packing(self):
         """Runs packing detection and shows results."""
         if not self.binary_path:
-            QMessageBox.warning(self, "No File Selected",
-                                "Please select a program first.")
+            QMessageBox.warning(self, "No File Selected", "Please select a program first.")
             return
 
-        self.update_output.emit(log_message(
-            "[Packing Detection] Starting packing detection..."))
+        self.update_output.emit(log_message("[Packing Detection] Starting packing detection..."))
         self.analyze_status.setText("Checking for packing/obfuscation...")
 
         # Run in background thread
@@ -23719,29 +27307,24 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(
-                f"[Packing Detection] Error: {e}"))
+            self.update_output.emit(log_message(f"[Packing Detection] Error: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
             self.update_status.emit(f"Error: {e!s}")
 
     def run_simulate_patch(self):
         """Simulates patch application and verifies results."""
         if not self.binary_path:
-            QMessageBox.warning(self, "No File Selected",
-                                "Please select a program first.")
+            QMessageBox.warning(self, "No File Selected", "Please select a program first.")
             return
 
         # Check if we have patches from preview
-        if not hasattr(
-                self, "potential_patches") or not self.potential_patches:
+        if not hasattr(self, "potential_patches") or not self.potential_patches:
             QMessageBox.warning(
-                self,
-                "No Patches",
-                "No patches available. Run 'Preview Patch Plan' first.")
+                self, "No Patches", "No patches available. Run 'Preview Patch Plan' first."
+            )
             return
 
-        self.update_output.emit(log_message(
-            "[Patch Simulation] Starting patch simulation..."))
+        self.update_output.emit(log_message("[Patch Simulation] Starting patch simulation..."))
         self.analyze_status.setText("Simulating patches...")
 
         # Run in background thread
@@ -23755,8 +27338,7 @@ Focus on:
         try:
             self.clear_analysis_results.emit()
 
-            self.update_analysis_results.emit(
-                f"Simulating {len(patches)} patches...")
+            self.update_analysis_results.emit(f"Simulating {len(patches)} patches...")
 
             report = simulate_patch_and_verify(self.binary_path, patches)
 
@@ -23768,20 +27350,19 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(
-                f"[Patch Simulation] Error: {e}"))
+            self.update_output.emit(log_message(f"[Patch Simulation] Error: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
             self.update_status.emit(f"Error: {e!s}")
 
     def run_tpm_bypass(self):
         """Run TPM protection bypass."""
         if not self.binary_path:
-            self.update_output.emit(log_message(
-                "[TPM Bypass] No binary loaded. Please load a binary first."))
+            self.update_output.emit(
+                log_message("[TPM Bypass] No binary loaded. Please load a binary first.")
+            )
             return
 
-        self.update_output.emit(log_message(
-            "[TPM Bypass] Starting TPM protection bypass..."))
+        self.update_output.emit(log_message("[TPM Bypass] Starting TPM protection bypass..."))
         self.analyze_status.setText("Running TPM bypass...")
 
         # Run bypass in background thread
@@ -23795,39 +27376,40 @@ Focus on:
             # Run TPM bypass
             results = bypass_tpm_protection(self)
 
-            self.update_output.emit(log_message(
-                "[TPM Bypass] Bypass attempt completed."))
+            self.update_output.emit(log_message("[TPM Bypass] Bypass attempt completed."))
 
             # Show results
             if results["success"]:
-                self.update_output.emit(log_message(
-                    f"[TPM Bypass] Success! Applied methods: {', '.join(results['methods_applied'])}"))
+                self.update_output.emit(
+                    log_message(
+                        f"[TPM Bypass] Success! Applied methods: {', '.join(results['methods_applied'])}"
+                    )
+                )
             else:
-                self.update_output.emit(log_message(
-                    "[TPM Bypass] Failed to bypass TPM protection."))
+                self.update_output.emit(
+                    log_message("[TPM Bypass] Failed to bypass TPM protection.")
+                )
 
             # Show any errors
             for error in results.get("errors", []):
-                self.update_output.emit(log_message(
-                    f"[TPM Bypass] Error: {error}"))
+                self.update_output.emit(log_message(f"[TPM Bypass] Error: {error}"))
 
             self.analyze_status.setText("TPM bypass complete")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(
-                f"[TPM Bypass] Error during bypass: {e!s}"))
+            self.update_output.emit(log_message(f"[TPM Bypass] Error during bypass: {e!s}"))
             self.analyze_status.setText("TPM bypass failed")
             logger.error(traceback.format_exc())
 
     def run_vm_bypass(self):
         """Run VM detection bypass."""
         if not self.binary_path:
-            self.update_output.emit(log_message(
-                "[VM Bypass] No binary loaded. Please load a binary first."))
+            self.update_output.emit(
+                log_message("[VM Bypass] No binary loaded. Please load a binary first.")
+            )
             return
 
-        self.update_output.emit(log_message(
-            "[VM Bypass] Starting VM detection bypass..."))
+        self.update_output.emit(log_message("[VM Bypass] Starting VM detection bypass..."))
         self.analyze_status.setText("Running VM bypass...")
 
         # Run bypass in background thread
@@ -23841,39 +27423,40 @@ Focus on:
             # Run VM bypass
             results = bypass_vm_detection(self)
 
-            self.update_output.emit(log_message(
-                "[VM Bypass] Bypass attempt completed."))
+            self.update_output.emit(log_message("[VM Bypass] Bypass attempt completed."))
 
             # Show results
             if results["success"]:
-                self.update_output.emit(log_message(
-                    f"[VM Bypass] Success! Applied methods: {', '.join(results['methods_applied'])}"))
+                self.update_output.emit(
+                    log_message(
+                        f"[VM Bypass] Success! Applied methods: {', '.join(results['methods_applied'])}"
+                    )
+                )
             else:
-                self.update_output.emit(log_message(
-                    "[VM Bypass] Failed to bypass VM detection."))
+                self.update_output.emit(log_message("[VM Bypass] Failed to bypass VM detection."))
 
             # Show any errors
             for error in results.get("errors", []):
-                self.update_output.emit(log_message(
-                    f"[VM Bypass] Error: {error}"))
+                self.update_output.emit(log_message(f"[VM Bypass] Error: {error}"))
 
             self.analyze_status.setText("VM bypass complete")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(
-                f"[VM Bypass] Error during bypass: {e!s}"))
+            self.update_output.emit(log_message(f"[VM Bypass] Error during bypass: {e!s}"))
             self.analyze_status.setText("VM bypass failed")
             logger.error(traceback.format_exc())
 
     def run_vm_detection(self):
         """Run VM/Sandbox detection on the binary."""
         if not self.binary_path:
-            self.update_output.emit(log_message(
-                "[VM Detection] No binary loaded. Please load a binary first."))
+            self.update_output.emit(
+                log_message("[VM Detection] No binary loaded. Please load a binary first.")
+            )
             return
 
-        self.update_output.emit(log_message(
-            "[VM Detection] Starting VM/Sandbox detection analysis..."))
+        self.update_output.emit(
+            log_message("[VM Detection] Starting VM/Sandbox detection analysis...")
+        )
         self.analyze_status.setText("Detecting VM/Sandbox evasion...")
 
         # Run detection in background thread
@@ -23890,42 +27473,47 @@ Focus on:
 
             results = detect_virtualization_protection(self.binary_path)
 
-            self.update_output.emit(log_message(
-                "[VM Detection] Analysis completed."))
-            self.update_output.emit(log_message(
-                f"[VM Detection] Virtualization Detected: {results.get('virtualization_detected', False)}"))
+            self.update_output.emit(log_message("[VM Detection] Analysis completed."))
+            self.update_output.emit(
+                log_message(
+                    f"[VM Detection] Virtualization Detected: {results.get('virtualization_detected', False)}"
+                )
+            )
 
             if results.get("protection_types"):
-                self.update_output.emit(log_message(
-                    f"[VM Detection] Protection Types: {', '.join(results['protection_types'])}"))
+                self.update_output.emit(
+                    log_message(
+                        f"[VM Detection] Protection Types: {', '.join(results['protection_types'])}"
+                    )
+                )
 
             if results.get("indicators"):
-                self.update_output.emit(log_message(
-                    "[VM Detection] Indicators found:"))
+                self.update_output.emit(log_message("[VM Detection] Indicators found:"))
                 for indicator in results["indicators"]:
-                    self.update_output.emit(log_message(
-                        f"  • {indicator}"))
+                    self.update_output.emit(log_message(f"  • {indicator}"))
 
-            self.update_output.emit(log_message(
-                f"[VM Detection] Confidence: {results.get('confidence', 0) * 100:.1f}%"))
+            self.update_output.emit(
+                log_message(f"[VM Detection] Confidence: {results.get('confidence', 0) * 100:.1f}%")
+            )
 
             self.analyze_status.setText("VM detection complete")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(
-                f"[VM Detection] Error during analysis: {e!s}"))
+            self.update_output.emit(log_message(f"[VM Detection] Error during analysis: {e!s}"))
             self.analyze_status.setText("VM detection failed")
             logger.error(traceback.format_exc())
 
     def run_anti_debug_detection(self):
         """Run anti-debugger technique detection on the binary."""
         if not self.binary_path:
-            self.update_output.emit(log_message(
-                "[Anti-Debug] No binary loaded. Please load a binary first."))
+            self.update_output.emit(
+                log_message("[Anti-Debug] No binary loaded. Please load a binary first.")
+            )
             return
 
-        self.update_output.emit(log_message(
-            "[Anti-Debug] Starting anti-debugger technique detection..."))
+        self.update_output.emit(
+            log_message("[Anti-Debug] Starting anti-debugger technique detection...")
+        )
         self.analyze_status.setText("Detecting anti-debug techniques...")
 
         # Run detection in background thread
@@ -23942,55 +27530,56 @@ Focus on:
 
             results = detect_anti_debugging_techniques(self.binary_path)
 
-            self.update_output.emit(log_message(
-                "[Anti-Debug] Analysis completed."))
-            self.update_output.emit(log_message(
-                f"[Anti-Debug] Anti-Debug Detected: {results.get('anti_debug_detected', False)}"))
+            self.update_output.emit(log_message("[Anti-Debug] Analysis completed."))
+            self.update_output.emit(
+                log_message(
+                    f"[Anti-Debug] Anti-Debug Detected: {results.get('anti_debug_detected', False)}"
+                )
+            )
 
             if results.get("techniques"):
-                self.update_output.emit(log_message(
-                    f"[Anti-Debug] Techniques found ({len(results['techniques'])}):"))
+                self.update_output.emit(
+                    log_message(f"[Anti-Debug] Techniques found ({len(results['techniques'])}):")
+                )
                 for technique in results["techniques"]:
-                    self.update_output.emit(log_message(
-                        f"  • {technique}"))
+                    self.update_output.emit(log_message(f"  • {technique}"))
 
             if results.get("api_calls"):
-                self.update_output.emit(log_message(
-                    f"[Anti-Debug] Anti-debug APIs ({len(results['api_calls'])}):"))
+                self.update_output.emit(
+                    log_message(f"[Anti-Debug] Anti-debug APIs ({len(results['api_calls'])}):")
+                )
                 for api in results["api_calls"][:10]:  # Show first 10
-                    self.update_output.emit(log_message(
-                        f"  • {api}"))
+                    self.update_output.emit(log_message(f"  • {api}"))
                 if len(results["api_calls"]) > 10:
-                    self.update_output.emit(log_message(
-                        f"  ... and {len(results['api_calls']) - 10} more"))
+                    self.update_output.emit(
+                        log_message(f"  ... and {len(results['api_calls']) - 10} more")
+                    )
 
             if results.get("instructions"):
-                self.update_output.emit(log_message(
-                    "[Anti-Debug] Anti-debug instructions:"))
+                self.update_output.emit(log_message("[Anti-Debug] Anti-debug instructions:"))
                 for instruction in results["instructions"]:
-                    self.update_output.emit(log_message(
-                        f"  • {instruction}"))
+                    self.update_output.emit(log_message(f"  • {instruction}"))
 
-            self.update_output.emit(log_message(
-                f"[Anti-Debug] Confidence: {results.get('confidence', 0) * 100:.1f}%"))
+            self.update_output.emit(
+                log_message(f"[Anti-Debug] Confidence: {results.get('confidence', 0) * 100:.1f}%")
+            )
 
             self.analyze_status.setText("Anti-debug detection complete")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(
-                f"[Anti-Debug] Error during analysis: {e!s}"))
+            self.update_output.emit(log_message(f"[Anti-Debug] Error during analysis: {e!s}"))
             self.analyze_status.setText("Anti-debug detection failed")
             logger.error(traceback.format_exc())
 
     def run_tpm_detection(self):
         """Run TPM protection detection."""
         if not self.binary_path:
-            self.update_output.emit(log_message(
-                "[TPM Detection] No binary loaded. Please load a binary first."))
+            self.update_output.emit(
+                log_message("[TPM Detection] No binary loaded. Please load a binary first.")
+            )
             return
 
-        self.update_output.emit(log_message(
-            "[TPM Detection] Starting TPM protection detection..."))
+        self.update_output.emit(log_message("[TPM Detection] Starting TPM protection detection..."))
         self.analyze_status.setText("Detecting TPM protection...")
 
         # Run detection in background thread
@@ -24005,35 +27594,34 @@ Focus on:
 
             results = detect_tpm_protection()
 
-            self.update_output.emit(log_message(
-                "[TPM Detection] Analysis completed."))
-            self.update_output.emit(log_message(
-                f"[TPM Detection] TPM Protected: {results.get('tpm_protected', False)}"))
+            self.update_output.emit(log_message("[TPM Detection] Analysis completed."))
+            self.update_output.emit(
+                log_message(f"[TPM Detection] TPM Protected: {results.get('tpm_protected', False)}")
+            )
 
             if results.get("indicators"):
-                self.update_output.emit(log_message(
-                    "[TPM Detection] Indicators found:"))
+                self.update_output.emit(log_message("[TPM Detection] Indicators found:"))
                 for indicator in results["indicators"]:
-                    self.update_output.emit(log_message(
-                        f"  • {indicator}"))
+                    self.update_output.emit(log_message(f"  • {indicator}"))
 
             self.analyze_status.setText("TPM detection complete")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(
-                f"[TPM Detection] Error during analysis: {e!s}"))
+            self.update_output.emit(log_message(f"[TPM Detection] Error during analysis: {e!s}"))
             self.analyze_status.setText("TPM detection failed")
             logger.error(traceback.format_exc())
 
     def run_hardware_dongle_detection(self):
         """Run hardware dongle detection."""
         if not self.binary_path:
-            self.update_output.emit(log_message(
-                "[Dongle Detection] No binary loaded. Please load a binary first."))
+            self.update_output.emit(
+                log_message("[Dongle Detection] No binary loaded. Please load a binary first.")
+            )
             return
 
-        self.update_output.emit(log_message(
-            "[Dongle Detection] Starting hardware dongle detection..."))
+        self.update_output.emit(
+            log_message("[Dongle Detection] Starting hardware dongle detection...")
+        )
         self.analyze_status.setText("Detecting hardware dongles...")
 
         # Run detection in background thread
@@ -24047,74 +27635,94 @@ Focus on:
             # Import the real hardware dongle detection function
             from ..utils.process_utils import detect_hardware_dongles
 
-            self.update_output.emit(log_message(
-                "[Dongle Detection] Starting comprehensive hardware dongle detection..."))
+            self.update_output.emit(
+                log_message(
+                    "[Dongle Detection] Starting comprehensive hardware dongle detection..."
+                )
+            )
 
             # Run real dongle detection
             detection_results = detect_hardware_dongles()
 
             if detection_results:
-                self.update_output.emit(log_message(
-                    f"[Dongle Detection] Found {len(detection_results)} potential dongle protection(s):"))
+                self.update_output.emit(
+                    log_message(
+                        f"[Dongle Detection] Found {len(detection_results)} potential dongle protection(s):"
+                    )
+                )
                 for result in detection_results:
                     self.update_output.emit(log_message(f"  • {result}"))
 
                 # Also check for dongle processes and services
-                self.update_output.emit(log_message(
-                    "[Dongle Detection] Checking for dongle-related processes..."))
+                self.update_output.emit(
+                    log_message("[Dongle Detection] Checking for dongle-related processes...")
+                )
 
                 # Import additional detection utilities
                 try:
                     from ..utils.additional_runners import (
                         detect_hardware_dongles as detect_dongles_extended,
                     )
+
                     extended_results = detect_dongles_extended()
                     if isinstance(extended_results, dict):
                         for dongle_type, details in extended_results.items():
                             if isinstance(details, dict):
                                 if details.get("detected", False):
                                     description = details.get("description", "Detected")
-                                    self.update_output.emit(log_message(
-                                        f"  • {dongle_type}: {description}"))
+                                    self.update_output.emit(
+                                        log_message(f"  • {dongle_type}: {description}")
+                                    )
                             elif isinstance(details, list) and details:
                                 description = "Detected (list result)"
-                                self.update_output.emit(log_message(
-                                    f"  • {dongle_type}: {description}"))
+                                self.update_output.emit(
+                                    log_message(f"  • {dongle_type}: {description}")
+                                )
                 except ImportError as e:
                     logger.error("Import error in main_app.py: %s", e)
 
-                self.update_output.emit(log_message(
-                    "[Dongle Detection] Hardware dongle protection detected! Consider dongle emulation strategies."))
+                self.update_output.emit(
+                    log_message(
+                        "[Dongle Detection] Hardware dongle protection detected! Consider dongle emulation strategies."
+                    )
+                )
             else:
-                self.update_output.emit(log_message(
-                    "[Dongle Detection] No hardware dongle protection detected."))
-                self.update_output.emit(log_message(
-                    "[Dongle Detection] System appears to use software-based licensing."))
+                self.update_output.emit(
+                    log_message("[Dongle Detection] No hardware dongle protection detected.")
+                )
+                self.update_output.emit(
+                    log_message(
+                        "[Dongle Detection] System appears to use software-based licensing."
+                    )
+                )
 
-            self.update_output.emit(log_message(
-                "[Dongle Detection] Analysis completed successfully."))
+            self.update_output.emit(
+                log_message("[Dongle Detection] Analysis completed successfully.")
+            )
             self.analyze_status.setText("Dongle detection complete")
 
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
-            self.update_output.emit(log_message(
-                f"[Dongle Detection] Detection module not available: {e!s}"))
+            self.update_output.emit(
+                log_message(f"[Dongle Detection] Detection module not available: {e!s}")
+            )
             self.analyze_status.setText("Dongle detection unavailable")
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(
-                f"[Dongle Detection] Error during analysis: {e!s}"))
+            self.update_output.emit(log_message(f"[Dongle Detection] Error during analysis: {e!s}"))
             self.analyze_status.setText("Dongle detection failed")
             logger.error(traceback.format_exc())
 
     def run_checksum_detection(self):
         """Run checksum/integrity verification detection."""
         if not self.binary_path:
-            self.update_output.emit(log_message(
-                "[Checksum Detection] No binary loaded. Please load a binary first."))
+            self.update_output.emit(
+                log_message("[Checksum Detection] No binary loaded. Please load a binary first.")
+            )
             return
 
-        self.update_output.emit(log_message(
-            "[Checksum Detection] Starting checksum verification detection..."))
+        self.update_output.emit(
+            log_message("[Checksum Detection] Starting checksum verification detection...")
+        )
         self.analyze_status.setText("Detecting checksum verification...")
 
         # Run detection in background thread
@@ -24131,39 +27739,47 @@ Focus on:
 
             results = detect_checksum_verification(self.binary_path)
 
-            self.update_output.emit(log_message(
-                "[Checksum Detection] Analysis completed."))
-            self.update_output.emit(log_message(
-                f"[Checksum Detection] Verification Detected: {results.get('checksum_verification_detected', False)}"))
+            self.update_output.emit(log_message("[Checksum Detection] Analysis completed."))
+            self.update_output.emit(
+                log_message(
+                    f"[Checksum Detection] Verification Detected: {results.get('checksum_verification_detected', False)}"
+                )
+            )
 
             if results.get("algorithms_found"):
-                self.update_output.emit(log_message(
-                    f"[Checksum Detection] Algorithms found: {', '.join(results['algorithms_found'])}"))
+                self.update_output.emit(
+                    log_message(
+                        f"[Checksum Detection] Algorithms found: {', '.join(results['algorithms_found'])}"
+                    )
+                )
 
             if results.get("indicators"):
-                self.update_output.emit(log_message(
-                    "[Checksum Detection] Indicators:"))
+                self.update_output.emit(log_message("[Checksum Detection] Indicators:"))
                 for indicator in results["indicators"]:
-                    self.update_output.emit(log_message(
-                        f"  • {indicator}"))
+                    self.update_output.emit(log_message(f"  • {indicator}"))
 
             self.analyze_status.setText("Checksum detection complete")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(
-                f"[Checksum Detection] Error during analysis: {e!s}"))
+            self.update_output.emit(
+                log_message(f"[Checksum Detection] Error during analysis: {e!s}")
+            )
             self.analyze_status.setText("Checksum detection failed")
             logger.error(traceback.format_exc())
 
     def run_self_healing_detection(self):
         """Run self-healing code detection."""
         if not self.binary_path:
-            self.update_output.emit(log_message(
-                "[Self-Healing Detection] No binary loaded. Please load a binary first."))
+            self.update_output.emit(
+                log_message(
+                    "[Self-Healing Detection] No binary loaded. Please load a binary first."
+                )
+            )
             return
 
-        self.update_output.emit(log_message(
-            "[Self-Healing Detection] Starting self-healing code detection..."))
+        self.update_output.emit(
+            log_message("[Self-Healing Detection] Starting self-healing code detection...")
+        )
         self.analyze_status.setText("Detecting self-healing code...")
 
         # Run detection in background thread
@@ -24178,39 +27794,45 @@ Focus on:
 
             results = detect_self_healing_code(self.binary_path)
 
-            self.update_output.emit(log_message(
-                "[Self-Healing Detection] Analysis completed."))
-            self.update_output.emit(log_message(
-                f"[Self-Healing Detection] Self-Healing Detected: {results.get('self_healing_detected', False)}"))
+            self.update_output.emit(log_message("[Self-Healing Detection] Analysis completed."))
+            self.update_output.emit(
+                log_message(
+                    f"[Self-Healing Detection] Self-Healing Detected: {results.get('self_healing_detected', False)}"
+                )
+            )
 
             if results.get("techniques"):
-                self.update_output.emit(log_message(
-                    f"[Self-Healing Detection] Techniques: {', '.join(results['techniques'])}"))
+                self.update_output.emit(
+                    log_message(
+                        f"[Self-Healing Detection] Techniques: {', '.join(results['techniques'])}"
+                    )
+                )
 
             if results.get("indicators"):
-                self.update_output.emit(log_message(
-                    "[Self-Healing Detection] Indicators:"))
+                self.update_output.emit(log_message("[Self-Healing Detection] Indicators:"))
                 for indicator in results["indicators"]:
-                    self.update_output.emit(log_message(
-                        f"  • {indicator}"))
+                    self.update_output.emit(log_message(f"  • {indicator}"))
 
             self.analyze_status.setText("Self-healing detection complete")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(
-                f"[Self-Healing Detection] Error during analysis: {e!s}"))
+            self.update_output.emit(
+                log_message(f"[Self-Healing Detection] Error during analysis: {e!s}")
+            )
             self.analyze_status.setText("Self-healing detection failed")
             logger.error(traceback.format_exc())
 
     def run_commercial_protection_detection(self):
         """Run commercial protection detection."""
         if not self.binary_path:
-            self.update_output.emit(log_message(
-                "[Commercial Protection] No binary loaded. Please load a binary first."))
+            self.update_output.emit(
+                log_message("[Commercial Protection] No binary loaded. Please load a binary first.")
+            )
             return
 
-        self.update_output.emit(log_message(
-            "[Commercial Protection] Starting commercial protection detection..."))
+        self.update_output.emit(
+            log_message("[Commercial Protection] Starting commercial protection detection...")
+        )
         self.analyze_status.setText("Detecting commercial protections...")
 
         # Run detection in background thread
@@ -24231,44 +27853,49 @@ Focus on:
             if not isinstance(results, dict):
                 results = {"protections_found": [], "confidence_scores": {}, "indicators": []}
 
-            self.update_output.emit(log_message(
-                "[Commercial Protection] Analysis completed."))
+            self.update_output.emit(log_message("[Commercial Protection] Analysis completed."))
 
             if results.get("protections_found"):
-                self.update_output.emit(log_message(
-                    f"[Commercial Protection] Found {len(results['protections_found'])} protections:"))
+                self.update_output.emit(
+                    log_message(
+                        f"[Commercial Protection] Found {len(results['protections_found'])} protections:"
+                    )
+                )
                 for protection in results["protections_found"]:
                     confidence = results.get("confidence_scores", {}).get(protection, 0)
-                    self.update_output.emit(log_message(
-                        f"  • {protection} (Confidence: {confidence * 100:.0f}%)"))
+                    self.update_output.emit(
+                        log_message(f"  • {protection} (Confidence: {confidence * 100:.0f}%)")
+                    )
             else:
-                self.update_output.emit(log_message(
-                    "[Commercial Protection] No commercial protections detected."))
+                self.update_output.emit(
+                    log_message("[Commercial Protection] No commercial protections detected.")
+                )
 
             if results.get("indicators"):
-                self.update_output.emit(log_message(
-                    "[Commercial Protection] Detailed indicators:"))
+                self.update_output.emit(log_message("[Commercial Protection] Detailed indicators:"))
                 for indicator in results["indicators"][:10]:  # Show first 10
-                    self.update_output.emit(log_message(
-                        f"  • {indicator}"))
+                    self.update_output.emit(log_message(f"  • {indicator}"))
 
             self.analyze_status.setText("Commercial protection detection complete")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.update_output.emit(log_message(
-                f"[Commercial Protection] Error during analysis: {e!s}"))
+            self.update_output.emit(
+                log_message(f"[Commercial Protection] Error during analysis: {e!s}")
+            )
             self.analyze_status.setText("Commercial protection detection failed")
             logger.error(traceback.format_exc())
 
     def run_commercial_protection_scan(self):
         """Run comprehensive commercial protection scan with detailed analysis."""
         if not self.binary_path:
-            self.update_output.emit(log_message(
-                "[Protection Scan] No binary loaded. Please load a binary first."))
+            self.update_output.emit(
+                log_message("[Protection Scan] No binary loaded. Please load a binary first.")
+            )
             return
 
-        self.update_output.emit(log_message(
-            "[Protection Scan] Starting comprehensive protection scan..."))
+        self.update_output.emit(
+            log_message("[Protection Scan] Starting comprehensive protection scan...")
+        )
         self.analyze_status.setText("Scanning for all protection methods...")
 
         # Run detailed scan in background thread
@@ -24286,7 +27913,9 @@ Focus on:
                 detect_vm_detection_methods,
             )
 
-            self.update_output.emit(log_message("[Protection Scan] Scanning commercial protections..."))
+            self.update_output.emit(
+                log_message("[Protection Scan] Scanning commercial protections...")
+            )
             commercial_results = detect_commercial_protections(self.binary_path)
 
             self.update_output.emit(log_message("[Protection Scan] Scanning packing methods..."))
@@ -24295,7 +27924,9 @@ Focus on:
             self.update_output.emit(log_message("[Protection Scan] Scanning anti-debug methods..."))
             antidebug_results = detect_anti_debug_methods(self.binary_path)
 
-            self.update_output.emit(log_message("[Protection Scan] Scanning VM detection methods..."))
+            self.update_output.emit(
+                log_message("[Protection Scan] Scanning VM detection methods...")
+            )
             vm_results = detect_vm_detection_methods(self.binary_path)
 
             # Compile comprehensive report
@@ -24313,8 +27944,11 @@ Focus on:
             if vm_results.get("methods_found"):
                 total_protections += len(vm_results["methods_found"])
 
-            self.update_output.emit(log_message(
-                f"[Protection Scan] Comprehensive scan complete - {total_protections} protection methods detected"))
+            self.update_output.emit(
+                log_message(
+                    f"[Protection Scan] Comprehensive scan complete - {total_protections} protection methods detected"
+                )
+            )
 
             # Update analysis results with detailed findings
             report = "\n=== Comprehensive Protection Scan Results ===\n"
@@ -24347,22 +27981,24 @@ Focus on:
             self.analyze_status.setText("Comprehensive protection scan complete")
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.update_output.emit(log_message(
-                f"[Protection Scan] Error during comprehensive scan: {e!s}"))
+            self.update_output.emit(
+                log_message(f"[Protection Scan] Error during comprehensive scan: {e!s}")
+            )
             self.analyze_status.setText("Protection scan failed")
             logger.error(traceback.format_exc())
 
     def run_external_command(self):
         """Runs an external command and shows output."""
         command, ok = QInputDialog.getText(
-            self, "Run External Command", "Enter command to run:",
+            self,
+            "Run External Command",
+            "Enter command to run:",
         )
 
         if not ok or not command:
             return
 
-        self.update_output.emit(log_message(
-            f"[External Command] Running: {command}"))
+        self.update_output.emit(log_message(f"[External Command] Running: {command}"))
         self.analyze_status.setText(f"Running: {command}")
 
         # Run in background thread
@@ -24380,28 +28016,30 @@ Focus on:
 
             output = run_external_tool(args)
 
-            self.update_output.emit(log_message(
-                f"[External Command] Output:\n{output}"))
+            self.update_output.emit(log_message(f"[External Command] Output:\n{output}"))
             self.update_analysis_results.emit(output)
 
             self.update_status.emit("External command complete")
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(
-                f"[External Command] Error: {e}"))
+            self.update_output.emit(log_message(f"[External Command] Error: {e}"))
             self.update_output.emit(log_message(traceback.format_exc()))
             self.update_status.emit(f"Error: {e!s}")
 
     def view_cfg(self):
         """Opens the CFG visualization."""
-        cfg_paths = ["license_cfg.svg", "license_cfg.dot",
-                     "full_cfg.svg", "full_cfg.dot", "cfg.dot"]
+        cfg_paths = [
+            "license_cfg.svg",
+            "license_cfg.dot",
+            "full_cfg.svg",
+            "full_cfg.dot",
+            "cfg.dot",
+        ]
 
         for path in cfg_paths:
             if os.path.exists(path):
-                self.update_output.emit(log_message(
-                    f"[CFG Viewer] Opening {path}..."))
+                self.update_output.emit(log_message(f"[CFG Viewer] Opening {path}..."))
 
                 try:
                     # Try to open with default viewer
@@ -24415,13 +28053,11 @@ Focus on:
                     return
                 except (OSError, ValueError, RuntimeError) as e:
                     self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                    self.update_output.emit(log_message(
-                        f"[CFG Viewer] Error opening {path}: {e}"))
+                    self.update_output.emit(log_message(f"[CFG Viewer] Error opening {path}: {e}"))
 
         QMessageBox.warning(
-            self,
-            "CFG Not Found",
-            "No CFG file found. Run 'Deep CFG Analysis' first.")
+            self, "CFG Not Found", "No CFG file found. Run 'Deep CFG Analysis' first."
+        )
 
     def generate_key(self):
         """Generates a license key based on product name and version.
@@ -24431,10 +28067,12 @@ Focus on:
         version = self.keygen_input_version.text().strip()
 
         if not name or not version:
-            self.update_output.emit(log_message(
-                "[Keygen] Product name and version required to generate key"))
-            QMessageBox.warning(self, "Missing Information",
-                                "Product name and version are required.")
+            self.update_output.emit(
+                log_message("[Keygen] Product name and version required to generate key")
+            )
+            QMessageBox.warning(
+                self, "Missing Information", "Product name and version are required."
+            )
             return
 
         self.update_output.emit(log_message("[Keygen] Generating key..."))
@@ -24443,8 +28081,7 @@ Focus on:
         key_format = self.key_format_dropdown.currentText()
 
         # Get custom seed if provided
-        seed = self.keygen_seed.text().strip(
-        ) if hasattr(self, "keygen_seed") else ""
+        seed = self.keygen_seed.text().strip() if hasattr(self, "keygen_seed") else ""
 
         # If seed provided, use it for deterministic key generation
         if seed:
@@ -24460,24 +28097,21 @@ Focus on:
 
         # Format the key based on selected format
         if key_format == "####-####-####-####":
-            formatted_key = "-".join([key_base[i:i + 4]
-                                     for i in range(0, 16, 4)])
+            formatted_key = "-".join([key_base[i : i + 4] for i in range(0, 16, 4)])
         elif key_format == "#####-#####-#####":
-            formatted_key = "-".join([key_base[i:i + 5]
-                                     for i in range(0, 15, 5)])
+            formatted_key = "-".join([key_base[i : i + 5] for i in range(0, 15, 5)])
         elif key_format == "###-#######-###":
             # 3-7-3 format
             formatted_key = f"{key_base[:3]}-{key_base[3:10]}-{key_base[10:13]}"
         elif key_format == "XXX-XXX-XXX-XXX-XXX":
-            formatted_key = "-".join([key_base[i:i + 3]
-                                     for i in range(0, 15, 3)])
+            formatted_key = "-".join([key_base[i : i + 3] for i in range(0, 15, 3)])
         else:
             # Default format
-            formatted_key = "-".join([key_base[i:i + 4]
-                                     for i in range(0, len(key_base), 4)])
+            formatted_key = "-".join([key_base[i : i + 4] for i in range(0, len(key_base), 4)])
 
-        self.update_output.emit(log_message(
-            f"[Keygen] Generated key for {name} {version}: {formatted_key}"))
+        self.update_output.emit(
+            log_message(f"[Keygen] Generated key for {name} {version}: {formatted_key}")
+        )
 
         # Save to keys directory
         os.makedirs("keys", exist_ok=True)
@@ -24491,14 +28125,13 @@ Focus on:
 
         # Update GUI
         self.update_output.emit(
-            log_message(
-                f"[Keygen] License key copied to clipboard and saved to {key_file}"))
+            log_message(f"[Keygen] License key copied to clipboard and saved to {key_file}")
+        )
 
         # Add to results display
         if hasattr(self, "keygen_results"):
             timestamp_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.keygen_results.append(
-                f"[{timestamp_str}] {name} {version}: {formatted_key}")
+            self.keygen_results.append(f"[{timestamp_str}] {name} {version}: {formatted_key}")
 
     def _run_model_inference_thread(self, prompt):
         """Background thread for running AI model inference with tool calling and orchestration.
@@ -24539,7 +28172,6 @@ Focus on:
                 "2. Help develop and apply patches to bypass license checks and other protections\n"
                 "3. Guide users through the software analysis workflow using available tools\n"
                 "4. Provide clear explanations of your reasoning and findings\n\n"
-
                 "## Tool Execution Protocol\n"
                 "To execute tools, output a JSON object with the following structure:\n"
                 "```json\n"
@@ -24551,94 +28183,74 @@ Focus on:
                 "  }\n"
                 "}\n"
                 "```\n\n"
-
                 "## Workflow Guidelines\n"
                 "1. Always plan your approach step-by-step before taking action\n"
                 "2. Explain your reasoning clearly before requesting tool execution\n"
                 "3. Wait for user confirmation before executing sensitive operations\n"
                 "4. Provide detailed analysis of results after each tool execution\n"
                 "5. When you've completed the task, summarize your findings and actions\n\n"
-
                 "## Available Tools\n\n"
-
                 "### File Operations\n"
                 "- `tool_find_file`: Search for files by name\n"
                 "  - Parameters: `filename: str` (optional)\n"
                 "  - Returns: Status and path if found\n"
-
                 "- `tool_list_relevant_files`: List files with relevant extensions in a directory\n"
                 "  - Parameters: `directory_path: str` (default: current directory)\n"
                 "  - Returns: List of relevant files\n"
-
                 "- `tool_read_file_chunk`: Read a portion of a file\n"
                 "  - Parameters: `file_path: str`, `offset: int` (optional), `max_bytes: int` (optional, default: 4096)\n"
                 "  - Returns: File content in hex and text format\n"
-
                 "- `tool_get_file_metadata`: Get metadata for a file\n"
                 "  - Parameters: `path: str`\n"
                 "  - Returns: File metadata\n"
-
                 "### Binary Analysis\n"
                 "- `tool_load_binary`: Load a binary file for analysis\n"
                 "  - Parameters: `path: str`\n"
                 "  - Returns: Binary information\n"
-
                 "- `tool_run_static_analysis`: Run static analysis on a binary\n"
                 "  - Parameters: `path: str`\n"
                 "  - Returns: Analysis results\n"
-
                 "- `tool_deep_license_analysis`: Run deep license analysis on a binary\n"
                 "  - Parameters: `path: str`\n"
                 "  - Returns: License analysis results\n"
-
                 "- `tool_detect_protections`: Detect specific protection types\n"
                 "  - Parameters: `path: str`, `type: str` ('commercial', 'packing', 'obfuscation', 'checksum', 'healing')\n"
                 "  - Returns: Detection results\n"
-
                 "- `tool_disassemble_address`: Disassemble instructions at an address\n"
                 "  - Parameters: `address: int`, `num_instructions: int` (optional, default: 10)\n"
                 "  - Returns: Disassembly listing\n"
-
                 "- `tool_get_cfg`: Get Control Flow Graph for a function\n"
                 "  - Parameters: `function_address: int`\n"
                 "  - Returns: CFG nodes and edges\n"
-
                 "### Dynamic Analysis\n"
                 "- `tool_launch_target`: Launch the target binary\n"
                 "  - Parameters: `path: str`\n"
                 "  - Returns: Process ID\n"
                 "  - Requires confirmation\n"
-
                 "- `tool_attach_target`: Attach Frida to a process\n"
                 "  - Parameters: `pid: int`\n"
                 "  - Returns: Success status\n"
                 "  - Requires confirmation\n"
-
                 "- `tool_run_frida_script`: Run a Frida script on an attached process\n"
                 "  - Parameters: `pid: int`, `script_content: str`\n"
                 "  - Returns: Script execution status\n"
                 "  - Requires confirmation\n"
-
                 "- `tool_detach`: Detach Frida from a process\n"
                 "  - Parameters: `pid: int`\n"
                 "  - Returns: Success status\n"
                 "  - Requires confirmation\n"
-
                 "### Patching\n"
                 "- `tool_propose_patch`: Propose a patch for the binary\n"
                 "  - Parameters: `address: int`, `new_bytes_hex: str`, `description: str`\n"
                 "  - Returns: Patch ID\n"
                 "  - Requires confirmation\n"
-
                 "- `tool_get_proposed_patches`: Get the list of proposed patches\n"
                 "  - Parameters: None\n"
                 "  - Returns: List of patches\n"
-
                 "- `tool_apply_confirmed_patch`: Apply a confirmed patch\n"
                 "  - Parameters: `patch_id: str`\n"
                 "  - Returns: Success status and patched file path\n"
                 "  - Requires confirmation\n"
-
                 "- `tool_generate_launcher_script`: Generate a launcher script\n"
                 "  - Parameters: `strategy: str` ('memory', 'api')\n"
                 "  - Returns: Script path\n"
@@ -24648,15 +28260,23 @@ Focus on:
             # Main orchestration loop
             while True:
                 # Prepare messages for the model
-                messages = [{"role": "system", "content": system_prompt}] + app.ai_conversation_history
+                messages = [
+                    {"role": "system", "content": system_prompt}
+                ] + app.ai_conversation_history
 
                 # Run model inference
                 app.update_output.emit(log_message("[AI] Generating response..."))
-                response = model(messages=messages, temperature=CONFIG.get("temperature", 0.7), top_p=CONFIG.get("top_p", 0.95))
+                response = model(
+                    messages=messages,
+                    temperature=CONFIG.get("temperature", 0.7),
+                    top_p=CONFIG.get("top_p", 0.95),
+                )
                 response_content = response["choices"][0]["message"]["content"]
 
                 # Append AI's response to history and display
-                app.ai_conversation_history.append({"role": "assistant", "content": response_content})
+                app.ai_conversation_history.append(
+                    {"role": "assistant", "content": response_content}
+                )
                 app.append_chat_display(f"AI: {response_content}")
                 app.set_assistant_status("Received response.")
 
@@ -24666,7 +28286,11 @@ Focus on:
                     tool_request = None
 
                     # Look for JSON object in the response
-                    json_match = re.search(r'```json\s*(\{.*?\})\s*```|(\{.*"tool_name".*\})', response_content, re.DOTALL)
+                    json_match = re.search(
+                        r'```json\s*(\{.*?\})\s*```|(\{.*"tool_name".*\})',
+                        response_content,
+                        re.DOTALL,
+                    )
                     if json_match:
                         json_str = json_match.group(1) or json_match.group(2)
                         try:
@@ -24686,25 +28310,40 @@ Focus on:
                             # Not a JSON response
 
                     # Process the tool request if found
-                    if isinstance(tool_request, dict) and "tool_name" in tool_request and "parameters" in tool_request:
+                    if (
+                        isinstance(tool_request, dict)
+                        and "tool_name" in tool_request
+                        and "parameters" in tool_request
+                    ):
                         tool_name = tool_request["tool_name"]
                         parameters = tool_request.get("parameters", {})
 
-                        app.update_output.emit(log_message(f"[AI] Requested tool: {tool_name} with parameters: {parameters}"))
+                        app.update_output.emit(
+                            log_message(
+                                f"[AI] Requested tool: {tool_name} with parameters: {parameters}"
+                            )
+                        )
 
                         # Determine if the tool requires confirmation
                         # List of tools that require explicit user confirmation
                         sensitive_tools = [
-                            "tool_load_binary", "tool_launch_target", "tool_attach_target",
-                            "tool_run_frida_script", "tool_detach", "tool_propose_patch",
-                            "tool_apply_confirmed_patch", "tool_generate_launcher_script",
+                            "tool_load_binary",
+                            "tool_launch_target",
+                            "tool_attach_target",
+                            "tool_run_frida_script",
+                            "tool_detach",
+                            "tool_propose_patch",
+                            "tool_apply_confirmed_patch",
+                            "tool_generate_launcher_script",
                         ]
 
                         requires_confirmation = tool_name in sensitive_tools
                         user_approved = True  # Default to True for non-sensitive tools
 
                         if requires_confirmation:
-                            app.update_output.emit(log_message(f"[AI] Requesting user confirmation for {tool_name}"))
+                            app.update_output.emit(
+                                log_message(f"[AI] Requesting user confirmation for {tool_name}")
+                            )
 
                             # Define the thread-safe confirmation function
                             def ask_user_confirmation(app, tool_name, parameters):
@@ -24724,7 +28363,11 @@ Focus on:
                             # Use the thread-safe confirmation dialog
                             user_approved = ask_user_confirmation(app, tool_name, parameters)
 
-                            app.update_output.emit(log_message(f"[AI] User {'approved' if user_approved else 'denied'} {tool_name}"))
+                            app.update_output.emit(
+                                log_message(
+                                    f"[AI] User {'approved' if user_approved else 'denied'} {tool_name}"
+                                )
+                            )
 
                         if user_approved:
                             # Execute the tool
@@ -24738,11 +28381,13 @@ Focus on:
                             formatted_result = self._format_tool_result(tool_result)
 
                             # Append tool result to history
-                            app.ai_conversation_history.append({
-                                "role": "tool_result",
-                                "tool_name": tool_name,
-                                "content": json.dumps(tool_result),
-                            })
+                            app.ai_conversation_history.append(
+                                {
+                                    "role": "tool_result",
+                                    "tool_name": tool_name,
+                                    "content": json.dumps(tool_result),
+                                }
+                            )
 
                             # Display the result to the user
                             app.append_chat_display(f"Tool Result: {formatted_result}")
@@ -24752,11 +28397,13 @@ Focus on:
                             continue
                         # User denied the tool execution
                         denial_message = f"User denied execution of tool: {tool_name}"
-                        app.ai_conversation_history.append({
-                            "role": "tool_result",
-                            "tool_name": tool_name,
-                            "content": denial_message,
-                        })
+                        app.ai_conversation_history.append(
+                            {
+                                "role": "tool_result",
+                                "tool_name": tool_name,
+                                "content": denial_message,
+                            }
+                        )
                         app.append_chat_display(f"Tool Result: {denial_message}")
                         app.set_assistant_status("Tool execution denied by user.")
                         # Continue the loop to inform the AI about the denial
@@ -24791,23 +28438,34 @@ Focus on:
                     detailed_error = f"{error_message}\n{error_context if error_context else ''}"
 
                     # Add error to conversation history
-                    app.ai_conversation_history.append({
-                        "role": "error",
-                        "content": detailed_error,
-                    })
+                    app.ai_conversation_history.append(
+                        {
+                            "role": "error",
+                            "content": detailed_error,
+                        }
+                    )
 
                     # Display error to user
                     app.append_chat_display(f"Error: {detailed_error}")
                     app.set_assistant_status("Error")
 
                     # Don't break the loop for minor errors, but do for critical ones
-                    if any(critical_error in error_trace for critical_error in
-                          ["JSONDecodeError", "KeyError", "TypeError", "ValueError"]):
+                    if any(
+                        critical_error in error_trace
+                        for critical_error in [
+                            "JSONDecodeError",
+                            "KeyError",
+                            "TypeError",
+                            "ValueError",
+                        ]
+                    ):
                         # These are likely formatting issues that the AI can recover from
-                        app.ai_conversation_history.append({
-                            "role": "system",
-                            "content": "There was an error processing your last request. Please try a different approach.",
-                        })
+                        app.ai_conversation_history.append(
+                            {
+                                "role": "system",
+                                "content": "There was an error processing your last request. Please try a different approach.",
+                            }
+                        )
                         continue
                     # More serious errors that might require restarting the conversation
                     break
@@ -24822,21 +28480,31 @@ Focus on:
             # Provide more helpful error messages based on the type of exception
             user_friendly_message = error_message
             if "No such file or directory" in str(e):
-                user_friendly_message = "Error: AI model file not found. Please check your model settings."
+                user_friendly_message = (
+                    "Error: AI model file not found. Please check your model settings."
+                )
             elif "CUDA out of memory" in str(e) or "device-side assert" in str(e):
-                user_friendly_message = "Error: GPU memory issue. Try using a smaller model or reducing batch size."
+                user_friendly_message = (
+                    "Error: GPU memory issue. Try using a smaller model or reducing batch size."
+                )
             elif "Connection refused" in str(e) or "Connection timeout" in str(e):
-                user_friendly_message = "Error: Connection issue. Please check your network connection."
+                user_friendly_message = (
+                    "Error: Connection issue. Please check your network connection."
+                )
             elif "Permission denied" in str(e):
                 user_friendly_message = "Error: Permission denied. Please check file permissions."
             elif "KeyError" in error_trace:
-                user_friendly_message = "Error: Invalid model response format. The model may need to be updated."
+                user_friendly_message = (
+                    "Error: Invalid model response format. The model may need to be updated."
+                )
 
             # Add to conversation history
-            app.ai_conversation_history.append({
-                "role": "error",
-                "content": user_friendly_message,
-            })
+            app.ai_conversation_history.append(
+                {
+                    "role": "error",
+                    "content": user_friendly_message,
+                }
+            )
 
             app.append_chat_display(f"Error: {user_friendly_message}")
             app.set_assistant_status("Error")
@@ -24890,53 +28558,60 @@ Focus on:
         if hasattr(self, "analyze_results_widget") and self.analyze_results_widget:
             results_text = self.analyze_results_widget.toPlainText()
         else:
-            results_text = "\n".join(self.analyze_results) if isinstance(self.analyze_results, list) else str(self.analyze_results)
+            results_text = (
+                "\n".join(self.analyze_results)
+                if isinstance(self.analyze_results, list)
+                else str(self.analyze_results)
+            )
 
         if not results_text.strip():
-            QMessageBox.warning(self, "No Results",
-                                "No analysis results to export.")
+            QMessageBox.warning(self, "No Results", "No analysis results to export.")
             return
 
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export Analysis Results", "", "Text Files (*.txt);;JSON Files (*.json);;All Files (*)")
+            self,
+            "Export Analysis Results",
+            "",
+            "Text Files (*.txt);;JSON Files (*.json);;All Files (*)",
+        )
 
         if path:
             try:
                 with open(path, "w", encoding="utf-8") as f:
                     f.write(results_text)
 
-                self.update_output.emit(log_message(
-                    f"[Export] Analysis results exported to {path}"))
+                self.update_output.emit(
+                    log_message(f"[Export] Analysis results exported to {path}")
+                )
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                self.update_output.emit(log_message(
-                    f"[Export] Error exporting results: {e}"))
-                QMessageBox.warning(self, "Export Error",
-                                    f"Error exporting results: {e}")
+                self.update_output.emit(log_message(f"[Export] Error exporting results: {e}"))
+                QMessageBox.warning(self, "Export Error", f"Error exporting results: {e}")
 
     def load_ghidra_results(self):
         """Loads analysis results from a Ghidra JSON file."""
         path, _ = QFileDialog.getOpenFileName(
-            self, "Load Ghidra Analysis Results", "", "JSON Files (*.json);;All Files (*)")
+            self, "Load Ghidra Analysis Results", "", "JSON Files (*.json);;All Files (*)"
+        )
 
         if path:
             try:
                 from ..utils.runtime.runner_functions import (
                     process_ghidra_analysis_results as ghidra_processor,
                 )
+
                 ghidra_processor(self, path)
-                self.update_output.emit(log_message(
-                    f"[Import] Loaded Ghidra analysis results from {path}"))
+                self.update_output.emit(
+                    log_message(f"[Import] Loaded Ghidra analysis results from {path}")
+                )
             except (OSError, ValueError, RuntimeError) as e:
                 self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                self.update_output.emit(log_message(
-                    f"[Import] Error loading results: {e}"))
-                QMessageBox.warning(self, "Import Error",
-                                    f"Error loading results: {e}")
+                self.update_output.emit(log_message(f"[Import] Error loading results: {e}"))
+                QMessageBox.warning(self, "Import Error", f"Error loading results: {e}")
 
-# -------------------------------
-# UI Enhancement Helper Methods
-# -------------------------------
+    # -------------------------------
+    # UI Enhancement Helper Methods
+    # -------------------------------
 
     def run_selected_analysis(self, analysis_type=None):
         """Run the selected analysis type from the dropdown menu
@@ -24955,12 +28630,23 @@ Focus on:
             self.run_analysis()
         elif analysis_type == "Deep Analysis":
             # Show a submenu for deep analysis options
-            options = ["License Logic", "Runtime Monitoring", "CFG Structure",
-                       "Packing Detection", "Taint Analysis", "Symbolic Execution",
-                       "Concolic Execution", "ROP Chain Analysis", "Memory Optimization",
-                       "Incremental Analysis", "Distributed Processing", "GPU Acceleration"]
-            option, ok = QInputDialog.getItem(self, "Deep Analysis",
-                                             "Select Deep Analysis Type:", options, 0, False)
+            options = [
+                "License Logic",
+                "Runtime Monitoring",
+                "CFG Structure",
+                "Packing Detection",
+                "Taint Analysis",
+                "Symbolic Execution",
+                "Concolic Execution",
+                "ROP Chain Analysis",
+                "Memory Optimization",
+                "Incremental Analysis",
+                "Distributed Processing",
+                "GPU Acceleration",
+            ]
+            option, ok = QInputDialog.getItem(
+                self, "Deep Analysis", "Select Deep Analysis Type:", options, 0, False
+            )
             if ok and option:
                 self.handle_deep_analysis_mode(option)
         elif analysis_type == "Memory Analysis":
@@ -24987,10 +28673,16 @@ Focus on:
             run_automated_patch_agent(self)
         elif patch_type == "Targeted Patch":
             # Show a submenu for targeting options
-            options = ["License Checks", "Trial Limitations", "Feature Locks",
-                       "Network Validation", "Hardware Checks"]
-            target, ok = QInputDialog.getItem(self, "Targeted Patch",
-                                             "Select Target Type:", options, 0, False)
+            options = [
+                "License Checks",
+                "Trial Limitations",
+                "Feature Locks",
+                "Network Validation",
+                "Hardware Checks",
+            ]
+            target, ok = QInputDialog.getItem(
+                self, "Targeted Patch", "Select Target Type:", options, 0, False
+            )
             if ok and target:
                 self.tabs.setCurrentIndex(self.tabs.indexOf(self.patching_tab))
                 self.strategy_targeted_radio.setChecked(True)
@@ -25022,7 +28714,9 @@ Focus on:
             QMessageBox.warning(self, "No Binary", "Please select a binary file first.")
             return
 
-        self.update_output.emit(log_message("[Memory Analysis] Starting comprehensive memory analysis..."))
+        self.update_output.emit(
+            log_message("[Memory Analysis] Starting comprehensive memory analysis...")
+        )
 
         try:
             # Gather basic process information first
@@ -25030,7 +28724,9 @@ Focus on:
                 pid = self.dynamic_analyzer.get_target_pid()
                 if not pid:
                     # If not running, try to launch the process
-                    self.update_output.emit(log_message("[Memory Analysis] Target not running. Attempting to launch..."))
+                    self.update_output.emit(
+                        log_message("[Memory Analysis] Target not running. Attempting to launch...")
+                    )
                     pid = self.dynamic_analyzer.launch_target()
 
                 if pid:
@@ -25040,11 +28736,17 @@ Focus on:
                     # Basic memory info
                     mem_info = process.memory_info()
                     self.update_output.emit(log_message(f"[Memory Analysis] PID: {pid}"))
-                    self.update_output.emit(log_message(f"[Memory Analysis] RSS: {mem_info.rss / (1024*1024):.2f} MB"))
-                    self.update_output.emit(log_message(f"[Memory Analysis] VMS: {mem_info.vms / (1024*1024):.2f} MB"))
+                    self.update_output.emit(
+                        log_message(f"[Memory Analysis] RSS: {mem_info.rss / (1024*1024):.2f} MB")
+                    )
+                    self.update_output.emit(
+                        log_message(f"[Memory Analysis] VMS: {mem_info.vms / (1024*1024):.2f} MB")
+                    )
 
                     # Memory maps
-                    self.update_output.emit(log_message("[Memory Analysis] Analyzing memory maps..."))
+                    self.update_output.emit(
+                        log_message("[Memory Analysis] Analyzing memory maps...")
+                    )
                     memory_maps = process.memory_maps()
 
                     # Extract and categorize mapped regions
@@ -25073,23 +28775,51 @@ Focus on:
                             writable_regions.append(region)
 
                     # Report memory statistics
-                    self.update_output.emit(log_message(f"[Memory Analysis] Total mapped memory: {total_mapped / (1024*1024):.2f} MB"))
-                    self.update_output.emit(log_message(f"[Memory Analysis] Private memory: {total_private / (1024*1024):.2f} MB"))
-                    self.update_output.emit(log_message(f"[Memory Analysis] Executable regions: {len(executable_regions)}"))
-                    self.update_output.emit(log_message(f"[Memory Analysis] Writable regions: {len(writable_regions)}"))
+                    self.update_output.emit(
+                        log_message(
+                            f"[Memory Analysis] Total mapped memory: {total_mapped / (1024*1024):.2f} MB"
+                        )
+                    )
+                    self.update_output.emit(
+                        log_message(
+                            f"[Memory Analysis] Private memory: {total_private / (1024*1024):.2f} MB"
+                        )
+                    )
+                    self.update_output.emit(
+                        log_message(
+                            f"[Memory Analysis] Executable regions: {len(executable_regions)}"
+                        )
+                    )
+                    self.update_output.emit(
+                        log_message(f"[Memory Analysis] Writable regions: {len(writable_regions)}")
+                    )
 
                     # Security warning for suspicious memory protections
                     if suspicious_regions:
-                        self.update_output.emit(log_message(f"[Memory Analysis] WARNING: Found {len(suspicious_regions)} memory regions that are both writable and executable"))
+                        self.update_output.emit(
+                            log_message(
+                                f"[Memory Analysis] WARNING: Found {len(suspicious_regions)} memory regions that are both writable and executable"
+                            )
+                        )
                         for region in suspicious_regions[:5]:  # Show first 5 only
-                            self.update_output.emit(log_message(f"[Memory Analysis] Suspicious region: {region.addr} ({region.perms}) - {region.path}"))
+                            self.update_output.emit(
+                                log_message(
+                                    f"[Memory Analysis] Suspicious region: {region.addr} ({region.perms}) - {region.path}"
+                                )
+                            )
 
                         self.analyze_results.append("\n=== MEMORY SECURITY ANALYSIS ===")
-                        self.analyze_results.append(f"Found {len(suspicious_regions)} memory regions with RWX permissions (security risk)")
-                        self.analyze_results.append("These regions could be used for shellcode execution or code injection attacks")
+                        self.analyze_results.append(
+                            f"Found {len(suspicious_regions)} memory regions with RWX permissions (security risk)"
+                        )
+                        self.analyze_results.append(
+                            "These regions could be used for shellcode execution or code injection attacks"
+                        )
 
                     # Memory usage over time (sample for a short period)
-                    self.update_output.emit(log_message("[Memory Analysis] Sampling memory usage over time..."))
+                    self.update_output.emit(
+                        log_message("[Memory Analysis] Sampling memory usage over time...")
+                    )
                     memory_samples = []
 
                     for _ in range(5):  # Sample 5 times with 1-second intervals
@@ -25097,8 +28827,12 @@ Focus on:
                             memory_samples.append(process.memory_info().rss)
                             time.sleep(1)
                         except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                            logger.error("(psutil.NoSuchProcess, psutil.AccessDenied) in main_app.py: %s", e)
-                            self.update_output.emit(log_message("[Memory Analysis] Process terminated during sampling"))
+                            logger.error(
+                                "(psutil.NoSuchProcess, psutil.AccessDenied) in main_app.py: %s", e
+                            )
+                            self.update_output.emit(
+                                log_message("[Memory Analysis] Process terminated during sampling")
+                            )
                             break
 
                     # Check for memory growth
@@ -25106,131 +28840,260 @@ Focus on:
                         growth = memory_samples[-1] - memory_samples[0]
                         if growth > 0:
                             growth_rate = growth / (1024 * 1024)  # Convert to MB
-                            self.update_output.emit(log_message(f"[Memory Analysis] Memory growth detected: {growth_rate:.2f} MB over {len(memory_samples)} seconds"))
+                            self.update_output.emit(
+                                log_message(
+                                    f"[Memory Analysis] Memory growth detected: {growth_rate:.2f} MB over {len(memory_samples)} seconds"
+                                )
+                            )
 
-                            if growth_rate > 5:  # Threshold for significant growth (5MB in a few seconds)
-                                self.update_output.emit(log_message("[Memory Analysis] WARNING: Significant memory growth detected - possible memory leak"))
-                                self.analyze_results.append("Detected significant memory growth rate - potential memory leak")
+                            if (
+                                growth_rate > 5
+                            ):  # Threshold for significant growth (5MB in a few seconds)
+                                self.update_output.emit(
+                                    log_message(
+                                        "[Memory Analysis] WARNING: Significant memory growth detected - possible memory leak"
+                                    )
+                                )
+                                self.analyze_results.append(
+                                    "Detected significant memory growth rate - potential memory leak"
+                                )
 
                     # Heap analysis using memory_profiler if available
                     try:
-                        self.update_output.emit(log_message("[Memory Analysis] Detailed heap analysis available"))
+                        self.update_output.emit(
+                            log_message("[Memory Analysis] Detailed heap analysis available")
+                        )
                     except ImportError as e:
                         logger.error("Import error in main_app.py: %s", e)
-                        self.update_output.emit(log_message("[Memory Analysis] memory_profiler not available for detailed heap analysis"))
+                        self.update_output.emit(
+                            log_message(
+                                "[Memory Analysis] memory_profiler not available for detailed heap analysis"
+                            )
+                        )
 
                     # Check for memory fragmentation
                     if hasattr(process, "memory_full_info"):
                         full_info = process.memory_full_info()
                         if hasattr(full_info, "uss") and hasattr(full_info, "pss"):
-                            self.update_output.emit(log_message(f"[Memory Analysis] Unique Set Size: {full_info.uss / (1024*1024):.2f} MB"))
-                            self.update_output.emit(log_message(f"[Memory Analysis] Proportional Set Size: {full_info.pss / (1024*1024):.2f} MB"))
+                            self.update_output.emit(
+                                log_message(
+                                    f"[Memory Analysis] Unique Set Size: {full_info.uss / (1024*1024):.2f} MB"
+                                )
+                            )
+                            self.update_output.emit(
+                                log_message(
+                                    f"[Memory Analysis] Proportional Set Size: {full_info.pss / (1024*1024):.2f} MB"
+                                )
+                            )
 
                             # Fragmentation estimate
                             if full_info.rss > 0:
                                 fragmentation = 1.0 - (full_info.uss / full_info.rss)
-                                self.update_output.emit(log_message(f"[Memory Analysis] Memory fragmentation estimate: {fragmentation:.2%}"))
+                                self.update_output.emit(
+                                    log_message(
+                                        f"[Memory Analysis] Memory fragmentation estimate: {fragmentation:.2%}"
+                                    )
+                                )
 
                                 if fragmentation > 0.3:  # Over 30% fragmentation
-                                    self.update_output.emit(log_message("[Memory Analysis] WARNING: High memory fragmentation detected"))
-                                    self.analyze_results.append("High memory fragmentation detected - could impact performance")
+                                    self.update_output.emit(
+                                        log_message(
+                                            "[Memory Analysis] WARNING: High memory fragmentation detected"
+                                        )
+                                    )
+                                    self.analyze_results.append(
+                                        "High memory fragmentation detected - could impact performance"
+                                    )
 
                     # Attach Frida for deeper memory inspection if available
-                    if hasattr(self, "dynamic_analyzer") and hasattr(self.dynamic_analyzer, "attach_memory_script"):
-                        self.update_output.emit(log_message("[Memory Analysis] Attaching Frida for memory allocation tracking..."))
+                    if hasattr(self, "dynamic_analyzer") and hasattr(
+                        self.dynamic_analyzer, "attach_memory_script"
+                    ):
+                        self.update_output.emit(
+                            log_message(
+                                "[Memory Analysis] Attaching Frida for memory allocation tracking..."
+                            )
+                        )
                         try:
                             # This would inject a Frida script to monitor memory allocations
                             self.dynamic_analyzer.attach_memory_script(pid)
-                            self.update_output.emit(log_message("[Memory Analysis] Memory tracking script attached successfully"))
+                            self.update_output.emit(
+                                log_message(
+                                    "[Memory Analysis] Memory tracking script attached successfully"
+                                )
+                            )
                         except (OSError, ValueError, RuntimeError) as e:
-                            logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                            self.update_output.emit(log_message(f"[Memory Analysis] Error attaching memory script: {e!s}"))
+                            logger.error(
+                                "(OSError, ValueError, RuntimeError) in main_app.py: %s", e
+                            )
+                            self.update_output.emit(
+                                log_message(
+                                    f"[Memory Analysis] Error attaching memory script: {e!s}"
+                                )
+                            )
 
                     # Summary
                     self.analyze_results.append("\n=== MEMORY ANALYSIS SUMMARY ===")
                     self.analyze_results.append(f"Process ID: {pid}")
-                    self.analyze_results.append(f"Total memory usage: {mem_info.rss / (1024*1024):.2f} MB")
-                    self.analyze_results.append(f"Virtual memory size: {mem_info.vms / (1024*1024):.2f} MB")
-                    self.analyze_results.append(f"Executable memory regions: {len(executable_regions)}")
+                    self.analyze_results.append(
+                        f"Total memory usage: {mem_info.rss / (1024*1024):.2f} MB"
+                    )
+                    self.analyze_results.append(
+                        f"Virtual memory size: {mem_info.vms / (1024*1024):.2f} MB"
+                    )
+                    self.analyze_results.append(
+                        f"Executable memory regions: {len(executable_regions)}"
+                    )
                     self.analyze_results.append(f"Writable memory regions: {len(writable_regions)}")
                     self.analyze_results.append(f"RWX memory regions: {len(suspicious_regions)}")
 
-                    self.update_output.emit(log_message("[Memory Analysis] Memory analysis completed successfully"))
+                    self.update_output.emit(
+                        log_message("[Memory Analysis] Memory analysis completed successfully")
+                    )
                 else:
-                    self.update_output.emit(log_message("[Memory Analysis] Error: Could not get target process ID"))
+                    self.update_output.emit(
+                        log_message("[Memory Analysis] Error: Could not get target process ID")
+                    )
             else:
                 # Static analysis fallback
-                self.update_output.emit(log_message("[Memory Analysis] Dynamic analyzer not available. Performing static memory analysis..."))
+                self.update_output.emit(
+                    log_message(
+                        "[Memory Analysis] Dynamic analyzer not available. Performing static memory analysis..."
+                    )
+                )
 
                 # Analyze PE file section memory characteristics
                 try:
                     pe = pefile.PE(self.binary_path)
 
-                    self.update_output.emit(log_message("[Memory Analysis] Analyzing memory characteristics from PE headers..."))
+                    self.update_output.emit(
+                        log_message(
+                            "[Memory Analysis] Analyzing memory characteristics from PE headers..."
+                        )
+                    )
 
                     # Check for suspicious section permissions
                     from ..utils.binary.binary_utils import check_suspicious_pe_sections
+
                     suspicious_sections = check_suspicious_pe_sections(pe)
 
                     for section_name in suspicious_sections:
-                        self.update_output.emit(log_message(f"[Memory Analysis] WARNING: Section {section_name} is both writable and executable"))
+                        self.update_output.emit(
+                            log_message(
+                                f"[Memory Analysis] WARNING: Section {section_name} is both writable and executable"
+                            )
+                        )
 
                     if suspicious_sections:
                         self.analyze_results.append("\n=== MEMORY SECURITY ANALYSIS (STATIC) ===")
-                        self.analyze_results.append(f"Found {len(suspicious_sections)} PE sections with RWX permissions (security risk)")
+                        self.analyze_results.append(
+                            f"Found {len(suspicious_sections)} PE sections with RWX permissions (security risk)"
+                        )
                         self.analyze_results.append("Sections: " + ", ".join(suspicious_sections))
-                        self.analyze_results.append("These sections could be used for shellcode execution or code injection attacks")
+                        self.analyze_results.append(
+                            "These sections could be used for shellcode execution or code injection attacks"
+                        )
 
                     # Analyze stack security
                     has_stack_protection = False
-                    if hasattr(pe, "OPTIONAL_HEADER") and hasattr(pe.OPTIONAL_HEADER, "DllCharacteristics"):
-                        if pe.OPTIONAL_HEADER.DllCharacteristics & 0x0100:  # IMAGE_DLLCHARACTERISTICS_NX_COMPAT
+                    if hasattr(pe, "OPTIONAL_HEADER") and hasattr(
+                        pe.OPTIONAL_HEADER, "DllCharacteristics"
+                    ):
+                        if (
+                            pe.OPTIONAL_HEADER.DllCharacteristics & 0x0100
+                        ):  # IMAGE_DLLCHARACTERISTICS_NX_COMPAT
                             has_stack_protection = True
-                            self.update_output.emit(log_message("[Memory Analysis] Binary has DEP/NX protection enabled"))
+                            self.update_output.emit(
+                                log_message(
+                                    "[Memory Analysis] Binary has DEP/NX protection enabled"
+                                )
+                            )
 
-                        if pe.OPTIONAL_HEADER.DllCharacteristics & 0x0400:  # IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
-                            self.update_output.emit(log_message("[Memory Analysis] Binary has ASLR support enabled"))
+                        if (
+                            pe.OPTIONAL_HEADER.DllCharacteristics & 0x0400
+                        ):  # IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE
+                            self.update_output.emit(
+                                log_message("[Memory Analysis] Binary has ASLR support enabled")
+                            )
 
                     if not has_stack_protection:
-                        self.update_output.emit(log_message("[Memory Analysis] WARNING: Binary does not have DEP/NX protection"))
-                        self.analyze_results.append("Binary does not have DEP/NX protection - stack executable (security risk)")
+                        self.update_output.emit(
+                            log_message(
+                                "[Memory Analysis] WARNING: Binary does not have DEP/NX protection"
+                            )
+                        )
+                        self.analyze_results.append(
+                            "Binary does not have DEP/NX protection - stack executable (security risk)"
+                        )
 
                     # Estimate memory usage based on section sizes
                     estimated_memory = sum(section.Misc_VirtualSize for section in pe.sections)
-                    self.update_output.emit(log_message(f"[Memory Analysis] Estimated memory usage: {estimated_memory / (1024*1024):.2f} MB"))
+                    self.update_output.emit(
+                        log_message(
+                            f"[Memory Analysis] Estimated memory usage: {estimated_memory / (1024*1024):.2f} MB"
+                        )
+                    )
 
                     # Check for memory-related imports
-                    memory_apis = ["HeapAlloc", "VirtualAlloc", "malloc", "GlobalAlloc", "LocalAlloc", "CoTaskMemAlloc"]
+                    memory_apis = [
+                        "HeapAlloc",
+                        "VirtualAlloc",
+                        "malloc",
+                        "GlobalAlloc",
+                        "LocalAlloc",
+                        "CoTaskMemAlloc",
+                    ]
                     detected_apis = []
 
                     # Use common utility function for PE import extraction
                     from ..utils.pe_common import extract_pe_imports
+
                     imports = extract_pe_imports(pe)
                     for func_name in imports:
                         if any(api in func_name for api in memory_apis):
                             detected_apis.append(func_name)
 
                     if detected_apis:
-                        self.update_output.emit(log_message(f"[Memory Analysis] Detected {len(detected_apis)} memory allocation APIs"))
+                        self.update_output.emit(
+                            log_message(
+                                f"[Memory Analysis] Detected {len(detected_apis)} memory allocation APIs"
+                            )
+                        )
                         for api in detected_apis[:5]:  # Show first 5
-                            self.update_output.emit(log_message(f"[Memory Analysis] Memory API: {api}"))
+                            self.update_output.emit(
+                                log_message(f"[Memory Analysis] Memory API: {api}")
+                            )
 
                     # Summary for static analysis
                     self.analyze_results.append("\n=== STATIC MEMORY ANALYSIS SUMMARY ===")
-                    self.analyze_results.append(f"Estimated memory footprint: {estimated_memory / (1024*1024):.2f} MB")
-                    self.analyze_results.append(f"Memory allocation APIs detected: {len(detected_apis)}")
-                    self.analyze_results.append(f"DEP/NX Protection: {'Enabled' if has_stack_protection else 'Disabled'}")
+                    self.analyze_results.append(
+                        f"Estimated memory footprint: {estimated_memory / (1024*1024):.2f} MB"
+                    )
+                    self.analyze_results.append(
+                        f"Memory allocation APIs detected: {len(detected_apis)}"
+                    )
+                    self.analyze_results.append(
+                        f"DEP/NX Protection: {'Enabled' if has_stack_protection else 'Disabled'}"
+                    )
 
-                    self.update_output.emit(log_message("[Memory Analysis] Static memory analysis completed"))
+                    self.update_output.emit(
+                        log_message("[Memory Analysis] Static memory analysis completed")
+                    )
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                    self.update_output.emit(log_message(f"[Memory Analysis] Error during static analysis: {e!s}"))
+                    self.update_output.emit(
+                        log_message(f"[Memory Analysis] Error during static analysis: {e!s}")
+                    )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Memory Analysis] Error during memory analysis: {e!s}"))
-            self.update_output.emit(log_message(f"[Memory Analysis] Traceback: {traceback.format_exc()}"))
+            self.update_output.emit(
+                log_message(f"[Memory Analysis] Error during memory analysis: {e!s}")
+            )
+            self.update_output.emit(
+                log_message(f"[Memory Analysis] Traceback: {traceback.format_exc()}")
+            )
 
     def run_network_analysis(self):
         """Run comprehensive network analysis on the target application.
@@ -25243,7 +29106,9 @@ Focus on:
             QMessageBox.warning(self, "No Binary", "Please select a binary file first.")
             return
 
-        self.update_output.emit(log_message("[Network Analysis] Starting comprehensive network analysis..."))
+        self.update_output.emit(
+            log_message("[Network Analysis] Starting comprehensive network analysis...")
+        )
 
         try:
             # First check if we already have network capture data
@@ -25251,32 +29116,67 @@ Focus on:
             if hasattr(self, "traffic_samples") and self.traffic_samples:
                 has_existing_data = True
                 sample_count = len(self.traffic_samples)
-                self.update_output.emit(log_message(f"[Network Analysis] Using {sample_count} existing traffic samples"))
+                self.update_output.emit(
+                    log_message(f"[Network Analysis] Using {sample_count} existing traffic samples")
+                )
 
             if not has_existing_data:
                 # Start capturing if we don't have data and analyzer is available
                 if hasattr(self, "start_network_capture"):
-                    self.update_output.emit(log_message("[Network Analysis] No existing data found. Starting network capture..."))
+                    self.update_output.emit(
+                        log_message(
+                            "[Network Analysis] No existing data found. Starting network capture..."
+                        )
+                    )
                     self.start_network_capture()
                     capture_result = True  # start_network_capture doesn't return a value
 
                     if capture_result:
-                        self.update_output.emit(log_message("[Network Analysis] Network capture started successfully"))
-                        self.update_output.emit(log_message("[Network Analysis] Waiting for traffic (10 seconds)..."))
+                        self.update_output.emit(
+                            log_message("[Network Analysis] Network capture started successfully")
+                        )
+                        self.update_output.emit(
+                            log_message("[Network Analysis] Waiting for traffic (10 seconds)...")
+                        )
 
                         # Wait a short time to collect some traffic
                         time.sleep(10)
                     else:
-                        self.update_output.emit(log_message("[Network Analysis] Failed to start network capture"))
+                        self.update_output.emit(
+                            log_message("[Network Analysis] Failed to start network capture")
+                        )
 
             # Static analysis of network capabilities
-            self.update_output.emit(log_message("[Network Analysis] Analyzing network capabilities from binary..."))
+            self.update_output.emit(
+                log_message("[Network Analysis] Analyzing network capabilities from binary...")
+            )
 
             # Define common networking and protocol APIs
             network_apis = {
-                "basic": ["socket", "connect", "bind", "listen", "accept", "send", "recv", "recvfrom"],
-                "http": ["HttpOpenRequest", "InternetConnect", "WinHttpConnect", "curl_easy", "libcurl"],
-                "ssl": ["SSL_connect", "SSL_read", "SSL_write", "SslCreateContext", "CryptAcquireContext"],
+                "basic": [
+                    "socket",
+                    "connect",
+                    "bind",
+                    "listen",
+                    "accept",
+                    "send",
+                    "recv",
+                    "recvfrom",
+                ],
+                "http": [
+                    "HttpOpenRequest",
+                    "InternetConnect",
+                    "WinHttpConnect",
+                    "curl_easy",
+                    "libcurl",
+                ],
+                "ssl": [
+                    "SSL_connect",
+                    "SSL_read",
+                    "SSL_write",
+                    "SslCreateContext",
+                    "CryptAcquireContext",
+                ],
                 "dns": ["gethostbyname", "DnsQuery", "getaddrinfo", "WSAGetLastError"],
                 "udp": ["sendto", "recvfrom", "UdpConnectClient"],
                 "license": ["LicenseCheck", "VerifyLicense", "Activate", "Register"],
@@ -25293,6 +29193,7 @@ Focus on:
                     detect_network_apis,
                     get_network_api_categories,
                 )
+
                 network_apis = get_network_api_categories()
                 detected_apis = detect_network_apis(
                     pe,
@@ -25328,24 +29229,36 @@ Focus on:
                     self.update_output.emit(log_message(f"[Network Analysis] WARNING: {issue}"))
 
                 # String analysis for URLs and IP addresses
-                self.update_output.emit(log_message("[Network Analysis] Searching for embedded URLs and IP addresses..."))
+                self.update_output.emit(
+                    log_message(
+                        "[Network Analysis] Searching for embedded URLs and IP addresses..."
+                    )
+                )
 
                 with open(self.binary_path, "rb") as f:
                     binary_data = f.read()
 
                     # URL pattern
                     # Fixed regex pattern with raw string to avoid escape sequence warning
-                    url_pattern = re.compile(br"https?://[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+(?:/[^\s]*)?")
+                    url_pattern = re.compile(
+                        rb"https?://[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+(?:/[^\s]*)?"
+                    )
                     urls = url_pattern.findall(binary_data)
 
                     # IP address pattern
                     # Fixed regex pattern with raw string to avoid escape sequence warning
-                    ip_pattern = re.compile(br"(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)")
+                    ip_pattern = re.compile(
+                        rb"(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
+                    )
                     ips = ip_pattern.findall(binary_data)
 
                     if urls:
                         unique_urls = set(url.decode("utf-8", errors="ignore") for url in urls)
-                        self.update_output.emit(log_message(f"[Network Analysis] Found {len(unique_urls)} embedded URLs"))
+                        self.update_output.emit(
+                            log_message(
+                                f"[Network Analysis] Found {len(unique_urls)} embedded URLs"
+                            )
+                        )
 
                         self.analyze_results.append("\n=== EMBEDDED URLs ===")
                         for url in list(unique_urls)[:10]:  # Show first 10
@@ -25356,51 +29269,81 @@ Focus on:
                         if auth_urls:
                             issue = "Found URLs with embedded credentials - security risk"
                             security_issues.append(issue)
-                            self.update_output.emit(log_message(f"[Network Analysis] WARNING: {issue}"))
+                            self.update_output.emit(
+                                log_message(f"[Network Analysis] WARNING: {issue}")
+                            )
 
                     if ips:
                         unique_ips = set(ip.decode("utf-8", errors="ignore") for ip in ips)
-                        self.update_output.emit(log_message(f"[Network Analysis] Found {len(unique_ips)} embedded IP addresses"))
+                        self.update_output.emit(
+                            log_message(
+                                f"[Network Analysis] Found {len(unique_ips)} embedded IP addresses"
+                            )
+                        )
 
                         self.analyze_results.append("\n=== EMBEDDED IP ADDRESSES ===")
                         for ip in list(unique_ips)[:10]:  # Show first 10
                             self.analyze_results.append(ip)
 
                         # Check for private IPs
-                        private_ips = [ip for ip in unique_ips if ip.startswith(("10.", "192.168.", "172.16.", "172.17.", "172.18."))]
+                        private_ips = [
+                            ip
+                            for ip in unique_ips
+                            if ip.startswith(("10.", "192.168.", "172.16.", "172.17.", "172.18."))
+                        ]
                         if private_ips:
-                            self.update_output.emit(log_message(f"[Network Analysis] Found {len(private_ips)} private IP addresses hardcoded"))
+                            self.update_output.emit(
+                                log_message(
+                                    f"[Network Analysis] Found {len(private_ips)} private IP addresses hardcoded"
+                                )
+                            )
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                self.update_output.emit(log_message(f"[Network Analysis] Error during static analysis: {e!s}"))
+                self.update_output.emit(
+                    log_message(f"[Network Analysis] Error during static analysis: {e!s}")
+                )
 
             # Dynamic analysis results if available
             if hasattr(self, "traffic_recorder") and self.traffic_recorder:
                 traffic_summary = self.traffic_recorder.get_traffic_summary()
 
                 if traffic_summary:
-                    self.update_output.emit(log_message("[Network Analysis] Analyzing captured network traffic..."))
+                    self.update_output.emit(
+                        log_message("[Network Analysis] Analyzing captured network traffic...")
+                    )
 
                     # Process traffic summary
                     total_packets = traffic_summary.get("total_packets", 0)
                     protocols = traffic_summary.get("protocols", {})
                     destinations = traffic_summary.get("destinations", {})
 
-                    self.update_output.emit(log_message(f"[Network Analysis] Captured {total_packets} packets"))
+                    self.update_output.emit(
+                        log_message(f"[Network Analysis] Captured {total_packets} packets")
+                    )
 
                     # Protocol breakdown
                     if protocols:
                         self.analyze_results.append("\n=== PROTOCOL ANALYSIS ===")
-                        for protocol, count in sorted(protocols.items(), key=lambda x: x[1], reverse=True):
+                        for protocol, count in sorted(
+                            protocols.items(), key=lambda x: x[1], reverse=True
+                        ):
                             percentage = (count / total_packets) * 100 if total_packets > 0 else 0
-                            self.analyze_results.append(f"{protocol}: {count} packets ({percentage:.1f}%)")
-                            self.update_output.emit(log_message(f"[Network Analysis] Protocol: {protocol} - {count} packets"))
+                            self.analyze_results.append(
+                                f"{protocol}: {count} packets ({percentage:.1f}%)"
+                            )
+                            self.update_output.emit(
+                                log_message(
+                                    f"[Network Analysis] Protocol: {protocol} - {count} packets"
+                                )
+                            )
 
                     # Destination breakdown
                     if destinations:
                         self.analyze_results.append("\n=== CONNECTION DESTINATIONS ===")
-                        for dest, count in sorted(destinations.items(), key=lambda x: x[1], reverse=True)[:10]:
+                        for dest, count in sorted(
+                            destinations.items(), key=lambda x: x[1], reverse=True
+                        )[:10]:
                             self.analyze_results.append(f"{dest}: {count} packets")
 
                     # Security assessment from traffic
@@ -25417,7 +29360,9 @@ Focus on:
                             for query in dns_queries[:10]:  # Show first 10
                                 self.analyze_results.append(query)
                 else:
-                    self.update_output.emit(log_message("[Network Analysis] No traffic capture data available"))
+                    self.update_output.emit(
+                        log_message("[Network Analysis] No traffic capture data available")
+                    )
 
             # Live process connections if possible
             if hasattr(self, "dynamic_analyzer") and self.dynamic_analyzer:
@@ -25428,22 +29373,42 @@ Focus on:
                         connections = process.connections()
 
                         if connections:
-                            self.update_output.emit(log_message(f"[Network Analysis] Found {len(connections)} active connections"))
+                            self.update_output.emit(
+                                log_message(
+                                    f"[Network Analysis] Found {len(connections)} active connections"
+                                )
+                            )
 
                             # Analyze connections
                             self.analyze_results.append("\n=== ACTIVE NETWORK CONNECTIONS ===")
 
                             for conn in connections:
                                 status = conn.status if hasattr(conn, "status") else "UNKNOWN"
-                                family = "IPv4" if conn.family == socket.AF_INET else "IPv6" if conn.family == socket.AF_INET6 else "UNIX" if hasattr(socket, "AF_UNIX") and conn.family == socket.AF_UNIX else "UNKNOWN"  # pylint: disable=no-member
+                                family = (
+                                    "IPv4"
+                                    if conn.family == socket.AF_INET
+                                    else "IPv6"
+                                    if conn.family == socket.AF_INET6
+                                    else "UNIX"
+                                    if hasattr(socket, "AF_UNIX") and conn.family == socket.AF_UNIX
+                                    else "UNKNOWN"
+                                )  # pylint: disable=no-member
 
                                 if conn.laddr:
-                                    local = f"{conn.laddr[0]}:{conn.laddr[1]}" if len(conn.laddr) >= 2 else str(conn.laddr)
+                                    local = (
+                                        f"{conn.laddr[0]}:{conn.laddr[1]}"
+                                        if len(conn.laddr) >= 2
+                                        else str(conn.laddr)
+                                    )
                                 else:
                                     local = "N/A"
 
                                 if hasattr(conn, "raddr") and conn.raddr:
-                                    remote = f"{conn.raddr[0]}:{conn.raddr[1]}" if len(conn.raddr) >= 2 else str(conn.raddr)
+                                    remote = (
+                                        f"{conn.raddr[0]}:{conn.raddr[1]}"
+                                        if len(conn.raddr) >= 2
+                                        else str(conn.raddr)
+                                    )
                                 else:
                                     remote = "N/A"
 
@@ -25452,12 +29417,20 @@ Focus on:
 
                                 # Log first few connections
                                 if len(self.analyze_results) < 15:  # Limit logging
-                                    self.update_output.emit(log_message(f"[Network Analysis] Connection: {conn_info}"))
+                                    self.update_output.emit(
+                                        log_message(f"[Network Analysis] Connection: {conn_info}")
+                                    )
                         else:
-                            self.update_output.emit(log_message("[Network Analysis] No active network connections found"))
+                            self.update_output.emit(
+                                log_message(
+                                    "[Network Analysis] No active network connections found"
+                                )
+                            )
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                        self.update_output.emit(log_message(f"[Network Analysis] Error checking connections: {e!s}"))
+                        self.update_output.emit(
+                            log_message(f"[Network Analysis] Error checking connections: {e!s}")
+                        )
 
             # Summarize security issues
             if security_issues:
@@ -25466,10 +29439,16 @@ Focus on:
                     self.analyze_results.append(f"⚠️ {issue}")
 
             # Final summary
-            self.update_output.emit(log_message("[Network Analysis] Network analysis completed successfully"))
+            self.update_output.emit(
+                log_message("[Network Analysis] Network analysis completed successfully")
+            )
 
             categories_found = sum(1 for apis in detected_apis.values() if apis)
-            self.update_output.emit(log_message(f"[Network Analysis] Found {categories_found} network API categories in use"))
+            self.update_output.emit(
+                log_message(
+                    f"[Network Analysis] Found {categories_found} network API categories in use"
+                )
+            )
 
             # Check if we need to stop a running capture
             if not has_existing_data and hasattr(self, "stop_network_capture"):
@@ -25477,21 +29456,27 @@ Focus on:
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Network Analysis] Error during network analysis: {e!s}"))
-            self.update_output.emit(log_message(f"[Network Analysis] Traceback: {traceback.format_exc()}"))
+            self.update_output.emit(
+                log_message(f"[Network Analysis] Error during network analysis: {e!s}")
+            )
+            self.update_output.emit(
+                log_message(f"[Network Analysis] Traceback: {traceback.format_exc()}")
+            )
 
-# -------------------------------
-# Helper Methods for New Tabs
-# -------------------------------
+    # -------------------------------
+    # Helper Methods for New Tabs
+    # -------------------------------
 
-# Patching tab helpers
+    # Patching tab helpers
     def run_patching(self):
         """Run the patching process based on selected strategy"""
         strategy = "Automatic"
         if self.strategy_targeted_radio.isChecked():
             strategy = "Targeted"
             target_type = self.target_type_combo.currentText()
-            self.update_output.emit(log_message(f"[Patching] Running {strategy} patching targeting {target_type}..."))
+            self.update_output.emit(
+                log_message(f"[Patching] Running {strategy} patching targeting {target_type}...")
+            )
         elif self.strategy_custom_radio.isChecked():
             strategy = "Custom"
             self.update_output.emit(log_message(f"[Patching] Running {strategy} patching..."))
@@ -25513,7 +29498,9 @@ Focus on:
             self.update_output.emit(log_message(f"[Patching] Options: {', '.join(options)}"))
 
         # Perform the actual patching
-        self.update_output.emit(log_message(f"[Patching] Starting patching process with {strategy} strategy..."))
+        self.update_output.emit(
+            log_message(f"[Patching] Starting patching process with {strategy} strategy...")
+        )
 
         try:
             # Create backup first if requested
@@ -25536,10 +29523,15 @@ Focus on:
 
             # Handle the result
             if result.get("success"):
-                self.update_output.emit(log_message(f"[Patching] Successfully applied {result.get('count', 0)} patches"))
-                QMessageBox.information(self, "Patching Complete",
-                                       f"Successfully applied {result.get('count', 0)} patches to the binary.\n\n"
-                                       f"Details: {result.get('message', '')}")
+                self.update_output.emit(
+                    log_message(f"[Patching] Successfully applied {result.get('count', 0)} patches")
+                )
+                QMessageBox.information(
+                    self,
+                    "Patching Complete",
+                    f"Successfully applied {result.get('count', 0)} patches to the binary.\n\n"
+                    f"Details: {result.get('message', '')}",
+                )
 
                 # Update the patch list
                 self.refresh_patch_list()
@@ -25554,16 +29546,19 @@ Focus on:
             else:
                 error_msg = result.get("error", "Unknown error")
                 self.update_output.emit(log_message(f"[Patching] Error: {error_msg}"))
-                QMessageBox.warning(self, "Patching Failed",
-                                   f"Failed to apply patches: {error_msg}\n\n"
-                                   f"See the logs for more details.")
+                QMessageBox.warning(
+                    self,
+                    "Patching Failed",
+                    f"Failed to apply patches: {error_msg}\n\n" f"See the logs for more details.",
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Patching] Exception during patching: {e!s}"))
             self.update_output.emit(log_message(traceback.format_exc()))
-            QMessageBox.critical(self, "Patching Error",
-                                f"An exception occurred during patching:\n{e!s}")
+            QMessageBox.critical(
+                self, "Patching Error", f"An exception occurred during patching:\n{e!s}"
+            )
 
     def refresh_patch_list(self):
         """Refresh the list of patches"""
@@ -25614,7 +29609,9 @@ Focus on:
         """Apply a single patch"""
         patch_id = self.patches_table.item(row, 0).text()
         patch_type = self.patches_table.item(row, 1).text()
-        self.update_output.emit(log_message(f"[Patching] Applying patch {patch_id} ({patch_type})..."))
+        self.update_output.emit(
+            log_message(f"[Patching] Applying patch {patch_id} ({patch_type})...")
+        )
         self.patches_table.setItem(row, 3, QTableWidgetItem("Applied"))
 
     def revert_patch(self, row):
@@ -25627,7 +29624,9 @@ Focus on:
         """Edit a single patch"""
         patch_id = self.patches_table.item(row, 0).text()
         self.update_output.emit(log_message(f"[Patching] Editing patch {patch_id}..."))
-        QMessageBox.information(self, "Edit Patch", f"Editing patch {patch_id} would open the editor")
+        QMessageBox.information(
+            self, "Edit Patch", f"Editing patch {patch_id} would open the editor"
+        )
 
     def apply_all_patches(self):
         """Apply all patches in the list"""
@@ -25655,7 +29654,9 @@ Focus on:
     def run_patch_test(self):
         """Run tests for the applied patches"""
         env_type = self.env_type_combo.currentText()
-        self.update_output.emit(log_message(f"[Patching] Running patch tests in {env_type} environment..."))
+        self.update_output.emit(
+            log_message(f"[Patching] Running patch tests in {env_type} environment...")
+        )
 
         options = []
         if self.test_network_cb.isChecked():
@@ -25688,19 +29689,27 @@ Focus on:
         # Add more detail to test results
         self.test_results_text.append("\n\n==== Detailed Verification ====")
         self.test_results_text.append("\nLicense Check Bypass:")
-        self.test_results_text.append("- Original behavior: Application exits with error code 0xE001")
+        self.test_results_text.append(
+            "- Original behavior: Application exits with error code 0xE001"
+        )
         self.test_results_text.append("- Patched behavior: Application continues normal execution")
         self.test_results_text.append("- Verification method: Process exit code monitoring")
 
         self.test_results_text.append("\nHardware Check Modification:")
-        self.test_results_text.append("- Original behavior: Application checks CPU ID at 0x00405A10")
-        self.test_results_text.append("- Patched behavior: Check still occurs but with modified comparison")
+        self.test_results_text.append(
+            "- Original behavior: Application checks CPU ID at 0x00405A10"
+        )
+        self.test_results_text.append(
+            "- Patched behavior: Check still occurs but with modified comparison"
+        )
         self.test_results_text.append("- Verification method: Memory tracing")
-        self.test_results_text.append("- Failure reason: The patch modifies the comparison but hardware ID is checked in multiple locations")
+        self.test_results_text.append(
+            "- Failure reason: The patch modifies the comparison but hardware ID is checked in multiple locations"
+        )
 
         QMessageBox.information(self, "Verification", "Verification process complete.")
 
-# Network tab helpers moved to IntellicrackApp class methods
+    # Network tab helpers moved to IntellicrackApp class methods
 
     def start_license_server(self):
         """Start the license server emulation"""
@@ -25709,7 +29718,9 @@ Focus on:
         protocol = self.server_protocol_combo.currentText()
         response_type = self.server_response_combo.currentText()
 
-        self.update_output.emit(log_message(f"[Server] Starting license server on {address}:{port} ({protocol})"))
+        self.update_output.emit(
+            log_message(f"[Server] Starting license server on {address}:{port} ({protocol})")
+        )
 
         # Show server logs
         self.server_logs_text.clear()
@@ -25718,7 +29729,9 @@ Focus on:
         self.server_logs_text.append(f"[INFO] Response type: {response_type}")
         self.server_logs_text.append("[INFO] Server ready to accept connections")
 
-        QMessageBox.information(self, "License Server", f"License server started on {address}:{port}")
+        QMessageBox.information(
+            self, "License Server", f"License server started on {address}:{port}"
+        )
 
     def stop_license_server(self):
         """Stop the license server emulation"""
@@ -25766,7 +29779,7 @@ Focus on:
 
         self.tool_description_label.setText(descriptions.get(tool, "No description available"))
 
-# Reports tab helpers
+    # Reports tab helpers
     def generate_report(self):
         """Generate a report based on selected options"""
         template = self.report_template_combo.currentText()
@@ -25782,7 +29795,9 @@ Focus on:
         if self.include_network_cb.isChecked():
             options.append("Network Analysis")
 
-        self.update_output.emit(log_message(f"[Reports] Generating {template} in {report_format} format"))
+        self.update_output.emit(
+            log_message(f"[Reports] Generating {template} in {report_format} format")
+        )
         if options:
             self.update_output.emit(log_message(f"[Reports] Including: {', '.join(options)}"))
 
@@ -25818,7 +29833,9 @@ Focus on:
 
         self.reports_table.setCellWidget(new_row, 3, actions_widget)
 
-        QMessageBox.information(self, "Report Generation", f"Report '{report_name}' generated successfully")
+        QMessageBox.information(
+            self, "Report Generation", f"Report '{report_name}' generated successfully"
+        )
 
     def view_report(self, row):
         """View a generated report in an appropriate viewer based on format"""
@@ -25826,7 +29843,9 @@ Focus on:
         report_type = self.reports_table.item(row, 1).text()
         report_format = self.reports_table.item(row, 2).text()
 
-        self.update_output.emit(log_message(f"[Reports] Viewing report: {report_name} ({report_format})"))
+        self.update_output.emit(
+            log_message(f"[Reports] Viewing report: {report_name} ({report_format})")
+        )
 
         # Get report path
         reports_dir = os.path.join(os.getcwd(), "reports")
@@ -25834,14 +29853,18 @@ Focus on:
             os.makedirs(reports_dir)
 
         # Sanitize filename
-        safe_name = "".join(c for c in report_name if c.isalnum() or c in (" ", ".", "_", "-")).replace(" ", "_")
+        safe_name = "".join(
+            c for c in report_name if c.isalnum() or c in (" ", ".", "_", "-")
+        ).replace(" ", "_")
         report_path = os.path.join(reports_dir, f"{safe_name}.{report_format.lower()}")
 
         try:
             # Check if report exists
             if not os.path.exists(report_path):
                 # Generate the report file if it doesn't exist
-                self.update_output.emit(log_message(f"[Reports] Report file not found. Generating: {report_path}"))
+                self.update_output.emit(
+                    log_message(f"[Reports] Report file not found. Generating: {report_path}")
+                )
 
                 # Generate report based on type and format
                 if report_format.lower() == "html":
@@ -25873,8 +29896,12 @@ Focus on:
                     # Add zoom controls
                     zoom_in_btn = QPushButton("Zoom In")
                     zoom_out_btn = QPushButton("Zoom Out")
-                    zoom_in_btn.clicked.connect(lambda: web_view.setZoomFactor(web_view.zoomFactor() + 0.1))
-                    zoom_out_btn.clicked.connect(lambda: web_view.setZoomFactor(web_view.zoomFactor() - 0.1))
+                    zoom_in_btn.clicked.connect(
+                        lambda: web_view.setZoomFactor(web_view.zoomFactor() + 0.1)
+                    )
+                    zoom_out_btn.clicked.connect(
+                        lambda: web_view.setZoomFactor(web_view.zoomFactor() - 0.1)
+                    )
 
                     # Add print button
                     print_btn = QPushButton("Print")
@@ -25900,7 +29927,11 @@ Focus on:
                 except ImportError as e:
                     logger.error("Import error in main_app.py: %s", e)
                     # Fall back to system browser if Qt WebEngine is not available
-                    self.update_output.emit(log_message("[Reports] QWebEngineView not available, opening in system browser"))
+                    self.update_output.emit(
+                        log_message(
+                            "[Reports] QWebEngineView not available, opening in system browser"
+                        )
+                    )
                     webbrowser.open(f"file://{report_path}")
 
             elif report_format.lower() == "pdf":
@@ -25929,12 +29960,16 @@ Focus on:
                         fallback_widget = QWidget()
                         fallback_layout = QVBoxLayout(fallback_widget)
 
-                        message_label = QLabel("PDF viewing is not available with current PyQt6 installation.")
+                        message_label = QLabel(
+                            "PDF viewing is not available with current PyQt6 installation."
+                        )
                         message_label.setWordWrap(True)
                         fallback_layout.addWidget(message_label)
 
                         open_button = QPushButton("Open PDF with System Viewer")
-                        open_button.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(report_path)))
+                        open_button.clicked.connect(
+                            lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(report_path))
+                        )
                         fallback_layout.addWidget(open_button)
 
                         # Create widget for the layout
@@ -25948,8 +29983,16 @@ Focus on:
                         # Add navigation buttons
                         prev_btn = QPushButton("Previous")
                         next_btn = QPushButton("Next")
-                        prev_btn.clicked.connect(lambda: pdf_view.pageNavigator().jump(pdf_view.pageNavigator().currentPage() - 1))
-                        next_btn.clicked.connect(lambda: pdf_view.pageNavigator().jump(pdf_view.pageNavigator().currentPage() + 1))
+                        prev_btn.clicked.connect(
+                            lambda: pdf_view.pageNavigator().jump(
+                                pdf_view.pageNavigator().currentPage() - 1
+                            )
+                        )
+                        next_btn.clicked.connect(
+                            lambda: pdf_view.pageNavigator().jump(
+                                pdf_view.pageNavigator().currentPage() + 1
+                            )
+                        )
 
                         # Add to toolbar
                         toolbar.addWidget(prev_btn)
@@ -25957,18 +30000,24 @@ Focus on:
 
                     # Add external viewer button (always available)
                     external_btn = QPushButton("Open Externally")
-                    external_btn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(report_path)))
+                    external_btn.clicked.connect(
+                        lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(report_path))
+                    )
 
                     # Add to toolbar
                     toolbar.addWidget(external_btn)
 
                     # Add to layout
                     layout.addLayout(toolbar)
-                    layout.addWidget(widget_for_layout)  # Use the appropriate widget based on PDF support
+                    layout.addWidget(
+                        widget_for_layout
+                    )  # Use the appropriate widget based on PDF support
 
                     # Show the viewer
                     self.report_viewer.show()
-                    self.update_output.emit(log_message(f"[Reports] Opened PDF report: {report_name}"))
+                    self.update_output.emit(
+                        log_message(f"[Reports] Opened PDF report: {report_name}")
+                    )
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
@@ -25976,16 +30025,30 @@ Focus on:
                     self.update_output.emit(log_message(f"[Reports] Error displaying PDF: {e}"))
                     # Open with system default PDF viewer as fallback
                     try:
-                        self.update_output.emit(log_message("[Reports] Falling back to system default PDF viewer"))
+                        self.update_output.emit(
+                            log_message("[Reports] Falling back to system default PDF viewer")
+                        )
                         QDesktopServices.openUrl(QUrl.fromLocalFile(report_path))
-                    except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                        logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                    except (
+                        AttributeError,
+                        ValueError,
+                        TypeError,
+                        RuntimeError,
+                        KeyError,
+                        OSError,
+                    ) as e:
+                        logger.error(
+                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                            e,
+                        )
                         # Last resort fallback using OS-specific methods
                         if os.name == "nt":  # Windows
                             if hasattr(os, "startfile"):
                                 os.startfile(report_path)
                         else:  # macOS, Linux
-                            subprocess.call(("xdg-open" if os.name == "posix" else "open", report_path))
+                            subprocess.call(
+                                ("xdg-open" if os.name == "posix" else "open", report_path)
+                            )
             else:
                 # For other formats, open a simple text viewer
                 self._open_text_report_viewer(report_path, report_name)
@@ -26003,8 +30066,11 @@ Focus on:
 
         self.update_output.emit(log_message(f"[Reports] Exporting report: {report_name}"))
 
-        QMessageBox.information(self, "Export Report",
-                               f"Report '{report_name}' would be exported in {report_format} format")
+        QMessageBox.information(
+            self,
+            "Export Report",
+            f"Report '{report_name}' would be exported in {report_format} format",
+        )
 
     def delete_report(self, row):
         """Delete a report"""
@@ -26048,21 +30114,41 @@ Focus on:
                     report_data = json.load(f)
 
                 # Basic validation of report structure
-                if not isinstance(report_data, dict) or "report_type" not in report_data or "content" not in report_data:
-                    raise ValueError("Invalid report format. Report must contain 'report_type' and 'content' fields.")
+                if (
+                    not isinstance(report_data, dict)
+                    or "report_type" not in report_data
+                    or "content" not in report_data
+                ):
+                    raise ValueError(
+                        "Invalid report format. Report must contain 'report_type' and 'content' fields."
+                    )
 
                 report_type = report_data.get("report_type")
                 report_name = report_data.get("name", os.path.basename(file_path))
-                report_date = report_data.get("date", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                report_date = report_data.get(
+                    "date", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                )
 
             elif file_path.lower().endswith(".xml"):
                 tree = ET.parse(file_path)
                 root = tree.getroot()
 
                 # Extract basic info
-                report_type = root.find("report_type").text if root.find("report_type") is not None else "unknown"
-                report_name = root.find("name").text if root.find("name") is not None else os.path.basename(file_path)
-                report_date = root.find("date").text if root.find("date") is not None else datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                report_type = (
+                    root.find("report_type").text
+                    if root.find("report_type") is not None
+                    else "unknown"
+                )
+                report_name = (
+                    root.find("name").text
+                    if root.find("name") is not None
+                    else os.path.basename(file_path)
+                )
+                report_date = (
+                    root.find("date").text
+                    if root.find("date") is not None
+                    else datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                )
 
                 # Convert XML to dict for storage
                 report_data = {
@@ -26083,7 +30169,9 @@ Focus on:
 
                     report_type = report_data.get("report_type", "unknown")
                     report_name = report_data.get("name", os.path.basename(file_path))
-                    report_date = report_data.get("date", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    report_date = report_data.get(
+                        "date", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    )
 
                 except json.JSONDecodeError as e:
                     logger.error("json.JSONDecodeError in main_app.py: %s", e)
@@ -26092,9 +30180,21 @@ Focus on:
                         tree = ET.parse(file_path)
                         root = tree.getroot()
 
-                        report_type = root.find("report_type").text if root.find("report_type") is not None else "unknown"
-                        report_name = root.find("name").text if root.find("name") is not None else os.path.basename(file_path)
-                        report_date = root.find("date").text if root.find("date") is not None else datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        report_type = (
+                            root.find("report_type").text
+                            if root.find("report_type") is not None
+                            else "unknown"
+                        )
+                        report_name = (
+                            root.find("name").text
+                            if root.find("name") is not None
+                            else os.path.basename(file_path)
+                        )
+                        report_date = (
+                            root.find("date").text
+                            if root.find("date") is not None
+                            else datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        )
 
                         report_data = {
                             "report_type": report_type,
@@ -26121,7 +30221,9 @@ Focus on:
                         }
 
             # Create a unique report ID
-            report_id = f"imported_{int(time.time())}_{os.path.basename(file_path).replace('.', '_')}"
+            report_id = (
+                f"imported_{int(time.time())}_{os.path.basename(file_path).replace('.', '_')}"
+            )
 
             # Save to reports storage
             if self.reports is None:
@@ -26145,7 +30247,9 @@ Focus on:
                 item.setData(Qt.UserRole, report_id)
                 self.reports_list.addItem(item)
 
-            self.update_output.emit(log_message(f"[Reports] Successfully imported report: {report_name}"))
+            self.update_output.emit(
+                log_message(f"[Reports] Successfully imported report: {report_name}")
+            )
 
             # Show success message with details
             QMessageBox.information(
@@ -26252,8 +30356,17 @@ Focus on:
                 # Extract key findings - look for interesting entries
                 key_findings = []
                 for result in self.analyze_results:
-                    if any(keyword in str(result).lower() for keyword in
-                          ["license", "protection", "check", "critical", "vulnerability", "patched"]):
+                    if any(
+                        keyword in str(result).lower()
+                        for keyword in [
+                            "license",
+                            "protection",
+                            "check",
+                            "critical",
+                            "vulnerability",
+                            "patched",
+                        ]
+                    ):
                         key_findings.append(f"<li>{result}</li>")
 
                 # Add findings to the report
@@ -26309,7 +30422,9 @@ Focus on:
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(html_content)
 
-            self.update_output.emit(log_message(f"[Reports] HTML report generated successfully: {output_path}"))
+            self.update_output.emit(
+                log_message(f"[Reports] HTML report generated successfully: {output_path}")
+            )
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -26349,6 +30464,7 @@ Focus on:
 
                 # Import and use pdfkit locally
                 import pdfkit
+
                 pdfkit.from_file(temp_html_path, output_path, options=options)
 
             except ImportError as e:
@@ -26357,15 +30473,20 @@ Focus on:
                 try:
                     # Import and use weasyprint locally as fallback
                     import weasyprint
+
                     weasyprint.HTML(filename=temp_html_path).write_pdf(output_path)
 
                 except ImportError as e:
                     logger.error("Import error in main_app.py: %s", e)
                     # If neither solution is available, use a simple file-based approach
-                    self.update_output.emit(log_message("[Reports] PDF conversion libraries not available"))
+                    self.update_output.emit(
+                        log_message("[Reports] PDF conversion libraries not available")
+                    )
 
                     # Create a simple text report instead
-                    self._generate_text_report(report_name, report_type, output_path.replace(".pdf", ".txt"))
+                    self._generate_text_report(
+                        report_name, report_type, output_path.replace(".pdf", ".txt")
+                    )
 
                     # Raise an error to indicate PDF generation failed
                     raise Exception("PDF conversion libraries (pdfkit or weasyprint) not available")
@@ -26374,7 +30495,9 @@ Focus on:
             if os.path.exists(temp_html_path):
                 os.remove(temp_html_path)
 
-            self.update_output.emit(log_message(f"[Reports] PDF report generated successfully: {output_path}"))
+            self.update_output.emit(
+                log_message(f"[Reports] PDF report generated successfully: {output_path}")
+            )
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -26406,13 +30529,24 @@ ANALYSIS SUMMARY
                 # Extract key findings - look for interesting entries
                 key_findings = []
                 for result in self.analyze_results:
-                    if any(keyword in str(result).lower() for keyword in
-                          ["license", "protection", "check", "critical", "vulnerability", "patched"]):
+                    if any(
+                        keyword in str(result).lower()
+                        for keyword in [
+                            "license",
+                            "protection",
+                            "check",
+                            "critical",
+                            "vulnerability",
+                            "patched",
+                        ]
+                    ):
                         key_findings.append(f"* {result}")
 
                 # Add findings to the report
                 if key_findings:
-                    text_content += "KEY FINDINGS:\n" + "\n".join(key_findings[:10]) + "\n\n"  # First 10 findings
+                    text_content += (
+                        "KEY FINDINGS:\n" + "\n".join(key_findings[:10]) + "\n\n"
+                    )  # First 10 findings
                 else:
                     text_content += "KEY FINDINGS:\n* No critical issues identified\n\n"
             else:
@@ -26448,7 +30582,9 @@ ANALYSIS SUMMARY
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(text_content)
 
-            self.update_output.emit(log_message(f"[Reports] Text report generated successfully: {output_path}"))
+            self.update_output.emit(
+                log_message(f"[Reports] Text report generated successfully: {output_path}")
+            )
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -26487,15 +30623,13 @@ ANALYSIS SUMMARY
             decrease_font_btn = QPushButton("Smaller Font")
 
             def increase_font():
-                """Increase the font size in the text edit widget.
-                """
+                """Increase the font size in the text edit widget."""
                 current = text_edit.font()
                 current.setPointSize(current.pointSize() + 1)
                 text_edit.setFont(current)
 
             def decrease_font():
-                """Decrease the font size in the text edit widget, with a minimum size limit.
-                """
+                """Decrease the font size in the text edit widget, with a minimum size limit."""
                 current = text_edit.font()
                 if current.pointSize() > 8:
                     current.setPointSize(current.pointSize() - 1)
@@ -26513,16 +30647,23 @@ ANALYSIS SUMMARY
                 Opens a file dialog and writes the report text to the selected file.
                 """
                 file_path, _ = QFileDialog.getSaveFileName(
-                    self.report_viewer, "Save Report As", "", "Text Files (*.txt);;All Files (*)",
+                    self.report_viewer,
+                    "Save Report As",
+                    "",
+                    "Text Files (*.txt);;All Files (*)",
                 )
                 if file_path:
                     try:
                         with open(file_path, "w", encoding="utf-8") as f:
                             f.write(text_edit.toPlainText())
-                        QMessageBox.information(self.report_viewer, "Save Successful", f"Report saved to {file_path}")
+                        QMessageBox.information(
+                            self.report_viewer, "Save Successful", f"Report saved to {file_path}"
+                        )
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                        QMessageBox.warning(self.report_viewer, "Save Failed", f"Failed to save report: {e!s}")
+                        QMessageBox.warning(
+                            self.report_viewer, "Save Failed", f"Failed to save report: {e!s}"
+                        )
 
             save_btn.clicked.connect(save_as)
 
@@ -26557,8 +30698,12 @@ ANALYSIS SUMMARY
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Reports] Error opening text report viewer: {e!s}"))
-            QMessageBox.warning(self, "Report Viewer Error", f"Failed to open report viewer:\n\n{e!s}")
+            self.update_output.emit(
+                log_message(f"[Reports] Error opening text report viewer: {e!s}")
+            )
+            QMessageBox.warning(
+                self, "Report Viewer Error", f"Failed to open report viewer:\n\n{e!s}"
+            )
 
     def _generate_memory_report_section(self):
         """Generate the memory analysis section for HTML reports"""
@@ -26782,8 +30927,14 @@ ANALYSIS SUMMARY
                 summary_metrics = [
                     ("Total Packets", f"{traffic_summary.get('total_packets', 0):,}"),
                     ("Total Data Transferred", f"{traffic_summary.get('total_bytes', 0):,} bytes"),
-                    ("Capture Duration", f"{traffic_summary.get('duration_seconds', 0):.2f} seconds"),
-                    ("Average Packet Size", f"{traffic_summary.get('avg_packet_size', 0):.2f} bytes"),
+                    (
+                        "Capture Duration",
+                        f"{traffic_summary.get('duration_seconds', 0):.2f} seconds",
+                    ),
+                    (
+                        "Average Packet Size",
+                        f"{traffic_summary.get('avg_packet_size', 0):.2f} bytes",
+                    ),
                     ("Suspicious Connections", f"{len(traffic_summary.get('suspicious', []))}"),
                 ]
 
@@ -26827,11 +30978,21 @@ ANALYSIS SUMMARY
         if hasattr(self, "patches_table") and self.patches_table:
             for row in range(self.patches_table.rowCount()):
                 patch = {
-                    "id": self.patches_table.item(row, 0).text() if self.patches_table.item(row, 0) else "",
-                    "type": self.patches_table.item(row, 1).text() if self.patches_table.item(row, 1) else "",
-                    "address": self.patches_table.item(row, 2).text() if self.patches_table.item(row, 2) else "",
-                    "status": self.patches_table.item(row, 3).text() if self.patches_table.item(row, 3) else "",
-                    "description": self.patches_table.item(row, 4).text() if self.patches_table.item(row, 4) else "",
+                    "id": self.patches_table.item(row, 0).text()
+                    if self.patches_table.item(row, 0)
+                    else "",
+                    "type": self.patches_table.item(row, 1).text()
+                    if self.patches_table.item(row, 1)
+                    else "",
+                    "address": self.patches_table.item(row, 2).text()
+                    if self.patches_table.item(row, 2)
+                    else "",
+                    "status": self.patches_table.item(row, 3).text()
+                    if self.patches_table.item(row, 3)
+                    else "",
+                    "description": self.patches_table.item(row, 4).text()
+                    if self.patches_table.item(row, 4)
+                    else "",
                 }
                 patches.append(patch)
 
@@ -26959,13 +31120,22 @@ ANALYSIS SUMMARY
                 # Categorize based on content
                 if "license" in result_str.lower():
                     categories["License Detection"].append(result_str)
-                elif any(x in result_str.lower() for x in ["protect", "obfuscation", "packing", "anti-debug"]):
+                elif any(
+                    x in result_str.lower()
+                    for x in ["protect", "obfuscation", "packing", "anti-debug"]
+                ):
                     categories["Protection Mechanisms"].append(result_str)
                 elif "memory" in result_str.lower():
                     categories["Memory Analysis"].append(result_str)
-                elif any(x in result_str.lower() for x in ["network", "traffic", "connection", "http", "dns"]):
+                elif any(
+                    x in result_str.lower()
+                    for x in ["network", "traffic", "connection", "http", "dns"]
+                ):
                     categories["Network Analysis"].append(result_str)
-                elif any(x in result_str.lower() for x in ["static", "function", "string", "import", "export"]):
+                elif any(
+                    x in result_str.lower()
+                    for x in ["static", "function", "string", "import", "export"]
+                ):
                     categories["Static Analysis"].append(result_str)
                 else:
                     categories["General"].append(result_str)
@@ -26982,7 +31152,9 @@ ANALYSIS SUMMARY
 
                     # Add a note if there are more items
                     if len(items) > 10:
-                        section += f"                <li>... and {len(items) - 10} more items</li>\n"
+                        section += (
+                            f"                <li>... and {len(items) - 10} more items</li>\n"
+                        )
 
                     section += "            </ul>\n"
         else:
@@ -27058,8 +31230,12 @@ ANALYSIS SUMMARY
                 text += f"- Total Packets: {traffic_summary.get('total_packets', 0):,}\n"
                 text += f"- Total Data: {traffic_summary.get('total_bytes', 0):,} bytes\n"
                 text += f"- Duration: {traffic_summary.get('duration_seconds', 0):.2f} seconds\n"
-                text += f"- Avg Packet Size: {traffic_summary.get('avg_packet_size', 0):.2f} bytes\n"
-                text += f"- Suspicious Connections: {len(traffic_summary.get('suspicious', []))}\n\n"
+                text += (
+                    f"- Avg Packet Size: {traffic_summary.get('avg_packet_size', 0):.2f} bytes\n"
+                )
+                text += (
+                    f"- Suspicious Connections: {len(traffic_summary.get('suspicious', []))}\n\n"
+                )
 
                 # Protocol breakdown
                 if traffic_summary.get("protocols"):
@@ -27123,11 +31299,21 @@ ANALYSIS SUMMARY
         if hasattr(self, "patches_table") and self.patches_table:
             for row in range(self.patches_table.rowCount()):
                 patch = {
-                    "id": self.patches_table.item(row, 0).text() if self.patches_table.item(row, 0) else "",
-                    "type": self.patches_table.item(row, 1).text() if self.patches_table.item(row, 1) else "",
-                    "address": self.patches_table.item(row, 2).text() if self.patches_table.item(row, 2) else "",
-                    "status": self.patches_table.item(row, 3).text() if self.patches_table.item(row, 3) else "",
-                    "description": self.patches_table.item(row, 4).text() if self.patches_table.item(row, 4) else "",
+                    "id": self.patches_table.item(row, 0).text()
+                    if self.patches_table.item(row, 0)
+                    else "",
+                    "type": self.patches_table.item(row, 1).text()
+                    if self.patches_table.item(row, 1)
+                    else "",
+                    "address": self.patches_table.item(row, 2).text()
+                    if self.patches_table.item(row, 2)
+                    else "",
+                    "status": self.patches_table.item(row, 3).text()
+                    if self.patches_table.item(row, 3)
+                    else "",
+                    "description": self.patches_table.item(row, 4).text()
+                    if self.patches_table.item(row, 4)
+                    else "",
                 }
                 patches.append(patch)
 
@@ -27200,7 +31386,10 @@ ANALYSIS SUMMARY
             self.update_output.emit(log_message("[ROP] ROPgadget not available"))
             self.update_analysis_results.emit("ROP analysis requires ROPgadget tool.\n")
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(log_message(f"[ROP] Error: {e}"))
             self.update_analysis_results.emit(f"ROP analysis failed: {e}\n")
 
@@ -27220,8 +31409,12 @@ ANALYSIS SUMMARY
 
             if results.get("packed"):
                 self.update_analysis_results.emit("⚠️ Binary appears to be packed!\n\n")
-                self.update_analysis_results.emit(f"Detected Packer: {results.get('packer_type', 'Unknown')}\n")
-                self.update_analysis_results.emit(f"Confidence: {results.get('confidence', 0):.1%}\n\n")
+                self.update_analysis_results.emit(
+                    f"Detected Packer: {results.get('packer_type', 'Unknown')}\n"
+                )
+                self.update_analysis_results.emit(
+                    f"Confidence: {results.get('confidence', 0):.1%}\n\n"
+                )
 
                 self.update_analysis_results.emit("Indicators:\n")
                 for indicator in results.get("indicators", []):
@@ -27233,10 +31426,15 @@ ANALYSIS SUMMARY
 
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
-            self.update_output.emit(log_message("[Packing] Protection detection module not available"))
+            self.update_output.emit(
+                log_message("[Packing] Protection detection module not available")
+            )
             self.update_analysis_results.emit("Protection detection requires additional modules.\n")
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(log_message(f"[Packing] Error: {e}"))
             self.update_analysis_results.emit(f"Packing detection failed: {e}\n")
 
@@ -27264,7 +31462,10 @@ ANALYSIS SUMMARY
                     if resource_type.struct.Id == 3:  # RT_ICON = 3
                         for resource_id in resource_type.directory.entries:
                             for resource_lang in resource_id.directory.entries:
-                                data = pe.get_data(resource_lang.data.struct.OffsetToData, resource_lang.data.struct.Size)
+                                data = pe.get_data(
+                                    resource_lang.data.struct.OffsetToData,
+                                    resource_lang.data.struct.Size,
+                                )
                                 icon_data = data
                                 break
                             if icon_data:
@@ -27278,16 +31479,23 @@ ANALYSIS SUMMARY
                 with open(icon_path, "wb") as f:
                     f.write(icon_data)
 
-                self.update_output.emit(log_message(f"[Icon] Extracted {len(icon_data)} bytes to: {icon_path}"))
+                self.update_output.emit(
+                    log_message(f"[Icon] Extracted {len(icon_data)} bytes to: {icon_path}")
+                )
 
                 # Use PIL to convert icon to PNG for better compatibility
                 try:
                     import io
+
                     icon_image = Image.open(io.BytesIO(icon_data))
                     png_path = os.path.splitext(self.binary_path)[0] + "_icon.png"
                     icon_image.save(png_path, "PNG")
                     self.update_output.emit(log_message(f"[Icon] Also saved as PNG: {png_path}"))
-                    QMessageBox.information(self, "Icon Extracted", f"Icon saved to:\n{icon_path}\n\nAlso saved as PNG:\n{png_path}")
+                    QMessageBox.information(
+                        self,
+                        "Icon Extracted",
+                        f"Icon saved to:\n{icon_path}\n\nAlso saved as PNG:\n{png_path}",
+                    )
                 except Exception as e:
                     self.logger.warning(f"Failed to convert icon to PNG: {e}")
                     QMessageBox.information(self, "Icon Extracted", f"Icon saved to:\n{icon_path}")
@@ -27300,13 +31508,18 @@ ANALYSIS SUMMARY
             self.update_output.emit(log_message(f"[Icon] Missing dependencies: {e}"))
             QMessageBox.warning(self, "Missing Dependencies", f"Icon extraction requires: {e}")
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(log_message(f"[Icon] Error: {e}"))
             QMessageBox.warning(self, "Error", f"Failed to extract icon: {e}")
 
     def fine_tune_model(self):
         """ML fine-tuning functionality has been removed."""
-        QMessageBox.information(self, "Function Removed", "ML fine-tuning functionality is no longer available.")
+        QMessageBox.information(
+            self, "Function Removed", "ML fine-tuning functionality is no longer available."
+        )
 
     def run_static_vulnerability_scan(self):
         """Run comprehensive static vulnerability analysis."""
@@ -27324,12 +31537,18 @@ ANALYSIS SUMMARY
             # Check if coordination layer is available for comprehensive analysis
             if hasattr(self, "ai_coordinator") and self.ai_coordinator:
                 # Use comprehensive analysis from coordination layer
-                self.update_output.emit(log_message("[Static Vuln] Using AI coordination for comprehensive analysis..."))
+                self.update_output.emit(
+                    log_message("[Static Vuln] Using AI coordination for comprehensive analysis...")
+                )
 
                 # Suggest analysis strategy
                 if hasattr(self.ai_coordinator, "suggest_strategy"):
-                    strategy = self.ai_coordinator.suggest_strategy(self.binary_path, "vulnerability_scan")
-                    self.update_output.emit(log_message(f"[Strategy] Recommended strategy: {strategy}"))
+                    strategy = self.ai_coordinator.suggest_strategy(
+                        self.binary_path, "vulnerability_scan"
+                    )
+                    self.update_output.emit(
+                        log_message(f"[Strategy] Recommended strategy: {strategy}")
+                    )
 
                 # Run comprehensive coordinated analysis
                 coordinated_result = comprehensive_analysis(self.binary_path)
@@ -27348,7 +31567,9 @@ ANALYSIS SUMMARY
                                 report += f"{key.replace('_', ' ').title()}: {value}\n"
 
                     self.update_analysis_results.emit(report)
-                    self.update_output.emit(log_message("[Static Vuln] Comprehensive analysis complete"))
+                    self.update_output.emit(
+                        log_message("[Static Vuln] Comprehensive analysis complete")
+                    )
 
                     # Display performance statistics
                     if hasattr(self.ai_coordinator, "get_performance_stats"):
@@ -27362,7 +31583,11 @@ ANALYSIS SUMMARY
                         self.update_analysis_results.emit(perf_report)
 
                     return
-                self.update_output.emit(log_message("[Static Vuln] Comprehensive analysis failed, falling back to standard analysis..."))
+                self.update_output.emit(
+                    log_message(
+                        "[Static Vuln] Comprehensive analysis failed, falling back to standard analysis..."
+                    )
+                )
 
             # Initialize vulnerability engine
             vuln_engine = VulnerabilityEngine()
@@ -27402,7 +31627,9 @@ ANALYSIS SUMMARY
                 report += "ML Vulnerability Assessment:\n"
                 report += f"  Vulnerability Score: {ml_score:.2f}\n"
                 report += f"  Confidence: {ml_confidence:.1%}\n"
-                report += f"  Classification: {'Vulnerable' if ml_score > 0.5 else 'Likely Benign'}\n\n"
+                report += (
+                    f"  Classification: {'Vulnerable' if ml_score > 0.5 else 'Likely Benign'}\n\n"
+                )
 
                 if ml_results.get("risk_factors"):
                     report += "Identified Risk Factors:\n"
@@ -27417,24 +31644,29 @@ ANALYSIS SUMMARY
             report += f"  Overall Risk Level: {'HIGH' if critical_vulns > 0 else 'MEDIUM' if total_vulns > 0 else 'LOW'}\n"
 
             self.update_analysis_results.emit(report)
-            self.update_output.emit(log_message(f"[Static Vuln] Scan complete - {total_vulns} vulnerabilities found"))
+            self.update_output.emit(
+                log_message(f"[Static Vuln] Scan complete - {total_vulns} vulnerabilities found")
+            )
 
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Static Vuln] Missing dependencies: {e}"))
-            self.update_analysis_results.emit("Static vulnerability analysis requires additional modules.\n")
+            self.update_analysis_results.emit(
+                "Static vulnerability analysis requires additional modules.\n"
+            )
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(log_message(f"[Static Vuln] Error: {e}"))
             self.update_analysis_results.emit(f"Static vulnerability analysis failed: {e}\n")
 
     def run_ml_vulnerability_prediction(self):
         """ML vulnerability prediction functionality has been removed."""
-        QMessageBox.information(self, "Function Removed", "ML vulnerability prediction is no longer available.")
-
-
-
-
+        QMessageBox.information(
+            self, "Function Removed", "ML vulnerability prediction is no longer available."
+        )
 
     def generate_exploit_strategy(self):
         """Generate an exploitation strategy for the loaded binary."""
@@ -27466,8 +31698,12 @@ ANALYSIS SUMMARY
             if strategy:
                 self.update_analysis_results.emit(f"Exploit Strategy:\n{'-' * 50}\n")
                 self.update_analysis_results.emit(f"Target: {strategy.get('target', 'Unknown')}\n")
-                self.update_analysis_results.emit(f"Confidence: {strategy.get('confidence', 0):.1%}\n")
-                self.update_analysis_results.emit(f"\nApproach:\n{strategy.get('approach', 'No approach generated')}\n")
+                self.update_analysis_results.emit(
+                    f"Confidence: {strategy.get('confidence', 0):.1%}\n"
+                )
+                self.update_analysis_results.emit(
+                    f"\nApproach:\n{strategy.get('approach', 'No approach generated')}\n"
+                )
 
                 if "techniques" in strategy:
                     self.update_analysis_results.emit("\nRecommended Techniques:\n")
@@ -27494,7 +31730,10 @@ ANALYSIS SUMMARY
             self.update_analysis_results.emit("4. Test exploits in controlled environment\n")
             self.update_output.emit(log_message("[Exploit] Using fallback strategy generation"))
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(log_message(f"[Exploit] Error: {e}"))
             self.update_analysis_results.emit(f"Strategy generation failed: {e}\n")
 
@@ -27504,7 +31743,9 @@ ANALYSIS SUMMARY
             QMessageBox.warning(self, "No File", "Please select a binary file first.")
             return
 
-        self.update_output.emit(log_message("[Auto-Exploit] Starting full automated exploitation..."))
+        self.update_output.emit(
+            log_message("[Auto-Exploit] Starting full automated exploitation...")
+        )
         self.update_analysis_results.emit("\n=== Full Automated Exploitation ===\n")
 
         try:
@@ -27521,7 +31762,10 @@ ANALYSIS SUMMARY
             self.update_output.emit(log_message("[Auto-Exploit] Automated exploitation complete"))
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(log_message(f"[Auto-Exploit] Error: {e}"))
             self.update_analysis_results.emit(f"Automated exploitation failed: {e}\n")
 
@@ -27553,7 +31797,9 @@ ANALYSIS SUMMARY
                 spec = importlib.util.find_spec(module)
                 if spec is None:
                     missing.append(f"{module} - {description}")
-                    self.update_analysis_results.emit(f"❌ {module}: Not installed ({description})\n")
+                    self.update_analysis_results.emit(
+                        f"❌ {module}: Not installed ({description})\n"
+                    )
                 else:
                     available.append(f"{module} - {description}")
                     self.update_analysis_results.emit(f"✅ {module}: Installed ({description})\n")
@@ -27564,14 +31810,23 @@ ANALYSIS SUMMARY
                     self.update_analysis_results.emit(f"  • {dep}\n")
 
                 self.update_analysis_results.emit("\nTo install missing dependencies:\n")
-                self.update_analysis_results.emit("  pip install " + " ".join([d.split(" - ")[0] for d in missing]) + "\n")
+                self.update_analysis_results.emit(
+                    "  pip install " + " ".join([d.split(" - ")[0] for d in missing]) + "\n"
+                )
             else:
                 self.update_analysis_results.emit("\nAll dependencies are installed! ✅\n")
 
-            self.update_output.emit(log_message(f"[Dependencies] Check complete: {len(available)} installed, {len(missing)} missing"))
+            self.update_output.emit(
+                log_message(
+                    f"[Dependencies] Check complete: {len(available)} installed, {len(missing)} missing"
+                )
+            )
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(log_message(f"[Dependencies] Error: {e}"))
             self.update_analysis_results.emit(f"Dependency check failed: {e}\n")
 
@@ -27583,16 +31838,27 @@ ANALYSIS SUMMARY
             from ..utils.logger import setup_logging
 
             # Setup logging with rotation
-            log_dir = os.path.join(os.path.dirname(self.binary_path) if self.binary_path else os.getcwd(), "intellicrack_logs")
+            log_dir = os.path.join(
+                os.path.dirname(self.binary_path) if self.binary_path else os.getcwd(),
+                "intellicrack_logs",
+            )
             os.makedirs(log_dir, exist_ok=True)
 
-            log_file = os.path.join(log_dir, f'intellicrack_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.log')
+            log_file = os.path.join(
+                log_dir, f'intellicrack_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}.log'
+            )
 
             # Configure logging
-            setup_logging(log_file=log_file, max_bytes=10*1024*1024, backup_count=5)
+            setup_logging(log_file=log_file, max_bytes=10 * 1024 * 1024, backup_count=5)
 
-            self.update_output.emit(log_message(f"[Logging] Persistent logging enabled: {log_file}"))
-            QMessageBox.information(self, "Logging Setup", f"Logging configured to:\n{log_file}\n\nLogs will rotate at 10MB")
+            self.update_output.emit(
+                log_message(f"[Logging] Persistent logging enabled: {log_file}")
+            )
+            QMessageBox.information(
+                self,
+                "Logging Setup",
+                f"Logging configured to:\n{log_file}\n\nLogs will rotate at 10MB",
+            )
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
             self.update_output.emit(log_message(f"[Logging] Error: {e}"))
@@ -27600,26 +31866,42 @@ ANALYSIS SUMMARY
 
     def install_dependencies(self, dependencies):
         """Install or update dependencies."""
-        self.update_output.emit(log_message(f"[Dependencies] Installing: {', '.join(dependencies)}"))
+        self.update_output.emit(
+            log_message(f"[Dependencies] Installing: {', '.join(dependencies)}")
+        )
 
         try:
             import subprocess
 
             for dep in dependencies:
                 self.update_output.emit(log_message(f"[Dependencies] Installing {dep}..."))
-                result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", dep],
-                                      check=False, capture_output=True, text=True)
+                result = subprocess.run(
+                    [sys.executable, "-m", "pip", "install", "--upgrade", dep],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
 
                 if result.returncode == 0:
-                    self.update_output.emit(log_message(f"[Dependencies] {dep} installed successfully"))
+                    self.update_output.emit(
+                        log_message(f"[Dependencies] {dep} installed successfully")
+                    )
                 else:
-                    self.update_output.emit(log_message(f"[Dependencies] Failed to install {dep}: {result.stderr}"))
+                    self.update_output.emit(
+                        log_message(f"[Dependencies] Failed to install {dep}: {result.stderr}")
+                    )
 
-            QMessageBox.information(self, "Installation Complete",
-                                  "Dependency installation complete. Some changes may require restarting Intellicrack.")
+            QMessageBox.information(
+                self,
+                "Installation Complete",
+                "Dependency installation complete. Some changes may require restarting Intellicrack.",
+            )
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            self.logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(log_message(f"[Dependencies] Error: {e}"))
             QMessageBox.warning(self, "Installation Error", f"Failed to install dependencies: {e}")
 
@@ -27637,7 +31919,9 @@ ANALYSIS SUMMARY
             process = psutil.Process()
             memory_before = process.memory_info().rss / 1024 / 1024  # MB
 
-            self.update_analysis_results.emit(f"Memory before optimization: {memory_before:.2f} MB\n")
+            self.update_analysis_results.emit(
+                f"Memory before optimization: {memory_before:.2f} MB\n"
+            )
 
             # Clear analysis results if they're large
             if hasattr(self, "analyze_results") and len(self.analyze_results) > 10000:
@@ -27655,7 +31939,9 @@ ANALYSIS SUMMARY
                     self.update_analysis_results.emit(f"Cleared {capture_size} captured packets\n")
 
             # Clear traffic analyzer cache
-            if hasattr(self, "traffic_analyzer") and hasattr(self.traffic_analyzer, "captured_packets"):
+            if hasattr(self, "traffic_analyzer") and hasattr(
+                self.traffic_analyzer, "captured_packets"
+            ):
                 self.traffic_analyzer.captured_packets = []
                 self.update_analysis_results.emit("Cleared traffic analyzer cache\n")
 
@@ -27672,30 +31958,42 @@ ANALYSIS SUMMARY
             memory_after = process.memory_info().rss / 1024 / 1024  # MB
             memory_freed = memory_before - memory_after
 
-            self.update_analysis_results.emit(f"\nMemory after optimization: {memory_after:.2f} MB\n")
+            self.update_analysis_results.emit(
+                f"\nMemory after optimization: {memory_after:.2f} MB\n"
+            )
             self.update_analysis_results.emit(f"Memory freed: {memory_freed:.2f} MB\n")
 
             # Show system memory info
             vm = psutil.virtual_memory()
             self.update_analysis_results.emit("\nSystem memory:\n")
             self.update_analysis_results.emit(f"  Total: {vm.total / 1024 / 1024 / 1024:.2f} GB\n")
-            self.update_analysis_results.emit(f"  Available: {vm.available / 1024 / 1024 / 1024:.2f} GB\n")
+            self.update_analysis_results.emit(
+                f"  Available: {vm.available / 1024 / 1024 / 1024:.2f} GB\n"
+            )
             self.update_analysis_results.emit(f"  Used: {vm.percent}%\n")
 
-            self.update_output.emit(log_message(f"[Memory] Optimization complete - freed {memory_freed:.2f} MB"))
+            self.update_output.emit(
+                log_message(f"[Memory] Optimization complete - freed {memory_freed:.2f} MB")
+            )
 
         except ImportError as e:
             logger.error("Import error in main_app.py: %s", e)
-            self.update_output.emit(log_message("[Memory] psutil not available - using basic cleanup"))
+            self.update_output.emit(
+                log_message("[Memory] psutil not available - using basic cleanup")
+            )
 
             import gc
+
             gc.collect()
 
             self.update_analysis_results.emit("Basic memory cleanup performed\n")
             self.update_analysis_results.emit("Install psutil for detailed memory statistics\n")
 
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+            logger.error(
+                "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                e,
+            )
             self.update_output.emit(log_message(f"[Memory] Error: {e}"))
             self.update_analysis_results.emit(f"Memory optimization failed: {e}\n")
 
@@ -27709,21 +32007,28 @@ ANALYSIS SUMMARY
                 self.update_output.emit(log_message("[Demo] Task started in background thread"))
 
                 import time
+
                 for i in range(5):
                     time.sleep(1)
                     self.update_output.emit(log_message(f"[Demo] Progress: {(i+1)*20}%"))
 
                 self.update_output.emit(log_message("[Demo] Task completed successfully"))
                 self.update_analysis_results.emit("\n=== Thread Demo Complete ===\n")
-                self.update_analysis_results.emit("Long-running tasks should always run in separate threads\n")
+                self.update_analysis_results.emit(
+                    "Long-running tasks should always run in separate threads\n"
+                )
                 self.update_analysis_results.emit("This prevents the UI from freezing\n")
 
             except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-                self.logger.error("(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s", e)
+                self.logger.error(
+                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
+                    e,
+                )
                 self.update_output.emit(log_message(f"[Demo] Error in thread: {e}"))
 
         # Start the task in a new thread
         import threading
+
         thread = threading.Thread(target=long_running_task, daemon=True)
         thread.start()
 
@@ -27738,7 +32043,9 @@ ANALYSIS SUMMARY
             if dialog.exec():
                 # Configuration saved
                 self.update_output.emit(log_message("[LLM] Configuration updated"))
-                QMessageBox.information(self, "LLM Configuration", "LLM settings have been updated.")
+                QMessageBox.information(
+                    self, "LLM Configuration", "LLM settings have been updated."
+                )
         except ImportError as e:
             self.logger.error("Import error in main_app.py: %s", e)
             # Fallback implementation
@@ -27762,9 +32069,11 @@ To configure LLMs, set the appropriate environment variables and restart Intelli
             QMessageBox.information(self, "LLM Configuration", config_text)
             self.update_output.emit(log_message("[LLM] Configuration dialog shown"))
 
+
 # -------------------------------
 # Entry Point
 # -------------------------------
+
 
 def launch():
     """Starts the application with an optional splash screen."""
@@ -27775,6 +32084,7 @@ def launch():
         print("[LAUNCH] Importing Qt modules...")
         from PyQt6.QtCore import Qt
         from PyQt6.QtWidgets import QApplication
+
         print("[LAUNCH] Qt modules imported successfully")
 
         # Set attributes for better compatibility
@@ -27794,7 +32104,9 @@ def launch():
 
             # Force software rendering for ALL Intel Arc cards and when explicitly requested
             if force_software or is_intel_arc:
-                print(f"[LAUNCH] Intel GPU detected ({gpu_type}) - using SOFTWARE rendering (Intel Arc compatibility)")
+                print(
+                    f"[LAUNCH] Intel GPU detected ({gpu_type}) - using SOFTWARE rendering (Intel Arc compatibility)"
+                )
                 QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseSoftwareOpenGL, True)
                 QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, False)
                 # AA_DisableWindowContextHelpButton not available in PyQt6
@@ -27803,7 +32115,9 @@ def launch():
                 QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseDesktopOpenGL, False)
                 QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseOpenGLES, False)
             else:
-                print(f"[LAUNCH] Intel GPU detected ({gpu_type}) - using limited hardware acceleration")
+                print(
+                    f"[LAUNCH] Intel GPU detected ({gpu_type}) - using limited hardware acceleration"
+                )
                 # Even non-Arc Intel GPUs should use conservative settings
                 QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseSoftwareOpenGL, True)
                 QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, False)
@@ -27813,7 +32127,9 @@ def launch():
             QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseSoftwareOpenGL, False)
             QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True)
         else:
-            print(f"[LAUNCH] No GPU detected or unknown vendor ({gpu_vendor}) - using software rendering")
+            print(
+                f"[LAUNCH] No GPU detected or unknown vendor ({gpu_vendor}) - using software rendering"
+            )
             # Use software OpenGL for CPU mode
             QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseSoftwareOpenGL, True)
             QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, False)
@@ -27832,6 +32148,7 @@ def launch():
         print("[LAUNCH] Using existing QApplication instance")
 
     import intellicrack
+
     base_path = os.path.dirname(os.path.dirname(intellicrack.__file__))
     splash_image_path = os.path.join(base_path, "intellicrack", "assets", "splash.png")
     icon_path = os.path.join(base_path, "intellicrack", "assets", "icon.ico")
@@ -27841,6 +32158,7 @@ def launch():
     if os.path.exists(splash_image_path) and not os.environ.get("INTELLICRACK_NO_SPLASH"):
         try:
             from .dialogs.splash_screen import SplashScreen
+
             splash = SplashScreen(splash_image_path)
             splash.show()
             splash.set_progress(10, "Starting Intellicrack...")
@@ -27899,10 +32217,14 @@ def launch():
 
             # Show a simple error dialog
             from PyQt6.QtWidgets import QMessageBox
-            QMessageBox.critical(None, "Startup Error",
-                               f"Failed to initialize Intellicrack:\n{init_error!s}\n\n"
-                               "This might be a graphics driver compatibility issue.\n"
-                               "Try updating your Intel Arc Graphics drivers.")
+
+            QMessageBox.critical(
+                None,
+                "Startup Error",
+                f"Failed to initialize Intellicrack:\n{init_error!s}\n\n"
+                "This might be a graphics driver compatibility issue.\n"
+                "Try updating your Intel Arc Graphics drivers.",
+            )
             return 1
 
         # Check for first-run setup needs
@@ -27920,6 +32242,7 @@ def launch():
         if missing_deps and not skip_firstrun and not tensorflow_only:
             try:
                 from .dialogs.first_run_setup import FirstRunSetupDialog
+
                 dialog = FirstRunSetupDialog(deps, window)
                 dialog.exec()
             except ImportError:
@@ -27929,7 +32252,9 @@ def launch():
 
         # Force window to be visible and on top
         logger.info("Setting window properties...")
-        window.setWindowState(window.windowState() & ~Qt.WindowState.WindowMinimized | Qt.WindowState.WindowActive)
+        window.setWindowState(
+            window.windowState() & ~Qt.WindowState.WindowMinimized | Qt.WindowState.WindowActive
+        )
 
         # Ensure window has reasonable size first
         window.resize(1200, 800)
@@ -27972,6 +32297,7 @@ def launch():
 
         # Also write to a file for verification
         import datetime
+
         with open("LAUNCH_SUCCESS.log", "w") as f:
             f.write(f"Intellicrack launched successfully at {datetime.datetime.now()}\n")
             f.write("Window is visible and application is running!\n")
@@ -27997,7 +32323,9 @@ def launch():
         window.showNormal()
 
         # Force to foreground
-        window.setWindowState(window.windowState() & ~Qt.WindowState.WindowMinimized | Qt.WindowState.WindowActive)
+        window.setWindowState(
+            window.windowState() & ~Qt.WindowState.WindowMinimized | Qt.WindowState.WindowActive
+        )
 
         # Force Qt to process events
         app_instance.processEvents()
@@ -28010,9 +32338,9 @@ def launch():
         # Check for any modal widgets
         logger.info(f"Modal widgets: {app_instance.activeModalWidget()}")
         logger.info(f"Popup widgets: {app_instance.activePopupWidget()}")
-        logger.info(f"All top level widgets: {[w.objectName() or str(w) for w in app_instance.topLevelWidgets()]}")
-
-
+        logger.info(
+            f"All top level widgets: {[w.objectName() or str(w) for w in app_instance.topLevelWidgets()]}"
+        )
 
         # Make absolutely sure the main window is on top
         try:
@@ -28059,6 +32387,7 @@ def launch():
 
         # Also write to a file for verification
         import datetime
+
         with open("LAUNCH_SUCCESS.log", "w") as f:
             f.write(f"Intellicrack launched successfully at {datetime.datetime.now()}\n")
             f.write("Window is visible and application is running!\n")

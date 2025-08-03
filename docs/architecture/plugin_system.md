@@ -44,7 +44,7 @@ from intellicrack.plugins import PluginBase
 
 class MyPlugin(PluginBase):
     """Example plugin implementation."""
-    
+
     metadata = {
         'name': 'My Custom Plugin',
         'version': '1.0.0',
@@ -53,17 +53,17 @@ class MyPlugin(PluginBase):
         'category': 'analysis',
         'dependencies': ['numpy', 'requests']
     }
-    
+
     def __init__(self):
         super().__init__()
         self.config = self.load_config()
-    
+
     def analyze(self, binary_data):
         """Main analysis method."""
         results = {}
         # Plugin logic here
         return results
-    
+
     def get_ui_components(self):
         """Return UI components if applicable."""
         return None
@@ -212,10 +212,10 @@ class TestMyPlugin(PluginTestCase):
     def test_analysis(self):
         # Load test binary
         binary = self.load_test_binary('test.exe')
-        
+
         # Run plugin
         results = self.plugin.analyze(binary)
-        
+
         # Verify results
         assert 'vulnerabilities' in results
         assert len(results['vulnerabilities']) > 0
@@ -322,7 +322,7 @@ from intellicrack.core.analysis import AnalysisEngine
 
 class MyAnalysisEngine(AnalysisEngine):
     """Custom analysis engine."""
-    
+
     def analyze(self, binary):
         # Custom analysis logic
         pass
@@ -334,7 +334,7 @@ from PyQt5.QtWidgets import QWidget
 
 class MyPluginWidget(QWidget):
     """Custom UI widget."""
-    
+
     def __init__(self, plugin_api):
         super().__init__()
         self.api = plugin_api

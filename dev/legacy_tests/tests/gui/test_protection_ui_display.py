@@ -81,44 +81,44 @@ def create_test_analysis():
 def test_die_widget_display():
     """Test that protection widget properly displays protection results."""
     app = QApplication(sys.argv)
-    
+
     # Create widget
     widget = IntellicrackProtectionWidget()
     widget.show()
-    
+
     # Create test data
     test_analysis = create_test_analysis()
-    
+
     # Update widget with test data
     widget.display_results(test_analysis)
-    
+
     # Verify tree has items
     tree = widget.detection_tree
     root = tree.invisibleRootItem()
-    
+
     print("=== Testing Protection Widget Display ===")
-    
+
     # Check detection items
     type_count = 0
     detection_count = 0
-    
+
     for i in range(root.childCount()):
         type_item = root.child(i)
         type_count += 1
         print(f"✓ Protection type displayed: {type_item.text(0)}")
-        
+
         # Check detections under this type
         for j in range(type_item.childCount()):
             det_item = type_item.child(j)
             detection_count += 1
             print(f"  - {det_item.text(0)} ({det_item.text(1)}) - Version: {det_item.text(2)}")
-    
+
     if type_count > 0 and detection_count > 0:
         print(f"✓ Successfully displayed {type_count} types with {detection_count} detections")
     else:
         print(f"✗ Failed to display detections (types: {type_count}, detections: {detection_count})")
         return False
-    
+
     # Check summary text
     summary_text = widget.summary_text.toPlainText()
     if summary_text:
@@ -127,7 +127,7 @@ def test_die_widget_display():
     else:
         print("✗ No summary displayed")
         return False
-    
+
     # Check technical details text
     tech_details_text = widget.tech_details_text.toPlainText()
     if tech_details_text:
@@ -136,21 +136,21 @@ def test_die_widget_display():
     else:
         print("✗ No technical details displayed")
         return False
-        
+
     # Check bypass recommendations
     bypass_text = widget.bypass_text.toPlainText()
     if bypass_text:
         print(f"✓ Bypass recommendations displayed: {len(bypass_text)} characters")
     else:
         print("✗ No bypass recommendations displayed")
-    
+
     print("\n✓ Protection widget display test PASSED")
     return True
 
 def test_die_binary_analysis():
     """Test analyzing a real binary with the protection engine."""
     print("\n=== Testing Real Binary Analysis ===")
-    
+
     # Create a test executable
     test_binary = None
     try:
@@ -160,11 +160,11 @@ def test_die_binary_analysis():
             f.write(b'MZ')  # DOS header signature
             f.write(b'\x00' * 100)  # Padding
             test_binary = f.name
-        
+
         # Test with protection detector
         detector = IntellicrackProtectionCore()
         result = detector.detect_protections(test_binary)
-        
+
         if result:
             print("✓ Protection analysis completed successfully")
             print(f"  File type: {result.file_type}")
@@ -176,7 +176,7 @@ def test_die_binary_analysis():
         else:
             print("✗ Protection analysis failed")
             return False
-            
+
     except Exception as e:
         print(f"✗ Error during binary analysis: {str(e)}")
         return False
@@ -188,29 +188,29 @@ def test_die_binary_analysis():
 def test_llm_integration_with_die():
     """Test that LLM tools can properly use protection engine results."""
     print("\n=== Testing LLM Integration with Protection Engine ===")
-    
+
     try:
         from intellicrack.tools.protection_analyzer_tool import ProtectionAnalyzerTool
 
         # Initialize tool
         tool = ProtectionAnalyzerTool()
-        
+
         # Create test binary path
         test_path = "/test/binary.exe"
-        
+
         # Test analyze method
         # Create a real test file
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as f:
             f.write(b'MZ' + b'\x00' * 100)
             test_file = f.name
-            
+
         try:
             result = tool.analyze(test_file, detailed=True)
-            
+
             if result and result.get("success", False):
                 print("✓ ProtectionAnalyzerTool analyze method works")
                 print(f"  Result keys: {list(result.keys())}")
-                
+
                 # Check if it has expected structure
                 if "protection_analysis" in result:
                     print("✓ Has protection_analysis section")
@@ -224,7 +224,7 @@ def test_llm_integration_with_die():
         finally:
             if os.path.exists(test_file):
                 os.unlink(test_file)
-            
+
     except Exception as e:
         print(f"✗ LLM integration test failed: {str(e)}")
         return False
@@ -234,28 +234,28 @@ def main():
     print("=" * 60)
     print("Testing Protection Engine UI Display and Integration")
     print("=" * 60)
-    
+
     results = []
-    
+
     # Run tests
     results.append(("Widget Display", test_die_widget_display()))
     results.append(("Binary Analysis", test_die_binary_analysis()))
     results.append(("LLM Integration", test_llm_integration_with_die()))
-    
+
     # Summary
     print("\n" + "=" * 60)
     print("TEST SUMMARY")
     print("=" * 60)
-    
+
     passed = sum(1 for _, result in results if result)
     total = len(results)
-    
+
     for test_name, result in results:
         status = "PASSED" if result else "FAILED"
         print(f"{test_name}: {status}")
-    
+
     print(f"\nTotal: {passed}/{total} tests passed ({passed/total*100:.0f}%)")
-    
+
     # Exit code
     sys.exit(0 if passed == total else 1)
 

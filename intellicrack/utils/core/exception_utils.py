@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import json
 import logging
 import os
@@ -42,6 +41,7 @@ import pickle
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
+
 class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
@@ -49,12 +49,21 @@ class RestrictedUnpickler(pickle.Unpickler):
         """Override find_class to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
-            "numpy", "numpy.core.multiarray", "numpy.core.numeric",
-            "pandas", "pandas.core.frame", "pandas.core.series",
-            "sklearn", "torch", "tensorflow",
-            "__builtin__", "builtins",
-            "collections", "collections.abc",
-            "traceback", "types",
+            "numpy",
+            "numpy.core.multiarray",
+            "numpy.core.numeric",
+            "pandas",
+            "pandas.core.frame",
+            "pandas.core.series",
+            "sklearn",
+            "torch",
+            "tensorflow",
+            "__builtin__",
+            "builtins",
+            "collections",
+            "collections.abc",
+            "traceback",
+            "types",
         }
 
         # Allow model classes from our own modules
@@ -67,6 +76,7 @@ class RestrictedUnpickler(pickle.Unpickler):
 
         # Deny everything else
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
+
 
 def secure_pickle_dump(obj, file_path):
     """Securely dump object with integrity check."""
@@ -81,11 +91,13 @@ def secure_pickle_dump(obj, file_path):
         f.write(mac)
         f.write(data)
 
+
 def secure_pickle_load(file_path):
     """Securely load object with integrity verification."""
     try:
         # Try joblib first as it's safer for ML models
         import joblib
+
         return joblib.load(file_path)
     except (ImportError, ValueError):
         # Fallback to pickle with restricted unpickler
@@ -103,6 +115,7 @@ def secure_pickle_load(file_path):
 
     # Load object using RestrictedUnpickler
     import io
+
     return RestrictedUnpickler(io.BytesIO(data)).load()
 
 
@@ -170,10 +183,19 @@ def _report_error(exc_type, exc_value, exc_traceback) -> None:
     """
     try:
         error_report = {
-            "timestamp": logger.handlers[0].format(logging.LogRecord(
-                name="error", level=logging.ERROR, pathname="", lineno=0,
-                msg="", args=(), exc_info=None,
-            )) if logger.handlers else str(sys.exc_info()),
+            "timestamp": logger.handlers[0].format(
+                logging.LogRecord(
+                    name="error",
+                    level=logging.ERROR,
+                    pathname="",
+                    lineno=0,
+                    msg="",
+                    args=(),
+                    exc_info=None,
+                )
+            )
+            if logger.handlers
+            else str(sys.exc_info()),
             "exception_type": exc_type.__name__,
             "exception_value": str(exc_value),
             "traceback": traceback.format_exception(exc_type, exc_value, exc_traceback),
@@ -241,8 +263,9 @@ def save_config(config: dict[str, Any], config_path: str = "config.json") -> boo
         return False
 
 
-def setup_file_logging(log_file: str = "intellicrack.log",
-                      level: int = logging.INFO) -> logging.Logger:
+def setup_file_logging(
+    log_file: str = "intellicrack.log", level: int = logging.INFO
+) -> logging.Logger:
     """Set up file logging for the application.
 
     Args:
@@ -377,6 +400,7 @@ def load_ai_model(model_path: str) -> Any | None:
         if model_path.endswith(".joblib"):
             try:
                 import joblib
+
                 model = joblib.load(model_path)
                 logger.info("Joblib model loaded: %s", model_path)
                 return model
@@ -403,6 +427,7 @@ def load_ai_model(model_path: str) -> Any | None:
         elif model_path.endswith(".onnx"):
             try:
                 import onnxruntime
+
                 model = onnxruntime.InferenceSession(model_path)
                 logger.info("ONNX model loaded: %s", model_path)
                 return model

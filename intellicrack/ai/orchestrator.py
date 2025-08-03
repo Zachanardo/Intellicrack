@@ -55,9 +55,9 @@ logger = get_logger(__name__)
 class AnalysisComplexity(Enum):
     """Defines the complexity level of analysis tasks."""
 
-    SIMPLE = "simple"      # Use fast detection tools only
+    SIMPLE = "simple"  # Use fast detection tools only
     MODERATE = "moderate"  # Use detection tools + basic LLM
-    COMPLEX = "complex"    # Use full agentic reasoning
+    COMPLEX = "complex"  # Use full agentic reasoning
     CRITICAL = "critical"  # Use all available AI resources
 
 
@@ -186,13 +186,14 @@ class AIEventBus:
             if event_type not in self._subscribers:
                 self._subscribers[event_type] = []
 
-            self._subscribers[event_type].append({
-                "callback": callback,
-                "component": component_name,
-            })
+            self._subscribers[event_type].append(
+                {
+                    "callback": callback,
+                    "component": component_name,
+                }
+            )
 
-        logger.debug("Component %s subscribed to %s",
-                     component_name, event_type)
+        logger.debug("Component %s subscribed to %s", component_name, event_type)
 
     def emit(self, event_type: str, data: dict[str, Any], source_component: str) -> None:
         """Emit an event to all subscribers."""
@@ -200,8 +201,12 @@ class AIEventBus:
             subscribers = self._subscribers.get(event_type, [])
 
         if subscribers:
-            logger.debug("Emitting %s from %s to %d subscribers",
-                         event_type, source_component, len(subscribers))
+            logger.debug(
+                "Emitting %s from %s to %d subscribers",
+                event_type,
+                source_component,
+                len(subscribers),
+            )
 
             for _subscriber in subscribers:
                 try:
@@ -219,22 +224,22 @@ class AIEventBus:
                         try:
                             sub["callback"](data, source_component)
                         except (OSError, ValueError, RuntimeError) as e:
-                            logger.error(
-                                "Error in subscriber %s: %s", sub["component"], e)
+                            logger.error("Error in subscriber %s: %s", sub["component"], e)
 
-                    threading.Thread(target=lambda: call_subscriber(
-                        _subscriber), daemon=True).start()
+                    threading.Thread(
+                        target=lambda: call_subscriber(_subscriber), daemon=True
+                    ).start()
 
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error calling subscriber %s: %s",
-                                 _subscriber["component"], e)
+                    logger.error("Error calling subscriber %s: %s", _subscriber["component"], e)
 
     def unsubscribe(self, event_type: str, component_name: str) -> None:
         """Unsubscribe a component from an event type."""
         with self._lock:
             if event_type in self._subscribers:
                 self._subscribers[event_type] = [
-                    _sub for _sub in self._subscribers[event_type]
+                    _sub
+                    for _sub in self._subscribers[event_type]
                     if _sub["component"] != component_name
                 ]
 
@@ -341,26 +346,25 @@ class AIOrchestrator:
     def _setup_event_subscriptions(self):
         """Set up event subscriptions for component coordination."""
         # Subscribe to analysis completion events
+        self.event_bus.subscribe("analysis_complete", self._on_analysis_complete, "orchestrator")
         self.event_bus.subscribe(
-            "analysis_complete", self._on_analysis_complete, "orchestrator")
-        self.event_bus.subscribe(
-            "ml_prediction_complete", self._on_ml_prediction_complete, "orchestrator")
-        self.event_bus.subscribe(
-            "model_loaded", self._on_model_loaded, "orchestrator")
-        self.event_bus.subscribe(
-            "error_occurred", self._on_error_occurred, "orchestrator")
+            "ml_prediction_complete", self._on_ml_prediction_complete, "orchestrator"
+        )
+        self.event_bus.subscribe("model_loaded", self._on_model_loaded, "orchestrator")
+        self.event_bus.subscribe("error_occurred", self._on_error_occurred, "orchestrator")
 
     def _on_analysis_complete(self, data: dict[str, Any], source: str):
         """Handle analysis completion events."""
-        logger.info("Analysis complete from %s: %s",
-                    source, data.get("task_id", "unknown"))
+        logger.info("Analysis complete from %s: %s", source, data.get("task_id", "unknown"))
 
         # Update shared context with results
         if "results" in data:
-            self.shared_context.update({
-                f"last_analysis_{source}": data["results"],
-                f"last_analysis_time_{source}": datetime.now(),
-            })
+            self.shared_context.update(
+                {
+                    f"last_analysis_{source}": data["results"],
+                    f"last_analysis_time_{source}": datetime.now(),
+                }
+            )
 
     def _on_ml_prediction_complete(self, data: dict[str, Any], source: str):
         """Handle ML prediction completion events."""
@@ -373,19 +377,16 @@ class AIOrchestrator:
 
     def _on_model_loaded(self, data: dict[str, Any], source: str):
         """Handle model loading events."""
-        logger.info("Model loaded in %s: %s", source,
-                    data.get("model_name", "unknown"))
+        logger.info("Model loaded in %s: %s", source, data.get("model_name", "unknown"))
 
     def _on_error_occurred(self, data: dict[str, Any], source: str):
         """Handle error events."""
-        logger.error("Error in %s: %s", source,
-                     data.get("error", "unknown error"))
+        logger.error("Error in %s: %s", source, data.get("error", "unknown error"))
 
     def _escalate_to_complex_analysis(self, ml_data: dict[str, Any]):
         """Escalate low-confidence ML results to complex LLM analysis."""
         if self.model_manager:
-            logger.info(
-                "Escalating to complex analysis due to low ML confidence")
+            logger.info("Escalating to complex analysis due to low ML confidence")
             # Create complex analysis task
             task = AITask(
                 task_id=f"escalated_{ml_data.get('task_id', 'unknown')}",
@@ -402,8 +403,7 @@ class AIOrchestrator:
         """Start the task processing thread."""
         if not self.is_running:
             self.is_running = True
-            self.processing_thread = threading.Thread(
-                target=self._process_tasks, daemon=True)
+            self.processing_thread = threading.Thread(target=self._process_tasks, daemon=True)
             self.processing_thread.start()
             logger.info("Task processing started")
 
@@ -441,90 +441,79 @@ class AIOrchestrator:
         confidence = 0.0
 
         try:
-            logger.info("Executing task %s (type: %s, complexity: %s)",
-                        task.task_id, task.task_type, task.complexity)
+            logger.info(
+                "Executing task %s (type: %s, complexity: %s)",
+                task.task_id,
+                task.task_type,
+                task.complexity,
+            )
 
             # Initialize progress tracking
-            self.update_task_progress(
-                task.task_id, 0, "Starting task execution...")
+            self.update_task_progress(task.task_id, 0, "Starting task execution...")
 
             # Route task based on type and complexity
-            self.update_task_progress(
-                task.task_id, 10, "Routing task to appropriate component...")
+            self.update_task_progress(task.task_id, 10, "Routing task to appropriate component...")
 
             if task.task_type == AITaskType.VULNERABILITY_SCAN:
-                self.update_task_progress(
-                    task.task_id, 20, "Executing vulnerability scan...")
-                result_data, components_used, confidence = self._execute_vulnerability_scan(
-                    task)
+                self.update_task_progress(task.task_id, 20, "Executing vulnerability scan...")
+                result_data, components_used, confidence = self._execute_vulnerability_scan(task)
                 success = True
 
             elif task.task_type == AITaskType.LICENSE_ANALYSIS:
-                self.update_task_progress(
-                    task.task_id, 20, "Analyzing license patterns...")
-                result_data, components_used, confidence = self._execute_license_analysis(
-                    task)
+                self.update_task_progress(task.task_id, 20, "Analyzing license patterns...")
+                result_data, components_used, confidence = self._execute_license_analysis(task)
                 success = True
 
             elif task.task_type == AITaskType.BINARY_ANALYSIS:
-                self.update_task_progress(
-                    task.task_id, 20, "Performing binary analysis...")
-                result_data, components_used, confidence = self._execute_binary_analysis(
-                    task)
+                self.update_task_progress(task.task_id, 20, "Performing binary analysis...")
+                result_data, components_used, confidence = self._execute_binary_analysis(task)
                 success = True
 
             elif task.task_type == AITaskType.REASONING:
-                self.update_task_progress(
-                    task.task_id, 20, "Processing reasoning task...")
-                result_data, components_used, confidence = self._execute_reasoning_task(
-                    task)
+                self.update_task_progress(task.task_id, 20, "Processing reasoning task...")
+                result_data, components_used, confidence = self._execute_reasoning_task(task)
                 success = True
 
             elif task.task_type == AITaskType.FRIDA_SCRIPT_GENERATION:
-                self.update_task_progress(
-                    task.task_id, 20, "Generating Frida script...")
+                self.update_task_progress(task.task_id, 20, "Generating Frida script...")
                 result_data, components_used, confidence = self._execute_frida_script_generation(
-                    task)
+                    task
+                )
                 success = True
 
             elif task.task_type == AITaskType.GHIDRA_SCRIPT_GENERATION:
-                self.update_task_progress(
-                    task.task_id, 20, "Generating Ghidra script...")
+                self.update_task_progress(task.task_id, 20, "Generating Ghidra script...")
                 result_data, components_used, confidence = self._execute_ghidra_script_generation(
-                    task)
+                    task
+                )
                 success = True
 
             elif task.task_type == AITaskType.UNIFIED_SCRIPT_GENERATION:
-                self.update_task_progress(
-                    task.task_id, 20, "Generating unified scripts...")
+                self.update_task_progress(task.task_id, 20, "Generating unified scripts...")
                 result_data, components_used, confidence = self._execute_unified_script_generation(
-                    task)
+                    task
+                )
                 success = True
 
             elif task.task_type == AITaskType.SCRIPT_TESTING:
-                self.update_task_progress(
-                    task.task_id, 20, "Testing generated scripts...")
-                result_data, components_used, confidence = self._execute_script_testing(
-                    task)
+                self.update_task_progress(task.task_id, 20, "Testing generated scripts...")
+                result_data, components_used, confidence = self._execute_script_testing(task)
                 success = True
 
             elif task.task_type == AITaskType.SCRIPT_REFINEMENT:
-                self.update_task_progress(
-                    task.task_id, 20, "Refining script quality...")
-                result_data, components_used, confidence = self._execute_script_refinement(
-                    task)
+                self.update_task_progress(task.task_id, 20, "Refining script quality...")
+                result_data, components_used, confidence = self._execute_script_refinement(task)
                 success = True
 
             elif task.task_type == AITaskType.AUTONOMOUS_WORKFLOW:
-                self.update_task_progress(
-                    task.task_id, 20, "Executing autonomous workflow...")
-                result_data, components_used, confidence = self._execute_autonomous_workflow(
-                    task)
+                self.update_task_progress(task.task_id, 20, "Executing autonomous workflow...")
+                result_data, components_used, confidence = self._execute_autonomous_workflow(task)
                 success = True
 
             else:
                 self.update_task_progress(
-                    task.task_id, 0, f"Error: Unknown task type {task.task_type}")
+                    task.task_id, 0, f"Error: Unknown task type {task.task_type}"
+                )
                 errors.append(f"Unknown task type: {task.task_type}")
                 logger.warning("Unknown task type: %s", task.task_type)
 
@@ -535,8 +524,7 @@ class AIOrchestrator:
 
         # Update progress to completion
         if success:
-            self.update_task_progress(
-                task.task_id, 90, "Finalizing results...")
+            self.update_task_progress(task.task_id, 90, "Finalizing results...")
 
         # Create result
         processing_time = (datetime.now() - start_time).total_seconds()
@@ -553,18 +541,20 @@ class AIOrchestrator:
 
         # Mark task as completed
         if success:
-            self.update_task_progress(
-                task.task_id, 100, "Task completed successfully!")
+            self.update_task_progress(task.task_id, 100, "Task completed successfully!")
         else:
-            self.update_task_progress(
-                task.task_id, 0, "Task failed with errors")
+            self.update_task_progress(task.task_id, 0, "Task failed with errors")
 
         # Emit completion event
-        self.event_bus.emit("task_complete", {
-            "task_id": task.task_id,
-            "success": success,
-            "result": result_data,
-        }, "orchestrator")
+        self.event_bus.emit(
+            "task_complete",
+            {
+                "task_id": task.task_id,
+                "success": success,
+                "result": result_data,
+            },
+            "orchestrator",
+        )
 
         # Call callback if provided
         if task.callback:
@@ -576,6 +566,7 @@ class AIOrchestrator:
         # Clear progress tracking after short delay (keep for UI feedback)
         def clear_progress():
             import time
+
             time.sleep(5)  # Keep progress visible for 5 seconds
             self.clear_task_progress(task.task_id)
 
@@ -598,26 +589,26 @@ class AIOrchestrator:
         confidence = 0.0
 
         # Escalate to LLM if complexity requires it or ML confidence is low
-        if (task.complexity in [AnalysisComplexity.COMPLEX, AnalysisComplexity.CRITICAL] or
-                confidence < 0.7):
-
+        if (
+            task.complexity in [AnalysisComplexity.COMPLEX, AnalysisComplexity.CRITICAL]
+            or confidence < 0.7
+        ):
             if self.model_manager and self.ai_assistant:
                 try:
                     # Use AI assistant for complex analysis
                     if hasattr(self.ai_assistant, "analyze_binary_complex"):
                         llm_results = self.ai_assistant.analyze_binary_complex(
-                            binary_path, ml_results)
+                            binary_path, ml_results
+                        )
                     elif hasattr(self.ai_assistant, "analyze_binary"):
-                        llm_results = self.ai_assistant.analyze_binary(
-                            binary_path)
+                        llm_results = self.ai_assistant.analyze_binary(binary_path)
                     else:
                         raise AttributeError("No analysis method available")
                     result_data["llm_analysis"] = llm_results
                     components_used.append("ai_assistant")
 
                     # Combine confidences
-                    confidence = max(
-                        confidence, llm_results.get("confidence", 0.0))
+                    confidence = max(confidence, llm_results.get("confidence", 0.0))
 
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("LLM analysis failed: %s", e)
@@ -634,14 +625,11 @@ class AIOrchestrator:
         if self.ai_assistant:
             try:
                 if hasattr(self.ai_assistant, "analyze_license_patterns"):
-                    license_results = self.ai_assistant.analyze_license_patterns(
-                        task.input_data)
+                    license_results = self.ai_assistant.analyze_license_patterns(task.input_data)
                 elif hasattr(self.ai_assistant, "analyze_license"):
-                    license_results = self.ai_assistant.analyze_license(
-                        task.input_data)
+                    license_results = self.ai_assistant.analyze_license(task.input_data)
                 else:
-                    raise AttributeError(
-                        "No license analysis method available")
+                    raise AttributeError("No license analysis method available")
                 result_data["license_analysis"] = license_results
                 components_used.append("ai_assistant")
                 # License analysis is typically high confidence
@@ -664,8 +652,7 @@ class AIOrchestrator:
         if self.hex_bridge:
             try:
                 if hasattr(self.hex_bridge, "analyze_binary_patterns"):
-                    hex_results = self.hex_bridge.analyze_binary_patterns(
-                        binary_path)
+                    hex_results = self.hex_bridge.analyze_binary_patterns(binary_path)
                 elif hasattr(self.hex_bridge, "analyze_binary"):
                     hex_results = self.hex_bridge.analyze_binary(binary_path)
                 else:
@@ -698,7 +685,8 @@ class AIOrchestrator:
 
                 # Run AI complex analysis
                 ai_complex_results = self.ai_assistant.analyze_binary_complex(
-                    binary_path, ml_results_for_ai,
+                    binary_path,
+                    ml_results_for_ai,
                 )
 
                 if ai_complex_results and not ai_complex_results.get("error"):
@@ -706,7 +694,9 @@ class AIOrchestrator:
                     components_used.append("ai_assistant_complex")
                     confidence = max(confidence, ai_complex_results.get("confidence", 0.0))
 
-                    logger.info(f"AI complex analysis completed with confidence: {ai_complex_results.get('confidence', 0.0)}")
+                    logger.info(
+                        f"AI complex analysis completed with confidence: {ai_complex_results.get('confidence', 0.0)}"
+                    )
 
             except Exception as e:
                 logger.error(f"AI complex binary analysis failed: {e}")
@@ -723,15 +713,21 @@ class AIOrchestrator:
         if self.llm_manager and self.llm_manager.get_available_llms():
             try:
                 # Prepare reasoning messages with the AI assistant's system prompt
-                system_content = self.system_prompt if self.system_prompt else """You are an autonomous binary analysis expert orchestrator integrated into Intellicrack.
+                system_content = (
+                    self.system_prompt
+                    if self.system_prompt
+                    else """You are an autonomous binary analysis expert orchestrator integrated into Intellicrack.
                     You excel at autonomous workflow management and comprehensive analysis reasoning. Analyze provided data and autonomously orchestrate complete binary analysis workflows.
                     Provide expert-level reasoning about binary security, vulnerabilities, and comprehensive recommendations. Make autonomous decisions about workflow execution and tool orchestration.
                     Be specific, actionable, and focus on complete autonomous execution of security analysis workflows."""
+                )
 
                 messages = [
                     LLMMessage(role="system", content=system_content),
                     LLMMessage(
-                        role="user", content=f"Analyze this data and provide reasoning: {json.dumps(task.input_data, indent=2)}"),
+                        role="user",
+                        content=f"Analyze this data and provide reasoning: {json.dumps(task.input_data, indent=2)}",
+                    ),
                 ]
 
                 # Get LLM response
@@ -750,8 +746,7 @@ class AIOrchestrator:
                     components_used.append("llm_manager")
                     confidence = 0.85
 
-                    logger.info(
-                        "LLM reasoning completed using model: %s", response.model)
+                    logger.info("LLM reasoning completed using model: %s", response.model)
                 else:
                     logger.warning("LLM returned empty response")
 
@@ -762,11 +757,9 @@ class AIOrchestrator:
         elif self.ai_assistant:
             try:
                 if hasattr(self.ai_assistant, "perform_reasoning"):
-                    reasoning_results = self.ai_assistant.perform_reasoning(
-                        task.input_data)
+                    reasoning_results = self.ai_assistant.perform_reasoning(task.input_data)
                 elif hasattr(self.ai_assistant, "analyze_complex"):
-                    reasoning_results = self.ai_assistant.analyze_complex(
-                        task.input_data)
+                    reasoning_results = self.ai_assistant.analyze_complex(task.input_data)
                 else:
                     raise AttributeError("No reasoning method available")
                 result_data["reasoning"] = reasoning_results
@@ -786,7 +779,10 @@ class AIOrchestrator:
         lines = content.split("\n")
         for _line in lines:
             line = _line.strip()
-            if any(_keyword in line.lower() for _keyword in ["recommend", "suggest", "should", "consider"]):
+            if any(
+                _keyword in line.lower()
+                for _keyword in ["recommend", "suggest", "should", "consider"]
+            ):
                 if len(line) > 20 and len(line) < 200:  # Reasonable length
                     recommendations.append(line)
 
@@ -811,8 +807,7 @@ class AIOrchestrator:
             analysis_data = task.input_data.get("analysis_data", {})
 
             # Generate Frida script
-            generated_script = script_generator.generate_frida_script(
-                analysis_data)
+            generated_script = script_generator.generate_frida_script(analysis_data)
 
             if generated_script:
                 result_data["script"] = generated_script.content
@@ -820,7 +815,9 @@ class AIOrchestrator:
                     "script_id": generated_script.metadata.script_id,
                     "script_type": generated_script.metadata.script_type.value,
                     "target_binary": generated_script.metadata.target_binary,
-                    "protection_types": [p.value for p in generated_script.metadata.protection_types],
+                    "protection_types": [
+                        p.value for p in generated_script.metadata.protection_types
+                    ],
                     "success_probability": generated_script.metadata.success_probability,
                     "entry_point": generated_script.entry_point,
                     "dependencies": generated_script.dependencies,
@@ -829,8 +826,11 @@ class AIOrchestrator:
                 }
                 confidence = generated_script.metadata.success_probability
 
-                logger.info("Generated Frida script for %s with %d%% confidence",
-                            binary_path, int(confidence * 100))
+                logger.info(
+                    "Generated Frida script for %s with %d%% confidence",
+                    binary_path,
+                    int(confidence * 100),
+                )
             else:
                 result_data["error"] = "Failed to generate Frida script"
                 confidence = 0.0
@@ -861,8 +861,7 @@ class AIOrchestrator:
             analysis_data = task.input_data.get("analysis_data", {})
 
             # Generate Ghidra script
-            generated_script = script_generator.generate_ghidra_script(
-                analysis_data)
+            generated_script = script_generator.generate_ghidra_script(analysis_data)
 
             if generated_script:
                 result_data["script"] = generated_script.content
@@ -870,7 +869,9 @@ class AIOrchestrator:
                     "script_id": generated_script.metadata.script_id,
                     "script_type": generated_script.metadata.script_type.value,
                     "target_binary": generated_script.metadata.target_binary,
-                    "protection_types": [p.value for p in generated_script.metadata.protection_types],
+                    "protection_types": [
+                        p.value for p in generated_script.metadata.protection_types
+                    ],
                     "success_probability": generated_script.metadata.success_probability,
                     "entry_point": generated_script.entry_point,
                     "dependencies": generated_script.dependencies,
@@ -879,8 +880,11 @@ class AIOrchestrator:
                 }
                 confidence = generated_script.metadata.success_probability
 
-                logger.info("Generated Ghidra script for %s with %d%% confidence",
-                            binary_path, int(confidence * 100))
+                logger.info(
+                    "Generated Ghidra script for %s with %d%% confidence",
+                    binary_path,
+                    int(confidence * 100),
+                )
             else:
                 result_data["error"] = "Failed to generate Ghidra script"
                 confidence = 0.0
@@ -911,10 +915,8 @@ class AIOrchestrator:
             analysis_data = task.input_data.get("analysis_data", {})
 
             # Generate both scripts
-            frida_script = script_generator.generate_frida_script(
-                analysis_data)
-            ghidra_script = script_generator.generate_ghidra_script(
-                analysis_data)
+            frida_script = script_generator.generate_frida_script(analysis_data)
+            ghidra_script = script_generator.generate_ghidra_script(analysis_data)
 
             scripts = {}
             confidences = []
@@ -948,8 +950,11 @@ class AIOrchestrator:
             result_data["scripts"] = scripts
             confidence = max(confidences) if confidences else 0.0
 
-            logger.info("Generated unified scripts for %s with %d%% max confidence",
-                        binary_path, int(confidence * 100))
+            logger.info(
+                "Generated unified scripts for %s with %d%% max confidence",
+                binary_path,
+                int(confidence * 100),
+            )
 
         except Exception as e:
             logger.error("Unified script generation failed: %s", e)
@@ -983,10 +988,12 @@ class AIOrchestrator:
             # Test script based on type
             if script_type.lower() == "frida":
                 test_result = test_manager.test_frida_script(
-                    snapshot_id, script_content, binary_path)
+                    snapshot_id, script_content, binary_path
+                )
             else:
                 test_result = test_manager.test_ghidra_script(
-                    snapshot_id, script_content, binary_path)
+                    snapshot_id, script_content, binary_path
+                )
 
             result_data["test_result"] = {
                 "success": test_result.success,
@@ -1002,8 +1009,11 @@ class AIOrchestrator:
             # Cleanup snapshot
             test_manager.cleanup_snapshot(snapshot_id)
 
-            logger.info("Script testing completed for %s: %s",
-                        binary_path, "SUCCESS" if test_result.success else "FAILED")
+            logger.info(
+                "Script testing completed for %s: %s",
+                binary_path,
+                "SUCCESS" if test_result.success else "FAILED",
+            )
 
         except Exception as e:
             logger.error("Script testing failed: %s", e)
@@ -1033,16 +1043,17 @@ class AIOrchestrator:
 
             # Refine script based on test results
             refined_script = script_generator.refine_script(
-                original_script, test_results, analysis_data)
+                original_script, test_results, analysis_data
+            )
 
             if refined_script:
                 result_data["refined_script"] = refined_script.content
-                result_data["improvements"] = getattr(
-                    refined_script.metadata, "improvements", [])
+                result_data["improvements"] = getattr(refined_script.metadata, "improvements", [])
                 confidence = refined_script.metadata.success_probability
 
-                logger.info("Script refinement completed with %d%% confidence",
-                            int(confidence * 100))
+                logger.info(
+                    "Script refinement completed with %d%% confidence", int(confidence * 100)
+                )
             else:
                 result_data["error"] = "Failed to refine script"
                 confidence = 0.0
@@ -1080,11 +1091,14 @@ class AIOrchestrator:
                 confidence = 0.9
                 scripts = workflow_result.get("scripts", [])
                 logger.info(
-                    "Autonomous workflow completed successfully with %d scripts", len(scripts))
+                    "Autonomous workflow completed successfully with %d scripts", len(scripts)
+                )
             else:
                 confidence = 0.3
-                logger.warning("Autonomous workflow failed: %s",
-                               workflow_result.get("message", "Unknown error"))
+                logger.warning(
+                    "Autonomous workflow failed: %s",
+                    workflow_result.get("message", "Unknown error"),
+                )
 
         except Exception as e:
             logger.error("Autonomous workflow failed: %s", e)
@@ -1099,8 +1113,7 @@ class AIOrchestrator:
         self.task_queue.put((-task.priority, task))
         self.active_tasks[task.task_id] = task
 
-        logger.info("Task %s submitted with priority %s",
-                    task.task_id, task.priority)
+        logger.info("Task %s submitted with priority %s", task.task_id, task.priority)
         return task.task_id
 
     def get_task_status(self, task_id: str) -> dict[str, Any] | None:
@@ -1169,7 +1182,9 @@ class AIOrchestrator:
             "is_processing": self.is_running,
         }
 
-    def register_progress_callback(self, task_id: str, callback: Callable[[str, int, str], None]) -> None:
+    def register_progress_callback(
+        self, task_id: str, callback: Callable[[str, int, str], None]
+    ) -> None:
         """Register a progress callback for a specific task.
 
         Args:
@@ -1196,19 +1211,22 @@ class AIOrchestrator:
         }
 
         # Emit progress event
-        self.event_bus.emit("task_progress", {
-            "task_id": task_id,
-            "progress": progress,
-            "status": status,
-        }, "orchestrator")
+        self.event_bus.emit(
+            "task_progress",
+            {
+                "task_id": task_id,
+                "progress": progress,
+                "status": status,
+            },
+            "orchestrator",
+        )
 
         # Call registered callback if exists
         if task_id in self.progress_callbacks:
             try:
                 self.progress_callbacks[task_id](task_id, progress, status)
             except Exception as e:
-                logger.error(
-                    f"Error calling progress callback for {task_id}: {e}")
+                logger.error(f"Error calling progress callback for {task_id}: {e}")
 
         logger.debug(f"Task {task_id} progress: {progress}% - {status}")
 

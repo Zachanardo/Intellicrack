@@ -83,7 +83,7 @@ class TestNetworkTrafficAnalyzer(unittest.TestCase):
         """Test starting packet capture with Scapy."""
         # Mock Scapy functions
         mock_scapy.sniff = MagicMock()
-        
+
         # Start capture
         result = self.analyzer.start_capture(interface='eth0', use_pyshark=False)
 

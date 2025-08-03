@@ -166,8 +166,7 @@ class IntellicrackConfig:
                 self._load_config()
                 self._upgrade_config_if_needed()
             else:
-                logger.info(
-                    "First run detected - creating default configuration")
+                logger.info("First run detected - creating default configuration")
                 self._create_default_config()
         except Exception as e:
             logger.error(f"Configuration initialization failed: {e}")
@@ -220,7 +219,11 @@ class IntellicrackConfig:
                 "output": str(self.output_dir),
                 "logs": str(self.logs_dir),
                 "cache": str(self.cache_dir),
-                "temp": str(Path.home() / "tmp" if sys.platform != "win32" else Path.home() / "AppData" / "Local" / "Temp"),
+                "temp": str(
+                    Path.home() / "tmp"
+                    if sys.platform != "win32"
+                    else Path.home() / "AppData" / "Local" / "Temp"
+                ),
             },
             "tools": self._auto_discover_tools(),
             "preferences": {
@@ -395,8 +398,7 @@ class IntellicrackConfig:
             >>> tool_info = self._discover_tool('ghidra', config)
 
         """
-        logger.debug(
-            f"Discovering tool: {tool_name} with config keys: {list(config.keys())}")
+        logger.debug(f"Discovering tool: {tool_name} with config keys: {list(config.keys())}")
         # First check PATH environment variable
         for executable in config["executables"]:
             tool_path = shutil.which(executable)
@@ -457,7 +459,8 @@ class IntellicrackConfig:
             try:
                 result = subprocess.run(
                     [tool_path, version_flag],
-                    check=False, capture_output=True,
+                    check=False,
+                    capture_output=True,
                     text=True,
                     timeout=10,  # Prevent hanging on broken tools
                 )
@@ -474,23 +477,27 @@ class IntellicrackConfig:
         paths = []
 
         if sys.platform == "win32":
-            paths.extend([
-                r"C:\Program Files\Ghidra",
-                r"C:\ghidra",
-                r"C:\Tools\ghidra",
-                os.path.expanduser(r"~\ghidra"),
-                os.path.join(os.environ.get("PROGRAMFILES", ""), "Ghidra"),
-                os.path.join(os.environ.get("PROGRAMFILES(X86)", ""), "Ghidra"),
-            ])
+            paths.extend(
+                [
+                    r"C:\Program Files\Ghidra",
+                    r"C:\ghidra",
+                    r"C:\Tools\ghidra",
+                    os.path.expanduser(r"~\ghidra"),
+                    os.path.join(os.environ.get("PROGRAMFILES", ""), "Ghidra"),
+                    os.path.join(os.environ.get("PROGRAMFILES(X86)", ""), "Ghidra"),
+                ]
+            )
         else:
-            paths.extend([
-                "/opt/ghidra",
-                "/usr/local/ghidra",
-                "/usr/share/ghidra",
-                os.path.expanduser("~/ghidra"),
-                os.path.expanduser("~/Tools/ghidra"),
-                "/Applications/ghidra",  # macOS
-            ])
+            paths.extend(
+                [
+                    "/opt/ghidra",
+                    "/usr/local/ghidra",
+                    "/usr/share/ghidra",
+                    os.path.expanduser("~/ghidra"),
+                    os.path.expanduser("~/Tools/ghidra"),
+                    "/Applications/ghidra",  # macOS
+                ]
+            )
 
         return [p for p in paths if p]  # Remove empty strings
 
@@ -499,19 +506,23 @@ class IntellicrackConfig:
         paths = []
 
         if sys.platform == "win32":
-            paths.extend([
-                r"C:\Program Files\radare2",
-                r"C:\radare2",
-                r"C:\Tools\radare2",
-                os.path.expanduser(r"~\radare2"),
-            ])
+            paths.extend(
+                [
+                    r"C:\Program Files\radare2",
+                    r"C:\radare2",
+                    r"C:\Tools\radare2",
+                    os.path.expanduser(r"~\radare2"),
+                ]
+            )
         else:
-            paths.extend([
-                "/usr/bin",
-                "/usr/local/bin",
-                "/opt/radare2",
-                os.path.expanduser("~/radare2"),
-            ])
+            paths.extend(
+                [
+                    "/usr/bin",
+                    "/usr/local/bin",
+                    "/opt/radare2",
+                    os.path.expanduser("~/radare2"),
+                ]
+            )
 
         return paths
 
@@ -520,17 +531,21 @@ class IntellicrackConfig:
         paths = []
 
         if sys.platform == "win32":
-            paths.extend([
-                r"C:\Program Files\qemu",
-                r"C:\qemu",
-                os.path.join(os.environ.get("PROGRAMFILES", ""), "qemu"),
-            ])
+            paths.extend(
+                [
+                    r"C:\Program Files\qemu",
+                    r"C:\qemu",
+                    os.path.join(os.environ.get("PROGRAMFILES", ""), "qemu"),
+                ]
+            )
         else:
-            paths.extend([
-                "/usr/bin",
-                "/usr/local/bin",
-                "/opt/qemu/bin",
-            ])
+            paths.extend(
+                [
+                    "/usr/bin",
+                    "/usr/local/bin",
+                    "/opt/qemu/bin",
+                ]
+            )
 
         return paths
 
@@ -538,14 +553,12 @@ class IntellicrackConfig:
         """Upgrade configuration if version changed."""
         current_version = self._config.get("version", "1.0")
         if current_version != "2.0":
-            logger.info(
-                f"Upgrading configuration from {current_version} to 2.0")
+            logger.info(f"Upgrading configuration from {current_version} to 2.0")
             self._upgrade_config(current_version)
 
     def _upgrade_config(self, from_version: str):
         """Upgrade configuration from older version."""
-        logger.info(
-            f"Upgrading configuration schema from version: {from_version}")
+        logger.info(f"Upgrading configuration schema from version: {from_version}")
         # Preserve user settings while updating structure
         user_preferences = self._config.get("preferences", {})
         user_tools = self._config.get("tools", {})

@@ -3,6 +3,7 @@
 This module provides the original base tab implementation,
 maintained for compatibility purposes.
 """
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget

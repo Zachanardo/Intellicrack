@@ -37,6 +37,7 @@ logger = get_logger(__name__)
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in performance_optimization_layer: %s", e)
@@ -195,8 +196,9 @@ class PerformanceOptimizer:
         ]
 
     @profile_ai_operation("performance_optimization")
-    def optimize_operation(self, operation_id: str, operation_func: Callable,
-                           *args, **kwargs) -> Any:
+    def optimize_operation(
+        self, operation_id: str, operation_func: Callable, *args, **kwargs
+    ) -> Any:
         """Optimize execution of an operation."""
         # Check if optimization is cached
         cache_key = self._generate_cache_key(operation_id, args, kwargs)
@@ -214,8 +216,7 @@ class PerformanceOptimizer:
         start_memory = psutil.Process().memory_info().rss if PSUTIL_AVAILABLE else 0
 
         # Apply optimizations
-        optimized_func = self._apply_optimizations(
-            operation_id, operation_func)
+        optimized_func = self._apply_optimizations(operation_id, operation_func)
 
         # Execute optimized operation
         try:
@@ -229,9 +230,12 @@ class PerformanceOptimizer:
                 operation_id=operation_id,
                 operation_type=operation_func.__name__,
                 execution_time=end_time - start_time,
-                memory_usage=(
-                    end_memory - start_memory) // (1024 * 1024),  # MB
-                cpu_usage=psutil.cpu_percent() if PSUTIL_AVAILABLE else 0.0 if PSUTIL_AVAILABLE else 0.0,
+                memory_usage=(end_memory - start_memory) // (1024 * 1024),  # MB
+                cpu_usage=psutil.cpu_percent()
+                if PSUTIL_AVAILABLE
+                else 0.0
+                if PSUTIL_AVAILABLE
+                else 0.0,
                 io_operations=0,  # Would need more detailed tracking
                 resource_bottlenecks=[],
             )
@@ -245,10 +249,11 @@ class PerformanceOptimizer:
             # Record learning experience
             get_learning_engine().record_experience(
                 task_type="performance_optimization",
-                input_data={"operation_id": operation_id,
-                            "args_hash": cache_key},
-                output_data={"execution_time": profile.execution_time,
-                             "memory_usage": profile.memory_usage},
+                input_data={"operation_id": operation_id, "args_hash": cache_key},
+                output_data={
+                    "execution_time": profile.execution_time,
+                    "memory_usage": profile.memory_usage,
+                },
                 success=True,
                 confidence=0.8,
                 execution_time=profile.execution_time,
@@ -278,7 +283,9 @@ class PerformanceOptimizer:
         for rule in self.optimization_rules:
             if rule.enabled and self._rule_applies(rule, operation_id):
                 optimized_func = self._apply_optimization_strategy(
-                    optimized_func, rule.strategy, rule.parameters,
+                    optimized_func,
+                    rule.strategy,
+                    rule.parameters,
                 )
                 rule.times_applied += 1
                 logger.debug(f"Applied optimization rule: {rule.name}")
@@ -302,8 +309,9 @@ class PerformanceOptimizer:
         # Default to applying rule for new operations
         return True
 
-    def _apply_optimization_strategy(self, func: Callable, strategy: OptimizationStrategy,
-                                     parameters: dict[str, Any]) -> Callable:
+    def _apply_optimization_strategy(
+        self, func: Callable, strategy: OptimizationStrategy, parameters: dict[str, Any]
+    ) -> Callable:
         """Apply specific optimization strategy."""
         if strategy == OptimizationStrategy.PARALLEL_EXECUTION:
             return self._wrap_for_parallel_execution(func, parameters)
@@ -326,7 +334,11 @@ class PerformanceOptimizer:
                 remaining_args = args[1:]
 
                 results = self.parallel_executor.execute_parallel(
-                    func, items, max_workers, *remaining_args, **kwargs,
+                    func,
+                    items,
+                    max_workers,
+                    *remaining_args,
+                    **kwargs,
                 )
                 return results
             # Regular execution for non-parallelizable arguments
@@ -342,21 +354,44 @@ class PerformanceOptimizer:
             import gc
 
             # Check memory usage before execution
-            memory_percent = psutil.virtual_memory() if PSUTIL_AVAILABLE else type(
-                "", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().percent / 100.0
+            memory_percent = (
+                psutil.virtual_memory()
+                if PSUTIL_AVAILABLE
+                else type(
+                    "",
+                    (),
+                    {
+                        "percent": 0,
+                        "total": 8 * 1024 * 1024 * 1024,
+                        "available": 4 * 1024 * 1024 * 1024,
+                    },
+                )().percent
+                / 100.0
+            )
 
             if memory_percent > gc_threshold:
                 # Force garbage collection
                 gc.collect()
-                logger.debug(
-                    "Triggered garbage collection for memory optimization")
+                logger.debug("Triggered garbage collection for memory optimization")
 
             # Execute function
             result = func(*args, **kwargs)
 
             # Check memory after execution
-            memory_percent_after = psutil.virtual_memory() if PSUTIL_AVAILABLE else type(
-                "", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().percent / 100.0
+            memory_percent_after = (
+                psutil.virtual_memory()
+                if PSUTIL_AVAILABLE
+                else type(
+                    "",
+                    (),
+                    {
+                        "percent": 0,
+                        "total": 8 * 1024 * 1024 * 1024,
+                        "available": 4 * 1024 * 1024 * 1024,
+                    },
+                )().percent
+                / 100.0
+            )
             if memory_percent_after > gc_threshold:
                 gc.collect()
 
@@ -376,10 +411,11 @@ class PerformanceOptimizer:
 
                 results = []
                 for i in range(0, len(items), batch_size):
-                    batch = items[i:i + batch_size]
+                    batch = items[i : i + batch_size]
                     batch_result = func(batch, *remaining_args, **kwargs)
-                    results.extend(batch_result if isinstance(
-                        batch_result, list) else [batch_result])
+                    results.extend(
+                        batch_result if isinstance(batch_result, list) else [batch_result]
+                    )
 
                 return results
             return func(*args, **kwargs)
@@ -399,21 +435,17 @@ class PerformanceOptimizer:
             profile = self.execution_profiles[operation_id]
 
             if profile.execution_time > 10.0:
-                recommendations.append(
-                    "Consider parallel execution for long-running operations")
+                recommendations.append("Consider parallel execution for long-running operations")
 
             if profile.memory_usage > 1000:  # 1GB
-                recommendations.append(
-                    "Implement memory optimization strategies")
+                recommendations.append("Implement memory optimization strategies")
 
             if profile.cpu_usage > 90:
-                recommendations.append(
-                    "Reduce CPU-intensive operations or use async processing")
+                recommendations.append("Reduce CPU-intensive operations or use async processing")
 
             # Check cache hit rate
             if profile.cache_hit_rate < 0.3:
-                recommendations.append(
-                    "Improve caching strategy for better performance")
+                recommendations.append("Improve caching strategy for better performance")
 
         return recommendations
 
@@ -421,9 +453,10 @@ class PerformanceOptimizer:
         """Get optimization statistics."""
         return {
             **self.optimization_stats,
-            "cache_hit_rate": self.optimization_stats["cache_hits"] /
-            max(1, self.optimization_stats["cache_hits"] +
-                self.optimization_stats["cache_misses"]),
+            "cache_hit_rate": self.optimization_stats["cache_hits"]
+            / max(
+                1, self.optimization_stats["cache_hits"] + self.optimization_stats["cache_misses"]
+            ),
             "total_profiles": len(self.execution_profiles),
             "active_rules": len([r for r in self.optimization_rules if r.enabled]),
         }
@@ -453,7 +486,18 @@ class ResourceManager:
         return {
             ResourceType.CPU: psutil.cpu_count() if PSUTIL_AVAILABLE else 4,
             # MB
-            ResourceType.MEMORY: psutil.virtual_memory() if PSUTIL_AVAILABLE else type("", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().total // (1024 * 1024),
+            ResourceType.MEMORY: psutil.virtual_memory()
+            if PSUTIL_AVAILABLE
+            else type(
+                "",
+                (),
+                {
+                    "percent": 0,
+                    "total": 8 * 1024 * 1024 * 1024,
+                    "available": 4 * 1024 * 1024 * 1024,
+                },
+            )().total
+            // (1024 * 1024),
             ResourceType.THREADS: 500,  # Reasonable default
             ResourceType.PROCESSES: 100,
             ResourceType.DISK_IO: 1000,  # MB/s estimate
@@ -474,28 +518,28 @@ class ResourceManager:
             max_workers=max_processes,
         )
 
-        logger.info(
-            f"Initialized resource pools: {max_threads} threads, {max_processes} processes")
+        logger.info(f"Initialized resource pools: {max_threads} threads, {max_processes} processes")
 
     @profile_ai_operation("resource_allocation")
     def allocate_resources(self, operation_id: str, requirements: ResourceAllocation) -> bool:
         """Allocate resources for operation."""
         # Check if resources are available
         if not self._check_resource_availability(requirements):
-            logger.warning(
-                f"Insufficient resources for operation {operation_id}")
+            logger.warning(f"Insufficient resources for operation {operation_id}")
             return False
 
         # Reserve resources
         self.active_allocations[operation_id] = requirements
 
         # Record allocation
-        self.allocation_history.append({
-            "operation_id": operation_id,
-            "allocation": requirements,
-            "timestamp": datetime.now(),
-            "action": "allocate",
-        })
+        self.allocation_history.append(
+            {
+                "operation_id": operation_id,
+                "allocation": requirements,
+                "timestamp": datetime.now(),
+                "action": "allocate",
+            }
+        )
 
         logger.debug(f"Allocated resources for operation {operation_id}")
         return True
@@ -507,12 +551,14 @@ class ResourceManager:
             del self.active_allocations[operation_id]
 
             # Record release
-            self.allocation_history.append({
-                "operation_id": operation_id,
-                "allocation": allocation,
-                "timestamp": datetime.now(),
-                "action": "release",
-            })
+            self.allocation_history.append(
+                {
+                    "operation_id": operation_id,
+                    "allocation": allocation,
+                    "timestamp": datetime.now(),
+                    "action": "release",
+                }
+            )
 
             logger.debug(f"Released resources for operation {operation_id}")
 
@@ -523,14 +569,29 @@ class ResourceManager:
             return False
 
         # Check memory
-        available_memory = psutil.virtual_memory() if PSUTIL_AVAILABLE else type(
-            "", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().available // (1024 * 1024)
+        available_memory = (
+            psutil.virtual_memory()
+            if PSUTIL_AVAILABLE
+            else type(
+                "",
+                (),
+                {
+                    "percent": 0,
+                    "total": 8 * 1024 * 1024 * 1024,
+                    "available": 4 * 1024 * 1024 * 1024,
+                },
+            )().available
+            // (1024 * 1024)
+        )
         if requirements.memory_mb > available_memory:
             return False
 
         # Check thread pool capacity
         thread_pool = self.resource_pools[ResourceType.THREADS]
-        if hasattr(thread_pool, "_threads") and len(thread_pool._threads) >= thread_pool._max_workers:
+        if (
+            hasattr(thread_pool, "_threads")
+            and len(thread_pool._threads) >= thread_pool._max_workers
+        ):
             return False
 
         return True
@@ -538,10 +599,24 @@ class ResourceManager:
     def get_resource_usage(self) -> dict[str, float]:
         """Get current resource usage."""
         cpu_usage = psutil.cpu_percent() if PSUTIL_AVAILABLE else 0.0
-        memory = psutil.virtual_memory() if PSUTIL_AVAILABLE else type(
-            "", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})()
-        disk_io = psutil.disk_io_counters() if PSUTIL_AVAILABLE else type(
-            "", (), {"read_bytes": 0, "write_bytes": 0})()
+        memory = (
+            psutil.virtual_memory()
+            if PSUTIL_AVAILABLE
+            else type(
+                "",
+                (),
+                {
+                    "percent": 0,
+                    "total": 8 * 1024 * 1024 * 1024,
+                    "available": 4 * 1024 * 1024 * 1024,
+                },
+            )()
+        )
+        disk_io = (
+            psutil.disk_io_counters()
+            if PSUTIL_AVAILABLE
+            else type("", (), {"read_bytes": 0, "write_bytes": 0})()
+        )
 
         usage = {
             "cpu_percent": cpu_usage,
@@ -551,10 +626,12 @@ class ResourceManager:
         }
 
         if disk_io:
-            usage.update({
-                "disk_read_mb": disk_io.read_bytes // (1024 * 1024),
-                "disk_write_mb": disk_io.write_bytes // (1024 * 1024),
-            })
+            usage.update(
+                {
+                    "disk_read_mb": disk_io.read_bytes // (1024 * 1024),
+                    "disk_write_mb": disk_io.write_bytes // (1024 * 1024),
+                }
+            )
 
         return usage
 
@@ -566,16 +643,13 @@ class ResourceManager:
         current_usage = self.get_resource_usage()
 
         if current_usage["cpu_percent"] > 80:
-            optimizations.append(
-                "High CPU usage - consider process parallelization")
+            optimizations.append("High CPU usage - consider process parallelization")
 
         if current_usage["memory_percent"] > 85:
-            optimizations.append(
-                "High memory usage - implement memory optimization")
+            optimizations.append("High memory usage - implement memory optimization")
 
         if len(self.active_allocations) > 20:
-            optimizations.append(
-                "Many active allocations - consider resource pooling")
+            optimizations.append("Many active allocations - consider resource pooling")
 
         return {
             "current_usage": current_usage,
@@ -603,26 +677,25 @@ class ParallelExecutor:
         logger.info("Parallel executor initialized")
 
     @profile_ai_operation("parallel_execution")
-    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int = None,
-                         *args, **kwargs) -> list[Any]:
+    def execute_parallel(
+        self, func: Callable, items: list[Any], max_workers: int = None, *args, **kwargs
+    ) -> list[Any]:
         """Execute function in parallel for list of items."""
         if not items:
             return []
 
         # Determine optimal number of workers
         if max_workers is None:
-            max_workers = min(len(items), psutil.cpu_count()
-                              if PSUTIL_AVAILABLE else 4)
+            max_workers = min(len(items), psutil.cpu_count() if PSUTIL_AVAILABLE else 4)
 
         # Measure sequential baseline (for first few items)
-        baseline_items = items[:min(3, len(items))]
+        baseline_items = items[: min(3, len(items))]
         start_time = time.time()
 
         for item in baseline_items:
             func(item, *args, **kwargs)
 
-        sequential_time_per_item = (
-            time.time() - start_time) / len(baseline_items)
+        sequential_time_per_item = (time.time() - start_time) / len(baseline_items)
         estimated_sequential_time = sequential_time_per_item * len(items)
 
         # Execute in parallel
@@ -630,10 +703,7 @@ class ParallelExecutor:
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all tasks
-            future_to_item = {
-                executor.submit(func, item, *args, **kwargs): item
-                for item in items
-            }
+            future_to_item = {executor.submit(func, item, *args, **kwargs): item for item in items}
 
             # Collect results
             results = []
@@ -655,25 +725,25 @@ class ParallelExecutor:
         self.execution_stats["parallel_executions"] += 1
         self.execution_stats["total_time_saved"] += time_saved
         self.execution_stats["average_speedup"] = (
-            (self.execution_stats["average_speedup"] * (self.execution_stats["parallel_executions"] - 1) + speedup) /
-            self.execution_stats["parallel_executions"]
-        )
+            self.execution_stats["average_speedup"]
+            * (self.execution_stats["parallel_executions"] - 1)
+            + speedup
+        ) / self.execution_stats["parallel_executions"]
 
-        logger.info(
-            f"Parallel execution: {speedup:.2f}x speedup, saved {time_saved:.2f}s")
+        logger.info(f"Parallel execution: {speedup:.2f}x speedup, saved {time_saved:.2f}s")
 
         return results
 
     @profile_ai_operation("batch_parallel_execution")
-    def execute_batch_parallel(self, operations: list[tuple[Callable, tuple, dict]],
-                               max_workers: int = None) -> list[Any]:
+    def execute_batch_parallel(
+        self, operations: list[tuple[Callable, tuple, dict]], max_workers: int = None
+    ) -> list[Any]:
         """Execute multiple different operations in parallel."""
         if not operations:
             return []
 
         if max_workers is None:
-            max_workers = min(len(operations), psutil.cpu_count()
-                              if PSUTIL_AVAILABLE else 4)
+            max_workers = min(len(operations), psutil.cpu_count() if PSUTIL_AVAILABLE else 4)
 
         results = []
 
@@ -759,6 +829,7 @@ class CacheManager:
         """Set value in cache."""
         # Estimate size of cached item
         import sys
+
         item_size_mb = sys.getsizeof(value) / (1024 * 1024)
 
         # Check if we need to evict items
@@ -798,8 +869,7 @@ class CacheManager:
             self.current_size_mb -= item_size
             self.stats["evictions"] += 1
 
-            logger.debug(
-                f"Evicted LRU item {lru_key[:8]}... ({item_size:.2f}MB)")
+            logger.debug(f"Evicted LRU item {lru_key[:8]}... ({item_size:.2f}MB)")
 
     def cleanup_expired(self):
         """Remove expired items from cache."""
@@ -839,8 +909,7 @@ class CacheManager:
 
     def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
-        hit_rate = self.stats["hits"] / \
-            max(1, self.stats["hits"] + self.stats["misses"])
+        hit_rate = self.stats["hits"] / max(1, self.stats["hits"] + self.stats["misses"])
 
         return {
             **self.stats,
@@ -873,6 +942,7 @@ class PerformanceOptimizationLayer:
 
     def _start_background_optimization(self):
         """Start background optimization tasks."""
+
         def background_worker():
             while True:
                 try:
@@ -897,7 +967,9 @@ class PerformanceOptimizationLayer:
         """Main optimization entry point."""
         return self.optimizer.optimize_operation(operation_id, operation_func, *args, **kwargs)
 
-    def execute_parallel(self, func: Callable, items: list[Any], max_workers: int = None) -> list[Any]:
+    def execute_parallel(
+        self, func: Callable, items: list[Any], max_workers: int = None
+    ) -> list[Any]:
         """Execute function in parallel."""
         return self.parallel_executor.execute_parallel(func, items, max_workers)
 
@@ -918,8 +990,30 @@ class PerformanceOptimizationLayer:
             "resource_usage": self.resource_manager.get_resource_usage(),
             "system_info": {
                 "cpu_count": psutil.cpu_count() if PSUTIL_AVAILABLE else 4,
-                "memory_total_gb": psutil.virtual_memory() if PSUTIL_AVAILABLE else type("", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().total / (1024**3),
-                "memory_available_gb": psutil.virtual_memory() if PSUTIL_AVAILABLE else type("", (), {"percent": 0, "total": 8*1024*1024*1024, "available": 4*1024*1024*1024})().available / (1024**3),
+                "memory_total_gb": psutil.virtual_memory()
+                if PSUTIL_AVAILABLE
+                else type(
+                    "",
+                    (),
+                    {
+                        "percent": 0,
+                        "total": 8 * 1024 * 1024 * 1024,
+                        "available": 4 * 1024 * 1024 * 1024,
+                    },
+                )().total
+                / (1024**3),
+                "memory_available_gb": psutil.virtual_memory()
+                if PSUTIL_AVAILABLE
+                else type(
+                    "",
+                    (),
+                    {
+                        "percent": 0,
+                        "total": 8 * 1024 * 1024 * 1024,
+                        "available": 4 * 1024 * 1024 * 1024,
+                    },
+                )().available
+                / (1024**3),
             },
         }
 

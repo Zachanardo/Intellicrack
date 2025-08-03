@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import hashlib
 import logging
 import os
@@ -31,8 +30,11 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def compute_file_hash(file_path: str | Path, algorithm: str = "sha256",
-                     progress_signal: Callable[[int], None] | None = None) -> str:
+def compute_file_hash(
+    file_path: str | Path,
+    algorithm: str = "sha256",
+    progress_signal: Callable[[int], None] | None = None,
+) -> str:
     """Computes the hash of a file using the specified algorithm with optional progress updates.
 
     Calculates the cryptographic hash of the specified file using the given algorithm, reading it
@@ -159,6 +161,7 @@ def write_binary(file_path: str | Path, data: bytes, create_backup: bool = True)
         if create_backup and file_path.exists():
             backup_path = file_path.with_suffix(file_path.suffix + ".bak")
             import shutil
+
             shutil.copy2(file_path, backup_path)
             logger.info("Created backup: %s", backup_path)
 
@@ -207,7 +210,7 @@ def analyze_binary_format(file_path: str | Path) -> dict[str, Any]:
             if len(header) > 0x3C:
                 pe_offset = int.from_bytes(header[0x3C:0x40], "little")
                 if len(header) > pe_offset + 4:
-                    if header[pe_offset:pe_offset+4] == b"PE\x00\x00":
+                    if header[pe_offset : pe_offset + 4] == b"PE\x00\x00":
                         format_info["type"] = "PE32/PE32+"
 
         elif header.startswith(b"\x7fELF"):
@@ -218,10 +221,10 @@ def analyze_binary_format(file_path: str | Path) -> dict[str, Any]:
                 elif header[4] == 2:
                     format_info["architecture"] = "64-bit"
 
-        elif header.startswith(b"\xCE\xFA\xED\xFE") or header.startswith(b"\xCF\xFA\xED\xFE"):
+        elif header.startswith(b"\xce\xfa\xed\xfe") or header.startswith(b"\xcf\xfa\xed\xfe"):
             format_info["type"] = "Mach-O"
             format_info["architecture"] = "32-bit"
-        elif header.startswith(b"\xFE\xED\xFA\xCE") or header.startswith(b"\xFE\xED\xFA\xCF"):
+        elif header.startswith(b"\xfe\xed\xfa\xce") or header.startswith(b"\xfe\xed\xfa\xcf"):
             format_info["type"] = "Mach-O"
             format_info["architecture"] = "64-bit"
 
@@ -316,7 +319,9 @@ def check_suspicious_pe_sections(pe_obj) -> list:
                 section_name = section.Name.decode("utf-8", errors="ignore").strip("\x00")
 
                 # Check if section is both writable and executable (security risk)
-                if (section.Characteristics & 0x20000000) and (section.Characteristics & 0x80000000):
+                if (section.Characteristics & 0x20000000) and (
+                    section.Characteristics & 0x80000000
+                ):
                     suspicious_sections.append(section_name)
     except (AttributeError, ValueError) as e:
         logger.debug("Error checking PE sections: %s", e)

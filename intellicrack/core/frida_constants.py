@@ -85,11 +85,11 @@ class HookCategory(Enum):
     - MONITORING: Performance monitoring, analytics
     """
 
-    CRITICAL = "critical"      # Must hook immediately (no delay)
-    HIGH = "high"             # Hook soon (max 100ms delay)
-    MEDIUM = "medium"         # Can batch (max 500ms delay)
-    LOW = "low"              # Batch aggressively (max 2s delay)
-    MONITORING = "monitoring" # Passive monitoring hooks (lowest priority)
+    CRITICAL = "critical"  # Must hook immediately (no delay)
+    HIGH = "high"  # Hook soon (max 100ms delay)
+    MEDIUM = "medium"  # Can batch (max 500ms delay)
+    LOW = "low"  # Batch aggressively (max 2s delay)
+    MONITORING = "monitoring"  # Passive monitoring hooks (lowest priority)
 
 
 __all__ = ["HookCategory", "ProtectionType"]

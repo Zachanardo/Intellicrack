@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import os
 import shutil
 import zipfile
@@ -52,6 +51,7 @@ from .common_imports import (
 
 # Additional imports specific to plugin manager
 if not HAS_PYQT:
+
     class PluginInstallThread:
         """Stub class for plugin installation thread when PyQt6 is not available.
 
@@ -91,9 +91,9 @@ if not HAS_PYQT:
             self.status_label = None
             self.test_file_edit = None
             self.test_output = None
+
         def show(self):
-            """Show the dialog (no-op when PyQt6 is not available).
-            """
+            """Show the dialog (no-op when PyQt6 is not available)."""
 
         def exec_(self):
             """Execute the dialog modally (no-op when PyQt6 is not available).
@@ -113,6 +113,7 @@ if not HAS_PYQT:
             """
             return 0
 else:
+
     class PluginInstallThread(QThread):
         """Thread for installing plugins without blocking the UI."""
 
@@ -200,7 +201,9 @@ else:
             self.auto_refresh_timer.timeout.connect(self.auto_refresh_plugins)
 
             # Check for updates on startup
-            if hasattr(self.app_context, "config") and self.app_context.config.get("plugin_auto_update", True):
+            if hasattr(self.app_context, "config") and self.app_context.config.get(
+                "plugin_auto_update", True
+            ):
                 QTimer.singleShot(2000, self.check_for_updates)
 
             logger.info("Plugin Manager Dialog initialized")
@@ -318,7 +321,9 @@ else:
 
             repo_layout.addWidget(QLabel("Repository:"))
             self.repo_combo = QComboBox()
-            self.repo_combo.addItems(["Official Repository", "Community Repository", "Local Repository"])
+            self.repo_combo.addItems(
+                ["Official Repository", "Community Repository", "Local Repository"]
+            )
             repo_layout.addWidget(self.repo_combo)
 
             refresh_repo_btn = QPushButton("Refresh")
@@ -427,13 +432,15 @@ else:
             template_layout.addRow("Plugin Name:", self.plugin_name_edit)
 
             self.plugin_type_combo = QComboBox()
-            self.plugin_type_combo.addItems([
-                "Analysis Plugin",
-                "Exploit Plugin",
-                "UI Plugin",
-                "Tool Plugin",
-                "Generic Plugin",
-            ])
+            self.plugin_type_combo.addItems(
+                [
+                    "Analysis Plugin",
+                    "Exploit Plugin",
+                    "UI Plugin",
+                    "Tool Plugin",
+                    "Generic Plugin",
+                ]
+            )
             template_layout.addRow("Plugin Type:", self.plugin_type_combo)
 
             self.author_edit = QLineEdit()
@@ -495,6 +502,7 @@ else:
                                 list_item.setForeground(list_item.foreground())  # Default color
                             else:
                                 from PyQt6.QtGui import QColor
+
                                 list_item.setForeground(QColor(128, 128, 128))  # Gray for disabled
 
                             self.installed_list.addItem(list_item)
@@ -626,6 +634,7 @@ Description: {plugin_info['description']}"""
                 plugin_info["enabled"] = False
                 current_item.setData(0, plugin_info)
                 from PyQt6.QtGui import QColor
+
                 current_item.setForeground(QColor(128, 128, 128))  # Gray out
                 self.on_installed_selection_changed()  # Refresh info display
                 QMessageBox.information(self, "Success", f"Plugin '{plugin_info['name']}' disabled")
@@ -719,7 +728,9 @@ Description: {plugin_info['description']}"""
                 return
 
             # Start installation thread
-            install_dir = os.path.join(self.plugins_dir, os.path.splitext(os.path.basename(plugin_file))[0])
+            install_dir = os.path.join(
+                self.plugins_dir, os.path.splitext(os.path.basename(plugin_file))[0]
+            )
             os.makedirs(install_dir, exist_ok=True)
 
             self.install_thread = PluginInstallThread(plugin_file, install_dir)

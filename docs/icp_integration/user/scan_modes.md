@@ -10,7 +10,7 @@ Scan modes control the depth and thoroughness of protection analysis, trading sp
 Speed vs Accuracy Trade-off:
 
 NORMAL     ██████████                    (Fastest)
-DEEP       ███████████████               (Balanced)  
+DEEP       ███████████████               (Balanced)
 HEURISTIC  ███████████████               (Behavioral)
 AGGRESSIVE ████████████████████          (Thorough)
 ALL        ████████████████████████████  (Complete)
@@ -342,7 +342,7 @@ Rationale: Speed over accuracy for initial sorting
 
 **Scenario 2: Software Research**
 ```
-Files: 10-50 commercial applications  
+Files: 10-50 commercial applications
 Goal: Protection identification
 Recommendation: DEEP mode
 Rationale: Balanced speed and accuracy
@@ -384,7 +384,7 @@ Stage 1: NORMAL scan
     ├─ Simple protections ─────► Analysis complete
     └─ Complex protections ────► Stage 2: DEEP scan
 
-Stage 2: Detailed analysis  
+Stage 2: Detailed analysis
     ├─ DEEP scan results ──────► Stage 3: AGGRESSIVE (if incomplete)
     ├─ HEURISTIC results ──────► Stage 3: DEEP (for verification)
     └─ Conflicting results ────► Stage 3: ALL mode

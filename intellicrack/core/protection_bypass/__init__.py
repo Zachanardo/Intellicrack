@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 
 # Set up package logger
@@ -63,7 +62,6 @@ __all__ = [
     "bypass_tpm_protection",
     "detect_tpm_usage",
     "tpm_research_tools",
-
     # From vm_bypass
     "VMDetector",
     "VirtualizationAnalyzer",
@@ -71,7 +69,6 @@ __all__ = [
     "detect_virtualization",
     "analyze_vm_protection",
     "bypass_vm_detection",
-
     # From dongle_emulator
     "HardwareDongleEmulator",
     "activate_hardware_dongle_emulation",

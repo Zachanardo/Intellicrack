@@ -31,6 +31,7 @@ from PyQt6.QtWidgets import (
 
 try:
     import pyqtgraph as pg
+
     PYQTGRAPH_AVAILABLE = True
 except ImportError:
     PYQTGRAPH_AVAILABLE = False
@@ -59,14 +60,16 @@ class StructureVisualizerWidget(QWidget):
 
         controls_layout.addWidget(QLabel("View:"))
         self.view_combo = QComboBox()
-        self.view_combo.addItems([
-            "Tree View",
-            "Headers",
-            "Sections",
-            "Imports/Exports",
-            "Resources",
-            "Memory Map",
-        ])
+        self.view_combo.addItems(
+            [
+                "Tree View",
+                "Headers",
+                "Sections",
+                "Imports/Exports",
+                "Resources",
+                "Memory Map",
+            ]
+        )
         self.view_combo.currentTextChanged.connect(self.update_view)
         controls_layout.addWidget(self.view_combo)
 
@@ -131,10 +134,16 @@ class StructureVisualizerWidget(QWidget):
         # Sections table
         self.sections_table = QTableWidget()
         self.sections_table.setColumnCount(6)
-        self.sections_table.setHorizontalHeaderLabels([
-            "Name", "Virtual Addr", "Virtual Size",
-            "Raw Addr", "Raw Size", "Characteristics",
-        ])
+        self.sections_table.setHorizontalHeaderLabels(
+            [
+                "Name",
+                "Virtual Addr",
+                "Virtual Size",
+                "Raw Addr",
+                "Raw Size",
+                "Characteristics",
+            ]
+        )
         self.sections_table.itemSelectionChanged.connect(self._on_section_selection)
         self.structure_widget.addTab(self.sections_table, "Sections")
 
@@ -231,18 +240,28 @@ class StructureVisualizerWidget(QWidget):
             file_data = pe_data.get("file_header", {})
 
             QTreeWidgetItem(file_header, ["Machine", f"0x{file_data.get('machine', 0):04X}"])
-            QTreeWidgetItem(file_header, ["Number of Sections", str(file_data.get("number_of_sections", 0))])
-            QTreeWidgetItem(file_header, ["Time Date Stamp", str(file_data.get("time_date_stamp", 0))])
+            QTreeWidgetItem(
+                file_header, ["Number of Sections", str(file_data.get("number_of_sections", 0))]
+            )
+            QTreeWidgetItem(
+                file_header, ["Time Date Stamp", str(file_data.get("time_date_stamp", 0))]
+            )
 
             # Optional Header
             opt_header = QTreeWidgetItem(pe_item, ["Optional Header"])
             opt_data = pe_data.get("optional_header", {})
 
             QTreeWidgetItem(opt_header, ["Magic", f"0x{opt_data.get('magic', 0):04X}"])
-            QTreeWidgetItem(opt_header, ["Entry Point", f"0x{opt_data.get('address_of_entry_point', 0):08X}"])
+            QTreeWidgetItem(
+                opt_header, ["Entry Point", f"0x{opt_data.get('address_of_entry_point', 0):08X}"]
+            )
             QTreeWidgetItem(opt_header, ["Image Base", f"0x{opt_data.get('image_base', 0):08X}"])
-            QTreeWidgetItem(opt_header, ["Section Alignment", f"0x{opt_data.get('section_alignment', 0):08X}"])
-            QTreeWidgetItem(opt_header, ["File Alignment", f"0x{opt_data.get('file_alignment', 0):08X}"])
+            QTreeWidgetItem(
+                opt_header, ["Section Alignment", f"0x{opt_data.get('section_alignment', 0):08X}"]
+            )
+            QTreeWidgetItem(
+                opt_header, ["File Alignment", f"0x{opt_data.get('file_alignment', 0):08X}"]
+            )
 
         # Data Directories
         if "data_directories" in self.structure_data:
@@ -261,9 +280,15 @@ class StructureVisualizerWidget(QWidget):
             for section in self.structure_data["sections"]:
                 section_item = QTreeWidgetItem(sections_item, [section.get("name", "Unknown")])
 
-                QTreeWidgetItem(section_item, ["Virtual Address", f"0x{section.get('virtual_address', 0):08X}"])
-                QTreeWidgetItem(section_item, ["Virtual Size", f"0x{section.get('virtual_size', 0):08X}"])
-                QTreeWidgetItem(section_item, ["Raw Address", f"0x{section.get('raw_address', 0):08X}"])
+                QTreeWidgetItem(
+                    section_item, ["Virtual Address", f"0x{section.get('virtual_address', 0):08X}"]
+                )
+                QTreeWidgetItem(
+                    section_item, ["Virtual Size", f"0x{section.get('virtual_size', 0):08X}"]
+                )
+                QTreeWidgetItem(
+                    section_item, ["Raw Address", f"0x{section.get('raw_address', 0):08X}"]
+                )
                 QTreeWidgetItem(section_item, ["Raw Size", f"0x{section.get('raw_size', 0):08X}"])
 
                 # Highlight suspicious sections
@@ -346,6 +371,7 @@ class StructureVisualizerWidget(QWidget):
                     self._add_dict_to_tree(item, list_item)
                 else:
                     QTreeWidgetItem(parent, [f"[{i}]", str(item)])
+
     def _update_headers_view(self):
         """Update headers table view"""
         self.headers_table.setRowCount(0)
@@ -393,13 +419,19 @@ class StructureVisualizerWidget(QWidget):
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Machine"))
-                self.headers_table.setItem(row, 1, QTableWidgetItem(f"0x{fh.get('machine', 0):04X}"))
-                self.headers_table.setItem(row, 2, QTableWidgetItem(self._get_machine_name(fh.get("machine", 0))))
+                self.headers_table.setItem(
+                    row, 1, QTableWidgetItem(f"0x{fh.get('machine', 0):04X}")
+                )
+                self.headers_table.setItem(
+                    row, 2, QTableWidgetItem(self._get_machine_name(fh.get("machine", 0)))
+                )
                 row += 1
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Number of Sections"))
-                self.headers_table.setItem(row, 1, QTableWidgetItem(str(fh.get("number_of_sections", 0))))
+                self.headers_table.setItem(
+                    row, 1, QTableWidgetItem(str(fh.get("number_of_sections", 0)))
+                )
                 self.headers_table.setItem(row, 2, QTableWidgetItem("Total section count"))
                 row += 1
             # Optional header
@@ -408,20 +440,26 @@ class StructureVisualizerWidget(QWidget):
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Entry Point"))
-                self.headers_table.setItem(row, 1, QTableWidgetItem(f"0x{oh.get('address_of_entry_point', 0):08X}"))
+                self.headers_table.setItem(
+                    row, 1, QTableWidgetItem(f"0x{oh.get('address_of_entry_point', 0):08X}")
+                )
                 self.headers_table.setItem(row, 2, QTableWidgetItem("Program entry point RVA"))
                 row += 1
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Image Base"))
-                self.headers_table.setItem(row, 1, QTableWidgetItem(f"0x{oh.get('image_base', 0):08X}"))
+                self.headers_table.setItem(
+                    row, 1, QTableWidgetItem(f"0x{oh.get('image_base', 0):08X}")
+                )
                 self.headers_table.setItem(row, 2, QTableWidgetItem("Preferred load address"))
                 row += 1
 
                 self.headers_table.insertRow(row)
                 self.headers_table.setItem(row, 0, QTableWidgetItem("Subsystem"))
                 self.headers_table.setItem(row, 1, QTableWidgetItem(str(oh.get("subsystem", 0))))
-                self.headers_table.setItem(row, 2, QTableWidgetItem(self._get_subsystem_name(oh.get("subsystem", 0))))
+                self.headers_table.setItem(
+                    row, 2, QTableWidgetItem(self._get_subsystem_name(oh.get("subsystem", 0)))
+                )
                 row += 1
 
     def _update_sections_view(self):
@@ -482,7 +520,9 @@ class StructureVisualizerWidget(QWidget):
                     self.imports_table.insertRow(row)
                     self.imports_table.setItem(row, 0, QTableWidgetItem(dll_name))
                     self.imports_table.setItem(row, 1, QTableWidgetItem(func.get("name", "")))
-                    self.imports_table.setItem(row, 2, QTableWidgetItem(str(func.get("ordinal", ""))))
+                    self.imports_table.setItem(
+                        row, 2, QTableWidgetItem(str(func.get("ordinal", "")))
+                    )
 
                     # Highlight suspicious imports
                     if self.highlight_suspicious_cb.isChecked():
@@ -500,7 +540,9 @@ class StructureVisualizerWidget(QWidget):
                 self.exports_table.insertRow(row)
                 self.exports_table.setItem(row, 0, QTableWidgetItem(str(export.get("ordinal", ""))))
                 self.exports_table.setItem(row, 1, QTableWidgetItem(export.get("name", "")))
-                self.exports_table.setItem(row, 2, QTableWidgetItem(f"0x{export.get('address', 0):08X}"))
+                self.exports_table.setItem(
+                    row, 2, QTableWidgetItem(f"0x{export.get('address', 0):08X}")
+                )
                 self.exports_table.setItem(row, 3, QTableWidgetItem(export.get("forwarded", "")))
 
     def _update_memory_map(self):
@@ -570,7 +612,9 @@ class StructureVisualizerWidget(QWidget):
         if "sections" in self.structure_data:
             for section in self.structure_data["sections"]:
                 if self._is_suspicious_section(section):
-                    suspicious.append(f"Section '{section.get('name', '')}' has suspicious characteristics")
+                    suspicious.append(
+                        f"Section '{section.get('name', '')}' has suspicious characteristics"
+                    )
 
         if "imports" in self.structure_data:
             imports = self.structure_data["imports"]
@@ -621,14 +665,23 @@ class StructureVisualizerWidget(QWidget):
             return False
 
         suspicious_funcs = [
-            "VirtualProtect", "VirtualAlloc", "VirtualAllocEx",
-            "WriteProcessMemory", "ReadProcessMemory",
-            "CreateRemoteThread", "SetWindowsHookEx",
-            "GetProcAddress", "LoadLibrary",
-            "OpenProcess", "TerminateProcess",
-            "RegSetValue", "RegCreateKey",
-            "WinExec", "ShellExecute",
-            "IsDebuggerPresent", "CheckRemoteDebuggerPresent",
+            "VirtualProtect",
+            "VirtualAlloc",
+            "VirtualAllocEx",
+            "WriteProcessMemory",
+            "ReadProcessMemory",
+            "CreateRemoteThread",
+            "SetWindowsHookEx",
+            "GetProcAddress",
+            "LoadLibrary",
+            "OpenProcess",
+            "TerminateProcess",
+            "RegSetValue",
+            "RegCreateKey",
+            "WinExec",
+            "ShellExecute",
+            "IsDebuggerPresent",
+            "CheckRemoteDebuggerPresent",
         ]
 
         return func_name in suspicious_funcs
@@ -643,6 +696,7 @@ class StructureVisualizerWidget(QWidget):
             return bool(chars & 0x1)  # PF_X
 
         return False
+
     def _is_writable_section(self, section: dict[str, Any]) -> bool:
         """Check if section is writable"""
         chars = section.get("characteristics", 0)
@@ -657,10 +711,10 @@ class StructureVisualizerWidget(QWidget):
     def _get_machine_name(self, machine: int) -> str:
         """Get machine type name"""
         machines = {
-            0x014c: "x86 (32-bit)",
+            0x014C: "x86 (32-bit)",
             0x8664: "x64 (AMD64)",
-            0x01c0: "ARM",
-            0xaa64: "ARM64",
+            0x01C0: "ARM",
+            0xAA64: "ARM64",
             0x0200: "IA64",
         }
         return machines.get(machine, f"Unknown (0x{machine:04X})")
@@ -683,6 +737,7 @@ class StructureVisualizerWidget(QWidget):
             16: "Windows Boot Application",
         }
         return subsystems.get(subsystem, f"Unknown ({subsystem})")
+
     def _populate_elf_headers(self):
         """Populate ELF headers in table"""
         row = 0
@@ -721,6 +776,7 @@ class StructureVisualizerWidget(QWidget):
                 self.headers_table.setItem(row, 1, QTableWidgetItem(str(value)))
                 self.headers_table.setItem(row, 2, QTableWidgetItem(""))
                 row += 1
+
     def _on_tree_selection(self):
         """Handle tree item selection"""
         items = self.tree_view.selectedItems()
@@ -735,7 +791,9 @@ class StructureVisualizerWidget(QWidget):
 
             # Emit signal with path
             if len(path) > 1:
-                self.header_field_selected.emit(path[0], path[-1], item.text(1) if item.columnCount() > 1 else "")
+                self.header_field_selected.emit(
+                    path[0], path[-1], item.text(1) if item.columnCount() > 1 else ""
+                )
 
     def _on_section_selection(self):
         """Handle section selection"""
@@ -771,10 +829,14 @@ class StructureVisualizerWidget(QWidget):
 
                 # Show success message
                 from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.information(self, "Export Complete", f"Structure exported to {filename}")
+
+                QMessageBox.information(
+                    self, "Export Complete", f"Structure exported to {filename}"
+                )
 
             except Exception as e:
                 from PyQt6.QtWidgets import QMessageBox
+
                 QMessageBox.critical(self, "Export Error", f"Failed to export: {e!s}")
 
     def _format_structure_text(self) -> str:

@@ -23,7 +23,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import os
 import shutil
@@ -31,6 +30,7 @@ import subprocess
 import sys
 
 logger = logging.getLogger(__name__)
+
 
 class PathDiscovery:
     """Dynamic path discovery system for tools and resources."""
@@ -80,7 +80,6 @@ class PathDiscovery:
                 "env_vars": ["GHIDRA_HOME", "GHIDRA_PATH", "GHIDRA_INSTALL_DIR"],
                 "validation": self._validate_ghidra,
             },
-
             "radare2": {
                 "executables": {
                     "win32": ["radare2.exe", "r2.exe"],
@@ -92,7 +91,16 @@ class PathDiscovery:
                         r"C:\Program Files\radare2",
                         r"C:\radare2",
                         r"C:\Tools\radare2",
-                        os.path.join(os.path.dirname(__file__ or os.getcwd()), "..", "..", "radare2", "radare2-5.9.8-w64", "bin") if __file__ else os.path.join(os.getcwd(), "radare2", "radare2-5.9.8-w64", "bin"),
+                        os.path.join(
+                            os.path.dirname(__file__ or os.getcwd()),
+                            "..",
+                            "..",
+                            "radare2",
+                            "radare2-5.9.8-w64",
+                            "bin",
+                        )
+                        if __file__
+                        else os.path.join(os.getcwd(), "radare2", "radare2-5.9.8-w64", "bin"),
                     ],
                     "linux": [
                         "/usr/bin",
@@ -108,7 +116,6 @@ class PathDiscovery:
                 "env_vars": ["RADARE2_HOME", "RADARE2_PATH"],
                 "validation": self._validate_radare2,
             },
-
             "frida": {
                 "executables": {
                     "win32": ["frida.exe", "frida-server.exe"],
@@ -135,10 +142,15 @@ class PathDiscovery:
                 "env_vars": ["FRIDA_PATH"],
                 "validation": self._validate_frida,
             },
-
             "python": {
                 "executables": {
-                    "win32": ["python.exe", "python3.exe", "python311.exe", "python310.exe", "python39.exe"],
+                    "win32": [
+                        "python.exe",
+                        "python3.exe",
+                        "python311.exe",
+                        "python310.exe",
+                        "python39.exe",
+                    ],
                     "linux": ["python3", "python", "python3.11", "python3.10", "python3.9"],
                     "darwin": ["python3", "python", "python3.11", "python3.10", "python3.9"],
                 },
@@ -167,7 +179,6 @@ class PathDiscovery:
                 "env_vars": ["PYTHON_HOME", "PYTHON_PATH"],
                 "validation": self._validate_python,
             },
-
             "docker": {
                 "executables": {
                     "win32": ["docker.exe", "Docker Desktop.exe"],
@@ -191,7 +202,6 @@ class PathDiscovery:
                 "env_vars": ["DOCKER_PATH"],
                 "validation": self._validate_docker,
             },
-
             "wireshark": {
                 "executables": {
                     "win32": ["Wireshark.exe", "tshark.exe"],
@@ -215,7 +225,6 @@ class PathDiscovery:
                 "env_vars": ["WIRESHARK_PATH"],
                 "validation": self._validate_wireshark,
             },
-
             "qemu": {
                 "executables": {
                     "win32": ["qemu-system-x86_64.exe", "qemu-system-i386.exe"],
@@ -240,7 +249,6 @@ class PathDiscovery:
                 "env_vars": ["QEMU_PATH", "QEMU_HOME"],
                 "validation": None,
             },
-
             "git": {
                 "executables": {
                     "win32": ["git.exe"],
@@ -266,7 +274,6 @@ class PathDiscovery:
                 "env_vars": ["GIT_PATH"],
                 "validation": None,
             },
-
             "wkhtmltopdf": {
                 "executables": {
                     "win32": ["wkhtmltopdf.exe"],
@@ -308,7 +315,9 @@ class PathDiscovery:
             "startup": self._get_startup_dir,
         }
 
-    def find_tool(self, tool_name: str, required_executables: list[str] | None = None) -> str | None:
+    def find_tool(
+        self, tool_name: str, required_executables: list[str] | None = None
+    ) -> str | None:
         """Find a tool using multiple discovery strategies.
 
         Args:
@@ -372,7 +381,9 @@ class PathDiscovery:
 
         return None
 
-    def _generic_tool_search(self, tool_name: str, executables: list[str] | None = None) -> str | None:
+    def _generic_tool_search(
+        self, tool_name: str, executables: list[str] | None = None
+    ) -> str | None:
         """Generic search for tools not in specification."""
         if not executables:
             executables = [tool_name]
@@ -388,19 +399,23 @@ class PathDiscovery:
         # Search common locations
         search_dirs = []
         if self.is_windows:
-            search_dirs.extend([
-                os.path.join(self.get_system_path("program_files"), tool_name),
-                os.path.join(self.get_system_path("program_files_x86"), tool_name),
-                f"C:\\{tool_name}",
-                f"C:\\Tools\\{tool_name}",
-            ])
+            search_dirs.extend(
+                [
+                    os.path.join(self.get_system_path("program_files"), tool_name),
+                    os.path.join(self.get_system_path("program_files_x86"), tool_name),
+                    f"C:\\{tool_name}",
+                    f"C:\\Tools\\{tool_name}",
+                ]
+            )
         else:
-            search_dirs.extend([
-                f"/opt/{tool_name}",
-                f"/usr/local/{tool_name}",
-                os.path.expanduser(f"~/.{tool_name}"),
-                os.path.expanduser(f"~/{tool_name}"),
-            ])
+            search_dirs.extend(
+                [
+                    f"/opt/{tool_name}",
+                    f"/usr/local/{tool_name}",
+                    os.path.expanduser(f"~/.{tool_name}"),
+                    os.path.expanduser(f"~/{tool_name}"),
+                ]
+            )
 
         for directory in search_dirs:
             if os.path.exists(directory):
@@ -426,7 +441,9 @@ class PathDiscovery:
                 if os.path.isdir(path):
                     # Look for executable in directory
                     for file in os.listdir(path):
-                        if os.path.isfile(os.path.join(path, file)) and os.access(os.path.join(path, file), os.X_OK):
+                        if os.path.isfile(os.path.join(path, file)) and os.access(
+                            os.path.join(path, file), os.X_OK
+                        ):
                             return os.path.join(path, file)
         return None
 
@@ -469,7 +486,10 @@ class PathDiscovery:
 
             registry_paths = [
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
-                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+                ),
                 (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
             ]
 
@@ -483,11 +503,17 @@ class PathDiscovery:
                                     try:
                                         name = winreg.QueryValueEx(subkey, "DisplayName")[0]
                                         if tool_name.lower() in name.lower():
-                                            install_location = winreg.QueryValueEx(subkey, "InstallLocation")[0]
-                                            if install_location and os.path.exists(install_location):
+                                            install_location = winreg.QueryValueEx(
+                                                subkey, "InstallLocation"
+                                            )[0]
+                                            if install_location and os.path.exists(
+                                                install_location
+                                            ):
                                                 # Look for executable
                                                 spec = self.tool_specs.get(tool_name.lower(), {})
-                                                executables = spec.get("executables", {}).get("win32", [tool_name + ".exe"])
+                                                executables = spec.get("executables", {}).get(
+                                                    "win32", [tool_name + ".exe"]
+                                                )
 
                                                 for exe in executables:
                                                     exe_path = os.path.join(install_location, exe)
@@ -495,7 +521,9 @@ class PathDiscovery:
                                                         return exe_path
 
                                                     # Check bin subdirectory
-                                                    bin_path = os.path.join(install_location, "bin", exe)
+                                                    bin_path = os.path.join(
+                                                        install_location, "bin", exe
+                                                    )
                                                     if os.path.isfile(bin_path):
                                                         return bin_path
                                     except OSError as e:
@@ -581,6 +609,7 @@ class PathDiscovery:
     def _get_temp_dir(self) -> str:
         """Get temporary directory."""
         import tempfile
+
         return tempfile.gettempdir()
 
     def _get_startup_dir(self) -> str | None:
@@ -588,7 +617,9 @@ class PathDiscovery:
         if self.is_windows:
             appdata = self._get_appdata_dir()
             if appdata:
-                return os.path.join(appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
+                return os.path.join(
+                    appdata, "Microsoft", "Windows", "Start Menu", "Programs", "Startup"
+                )
         return None
 
     # Validation methods
@@ -613,7 +644,9 @@ class PathDiscovery:
     def _validate_radare2(self, path: str) -> bool:
         """Validate radare2 installation."""
         try:
-            result = subprocess.run([path, "-v"], capture_output=True, text=True, timeout=5, check=False)
+            result = subprocess.run(
+                [path, "-v"], capture_output=True, text=True, timeout=5, check=False
+            )
             return "radare2" in result.stdout.lower()
         except Exception as e:
             logger.error("Exception in path_discovery: %s", e)
@@ -622,7 +655,9 @@ class PathDiscovery:
     def _validate_frida(self, path: str) -> bool:
         """Validate Frida installation."""
         try:
-            result = subprocess.run([path, "--version"], capture_output=True, text=True, timeout=5, check=False)
+            result = subprocess.run(
+                [path, "--version"], capture_output=True, text=True, timeout=5, check=False
+            )
             return "frida" in result.stdout.lower() or result.returncode == 0
         except Exception as e:
             logger.error("Exception in path_discovery: %s", e)
@@ -631,7 +666,9 @@ class PathDiscovery:
     def _validate_python(self, path: str) -> bool:
         """Validate Python installation."""
         try:
-            result = subprocess.run([path, "--version"], capture_output=True, text=True, timeout=5, check=False)
+            result = subprocess.run(
+                [path, "--version"], capture_output=True, text=True, timeout=5, check=False
+            )
             return "python" in result.stdout.lower() or "python" in result.stderr.lower()
         except Exception as e:
             logger.error("Exception in path_discovery: %s", e)
@@ -640,7 +677,9 @@ class PathDiscovery:
     def _validate_docker(self, path: str) -> bool:
         """Validate Docker installation."""
         try:
-            result = subprocess.run([path, "--version"], capture_output=True, text=True, timeout=5, check=False)
+            result = subprocess.run(
+                [path, "--version"], capture_output=True, text=True, timeout=5, check=False
+            )
             return "docker" in result.stdout.lower()
         except Exception as e:
             logger.error("Exception in path_discovery: %s", e)
@@ -708,7 +747,11 @@ class PathDiscovery:
                     msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
                     if msg.exec() == QMessageBox.Yes:
-                        file_filter = "Executable files (*.exe *.bat);;All files (*.*)" if self.is_windows else "All files (*)"
+                        file_filter = (
+                            "Executable files (*.exe *.bat);;All files (*.*)"
+                            if self.is_windows
+                            else "All files (*)"
+                        )
                         path, _ = QFileDialog.getOpenFileName(
                             parent_widget,
                             f"Select {tool_name} executable",
@@ -738,7 +781,9 @@ class PathDiscovery:
                     # Validate path exists and is safe
                     if os.path.exists(path) and os.path.isfile(path):
                         # Additional validation: ensure it's an executable or expected file type
-                        if os.access(path, os.X_OK) or path.endswith((".exe", ".bat", ".sh", ".py")):
+                        if os.access(path, os.X_OK) or path.endswith(
+                            (".exe", ".bat", ".sh", ".py")
+                        ):
                             self.cache[tool_name] = path
                             if self.config_manager:
                                 self.config_manager.set(f"{tool_name}_path", path)
@@ -756,6 +801,7 @@ class PathDiscovery:
 # Global instance
 _path_discovery = None
 
+
 def get_path_discovery(config_manager=None) -> PathDiscovery:
     """Get global PathDiscovery instance."""
     global _path_discovery  # pylint: disable=global-statement
@@ -763,13 +809,16 @@ def get_path_discovery(config_manager=None) -> PathDiscovery:
         _path_discovery = PathDiscovery(config_manager)
     return _path_discovery
 
+
 def find_tool(tool_name: str, required_executables: list[str] | None = None) -> str | None:
     """Convenience function to find a tool."""
     return get_path_discovery().find_tool(tool_name, required_executables)
 
+
 def get_system_path(path_type: str) -> str | None:
     """Convenience function to get system paths."""
     return get_path_discovery().get_system_path(path_type)
+
 
 def ensure_tool_available(tool_name: str, parent_widget=None) -> str | None:
     """Convenience function to ensure tool availability."""

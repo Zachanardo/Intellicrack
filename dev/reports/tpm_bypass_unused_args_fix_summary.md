@@ -9,7 +9,7 @@ Fixed all unused argument warnings in `/mnt/c/Intellicrack/intellicrack/core/pro
 - **Fix**: Parse capability type from params and log it for debugging
 - **Implementation**: Extracts 4-byte capability type and logs the requested capability
 
-### 2. `_tpm_startup(self, params: bytes)` - Line 256  
+### 2. `_tpm_startup(self, params: bytes)` - Line 256
 - **Fix**: Parse startup type (CLEAR/STATE) from params
 - **Implementation**: Reads 2-byte type code and logs the startup mode
 
@@ -43,7 +43,7 @@ Fixed all unused argument warnings in `/mnt/c/Intellicrack/intellicrack/core/pro
 
 ### 10. `detect_tpm_usage(process_name: Optional[str])` - Line 825
 - **Fix**: Implement process-specific TPM usage detection
-- **Implementation**: 
+- **Implementation**:
   - If process_name provided, checks if that specific process has TPM DLLs loaded
   - Uses tasklist to check for tbs.dll and ncrypt.dll in the process
   - Provides more detailed logging about TPM usage per process

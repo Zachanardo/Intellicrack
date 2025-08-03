@@ -40,6 +40,7 @@ try:
     from rich.syntax import Syntax
     from rich.table import Table
     from rich.text import Text
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -53,7 +54,9 @@ sys.path.insert(0, project_root)
 class AITerminalChat:
     """Terminal-based AI chat interface with rich formatting."""
 
-    def __init__(self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None):
+    def __init__(
+        self, binary_path: str | None = None, analysis_results: dict[str, Any] | None = None
+    ):
         """Initialize AI chat interface.
 
         Args:
@@ -95,6 +98,7 @@ class AITerminalChat:
         try:
             # Try to import and initialize AI coordination layer
             from intellicrack.ai.coordination_layer import CoordinationLayer
+
             self.ai_backend = CoordinationLayer()
 
             if self.console:
@@ -104,7 +108,9 @@ class AITerminalChat:
 
         except ImportError:
             if self.console:
-                self.console.print("[yellow]AI backend not available - using mock responses[/yellow]")
+                self.console.print(
+                    "[yellow]AI backend not available - using mock responses[/yellow]"
+                )
             else:
                 print("AI backend not available - using mock responses")
             self.ai_backend = None
@@ -208,11 +214,13 @@ class AITerminalChat:
     def _process_ai_query(self, user_input: str):
         """Process AI query with rich formatting."""
         # Add to conversation history
-        self.conversation_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "type": "user",
-            "content": user_input,
-        })
+        self.conversation_history.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "type": "user",
+                "content": user_input,
+            }
+        )
 
         # Show thinking indicator with progress bar
         with Progress(
@@ -230,7 +238,9 @@ class AITerminalChat:
 
             # Check if response contains code and prepare syntax highlighting
             if "```" in response:
-                progress.update(thinking_task, advance=15, description="[yellow]Formatting code blocks...")
+                progress.update(
+                    thinking_task, advance=15, description="[yellow]Formatting code blocks..."
+                )
 
             progress.update(thinking_task, advance=10, description="[green]Finalizing response...")
 
@@ -238,24 +248,28 @@ class AITerminalChat:
         self._display_ai_response(response)
 
         # Add response to history
-        self.conversation_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "type": "ai",
-            "content": response,
-        })
+        self.conversation_history.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "type": "ai",
+                "content": response,
+            }
+        )
 
         # Trim history if too long
         if len(self.conversation_history) > self.max_history * 2:
-            self.conversation_history = self.conversation_history[-self.max_history:]
+            self.conversation_history = self.conversation_history[-self.max_history :]
 
     def _process_ai_query_basic(self, user_input: str):
         """Process AI query with basic formatting."""
         # Add to conversation history
-        self.conversation_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "type": "user",
-            "content": user_input,
-        })
+        self.conversation_history.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "type": "user",
+                "content": user_input,
+            }
+        )
 
         print("AI: Thinking...")
         response = self._get_ai_response(user_input)
@@ -263,11 +277,13 @@ class AITerminalChat:
         print(f"AI: {response}\n")
 
         # Add response to history
-        self.conversation_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "type": "ai",
-            "content": response,
-        })
+        self.conversation_history.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "type": "ai",
+                "content": response,
+            }
+        )
 
     def _get_ai_response(self, user_input: str) -> str:
         """Get AI response from backend or mock."""
@@ -276,6 +292,7 @@ class AITerminalChat:
         # Try using AI tools ask_question method first
         try:
             from intellicrack.ai.ai_tools import AIAssistant
+
             ai_tools = AIAssistant()
 
             # Build contextual question with binary and analysis info
@@ -285,9 +302,13 @@ class AITerminalChat:
 
             if self.analysis_results:
                 # Add key analysis findings to context
-                vuln_count = len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", []))
+                vuln_count = len(
+                    self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])
+                )
                 if vuln_count > 0:
-                    contextual_question = f"Context: Found {vuln_count} vulnerabilities\n{contextual_question}"
+                    contextual_question = (
+                        f"Context: Found {vuln_count} vulnerabilities\n{contextual_question}"
+                    )
 
             response = ai_tools.ask_question(contextual_question)
             return response
@@ -334,7 +355,9 @@ Would you like me to focus on any specific aspect of the analysis?"""
 
         # Vulnerability questions
         if any(word in user_lower for word in ["vulnerability", "vuln", "security", "exploit"]):
-            vuln_count = len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", []))
+            vuln_count = len(
+                self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])
+            )
             if vuln_count > 0:
                 return f"""I found {vuln_count} potential vulnerabilities in your binary:
 
@@ -346,7 +369,9 @@ I recommend addressing the high-severity issues first. Would you like specific r
             return "No critical vulnerabilities detected in the current analysis. The binary appears to have good security protections."
 
         # Protection questions
-        if any(word in user_lower for word in ["protection", "aslr", "dep", "canary", "mitigation"]):
+        if any(
+            word in user_lower for word in ["protection", "aslr", "dep", "canary", "mitigation"]
+        ):
             protections = self.analysis_results.get("protections", {})
             if protections:
                 enabled = [k for k, v in protections.items() if v]
@@ -366,8 +391,14 @@ I recommend addressing the high-severity issues first. Would you like specific r
         if any(word in user_lower for word in ["string", "text", "password", "key"]):
             strings = self.analysis_results.get("strings", [])
             if strings:
-                interesting_strings = [s for s in strings if any(keyword in s.lower()
-                                     for keyword in ["password", "key", "license", "admin", "secret"])]
+                interesting_strings = [
+                    s
+                    for s in strings
+                    if any(
+                        keyword in s.lower()
+                        for keyword in ["password", "key", "license", "admin", "secret"]
+                    )
+                ]
 
                 if interesting_strings:
                     return f"""Found {len(interesting_strings)} potentially interesting strings:
@@ -375,7 +406,9 @@ I recommend addressing the high-severity issues first. Would you like specific r
 {chr(10).join(['• ' + s[:50] + ('...' if len(s) > 50 else '') for s in interesting_strings[:5]])}
 
 These strings might indicate authentication mechanisms or sensitive data."""
-                return f"Found {len(strings)} strings total, but none appear particularly sensitive."
+                return (
+                    f"Found {len(strings)} strings total, but none appear particularly sensitive."
+                )
             return "No string analysis data available. Run string extraction first."
 
         # Help questions
@@ -417,14 +450,18 @@ Could you be more specific about what aspect of the analysis you'd like to explo
             context["binary_info"] = {
                 "name": os.path.basename(self.binary_path),
                 "path": self.binary_path,
-                "size": os.path.getsize(self.binary_path) if os.path.exists(self.binary_path) else 0,
+                "size": os.path.getsize(self.binary_path)
+                if os.path.exists(self.binary_path)
+                else 0,
             }
 
         if self.analysis_results:
             # Summarize analysis results for context
             context["analysis_summary"] = {
                 "categories": list(self.analysis_results.keys()),
-                "vulnerability_count": len(self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])),
+                "vulnerability_count": len(
+                    self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])
+                ),
                 "string_count": len(self.analysis_results.get("strings", [])),
                 "has_protections": "protections" in self.analysis_results,
             }
@@ -475,6 +512,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         # Display with live update for typing effect
         with Live(layout, refresh_per_second=10, console=self.console) as live:
             import time
+
             # Simulate typing effect by updating the display
             for _i in range(5):  # 5 refresh cycles
                 live.update(layout)
@@ -511,7 +549,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
                     if part.strip():
                         result_parts.append(part)
                 elif i % 3 == 2:  # Code content parts
-                    lang = parts[i-1] or "python"
+                    lang = parts[i - 1] or "python"
                     syntax = Syntax(part, lang, theme="monokai", line_numbers=True)
                     result_parts.append(syntax)
 
@@ -531,17 +569,39 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
         if "vulnerabilities" in self.analysis_results:
             vuln_data = self.analysis_results["vulnerabilities"]
-            vuln_count = len(vuln_data.get("vulnerabilities", [])) if isinstance(vuln_data, dict) else 0
-            panels.append(Panel(f"[red]{vuln_count}[/red] vulnerabilities found", title="Security", border_style="red"))
+            vuln_count = (
+                len(vuln_data.get("vulnerabilities", [])) if isinstance(vuln_data, dict) else 0
+            )
+            panels.append(
+                Panel(
+                    f"[red]{vuln_count}[/red] vulnerabilities found",
+                    title="Security",
+                    border_style="red",
+                )
+            )
 
         if "strings" in self.analysis_results:
             string_count = len(self.analysis_results["strings"])
-            panels.append(Panel(f"[blue]{string_count}[/blue] strings extracted", title="Strings", border_style="blue"))
+            panels.append(
+                Panel(
+                    f"[blue]{string_count}[/blue] strings extracted",
+                    title="Strings",
+                    border_style="blue",
+                )
+            )
 
         if "protections" in self.analysis_results:
             protection_data = self.analysis_results["protections"]
-            protection_count = len(protection_data) if isinstance(protection_data, (list, dict)) else 1
-            panels.append(Panel(f"[yellow]{protection_count}[/yellow] protections detected", title="Protections", border_style="yellow"))
+            protection_count = (
+                len(protection_data) if isinstance(protection_data, (list, dict)) else 1
+            )
+            panels.append(
+                Panel(
+                    f"[yellow]{protection_count}[/yellow] protections detected",
+                    title="Protections",
+                    border_style="yellow",
+                )
+            )
 
         if panels:
             # Display in columns for better layout
@@ -719,7 +779,9 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
                 # Update context with new backend info
                 self.context["ai_backend"] = backend_name
-                self.context["backend_capabilities"] = self.ai_assistant.llm_manager.get_backend_capabilities(backend_name)
+                self.context["backend_capabilities"] = (
+                    self.ai_assistant.llm_manager.get_backend_capabilities(backend_name)
+                )
 
             else:
                 msg = f"Failed to switch to {backend_name} backend. Check configuration."
@@ -818,7 +880,7 @@ Could you be more specific about what aspect of the analysis you'd like to explo
             f.write(f"Started: {self.session_start}\n")
             if self.binary_path:
                 f.write(f"Binary: {self.binary_path}\n")
-            f.write("\n" + "="*50 + "\n\n")
+            f.write("\n" + "=" * 50 + "\n\n")
 
             for entry in self.conversation_history:
                 timestamp = entry.get("timestamp", "")

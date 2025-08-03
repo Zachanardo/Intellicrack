@@ -603,32 +603,32 @@ class TestFridaScriptRegression(unittest.TestCase):
             version = frida.__version__
             self.assertIsNotNone(version)
             self.assertIsInstance(version, str)
-            
+
             # Parse version components
             version_parts = version.split('.')
             self.assertGreaterEqual(len(version_parts), 2)  # At least major.minor
-            
+
             # Verify version is numeric
             major = int(version_parts[0])
             self.assertGreaterEqual(major, 0)
-            
+
     def test_frida_device_manager(self):
         """Test Frida device manager functionality"""
         if FRIDA_AVAILABLE:
             # Get device manager
             device_manager = frida.get_device_manager()
             self.assertIsNotNone(device_manager)
-            
+
             # Enumerate devices
             devices = device_manager.enumerate_devices()
             self.assertIsInstance(devices, list)
             self.assertGreater(len(devices), 0)  # At least local device
-            
+
             # Check local device
             local_device = frida.get_local_device()
             self.assertIsNotNone(local_device)
             self.assertEqual(local_device.type, 'local')
-            
+
     def test_regression_suite(self):
         """Test regression suite functionality"""
         suite = FridaScriptRegressionSuite(self.scripts_dir)

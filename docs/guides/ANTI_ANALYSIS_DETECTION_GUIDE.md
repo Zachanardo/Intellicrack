@@ -290,14 +290,14 @@ suite.apply_comprehensive_bypass(
 class CustomBypass:
     def __init__(self):
         self.patches = []
-    
+
     def add_patch(self, address, original, patch):
         self.patches.append({
             "address": address,
             "original": original,
             "patch": patch
         })
-    
+
     def apply(self, process):
         for patch in self.patches:
             process.write_memory(
@@ -315,13 +315,13 @@ const bypasses = {
     'kernel32.dll!IsDebuggerPresent': function() {
         return 0;
     },
-    
+
     // Bypass CheckRemoteDebuggerPresent
     'kernel32.dll!CheckRemoteDebuggerPresent': function(hProcess, pbDebuggerPresent) {
         Memory.writeU8(pbDebuggerPresent, 0);
         return 1;
     },
-    
+
     // Bypass NtQueryInformationProcess
     'ntdll.dll!NtQueryInformationProcess': function(handle, infoClass, info, size, ret) {
         const result = this.original(handle, infoClass, info, size, ret);

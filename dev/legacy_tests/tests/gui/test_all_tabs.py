@@ -16,10 +16,10 @@ def test_tabs():
     """Test each tab individually."""
     try:
         print("Testing Intellicrack tabs...")
-        
+
         from PyQt6.QtWidgets import QApplication
         app = QApplication(sys.argv)
-        
+
         # Test shared context
         shared_context = {
             'main_window': None,
@@ -27,7 +27,7 @@ def test_tabs():
             'app_context': None,
             'task_manager': None
         }
-        
+
         # Test each tab
         tabs_to_test = [
             ("DashboardTab", "intellicrack.ui.tabs.dashboard_tab"),
@@ -37,30 +37,30 @@ def test_tabs():
             ("AIAssistantTab", "intellicrack.ui.tabs.ai_assistant_tab"),
             ("SettingsTab", "intellicrack.ui.tabs.settings_tab"),
         ]
-        
+
         for tab_name, module_path in tabs_to_test:
             print(f"\nTesting {tab_name}...")
             try:
                 module = __import__(module_path, fromlist=[tab_name])
                 tab_class = getattr(module, tab_name)
-                
+
                 # Create instance
                 tab = tab_class(shared_context)
                 print(f"  ✓ {tab_name} created successfully")
-                
+
                 # Try to load content
                 if hasattr(tab, 'lazy_load_content'):
                     tab.lazy_load_content()
                     print(f"  ✓ {tab_name} content loaded")
-                
+
             except Exception as e:
                 print(f"  ✗ {tab_name} failed: {e}")
                 import traceback
                 traceback.print_exc()
-        
+
         print("\nTab testing complete!")
         return 0
-        
+
     except Exception as e:
         print(f"✗ Error: {e}")
         import traceback

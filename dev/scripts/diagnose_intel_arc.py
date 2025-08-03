@@ -107,19 +107,19 @@ import sys
 try:
     from PyQt6.QtWidgets import QApplication, QWidget
     from PyQt6.QtCore import Qt
-    
+
     app = QApplication(sys.argv)
     QApplication.setAttribute(Qt.AA_UseSoftwareOpenGL, {"software" in str(env_vars.get("QT_OPENGL", ""))})
-    
+
     window = QWidget()
     window.setWindowTitle("Test")
     window.resize(200, 100)
     window.show()
-    
+
     # Close immediately
     from PyQt6.QtCore import QTimer
     QTimer.singleShot(100, app.quit)
-    
+
     exit_code = app.exec()
     print(f"SUCCESS: {name} configuration works!")
     sys.exit(0)

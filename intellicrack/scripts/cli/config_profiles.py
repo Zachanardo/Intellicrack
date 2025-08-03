@@ -161,7 +161,9 @@ class ProfileManager:
         for profile in self.profiles.values():
             table.add_row(
                 profile.name,
-                profile.description[:30] + "..." if len(profile.description) > 30 else profile.description,
+                profile.description[:30] + "..."
+                if len(profile.description) > 30
+                else profile.description,
                 profile.created_at.strftime("%Y-%m-%d"),
                 profile.last_used.strftime("%Y-%m-%d") if profile.last_used else "Never",
                 f"{len(profile.analysis_options)} options",
@@ -214,7 +216,9 @@ class ProfileManager:
 
         # Advanced settings
         if Confirm.ask("\nConfigure advanced settings?", default=False):
-            profile.settings["timeout"] = int(Prompt.ask("Analysis timeout (seconds)", default="300"))
+            profile.settings["timeout"] = int(
+                Prompt.ask("Analysis timeout (seconds)", default="300")
+            )
             profile.settings["max_memory"] = int(Prompt.ask("Max memory (MB)", default="2048"))
             profile.settings["threads"] = int(Prompt.ask("Number of threads", default="4"))
 
@@ -270,8 +274,16 @@ def create_default_profiles():
     # Full analysis profile
     full_analysis = ConfigProfile("full_analysis", "Comprehensive analysis with all features")
     full_analysis.analysis_options = [
-        "static", "dynamic", "vulnerability", "protection",
-        "network", "license", "strings", "entropy", "signature", "ml_predict",
+        "static",
+        "dynamic",
+        "vulnerability",
+        "protection",
+        "network",
+        "license",
+        "strings",
+        "entropy",
+        "signature",
+        "ml_predict",
     ]
     full_analysis.settings = {"timeout": 600, "threads": 8, "verbose": True}
     full_analysis.output_format = "html"
@@ -280,7 +292,12 @@ def create_default_profiles():
     # Malware analysis profile
     malware = ConfigProfile("malware_analysis", "Specialized malware analysis")
     malware.analysis_options = [
-        "static", "dynamic", "strings", "network", "protection", "signature",
+        "static",
+        "dynamic",
+        "strings",
+        "network",
+        "protection",
+        "signature",
     ]
     malware.settings = {
         "timeout": 300,
@@ -304,10 +321,12 @@ def main():
     """Demo the profile system"""
     console = Console()
 
-    console.print(Panel(
-        "[bold cyan]Intellicrack Configuration Profile Manager[/bold cyan]",
-        box=box.DOUBLE,
-    ))
+    console.print(
+        Panel(
+            "[bold cyan]Intellicrack Configuration Profile Manager[/bold cyan]",
+            box=box.DOUBLE,
+        )
+    )
 
     manager = ProfileManager()
 
@@ -356,7 +375,9 @@ def main():
                 console.print("[yellow]No profiles available.[/yellow]")
                 continue
 
-            profile_name = Prompt.ask("Profile name to delete", choices=list(manager.profiles.keys()))
+            profile_name = Prompt.ask(
+                "Profile name to delete", choices=list(manager.profiles.keys())
+            )
             if Confirm.ask(f"Delete profile '{profile_name}'?", default=False):
                 if manager.delete_profile(profile_name):
                     console.print(f"[green]Profile '{profile_name}' deleted.[/green]")

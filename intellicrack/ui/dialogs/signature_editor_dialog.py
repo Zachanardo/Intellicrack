@@ -59,11 +59,11 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
         self.highlighting_rules = []
 
         # Define colors
-        keyword_color = QColor(86, 156, 214)      # Blue
-        string_color = QColor(206, 145, 120)      # Orange
-        comment_color = QColor(106, 153, 85)      # Green
-        number_color = QColor(181, 206, 168)      # Light green
-        operator_color = QColor(212, 212, 212)    # Light gray
+        keyword_color = QColor(86, 156, 214)  # Blue
+        string_color = QColor(206, 145, 120)  # Orange
+        comment_color = QColor(106, 153, 85)  # Green
+        number_color = QColor(181, 206, 168)  # Light green
+        operator_color = QColor(212, 212, 212)  # Light gray
 
         # Keyword patterns
         keyword_format = QTextCharFormat()
@@ -71,8 +71,18 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
         keyword_format.setFontWeight(QFont.Bold)
 
         keywords = [
-            "init", "ep", "section", "header", "overlay", "entrypoint",
-            "size", "version", "options", "name", "type", "comment",
+            "init",
+            "ep",
+            "section",
+            "header",
+            "overlay",
+            "entrypoint",
+            "size",
+            "version",
+            "options",
+            "name",
+            "type",
+            "comment",
         ]
 
         for keyword in keywords:
@@ -117,7 +127,7 @@ class SignatureTestWorker(QThread):
     """Worker thread for testing signatures against files"""
 
     test_completed = pyqtSignal(str, bool, str)  # file_path, success, result
-    progress_update = pyqtSignal(int, str)       # progress, current_file
+    progress_update = pyqtSignal(int, str)  # progress, current_file
 
     def __init__(self, signature_content: str, test_files: list[str]):
         """Initialize the SignatureTestWorker with default values."""
@@ -366,10 +376,18 @@ class SignatureEditorDialog(QDialog):
 
         info_layout.addWidget(QLabel("Type:"))
         self.sig_type_combo = QComboBox()
-        self.sig_type_combo.addItems([
-            "Packer", "Protector", "Compiler", "Installer",
-            "Cryptor", "Virus", "Trojan", "Other",
-        ])
+        self.sig_type_combo.addItems(
+            [
+                "Packer",
+                "Protector",
+                "Compiler",
+                "Installer",
+                "Cryptor",
+                "Virus",
+                "Trojan",
+                "Other",
+            ]
+        )
         info_layout.addWidget(self.sig_type_combo)
 
         info_layout.addWidget(QLabel("Version:"))
@@ -481,9 +499,15 @@ class SignatureEditorDialog(QDialog):
 
         # Results table
         self.test_results_model = QStandardItemModel()
-        self.test_results_model.setHorizontalHeaderLabels([
-            "File", "Result", "Message", "File Size", "Time",
-        ])
+        self.test_results_model.setHorizontalHeaderLabels(
+            [
+                "File",
+                "Result",
+                "Message",
+                "File Size",
+                "Time",
+            ]
+        )
 
         self.test_results_table = QTableView()
         self.test_results_table.setModel(self.test_results_model)
@@ -525,12 +549,17 @@ class SignatureEditorDialog(QDialog):
         # Load categories from templates module
         try:
             from ...data.signature_templates import SignatureTemplates
+
             categories = SignatureTemplates.get_all_categories()
         except ImportError:
             logger.debug("Signature templates module not available, using fallback categories")
             categories = [
-                "Basic Patterns", "PE Headers", "Section Signatures",
-                "Import Signatures", "String Signatures", "Complex Rules",
+                "Basic Patterns",
+                "PE Headers",
+                "Section Signatures",
+                "Import Signatures",
+                "String Signatures",
+                "Complex Rules",
             ]
 
         self.template_category_list.addItems(categories)
@@ -836,10 +865,12 @@ ep:
 
         for line in lines:
             stripped = line.strip()
-            if not (stripped.startswith("// Name:") or
-                   stripped.startswith("// Type:") or
-                   stripped.startswith("// Version:") or
-                   stripped.startswith("// Description:")):
+            if not (
+                stripped.startswith("// Name:")
+                or stripped.startswith("// Type:")
+                or stripped.startswith("// Version:")
+                or stripped.startswith("// Description:")
+            ):
                 filtered_lines.append(line)
 
         return metadata_header + "\n".join(filtered_lines)
@@ -926,7 +957,9 @@ ep:
                 self._category_selections = {}
             if selected_template:
                 self._category_selections[previous_category] = selected_template
-                logger.debug(f"Saved template selection '{selected_template}' for category '{previous_category}'")
+                logger.debug(
+                    f"Saved template selection '{selected_template}' for category '{previous_category}'"
+                )
 
         category = current_item.text()
         self.template_list.clear()
@@ -943,7 +976,9 @@ ep:
                 if self.template_list.item(i).text() == previous_selection:
                     self.template_list.setCurrentRow(i)
                     self._update_template_preview()
-                    logger.debug(f"Restored template selection '{previous_selection}' for category '{category}'")
+                    logger.debug(
+                        f"Restored template selection '{previous_selection}' for category '{category}'"
+                    )
                     return
 
         # Load first template preview if no previous selection
@@ -1069,9 +1104,15 @@ ep:
 
         # Clear previous results
         self.test_results_model.clear()
-        self.test_results_model.setHorizontalHeaderLabels([
-            "File", "Result", "Message", "File Size", "Time",
-        ])
+        self.test_results_model.setHorizontalHeaderLabels(
+            [
+                "File",
+                "Result",
+                "Message",
+                "File Size",
+                "Time",
+            ]
+        )
 
         # Disable test button, enable stop button
         self.run_test_btn.setEnabled(False)
@@ -1148,7 +1189,8 @@ ep:
 
         self.test_summary_label.setText(
             f"Tests completed: {matches}/{total_tests} matches ({matches/total_tests*100:.1f}%)"
-            if total_tests > 0 else "No tests completed",
+            if total_tests > 0
+            else "No tests completed",
         )
 
         self.test_worker = None

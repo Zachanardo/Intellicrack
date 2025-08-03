@@ -132,17 +132,17 @@ services:
     environment:
       - DATABASE_URL=postgresql://intellicrack:${DB_PASSWORD}@postgres/intellicrack
       - REDIS_URL=redis://redis:6379
-    
+
   postgres:
     image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    
+
   redis:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
-    
+
   radare2:
     image: radare/radare2:latest
     volumes:
@@ -185,7 +185,7 @@ Use Docker secrets for sensitive data:
 secrets:
   db_password:
     file: ./secrets/db_password.txt
-  
+
 services:
   intellicrack:
     secrets:
@@ -313,7 +313,7 @@ docker-compose exec -T postgres psql -U intellicrack intellicrack < backup.sql
    ```bash
    # Check logs
    docker logs intellicrack
-   
+
    # Interactive debug
    docker run -it --rm intellicrack:latest /bin/bash
    ```

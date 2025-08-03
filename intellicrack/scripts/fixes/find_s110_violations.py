@@ -64,24 +64,35 @@ def find_exception_blocks(file_path):
             if current_indent <= except_indent and stripped:
                 # We've left the except block
                 if not has_logger:
-                    violations.append({
-                        "line": except_start_line,
-                        "type": exception_type,
-                        "context": lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)],
-                    })
+                    violations.append(
+                        {
+                            "line": except_start_line,
+                            "type": exception_type,
+                            "context": lines[
+                                max(0, except_start_line - 2) : min(
+                                    len(lines), except_start_line + 3
+                                )
+                            ],
+                        }
+                    )
                 in_except_block = False
             elif "logger" in line or "logging" in line:
                 has_logger = True
 
     # Check if the last except block had a logger
     if in_except_block and not has_logger:
-        violations.append({
-            "line": except_start_line,
-            "type": exception_type,
-            "context": lines[max(0, except_start_line-2):min(len(lines), except_start_line+3)],
-        })
+        violations.append(
+            {
+                "line": except_start_line,
+                "type": exception_type,
+                "context": lines[
+                    max(0, except_start_line - 2) : min(len(lines), except_start_line + 3)
+                ],
+            }
+        )
 
     return violations
+
 
 def main():
     """Main function to find all S110 violations."""
@@ -117,6 +128,7 @@ def main():
             if len(violations) > 2:
                 print(f"   ... and {len(violations) - 2} more")
             break
+
 
 if __name__ == "__main__":
     main()

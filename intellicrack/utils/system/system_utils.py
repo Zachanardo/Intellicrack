@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import os
 import platform
@@ -41,6 +40,7 @@ except ImportError as e:
 
 try:
     from PIL import Image, ImageDraw
+
     PIL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in system_utils: %s", e)
@@ -79,19 +79,23 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
                 proc_name_lower = proc.info["name"].lower()
                 # Prioritize exact matches
                 if proc_name_lower == target_name:
-                    potential_pids.append({
-                        "pid": proc.info["pid"],
-                        "name": proc.info["name"],
-                        "create_time": proc.info["create_time"],
-                        "match": "exact",
-                    })
+                    potential_pids.append(
+                        {
+                            "pid": proc.info["pid"],
+                            "name": proc.info["name"],
+                            "create_time": proc.info["create_time"],
+                            "match": "exact",
+                        }
+                    )
                 elif target_name in proc_name_lower:
-                    potential_pids.append({
-                        "pid": proc.info["pid"],
-                        "name": proc.info["name"],
-                        "create_time": proc.info["create_time"],
-                        "match": "partial",
-                    })
+                    potential_pids.append(
+                        {
+                            "pid": proc.info["pid"],
+                            "name": proc.info["name"],
+                            "create_time": proc.info["create_time"],
+                            "match": "partial",
+                        }
+                    )
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error iterating processes: %s", e)
         return None
@@ -113,8 +117,7 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
     # Multiple processes found - in a library context, just return the first
     # In the full application, this would prompt the user
     logger.warning(
-        f"[PID Finder] Found {len(potential_pids)} potential processes. "
-        f"Returning first match.",
+        f"[PID Finder] Found {len(potential_pids)} potential processes. " f"Returning first match.",
     )
     return potential_pids[0]["pid"]
 
@@ -176,8 +179,12 @@ def check_dependencies(dependencies: dict[str, str]) -> tuple[bool, dict[str, bo
     return all_satisfied, results
 
 
-def run_command(command: str | list[str], shell: bool = False,
-                capture_output: bool = True, timeout: int | None = None) -> subprocess.CompletedProcess:
+def run_command(
+    command: str | list[str],
+    shell: bool = False,
+    capture_output: bool = True,
+    timeout: int | None = None,
+) -> subprocess.CompletedProcess:
     """Run a system command with proper error handling.
 
     Args:
@@ -205,8 +212,9 @@ def run_command(command: str | list[str], shell: bool = False,
             shell=shell,
             capture_output=capture_output,
             text=True,
-            timeout=timeout
-        , check=False)
+            timeout=timeout,
+            check=False,
+        )
 
         if result.returncode != 0:
             logger.error("Command failed with return code %s", result.returncode)
@@ -318,6 +326,7 @@ def get_temp_directory() -> Path:
 
     """
     import tempfile
+
     return Path(tempfile.gettempdir())
 
 
@@ -341,6 +350,7 @@ def check_admin_privileges() -> bool:
     try:
         if is_windows():
             import ctypes
+
             return ctypes.windll.shell32.IsUserAnAdmin() != 0
         # Unix-like systems
         return hasattr(os, "geteuid") and getattr(os, "geteuid", lambda: -1)() == 0
@@ -378,12 +388,12 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
                 command = " ".join(command)
 
             # Use PowerShell to run with elevated privileges
-            ps_command = f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
+            ps_command = (
+                f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
+            )
             result = subprocess.run(
-                ["powershell", "-Command", ps_command],
-                capture_output=True,
-                text=True
-            , check=False)
+                ["powershell", "-Command", ps_command], capture_output=True, text=True, check=False
+            )
             return result.returncode == 0
         # On Unix-like systems, use sudo
         if isinstance(command, str):
@@ -445,8 +455,17 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
                     hdc_mem = hdc.CreateCompatibleDC()
                     hdc_mem.SelectObject(hbmp)
 
-                    win32gui.DrawIconEx(hdc_mem.GetHandleOutput(), 0, 0, large[0],
-                                       ico_x, ico_y, 0, None, win32con.DI_NORMAL)
+                    win32gui.DrawIconEx(
+                        hdc_mem.GetHandleOutput(),
+                        0,
+                        0,
+                        large[0],
+                        ico_x,
+                        ico_y,
+                        0,
+                        None,
+                        win32con.DI_NORMAL,
+                    )
 
                     # Save to file
                     bmpinfo = hbmp.GetInfo()
@@ -455,7 +474,11 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
                     img = Image.frombuffer(
                         "RGB",
                         (bmpinfo["bmWidth"], bmpinfo["bmHeight"]),
-                        bmpstr, "raw", "BGRX", 0, 1,
+                        bmpstr,
+                        "raw",
+                        "BGRX",
+                        0,
+                        1,
                     )
 
                     img.save(output_path, "PNG")
@@ -472,6 +495,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
         # Cross-platform fallback: Try to extract from PE file
         try:
             import pefile
+
             pe = pefile.PE(exe_path)
 
             # Look for RT_ICON resources
@@ -563,14 +587,17 @@ def optimize_memory_usage() -> dict[str, Any]:
     try:
         # Clear linecache
         import linecache
+
         linecache.clearcache()
 
         # Clear re cache
         import re
+
         re.purge()
 
         # Clear functools caches
         import functools
+
         if hasattr(functools, "lru_cache"):
             # Clear all lru_cache instances (Python 3.9+)
             cleared_count = 0

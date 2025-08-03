@@ -1,4 +1,5 @@
 """Plugin CI/CD system for automated plugin testing and deployment."""
+
 import hashlib
 import json
 import os
@@ -32,8 +33,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
 class CICDPipeline:
     """CI/CD pipeline for Intellicrack plugins"""
 
@@ -46,7 +45,7 @@ class CICDPipeline:
         self.results = {
             "stages": {},
             "overall_status": "pending",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     def _load_or_create_config(self) -> Dict[str, Any]:
@@ -61,37 +60,22 @@ class CICDPipeline:
             default_config = {
                 "version": "1.0",
                 "stages": ["validate", "test", "quality", "security", "build", "deploy"],
-                "validate": {
-                    "enabled": True,
-                    "checks": ["syntax", "structure", "imports"]
-                },
+                "validate": {"enabled": True, "checks": ["syntax", "structure", "imports"]},
                 "test": {
                     "enabled": True,
                     "framework": "pytest",
                     "coverage_threshold": 80,
-                    "timeout": 300
+                    "timeout": 300,
                 },
                 "quality": {
                     "enabled": True,
                     "linters": ["pylint", "flake8"],
                     "max_complexity": 10,
-                    "max_line_length": 120
+                    "max_line_length": 120,
                 },
-                "security": {
-                    "enabled": True,
-                    "scanners": ["bandit"],
-                    "check_dependencies": True
-                },
-                "build": {
-                    "enabled": True,
-                    "optimize": True,
-                    "minify": False
-                },
-                "deploy": {
-                    "enabled": True,
-                    "target": "local",
-                    "backup_previous": True
-                }
+                "security": {"enabled": True, "scanners": ["bandit"], "check_dependencies": True},
+                "build": {"enabled": True, "optimize": True, "minify": False},
+                "deploy": {"enabled": True, "target": "local", "backup_previous": True},
             }
 
             # Save default config
@@ -127,12 +111,7 @@ class CICDPipeline:
 
     def run_validate_stage(self) -> Dict[str, Any]:
         """Validation stage - check plugin structure"""
-        result = {
-            "success": True,
-            "checks": {},
-            "errors": [],
-            "warnings": []
-        }
+        result = {"success": True, "checks": {}, "errors": [], "warnings": []}
 
         checks = self.pipeline_config["validate"]["checks"]
 
@@ -160,21 +139,19 @@ class CICDPipeline:
 
     def run_test_stage(self) -> Dict[str, Any]:
         """Test stage - run unit tests"""
-        result = {
-            "success": True,
-            "test_results": {},
-            "coverage": 0,
-            "errors": []
-        }
+        result = {"success": True, "test_results": {}, "coverage": 0, "errors": []}
 
         test_config = self.pipeline_config["test"]
 
         # Find test file
-        test_file = os.path.join(self.plugin_dir, "tests", f"test_{os.path.basename(self.plugin_path)}")
+        test_file = os.path.join(
+            self.plugin_dir, "tests", f"test_{os.path.basename(self.plugin_path)}"
+        )
 
         if not os.path.exists(test_file):
             # Generate tests if they don't exist
             from .plugin_test_generator import PluginTestGenerator
+
             generator = PluginTestGenerator()
             test_code = generator.generate_tests_for_file(self.plugin_path)
 
@@ -184,25 +161,27 @@ class CICDPipeline:
 
         # Run tests
         cmd = [
-            sys.executable, "-m", test_config["framework"],
-            test_file, "-v",
+            sys.executable,
+            "-m",
+            test_config["framework"],
+            test_file,
+            "-v",
             f'--timeout={test_config["timeout"]}',
-            "--tb=short"
+            "--tb=short",
         ]
 
         if test_config["framework"] == "pytest":
-            cmd.extend([
-                f"--cov={self.plugin_name}",
-                "--cov-report=json"
-            ])
+            cmd.extend([f"--cov={self.plugin_name}", "--cov-report=json"])
 
         try:
-            process = subprocess.run(cmd, capture_output=True, text=True, timeout=test_config["timeout"])
+            process = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=test_config["timeout"]
+            )
 
             result["test_results"] = {
                 "stdout": process.stdout,
                 "stderr": process.stderr,
-                "returncode": process.returncode
+                "returncode": process.returncode,
             }
 
             if process.returncode != 0:
@@ -218,7 +197,9 @@ class CICDPipeline:
 
                 if result["coverage"] < test_config["coverage_threshold"]:
                     result["success"] = False
-                    result["errors"].append(f"Coverage {result['coverage']}% below threshold {test_config['coverage_threshold']}%")
+                    result["errors"].append(
+                        f"Coverage {result['coverage']}% below threshold {test_config['coverage_threshold']}%"
+                    )
 
         except subprocess.TimeoutExpired as e:
             logger.error("Subprocess timeout in plugin_ci_cd: %s", e)
@@ -233,12 +214,7 @@ class CICDPipeline:
 
     def run_quality_stage(self) -> Dict[str, Any]:
         """Quality stage - run linters and code quality checks"""
-        result = {
-            "success": True,
-            "linter_results": {},
-            "metrics": {},
-            "errors": []
-        }
+        result = {"success": True, "linter_results": {}, "metrics": {}, "errors": []}
 
         quality_config = self.pipeline_config["quality"]
 
@@ -257,25 +233,24 @@ class CICDPipeline:
 
         if complexity > quality_config["max_complexity"]:
             result["success"] = False
-            result["errors"].append(f"Code complexity {complexity} exceeds maximum {quality_config['max_complexity']}")
+            result["errors"].append(
+                f"Code complexity {complexity} exceeds maximum {quality_config['max_complexity']}"
+            )
 
         # Check line length
         max_line_length = self._check_line_length()
         result["metrics"]["max_line_length"] = max_line_length
 
         if max_line_length > quality_config["max_line_length"]:
-            result["errors"].append(f"Line length {max_line_length} exceeds maximum {quality_config['max_line_length']}")
+            result["errors"].append(
+                f"Line length {max_line_length} exceeds maximum {quality_config['max_line_length']}"
+            )
 
         return result
 
     def run_security_stage(self) -> Dict[str, Any]:
         """Security stage - run security scanners"""
-        result = {
-            "success": True,
-            "scanner_results": {},
-            "vulnerabilities": [],
-            "errors": []
-        }
+        result = {"success": True, "scanner_results": {}, "vulnerabilities": [], "errors": []}
 
         security_config = self.pipeline_config["security"]
 
@@ -304,11 +279,7 @@ class CICDPipeline:
 
     def run_build_stage(self) -> Dict[str, Any]:
         """Build stage - optimize and package plugin"""
-        result = {
-            "success": True,
-            "artifacts": [],
-            "errors": []
-        }
+        result = {"success": True, "artifacts": [], "errors": []}
 
         build_config = self.pipeline_config["build"]
         build_dir = os.path.join(self.plugin_dir, "build")
@@ -328,7 +299,7 @@ class CICDPipeline:
                 "name": self.plugin_name,
                 "version": self._get_version(),
                 "build_time": datetime.now().isoformat(),
-                "checksum": self._calculate_checksum(dest_path)
+                "checksum": self._calculate_checksum(dest_path),
             }
 
             metadata_path = os.path.join(build_dir, f"{self.plugin_name}.json")
@@ -346,20 +317,14 @@ class CICDPipeline:
 
     def run_deploy_stage(self) -> Dict[str, Any]:
         """Deploy stage - deploy plugin to target"""
-        result = {
-            "success": True,
-            "deployed_to": [],
-            "errors": []
-        }
+        result = {"success": True, "deployed_to": [], "errors": []}
 
         deploy_config = self.pipeline_config["deploy"]
 
         if deploy_config["target"] == "local":
             # Deploy to local plugin directory
             plugin_install_dir = os.path.join(
-                os.path.dirname(os.path.dirname(self.plugin_dir)),
-                "plugins",
-                "deployed"
+                os.path.dirname(os.path.dirname(self.plugin_dir)), "plugins", "deployed"
             )
             os.makedirs(plugin_install_dir, exist_ok=True)
 
@@ -372,7 +337,9 @@ class CICDPipeline:
                     shutil.move(dest_path, backup_path)
 
                 # Copy from build directory
-                build_path = os.path.join(self.plugin_dir, "build", os.path.basename(self.plugin_path))
+                build_path = os.path.join(
+                    self.plugin_dir, "build", os.path.basename(self.plugin_path)
+                )
                 shutil.copy2(build_path, dest_path)
 
                 result["deployed_to"].append(dest_path)
@@ -404,11 +371,13 @@ class CICDPipeline:
     def _check_structure(self) -> Dict[str, Any]:
         """Check plugin structure"""
         from ..utils.validation.import_validator import PluginStructureValidator
+
         return PluginStructureValidator.validate_structure_from_file(self.plugin_path)
 
     def _check_imports(self) -> Dict[str, Any]:
         """Check plugin imports"""
         from ..utils.validation.import_validator import ImportValidator
+
         return ImportValidator.validate_imports_from_file(self.plugin_path)
 
     def _run_linter(self, linter: str) -> Dict[str, Any]:
@@ -483,12 +452,14 @@ class CICDPipeline:
                 data = json.loads(process.stdout)
 
                 for issue in data.get("results", []):
-                    result["issues"].append({
-                        "severity": issue.get("issue_severity"),
-                        "confidence": issue.get("issue_confidence"),
-                        "text": issue.get("issue_text"),
-                        "line": issue.get("line_number")
-                    })
+                    result["issues"].append(
+                        {
+                            "severity": issue.get("issue_severity"),
+                            "confidence": issue.get("issue_confidence"),
+                            "text": issue.get("issue_text"),
+                            "line": issue.get("line_number"),
+                        }
+                    )
 
         except (subprocess.CalledProcessError, json.JSONDecodeError) as e:
             logger.debug(f"Bandit security scanner not available or failed: {e}")
@@ -526,6 +497,7 @@ class CICDPipeline:
                 content = f.read()
 
             import re
+
             match = re.search(r'version\s*=\s*["\']([^"\']+)["\']', content)
             if match:
                 return match.group(1)
@@ -558,7 +530,7 @@ class CICDPipeline:
             "path": plugin_path,
             "deployed": datetime.now().isoformat(),
             "version": self._get_version(),
-            "pipeline_run": self.results["timestamp"]
+            "pipeline_run": self.results["timestamp"],
         }
 
         with open(registry_path, "w") as f:
@@ -566,7 +538,9 @@ class CICDPipeline:
 
     def _generate_report(self):
         """Generate pipeline report"""
-        report_path = os.path.join(self.plugin_dir, f'pipeline_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json')
+        report_path = os.path.join(
+            self.plugin_dir, f'pipeline_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        )
 
         with open(report_path, "w") as f:
             json.dump(self.results, f, indent=2)

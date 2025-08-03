@@ -175,7 +175,7 @@ async def analyze_file(self, file_path: str) -> ICPScanResult:
 class ICPAnalysisWidget(QWidget):
     analysis_complete = pyqtSignal(object)  # ICPScanResult
     analysis_error = pyqtSignal(str)
-    
+
     def analyze_file(self, file_path: str):
         # Start background analysis
         self.analysis_thread.start_analysis(file_path)
@@ -230,16 +230,16 @@ PE64
 def from_die_text(cls, file_path: str, die_text: str) -> 'ICPScanResult':
     # Stage 1: Input validation and preprocessing
     lines = die_text.strip().split('\n') if die_text else []
-    
+
     # Stage 2: File type extraction
     filetype = lines[0].strip() if lines else "Binary"
-    
+
     # Stage 3: Detection extraction and parsing
     for line in lines[1:]:
         if ':' in line:
             type_part, name_part = line.split(':', 1)
             # Create structured detection object
-    
+
     # Stage 4: Result assembly
     return ICPScanResult(file_path, [file_info])
 ```
@@ -331,7 +331,7 @@ class CustomICPHandler:
     def on_icp_analysis_complete(self, result: ICPScanResult):
         # Custom processing logic
         custom_analysis = self.process_detections(result.all_detections)
-        
+
     def register_with_orchestrator(self, orchestrator: AnalysisResultOrchestrator):
         orchestrator.register_handler(self)
 ```

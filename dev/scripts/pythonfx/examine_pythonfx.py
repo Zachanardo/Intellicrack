@@ -12,17 +12,17 @@ try:
     print("\n=== python-fx/pyfx module found ===")
     print(f"Module location: {pyfx.__file__}")
     print(f"Module attributes: {dir(pyfx)}")
-    
+
     # Check for main functionality
     if hasattr(pyfx, '__main__'):
         print("\nHas __main__ module")
-    
+
     # Check what's in the package
     pyfx_dir = os.path.dirname(pyfx.__file__)
     print(f"\nFiles in pyfx directory:")
     for file in os.listdir(pyfx_dir):
         print(f"  {file}")
-        
+
 except ImportError:
     print("pyfx module not found")
 
@@ -36,6 +36,6 @@ except ImportError:
 
 # Check installed files
 print("\n=== Checking installed files ===")
-result = subprocess.run([sys.executable, "-m", "pip", "show", "-f", "python-fx"], 
+result = subprocess.run([sys.executable, "-m", "pip", "show", "-f", "python-fx"],
                        capture_output=True, text=True)
 print(result.stdout)

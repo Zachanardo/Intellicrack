@@ -16,17 +16,17 @@ def main():
     """Launch minimal Intellicrack."""
     try:
         print("Starting minimal Intellicrack...")
-        
+
         from PyQt6.QtWidgets import QApplication, QMainWindow, QTabWidget, QLabel, QVBoxLayout, QWidget
         from PyQt6.QtCore import Qt
-        
+
         app = QApplication(sys.argv)
-        
+
         # Create main window
         window = QMainWindow()
         window.setWindowTitle("Intellicrack - Minimal Mode (Intel Arc B580)")
         window.setGeometry(100, 100, 1200, 800)
-        
+
         # Set dark theme
         app.setStyle("Fusion")
         app.setStyleSheet("""
@@ -51,10 +51,10 @@ def main():
                 padding: 20px;
             }
         """)
-        
+
         # Create tab widget
         tabs = QTabWidget()
-        
+
         # Add placeholder tabs
         for name in ["Dashboard", "Analysis", "Tools", "Exploitation", "AI Assistant", "Project", "Settings"]:
             widget = QWidget()
@@ -67,17 +67,17 @@ def main():
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(label)
             tabs.addTab(widget, name)
-        
+
         window.setCentralWidget(tabs)
-        
+
         # Show window
         window.show()
-        
+
         print("✓ Intellicrack launched successfully in minimal mode!")
         print("✓ Application is running. Close the window to exit.")
-        
+
         return app.exec()
-        
+
     except Exception as e:
         print(f"✗ Error: {e}")
         import traceback

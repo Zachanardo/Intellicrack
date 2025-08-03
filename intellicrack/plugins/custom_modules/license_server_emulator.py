@@ -239,10 +239,7 @@ class CryptoManager:
         key_hash = hashlib.sha256(data.encode()).hexdigest()
 
         # Format as license key (4x4 blocks)
-        formatted_key = "-".join([
-            key_hash[i:i+4].upper()
-            for i in range(0, 16, 4)
-        ])
+        formatted_key = "-".join([key_hash[i : i + 4].upper() for i in range(0, 16, 4)])
 
         return formatted_key
 
@@ -533,9 +530,9 @@ class HASPEmulator:
         # Create default features
         default_features = [
             {"id": 1, "type": 0x01, "options": 0x0F, "size": 1024},  # Feature 1: Full access
-            {"id": 2, "type": 0x02, "options": 0x07, "size": 512},   # Feature 2: Limited
-            {"id": 10, "type": 0x01, "options": 0x0F, "size": 2048}, # Feature 10: Extended
-            {"id": 100, "type": 0x04, "options": 0x1F, "size": 4096}, # Feature 100: Premium
+            {"id": 2, "type": 0x02, "options": 0x07, "size": 512},  # Feature 2: Limited
+            {"id": 10, "type": 0x01, "options": 0x0F, "size": 2048},  # Feature 10: Extended
+            {"id": 100, "type": 0x04, "options": 0x1F, "size": 4096},  # Feature 100: Premium
         ]
 
         data_offset = 0x0200
@@ -543,20 +540,36 @@ class HASPEmulator:
             entry_offset = feature_dir_base + (i * 16)
 
             # Feature directory entry (16 bytes each)
-            self.dongle_memory[entry_offset:entry_offset+4] = struct.pack("<I", feature["id"])
-            self.dongle_memory[entry_offset+4:entry_offset+6] = struct.pack("<H", feature["type"])
-            self.dongle_memory[entry_offset+6:entry_offset+8] = struct.pack("<H", feature["options"])
-            self.dongle_memory[entry_offset+8:entry_offset+12] = struct.pack("<I", data_offset)
-            self.dongle_memory[entry_offset+12:entry_offset+16] = struct.pack("<I", feature["size"])
+            self.dongle_memory[entry_offset : entry_offset + 4] = struct.pack("<I", feature["id"])
+            self.dongle_memory[entry_offset + 4 : entry_offset + 6] = struct.pack(
+                "<H", feature["type"]
+            )
+            self.dongle_memory[entry_offset + 6 : entry_offset + 8] = struct.pack(
+                "<H", feature["options"]
+            )
+            self.dongle_memory[entry_offset + 8 : entry_offset + 12] = struct.pack(
+                "<I", data_offset
+            )
+            self.dongle_memory[entry_offset + 12 : entry_offset + 16] = struct.pack(
+                "<I", feature["size"]
+            )
 
             # Initialize feature data area
             feature_data_offset = data_offset
 
             # Feature header in data area
-            self.dongle_memory[feature_data_offset:feature_data_offset+4] = struct.pack("<I", feature["id"])
-            self.dongle_memory[feature_data_offset+4:feature_data_offset+8] = struct.pack("<I", 0xFFFFFFFF)  # Expiry (never)
-            self.dongle_memory[feature_data_offset+8:feature_data_offset+12] = struct.pack("<I", 0)  # Execution count
-            self.dongle_memory[feature_data_offset+12:feature_data_offset+16] = struct.pack("<I", 0xFFFFFFFF)  # Max executions
+            self.dongle_memory[feature_data_offset : feature_data_offset + 4] = struct.pack(
+                "<I", feature["id"]
+            )
+            self.dongle_memory[feature_data_offset + 4 : feature_data_offset + 8] = struct.pack(
+                "<I", 0xFFFFFFFF
+            )  # Expiry (never)
+            self.dongle_memory[feature_data_offset + 8 : feature_data_offset + 12] = struct.pack(
+                "<I", 0
+            )  # Execution count
+            self.dongle_memory[feature_data_offset + 12 : feature_data_offset + 16] = struct.pack(
+                "<I", 0xFFFFFFFF
+            )  # Max executions
 
             # Create feature-specific memory area
             self.feature_memory[feature["id"]] = {
@@ -570,7 +583,7 @@ class HASPEmulator:
 
         # Write directory end marker
         end_marker_offset = feature_dir_base + (len(default_features) * 16)
-        self.dongle_memory[end_marker_offset:end_marker_offset+4] = b"\xFF\xFF\xFF\xFF"
+        self.dongle_memory[end_marker_offset : end_marker_offset + 4] = b"\xff\xff\xff\xff"
 
     def hasp_login(self, feature_id: int, vendor_code: bytes = None) -> int:
         """HASP login operation with real authentication"""
@@ -595,7 +608,7 @@ class HASPEmulator:
             # Check feature expiry
             feature_info = self.feature_memory[feature_id]
             feature_offset = feature_info["offset"]
-            expiry_bytes = self.dongle_memory[feature_offset+4:feature_offset+8]
+            expiry_bytes = self.dongle_memory[feature_offset + 4 : feature_offset + 8]
             expiry = struct.unpack("<I", expiry_bytes)[0]
 
             if expiry != 0xFFFFFFFF and expiry < int(time.time()):
@@ -629,8 +642,12 @@ class HASPEmulator:
 
             # Update execution count
             exec_count_offset = feature_offset + 8
-            current_count = struct.unpack("<I", self.dongle_memory[exec_count_offset:exec_count_offset+4])[0]
-            self.dongle_memory[exec_count_offset:exec_count_offset+4] = struct.pack("<I", current_count + 1)
+            current_count = struct.unpack(
+                "<I", self.dongle_memory[exec_count_offset : exec_count_offset + 4]
+            )[0]
+            self.dongle_memory[exec_count_offset : exec_count_offset + 4] = struct.pack(
+                "<I", current_count + 1
+            )
 
             return handle  # Return session handle
 
@@ -642,7 +659,7 @@ class HASPEmulator:
         """Calculate vendor code checksum"""
         checksum = 0x12345678
         for i in range(0, 16, 4):
-            value = struct.unpack("<I", vendor_code[i:i+4])[0]
+            value = struct.unpack("<I", vendor_code[i : i + 4])[0]
             checksum = ((checksum << 1) | (checksum >> 31)) ^ value
         return checksum & 0xFFFFFFFF
 
@@ -765,7 +782,7 @@ class HASPEmulator:
             if actual_offset + max_length > self.memory_size:
                 return self.HASP_NO_MEMORY, b""
 
-            data = bytes(self.dongle_memory[actual_offset:actual_offset + max_length])
+            data = bytes(self.dongle_memory[actual_offset : actual_offset + max_length])
 
             self.logger.info(f"HASP read: offset {offset}, length {length} -> {len(data)} bytes")
 
@@ -823,9 +840,11 @@ class HASPEmulator:
                 return self.HASP_NO_MEMORY
 
             # Perform write
-            self.dongle_memory[actual_offset:actual_offset + max_length] = data[:max_length]
+            self.dongle_memory[actual_offset : actual_offset + max_length] = data[:max_length]
 
-            self.logger.info(f"HASP write: offset {offset}, length {len(data)} -> {max_length} bytes written")
+            self.logger.info(
+                f"HASP write: offset {offset}, length {len(data)} -> {max_length} bytes written"
+            )
 
             return self.HASP_STATUS_OK
 
@@ -836,7 +855,9 @@ class HASPEmulator:
     def hasp_get_info(self, handle: int, query_type: int) -> tuple[int, bytes]:
         """Get HASP information"""
         try:
-            if handle not in self.active_sessions and handle != 0:  # Allow handle 0 for general queries
+            if (
+                handle not in self.active_sessions and handle != 0
+            ):  # Allow handle 0 for general queries
                 return self.HASP_INVALID_HANDLE, b""
 
             # Query types
@@ -875,7 +896,9 @@ class MicrosoftKMSEmulator:
             "Office 2019 Professional": "NMMKJ-6RK4F-KMJVX-8D9MJ-6MWKP",
         }
 
-    def activate_product(self, product_key: str, product_name: str, client_info: dict[str, Any]) -> dict[str, Any]:
+    def activate_product(
+        self, product_key: str, product_name: str, client_info: dict[str, Any]
+    ) -> dict[str, Any]:
         """Activate Microsoft product"""
         try:
             self.logger.info(f"KMS activation: {product_name}")
@@ -901,8 +924,6 @@ class MicrosoftKMSEmulator:
             return {"success": False, "error": str(e)}
 
 
-
-
 class AdobeEmulator:
     """Adobe license server emulation"""
 
@@ -921,7 +942,9 @@ class AdobeEmulator:
             "Acrobat Pro": {"id": "ACRO", "version": "2024"},
         }
 
-    def validate_adobe_license(self, product_id: str, user_id: str, machine_id: str) -> dict[str, Any]:
+    def validate_adobe_license(
+        self, product_id: str, user_id: str, machine_id: str
+    ) -> dict[str, Any]:
         """Validate Adobe Creative Cloud license"""
         try:
             self.logger.info(f"Adobe validation: {product_id} for user {user_id}")
@@ -1069,10 +1092,14 @@ class DatabaseManager:
         try:
             db = self.SessionLocal()
 
-            license_entry = db.query(LicenseEntry).filter(
-                LicenseEntry.license_key == license_key,
-                LicenseEntry.product_name == product_name,
-            ).first()
+            license_entry = (
+                db.query(LicenseEntry)
+                .filter(
+                    LicenseEntry.license_key == license_key,
+                    LicenseEntry.product_name == product_name,
+                )
+                .first()
+            )
 
             db.close()
             return license_entry
@@ -1081,7 +1108,9 @@ class DatabaseManager:
             self.logger.error(f"License validation error: {e}")
             return None
 
-    def log_operation(self, license_key: str, operation: str, client_ip: str, success: bool, details: str = ""):
+    def log_operation(
+        self, license_key: str, operation: str, client_ip: str, success: bool, details: str = ""
+    ):
         """Log license operation"""
         try:
             db = self.SessionLocal()
@@ -1124,15 +1153,21 @@ class HardwareFingerprintGenerator:
             try:
                 if platform.system() == "Windows":
                     # Windows - use wmic command
-                    result = subprocess.run(["wmic", "cpu", "get", "ProcessorId", "/format:value"],
-                                         check=False, capture_output=True, text=True)
+                    result = subprocess.run(
+                        ["wmic", "cpu", "get", "ProcessorId", "/format:value"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
                     for line in result.stdout.split("\n"):
                         if line.startswith("ProcessorId="):
                             fingerprint.cpu_id = line.split("=")[1].strip()
                             break
                     if not fingerprint.cpu_id:
                         # Fallback to CPUID using platform info
-                        fingerprint.cpu_id = hashlib.md5(platform.processor().encode()).hexdigest()[:16]
+                        fingerprint.cpu_id = hashlib.md5(platform.processor().encode()).hexdigest()[
+                            :16
+                        ]
                 elif platform.system() == "Linux":
                     # Linux - read from cpuinfo
                     with open("/proc/cpuinfo") as f:
@@ -1147,9 +1182,15 @@ class HardwareFingerprintGenerator:
                                 break
                 elif platform.system() == "Darwin":
                     # macOS - use sysctl
-                    result = subprocess.run(["sysctl", "-n", "machdep.cpu.brand_string"],
-                                         check=False, capture_output=True, text=True)
-                    fingerprint.cpu_id = hashlib.md5(result.stdout.strip().encode()).hexdigest()[:16]
+                    result = subprocess.run(
+                        ["sysctl", "-n", "machdep.cpu.brand_string"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
+                    fingerprint.cpu_id = hashlib.md5(result.stdout.strip().encode()).hexdigest()[
+                        :16
+                    ]
                 else:
                     # Other systems - generate from platform info
                     fingerprint.cpu_id = hashlib.md5(
@@ -1164,18 +1205,28 @@ class HardwareFingerprintGenerator:
             # Get motherboard info - cross-platform
             try:
                 if platform.system() == "Windows":
-                    result = subprocess.run(["wmic", "baseboard", "get", "SerialNumber", "/format:value"],
-                                         check=False, capture_output=True, text=True)
+                    result = subprocess.run(
+                        ["wmic", "baseboard", "get", "SerialNumber", "/format:value"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
                     for line in result.stdout.split("\n"):
                         if line.startswith("SerialNumber="):
                             fingerprint.motherboard_id = line.split("=")[1].strip()
                             break
                     if not fingerprint.motherboard_id:
                         # Try alternative method
-                        result = subprocess.run(["wmic", "baseboard", "get", "Product,Manufacturer", "/format:value"],
-                                             check=False, capture_output=True, text=True)
+                        result = subprocess.run(
+                            ["wmic", "baseboard", "get", "Product,Manufacturer", "/format:value"],
+                            check=False,
+                            capture_output=True,
+                            text=True,
+                        )
                         board_info = result.stdout.strip()
-                        fingerprint.motherboard_id = hashlib.md5(board_info.encode()).hexdigest()[:16]
+                        fingerprint.motherboard_id = hashlib.md5(board_info.encode()).hexdigest()[
+                            :16
+                        ]
                 elif platform.system() == "Linux":
                     # Linux - read DMI info
                     try:
@@ -1191,18 +1242,26 @@ class HardwareFingerprintGenerator:
                                 board_info += f.read().strip()
                         except:
                             pass
-                        fingerprint.motherboard_id = hashlib.md5(board_info.encode()).hexdigest()[:16]
+                        fingerprint.motherboard_id = hashlib.md5(board_info.encode()).hexdigest()[
+                            :16
+                        ]
                 elif platform.system() == "Darwin":
                     # macOS - use system_profiler
-                    result = subprocess.run(["system_profiler", "SPHardwareDataType"],
-                                         check=False, capture_output=True, text=True)
+                    result = subprocess.run(
+                        ["system_profiler", "SPHardwareDataType"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
                     lines = result.stdout.split("\n")
                     for line in lines:
                         if "Serial Number" in line:
                             fingerprint.motherboard_id = line.split(":")[1].strip()
                             break
                     if not fingerprint.motherboard_id:
-                        fingerprint.motherboard_id = hashlib.md5(result.stdout.encode()).hexdigest()[:16]
+                        fingerprint.motherboard_id = hashlib.md5(
+                            result.stdout.encode()
+                        ).hexdigest()[:16]
                 else:
                     # Generate from platform info
                     fingerprint.motherboard_id = hashlib.md5(
@@ -1217,9 +1276,20 @@ class HardwareFingerprintGenerator:
             # Get disk serial - cross-platform
             try:
                 if platform.system() == "Windows":
-                    result = subprocess.run(["wmic", "logicaldisk", "where", "drivetype=3", "get",
-                                          "VolumeSerialNumber", "/format:value"],
-                                         check=False, capture_output=True, text=True)
+                    result = subprocess.run(
+                        [
+                            "wmic",
+                            "logicaldisk",
+                            "where",
+                            "drivetype=3",
+                            "get",
+                            "VolumeSerialNumber",
+                            "/format:value",
+                        ],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
                     for line in result.stdout.split("\n"):
                         if line.startswith("VolumeSerialNumber="):
                             serial = line.split("=")[1].strip()
@@ -1228,25 +1298,36 @@ class HardwareFingerprintGenerator:
                                 break
                 elif platform.system() == "Linux":
                     # Try to get disk serial using lsblk
-                    result = subprocess.run(["lsblk", "-no", "SERIAL", "/dev/sda"],
-                                         check=False, capture_output=True, text=True)
+                    result = subprocess.run(
+                        ["lsblk", "-no", "SERIAL", "/dev/sda"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
                     serial = result.stdout.strip()
                     if serial:
                         fingerprint.disk_serial = serial
                     else:
                         # Fallback to disk ID
-                        result = subprocess.run(["ls", "-l", "/dev/disk/by-id/"],
-                                             check=False, capture_output=True, text=True)
+                        result = subprocess.run(
+                            ["ls", "-l", "/dev/disk/by-id/"],
+                            check=False,
+                            capture_output=True,
+                            text=True,
+                        )
                         lines = result.stdout.split("\n")
                         for line in lines:
                             if "ata-" in line and "part" not in line:
                                 parts = line.split("ata-")[1].split()[0]
-                                fingerprint.disk_serial = hashlib.md5(parts.encode()).hexdigest()[:16]
+                                fingerprint.disk_serial = hashlib.md5(parts.encode()).hexdigest()[
+                                    :16
+                                ]
                                 break
                 elif platform.system() == "Darwin":
                     # macOS - use diskutil
-                    result = subprocess.run(["diskutil", "info", "disk0"],
-                                         check=False, capture_output=True, text=True)
+                    result = subprocess.run(
+                        ["diskutil", "info", "disk0"], check=False, capture_output=True, text=True
+                    )
                     lines = result.stdout.split("\n")
                     for line in lines:
                         if "Volume UUID" in line or "Disk / Partition UUID" in line:
@@ -1255,6 +1336,7 @@ class HardwareFingerprintGenerator:
                 if not fingerprint.disk_serial:
                     # Generate from available info
                     import os
+
                     stat_info = os.statvfs("/" if platform.system() != "Windows" else "C:\\")
                     fingerprint.disk_serial = hashlib.md5(
                         f"{stat_info.f_blocks}{stat_info.f_bsize}".encode(),
@@ -1273,6 +1355,7 @@ class HardwareFingerprintGenerator:
                 if (mac_num >> 40) % 2:
                     # Random MAC, try to get real one
                     import netifaces
+
                     interfaces = netifaces.interfaces()
                     for iface in interfaces:
                         if iface == "lo" or iface.startswith("vir"):
@@ -1285,12 +1368,14 @@ class HardwareFingerprintGenerator:
                                 break
                 else:
                     # Real MAC address
-                    fingerprint.mac_address = ":".join([f"{(mac_num >> ele) & 0xff:02X}"
-                                                       for ele in range(0,8*6,8)][::-1])
+                    fingerprint.mac_address = ":".join(
+                        [f"{(mac_num >> ele) & 0xff:02X}" for ele in range(0, 8 * 6, 8)][::-1]
+                    )
 
                 if not fingerprint.mac_address or fingerprint.mac_address == "00:00:00:00:00:00":
                     # Fallback to generated but consistent MAC
                     import random
+
                     random.seed(platform.node() + platform.processor())
                     mac_bytes = [random.randint(0, 255) for _ in range(6)]
                     mac_bytes[0] = (mac_bytes[0] & 0xFC) | 0x02  # Set locally administered bit
@@ -1298,6 +1383,7 @@ class HardwareFingerprintGenerator:
             except Exception:
                 # Generate deterministic MAC
                 import random
+
                 random.seed(platform.node() + platform.machine())
                 mac_bytes = [random.randint(0, 255) for _ in range(6)]
                 mac_bytes[0] = (mac_bytes[0] & 0xFC) | 0x02  # Set locally administered bit
@@ -1306,12 +1392,23 @@ class HardwareFingerprintGenerator:
             # Get RAM size - cross-platform
             try:
                 import psutil
+
                 fingerprint.ram_size = int(psutil.virtual_memory().total / (1024**3))  # GB
             except Exception:
                 try:
                     if platform.system() == "Windows":
-                        result = subprocess.run(["wmic", "computersystem", "get", "TotalPhysicalMemory", "/format:value"],
-                                             check=False, capture_output=True, text=True)
+                        result = subprocess.run(
+                            [
+                                "wmic",
+                                "computersystem",
+                                "get",
+                                "TotalPhysicalMemory",
+                                "/format:value",
+                            ],
+                            check=False,
+                            capture_output=True,
+                            text=True,
+                        )
                         for line in result.stdout.split("\n"):
                             if line.startswith("TotalPhysicalMemory="):
                                 mem_bytes = int(line.split("=")[1].strip())
@@ -1325,8 +1422,12 @@ class HardwareFingerprintGenerator:
                                     fingerprint.ram_size = int(mem_kb / (1024**2))
                                     break
                     elif platform.system() == "Darwin":
-                        result = subprocess.run(["sysctl", "-n", "hw.memsize"],
-                                             check=False, capture_output=True, text=True)
+                        result = subprocess.run(
+                            ["sysctl", "-n", "hw.memsize"],
+                            check=False,
+                            capture_output=True,
+                            text=True,
+                        )
                         mem_bytes = int(result.stdout.strip())
                         fingerprint.ram_size = int(mem_bytes / (1024**3))
                 except:
@@ -1490,7 +1591,9 @@ class LicenseServerEmulator:
                 },
             }
 
-    async def _handle_license_validation(self, request: LicenseRequest, client_request: Request) -> LicenseResponse:
+    async def _handle_license_validation(
+        self, request: LicenseRequest, client_request: Request
+    ) -> LicenseResponse:
         """Handle license validation request"""
         try:
             client_ip = client_request.client.host
@@ -1505,7 +1608,9 @@ class LicenseServerEmulator:
             )
 
             # Check database first
-            license_entry = self.db_manager.validate_license(request.license_key, request.product_name)
+            license_entry = self.db_manager.validate_license(
+                request.license_key, request.product_name
+            )
 
             if license_entry:
                 # Calculate remaining days
@@ -1544,7 +1649,9 @@ class LicenseServerEmulator:
             self.logger.error(f"License validation error: {e}")
             raise HTTPException(status_code=500, detail="Internal server error")
 
-    async def _handle_license_activation(self, request: ActivationRequest, client_request: Request) -> ActivationResponse:
+    async def _handle_license_activation(
+        self, request: ActivationRequest, client_request: Request
+    ) -> ActivationResponse:
         """Handle license activation request"""
         try:
             client_ip = client_request.client.host
@@ -1598,7 +1705,9 @@ class LicenseServerEmulator:
                     "status": license_entry.status,
                     "product_name": license_entry.product_name,
                     "version": license_entry.version,
-                    "expiry_date": license_entry.expiry_date.isoformat() if license_entry.expiry_date else None,
+                    "expiry_date": license_entry.expiry_date.isoformat()
+                    if license_entry.expiry_date
+                    else None,
                     "max_users": license_entry.max_users,
                     "current_users": license_entry.current_users,
                 }
@@ -1617,7 +1726,9 @@ class LicenseServerEmulator:
             self.logger.error(f"License status error: {e}")
             raise HTTPException(status_code=500, detail="Internal server error")
 
-    async def _handle_flexlm_request(self, request: dict[str, Any], client_request: Request) -> dict[str, Any]:
+    async def _handle_flexlm_request(
+        self, request: dict[str, Any], client_request: Request
+    ) -> dict[str, Any]:
         """Handle FlexLM license request"""
         try:
             feature = request.get("feature", "unknown")
@@ -1664,7 +1775,9 @@ class LicenseServerEmulator:
             self.logger.error(f"HASP request error: {e}")
             raise HTTPException(status_code=500, detail="Internal server error")
 
-    async def _handle_kms_request(self, request: dict[str, Any], client_request: Request) -> dict[str, Any]:
+    async def _handle_kms_request(
+        self, request: dict[str, Any], client_request: Request
+    ) -> dict[str, Any]:
         """Handle Microsoft KMS activation request"""
         try:
             product_key = request.get("product_key", "")
@@ -1681,11 +1794,15 @@ class LicenseServerEmulator:
             self.logger.error(f"KMS request error: {e}")
             raise HTTPException(status_code=500, detail="Internal server error")
 
-    async def _handle_adobe_request(self, request: dict[str, Any], client_request: Request) -> dict[str, Any]:
+    async def _handle_adobe_request(
+        self, request: dict[str, Any], client_request: Request
+    ) -> dict[str, Any]:
         """Handle Adobe license validation request"""
         try:
             product_id = request.get("product_id", "PHSP")
-            user_id = request.get("user_id", os.environ.get("DEFAULT_USER_EMAIL", "user@internal.local"))
+            user_id = request.get(
+                "user_id", os.environ.get("DEFAULT_USER_EMAIL", "user@internal.local")
+            )
             machine_id = request.get("machine_id", "machine-123")
 
             response = self.adobe.validate_adobe_license(product_id, user_id, machine_id)

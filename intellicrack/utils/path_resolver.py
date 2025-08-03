@@ -23,11 +23,14 @@ def get_project_root() -> Path:
     # This file is at: intellicrack/utils/path_resolver.py
     return Path(__file__).parent.parent.parent.resolve()
 
+
 def get_data_dir() -> Path:
     """Get the data directory within the project."""
     return get_project_root() / "data"
 
+
 # ML models directory removed - using LLM-only approach
+
 
 def get_qemu_images_dir() -> Path:
     """Get the QEMU images directory."""
@@ -36,14 +39,23 @@ def get_qemu_images_dir() -> Path:
     qemu_dir.mkdir(parents=True, exist_ok=True)
     return qemu_dir
 
+
 # ML model path resolution removed - using LLM-only approach
+
 
 def resolve_qemu_image_path(image_name: str) -> Path:
     """Resolve a QEMU image file path."""
     # Remove any hardcoded path prefixes
     if isinstance(image_name, str):
         # Strip common hardcoded prefixes
-        for prefix in ["C:\\Intellicrack\\qemu\\images\\", "C:/Intellicrack/qemu/images/",                       "/Intellicrack/qemu/images/", "qemu/images/", "qemu\\images\\", "intellicrack/"]:
+        for prefix in [
+            "C:\\Intellicrack\\qemu\\images\\",
+            "C:/Intellicrack/qemu/images/",
+            "/Intellicrack/qemu/images/",
+            "qemu/images/",
+            "qemu\\images\\",
+            "intellicrack/",
+        ]:
             image_name = image_name.removeprefix(prefix)
 
         # Handle backslashes
@@ -53,6 +65,7 @@ def resolve_qemu_image_path(image_name: str) -> Path:
         image_name = os.path.basename(image_name)
 
     return get_qemu_images_dir() / image_name
+
 
 def ensure_data_directories():
     """Ensure all data directories exist."""
@@ -66,6 +79,7 @@ def ensure_data_directories():
 
     for directory in directories:
         directory.mkdir(parents=True, exist_ok=True)
+
 
 # Initialize directories on import
 ensure_data_directories()

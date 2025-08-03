@@ -152,7 +152,7 @@ def check_code_for_secrets():
             content = py_file.read_text()
             for pattern, description in patterns:
                 if pattern in content and pattern + '"' not in content:  # Not empty string
-                    line_no = content[:content.index(pattern)].count("\n") + 1
+                    line_no = content[: content.index(pattern)].count("\n") + 1
                     issues_found.append(f"{py_file}:{line_no} - {description}")
         except Exception as e:
             logger.debug(f"Failed to scan file {py_file}: {e}")

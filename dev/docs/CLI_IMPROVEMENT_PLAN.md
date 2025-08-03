@@ -212,19 +212,19 @@ steps:
   - name: Unpack
     action: detect-packing
     on_success: unpack
-    
+
   - name: Static Analysis
     parallel:
       - cfg-analysis
       - vulnerability-scan
       - string-extraction
-      
+
   - name: Dynamic Analysis
     condition: not_packed
-    action: 
+    action:
       - qemu-emulate
       - network-capture
-      
+
   - name: Report
     action: generate-report
     format: pdf
@@ -298,7 +298,7 @@ Symbolic Exec   45.2s     1.2GB    95%
 
 ### Phase 1 (High Priority)
 1. Interactive mode
-2. Progress visualization  
+2. Progress visualization
 3. Configuration profiles
 4. Enhanced error handling
 

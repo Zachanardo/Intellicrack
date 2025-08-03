@@ -109,7 +109,7 @@ for inj in injections:
     print(f"Size: {inj['size']}")
     print(f"Protection: {inj['protection']}")
     print(f"Suspicious: {inj['reasons']}")
-    
+
     # Dump injected code
     forensics.dump_memory_region(
         pid=inj['pid'],
@@ -189,7 +189,7 @@ for stream_id, stream in streams.items():
     print(f"Client: {stream['client']}")
     print(f"Server: {stream['server']}")
     print(f"Bytes: {stream['bytes_transferred']}")
-    
+
     # Extract transferred files
     files = net_forensics.extract_files_from_stream(stream_id)
     for file in files:

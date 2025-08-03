@@ -19,7 +19,7 @@ print("✓ Registered python-fx shim with package manager")
 import subprocess
 import sys
 
-result = subprocess.run([sys.executable, "-m", "pip", "show", "python-fx"], 
+result = subprocess.run([sys.executable, "-m", "pip", "show", "python-fx"],
                        capture_output=True, text=True)
 if "Name: python-fx" in result.stdout:
     print("✓ python-fx shows as installed")

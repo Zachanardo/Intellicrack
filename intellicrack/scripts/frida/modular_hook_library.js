@@ -1,10 +1,10 @@
 /**
  * Modular Hook Library System for Reusable Components
- * 
+ *
  * Comprehensive modular hook library system that provides reusable hook components
  * for common protection mechanisms. Enables efficient composition and sharing of
  * bypass techniques across different Frida scripts.
- * 
+ *
  * Author: Intellicrack Framework
  * Version: 2.0.0
  * License: GPL v3
@@ -14,7 +14,7 @@
     name: "Modular Hook Library",
     description: "Reusable hook components system for efficient bypass development",
     version: "2.0.0",
-    
+
     // Configuration for modular hook system
     config: {
         // Library management
@@ -27,7 +27,7 @@
             enableConflictDetection: true,
             maxCacheSize: 100
         },
-        
+
         // Module categories
         categories: {
             antiDebug: true,
@@ -41,7 +41,7 @@
             memory: true,
             registry: true
         },
-        
+
         // Hook execution
         execution: {
             enableAsync: true,
@@ -52,7 +52,7 @@
             retryDelay: 1000,
             timeout: 30000
         },
-        
+
         // Performance optimization
         performance: {
             enableLazyLoading: true,
@@ -61,7 +61,7 @@
             enableMinification: false,
             enableProxying: true
         },
-        
+
         // Debugging and logging
         debug: {
             enabled: true,
@@ -71,18 +71,18 @@
             trackDependencies: true
         }
     },
-    
+
     // Module registry
     moduleRegistry: new Map(),
     loadedModules: new Map(),
     moduleCache: new Map(),
     dependencyGraph: new Map(),
-    
+
     // Hook management
     activeHooks: new Map(),
     hookGroups: new Map(),
     hookChains: new Map(),
-    
+
     // Statistics and monitoring
     stats: {
         modulesLoaded: 0,
@@ -94,56 +94,56 @@
         totalExecutionTime: 0,
         avgExecutionTime: 0
     },
-    
+
     onAttach: function(pid) {
         console.log("[Hook Library] Attaching to process: " + pid);
         this.processId = pid;
         this.startTime = Date.now();
     },
-    
+
     run: function() {
         console.log("[Hook Library] Initializing modular hook library system...");
-        
+
         // Initialize core components
         this.initializeModuleSystem();
         this.registerBuiltinModules();
         this.setupDependencyManager();
         this.setupHookExecutor();
         this.setupPerformanceMonitor();
-        
+
         // Start library services
         this.startLibraryServices();
-        
+
         this.installSummary();
     },
-    
+
     // === MODULE SYSTEM INITIALIZATION ===
     initializeModuleSystem: function() {
         console.log("[Hook Library] Initializing module system...");
-        
+
         // Initialize module registry
         this.moduleRegistry.clear();
         this.loadedModules.clear();
         this.moduleCache.clear();
         this.dependencyGraph.clear();
-        
+
         // Initialize hook management
         this.activeHooks.clear();
         this.hookGroups.clear();
         this.hookChains.clear();
-        
+
         // Setup module loader
         this.moduleLoader = this.createModuleLoader();
-        
+
         // Setup hook manager
         this.hookManager = this.createHookManager();
-        
+
         // Setup dependency resolver
         this.dependencyResolver = this.createDependencyResolver();
-        
+
         console.log("[Hook Library] Module system initialized");
     },
-    
+
     createModuleLoader: function() {
         return {
             loadModule: this.loadModule.bind(this),
@@ -155,7 +155,7 @@
             resolveModulePath: this.resolveModulePath.bind(this)
         };
     },
-    
+
     createHookManager: function() {
         return {
             installHook: this.installHook.bind(this),
@@ -168,7 +168,7 @@
             executeHookChain: this.executeHookChain.bind(this)
         };
     },
-    
+
     createDependencyResolver: function() {
         return {
             resolveDependencies: this.resolveDependencies.bind(this),
@@ -179,11 +179,11 @@
             detectCircularDependencies: this.detectCircularDependencies.bind(this)
         };
     },
-    
+
     // === BUILTIN MODULES REGISTRATION ===
     registerBuiltinModules: function() {
         console.log("[Hook Library] Registering builtin modules...");
-        
+
         // Register core modules
         this.registerAntiDebugModules();
         this.registerLicensingModules();
@@ -195,13 +195,13 @@
         this.registerHardwareModules();
         this.registerMemoryModules();
         this.registerRegistryModules();
-        
+
         console.log("[Hook Library] " + this.moduleRegistry.size + " builtin modules registered");
     },
-    
+
     registerAntiDebugModules: function() {
         console.log("[Hook Library] Registering anti-debug modules...");
-        
+
         // Basic anti-debug module
         this.registerModule("antidebug.basic", {
             name: "Basic Anti-Debug",
@@ -217,7 +217,7 @@
                     priority: 10
                 },
                 "CheckRemoteDebuggerPresent": {
-                    module: "kernel32.dll", 
+                    module: "kernel32.dll",
                     strategy: "manipulate_output",
                     manipulation: "set_false",
                     priority: 10
@@ -236,7 +236,7 @@
                 return this.uninstallAntiDebugHooks();
             }
         });
-        
+
         // Advanced anti-debug module
         this.registerModule("antidebug.advanced", {
             name: "Advanced Anti-Debug",
@@ -251,7 +251,7 @@
                     priority: 8
                 },
                 "TEB_Manipulation": {
-                    strategy: "memory_patch", 
+                    strategy: "memory_patch",
                     targets: ["NtTib.ArbitraryUserPointer"],
                     priority: 8
                 },
@@ -267,11 +267,11 @@
                 return this.uninstallAdvancedAntiDebugHooks();
             }
         });
-        
+
         // Hardware anti-debug module
         this.registerModule("antidebug.hardware", {
             name: "Hardware Anti-Debug",
-            version: "1.0.0", 
+            version: "1.0.0",
             category: "antiDebug",
             dependencies: ["antidebug.advanced"],
             description: "Hardware-level debugging detection bypass",
@@ -286,7 +286,7 @@
                     priority: 6
                 },
                 "Single_Step": {
-                    strategy: "trap_flag_manipulation", 
+                    strategy: "trap_flag_manipulation",
                     priority: 5
                 }
             },
@@ -298,10 +298,10 @@
             }
         });
     },
-    
+
     registerLicensingModules: function() {
         console.log("[Hook Library] Registering licensing modules...");
-        
+
         // Local license module
         this.registerModule("licensing.local", {
             name: "Local License Bypass",
@@ -316,7 +316,7 @@
                     priority: 10
                 },
                 "checkLicense": {
-                    strategy: "replace_return", 
+                    strategy: "replace_return",
                     returnValue: 1,
                     priority: 10
                 },
@@ -330,12 +330,12 @@
                 return this.installLocalLicenseHooks();
             }
         });
-        
+
         // Network license module
         this.registerModule("licensing.network", {
             name: "Network License Bypass",
             version: "1.0.0",
-            category: "licensing", 
+            category: "licensing",
             dependencies: ["networking.http"],
             description: "Network-based license validation bypass",
             hooks: {
@@ -353,7 +353,7 @@
                 return this.installNetworkLicenseHooks();
             }
         });
-        
+
         // Cloud license module
         this.registerModule("licensing.cloud", {
             name: "Cloud License Bypass",
@@ -380,10 +380,10 @@
             }
         });
     },
-    
+
     registerDrmModules: function() {
         console.log("[Hook Library] Registering DRM modules...");
-        
+
         // HDCP module
         this.registerModule("drm.hdcp", {
             name: "HDCP Bypass",
@@ -409,7 +409,7 @@
                 return this.installHDCPHooks();
             }
         });
-        
+
         // PlayReady module
         this.registerModule("drm.playready", {
             name: "PlayReady Bypass",
@@ -435,12 +435,12 @@
                 return this.installPlayReadyHooks();
             }
         });
-        
+
         // Widevine module
         this.registerModule("drm.widevine", {
             name: "Widevine Bypass",
             version: "1.0.0",
-            category: "drm", 
+            category: "drm",
             dependencies: ["crypto.base"],
             description: "Google Widevine DRM bypass",
             hooks: {
@@ -449,7 +449,7 @@
                     priority: 10
                 },
                 "Widevine_License_Requests": {
-                    strategy: "spoof_licenses", 
+                    strategy: "spoof_licenses",
                     priority: 9
                 },
                 "Widevine_Content_Decryption": {
@@ -462,10 +462,10 @@
             }
         });
     },
-    
+
     registerNetworkingModules: function() {
         console.log("[Hook Library] Registering networking modules...");
-        
+
         // HTTP module
         this.registerModule("networking.http", {
             name: "HTTP Interception",
@@ -493,7 +493,7 @@
                 return this.installHTTPHooks();
             }
         });
-        
+
         // HTTPS module
         this.registerModule("networking.https", {
             name: "HTTPS Interception",
@@ -520,14 +520,14 @@
                 return this.installHTTPSHooks();
             }
         });
-        
+
         // DNS module
         this.registerModule("networking.dns", {
             name: "DNS Resolution Control",
             version: "1.0.0",
             category: "networking",
             dependencies: [],
-            description: "DNS resolution interception and redirection", 
+            description: "DNS resolution interception and redirection",
             hooks: {
                 "getaddrinfo": {
                     module: "ws2_32.dll",
@@ -545,10 +545,10 @@
             }
         });
     },
-    
+
     registerCryptographyModules: function() {
         console.log("[Hook Library] Registering cryptography modules...");
-        
+
         // Base crypto module
         this.registerModule("crypto.base", {
             name: "Base Cryptography",
@@ -563,7 +563,7 @@
                     priority: 8
                 },
                 "CryptDecrypt": {
-                    module: "advapi32.dll", 
+                    module: "advapi32.dll",
                     strategy: "monitor_and_optionally_bypass",
                     priority: 8
                 },
@@ -577,7 +577,7 @@
                 return this.installBaseCryptoHooks();
             }
         });
-        
+
         // SSL module
         this.registerModule("crypto.ssl", {
             name: "SSL/TLS Cryptography",
@@ -603,7 +603,7 @@
                 return this.installSSLHooks();
             }
         });
-        
+
         // JWT module
         this.registerModule("crypto.jwt", {
             name: "JWT Token Handling",
@@ -629,12 +629,12 @@
                 return this.installJWTHooks();
             }
         });
-        
+
         // OAuth module
         this.registerModule("crypto.oauth", {
             name: "OAuth Token Handling",
             version: "1.0.0",
-            category: "cryptography", 
+            category: "cryptography",
             dependencies: ["crypto.base"],
             description: "OAuth token manipulation and spoofing",
             hooks: {
@@ -656,10 +656,10 @@
             }
         });
     },
-    
+
     registerVirtualizationModules: function() {
         console.log("[Hook Library] Registering virtualization modules...");
-        
+
         // VMware detection bypass
         this.registerModule("virtualization.vmware", {
             name: "VMware Detection Bypass",
@@ -685,7 +685,7 @@
                 return this.installVMwareBypassHooks();
             }
         });
-        
+
         // VirtualBox detection bypass
         this.registerModule("virtualization.virtualbox", {
             name: "VirtualBox Detection Bypass",
@@ -699,7 +699,7 @@
                     priority: 10
                 },
                 "VirtualBox_Hardware_IDs": {
-                    strategy: "spoof_hardware_ids", 
+                    strategy: "spoof_hardware_ids",
                     priority: 9
                 },
                 "VirtualBox_Services": {
@@ -712,10 +712,10 @@
             }
         });
     },
-    
+
     registerIntegrityModules: function() {
         console.log("[Hook Library] Registering integrity modules...");
-        
+
         // Code integrity module
         this.registerModule("integrity.code", {
             name: "Code Integrity Bypass",
@@ -741,7 +741,7 @@
                 return this.installCodeIntegrityHooks();
             }
         });
-        
+
         // Memory integrity module
         this.registerModule("integrity.memory", {
             name: "Memory Integrity Bypass",
@@ -768,10 +768,10 @@
             }
         });
     },
-    
+
     registerHardwareModules: function() {
         console.log("[Hook Library] Registering hardware modules...");
-        
+
         // Base hardware module
         this.registerModule("hardware.base", {
             name: "Base Hardware Spoofing",
@@ -800,7 +800,7 @@
                 return this.installBaseHardwareHooks();
             }
         });
-        
+
         // TPM module
         this.registerModule("hardware.tpm", {
             name: "TPM Bypass",
@@ -824,10 +824,10 @@
             }
         });
     },
-    
+
     registerMemoryModules: function() {
         console.log("[Hook Library] Registering memory modules...");
-        
+
         // Base memory module
         this.registerModule("memory.base", {
             name: "Base Memory Operations",
@@ -856,7 +856,7 @@
                 return this.installBaseMemoryHooks();
             }
         });
-        
+
         // Memory protection module
         this.registerModule("memory.protection", {
             name: "Memory Protection Bypass",
@@ -883,10 +883,10 @@
             }
         });
     },
-    
+
     registerRegistryModules: function() {
         console.log("[Hook Library] Registering registry modules...");
-        
+
         // Registry access module
         this.registerModule("registry.access", {
             name: "Registry Access Control",
@@ -901,7 +901,7 @@
                     priority: 10
                 },
                 "RegQueryValueExW": {
-                    module: "advapi32.dll", 
+                    module: "advapi32.dll",
                     strategy: "spoof_values",
                     priority: 10
                 },
@@ -915,7 +915,7 @@
                 return this.installRegistryAccessHooks();
             }
         });
-        
+
         // Registry spoofing module
         this.registerModule("registry.spoofing", {
             name: "Registry Value Spoofing",
@@ -942,72 +942,72 @@
             }
         });
     },
-    
+
     // === MODULE MANAGEMENT ===
     registerModule: function(moduleId, moduleDefinition) {
         if (this.moduleRegistry.has(moduleId)) {
             console.log("[Hook Library] Warning: Module " + moduleId + " already registered, overwriting");
         }
-        
+
         // Validate module definition
         if (!this.validateModuleDefinition(moduleDefinition)) {
             console.log("[Hook Library] Error: Invalid module definition for " + moduleId);
             return false;
         }
-        
+
         // Add metadata
         moduleDefinition.id = moduleId;
         moduleDefinition.registeredAt = Date.now();
         moduleDefinition.status = "registered";
-        
+
         this.moduleRegistry.set(moduleId, moduleDefinition);
         console.log("[Hook Library] Module registered: " + moduleId);
-        
+
         return true;
     },
-    
+
     validateModuleDefinition: function(module) {
         // Required fields
         if (!module.name || !module.version || !module.category) {
             return false;
         }
-        
+
         // Valid category
         if (!this.config.categories[module.category]) {
             return false;
         }
-        
+
         // Dependencies should be array
         if (module.dependencies && !Array.isArray(module.dependencies)) {
             return false;
         }
-        
+
         // Hooks should be object
         if (module.hooks && typeof module.hooks !== 'object') {
             return false;
         }
-        
+
         return true;
     },
-    
+
     loadModule: function(moduleId, options) {
         console.log("[Hook Library] Loading module: " + moduleId);
-        
+
         options = options || {};
-        
+
         try {
             // Check if already loaded
             if (this.loadedModules.has(moduleId)) {
                 console.log("[Hook Library] Module " + moduleId + " already loaded");
                 return this.loadedModules.get(moduleId);
             }
-            
+
             // Get module definition
             var moduleDefinition = this.moduleRegistry.get(moduleId);
             if (!moduleDefinition) {
                 throw new Error("Module not found: " + moduleId);
             }
-            
+
             // Check cache first
             if (this.config.library.enableCaching && this.moduleCache.has(moduleId)) {
                 var cachedModule = this.moduleCache.get(moduleId);
@@ -1016,9 +1016,9 @@
                 console.log("[Hook Library] Module loaded from cache: " + moduleId);
                 return cachedModule;
             }
-            
+
             this.stats.cacheMisses++;
-            
+
             // Load dependencies first
             if (moduleDefinition.dependencies && moduleDefinition.dependencies.length > 0) {
                 for (var i = 0; i < moduleDefinition.dependencies.length; i++) {
@@ -1026,10 +1026,10 @@
                     this.loadModule(depId);
                 }
             }
-            
+
             // Create module instance
             var moduleInstance = this.createModuleInstance(moduleDefinition, options);
-            
+
             // Install the module
             if (moduleInstance.install) {
                 var installResult = moduleInstance.install();
@@ -1037,26 +1037,26 @@
                     throw new Error("Module installation failed: " + moduleId);
                 }
             }
-            
+
             // Cache the module
             if (this.config.library.enableCaching) {
                 this.cacheModule(moduleId, moduleInstance);
             }
-            
+
             // Track loaded module
             this.loadedModules.set(moduleId, moduleInstance);
             this.stats.modulesLoaded++;
-            
+
             console.log("[Hook Library] Module loaded successfully: " + moduleId);
             return moduleInstance;
-            
+
         } catch (e) {
             console.log("[Hook Library] Error loading module " + moduleId + ": " + e);
             this.stats.errors++;
             return null;
         }
     },
-    
+
     createModuleInstance: function(moduleDefinition, options) {
         var instance = {
             id: moduleDefinition.id,
@@ -1068,82 +1068,82 @@
             status: "loaded",
             loadedAt: Date.now(),
             options: options,
-            
+
             // Copy methods from definition
             install: moduleDefinition.install || function() { return true; },
             uninstall: moduleDefinition.uninstall || function() { return true; },
             enable: moduleDefinition.enable || function() { return true; },
             disable: moduleDefinition.disable || function() { return true; },
-            
+
             // Add management methods
             getHooks: function() {
                 return Object.keys(this.hooks);
             },
-            
+
             isInstalled: function() {
                 return this.status === "installed";
             },
-            
+
             isEnabled: function() {
                 return this.status === "enabled";
             }
         };
-        
+
         return instance;
     },
-    
+
     unloadModule: function(moduleId) {
         console.log("[Hook Library] Unloading module: " + moduleId);
-        
+
         try {
             var moduleInstance = this.loadedModules.get(moduleId);
             if (!moduleInstance) {
                 console.log("[Hook Library] Module not loaded: " + moduleId);
                 return false;
             }
-            
+
             // Uninstall hooks
             if (moduleInstance.uninstall) {
                 moduleInstance.uninstall();
             }
-            
+
             // Remove from loaded modules
             this.loadedModules.delete(moduleId);
-            
+
             // Remove from cache
             this.moduleCache.delete(moduleId);
-            
+
             console.log("[Hook Library] Module unloaded: " + moduleId);
             return true;
-            
+
         } catch (e) {
             console.log("[Hook Library] Error unloading module " + moduleId + ": " + e);
             this.stats.errors++;
             return false;
         }
     },
-    
+
     reloadModule: function(moduleId) {
         console.log("[Hook Library] Reloading module: " + moduleId);
-        
+
         this.unloadModule(moduleId);
         return this.loadModule(moduleId);
     },
-    
+
     cacheModule: function(moduleId, moduleInstance) {
         if (this.moduleCache.size >= this.config.library.maxCacheSize) {
             // Remove oldest entry
             var oldestKey = this.moduleCache.keys().next().value;
             this.moduleCache.delete(oldestKey);
         }
-        
+
         this.moduleCache.set(moduleId, moduleInstance);
     },
-    
+
     // === HOOK MANAGEMENT ===
     installHook: function(hookId, hookDefinition, moduleId) {
         console.log("[Hook Library] Installing hook: " + hookId);
-        
+
         try {
             var hookInfo = {
                 id: hookId,
@@ -1155,48 +1155,48 @@
                 successCount: 0,
                 errorCount: 0
             };
-            
+
             // Install the actual Frida hook based on strategy
             var fridaHook = this.createFridaHook(hookDefinition);
             if (fridaHook) {
                 hookInfo.fridaHook = fridaHook;
                 this.activeHooks.set(hookId, hookInfo);
                 this.stats.hooksInstalled++;
-                
+
                 console.log("[Hook Library] Hook installed: " + hookId);
                 return true;
             }
-            
+
             return false;
-            
+
         } catch (e) {
             console.log("[Hook Library] Error installing hook " + hookId + ": " + e);
             this.stats.errors++;
             return false;
         }
     },
-    
+
     createFridaHook: function(hookDefinition) {
         var strategy = hookDefinition.strategy;
         var target = hookDefinition.target || hookDefinition.module;
-        
+
         try {
             switch (strategy) {
                 case "replace_return":
                     return this.createReplaceReturnHook(hookDefinition);
-                    
+
                 case "intercept_and_modify":
                     return this.createInterceptModifyHook(hookDefinition);
-                    
+
                 case "monitor_and_log":
                     return this.createMonitorLogHook(hookDefinition);
-                    
+
                 case "spoof_values":
                     return this.createSpoofValuesHook(hookDefinition);
-                    
+
                 case "block_requests":
                     return this.createBlockRequestsHook(hookDefinition);
-                    
+
                 default:
                     console.log("[Hook Library] Unknown hook strategy: " + strategy);
                     return null;
@@ -1206,32 +1206,32 @@
             return null;
         }
     },
-    
+
     createReplaceReturnHook: function(hookDefinition) {
         var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
             console.log("[Hook Library] Function not found: " + hookDefinition.target);
             return null;
         }
-        
+
         return Interceptor.replace(targetFunc, new NativeCallback(function() {
             console.log("[Hook Library] Hook executed: " + hookDefinition.target);
             return hookDefinition.returnValue || 0;
         }, 'int', []));
     },
-    
+
     createInterceptModifyHook: function(hookDefinition) {
         var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
             return null;
         }
-        
+
         return Interceptor.attach(targetFunc, {
             onEnter: function(args) {
                 this.args = args;
                 this.hookDef = hookDefinition;
             },
-            
+
             onLeave: function(retval) {
                 if (this.hookDef.modifyReturn) {
                     retval.replace(this.hookDef.modifyReturn);
@@ -1240,26 +1240,26 @@
             }
         });
     },
-    
+
     createMonitorLogHook: function(hookDefinition) {
         var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
             return null;
         }
-        
+
         return Interceptor.attach(targetFunc, {
             onEnter: function(args) {
                 console.log("[Hook Library] Monitor: " + hookDefinition.target + " called");
             }
         });
     },
-    
+
     createSpoofValuesHook: function(hookDefinition) {
         var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
             return null;
         }
-        
+
         return Interceptor.attach(targetFunc, {
             onLeave: function(retval) {
                 if (hookDefinition.spoofedValues) {
@@ -1269,13 +1269,13 @@
             }
         });
     },
-    
+
     createBlockRequestsHook: function(hookDefinition) {
         var targetFunc = Module.findExportByName(hookDefinition.module, hookDefinition.target);
         if (!targetFunc) {
             return null;
         }
-        
+
         return Interceptor.attach(targetFunc, {
             onLeave: function(retval) {
                 retval.replace(-1); // Block by returning error
@@ -1283,36 +1283,36 @@
             }
         });
     },
-    
+
     uninstallHook: function(hookId) {
         console.log("[Hook Library] Uninstalling hook: " + hookId);
-        
+
         var hookInfo = this.activeHooks.get(hookId);
         if (!hookInfo) {
             console.log("[Hook Library] Hook not found: " + hookId);
             return false;
         }
-        
+
         try {
             if (hookInfo.fridaHook) {
                 // Frida hooks are automatically cleaned up when script is unloaded
                 // For manual cleanup, we would need to store the hook reference
             }
-            
+
             this.activeHooks.delete(hookId);
             console.log("[Hook Library] Hook uninstalled: " + hookId);
             return true;
-            
+
         } catch (e) {
             console.log("[Hook Library] Error uninstalling hook " + hookId + ": " + e);
             return false;
         }
     },
-    
+
     // === HOOK GROUPS AND CHAINS ===
     createHookGroup: function(groupId, hookIds, options) {
         console.log("[Hook Library] Creating hook group: " + groupId);
-        
+
         var group = {
             id: groupId,
             hooks: hookIds,
@@ -1320,25 +1320,25 @@
             createdAt: Date.now(),
             status: "created"
         };
-        
+
         this.hookGroups.set(groupId, group);
         return group;
     },
-    
+
     executeHookGroup: function(groupId) {
         console.log("[Hook Library] Executing hook group: " + groupId);
-        
+
         var group = this.hookGroups.get(groupId);
         if (!group) {
             console.log("[Hook Library] Hook group not found: " + groupId);
             return false;
         }
-        
+
         var results = [];
         for (var i = 0; i < group.hooks.length; i++) {
             var hookId = group.hooks[i];
             var hookInfo = this.activeHooks.get(hookId);
-            
+
             if (hookInfo) {
                 results.push({hookId: hookId, status: "executed"});
                 hookInfo.callCount++;
@@ -1347,13 +1347,13 @@
                 results.push({hookId: hookId, status: "not_found"});
             }
         }
-        
+
         return results;
     },
-    
+
     createHookChain: function(chainId, hookIds, options) {
         console.log("[Hook Library] Creating hook chain: " + chainId);
-        
+
         var chain = {
             id: chainId,
             hooks: hookIds,
@@ -1361,33 +1361,33 @@
             createdAt: Date.now(),
             status: "created"
         };
-        
+
         this.hookChains.set(chainId, chain);
         return chain;
     },
-    
+
     executeHookChain: function(chainId) {
         console.log("[Hook Library] Executing hook chain: " + chainId);
-        
+
         var chain = this.hookChains.get(chainId);
         if (!chain) {
             console.log("[Hook Library] Hook chain not found: " + chainId);
             return false;
         }
-        
+
         // Execute hooks in sequence with dependency checking
         var results = [];
         for (var i = 0; i < chain.hooks.length; i++) {
             var hookId = chain.hooks[i];
             var hookInfo = this.activeHooks.get(hookId);
-            
+
             if (hookInfo) {
                 // Check if previous hooks succeeded (if required)
                 if (chain.options.stopOnFailure && results.some(r => r.status === "failed")) {
                     results.push({hookId: hookId, status: "skipped"});
                     continue;
                 }
-                
+
                 results.push({hookId: hookId, status: "executed"});
                 hookInfo.callCount++;
                 this.stats.hooksExecuted++;
@@ -1395,61 +1395,61 @@
                 results.push({hookId: hookId, status: "not_found"});
             }
         }
-        
+
         return results;
     },
-    
+
     // === DEPENDENCY MANAGEMENT ===
     setupDependencyManager: function() {
         console.log("[Hook Library] Setting up dependency manager...");
-        
+
         if (this.config.library.enableDependencyTracking) {
             this.buildDependencyGraph();
         }
     },
-    
+
     buildDependencyGraph: function() {
         console.log("[Hook Library] Building dependency graph...");
-        
+
         this.dependencyGraph.clear();
-        
+
         this.moduleRegistry.forEach((module, moduleId) => {
             if (module.dependencies && module.dependencies.length > 0) {
                 this.dependencyGraph.set(moduleId, module.dependencies);
             }
         });
-        
+
         // Check for circular dependencies
         if (this.detectCircularDependencies()) {
             console.log("[Hook Library] Warning: Circular dependencies detected!");
         }
     },
-    
+
     detectCircularDependencies: function() {
         var visited = new Set();
         var recursionStack = new Set();
-        
+
         for (var moduleId of this.dependencyGraph.keys()) {
             if (this.hasCycle(moduleId, visited, recursionStack)) {
                 return true;
             }
         }
-        
+
         return false;
     },
-    
+
     hasCycle: function(moduleId, visited, recursionStack) {
         if (recursionStack.has(moduleId)) {
             return true;
         }
-        
+
         if (visited.has(moduleId)) {
             return false;
         }
-        
+
         visited.add(moduleId);
         recursionStack.add(moduleId);
-        
+
         var dependencies = this.dependencyGraph.get(moduleId) || [];
         for (var i = 0; i < dependencies.length; i++) {
             var dep = dependencies[i];
@@ -1457,29 +1457,29 @@
                 return true;
             }
         }
-        
+
         recursionStack.delete(moduleId);
         return false;
     },
-    
+
     resolveDependencies: function(moduleId) {
         var resolved = [];
         var resolving = new Set();
-        
+
         return this.resolveDependenciesRecursive(moduleId, resolved, resolving);
     },
-    
+
     resolveDependenciesRecursive: function(moduleId, resolved, resolving) {
         if (resolving.has(moduleId)) {
             throw new Error("Circular dependency detected: " + moduleId);
         }
-        
+
         if (resolved.indexOf(moduleId) !== -1) {
             return resolved;
         }
-        
+
         resolving.add(moduleId);
-        
+
         var module = this.moduleRegistry.get(moduleId);
         if (module && module.dependencies) {
             for (var i = 0; i < module.dependencies.length; i++) {
@@ -1487,17 +1487,17 @@
                 this.resolveDependenciesRecursive(dep, resolved, resolving);
             }
         }
-        
+
         resolving.delete(moduleId);
         resolved.push(moduleId);
-        
+
         return resolved;
     },
-    
+
     // === HOOK EXECUTOR ===
     setupHookExecutor: function() {
         console.log("[Hook Library] Setting up hook executor...");
-        
+
         this.hookExecutor = {
             executeAsync: this.config.execution.enableAsync,
             batchExecution: this.config.execution.enableBatching,
@@ -1506,58 +1506,58 @@
             timeout: this.config.execution.timeout
         };
     },
-    
+
     // === PERFORMANCE MONITORING ===
     setupPerformanceMonitor: function() {
         console.log("[Hook Library] Setting up performance monitor...");
-        
+
         if (this.config.debug.measurePerformance) {
             setInterval(() => {
                 this.updatePerformanceMetrics();
             }, 30000); // Update every 30 seconds
         }
     },
-    
+
     updatePerformanceMetrics: function() {
         var totalTime = 0;
         var totalExecutions = 0;
-        
+
         this.activeHooks.forEach((hookInfo) => {
             totalExecutions += hookInfo.callCount;
             // totalTime would be calculated from actual hook execution times
         });
-        
+
         if (totalExecutions > 0) {
             this.stats.totalExecutionTime = totalTime;
             this.stats.avgExecutionTime = totalTime / totalExecutions;
         }
-        
+
         this.stats.hooksExecuted = totalExecutions;
     },
-    
+
     // === LIBRARY SERVICES ===
     startLibraryServices: function() {
         console.log("[Hook Library] Starting library services...");
-        
+
         // Auto-load configured modules
         if (this.config.library.autoLoad) {
             this.autoLoadModules();
         }
-        
+
         // Start conflict detection
         if (this.config.library.enableConflictDetection) {
             this.startConflictDetection();
         }
-        
+
         // Start performance monitoring
         if (this.config.debug.measurePerformance) {
             this.startPerformanceMonitoring();
         }
     },
-    
+
     autoLoadModules: function() {
         console.log("[Hook Library] Auto-loading modules...");
-        
+
         // Load essential modules
         var essentialModules = [
             "antidebug.basic",
@@ -1567,7 +1567,7 @@
             "memory.base",
             "registry.access"
         ];
-        
+
         for (var i = 0; i < essentialModules.length; i++) {
             var moduleId = essentialModules[i];
             if (this.moduleRegistry.has(moduleId)) {
@@ -1575,45 +1575,45 @@
             }
         }
     },
-    
+
     startConflictDetection: function() {
         console.log("[Hook Library] Starting conflict detection...");
-        
+
         // This would monitor for conflicting hooks
         // For now, just log that it's started
         console.log("[Hook Library] Conflict detection service started");
     },
-    
+
     startPerformanceMonitoring: function() {
         console.log("[Hook Library] Starting performance monitoring...");
-        
+
         setInterval(() => {
             this.logPerformanceMetrics();
         }, 60000); // Log every minute
     },
-    
+
     logPerformanceMetrics: function() {
         console.log("[Hook Library] Performance: " +
                   "Modules: " + this.stats.modulesLoaded + ", " +
                   "Hooks: " + this.stats.hooksInstalled + ", " +
                   "Executions: " + this.stats.hooksExecuted + ", " +
-                  "Cache hits: " + this.stats.cacheHits + "/" + 
+                  "Cache hits: " + this.stats.cacheHits + "/" +
                   (this.stats.cacheHits + this.stats.cacheMisses));
     },
-    
+
     // === API METHODS ===
     getModuleInfo: function(moduleId) {
         return this.moduleRegistry.get(moduleId);
     },
-    
+
     getLoadedModules: function() {
         return Array.from(this.loadedModules.keys());
     },
-    
+
     getActiveHooks: function() {
         return Array.from(this.activeHooks.keys());
     },
-    
+
     getModulesByCategory: function(category) {
         var modules = [];
         this.moduleRegistry.forEach((module, moduleId) => {
@@ -1623,20 +1623,20 @@
         });
         return modules;
     },
-    
+
     getStatistics: function() {
         return Object.assign({}, this.stats);
     },
-    
+
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
             console.log("\n[Hook Library] ========================================");
             console.log("[Hook Library] Modular Hook Library Summary:");
             console.log("[Hook Library] ========================================");
-            
+
             var activeFeatures = [];
-            
+
             if (this.config.library.enabled) {
                 activeFeatures.push("Core Library System");
             }
@@ -1655,14 +1655,14 @@
             if (this.config.performance.enableLazyLoading) {
                 activeFeatures.push("Lazy Loading");
             }
-            
+
             for (var i = 0; i < activeFeatures.length; i++) {
                 console.log("[Hook Library]   ✓ " + activeFeatures[i]);
             }
-            
+
             console.log("[Hook Library] ========================================");
             console.log("[Hook Library] Module Categories:");
-            
+
             var categories = Object.keys(this.config.categories);
             for (var i = 0; i < categories.length; i++) {
                 var category = categories[i];
@@ -1671,7 +1671,7 @@
                     console.log("[Hook Library]   • " + category + ": " + moduleCount + " modules");
                 }
             }
-            
+
             console.log("[Hook Library] ========================================");
             console.log("[Hook Library] Library Configuration:");
             console.log("[Hook Library]   • Auto Load: " + this.config.library.autoLoad);
@@ -1679,7 +1679,7 @@
             console.log("[Hook Library]   • Cache Size: " + this.config.library.maxCacheSize);
             console.log("[Hook Library]   • Dependency Tracking: " + this.config.library.enableDependencyTracking);
             console.log("[Hook Library]   • Conflict Detection: " + this.config.library.enableConflictDetection);
-            
+
             console.log("[Hook Library] ========================================");
             console.log("[Hook Library] Execution Settings:");
             console.log("[Hook Library]   • Async Execution: " + this.config.execution.enableAsync);
@@ -1687,7 +1687,7 @@
             console.log("[Hook Library]   • Retry on Failure: " + this.config.execution.enableRetry);
             console.log("[Hook Library]   • Max Retries: " + this.config.execution.maxRetries);
             console.log("[Hook Library]   • Timeout: " + this.config.execution.timeout + "ms");
-            
+
             console.log("[Hook Library] ========================================");
             console.log("[Hook Library] Runtime Statistics:");
             console.log("[Hook Library]   • Registered Modules: " + this.moduleRegistry.size);
@@ -1695,13 +1695,13 @@
             console.log("[Hook Library]   • Installed Hooks: " + this.stats.hooksInstalled);
             console.log("[Hook Library]   • Cache Hits: " + this.stats.cacheHits);
             console.log("[Hook Library]   • Cache Misses: " + this.stats.cacheMisses);
-            console.log("[Hook Library]   • Cache Hit Rate: " + 
-                      (this.stats.cacheHits + this.stats.cacheMisses > 0 ? 
+            console.log("[Hook Library]   • Cache Hit Rate: " +
+                      (this.stats.cacheHits + this.stats.cacheMisses > 0 ?
                        (this.stats.cacheHits / (this.stats.cacheHits + this.stats.cacheMisses) * 100).toFixed(1) + "%" : "N/A"));
-            
+
             console.log("[Hook Library] ========================================");
             console.log("[Hook Library] Available Modules:");
-            
+
             var modulesByCategory = {};
             this.moduleRegistry.forEach((module, moduleId) => {
                 if (!modulesByCategory[module.category]) {
@@ -1709,7 +1709,7 @@
                 }
                 modulesByCategory[module.category].push(moduleId);
             });
-            
+
             for (var category in modulesByCategory) {
                 console.log("[Hook Library]   " + category + ":");
                 var modules = modulesByCategory[category];
@@ -1720,7 +1720,7 @@
                     console.log("[Hook Library]     - " + moduleId + " (" + status + ")");
                 }
             }
-            
+
             console.log("[Hook Library] ========================================");
             console.log("[Hook Library] Modular hook library system is now ACTIVE!");
             console.log("[Hook Library] Use library API to load and manage hook modules dynamically.");

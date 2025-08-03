@@ -13,7 +13,7 @@ if os.path.exists(venv_path):
 """
 Focused ICP Engine Integration Testing
 
-Simplified testing framework that focuses specifically on the ICP Engine 
+Simplified testing framework that focuses specifically on the ICP Engine
 integration components without loading the full GUI application.
 
 Phase 5: Complete System Testing & Integration Validation
@@ -126,7 +126,7 @@ class FocusedICPIntegrationTester:
                         self.log_result('phase_a', f"  Sample output: {repr(results[:100])}")
                     else:
                         self.log_result('phase_a', "✓ Basic scan completed (no detections)")
-                
+
                 except Exception as e:
                     self.log_result('phase_a', f"✗ Basic scan failed: {e}", True)
                     return False

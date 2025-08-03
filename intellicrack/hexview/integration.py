@@ -1,4 +1,5 @@
 """Integration module for hex viewer functionality."""
+
 import logging
 import os
 
@@ -29,8 +30,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
 try:
     from .hex_dialog import HexViewerDialog
 except ImportError as e:
@@ -45,6 +44,7 @@ try:
     )
 except ImportError as e:
     logger.error("Import error in integration: %s", e)
+
     # Provide dummy functions if AI bridge is not available
     def wrapper_ai_binary_analyze(*args, **kwargs):
         """Fallback function for AI binary analysis when AI bridge is not available.
@@ -55,6 +55,7 @@ except ImportError as e:
         """
         _args, _kwargs = args, kwargs  # Store for potential future use
         return {"error": "AI bridge not available"}
+
     def wrapper_ai_binary_pattern_search(*args, **kwargs):
         """Fallback function for AI pattern search when AI bridge is not available.
 
@@ -64,6 +65,7 @@ except ImportError as e:
         """
         _args, _kwargs = args, kwargs  # Store for potential future use
         return {"error": "AI bridge not available"}
+
     def wrapper_ai_binary_edit_suggest(*args, **kwargs):
         """Fallback function for AI edit suggestions when AI bridge is not available.
 
@@ -74,13 +76,16 @@ except ImportError as e:
         _args, _kwargs = args, kwargs  # Store for potential future use
         return {"error": "AI bridge not available"}
 
+
 logger = logging.getLogger("Intellicrack.HexView")
 
 # Tool registry for hex viewer AI tools
 TOOL_REGISTRY = {}
 
 
-def show_enhanced_hex_viewer(app_instance, file_path: str | None = None, read_only: bool = True) -> QDialog:
+def show_enhanced_hex_viewer(
+    app_instance, file_path: str | None = None, read_only: bool = True
+) -> QDialog:
     """Show the enhanced hex viewer/editor dialog.
 
     This function creates and shows the enhanced hex viewer dialog, optionally
@@ -187,7 +192,9 @@ def initialize_hex_viewer(app_instance):
     # Replace with enhanced version
     # Ensure the proper way to open hex viewer in edit mode is used
     app_instance.show_editable_hex_viewer = lambda: show_enhanced_hex_viewer(
-        app_instance, app_instance.binary_path if hasattr(app_instance, "binary_path") else None, False,
+        app_instance,
+        app_instance.binary_path if hasattr(app_instance, "binary_path") else None,
+        False,
     )
 
     # Add function to show writable hex viewer explicitly (fixes the menu-only integration)
@@ -242,7 +249,9 @@ def add_hex_viewer_menu(app_instance, menu_name: str = None):
 
     # Add view action (read-only)
     enhanced_hex_action = QAction("Hex Viewer (View)", app_instance)
-    enhanced_hex_action.triggered.connect(lambda: show_enhanced_hex_viewer(app_instance, None, True))
+    enhanced_hex_action.triggered.connect(
+        lambda: show_enhanced_hex_viewer(app_instance, None, True)
+    )
     enhanced_hex_action.setStatusTip("Open binary in read-only hex viewer")
     menu.addAction(enhanced_hex_action)
 
@@ -363,6 +372,7 @@ def hex_viewer_ai_tool(func):
         Decorated function
 
     """
+
     def wrapper(app_instance, parameters):
         """Wrapper function that adds error handling and logging to hex viewer AI tools.
 

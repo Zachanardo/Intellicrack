@@ -3,6 +3,7 @@
 This module provides a widget for displaying CPU usage, temperature,
 and performance metrics in the system monitoring interface.
 """
+
 import platform
 from typing import Any
 
@@ -78,12 +79,14 @@ class CPUMonitorWorker(QObject):
                 try:
                     pinfo = proc.info
                     if pinfo["cpu_percent"] > 0:
-                        processes.append({
-                            "pid": pinfo["pid"],
-                            "name": pinfo["name"],
-                            "cpu_percent": pinfo["cpu_percent"],
-                            "memory_percent": pinfo["memory_percent"],
-                        })
+                        processes.append(
+                            {
+                                "pid": pinfo["pid"],
+                                "name": pinfo["name"],
+                                "cpu_percent": pinfo["cpu_percent"],
+                                "memory_percent": pinfo["memory_percent"],
+                            }
+                        )
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
 
@@ -104,6 +107,7 @@ class CPUMonitorWorker(QObject):
         try:
             if platform.system() == "Windows":
                 import wmi
+
                 c = wmi.WMI()
                 for processor in c.Win32_Processor():
                     return processor.Name
@@ -114,7 +118,12 @@ class CPUMonitorWorker(QObject):
                             return line.split(":")[1].strip()
             elif platform.system() == "Darwin":
                 import subprocess
-                return subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"]).decode().strip()
+
+                return (
+                    subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"])
+                    .decode()
+                    .strip()
+                )
         except:
             pass
 
@@ -201,7 +210,9 @@ class CPUStatusWidget(QWidget):
         self.processes_table = QTableWidget()
         self.processes_table.setColumnCount(4)
         self.processes_table.setHorizontalHeaderLabels(["PID", "Name", "CPU %", "Memory %"])
-        self.processes_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.processes_table.horizontalHeader().setSectionResizeMode(
+            1, QHeaderView.ResizeMode.Stretch
+        )
         self.processes_table.setMaximumHeight(200)
         processes_layout.addWidget(self.processes_table)
 

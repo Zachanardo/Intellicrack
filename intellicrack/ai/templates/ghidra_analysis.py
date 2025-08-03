@@ -30,15 +30,16 @@ try:
     from intellicrack.logger import logger
 except ImportError:
     import logging
+
     logger = logging.getLogger(__name__)
 
 SCRIPT_INFO = {
-    'name': '{{script_name}}',
-    'version': '1.0.0',
-    'description': '{{description}}',
-    'target': '{{target_binary}}',
-    'analysis_type': '{{analysis_type}}',
-    'generated': '{{timestamp}}'
+    "name": "{{script_name}}",
+    "version": "1.0.0",
+    "description": "{{description}}",
+    "target": "{{target_binary}}",
+    "analysis_type": "{{analysis_type}}",
+    "generated": "{{timestamp}}",
 }
 
 
@@ -62,8 +63,7 @@ def analyze_license_functions():
     listing = program.getListing()
 
     # License-related function name patterns
-    license_patterns = ['license', 'trial',
-                        'valid', 'check', 'auth', 'serial', 'key']
+    license_patterns = ["license", "trial", "valid", "check", "auth", "serial", "key"]
 
     license_functions = []
 
@@ -75,14 +75,19 @@ def analyze_license_functions():
         # Check if function name contains license-related keywords
         for pattern in license_patterns:
             if pattern in func_name:
-                license_functions.append({
-                    'name': function.getName(),
-                    'address': function.getEntryPoint(),
-                    'size': function.getBody().getNumAddresses(),
-                    'pattern_matched': pattern
-                })
-                log("Found license function: {} at {}".format(
-                    function.getName(), function.getEntryPoint()))
+                license_functions.append(
+                    {
+                        "name": function.getName(),
+                        "address": function.getEntryPoint(),
+                        "size": function.getBody().getNumAddresses(),
+                        "pattern_matched": pattern,
+                    }
+                )
+                log(
+                    "Found license function: {} at {}".format(
+                        function.getName(), function.getEntryPoint()
+                    )
+                )
                 break
 
     return license_functions
@@ -102,8 +107,7 @@ def analyze_strings():
     program.getMemory()
 
     # License-related string patterns
-    string_patterns = ['license', 'trial', 'expire',
-                       'valid', 'serial', 'key', 'activation']
+    string_patterns = ["license", "trial", "expire", "valid", "serial", "key", "activation"]
 
     license_strings = []
 
@@ -119,13 +123,18 @@ def analyze_strings():
 
                 for pattern in string_patterns:
                     if pattern in string_lower:
-                        license_strings.append({
-                            'value': str(string_value),
-                            'address': data.getAddress(),
-                            'pattern_matched': pattern
-                        })
-                        log("Found license string: '{}' at {}".format(
-                            string_value, data.getAddress()))
+                        license_strings.append(
+                            {
+                                "value": str(string_value),
+                                "address": data.getAddress(),
+                                "pattern_matched": pattern,
+                            }
+                        )
+                        log(
+                            "Found license string: '{}' at {}".format(
+                                string_value, data.getAddress()
+                            )
+                        )
                         break
 
     return license_strings
@@ -148,7 +157,7 @@ def analyze_imports():
     external_symbols = symbol_table.getExternalSymbols()
 
     # License-related import patterns
-    import_patterns = ['crypt', 'hash', 'time', 'registry', 'file', 'network']
+    import_patterns = ["crypt", "hash", "time", "registry", "file", "network"]
 
     license_imports = []
 
@@ -157,14 +166,19 @@ def analyze_imports():
 
         for pattern in import_patterns:
             if pattern in symbol_name:
-                license_imports.append({
-                    'name': symbol.getName(),
-                    'address': symbol.getAddress(),
-                    'namespace': symbol.getParentNamespace().getName(),
-                    'pattern_matched': pattern
-                })
-                log("Found relevant import: {} from {}".format(
-                    symbol.getName(), symbol.getParentNamespace().getName()))
+                license_imports.append(
+                    {
+                        "name": symbol.getName(),
+                        "address": symbol.getAddress(),
+                        "namespace": symbol.getParentNamespace().getName(),
+                        "pattern_matched": pattern,
+                    }
+                )
+                log(
+                    "Found relevant import: {} from {}".format(
+                        symbol.getName(), symbol.getParentNamespace().getName()
+                    )
+                )
                 break
 
     return license_imports
@@ -184,8 +198,7 @@ def find_crypto_functions():
     listing = program.getListing()
 
     # Common crypto function patterns
-    crypto_patterns = ['md5', 'sha', 'aes', 'des',
-                       'rsa', 'crc', 'hash', 'encrypt', 'decrypt']
+    crypto_patterns = ["md5", "sha", "aes", "des", "rsa", "crc", "hash", "encrypt", "decrypt"]
 
     crypto_functions = []
 
@@ -195,14 +208,19 @@ def find_crypto_functions():
 
         for pattern in crypto_patterns:
             if pattern in func_name:
-                crypto_functions.append({
-                    'name': function.getName(),
-                    'address': function.getEntryPoint(),
-                    'size': function.getBody().getNumAddresses(),
-                    'crypto_type': pattern
-                })
-                log("Found crypto function: {} at {}".format(
-                    function.getName(), function.getEntryPoint()))
+                crypto_functions.append(
+                    {
+                        "name": function.getName(),
+                        "address": function.getEntryPoint(),
+                        "size": function.getBody().getNumAddresses(),
+                        "crypto_type": pattern,
+                    }
+                )
+                log(
+                    "Found crypto function: {} at {}".format(
+                        function.getName(), function.getEntryPoint()
+                    )
+                )
                 break
 
     return crypto_functions
@@ -215,31 +233,37 @@ def generate_bypass_recommendations(analysis_results):
     recommendations = []
 
     # Analyze license functions
-    if analysis_results['license_functions']:
-        recommendations.append({
-            'type': 'function_patching',
-            'description': 'Patch license validation functions to always return success',
-            'targets': [f['name'] for f in analysis_results['license_functions']],
-            'method': 'Replace function return with success value (1 or TRUE)'
-        })
+    if analysis_results["license_functions"]:
+        recommendations.append(
+            {
+                "type": "function_patching",
+                "description": "Patch license validation functions to always return success",
+                "targets": [f["name"] for f in analysis_results["license_functions"]],
+                "method": "Replace function return with success value (1 or TRUE)",
+            }
+        )
 
     # Analyze license strings
-    if analysis_results['license_strings']:
-        recommendations.append({
-            'type': 'string_modification',
-            'description': 'Modify license validation strings',
-            'targets': [s['value'] for s in analysis_results['license_strings']],
-            'method': 'Replace validation strings with always-valid values'
-        })
+    if analysis_results["license_strings"]:
+        recommendations.append(
+            {
+                "type": "string_modification",
+                "description": "Modify license validation strings",
+                "targets": [s["value"] for s in analysis_results["license_strings"]],
+                "method": "Replace validation strings with always-valid values",
+            }
+        )
 
     # Analyze crypto functions
-    if analysis_results['crypto_functions']:
-        recommendations.append({
-            'type': 'crypto_bypass',
-            'description': 'Bypass cryptographic license validation',
-            'targets': [c['name'] for c in analysis_results['crypto_functions']],
-            'method': 'Hook crypto functions to return expected values'
-        })
+    if analysis_results["crypto_functions"]:
+        recommendations.append(
+            {
+                "type": "crypto_bypass",
+                "description": "Bypass cryptographic license validation",
+                "targets": [c["name"] for c in analysis_results["crypto_functions"]],
+                "method": "Hook crypto functions to return expected values",
+            }
+        )
 
     return recommendations
 
@@ -247,42 +271,41 @@ def generate_bypass_recommendations(analysis_results):
 def main():
     """Main analysis function."""
     log("Starting Intellicrack Ghidra analysis...")
-    log("Script: {} v{}".format(SCRIPT_INFO['name'], SCRIPT_INFO['version']))
-    log("Target: {}".format(SCRIPT_INFO['target']))
+    log("Script: {} v{}".format(SCRIPT_INFO["name"], SCRIPT_INFO["version"]))
+    log("Target: {}".format(SCRIPT_INFO["target"]))
 
     # Perform analysis
     analysis_results = {
-        'license_functions': analyze_license_functions(),
-        'license_strings': analyze_strings(),
-        'license_imports': analyze_imports(),
-        'crypto_functions': find_crypto_functions()
+        "license_functions": analyze_license_functions(),
+        "license_strings": analyze_strings(),
+        "license_imports": analyze_imports(),
+        "crypto_functions": find_crypto_functions(),
     }
 
     # Generate recommendations
     recommendations = generate_bypass_recommendations(analysis_results)
 
     # Print summary
-    log("\n" + "="*60)
+    log("\n" + "=" * 60)
     log("ANALYSIS SUMMARY")
-    log("="*60)
-    log("License functions found: {}".format(
-        len(analysis_results['license_functions'])))
-    log("License strings found: {}".format(
-        len(analysis_results['license_strings'])))
-    log("Relevant imports found: {}".format(
-        len(analysis_results['license_imports'])))
-    log("Crypto functions found: {}".format(
-        len(analysis_results['crypto_functions'])))
+    log("=" * 60)
+    log("License functions found: {}".format(len(analysis_results["license_functions"])))
+    log("License strings found: {}".format(len(analysis_results["license_strings"])))
+    log("Relevant imports found: {}".format(len(analysis_results["license_imports"])))
+    log("Crypto functions found: {}".format(len(analysis_results["crypto_functions"])))
     log("Bypass recommendations: {}".format(len(recommendations)))
 
     # Print recommendations
     if recommendations:
         log("\nBYPASS RECOMMENDATIONS:")
         for i, rec in enumerate(recommendations, 1):
-            log("{}. {}: {}".format(i, rec['type'], rec['description']))
-            log("   Method: {}".format(rec['method']))
-            log("   Targets: {}".format(
-                ", ".join(rec['targets'][:3]) + ("..." if len(rec['targets']) > 3 else "")))
+            log("{}. {}: {}".format(i, rec["type"], rec["description"]))
+            log("   Method: {}".format(rec["method"]))
+            log(
+                "   Targets: {}".format(
+                    ", ".join(rec["targets"][:3]) + ("..." if len(rec["targets"]) > 3 else "")
+                )
+            )
 
     log("\nAnalysis complete!")
     return analysis_results, recommendations

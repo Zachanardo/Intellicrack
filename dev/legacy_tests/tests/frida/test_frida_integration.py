@@ -481,7 +481,7 @@ class TestFridaBypassWizard(unittest.TestCase):
 
         can_apply = strategy.can_apply(set())
         self.assertFalse(can_apply)
-        
+
     def test_wizard_state(self):
         """Test wizard state management"""
         # Test initial state
@@ -492,7 +492,7 @@ class TestFridaBypassWizard(unittest.TestCase):
         self.assertIsNone(initial_state.current_protection)
         self.assertEqual(len(initial_state.completed_protections), 0)
         self.assertEqual(len(initial_state.errors), 0)
-        
+
         # Test state transitions
         initial_state.phase = "analyzing"
         initial_state.is_running = True
@@ -500,13 +500,13 @@ class TestFridaBypassWizard(unittest.TestCase):
         self.assertEqual(initial_state.phase, "analyzing")
         self.assertTrue(initial_state.is_running)
         self.assertEqual(initial_state.progress, 25)
-        
+
         # Test protection tracking
         initial_state.current_protection = ProtectionType.LICENSE
         initial_state.completed_protections.append(ProtectionType.ANTI_DEBUG)
         self.assertEqual(initial_state.current_protection, ProtectionType.LICENSE)
         self.assertIn(ProtectionType.ANTI_DEBUG, initial_state.completed_protections)
-        
+
         # Test error tracking
         initial_state.errors.append({"type": "hook_failed", "message": "Failed to hook function"})
         self.assertEqual(len(initial_state.errors), 1)

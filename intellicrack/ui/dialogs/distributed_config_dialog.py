@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import multiprocessing
 from typing import Any
 
@@ -114,7 +113,9 @@ class DistributedProcessingConfigDialog(QDialog):
         # Convenience methods
         self.convenience_check = QCheckBox("Use convenience methods")
         self.convenience_check.setChecked(True)
-        self.convenience_check.setToolTip("Use built-in convenience methods instead of task queue for common operations")
+        self.convenience_check.setToolTip(
+            "Use built-in convenience methods instead of task queue for common operations"
+        )
         processing_layout.addRow("", self.convenience_check)
 
         processing_group.setLayout(processing_layout)
@@ -166,7 +167,9 @@ class DistributedProcessingConfigDialog(QDialog):
 
         self.custom_patterns_edit = QLineEdit()
         self.custom_patterns_edit.setPlaceholder("Custom patterns (comma-separated)")
-        self.custom_patterns_edit.setToolTip("Enter custom patterns to search for, separated by commas")
+        self.custom_patterns_edit.setToolTip(
+            "Enter custom patterns to search for, separated by commas"
+        )
         pattern_layout.addWidget(self.custom_patterns_edit)
 
         pattern_group.setLayout(pattern_layout)
@@ -220,19 +223,16 @@ class DistributedProcessingConfigDialog(QDialog):
             "timeout": self.timeout_spin.value(),
             "preferred_backend": preferred_backend,
             "use_convenience_methods": self.convenience_check.isChecked(),
-
             # Analysis options
             "run_section_analysis": self.section_check.isChecked(),
             "run_pattern_search": self.pattern_check.isChecked(),
             "run_entropy_analysis": self.entropy_check.isChecked(),
             "run_symbolic_execution": self.symbolic_check.isChecked(),
-
             # Pattern types
             "search_license_patterns": self.license_check.isChecked(),
             "search_hardware_patterns": self.hardware_check.isChecked(),
             "search_crypto_patterns": self.crypto_check.isChecked(),
             "custom_patterns": custom_patterns,
-
             # Binary path
             "binary_path": self.binary_path,
         }
@@ -315,16 +315,18 @@ class DistributedProcessingConfigDialog(QDialog):
 
         # Check if at least one analysis option is selected
         analysis_selected = (
-            self.section_check.isChecked() or
-            self.pattern_check.isChecked() or
-            self.entropy_check.isChecked() or
-            self.symbolic_check.isChecked()
+            self.section_check.isChecked()
+            or self.pattern_check.isChecked()
+            or self.entropy_check.isChecked()
+            or self.symbolic_check.isChecked()
         )
 
         return analysis_selected
 
 
-def create_distributed_config_dialog(binary_path: str, parent=None) -> DistributedProcessingConfigDialog:
+def create_distributed_config_dialog(
+    binary_path: str, parent=None
+) -> DistributedProcessingConfigDialog:
     """Factory function to create a DistributedProcessingConfigDialog.
 
     Args:

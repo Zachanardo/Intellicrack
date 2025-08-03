@@ -304,7 +304,11 @@ class AuditLogger:
                 # Encrypt if enabled
                 if self._cipher:
                     event_data = self._cipher.encrypt(event_json.encode()).decode()
-                    log_entry = {"encrypted": True, "data": event_data, "timestamp": event.timestamp.isoformat()}
+                    log_entry = {
+                        "encrypted": True,
+                        "data": event_data,
+                        "timestamp": event.timestamp.isoformat(),
+                    }
                     log_line = json.dumps(log_entry) + "\n"
                 else:
                     log_line = event_json + "\n"
@@ -377,7 +381,9 @@ class AuditLogger:
             ),
         )
 
-    def log_binary_analysis(self, file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]):
+    def log_binary_analysis(
+        self, file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]
+    ):
         """Log binary analysis results."""
         self.log_event(
             AuditEvent(
@@ -395,7 +401,9 @@ class AuditLogger:
             ),
         )
 
-    def log_vm_operation(self, operation: str, vm_name: str, success: bool = True, error: str | None = None):
+    def log_vm_operation(
+        self, operation: str, vm_name: str, success: bool = True, error: str | None = None
+    ):
         """Log VM-related operations."""
         event_map = {
             "start": AuditEventType.VM_START,
@@ -427,7 +435,11 @@ class AuditLogger:
                 event_type=AuditEventType.CREDENTIAL_ACCESS,
                 severity=AuditSeverity.MEDIUM,
                 description=f"Credential access: {credential_type} for {purpose}",
-                details={"credential_type": credential_type, "purpose": purpose, "success": success},
+                details={
+                    "credential_type": credential_type,
+                    "purpose": purpose,
+                    "success": success,
+                },
             ),
         )
 
@@ -457,7 +469,10 @@ class AuditLogger:
 
         self.log_event(
             AuditEvent(
-                event_type=event_type, severity=severity, description=f"Tool execution: {tool_name}", details=details,
+                event_type=event_type,
+                severity=severity,
+                description=f"Tool execution: {tool_name}",
+                details=details,
             ),
         )
 
@@ -589,7 +604,9 @@ class AuditLogger:
 
         return results
 
-    def generate_report(self, start_time: datetime, end_time: datetime, output_file: Path | None = None) -> str:
+    def generate_report(
+        self, start_time: datetime, end_time: datetime, output_file: Path | None = None
+    ) -> str:
         """Generate an audit report for a time period."""
         events = self.search_events(start_time=start_time, end_time=end_time)
 
@@ -746,7 +763,9 @@ class PerformanceMonitor:
                         "p50": sorted_values[int(0.5 * length)],
                         "p90": sorted_values[int(0.9 * length)],
                         "p95": sorted_values[int(0.95 * length)],
-                        "p99": sorted_values[int(0.99 * length)] if length > 10 else sorted_values[-1],
+                        "p99": sorted_values[int(0.99 * length)]
+                        if length > 10
+                        else sorted_values[-1],
                     }
 
             summary["percentiles"] = percentiles
@@ -863,7 +882,10 @@ class TelemetryCollector:
 
                 resource_stats = resource_manager.get_resource_usage_stats()
                 resource_health = resource_manager.health_check()
-                metrics["resource_management"] = {"stats": resource_stats, "health": resource_health}
+                metrics["resource_management"] = {
+                    "stats": resource_stats,
+                    "health": resource_health,
+                }
             except Exception as e:
                 logger.debug(f"Failed to get resource stats: {e}")
 
@@ -1092,7 +1114,9 @@ def log_exploit_attempt(target: str, exploit_type: str, **kwargs):
     get_audit_logger().log_exploit_attempt(target, exploit_type, **kwargs)
 
 
-def log_binary_analysis(file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]):
+def log_binary_analysis(
+    file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]
+):
     """Convenience function to log binary analysis."""
     get_audit_logger().log_binary_analysis(file_path, file_hash, protections, vulnerabilities)
 

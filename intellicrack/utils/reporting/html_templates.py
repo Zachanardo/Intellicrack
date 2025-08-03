@@ -45,6 +45,7 @@ def get_base_html_template(title="Intellicrack Report", custom_css="", custom_js
 </head>
 <body>"""
 
+
 def get_cfg_html_template(function_name):
     """Get CFG-specific HTML template."""
     custom_css = """
@@ -67,6 +68,7 @@ def get_cfg_html_template(function_name):
     custom_js = '<script src="https://d3js.org/d3.v7.min.js"></script>'
     return get_base_html_template(f"CFG: {function_name}", custom_css, custom_js)
 
+
 def get_traffic_html_template():
     """Get traffic analysis HTML template."""
     custom_css = """
@@ -74,6 +76,7 @@ def get_traffic_html_template():
         .visualization img { max-width: 100%; border: 1px solid #ddd; }
     """
     return get_base_html_template("License Traffic Analysis Report", custom_css)
+
 
 def get_report_html_template(binary_name):
     """Get analysis report HTML template."""
@@ -84,6 +87,7 @@ def get_report_html_template(binary_name):
         th { background-color: #3498db; color: white; }
     """
     return get_base_html_template(f"Intellicrack Analysis Report - {binary_name}", custom_css)
+
 
 def close_html():
     """Get HTML closing tags."""

@@ -14,7 +14,7 @@ try:
     print("✓ qiling imported successfully")
 except ImportError as e:
     print(f"✗ qiling import failed: {e}")
-    
+
 try:
     # Test basic qiling functionality
     from qiling import Qiling

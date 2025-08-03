@@ -47,7 +47,6 @@ FRIDA_PRESETS = {
             "advapi32.dll!CryptHashData",
         ],
     },
-
     "Microsoft Office 365": {
         "description": "Bypass for Microsoft Office licensing and activation",
         "target": "Word, Excel, PowerPoint, Outlook",
@@ -69,7 +68,6 @@ FRIDA_PRESETS = {
             "kernel32.dll!GetVolumeInformationW",
         ],
     },
-
     "Autodesk Products": {
         "description": "Bypass for AutoCAD, 3ds Max, Maya, Revit",
         "target": "Autodesk software suite",
@@ -92,7 +90,6 @@ FRIDA_PRESETS = {
             "advapi32.dll!CryptHashData",
         ],
     },
-
     "VMware Products": {
         "description": "Bypass for VMware Workstation and vSphere",
         "target": "VMware virtualization software",
@@ -113,7 +110,6 @@ FRIDA_PRESETS = {
             "kernel32.dll!GetTickCount64",
         ],
     },
-
     "Anti-Virus Software": {
         "description": "Bypass for antivirus license checks",
         "target": "Various AV products",
@@ -135,7 +131,6 @@ FRIDA_PRESETS = {
             "kernel32.dll!DeviceIoControl",
         ],
     },
-
     "Steam Games (CEG)": {
         "description": "Bypass Steam CEG (Custom Executable Generation)",
         "target": "Steam protected games",
@@ -156,7 +151,6 @@ FRIDA_PRESETS = {
             "ntdll.dll!NtProtectVirtualMemory",
         ],
     },
-
     "Denuvo Protected Games": {
         "description": "Advanced bypass for Denuvo anti-tamper",
         "target": "AAA games with Denuvo",
@@ -180,7 +174,6 @@ FRIDA_PRESETS = {
             "user32.dll!GetAsyncKeyState",
         ],
     },
-
     "Enterprise Software": {
         "description": "Generic bypass for enterprise applications",
         "target": "SAP, Oracle, IBM software",
@@ -203,7 +196,6 @@ FRIDA_PRESETS = {
             "advapi32.dll!Reg*",
         ],
     },
-
     "FlexLM/FlexNet Licensed": {
         "description": "Bypass for FlexLM/FlexNet license manager",
         "target": "Engineering and scientific software",
@@ -225,7 +217,6 @@ FRIDA_PRESETS = {
             "kernel32.dll!GetVolumeInformation*",
         ],
     },
-
     "HASP/Sentinel Protected": {
         "description": "Bypass for HASP/Sentinel dongle protection",
         "target": "Industrial and specialized software",
@@ -247,7 +238,6 @@ FRIDA_PRESETS = {
             "setupapi.dll!*",
         ],
     },
-
     "Trial Software (Generic)": {
         "description": "Generic bypass for trial/evaluation software",
         "target": "Various trial versions",
@@ -269,7 +259,6 @@ FRIDA_PRESETS = {
             "kernel32.dll!GetTickCount*",
         ],
     },
-
     "Development Tools": {
         "description": "Bypass for IDEs and development tools",
         "target": "JetBrains, Visual Studio extensions",
@@ -290,7 +279,6 @@ FRIDA_PRESETS = {
             "kernel32.dll!GetSystemTime",
         ],
     },
-
     "Media Production Software": {
         "description": "Bypass for audio/video production tools",
         "target": "DAWs, NLEs, plugins",
@@ -313,7 +301,6 @@ FRIDA_PRESETS = {
             "user32.dll!FindWindow*",
         ],
     },
-
     "Educational Software": {
         "description": "Bypass for educational and training software",
         "target": "E-learning platforms, simulators",
@@ -334,7 +321,6 @@ FRIDA_PRESETS = {
             "kernel32.dll!GetSystemTime*",
         ],
     },
-
     "Minimal Bypass": {
         "description": "Minimal bypass for testing purposes",
         "target": "Unknown/Generic software",
@@ -351,7 +337,6 @@ FRIDA_PRESETS = {
             "advapi32.dll!RegQueryValueEx*",
         ],
     },
-
     "Maximum Protection Bypass": {
         "description": "All available bypasses for heavily protected software",
         "target": "Unknown heavily protected software",
@@ -398,7 +383,6 @@ WIZARD_CONFIGS = {
             "minimal_hooks": True,
         },
     },
-
     "balanced": {
         "name": "Balanced Mode",
         "description": "Good balance between effectiveness and safety",
@@ -411,7 +395,6 @@ WIZARD_CONFIGS = {
             "adaptive": True,
         },
     },
-
     "aggressive": {
         "name": "Aggressive Mode",
         "description": "Maximum bypass capability",
@@ -425,7 +408,6 @@ WIZARD_CONFIGS = {
             "deep_hooks": True,
         },
     },
-
     "stealth": {
         "name": "Stealth Mode",
         "description": "Minimize detection by anti-cheat/anti-debug",
@@ -439,7 +421,6 @@ WIZARD_CONFIGS = {
             "indirect_hooks": True,
         },
     },
-
     "analysis": {
         "name": "Analysis Only",
         "description": "Detect protections without bypassing",
@@ -461,27 +442,24 @@ QUICK_TEMPLATES = {
         "scripts": ["time_bomb_defuser", "registry_monitor"],
         "options": {"reset_trial": True, "freeze_time": True},
     },
-
     "hardware_spoof": {
         "scripts": ["enhanced_hardware_spoofer"],
         "options": {"spoof_all": True, "persistent": True},
     },
-
     "cloud_bypass": {
         "scripts": ["cloud_licensing_bypass", "telemetry_blocker"],
         "options": {"emulate_server": True, "block_telemetry": True},
     },
-
     "anti_debug_bypass": {
         "scripts": ["anti_debugger", "virtualization_bypass"],
         "options": {"aggressive": True, "patch_all": True},
     },
-
     "drm_bypass": {
         "scripts": ["code_integrity_bypass", "memory_integrity_bypass"],
         "options": {"patch_checks": True, "hook_crypto": True},
     },
 }
+
 
 def get_preset_by_software(software_name: str) -> dict:
     """Get preset configuration by software name (fuzzy matching).
@@ -530,6 +508,7 @@ def get_preset_by_software(software_name: str) -> dict:
     # Default to minimal bypass
     return FRIDA_PRESETS["Minimal Bypass"]
 
+
 def get_wizard_config(mode: str = "balanced") -> dict:
     """Get wizard configuration by mode.
 
@@ -568,6 +547,7 @@ def get_wizard_config(mode: str = "balanced") -> dict:
 
     """
     return WIZARD_CONFIGS.get(mode, WIZARD_CONFIGS["balanced"])
+
 
 def get_scripts_for_protection(protection_type: str) -> list:
     """Get recommended scripts for a specific protection type.
@@ -622,6 +602,7 @@ def get_scripts_for_protection(protection_type: str) -> list:
     }
 
     return script_map.get(protection_type, [])
+
 
 # Export configuration
 __all__ = [

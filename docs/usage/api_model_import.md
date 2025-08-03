@@ -43,7 +43,7 @@ The feature is implemented using a modular, extensible architecture:
 
 Users can import models in two ways:
 
-1. **Import from File**: 
+1. **Import from File**:
    - Click "Import Custom Model" in the Settings tab
    - Select "Import from File"
    - Choose a GGUF model file

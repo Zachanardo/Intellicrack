@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 """
 Common AI response parsing utilities.
 
@@ -23,7 +22,9 @@ This module provides shared functions for parsing AI responses across different 
 """
 
 
-def parse_ai_response_sections(response: str, section_keywords: dict[str, list[str]]) -> dict[str, list[str]]:
+def parse_ai_response_sections(
+    response: str, section_keywords: dict[str, list[str]]
+) -> dict[str, list[str]]:
     """Parse AI response into categorized sections.
 
     Args:
@@ -81,8 +82,11 @@ def parse_attack_vector_response(response: str) -> tuple[list[str], list[str], l
     return sections["vulnerabilities"], sections["recommendations"], sections["attack_vectors"]
 
 
-def parse_simple_response(response: str, finding_keywords: list[str] | None = None,
-                          recommendation_keywords: list[str] | None = None) -> tuple[list[str], list[str]]:
+def parse_simple_response(
+    response: str,
+    finding_keywords: list[str] | None = None,
+    recommendation_keywords: list[str] | None = None,
+) -> tuple[list[str], list[str]]:
     """Simple response parser for findings and recommendations.
 
     Args:

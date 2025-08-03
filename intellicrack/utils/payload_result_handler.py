@@ -72,7 +72,9 @@ class PayloadResultHandler:
         if processed_result["success"]:
             logger.info(f"Payload {processed_result['payload_id']} executed successfully")
         else:
-            logger.warning(f"Payload {processed_result['payload_id']} failed: {processed_result['error']}")
+            logger.warning(
+                f"Payload {processed_result['payload_id']} failed: {processed_result['error']}"
+            )
 
         return processed_result
 

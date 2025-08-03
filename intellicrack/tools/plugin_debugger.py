@@ -1,4 +1,5 @@
 """Plugin debugger for testing and debugging Intellicrack plugins."""
+
 from intellicrack.logger import logger
 
 """
@@ -35,6 +36,7 @@ from typing import Any, Dict, List, Optional
 
 class BreakpointType(Enum):
     """Types of breakpoints"""
+
     LINE = "line"
     FUNCTION = "function"
     CONDITIONAL = "conditional"
@@ -44,6 +46,7 @@ class BreakpointType(Enum):
 @dataclass
 class Breakpoint:
     """Represents a breakpoint"""
+
     id: int
     type: BreakpointType
     file: str
@@ -58,6 +61,7 @@ class Breakpoint:
 @dataclass
 class StackFrame:
     """Represents a stack frame"""
+
     filename: str
     lineno: int
     function: str
@@ -68,6 +72,7 @@ class StackFrame:
 
 class DebuggerState(Enum):
     """Debugger states"""
+
     IDLE = "idle"
     RUNNING = "running"
     PAUSED = "paused"
@@ -123,8 +128,14 @@ class PluginDebugger:
         self._plugin_code = compiled
         self._plugin_path = plugin_path
 
-    def add_breakpoint(self, file: str, line: int = None, function: str = None,
-                      condition: str = None, type: BreakpointType = BreakpointType.LINE) -> int:
+    def add_breakpoint(
+        self,
+        file: str,
+        line: int = None,
+        function: str = None,
+        condition: str = None,
+        type: BreakpointType = BreakpointType.LINE,
+    ) -> int:
         """Add a breakpoint"""
         bp = Breakpoint(
             id=self.next_breakpoint_id,
@@ -132,7 +143,7 @@ class PluginDebugger:
             file=file,
             line=line,
             function=function,
-            condition=condition
+            condition=condition,
         )
 
         self.breakpoints[bp.id] = bp
@@ -172,7 +183,7 @@ class PluginDebugger:
                 "__name__": "__main__",
                 "__file__": self._plugin_path,
                 "binary_path": binary_path,
-                "options": options or {}
+                "options": options or {},
             }
 
             # Execute plugin
@@ -226,12 +237,12 @@ class PluginDebugger:
         if arg is not None:
             # Log trace data if verbose mode
             if hasattr(self, "verbose") and self.verbose:
-                self.output_queue.put(("trace", {
-                    "event": "line",
-                    "filename": filename,
-                    "lineno": lineno,
-                    "arg": str(arg)
-                }))
+                self.output_queue.put(
+                    (
+                        "trace",
+                        {"event": "line", "filename": filename, "lineno": lineno, "arg": str(arg)},
+                    )
+                )
 
         # Check breakpoints
         for bp in self.breakpoints.values():
@@ -285,7 +296,7 @@ class PluginDebugger:
                 "file": frame.f_code.co_filename,
                 "line": frame.f_lineno,
                 "args": arg if isinstance(arg, (list, tuple, dict)) else str(arg),
-                "timestamp": getattr(self, "_get_timestamp", lambda: 0)()
+                "timestamp": getattr(self, "_get_timestamp", lambda: 0)(),
             }
             if hasattr(self, "call_history"):
                 self.call_history.append(call_info)
@@ -321,8 +332,10 @@ class PluginDebugger:
                 "function": frame.f_code.co_name,
                 "file": frame.f_code.co_filename,
                 "line": frame.f_lineno,
-                "return_value": repr(arg) if not isinstance(arg, (bytes, bytearray)) else f"<{type(arg).__name__}: {len(arg)} bytes>",
-                "type": type(arg).__name__
+                "return_value": repr(arg)
+                if not isinstance(arg, (bytes, bytearray))
+                else f"<{type(arg).__name__}: {len(arg)} bytes>",
+                "type": type(arg).__name__,
             }
 
             # Track return values for analysis
@@ -337,10 +350,9 @@ class PluginDebugger:
             if hasattr(self, "watched_returns"):
                 for pattern in self.watched_returns:
                     if pattern in str(arg) or pattern == frame.f_code.co_name:
-                        self.output_queue.put(("watched_return", {
-                            "pattern": pattern,
-                            "value": return_info
-                        }))
+                        self.output_queue.put(
+                            ("watched_return", {"pattern": pattern, "value": return_info})
+                        )
 
         # Handle step out
         if self.state == DebuggerState.STEPPING and self.step_mode == "out":
@@ -362,7 +374,7 @@ class PluginDebugger:
                 "file": frame.f_code.co_filename,
                 "line": frame.f_lineno,
                 "function": frame.f_code.co_name,
-                "traceback": traceback.format_tb(exc_tb) if exc_tb else []
+                "traceback": traceback.format_tb(exc_tb) if exc_tb else [],
             }
 
             # Track exception history
@@ -386,14 +398,19 @@ class PluginDebugger:
 
     def _pause_at_breakpoint(self, frame, breakpoint: Breakpoint):
         """Pause execution at breakpoint"""
-        self.output_queue.put(("breakpoint", {
-            "id": breakpoint.id,
-            "type": breakpoint.type.value,
-            "file": breakpoint.file,
-            "line": breakpoint.line,
-            "function": breakpoint.function,
-            "hit_count": breakpoint.hit_count
-        }))
+        self.output_queue.put(
+            (
+                "breakpoint",
+                {
+                    "id": breakpoint.id,
+                    "type": breakpoint.type.value,
+                    "file": breakpoint.file,
+                    "line": breakpoint.line,
+                    "function": breakpoint.function,
+                    "hit_count": breakpoint.hit_count,
+                },
+            )
+        )
 
         self._pause_execution(frame)
 
@@ -405,11 +422,16 @@ class PluginDebugger:
         self._update_watched_variables()
 
         # Send pause notification
-        self.output_queue.put(("paused", {
-            "file": frame.f_code.co_filename,
-            "line": frame.f_lineno,
-            "function": frame.f_code.co_name
-        }))
+        self.output_queue.put(
+            (
+                "paused",
+                {
+                    "file": frame.f_code.co_filename,
+                    "line": frame.f_lineno,
+                    "function": frame.f_code.co_name,
+                },
+            )
+        )
 
         # Wait for continue command
         while self.state == DebuggerState.PAUSED:
@@ -484,22 +506,27 @@ class PluginDebugger:
                 function=frame.f_code.co_name,
                 locals=dict(frame.f_locals),
                 globals=dict(frame.f_globals),
-                code=line
+                code=line,
             )
 
             self.stack_frames.append(stack_frame)
             frame = frame.f_back
 
         # Send stack frames
-        self.output_queue.put(("stack", [
-            {
-                "filename": sf.filename,
-                "lineno": sf.lineno,
-                "function": sf.function,
-                "code": sf.code
-            }
-            for sf in self.stack_frames
-        ]))
+        self.output_queue.put(
+            (
+                "stack",
+                [
+                    {
+                        "filename": sf.filename,
+                        "lineno": sf.lineno,
+                        "function": sf.function,
+                        "code": sf.code,
+                    }
+                    for sf in self.stack_frames
+                ],
+            )
+        )
 
     def _update_watched_variables(self):
         """Update watched variables"""
@@ -521,24 +548,19 @@ class PluginDebugger:
     def _evaluate_expression(self, expression: str):
         """Evaluate expression in current context"""
         if not self.current_frame:
-            self.output_queue.put(("eval_result", {
-                "expression": expression,
-                "error": "No active frame"
-            }))
+            self.output_queue.put(
+                ("eval_result", {"expression": expression, "error": "No active frame"})
+            )
             return
 
         try:
             result = eval(expression, self.current_frame.f_globals, self.current_frame.f_locals)
-            self.output_queue.put(("eval_result", {
-                "expression": expression,
-                "value": self._serialize_value(result)
-            }))
+            self.output_queue.put(
+                ("eval_result", {"expression": expression, "value": self._serialize_value(result)})
+            )
         except Exception as e:
             self.logger.error("Exception in plugin_debugger: %s", e)
-            self.output_queue.put(("eval_result", {
-                "expression": expression,
-                "error": str(e)
-            }))
+            self.output_queue.put(("eval_result", {"expression": expression, "error": str(e)}))
 
     def _set_variable(self, name: str, value: str):
         """Set variable value in current context"""
@@ -555,10 +577,9 @@ class PluginDebugger:
             else:
                 self.current_frame.f_globals[name] = parsed_value
 
-            self.output_queue.put(("variable_set", {
-                "name": name,
-                "value": self._serialize_value(parsed_value)
-            }))
+            self.output_queue.put(
+                ("variable_set", {"name": name, "value": self._serialize_value(parsed_value)})
+            )
 
             # Update watches
             self._update_watched_variables()
@@ -582,11 +603,12 @@ class PluginDebugger:
         """Handle exception breakpoint"""
         tb = traceback.format_exc()
 
-        self.output_queue.put(("exception_break", {
-            "type": type(exception).__name__,
-            "message": str(exception),
-            "traceback": tb
-        }))
+        self.output_queue.put(
+            (
+                "exception_break",
+                {"type": type(exception).__name__, "message": str(exception), "traceback": tb},
+            )
+        )
 
         if frame:
             self._pause_execution(frame)
@@ -602,7 +624,9 @@ class PluginDebugger:
         else:
             return repr(value)
 
-    def get_source_code(self, filename: str, start_line: int = 1, end_line: int = None) -> List[str]:
+    def get_source_code(
+        self, filename: str, start_line: int = 1, end_line: int = None
+    ) -> List[str]:
         """Get source code lines"""
         lines = []
 
@@ -614,14 +638,16 @@ class PluginDebugger:
                 end_line = len(all_lines)
 
             for i in range(max(0, start_line - 1), min(len(all_lines), end_line)):
-                lines.append({
-                    "line": i + 1,
-                    "code": all_lines[i].rstrip(),
-                    "breakpoint": any(
-                        bp.file == filename and bp.line == i + 1 and bp.enabled
-                        for bp in self.breakpoints.values()
-                    )
-                })
+                lines.append(
+                    {
+                        "line": i + 1,
+                        "code": all_lines[i].rstrip(),
+                        "breakpoint": any(
+                            bp.file == filename and bp.line == i + 1 and bp.enabled
+                            for bp in self.breakpoints.values()
+                        ),
+                    }
+                )
 
         return lines
 
@@ -641,7 +667,7 @@ class PluginDebugger:
                 variables[name] = {
                     "value": self._serialize_value(value),
                     "type": type(value).__name__,
-                    "scope": "global"
+                    "scope": "global",
                 }
 
         # Override with locals
@@ -649,7 +675,7 @@ class PluginDebugger:
             variables[name] = {
                 "value": self._serialize_value(value),
                 "type": type(value).__name__,
-                "scope": "local"
+                "scope": "local",
             }
 
         return variables
@@ -658,8 +684,13 @@ class PluginDebugger:
 class DebuggerThread(threading.Thread):
     """Thread for running debugger"""
 
-    def __init__(self, debugger: PluginDebugger, plugin_path: str,
-                 binary_path: str = None, options: Dict[str, Any] = None):
+    def __init__(
+        self,
+        debugger: PluginDebugger,
+        plugin_path: str,
+        binary_path: str = None,
+        options: Dict[str, Any] = None,
+    ):
         """Initialize debugger thread with plugin path, binary path, and execution options."""
         super().__init__()
         self.debugger = debugger

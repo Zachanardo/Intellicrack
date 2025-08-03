@@ -30,23 +30,26 @@ from typing import Any
 # Set up logging
 logger = logging.getLogger(__name__)
 
+
 class ModelInfo:
     """Class representing metadata about an AI model."""
 
-    def __init__(self,
-                 model_id: str,
-                 name: str,
-                 description: str = "",
-                 size_bytes: int = 0,
-                 format: str = "gguf",
-                 provider: str = "unknown",
-                 parameters: int | None = None,
-                 context_length: int | None = None,
-                 capabilities: list[str] = None,
-                 version: str = "1.0",
-                 checksum: str | None = None,
-                 download_url: str | None = None,
-                 local_path: str | None = None):
+    def __init__(
+        self,
+        model_id: str,
+        name: str,
+        description: str = "",
+        size_bytes: int = 0,
+        format: str = "gguf",
+        provider: str = "unknown",
+        parameters: int | None = None,
+        context_length: int | None = None,
+        capabilities: list[str] = None,
+        version: str = "1.0",
+        checksum: str | None = None,
+        download_url: str | None = None,
+        local_path: str | None = None,
+    ):
         """Initialize a ModelInfo object.
 
         Args:

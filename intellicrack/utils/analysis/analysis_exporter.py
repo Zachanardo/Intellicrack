@@ -36,8 +36,12 @@ class AnalysisExporter:
     """
 
     @staticmethod
-    def export_analysis(result: dict[str, Any], output_file: str,
-                       format: str = "json", analysis_type: str = "generic") -> bool:
+    def export_analysis(
+        result: dict[str, Any],
+        output_file: str,
+        format: str = "json",
+        analysis_type: str = "generic",
+    ) -> bool:
         """Export analysis results to file in specified format.
 
         Args:
@@ -131,14 +135,16 @@ class AnalysisExporter:
         writer.writerow(["Type", "File", "Line", "Severity", "Confidence", "Description"])
 
         for vuln in result.get("vulnerabilities", []):
-            writer.writerow([
-                vuln.get("type", ""),
-                vuln.get("file", ""),
-                vuln.get("line", ""),
-                vuln.get("severity", ""),
-                vuln.get("confidence", ""),
-                vuln.get("description", ""),
-            ])
+            writer.writerow(
+                [
+                    vuln.get("type", ""),
+                    vuln.get("file", ""),
+                    vuln.get("line", ""),
+                    vuln.get("severity", ""),
+                    vuln.get("confidence", ""),
+                    vuln.get("description", ""),
+                ]
+            )
 
     @staticmethod
     def _write_diff_csv(writer, result: dict[str, Any]) -> None:
@@ -146,13 +152,15 @@ class AnalysisExporter:
         writer.writerow(["Type", "Old_Value", "New_Value", "Severity", "Description"])
 
         for diff in result.get("differences", []):
-            writer.writerow([
-                diff.get("type", ""),
-                diff.get("old_value", ""),
-                diff.get("new_value", ""),
-                diff.get("severity", ""),
-                diff.get("description", ""),
-            ])
+            writer.writerow(
+                [
+                    diff.get("type", ""),
+                    diff.get("old_value", ""),
+                    diff.get("new_value", ""),
+                    diff.get("severity", ""),
+                    diff.get("description", ""),
+                ]
+            )
 
     @staticmethod
     def _write_generic_csv(writer, result: dict[str, Any]) -> None:
@@ -216,11 +224,13 @@ class AnalysisExporter:
 
         # Extract data for template
         import time
+
         vulns = result.get("vulnerabilities", [])
         stats = result.get("statistics", {})
 
-        logger.debug("Exporting HTML report with %d vulnerabilities and stats: %s",
-                    len(vulns), stats)
+        logger.debug(
+            "Exporting HTML report with %d vulnerabilities and stats: %s", len(vulns), stats
+        )
 
         # Count by severity
         high_count = len([v for v in vulns if v.get("severity") == "high"])
@@ -293,6 +303,7 @@ class AnalysisExporter:
 
         # Extract data for template
         import time
+
         diffs = result.get("differences", [])
 
         # Count by type
@@ -304,7 +315,13 @@ class AnalysisExporter:
         diff_html = ""
         for diff in diffs:
             diff_type = diff.get("type", "unknown")
-            css_class = "added" if "added" in diff_type else "removed" if "removed" in diff_type else "modified"
+            css_class = (
+                "added"
+                if "added" in diff_type
+                else "removed"
+                if "removed" in diff_type
+                else "modified"
+            )
 
             diff_html += f"""
             <div class="difference {css_class}">

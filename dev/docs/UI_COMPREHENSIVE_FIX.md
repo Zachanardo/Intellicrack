@@ -39,7 +39,7 @@ def on_tab_changed(self, index):
         current_widget.lazy_load_content()
 
 # Force-load all tabs on startup
-for tab in [self.dashboard_tab, self.analysis_tab, self.exploitation_tab, 
+for tab in [self.dashboard_tab, self.analysis_tab, self.exploitation_tab,
             self.ai_assistant_tab, self.tools_tab, self.settings_tab]:
     if hasattr(tab, 'lazy_load_content'):
         print(f"[INIT] Loading content for {tab.__class__.__name__}")

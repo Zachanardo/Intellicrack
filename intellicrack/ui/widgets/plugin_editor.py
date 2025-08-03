@@ -1,4 +1,5 @@
 """Plugin editor widget for editing and managing plugin code."""
+
 from intellicrack.logger import logger
 
 """
@@ -69,17 +70,19 @@ class PluginValidator:
     def validate_structure(code: str) -> tuple[bool, list[str]]:
         """Validate plugin structure requirements"""
         from ...utils.validation.import_validator import PluginStructureValidator
+
         # Plugin editor checks for both 'run' and 'get_metadata' methods
         return PluginStructureValidator.validate_structure_from_code(
-            code, {"run", "get_metadata"},
+            code,
+            {"run", "get_metadata"},
         )
 
     @staticmethod
     def validate_imports(code: str) -> tuple[bool, list[str]]:
         """Check if imports are available"""
         from ...utils.validation.import_validator import validate_imports
-        return validate_imports(code)
 
+        return validate_imports(code)
 
 
 class PluginEditor(QWidget):
@@ -211,7 +214,8 @@ class PluginEditor(QWidget):
         """Create a new file"""
         if self.editor.document().isModified():
             reply = QMessageBox.question(
-                self, "Unsaved Changes",
+                self,
+                "Unsaved Changes",
                 "Do you want to save your changes?",
                 QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
             )
@@ -228,8 +232,10 @@ class PluginEditor(QWidget):
     def open_file(self):
         """Open a file"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open Plugin",
-            "", "Plugin Files (*.py *.js);;All Files (*.*)",
+            self,
+            "Open Plugin",
+            "",
+            "Plugin Files (*.py *.js);;All Files (*.*)",
         )
 
         if file_path:
@@ -258,8 +264,10 @@ class PluginEditor(QWidget):
         """Save the current file"""
         if not self.current_file:
             file_path, _ = QFileDialog.getSaveFileName(
-                self, "Save Plugin",
-                "", "Python Files (*.py);;JavaScript Files (*.js);;All Files (*.*)",
+                self,
+                "Save Plugin",
+                "",
+                "Python Files (*.py);;JavaScript Files (*.js);;All Files (*.*)",
             )
             if not file_path:
                 return
@@ -407,6 +415,7 @@ class PluginEditor(QWidget):
         """Show find/replace dialog"""
         # Simple find implementation
         from PyQt6.QtWidgets import QInputDialog
+
         text, ok = QInputDialog.getText(self, "Find", "Find text:")
         if ok and text:
             cursor = self.editor.textCursor()

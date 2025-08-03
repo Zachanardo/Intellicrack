@@ -194,7 +194,8 @@ class BaseAgent(ABC):
         """Execute a task specific to this agent."""
         # Implementation should use the task parameter to perform agent-specific work
         raise NotImplementedError(
-            f"Subclasses must implement execute_task for task: {task.task_type}")
+            f"Subclasses must implement execute_task for task: {task.task_type}"
+        )
 
     def start(self):
         """Start the agent."""
@@ -224,8 +225,7 @@ class BaseAgent(ABC):
                 self.logger.error("Empty in multi_agent_system: %s", e)
                 continue
             except Exception as e:
-                logger.error(
-                    f"Error processing message in {self.agent_id}: {e}")
+                logger.error(f"Error processing message in {self.agent_id}: {e}")
 
     def _process_message(self, message: AgentMessage):
         """Process incoming message."""
@@ -250,8 +250,7 @@ class BaseAgent(ABC):
         task_data = message.content.get("task", {})
 
         if self.busy or not self._can_execute_task(task_data):
-            self._send_task_rejection(
-                message, "Agent busy or cannot execute task")
+            self._send_task_rejection(message, "Agent busy or cannot execute task")
             return
 
         # Create task
@@ -291,8 +290,7 @@ class BaseAgent(ABC):
                 confidence=result.get("confidence", 0.8),
                 execution_time=execution_time,
                 memory_usage=0,  # Could implement memory tracking
-                context={"agent_role": self.role.value,
-                         "agent_id": self.agent_id},
+                context={"agent_role": self.role.value, "agent_id": self.agent_id},
             )
 
             # Send success response
@@ -312,13 +310,11 @@ class BaseAgent(ABC):
                 execution_time=execution_time,
                 memory_usage=0,
                 error_message=str(e),
-                context={"agent_role": self.role.value,
-                         "agent_id": self.agent_id},
+                context={"agent_role": self.role.value, "agent_id": self.agent_id},
             )
 
             logger.error(f"Task execution failed in {self.agent_id}: {e}")
-            self._send_task_response(
-                original_message, False, {"error": str(e)})
+            self._send_task_response(original_message, False, {"error": str(e)})
 
         finally:
             self.busy = False
@@ -351,8 +347,7 @@ class BaseAgent(ABC):
                 "confidence": message.content.get("confidence", 0.8),
             }
 
-        logger.info(
-            f"Agent {self.agent_id} received knowledge from {source_agent}")
+        logger.info(f"Agent {self.agent_id} received knowledge from {source_agent}")
 
     def _handle_collaboration_request(self, message: AgentMessage):
         """Handle collaboration request."""
@@ -361,27 +356,32 @@ class BaseAgent(ABC):
         if collaboration_type == "capability_needed":
             required_capability = message.content.get("capability", "")
             if self._has_capability(required_capability):
-                self._send_collaboration_response(message, True, {
-                    "available": True,
-                    "estimated_time": self._estimate_execution_time(required_capability),
-                    "confidence": self._get_capability_confidence(required_capability),
-                })
-            else:
                 self._send_collaboration_response(
-                    message, False, {"available": False})
+                    message,
+                    True,
+                    {
+                        "available": True,
+                        "estimated_time": self._estimate_execution_time(required_capability),
+                        "confidence": self._get_capability_confidence(required_capability),
+                    },
+                )
+            else:
+                self._send_collaboration_response(message, False, {"available": False})
 
     def _handle_capability_query(self, message: AgentMessage):
         """Handle capability query."""
         capabilities_data = []
         for capability in self.capabilities:
-            capabilities_data.append({
-                "name": capability.capability_name,
-                "description": capability.description,
-                "input_types": capability.input_types,
-                "output_types": capability.output_types,
-                "confidence": capability.confidence_level,
-                "estimated_time": capability.processing_time_estimate,
-            })
+            capabilities_data.append(
+                {
+                    "name": capability.capability_name,
+                    "description": capability.description,
+                    "input_types": capability.input_types,
+                    "output_types": capability.output_types,
+                    "confidence": capability.confidence_level,
+                    "estimated_time": capability.processing_time_estimate,
+                }
+            )
 
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -400,7 +400,9 @@ class BaseAgent(ABC):
         if correlation_id and correlation_id in self.response_waiters:
             self.response_waiters[correlation_id].put(message)
 
-    def _send_task_response(self, original_message: AgentMessage, success: bool, result: dict[str, Any]):
+    def _send_task_response(
+        self, original_message: AgentMessage, success: bool, result: dict[str, Any]
+    ):
         """Send task response."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -434,7 +436,9 @@ class BaseAgent(ABC):
 
         self._send_message(response)
 
-    def _send_collaboration_response(self, original_message: AgentMessage, available: bool, data: dict[str, Any]):
+    def _send_collaboration_response(
+        self, original_message: AgentMessage, available: bool, data: dict[str, Any]
+    ):
         """Send collaboration response."""
         response = AgentMessage(
             message_id=str(uuid.uuid4()),
@@ -595,10 +599,12 @@ class StaticAnalysisAgent(BaseAgent):
         }
 
         # Share knowledge with other agents
-        self.share_knowledge({
-            "binary_metadata": analysis_result,
-            "analysis_timestamp": datetime.now().isoformat(),
-        })
+        self.share_knowledge(
+            {
+                "binary_metadata": analysis_result,
+                "analysis_timestamp": datetime.now().isoformat(),
+            }
+        )
 
         return analysis_result
 
@@ -698,8 +704,7 @@ class DynamicAnalysisAgent(BaseAgent):
         """Perform runtime analysis."""
         executable = input_data.get("executable", "")
 
-        logger.debug(
-            f"Runtime analysis agent analyzing executable: {executable}")
+        logger.debug(f"Runtime analysis agent analyzing executable: {executable}")
 
         # Simulate runtime analysis
         await asyncio.sleep(10.0)
@@ -713,7 +718,11 @@ class DynamicAnalysisAgent(BaseAgent):
                 {"type": "write", "file": "output.log"},
             ],
             "network_connections": [
-                {"host": os.environ.get("API_SERVER_HOST", "api.internal"), "port": 443, "protocol": "HTTPS"},
+                {
+                    "host": os.environ.get("API_SERVER_HOST", "api.internal"),
+                    "port": 443,
+                    "protocol": "HTTPS",
+                },
             ],
             "registry_operations": [
                 {"operation": "read", "key": "HKLM\\Software\\Example"},
@@ -761,12 +770,13 @@ class DynamicAnalysisAgent(BaseAgent):
 
         result = {
             "api_calls": [
-                {"function": "CreateFileA", "args": [
-                    "config.dat"], "result": "success"},
-                {"function": "RegOpenKeyExA", "args": [
-                    "HKLM\\Software"], "result": "success"},
-                {"function": "InternetConnectA", "args": [
-                    os.environ.get("API_SERVER_HOST", "api.internal")], "result": "success"},
+                {"function": "CreateFileA", "args": ["config.dat"], "result": "success"},
+                {"function": "RegOpenKeyExA", "args": ["HKLM\\Software"], "result": "success"},
+                {
+                    "function": "InternetConnectA",
+                    "args": [os.environ.get("API_SERVER_HOST", "api.internal")],
+                    "result": "success",
+                },
             ],
             "suspicious_apis": [
                 {"function": "VirtualAlloc", "reason": "executable_memory"},
@@ -808,8 +818,7 @@ class ReverseEngineeringAgent(BaseAgent):
                 capability_name="algorithm_analysis",
                 description="Analyze and identify algorithms",
                 input_types=["assembly_code", "pseudo_code"],
-                output_types=["algorithm_identification",
-                              "complexity_analysis"],
+                output_types=["algorithm_identification", "complexity_analysis"],
                 processing_time_estimate=15.0,
                 confidence_level=0.8,
             ),
@@ -834,7 +843,8 @@ class ReverseEngineeringAgent(BaseAgent):
         start_address = input_data.get("start_address", 0x401000)
 
         logger.debug(
-            f"Disassembly agent processing {len(binary_data)} bytes starting at {hex(start_address)}")
+            f"Disassembly agent processing {len(binary_data)} bytes starting at {hex(start_address)}"
+        )
 
         # Simulate disassembly
         await asyncio.sleep(3.0)
@@ -861,8 +871,7 @@ class ReverseEngineeringAgent(BaseAgent):
         """Decompile code to higher level."""
         assembly_code = input_data.get("assembly_code", [])
 
-        logger.debug(
-            f"Decompilation agent processing {len(assembly_code)} assembly instructions")
+        logger.debug(f"Decompilation agent processing {len(assembly_code)} assembly instructions")
 
         # Simulate decompilation
         await asyncio.sleep(12.0)
@@ -886,10 +895,8 @@ int validate_license(char* license_key) {
 }
 """,
             "function_signatures": [
-                {"name": "validate_license", "parameters": [
-                    "char*"], "return_type": "int"},
-                {"name": "main", "parameters": [
-                    "int", "char**"], "return_type": "int"},
+                {"name": "validate_license", "parameters": ["char*"], "return_type": "int"},
+                {"name": "main", "parameters": ["int", "char**"], "return_type": "int"},
             ],
             "variable_analysis": [
                 {"name": "license_key", "type": "char*", "scope": "parameter"},
@@ -904,18 +911,15 @@ int validate_license(char* license_key) {
         """Analyze algorithms in code."""
         code = input_data.get("code", "")
 
-        logger.debug(
-            f"Algorithm analysis agent processing {len(code)} characters of code")
+        logger.debug(f"Algorithm analysis agent processing {len(code)} characters of code")
 
         # Simulate algorithm analysis
         await asyncio.sleep(10.0)
 
         result = {
             "identified_algorithms": [
-                {"name": "string_comparison",
-                    "complexity": "O(n)", "confidence": 0.9},
-                {"name": "basic_validation",
-                    "complexity": "O(1)", "confidence": 0.8},
+                {"name": "string_comparison", "complexity": "O(n)", "confidence": 0.9},
+                {"name": "basic_validation", "complexity": "O(1)", "confidence": 0.8},
             ],
             "cryptographic_functions": [],
             "obfuscation_techniques": [],
@@ -1027,8 +1031,7 @@ class MultiAgentSystem:
             confidence = self._calculate_combined_confidence(subtask_results)
 
             execution_time = time.time() - start_time
-            participating_agents = [
-                agent_id for agent_id, _ in suitable_agents]
+            participating_agents = [agent_id for agent_id, _ in suitable_agents]
 
             # Record successful collaboration
             self.collaboration_stats["collaborations_successful"] += 1
@@ -1074,7 +1077,9 @@ class MultiAgentSystem:
 
         return capability_map.get(task_type, [task_type])
 
-    def _find_suitable_agents(self, required_capabilities: list[str]) -> list[tuple[str, BaseAgent]]:
+    def _find_suitable_agents(
+        self, required_capabilities: list[str]
+    ) -> list[tuple[str, BaseAgent]]:
         """Find agents with required capabilities."""
         suitable_agents = []
 
@@ -1082,23 +1087,26 @@ class MultiAgentSystem:
             if not agent.active or agent.busy:
                 continue
 
-            agent_capabilities = [
-                cap.capability_name for cap in agent.capabilities]
+            agent_capabilities = [cap.capability_name for cap in agent.capabilities]
 
             # Check if agent has any required capability
             if any(cap in agent_capabilities for cap in required_capabilities):
                 suitable_agents.append((agent_id, agent))
 
         # Sort by agent performance (success rate, avg execution time)
-        suitable_agents.sort(key=lambda x: (
-            x[1].tasks_completed /
-            max(1, x[1].tasks_completed + x[1].tasks_failed),
-            -x[1].total_execution_time / max(1, x[1].tasks_completed),
-        ), reverse=True)
+        suitable_agents.sort(
+            key=lambda x: (
+                x[1].tasks_completed / max(1, x[1].tasks_completed + x[1].tasks_failed),
+                -x[1].total_execution_time / max(1, x[1].tasks_completed),
+            ),
+            reverse=True,
+        )
 
         return suitable_agents
 
-    def _create_subtasks(self, main_task: AgentTask, suitable_agents: list[tuple[str, BaseAgent]]) -> list[tuple[str, AgentTask]]:
+    def _create_subtasks(
+        self, main_task: AgentTask, suitable_agents: list[tuple[str, BaseAgent]]
+    ) -> list[tuple[str, AgentTask]]:
         """Create subtasks for agents."""
         subtasks = []
 
@@ -1115,16 +1123,18 @@ class MultiAgentSystem:
                         input_data=main_task.input_data,
                         priority=main_task.priority,
                         context=main_task.context,
-                        metadata={**main_task.metadata,
-                                  "parent_task": main_task.task_id},
+                        metadata={**main_task.metadata, "parent_task": main_task.task_id},
                     )
                     subtasks.append((agent_id, subtask))
                     break
 
         return subtasks
 
-    async def _execute_subtasks_parallel(self, subtasks: list[tuple[str, AgentTask]]) -> dict[str, dict[str, Any]]:
+    async def _execute_subtasks_parallel(
+        self, subtasks: list[tuple[str, AgentTask]]
+    ) -> dict[str, dict[str, Any]]:
         """Execute subtasks in parallel."""
+
         async def execute_subtask(agent_id: str, subtask: AgentTask) -> tuple[str, dict[str, Any]]:
             agent = self.agents[agent_id]
             try:
@@ -1135,8 +1145,7 @@ class MultiAgentSystem:
                 return agent_id, {"success": False, "error": str(e)}
 
         # Execute all subtasks concurrently
-        tasks = [execute_subtask(agent_id, subtask)
-                 for agent_id, subtask in subtasks]
+        tasks = [execute_subtask(agent_id, subtask) for agent_id, subtask in subtasks]
         results = await asyncio.gather(*tasks)
 
         return dict(results)
@@ -1157,10 +1166,8 @@ class MultiAgentSystem:
 
         # Create unified analysis
         if successful_results:
-            combined["unified_analysis"] = self._create_unified_analysis(
-                successful_results)
-            combined["cross_validated_findings"] = self._cross_validate_findings(
-                successful_results)
+            combined["unified_analysis"] = self._create_unified_analysis(successful_results)
+            combined["cross_validated_findings"] = self._cross_validate_findings(successful_results)
 
         return combined
 
@@ -1210,11 +1217,13 @@ class MultiAgentSystem:
         # Findings confirmed by multiple agents
         for pattern, confirming_agents in finding_patterns.items():
             if len(confirming_agents) >= 2:
-                validated_findings.append({
-                    "pattern": pattern,
-                    "confirmed_by": confirming_agents,
-                    "confidence": len(confirming_agents) / len(results),
-                })
+                validated_findings.append(
+                    {
+                        "pattern": pattern,
+                        "confirmed_by": confirming_agents,
+                        "confidence": len(confirming_agents) / len(results),
+                    }
+                )
 
         return validated_findings
 
@@ -1312,13 +1321,15 @@ class MessageRouter:
         """Route message to target agent."""
         if message.recipient_id in self.agent_queues:
             self.agent_queues[message.recipient_id].put(message)
-            self.message_log.append({
-                "timestamp": message.timestamp,
-                "from": message.sender_id,
-                "to": message.recipient_id,
-                "type": message.message_type.value,
-                "message_id": message.message_id,
-            })
+            self.message_log.append(
+                {
+                    "timestamp": message.timestamp,
+                    "from": message.sender_id,
+                    "to": message.recipient_id,
+                    "type": message.message_type.value,
+                    "message_id": message.message_id,
+                }
+            )
         else:
             logger.warning(f"No route found for agent {message.recipient_id}")
 
@@ -1395,8 +1406,7 @@ class TaskDistributor:
         score = 0.0
 
         # Base score from success rate
-        success_rate = agent.tasks_completed / \
-            max(1, agent.tasks_completed + agent.tasks_failed)
+        success_rate = agent.tasks_completed / max(1, agent.tasks_completed + agent.tasks_failed)
         score += success_rate * 40
 
         # Performance score (inverse of avg execution time)
@@ -1406,12 +1416,14 @@ class TaskDistributor:
 
         # Capability match score
         for capability in agent.capabilities:
-            if task.task_type in capability.input_types or task.task_type == capability.capability_name:
+            if (
+                task.task_type in capability.input_types
+                or task.task_type == capability.capability_name
+            ):
                 score += capability.confidence_level * 30
 
         # Recency score (more recent activity is better)
-        time_since_activity = (
-            datetime.now() - agent.last_activity).total_seconds()
+        time_since_activity = (datetime.now() - agent.last_activity).total_seconds()
         score += max(0, 10 - (time_since_activity / 3600))  # Decay over hours
 
         return score
@@ -1428,11 +1440,13 @@ class LoadBalancer:
     def update_agent_load(self, agent_id: str, load: float):
         """Update agent load."""
         self.agent_loads[agent_id] = load
-        self.load_history.append({
-            "timestamp": datetime.now(),
-            "agent_id": agent_id,
-            "load": load,
-        })
+        self.load_history.append(
+            {
+                "timestamp": datetime.now(),
+                "agent_id": agent_id,
+                "load": load,
+            }
+        )
 
     def get_least_loaded_agent(self, available_agents: list[str]) -> str | None:
         """Get least loaded agent from available agents."""
@@ -1472,8 +1486,7 @@ class KnowledgeManager:
             "access_count": 0,
         }
 
-        logger.debug(
-            f"Knowledge stored in {category}:{key} by agent {source_agent}")
+        logger.debug(f"Knowledge stored in {category}:{key} by agent {source_agent}")
 
         # Update knowledge graph
         self.knowledge_graph[source_agent].add(f"{category}:{key}")
@@ -1485,18 +1498,17 @@ class KnowledgeManager:
             knowledge_item["access_count"] += 1
             self.access_patterns[f"{category}:{key}"] += 1
 
-            logger.debug(
-                f"Knowledge retrieved from {category}:{key} by agent {requesting_agent}")
+            logger.debug(f"Knowledge retrieved from {category}:{key} by agent {requesting_agent}")
             return knowledge_item["value"]
 
         logger.debug(
-            f"Knowledge not found for {category}:{key} requested by agent {requesting_agent}")
+            f"Knowledge not found for {category}:{key} requested by agent {requesting_agent}"
+        )
         return None
 
     def get_related_knowledge(self, category: str, requesting_agent: str) -> dict[str, Any]:
         """Get all knowledge in category."""
-        logger.debug(
-            f"Agent '{requesting_agent}' requesting knowledge from category '{category}'")
+        logger.debug(f"Agent '{requesting_agent}' requesting knowledge from category '{category}'")
         if category in self.shared_knowledge:
             return {k: v["value"] for k, v in self.shared_knowledge[category].items()}
         return {}

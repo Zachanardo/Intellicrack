@@ -18,10 +18,10 @@
 
 /**
  * Certificate Pinner Bypass
- * 
+ *
  * Comprehensive SSL/TLS certificate pinning bypass for multiple platforms
  * and frameworks including native, Java, .NET, and custom implementations.
- * 
+ *
  * Author: Intellicrack Framework
  * Version: 1.0.0
  * License: GPL v3
@@ -31,7 +31,7 @@
     name: "Certificate Pinner Bypass",
     description: "Universal SSL/TLS certificate pinning bypass",
     version: "1.0.0",
-    
+
     // Configuration
     config: {
         // Platforms to target
@@ -42,7 +42,7 @@
             java: true,
             dotnet: true
         },
-        
+
         // Bypass methods
         methods: {
             hookValidation: true,
@@ -50,7 +50,7 @@
             disableChecks: true,
             injectCerts: true
         },
-        
+
         // Custom certificate for injection
         customCert: {
             subject: "CN=*.licensed.app, O=Trusted, C=US",
@@ -59,7 +59,7 @@
             publicKey: "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA..."
         }
     },
-    
+
     // Statistics
     stats: {
         hooksInstalled: 0,
@@ -67,43 +67,43 @@
         certificatesReplaced: 0,
         errors: 0
     },
-    
+
     run: function() {
         send({
             type: "status",
             target: "certificate_pinner_bypass",
             action: "starting_bypass"
         });
-        
+
         // Detect platform and apply appropriate hooks
         this.detectPlatform();
-        
+
         // Windows/Native hooks
         if (this.platform.windows) {
             this.hookWindowsCertificateAPIs();
             this.hookWinHTTPCertificateValidation();
             this.hookSchannelAPIs();
         }
-        
+
         // Android hooks
         if (this.platform.android) {
             this.hookAndroidCertificatePinning();
             this.hookOkHttpPinning();
             this.hookConscryptValidation();
         }
-        
+
         // iOS hooks
         if (this.platform.ios) {
             this.hookiOSCertificateValidation();
             this.hookAFNetworkingPinning();
         }
-        
+
         // Cross-platform hooks
         this.hookOpenSSLValidation();
         this.hookJavaCertificateValidation();
         this.hookDotNetCertificateValidation();
         this.hookCustomPinningImplementations();
-        
+
         send({
             type: "info",
             target: "certificate_pinner_bypass",
@@ -111,7 +111,7 @@
             hooks_installed: this.stats.hooksInstalled
         });
     },
-    
+
     // Platform detection
     detectPlatform: function() {
         this.platform = {
@@ -121,7 +121,7 @@
             java: Java.available,
             dotnet: false
         };
-        
+
         // Check for .NET
         Process.enumerateModules().forEach(function(module) {
             if (module.name.toLowerCase().indexOf('clr.dll') !== -1 ||
@@ -129,7 +129,7 @@
                 this.platform.dotnet = true;
             }
         }, this);
-        
+
         send({
             type: "info",
             target: "certificate_pinner_bypass",
@@ -137,11 +137,11 @@
             platform: this.platform
         });
     },
-    
+
     // Windows certificate API hooks
     hookWindowsCertificateAPIs: function() {
         var self = this;
-        
+
         // CertVerifyCertificateChainPolicy
         var certVerifyChainPolicy = Module.findExportByName("crypt32.dll", "CertVerifyCertificateChainPolicy");
         if (certVerifyChainPolicy) {
@@ -160,7 +160,7 @@
                 api_name: "CertVerifyCertificateChainPolicy"
             });
         }
-        
+
         // CertGetCertificateChain
         var certGetCertificateChain = Module.findExportByName("crypt32.dll", "CertGetCertificateChain");
         if (certGetCertificateChain) {
@@ -199,7 +199,7 @@
                 api_name: "CertGetCertificateChain"
             });
         }
-        
+
         // CertVerifyRevocation
         var certVerifyRevocation = Module.findExportByName("crypt32.dll", "CertVerifyRevocation");
         if (certVerifyRevocation) {
@@ -217,18 +217,18 @@
             });
         }
     },
-    
+
     // WinHTTP certificate validation hooks
     hookWinHTTPCertificateValidation: function() {
         var self = this;
-        
+
         // WinHttpSetOption - disable certificate validation
         var winHttpSetOption = Module.findExportByName("winhttp.dll", "WinHttpSetOption");
         if (winHttpSetOption) {
             Interceptor.attach(winHttpSetOption, {
                 onEnter: function(args) {
                     var option = args[1].toInt32();
-                    
+
                     // WINHTTP_OPTION_SECURITY_FLAGS
                     if (option === 31) {
                         var flags = args[2].readU32();
@@ -249,7 +249,7 @@
             });
             this.stats.hooksInstalled++;
         }
-        
+
         // WinHttpQueryOption - spoof certificate info
         var winHttpQueryOption = Module.findExportByName("winhttp.dll", "WinHttpQueryOption");
         if (winHttpQueryOption) {
@@ -271,11 +271,11 @@
             this.stats.hooksInstalled++;
         }
     },
-    
+
     // Schannel API hooks
     hookSchannelAPIs: function() {
         var self = this;
-        
+
         // InitializeSecurityContext
         var initSecContext = Module.findExportByName("secur32.dll", "InitializeSecurityContextW");
         if (initSecContext) {
@@ -299,7 +299,7 @@
                 api_name: "InitializeSecurityContext"
             });
         }
-        
+
         // QueryContextAttributes
         var queryContextAttrs = Module.findExportByName("secur32.dll", "QueryContextAttributesW");
         if (queryContextAttrs) {
@@ -319,18 +319,18 @@
             this.stats.hooksInstalled++;
         }
     },
-    
+
     // Android certificate pinning hooks
     hookAndroidCertificatePinning: function() {
         if (!Java.available) return;
-        
+
         var self = this;
-        
+
         Java.perform(function() {
             // TrustManagerImpl
             try {
                 var TrustManagerImpl = Java.use("com.android.org.conscrypt.TrustManagerImpl");
-                
+
                 TrustManagerImpl.verifyChain.implementation = function(untrustedChain, trustAnchorChain, host, clientAuth, ocspData, tlsSctData) {
                     send({
                         type: "bypass",
@@ -341,7 +341,7 @@
                     self.stats.validationsBypassed++;
                     return untrustedChain;
                 };
-                
+
                 TrustManagerImpl.checkTrustedRecursive.implementation = function(certs, host, clientAuth, untrustedChain, trustAnchorChain, used) {
                     send({
                         type: "bypass",
@@ -352,19 +352,19 @@
                     self.stats.validationsBypassed++;
                     return Java.use("java.util.ArrayList").$new();
                 };
-                
+
                 self.stats.hooksInstalled += 2;
             } catch(e) {
                 // Different Android version
             }
-            
+
             // X509TrustManager implementations
             Java.enumerateLoadedClasses({
                 onMatch: function(className) {
                     if (className.includes("TrustManager") && !className.includes("com.android")) {
                         try {
                             var TrustManager = Java.use(className);
-                            
+
                             if (TrustManager.checkClientTrusted) {
                                 TrustManager.checkClientTrusted.implementation = function() {
                                     send({
@@ -377,7 +377,7 @@
                                     self.stats.validationsBypassed++;
                                 };
                             }
-                            
+
                             if (TrustManager.checkServerTrusted) {
                                 TrustManager.checkServerTrusted.implementation = function() {
                                     send({
@@ -390,13 +390,13 @@
                                     self.stats.validationsBypassed++;
                                 };
                             }
-                            
+
                             if (TrustManager.getAcceptedIssuers) {
                                 TrustManager.getAcceptedIssuers.implementation = function() {
                                     return Java.array('java.security.cert.X509Certificate', []);
                                 };
                             }
-                            
+
                             self.stats.hooksInstalled += 3;
                         } catch(e) {
                             // Not a valid TrustManager
@@ -405,12 +405,12 @@
                 },
                 onComplete: function() {}
             });
-            
+
             // HostnameVerifier
             try {
                 var HostnameVerifier = Java.use("javax.net.ssl.HostnameVerifier");
                 var SSLSession = Java.use("javax.net.ssl.SSLSession");
-                
+
                 var MyHostnameVerifier = Java.registerClass({
                     name: "com.intellicrack.MyHostnameVerifier",
                     implements: [HostnameVerifier],
@@ -427,7 +427,7 @@
                         }
                     }
                 });
-                
+
                 // Replace all HostnameVerifier instances
                 Java.enumerateLoadedClasses({
                     onMatch: function(className) {
@@ -450,7 +450,7 @@
                     },
                     onComplete: function() {}
                 });
-                
+
             } catch(e) {
                 send({
                     type: "error",
@@ -461,18 +461,18 @@
             }
         });
     },
-    
+
     // OkHttp certificate pinning hooks
     hookOkHttpPinning: function() {
         if (!Java.available) return;
-        
+
         var self = this;
-        
+
         Java.perform(function() {
             // OkHttp3
             try {
                 var CertificatePinner = Java.use("okhttp3.CertificatePinner");
-                
+
                 CertificatePinner.check.overload('java.lang.String', 'java.util.List').implementation = function(hostname, peerCertificates) {
                     send({
                         type: "bypass",
@@ -483,7 +483,7 @@
                     });
                     self.stats.validationsBypassed++;
                 };
-                
+
                 CertificatePinner.check.overload('java.lang.String', '[Ljava.security.cert.Certificate;').implementation = function(hostname, peerCertificates) {
                     send({
                         type: "bypass",
@@ -494,16 +494,16 @@
                     });
                     self.stats.validationsBypassed++;
                 };
-                
+
                 self.stats.hooksInstalled += 2;
             } catch(e) {
                 // OkHttp3 not found
             }
-            
+
             // OkHttp2
             try {
                 var CertificatePinner2 = Java.use("com.squareup.okhttp.CertificatePinner");
-                
+
                 CertificatePinner2.check.overload('java.lang.String', 'java.util.List').implementation = function(hostname, peerCertificates) {
                     send({
                         type: "bypass",
@@ -513,17 +513,17 @@
                     });
                     self.stats.validationsBypassed++;
                 };
-                
+
                 self.stats.hooksInstalled++;
             } catch(e) {
                 // OkHttp2 not found
             }
-            
+
             // Retrofit
             try {
                 var Platform = Java.use("retrofit2.Platform");
                 var TrustManager = Java.use("javax.net.ssl.X509TrustManager");
-                
+
                 var TrustAllManager = Java.registerClass({
                     name: "com.intellicrack.TrustAllManager",
                     implements: [TrustManager],
@@ -535,7 +535,7 @@
                         }
                     }
                 });
-                
+
                 // Hook Platform.trustManager
                 Platform.trustManager.implementation = function() {
                     send({
@@ -546,18 +546,18 @@
                     self.stats.validationsBypassed++;
                     return TrustAllManager.$new();
                 };
-                
+
                 self.stats.hooksInstalled++;
             } catch(e) {
                 // Retrofit not found
             }
         });
     },
-    
+
     // OpenSSL validation hooks
     hookOpenSSLValidation: function() {
         var self = this;
-        
+
         // SSL_CTX_set_verify
         var ssl_ctx_set_verify = Module.findExportByName(null, "SSL_CTX_set_verify");
         if (ssl_ctx_set_verify) {
@@ -575,7 +575,7 @@
             });
             this.stats.hooksInstalled++;
         }
-        
+
         // SSL_set_verify
         var ssl_set_verify = Module.findExportByName(null, "SSL_set_verify");
         if (ssl_set_verify) {
@@ -586,7 +586,7 @@
             });
             this.stats.hooksInstalled++;
         }
-        
+
         // X509_verify_cert
         var x509_verify_cert = Module.findExportByName(null, "X509_verify_cert");
         if (x509_verify_cert) {
@@ -602,7 +602,7 @@
             }, 'int', ['pointer']));
             this.stats.hooksInstalled++;
         }
-        
+
         // SSL_get_verify_result
         var ssl_get_verify_result = Module.findExportByName(null, "SSL_get_verify_result");
         if (ssl_get_verify_result) {
@@ -619,21 +619,21 @@
             this.stats.hooksInstalled++;
         }
     },
-    
+
     // .NET certificate validation hooks
     hookDotNetCertificateValidation: function() {
         if (!this.platform.dotnet) return;
-        
+
         var self = this;
-        
+
         // Find System.dll
         var systemDll = Process.findModuleByName("System.dll");
         if (!systemDll) return;
-        
+
         // Pattern for ServicePointManager.ServerCertificateValidationCallback setter
         var pattern = "48 89 5C 24 ?? 57 48 83 EC ?? 48 8B F9 48 8B DA";
         var matches = Memory.scanSync(systemDll.base, systemDll.size, pattern);
-        
+
         if (matches.length > 0) {
             // Hook the setter to always accept certificates
             Interceptor.attach(matches[0].address, {
@@ -649,7 +649,7 @@
                         self.stats.validationsBypassed++;
                         return 1;
                     }, 'int', ['pointer', 'pointer', 'pointer', 'int']);
-                    
+
                     // Replace the callback
                     args[1] = alwaysTrue;
                 }
@@ -661,11 +661,11 @@
                 action: "dotnet_server_cert_callback_hooked"
             });
         }
-        
+
         // Hook SslStream certificate validation
         var sslStreamPattern = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F2 48 8B F9";
         matches = Memory.scanSync(systemDll.base, systemDll.size, sslStreamPattern);
-        
+
         if (matches.length > 0) {
             Interceptor.attach(matches[0].address, {
                 onLeave: function(retval) {
@@ -682,25 +682,25 @@
             });
         }
     },
-    
+
     // Java certificate validation hooks
     hookJavaCertificateValidation: function() {
         if (!Java.available) return;
-        
+
         var self = this;
-        
+
         Java.perform(function() {
             // SSLContext
             try {
                 var SSLContext = Java.use("javax.net.ssl.SSLContext");
-                
+
                 SSLContext.init.overload('[Ljavax.net.ssl.KeyManager;', '[Ljavax.net.ssl.TrustManager;', 'java.security.SecureRandom').implementation = function(keyManager, trustManager, secureRandom) {
                     send({
                         type: "bypass",
                         target: "certificate_pinner_bypass",
                         action: "java_sslcontext_init_intercepted"
                     });
-                    
+
                     // Create custom TrustManager
                     var TrustManager = Java.use("javax.net.ssl.X509TrustManager");
                     var TrustAllManager = Java.registerClass({
@@ -730,11 +730,11 @@
                             }
                         }
                     });
-                    
+
                     var trustAllArray = Java.array("javax.net.ssl.TrustManager", [TrustAllManager.$new()]);
                     this.init(keyManager, trustAllArray, secureRandom);
                 };
-                
+
                 self.stats.hooksInstalled++;
             } catch(e) {
                 send({
@@ -744,18 +744,18 @@
                     error: e.toString()
                 });
             }
-            
+
             // HttpsURLConnection
             try {
                 var HttpsURLConnection = Java.use("javax.net.ssl.HttpsURLConnection");
-                
+
                 HttpsURLConnection.setDefaultHostnameVerifier.implementation = function(verifier) {
                     send({
                         type: "bypass",
                         target: "certificate_pinner_bypass",
                         action: "java_https_hostname_verifier_intercepted"
                     });
-                    
+
                     var HostnameVerifier = Java.use("javax.net.ssl.HostnameVerifier");
                     var TrustAllVerifier = Java.registerClass({
                         name: "com.intellicrack.TrustAllVerifier",
@@ -773,10 +773,10 @@
                             }
                         }
                     });
-                    
+
                     this.setDefaultHostnameVerifier(TrustAllVerifier.$new());
                 };
-                
+
                 self.stats.hooksInstalled++;
             } catch(e) {
                 send({
@@ -788,17 +788,17 @@
             }
         });
     },
-    
+
     // iOS certificate validation hooks
     hookiOSCertificateValidation: function() {
         if (!ObjC.available) return;
-        
+
         var self = this;
-        
+
         // NSURLSession
         try {
             var NSURLSession = ObjC.classes.NSURLSession;
-            
+
             Interceptor.attach(NSURLSession["- dataTaskWithRequest:completionHandler:"].implementation, {
                 onEnter: function(args) {
                     var request = new ObjC.Object(args[2]);
@@ -810,7 +810,7 @@
                     });
                 }
             });
-            
+
             // Hook delegate methods
             if (ObjC.classes.NSURLSessionDelegate) {
                 var origMethod = ObjC.classes.NSURLSessionDelegate["- URLSession:didReceiveChallenge:completionHandler:"];
@@ -824,10 +824,10 @@
                                 CancelAuthenticationChallenge: 2,
                                 RejectProtectionSpace: 3
                             };
-                            
+
                             // Call completion handler with UseCredential
                             completionHandler.call([NSURLSessionAuthChallengeDisposition.UseCredential, ObjC.classes.NSURLCredential.credentialForTrust_(ptr(0))]);
-                            
+
                             send({
                                 type: "bypass",
                                 target: "certificate_pinner_bypass",
@@ -847,7 +847,7 @@
                 error: e.toString()
             });
         }
-        
+
         // SecTrustEvaluate
         var SecTrustEvaluate = Module.findExportByName("Security", "SecTrustEvaluate");
         if (SecTrustEvaluate) {
@@ -863,7 +863,7 @@
             }, 'int', ['pointer', 'pointer']));
             self.stats.hooksInstalled++;
         }
-        
+
         // SecTrustSetAnchorCertificates
         var SecTrustSetAnchorCertificates = Module.findExportByName("Security", "SecTrustSetAnchorCertificates");
         if (SecTrustSetAnchorCertificates) {
@@ -878,25 +878,25 @@
             self.stats.hooksInstalled++;
         }
     },
-    
+
     // Hook custom pinning implementations
     hookCustomPinningImplementations: function() {
         var self = this;
-        
+
         // Common function name patterns
         var patterns = [
-            "*pin*cert*", "*verify*cert*", "*check*cert*", 
+            "*pin*cert*", "*verify*cert*", "*check*cert*",
             "*validate*ssl*", "*trust*manager*", "*cert*valid*"
         ];
-        
+
         // Search for custom implementations
         Process.enumerateModules().forEach(function(module) {
-            if (module.name.toLowerCase().includes("app") || 
+            if (module.name.toLowerCase().includes("app") ||
                 module.name.toLowerCase().includes("lib")) {
-                
+
                 module.enumerateExports().forEach(function(exp) {
                     var name = exp.name.toLowerCase();
-                    
+
                     patterns.forEach(function(pattern) {
                         var regex = new RegExp(pattern.replace(/\*/g, '.*'));
                         if (regex.test(name)) {
@@ -926,7 +926,7 @@
             }
         });
     },
-    
+
     // Inject trusted certificate
     injectTrustedCertificate: function(buffer) {
         // This would contain actual certificate injection logic
@@ -937,13 +937,13 @@
             action: "injecting_trusted_certificate"
         });
     },
-    
+
     // Hook AFNetworking (iOS)
     hookAFNetworkingPinning: function() {
         if (!ObjC.available) return;
-        
+
         var self = this;
-        
+
         try {
             var AFSecurityPolicy = ObjC.classes.AFSecurityPolicy;
             if (AFSecurityPolicy) {
@@ -959,7 +959,7 @@
                         });
                     }
                 });
-                
+
                 // setAllowInvalidCertificates:
                 Interceptor.attach(AFSecurityPolicy["- setAllowInvalidCertificates:"].implementation, {
                     onEnter: function(args) {
@@ -971,7 +971,7 @@
                         });
                     }
                 });
-                
+
                 // evaluateServerTrust:forDomain:
                 var evaluateMethod = AFSecurityPolicy["- evaluateServerTrust:forDomain:"];
                 if (evaluateMethod) {
@@ -987,7 +987,7 @@
                         }
                     });
                 }
-                
+
                 self.stats.hooksInstalled += 3;
             }
         } catch(e) {
@@ -999,18 +999,18 @@
             });
         }
     },
-    
+
     // Conscrypt validation hooks (Android)
     hookConscryptValidation: function() {
         if (!Java.available) return;
-        
+
         var self = this;
-        
+
         Java.perform(function() {
             try {
                 // Conscrypt CertPinManager
                 var CertPinManager = Java.use("com.android.org.conscrypt.CertPinManager");
-                
+
                 CertPinManager.checkChainPinning.implementation = function(hostname, chain) {
                     send({
                         type: "bypass",
@@ -1020,7 +1020,7 @@
                     self.stats.validationsBypassed++;
                     return true;
                 };
-                
+
                 CertPinManager.isChainValid.implementation = function(hostname, chain) {
                     send({
                         type: "bypass",
@@ -1030,33 +1030,33 @@
                     self.stats.validationsBypassed++;
                     return true;
                 };
-                
+
                 self.stats.hooksInstalled += 2;
             } catch(e) {
                 // Conscrypt not found
             }
-            
+
             // Network Security Config (Android N+)
             try {
                 var NetworkSecurityConfig = Java.use("android.security.net.config.NetworkSecurityConfig");
-                
+
                 NetworkSecurityConfig.getDefaultBuilder.implementation = function(applicationInfo) {
                     send({
                         type: "bypass",
                         target: "certificate_pinner_bypass",
                         action: "android_network_security_config_intercepted"
                     });
-                    
+
                     var builder = this.getDefaultBuilder(applicationInfo);
                     var NetworkSecurityConfigBuilder = Java.use("android.security.net.config.NetworkSecurityConfig$Builder");
-                    
+
                     // Create permissive config
                     return NetworkSecurityConfigBuilder.$new()
                         .setCleartextTrafficPermitted(true)
                         .setHstsEnforced(false)
                         .build();
                 };
-                
+
                 self.stats.hooksInstalled++;
             } catch(e) {
                 // Not Android N+

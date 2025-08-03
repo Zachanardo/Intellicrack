@@ -26,6 +26,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def create_certificate_builder():
     """Create a certificate builder with common settings.
 
@@ -37,24 +38,33 @@ def create_certificate_builder():
         from cryptography import x509
         from cryptography.x509.oid import NameOID
 
-        builder = x509.CertificateBuilder().subject_name(
-            x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Org"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-            ]),
-        ).issuer_name(
-            x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Org"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
-            ]),
-        ).serial_number(
-            x509.random_serial_number(),
+        builder = (
+            x509.CertificateBuilder()
+            .subject_name(
+                x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+                        x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Org"),
+                        x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+                    ]
+                ),
+            )
+            .issuer_name(
+                x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+                        x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Org"),
+                        x509.NameAttribute(NameOID.COMMON_NAME, "localhost"),
+                    ]
+                ),
+            )
+            .serial_number(
+                x509.random_serial_number(),
+            )
         )
 
         # Set validity dates
@@ -67,7 +77,9 @@ def create_certificate_builder():
         return None
 
 
-def get_certificate_validity_dates(valid_days: int = 365) -> tuple[datetime.datetime, datetime.datetime]:
+def get_certificate_validity_dates(
+    valid_days: int = 365,
+) -> tuple[datetime.datetime, datetime.datetime]:
     """Get certificate validity dates.
 
     Args:

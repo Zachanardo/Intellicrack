@@ -247,16 +247,16 @@ config = {
     'memory_limit': 1000,         # MB
     'timeout': 600,               # seconds
     'parallel_workers': 3,        # concurrent analyses
-    
+
     # Caching
     'cache_enabled': True,
     'cache_ttl': 300,            # seconds
     'max_cache_size': 100,       # entries
-    
+
     # Real-time
     'real_time_monitoring': True,
     'monitoring_interval': 30,    # seconds
-    
+
     # R2 flags
     'r2_flags': [
         '-e', 'anal.timeout=600',
@@ -277,7 +277,7 @@ results = r2.run_comprehensive_analysis()
 from intellicrack.core.analysis.radare2_vulnerability_engine import quick_vulnerability_scan
 vulns = quick_vulnerability_scan('/path/to/binary')
 
-# Quick bypass generation  
+# Quick bypass generation
 from intellicrack.core.analysis.radare2_bypass_generator import quick_bypass_generation
 bypass = quick_bypass_generation('/path/to/binary')
 

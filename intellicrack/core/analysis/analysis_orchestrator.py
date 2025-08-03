@@ -64,8 +64,7 @@ class OrchestrationResult:
 
 
 class AnalysisOrchestrator(QObject):
-    """Orchestrates comprehensive binary analysis using multiple engines
-    """
+    """Orchestrates comprehensive binary analysis using multiple engines"""
 
     # Signals
     phase_started = pyqtSignal(str)  # phase_name
@@ -96,7 +95,9 @@ class AnalysisOrchestrator(QObject):
         self.enabled_phases = list(AnalysisPhase)
         self.timeout_per_phase = 300  # 5 minutes per phase
 
-    def analyze_binary(self, binary_path: str, phases: list[AnalysisPhase] | None = None) -> OrchestrationResult:
+    def analyze_binary(
+        self, binary_path: str, phases: list[AnalysisPhase] | None = None
+    ) -> OrchestrationResult:
         """Perform orchestrated analysis on a binary
 
         Args:
@@ -224,15 +225,17 @@ class AnalysisOrchestrator(QObject):
             chunk_size = 1024
             chunks = []
             for i in range(0, len(data), chunk_size):
-                chunk_data = data[i:i+chunk_size]
+                chunk_data = data[i : i + chunk_size]
                 if chunk_data:
                     entropy = self.entropy_analyzer.calculate_entropy(chunk_data)
-                    chunks.append({
-                        "offset": i,
-                        "size": len(chunk_data),
-                        "entropy": entropy,
-                        "suspicious": entropy > self.entropy_analyzer.high_entropy_threshold,
-                    })
+                    chunks.append(
+                        {
+                            "offset": i,
+                            "size": len(chunk_data),
+                            "entropy": entropy,
+                            "suspicious": entropy > self.entropy_analyzer.high_entropy_threshold,
+                        }
+                    )
 
             result["chunks"] = chunks
             result["high_entropy_chunks"] = [c for c in chunks if c["suspicious"]]
@@ -272,7 +275,10 @@ class AnalysisOrchestrator(QObject):
         """Perform dynamic analysis if possible"""
         try:
             # Check if dynamic analysis is available
-            if hasattr(self.dynamic_analyzer, "is_available") and self.dynamic_analyzer.is_available():
+            if (
+                hasattr(self.dynamic_analyzer, "is_available")
+                and self.dynamic_analyzer.is_available()
+            ):
                 return self.dynamic_analyzer.analyze(binary_path)
             return {"status": "skipped", "reason": "Dynamic analysis not available"}
         except Exception as e:
@@ -300,7 +306,9 @@ class AnalysisOrchestrator(QObject):
         if AnalysisPhase.VULNERABILITY_SCAN in result.phases_completed:
             vuln_data = result.results.get("vulnerability_scan", {})
             if vuln_data.get("vulnerabilities"):
-                findings.append(f"Found {len(vuln_data['vulnerabilities'])} potential vulnerabilities")
+                findings.append(
+                    f"Found {len(vuln_data['vulnerabilities'])} potential vulnerabilities"
+                )
 
         summary["key_findings"] = findings
         return summary

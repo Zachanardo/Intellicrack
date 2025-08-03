@@ -27,6 +27,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 def has_logger_import(lines: list[str]) -> tuple[bool, str]:
     """Check if file has logger import and return the logger name."""
     for line in lines[:50]:  # Check first 50 lines
@@ -37,6 +38,7 @@ def has_logger_import(lines: list[str]) -> tuple[bool, str]:
         if re.match(r"^logger\s*=", line.strip()):
             return True, "logger"
     return False, ""
+
 
 def get_logger_for_context(lines: list[str], line_num: int) -> str:
     """Determine the appropriate logger based on context."""
@@ -52,6 +54,7 @@ def get_logger_for_context(lines: list[str], line_num: int) -> str:
 
     # Default to module logger
     return "logger"
+
 
 def get_appropriate_message(exception_type: str, file_name: str) -> str:
     """Get appropriate error message based on exception type."""
@@ -89,6 +92,7 @@ def get_appropriate_message(exception_type: str, file_name: str) -> str:
     base_exception = exception_type.split()[0].strip("()")
 
     return messages.get(base_exception, f"{base_exception} in {base_name}")
+
 
 def fix_exception_blocks(file_path: Path) -> tuple[bool, int]:
     """Fix exception blocks without logger calls."""
@@ -173,7 +177,12 @@ def fix_exception_blocks(file_path: Path) -> tuple[bool, int]:
             # Add logger import at the top after other imports
             import_added = False
             for i, line in enumerate(lines):
-                if line.strip() and not line.startswith("#") and not line.startswith("from") and not line.startswith("import"):
+                if (
+                    line.strip()
+                    and not line.startswith("#")
+                    and not line.startswith("from")
+                    and not line.startswith("import")
+                ):
                     # Insert before first non-import line
                     lines.insert(i, "from intellicrack.logger import logger\n\n")
                     import_added = True
@@ -190,6 +199,7 @@ def fix_exception_blocks(file_path: Path) -> tuple[bool, int]:
         return True, fixes_made
 
     return False, 0
+
 
 def process_file(file_path: Path) -> dict[str, any]:
     """Process a single file and return results."""
@@ -209,6 +219,7 @@ def process_file(file_path: Path) -> dict[str, any]:
             "error": str(e),
         }
 
+
 def find_files_with_exceptions(root_dir: Path) -> list[Path]:
     """Find all Python files that contain exception handling."""
     files = []
@@ -224,6 +235,7 @@ def find_files_with_exceptions(root_dir: Path) -> list[Path]:
                 except Exception as e:
                     logger.debug(f"Failed to check file {file_path}: {e}")
     return files
+
 
 def main():
     """Main function to fix all S110 violations."""
@@ -242,7 +254,9 @@ def main():
     start_time = time.time()
 
     with ThreadPoolExecutor(max_workers=8) as executor:
-        futures = {executor.submit(process_file, file_path): file_path for file_path in files_to_process}
+        futures = {
+            executor.submit(process_file, file_path): file_path for file_path in files_to_process
+        }
 
         for future in as_completed(futures):
             result = future.result()
@@ -269,6 +283,7 @@ def main():
             print(f"  {error['path']}: {error['error']}")
         if len(errors) > 5:
             print(f"  ... and {len(errors) - 5} more")
+
 
 if __name__ == "__main__":
     main()

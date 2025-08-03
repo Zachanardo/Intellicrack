@@ -99,6 +99,7 @@ def track_binary_modifications(app_instance):
     """
     if not hasattr(app_instance, "timestamp_tracker"):
         from .file_metadata_widget import FileTimestampTracker
+
         app_instance.timestamp_tracker = FileTimestampTracker()
 
     if hasattr(app_instance, "binary_path") and app_instance.binary_path:
@@ -235,6 +236,7 @@ def integrate_file_metadata_display(app):
     # Add status updates with timestamps
     original_update = app.update_output.emit if hasattr(app, "update_output") else None
     if original_update:
+
         def timestamped_update(message):
             update_status_with_timestamp(app, message)
 

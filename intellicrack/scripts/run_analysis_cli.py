@@ -84,27 +84,32 @@ Examples:
     # Analysis options
     analysis_group = parser.add_argument_group("Analysis Options")
     analysis_group.add_argument(
-        "--comprehensive", "-c",
+        "--comprehensive",
+        "-c",
         action="store_true",
         help="Run comprehensive analysis (all modules)",
     )
     analysis_group.add_argument(
-        "--detect-packing", "-p",
+        "--detect-packing",
+        "-p",
         action="store_true",
         help="Detect packing and obfuscation",
     )
     analysis_group.add_argument(
-        "--vulnerability-scan", "-v",
+        "--vulnerability-scan",
+        "-v",
         action="store_true",
         help="Scan for security vulnerabilities",
     )
     analysis_group.add_argument(
-        "--license-analysis", "-l",
+        "--license-analysis",
+        "-l",
         action="store_true",
         help="Analyze license protection mechanisms",
     )
     analysis_group.add_argument(
-        "--quick", "-q",
+        "--quick",
+        "-q",
         action="store_true",
         help="Quick analysis (basic info only)",
     )
@@ -112,17 +117,20 @@ Examples:
     # Output options
     output_group = parser.add_argument_group("Output Options")
     output_group.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         help="Output file path (default: stdout)",
     )
     output_group.add_argument(
-        "--format", "-f",
+        "--format",
+        "-f",
         choices=["text", "json", "pdf", "html"],
         default="text",
         help="Output format (default: text)",
     )
     output_group.add_argument(
-        "--verbose", "-V",
+        "--verbose",
+        "-V",
         action="store_true",
         help="Enable verbose output",
     )
@@ -211,6 +219,7 @@ def perform_analysis(binary_path, args):
         logger.error(f"Analysis failed: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return None
 

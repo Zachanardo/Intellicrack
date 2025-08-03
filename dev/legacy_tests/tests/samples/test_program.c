@@ -5,7 +5,7 @@ int main() {
     char license_key[100];
     printf("Enter license key: ");
     fgets(license_key, sizeof(license_key), stdin);
-    
+
     // Simple license check
     if (strncmp(license_key, "VALID-KEY-", 10) == 0) {
         printf("License valid\! Access granted.\n");

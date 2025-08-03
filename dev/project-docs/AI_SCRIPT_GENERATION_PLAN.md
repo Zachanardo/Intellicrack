@@ -4,8 +4,8 @@
 
 This document outlines the implementation of a comprehensive AI-driven script generation system for Intellicrack that can dynamically analyze unknown applications and generate both Frida (dynamic analysis) and Ghidra (static analysis) scripts. The system features an autonomous, iterative workflow similar to Claude Code, where the AI can test scripts in QEMU, refine them based on results, and only deploy to the actual application after user confirmation. The system integrates with Intellicrack's CLI and works with any LLM the user imports - whether it's a local GGUF model, API-based service (OpenAI, Anthropic), or Ollama.
 
-**CRITICAL REQUIREMENTS**: 
-1. All generated code MUST be real, functional, and immediately executable. NO placeholder, stub, mock, or simulated code is acceptable. 
+**CRITICAL REQUIREMENTS**:
+1. All generated code MUST be real, functional, and immediately executable. NO placeholder, stub, mock, or simulated code is acceptable.
 2. Every script must perform actual analysis or bypassing operations.
 3. All implementation code in this plan is also real and functional - no stubs or mocks.
 4. All new files created as part of this implementation MUST contain the proper Intellicrack GPL-3.0 licensing header at the top of the file. Example header:
@@ -69,7 +69,7 @@ class AutonomousAgent:
     Autonomous AI agent that can iteratively develop and test scripts.
     Similar to Claude Code - takes a request and autonomously completes it.
     """
-    
+
     def __init__(self, orchestrator, cli_interface):
         self.orchestrator = orchestrator
         self.cli_interface = cli_interface
@@ -79,11 +79,11 @@ class AutonomousAgent:
         self.current_task = None
         self.iteration_count = 0
         self.max_iterations = 10
-        
+
     def process_request(self, user_request: str) -> Dict:
         """
         Process a user request autonomously, similar to Claude Code.
-        
+
         Example: "Create a Frida script to bypass the license check in app.exe"
         """
         self.current_task = self._parse_request(user_request)
@@ -91,62 +91,62 @@ class AutonomousAgent:
             "role": "user",
             "content": user_request
         })
-        
+
         # Analyze the target
         self._log_to_user("Analyzing target application...")
         analysis = self._analyze_target(self.current_task['binary_path'])
-        
+
         # Generate initial script
         self._log_to_user("Generating initial bypass script...")
         script = self._generate_script(analysis)
-        
+
         # Iterative testing and refinement
         working_script = self._iterative_refinement(script, analysis)
-        
+
         # Get user confirmation before deployment
         if self._get_user_confirmation(working_script):
             self._deploy_script(working_script)
             return {"status": "success", "script": working_script}
         else:
             return {"status": "cancelled", "script": working_script}
-    
+
     def _iterative_refinement(self, initial_script: Dict, analysis: Dict) -> Dict:
         """
         Iteratively test and refine the script until it works.
         """
         current_script = initial_script
-        
+
         for iteration in range(self.max_iterations):
             self.iteration_count = iteration + 1
             self._log_to_user(f"Testing iteration {self.iteration_count}...")
-            
+
             # Test in QEMU
             test_result = self._test_in_qemu(current_script, analysis)
-            
+
             if test_result.success:
                 self._log_to_user("✓ Script executed successfully in QEMU!")
-                
+
                 # Verify it actually bypassed the protection
                 if self._verify_bypass(test_result, analysis):
                     self._log_to_user("✓ Protection bypass confirmed!")
                     return current_script
                 else:
                     self._log_to_user("✗ Script ran but didn't bypass protection")
-            
+
             # Script needs refinement
             self._log_to_user("Refining script based on test results...")
             current_script = self._refine_script(current_script, test_result, analysis)
-        
+
         self._log_to_user("Maximum iterations reached. Current script may need manual review.")
         return current_script
-    
+
     def _test_in_qemu(self, script: Dict, analysis: Dict) -> ExecutionResult:
         """
         Test the script in QEMU environment.
         """
         # Create QEMU snapshot
         snapshot = self.qemu_manager.create_snapshot(analysis['binary_path'])
-        
+
         try:
             # Deploy script to QEMU environment
             if script['type'] == 'frida':
@@ -161,13 +161,13 @@ class AutonomousAgent:
                     script['content'],
                     analysis['binary_path']
                 )
-            
+
             return result
-            
+
         finally:
             # Clean up snapshot
             self.qemu_manager.cleanup_snapshot(snapshot)
-    
+
     def _refine_script(self, script: Dict, test_result: ExecutionResult, analysis: Dict) -> Dict:
         """
         Use LLM to refine the script based on test results.
@@ -190,28 +190,28 @@ Analysis Information:
 Please fix the script to address these issues. Generate a complete, working script.
 Remember: NO placeholders or stubs - only real, functional code.
 """
-        
+
         messages = [
             {"role": "system", "content": self._get_refinement_system_prompt(script['type'])},
             {"role": "user", "content": refinement_prompt}
         ]
-        
+
         # Add conversation history for context
         messages.extend(self.conversation_history[-5:])  # Last 5 messages
-        
+
         # Get refined script from LLM
         response = self.orchestrator.llm_manager.chat(messages)
-        
+
         # Extract and validate refined script
         refined_script = self._extract_script_from_response(response.content)
-        
+
         return {
             'type': script['type'],
             'content': refined_script,
             'language': script['language'],
             'iteration': self.iteration_count
         }
-    
+
     def _log_to_user(self, message: str):
         """Log progress to user via CLI or UI."""
         if self.cli_interface:
@@ -234,7 +234,7 @@ class QEMUTestManager:
     Manages QEMU virtual machines for testing generated scripts.
     Real implementation - no mocks or stubs.
     """
-    
+
     def __init__(self):
         self.conn = libvirt.open('qemu:///system')
         self.snapshots = {}
@@ -242,22 +242,22 @@ class QEMUTestManager:
             'windows': Path('/var/lib/libvirt/images/windows_base.qcow2'),
             'linux': Path('/var/lib/libvirt/images/linux_base.qcow2')
         }
-        
+
     def create_snapshot(self, binary_path: str) -> str:
         """Create a QEMU snapshot for testing."""
         # Detect OS type
         os_type = self._detect_os_type(binary_path)
-        
+
         # Create temporary disk image
         temp_disk = tempfile.mktemp(suffix='.qcow2')
-        
+
         # Create snapshot from base image
         subprocess.run([
             'qemu-img', 'create', '-f', 'qcow2',
             '-b', str(self.base_images[os_type]),
             temp_disk
         ], check=True)
-        
+
         # Define VM XML
         vm_xml = f'''
 <domain type='kvm'>
@@ -283,37 +283,37 @@ class QEMUTestManager:
   </devices>
 </domain>
 '''
-        
+
         # Create and start VM
         dom = self.conn.createXML(vm_xml, 0)
         snapshot_id = f"snapshot_{id(dom)}"
-        
+
         self.snapshots[snapshot_id] = {
             'domain': dom,
             'disk': temp_disk,
             'binary': binary_path
         }
-        
+
         # Copy binary to VM
         self._copy_to_vm(dom, binary_path, f'/tmp/{Path(binary_path).name}')
-        
+
         return snapshot_id
-    
+
     def test_frida_script(self, snapshot_id: str, script_content: str, binary_path: str) -> ExecutionResult:
         """Test a Frida script in QEMU environment."""
         snapshot = self.snapshots[snapshot_id]
         dom = snapshot['domain']
-        
+
         # Copy script to VM
         script_path = '/tmp/test_script.js'
         self._copy_content_to_vm(dom, script_content, script_path)
-        
+
         # Copy Frida to VM if not present
         self._ensure_frida_installed(dom)
-        
+
         # Execute Frida with script
         start_time = time.time()
-        
+
         result = self._execute_in_vm(dom, f'''
 cd /tmp
 # Start the target process
@@ -333,9 +333,9 @@ else
     exit 1
 fi
 ''')
-        
+
         runtime_ms = int((time.time() - start_time) * 1000)
-        
+
         return ExecutionResult(
             success=result['exit_code'] == 0,
             output=result['stdout'],
@@ -354,18 +354,18 @@ class AIScriptGenerator:
     Generates real, functional Frida and Ghidra scripts using AI analysis.
     NO PLACEHOLDERS - all generated code must be immediately executable.
     """
-    
+
     def __init__(self, orchestrator: AIOrchestrator):
         self.orchestrator = orchestrator
         self.llm_manager = orchestrator.llm_manager
         self.script_validator = ScriptValidator()
         self.template_engine = ScriptTemplateEngine()
         self.pattern_library = PatternLibrary()
-        
+
     def generate_frida_script(self, analysis_results: Dict) -> str:
         """Generate a real, working Frida script based on analysis."""
         # Implementation details below
-        
+
     def generate_ghidra_script(self, analysis_results: Dict) -> str:
         """Generate a real, working Ghidra script based on analysis."""
         # Implementation details below
@@ -386,26 +386,26 @@ FRIDA_BASE_TEMPLATE = '''
     name: "{script_name}",
     description: "{description}",
     version: "1.0.0",
-    
+
     // Configuration
     config: {config_json},
-    
+
     // Runtime state
     hooks: {},
     detections: [],
-    
+
     run: function() {
         console.log("[AI-Generated] Initializing {script_name}...");
-        
+
         {initialization_code}
-        
+
         {hook_installations}
-        
+
         {bypass_logic}
-        
+
         console.log("[AI-Generated] Script initialized successfully");
     },
-    
+
     {helper_functions}
 }
 '''
@@ -424,13 +424,13 @@ import re
 class {script_class_name}(GhidraScript):
     def run(self):
         print("[AI-Generated] Starting {script_name} analysis...")
-        
+
         {initialization_code}
-        
+
         {analysis_functions}
-        
+
         {patching_logic}
-        
+
         print("[AI-Generated] Analysis complete")
 
 # Run the script
@@ -448,7 +448,7 @@ class PatternLibrary:
     Library of real protection patterns and their bypass strategies.
     All patterns lead to functional bypass code generation.
     """
-    
+
     LICENSE_CHECK_PATTERNS = {
         "string_comparison": {
             "indicators": ["strcmp", "strcasecmp", "memcmp", "wcscmp"],
@@ -527,34 +527,34 @@ Generate a complete, working Ghidra script that will analyze and/or patch the id
 ```python
 class ScriptGenerationWorkflow:
     """Orchestrates the complete script generation process."""
-    
+
     def analyze_and_generate(self, binary_path: str) -> Dict[str, str]:
         """
         Complete workflow from binary analysis to script generation.
         Returns real, executable scripts.
         """
-        
+
         # Step 1: Binary Analysis (Static + Dynamic indicators)
         static_analysis = self.analyze_static(binary_path)
         dynamic_indicators = self.analyze_dynamic(binary_path)
-        
+
         # Step 2: Protection Detection
         protection_type = self.detect_protection_type(static_analysis, dynamic_indicators)
-        
+
         # Step 3: Determine Script Strategy
         strategy = self.determine_bypass_strategy(protection_type)
-        
+
         # Step 4: Generate Scripts
         scripts = {}
-        
+
         if strategy.requires_static_patching:
             ghidra_script = self.generate_ghidra_script(
-                binary_path, 
-                protection_type, 
+                binary_path,
+                protection_type,
                 static_analysis
             )
             scripts['ghidra'] = ghidra_script
-            
+
         if strategy.requires_dynamic_hooking:
             frida_script = self.generate_frida_script(
                 binary_path,
@@ -562,12 +562,12 @@ class ScriptGenerationWorkflow:
                 dynamic_indicators
             )
             scripts['frida'] = frida_script
-            
+
         # Step 5: Validate Scripts
         for script_type, script_content in scripts.items():
             if not self.validate_script(script_type, script_content):
                 raise ValueError(f"Generated {script_type} script failed validation")
-                
+
         return scripts
 ```
 
@@ -582,23 +582,23 @@ class ScriptGenerationWorkflow:
        target_functions = analysis_results.get('license_functions', [])
        protection_apis = analysis_results.get('protection_apis', [])
        strings = analysis_results.get('relevant_strings', [])
-       
+
        # Build hook specifications
        hooks = []
        for func in target_functions:
            hook = self._generate_function_hook(func)
            hooks.append(hook)
-       
+
        # Generate bypass logic based on protection type
        bypass_code = self._generate_bypass_logic(analysis_results['protection_type'])
-       
+
        # Assemble complete script
        script = self.template_engine.render_frida_script(
            hooks=hooks,
            bypass_logic=bypass_code,
            config=self._generate_config(analysis_results)
        )
-       
+
        return script
    ```
 
@@ -606,7 +606,7 @@ class ScriptGenerationWorkflow:
    ```python
    def _generate_function_hook(self, function_info: Dict) -> str:
        """Generate real, working Frida hook code."""
-       
+
        if function_info['type'] == 'license_check':
            return f'''
    Interceptor.attach(ptr("{function_info['address']}"), {{
@@ -632,20 +632,20 @@ class ScriptGenerationWorkflow:
        # Extract structural information
        target_addresses = analysis_results.get('patch_points', [])
        functions_to_analyze = analysis_results.get('key_functions', [])
-       
+
        # Generate analysis code
        analysis_code = self._generate_analysis_code(functions_to_analyze)
-       
+
        # Generate patching code
        patch_code = self._generate_patch_code(target_addresses)
-       
+
        # Assemble complete script
        script = self.template_engine.render_ghidra_script(
            analysis_code=analysis_code,
            patch_code=patch_code,
            target_info=analysis_results['binary_info']
        )
-       
+
        return script
    ```
 
@@ -653,7 +653,7 @@ class ScriptGenerationWorkflow:
    ```python
    def _generate_patch_code(self, patch_points: List[Dict]) -> str:
        """Generate real Ghidra patching code."""
-       
+
        patches = []
        for point in patch_points:
            if point['type'] == 'conditional_jump':
@@ -662,7 +662,7 @@ class ScriptGenerationWorkflow:
    addr = toAddr("{point['address']}")
    original = getByte(addr)
    print(f"Original byte at {{addr}}: {{original:02x}}")
-   
+
    # Change conditional jump to unconditional
    if original == 0x74:  # JE
        setByte(addr, 0xEB)  # JMP
@@ -673,7 +673,7 @@ class ScriptGenerationWorkflow:
        print("Patched JNE to NOP")
    '''
                patches.append(patch)
-               
+
        return '\n'.join(patches)
    ```
 
@@ -694,14 +694,14 @@ class AITaskType(Enum):
 ```python
 def _execute_script_generation(self, task: AITask) -> tuple:
     """Execute script generation using LLM."""
-    
+
     binary_path = task.input_data.get('binary_path')
     analysis_results = task.input_data.get('analysis_results')
     script_type = task.input_data.get('script_type', 'unified')
-    
+
     # Prepare context for LLM
     context = self._prepare_generation_context(analysis_results)
-    
+
     # Generate appropriate prompt
     if script_type == 'frida':
         system_prompt = FRIDA_GENERATION_SYSTEM_PROMPT
@@ -709,7 +709,7 @@ def _execute_script_generation(self, task: AITask) -> tuple:
         system_prompt = GHIDRA_GENERATION_SYSTEM_PROMPT
     else:
         system_prompt = UNIFIED_GENERATION_SYSTEM_PROMPT
-    
+
     # Create messages for LLM
     messages = [
         LLMMessage(role="system", content=system_prompt),
@@ -725,16 +725,16 @@ APIs Used: {json.dumps(analysis_results.get('apis', []), indent=2)}
 Generate a complete, working script that will bypass this protection.
 """)
     ]
-    
+
     # Get LLM response
     response = self.llm_manager.chat(messages)
-    
+
     # Extract and validate script
     script = self._extract_script_from_response(response.content)
-    
+
     # Save script to appropriate location
     script_path = self._save_generated_script(script, script_type, binary_path)
-    
+
     return {
         'script': script,
         'script_path': script_path,
@@ -751,43 +751,43 @@ Add AI generation capabilities to the existing Frida manager:
 ```python
 def create_ai_generation_group(self) -> QGroupBox:
     """Create AI script generation controls."""
-    
+
     group = QGroupBox("AI Script Generation")
     layout = QVBoxLayout()
-    
+
     # Status label
     self.ai_status_label = QLabel("AI Ready")
     layout.addWidget(self.ai_status_label)
-    
+
     # Generation options
     options_layout = QHBoxLayout()
-    
+
     self.auto_detect_cb = QCheckBox("Auto-detect protection type")
     self.auto_detect_cb.setChecked(True)
     options_layout.addWidget(self.auto_detect_cb)
-    
+
     self.generate_both_cb = QCheckBox("Generate both Frida & Ghidra scripts")
     self.generate_both_cb.setChecked(True)
     options_layout.addWidget(self.generate_both_cb)
-    
+
     layout.addLayout(options_layout)
-    
+
     # Generation button
     self.generate_script_btn = QPushButton("Generate AI Script")
     self.generate_script_btn.clicked.connect(self.generate_ai_script)
     layout.addWidget(self.generate_script_btn)
-    
+
     # Progress bar
     self.generation_progress = QProgressBar()
     self.generation_progress.setVisible(False)
     layout.addWidget(self.generation_progress)
-    
+
     # Generated script preview
     self.script_preview = QTextEdit()
     self.script_preview.setMaximumHeight(200)
     self.script_preview.setReadOnly(True)
     layout.addWidget(self.script_preview)
-    
+
     group.setLayout(layout)
     return group
 ```
@@ -799,29 +799,29 @@ def create_ai_generation_group(self) -> QGroupBox:
 ```python
 class ScriptValidator:
     """Validates generated scripts are real and functional."""
-    
+
     def validate_frida_script(self, script: str) -> bool:
         """Validate Frida script syntax and structure."""
-        
+
         # Check for required elements
         required_elements = [
             'run:', 'function',  # Main function
             'Interceptor', 'Module',  # Frida APIs
             'console.log'  # Basic output
         ]
-        
+
         for element in required_elements:
             if element not in script:
                 logger.error(f"Generated script missing required element: {element}")
                 return False
-                
+
         # Check for forbidden placeholders
         forbidden = ['TODO', 'PLACEHOLDER', 'mock', 'stub', '...']
         for word in forbidden:
             if word in script:
                 logger.error(f"Generated script contains placeholder: {word}")
                 return False
-                
+
         # Try to parse as JavaScript (basic check)
         try:
             # Basic bracket matching
@@ -832,35 +832,35 @@ class ScriptValidator:
         except ValueError as e:
             logger.error(f"Script syntax error: {e}")
             return False
-            
+
         return True
-    
+
     def validate_ghidra_script(self, script: str) -> bool:
         """Validate Ghidra script syntax and structure."""
-        
+
         # Check for required imports
         required_imports = [
             'from ghidra',
             'GhidraScript'
         ]
-        
+
         for imp in required_imports:
             if imp not in script:
                 logger.error(f"Generated script missing required import: {imp}")
                 return False
-                
+
         # Check for main execution
         if 'def run(self):' not in script:
             logger.error("Generated script missing run method")
             return False
-            
+
         # Check for forbidden placeholders
         forbidden = ['TODO', 'PLACEHOLDER', 'pass  # Implement', '...']
         for word in forbidden:
             if word in script:
                 logger.error(f"Generated script contains placeholder: {word}")
                 return False
-                
+
         return True
 ```
 
@@ -871,14 +871,14 @@ class ScriptValidator:
 ```python
 class ScriptSuccessTracker:
     """Tracks successful scripts for learning."""
-    
+
     def __init__(self):
         self.success_db_path = "data/successful_scripts.json"
         self.pattern_correlations = {}
-        
+
     def record_success(self, script_metadata: Dict, script_content: str):
         """Record a successful bypass for future learning."""
-        
+
         success_record = {
             'timestamp': datetime.now().isoformat(),
             'binary_hash': script_metadata['binary_hash'],
@@ -887,10 +887,10 @@ class ScriptSuccessTracker:
             'key_patterns': script_metadata['key_patterns'],
             'script_hash': hashlib.sha256(script_content.encode()).hexdigest()
         }
-        
+
         # Save to success database
         self._save_success_record(success_record)
-        
+
         # Update pattern correlations
         self._update_pattern_correlations(success_record)
 ```
@@ -902,31 +902,31 @@ class ScriptSuccessTracker:
 ```python
 def deploy_generated_script(self, script_content: str, script_type: str, target_name: str) -> str:
     """Deploy generated script to appropriate location."""
-    
+
     # Determine save location
     if script_type == 'frida':
         script_dir = Path("scripts/frida")
         extension = '.js'
     elif script_type == 'ghidra':
-        script_dir = Path("scripts/ghidra")  
+        script_dir = Path("scripts/ghidra")
         extension = '.py'
     else:
         raise ValueError(f"Unknown script type: {script_type}")
-        
+
     # Generate unique filename
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"ai_generated_{target_name}_{timestamp}{extension}"
-    
+
     # Save script
     script_path = script_dir / filename
     script_path.write_text(script_content)
-    
+
     logger.info(f"Deployed generated script to: {script_path}")
-    
+
     # Auto-load if in active session
     if script_type == 'frida' and self.current_session:
         self.load_script(script_path)
-        
+
     return str(script_path)
 ```
 
@@ -937,23 +937,23 @@ def deploy_generated_script(self, script_content: str, script_type: str, target_
 ```python
 class IntellicrackCLI:
     """Enhanced CLI with AI script generation capabilities."""
-    
+
     def __init__(self):
         self.ai_agent = None
         self.script_generator = None
         self._setup_ai_commands()
-        
+
     def _setup_ai_commands(self):
         """Add AI-specific commands to CLI."""
         self.commands['ai-generate'] = self.cmd_ai_generate_script
         self.commands['ai-test'] = self.cmd_ai_test_script
         self.commands['ai-analyze'] = self.cmd_ai_analyze_target
         self.commands['ai-status'] = self.cmd_ai_status
-        
+
     def cmd_ai_generate_script(self, args):
         """
         Generate Frida/Ghidra scripts using AI.
-        
+
         Usage: intellicrack ai-generate <binary> [options]
         Options:
             --type {frida|ghidra|both}    Script type to generate
@@ -965,60 +965,60 @@ class IntellicrackCLI:
         script_type = args.type or 'both'
         use_qemu = args.qemu
         autonomous = args.auto
-        
+
         if not self.ai_agent:
             self.ai_agent = AutonomousAgent(
-                self.orchestrator, 
+                self.orchestrator,
                 self
             )
-            
+
         # Construct request based on options
         if autonomous:
             request = f"Autonomously create and test {script_type} scripts to bypass protections in {binary_path}"
         else:
             request = f"Generate {script_type} scripts for {binary_path}"
-            
+
         if use_qemu:
             request += " with QEMU testing"
-            
+
         # Process request
         self.print_info(f"Starting AI script generation for {binary_path}...")
         result = self.ai_agent.process_request(request)
-        
+
         if result['status'] == 'success':
             self.print_success(f"Successfully generated scripts: {result['script']['type']}")
             self.print_info(f"Script saved to: {result.get('script_path', 'memory')}")
         else:
             self.print_error(f"Script generation failed or cancelled")
-            
+
         return result
-        
+
     def cmd_ai_test_script(self, args):
         """
         Test generated scripts in QEMU.
-        
+
         Usage: intellicrack ai-test <script_path> <binary> [options]
         """
         script_path = args.script
         binary_path = args.binary
-        
+
         # Load script
         with open(script_path, 'r') as f:
             script_content = f.read()
-            
+
         # Determine script type
         script_type = 'frida' if script_path.endswith('.js') else 'ghidra'
-        
+
         # Create test manager
         test_manager = QEMUTestManager()
-        
+
         # Create snapshot and test
         self.print_info("Creating QEMU snapshot...")
         snapshot = test_manager.create_snapshot(binary_path)
-        
+
         try:
             self.print_info(f"Testing {script_type} script...")
-            
+
             if script_type == 'frida':
                 result = test_manager.test_frida_script(
                     snapshot, script_content, binary_path
@@ -1027,7 +1027,7 @@ class IntellicrackCLI:
                 result = test_manager.test_ghidra_script(
                     snapshot, script_content, binary_path
                 )
-                
+
             # Display results
             if result.success:
                 self.print_success("Script executed successfully!")
@@ -1035,58 +1035,58 @@ class IntellicrackCLI:
             else:
                 self.print_error("Script execution failed")
                 self.print_error(f"Error: {result.error}")
-                
+
         finally:
             test_manager.cleanup_snapshot(snapshot)
-            
+
     def cmd_ai_analyze_target(self, args):
         """
         Use AI to analyze target and suggest approach.
-        
+
         Usage: intellicrack ai-analyze <binary> [options]
         """
         binary_path = args.binary
-        
+
         self.print_info("Running AI-powered analysis...")
-        
+
         # First run static analysis
         static_results = self.analyze_static(binary_path)
-        
+
         # Use orchestrator for comprehensive analysis
         task_id = self.orchestrator.comprehensive_analysis(
-            binary_path, 
+            binary_path,
             callback=self._on_ai_analysis_complete
         )
-        
+
         self.print_info(f"Analysis task submitted: {task_id}")
         self.print_info("Waiting for AI analysis to complete...")
-        
+
         # Wait for completion (with timeout)
         import time
         timeout = 60
         start = time.time()
-        
+
         while time.time() - start < timeout:
             status = self.orchestrator.get_task_status(task_id)
             if status and status['status'] != 'active':
                 break
             time.sleep(1)
-            
+
     def _on_ai_analysis_complete(self, result):
         """Handle AI analysis completion."""
         if result.success:
             self.print_success("AI analysis completed successfully")
-            
+
             # Display findings
             if 'reasoning' in result.result_data:
                 reasoning = result.result_data['reasoning']
                 self.print_info(f"\nAI Analysis:\n{reasoning['analysis']}")
-                
+
                 if reasoning.get('recommendations'):
                     self.print_info("\nRecommendations:")
                     for rec in reasoning['recommendations']:
                         self.print_info(f"  - {rec}")
-                        
+
             # Suggest next steps
             self.print_info("\nSuggested next steps:")
             self.print_info("  1. Run 'ai-generate' to create bypass scripts")
@@ -1106,9 +1106,9 @@ def create_parser():
     parser = argparse.ArgumentParser(
         description="Intellicrack - AI-Powered Binary Analysis and Exploitation"
     )
-    
+
     subparsers = parser.add_subparsers(dest='command', help='Commands')
-    
+
     # AI Generate command
     ai_gen = subparsers.add_parser(
         'ai-generate',
@@ -1116,7 +1116,7 @@ def create_parser():
     )
     ai_gen.add_argument('binary', help='Target binary path')
     ai_gen.add_argument(
-        '--type', 
+        '--type',
         choices=['frida', 'ghidra', 'both'],
         default='both',
         help='Type of scripts to generate'
@@ -1141,7 +1141,7 @@ def create_parser():
         '--llm',
         help='Specific LLM to use (default: active)'
     )
-    
+
     # AI Test command
     ai_test = subparsers.add_parser(
         'ai-test',
@@ -1155,7 +1155,7 @@ def create_parser():
         default=30,
         help='Test timeout in seconds'
     )
-    
+
     # AI Analyze command
     ai_analyze = subparsers.add_parser(
         'ai-analyze',
@@ -1168,7 +1168,7 @@ def create_parser():
         default='standard',
         help='Analysis depth'
     )
-    
+
     return parser
 ```
 
@@ -1236,9 +1236,9 @@ ALL code must be real and executable - no placeholders."""
 ```python
 def prepare_generation_context(self, analysis_results: Dict) -> str:
     """Prepare rich context for optimal script generation."""
-    
+
     context_parts = []
-    
+
     # Binary information
     if 'binary_info' in analysis_results:
         info = analysis_results['binary_info']
@@ -1251,7 +1251,7 @@ def prepare_generation_context(self, analysis_results: Dict) -> str:
 - Size: {info.get('size', 0):,} bytes
 - Entropy: {info.get('entropy', 0):.2f}
 """)
-    
+
     # Protection mechanisms
     if 'protections' in analysis_results:
         protections = analysis_results['protections']
@@ -1262,7 +1262,7 @@ def prepare_generation_context(self, analysis_results: Dict) -> str:
                 context_parts.append(f"  Confidence: {prot['confidence']:.0%}")
             if 'details' in prot:
                 context_parts.append(f"  Details: {prot['details']}")
-    
+
     # Key functions
     if 'key_functions' in analysis_results:
         context_parts.append("\n## Key Functions for Hooking/Patching")
@@ -1272,25 +1272,25 @@ def prepare_generation_context(self, analysis_results: Dict) -> str:
                 context_parts.append(f"  Purpose: {func['purpose']}")
             if 'parameters' in func:
                 context_parts.append(f"  Parameters: {func['parameters']}")
-    
+
     # Strings
     if 'strings' in analysis_results:
         relevant_strings = [
-            s for s in analysis_results['strings'] 
-            if any(kw in s.lower() for kw in 
+            s for s in analysis_results['strings']
+            if any(kw in s.lower() for kw in
                 ['license', 'trial', 'demo', 'expire', 'activate', 'register'])
         ]
         if relevant_strings:
             context_parts.append("\n## Relevant Strings")
             for s in relevant_strings[:20]:  # Limit to 20
                 context_parts.append(f'- "{s}"')
-    
+
     # Network activity
     if 'network' in analysis_results:
         context_parts.append("\n## Network Activity")
         for endpoint in analysis_results['network'].get('endpoints', []):
             context_parts.append(f"- {endpoint['url']} ({endpoint['purpose']})")
-    
+
     # Previous attempts
     if 'previous_attempts' in analysis_results:
         context_parts.append("\n## Previous Attempt Results")
@@ -1298,7 +1298,7 @@ def prepare_generation_context(self, analysis_results: Dict) -> str:
             context_parts.append(f"- Iteration {attempt['iteration']}: {attempt['result']}")
             if 'error' in attempt:
                 context_parts.append(f"  Error: {attempt['error']}")
-    
+
     return "\n".join(context_parts)
 ```
 
@@ -1309,16 +1309,16 @@ def prepare_generation_context(self, analysis_results: Dict) -> str:
 ```python
 class ScriptDeploymentManager:
     """Manages deployment of generated scripts."""
-    
+
     def __init__(self):
         self.deployment_history = []
         self.active_deployments = {}
-        
+
     def deploy_script(self, script: Dict, target_process: str = None) -> Dict:
         """Deploy a script with safety checks."""
-        
+
         deployment_id = f"deploy_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
+
         # Validate script first
         validator = ScriptValidator()
         if script['type'] == 'frida':
@@ -1327,17 +1327,17 @@ class ScriptDeploymentManager:
         elif script['type'] == 'ghidra':
             if not validator.validate_ghidra_script(script['content']):
                 return {"status": "error", "message": "Script validation failed"}
-        
+
         # Create backup if modifying files
         if script['type'] == 'ghidra' and 'patches' in script:
             self._create_backup(script['target_binary'])
-        
+
         # Deploy based on type
         if script['type'] == 'frida':
             result = self._deploy_frida_script(script, target_process)
         else:
             result = self._deploy_ghidra_script(script)
-        
+
         # Record deployment
         self.deployment_history.append({
             'id': deployment_id,
@@ -1345,39 +1345,39 @@ class ScriptDeploymentManager:
             'script': script,
             'result': result
         })
-        
+
         if result['status'] == 'success':
             self.active_deployments[deployment_id] = {
                 'script': script,
                 'process': target_process,
                 'start_time': datetime.now()
             }
-        
+
         return result
-    
+
     def _deploy_frida_script(self, script: Dict, target_process: str = None) -> Dict:
         """Deploy Frida script to target process."""
         try:
             import frida
-            
+
             # Save script to file
             script_path = Path("scripts/frida/deployed") / f"{script.get('name', 'generated')}.js"
             script_path.parent.mkdir(parents=True, exist_ok=True)
             script_path.write_text(script['content'])
-            
+
             # Attach to process if specified
             if target_process:
                 if target_process.isdigit():
                     session = frida.attach(int(target_process))
                 else:
                     session = frida.attach(target_process)
-                
+
                 # Load script
                 with open(script_path, 'r') as f:
                     script_obj = session.create_script(f.read())
-                
+
                 script_obj.load()
-                
+
                 return {
                     "status": "success",
                     "message": f"Script deployed to process {target_process}",
@@ -1390,13 +1390,13 @@ class ScriptDeploymentManager:
                     "message": "Script saved, ready for manual deployment",
                     "script_path": str(script_path)
                 }
-                
+
         except Exception as e:
             return {
                 "status": "error",
                 "message": f"Deployment failed: {str(e)}"
             }
-    
+
     def _deploy_ghidra_script(self, script: Dict) -> Dict:
         """Deploy Ghidra script."""
         try:
@@ -1404,13 +1404,13 @@ class ScriptDeploymentManager:
             script_path = Path("scripts/ghidra/deployed") / f"{script.get('name', 'generated')}.py"
             script_path.parent.mkdir(parents=True, exist_ok=True)
             script_path.write_text(script['content'])
-            
+
             # If script includes patches, prepare patch file
             if 'patches' in script:
                 patch_path = script_path.with_suffix('.patches.json')
                 with open(patch_path, 'w') as f:
                     json.dump(script['patches'], f, indent=2)
-                
+
                 return {
                     "status": "success",
                     "message": "Ghidra script and patches saved",
@@ -1423,13 +1423,13 @@ class ScriptDeploymentManager:
                     "message": "Ghidra script saved",
                     "script_path": str(script_path)
                 }
-                
+
         except Exception as e:
             return {
                 "status": "error",
                 "message": f"Deployment failed: {str(e)}"
             }
-    
+
     def _create_backup(self, binary_path: str):
         """Create backup of binary before patching."""
         backup_path = f"{binary_path}.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -1445,7 +1445,7 @@ class ScriptDeploymentManager:
 For EVERY feature implementation, developers MUST follow this process:
 
 1. **VERIFY**: Check if the feature already exists in Intellicrack
-2. **ANALYZE**: If it exists, determine if it meets the requirements  
+2. **ANALYZE**: If it exists, determine if it meets the requirements
 3. **ENHANCE**: Improve existing features to maximum potential
 4. **IMPLEMENT**: Only create new code if feature is missing
 5. **INTEGRATE**: Ensure seamless integration with existing systems
@@ -1462,7 +1462,7 @@ For EVERY feature implementation, developers MUST follow this process:
 - [ ] Review `intellicrack/ai/autonomous_agent.py` if it exists
 
 #### Implementation Tasks:
-- [ ] IF ai_script_generator.py exists: 
+- [ ] IF ai_script_generator.py exists:
   - Enhance with autonomous generation features
   - Add iterative refinement capabilities
   - Integrate with existing orchestrator
@@ -1706,7 +1706,7 @@ For EVERY feature implementation, developers MUST follow this process:
 #### Implementation Tasks:
 - [ ] End-to-end testing:
   - Script generation workflow
-  - Code modification workflow  
+  - Code modification workflow
   - QEMU testing pipeline
   - User approval mechanisms
 - [ ] Performance optimization:
@@ -1737,7 +1737,7 @@ For EVERY feature implementation, developers MUST follow this process:
           self.success_db = "data/ai_successes.db"
           self.failure_db = "data/ai_failures.db"
           self.pattern_evolution_engine = PatternEvolutionEngine()
-          
+
       def record_outcome(self, script, target, result):
           """Record and learn from outcomes."""
           # Store successful patterns with context
@@ -1775,7 +1775,7 @@ For EVERY feature implementation, developers MUST follow this process:
               'crypto_specialist': CryptoAnalysisAgent(),
               'coordinator': CoordinatorAgent()
           }
-          
+
       def collaborative_analysis(self, target):
           """Multiple specialists analyze target."""
           # Parallel analysis by specialists
@@ -1808,7 +1808,7 @@ For EVERY feature implementation, developers MUST follow this process:
           self.execution_monitor = ExecutionMonitor()
           self.dynamic_patcher = DynamicPatcher()
           self.ai_debugger = AIAssistedDebugger()
-          
+
       def monitor_and_adapt(self, script, process):
           """Real-time monitoring with adaptation."""
           # Monitor execution flow
@@ -1843,7 +1843,7 @@ For EVERY feature implementation, developers MUST follow this process:
           self.business_logic_detector = BusinessLogicDetector()
           self.intent_recognizer = IntentRecognizer()
           self.relationship_mapper = RelationshipMapper()
-          
+
       def analyze_semantics(self, code):
           """Understand code at semantic level."""
           # Parse and analyze AST
@@ -1878,7 +1878,7 @@ For EVERY feature implementation, developers MUST follow this process:
           self.chain_optimizer = ChainOptimizer()
           self.safety_verifier = SafetyVerifier()
           self.rollback_manager = RollbackManager()
-          
+
       def build_exploit_chain(self, vulnerabilities):
           """Build safe, optimal exploit chains."""
           # Analyze available primitives
@@ -1913,7 +1913,7 @@ For EVERY feature implementation, developers MUST follow this process:
           self.resource_manager = ResourceManager()
           self.parallel_executor = ParallelExecutor()
           self.cache_manager = CacheManager()
-          
+
       def optimize_execution(self, scripts):
           """Comprehensive optimization."""
           # Minimize hook overhead
@@ -1948,7 +1948,7 @@ For EVERY feature implementation, developers MUST follow this process:
           self.protection_mapper = ProtectionMapper()
           self.analytics_dashboard = AnalyticsDashboard()
           self.report_generator = InteractiveReportGenerator()
-          
+
       def create_visualizations(self, data):
           """Generate comprehensive visualizations."""
           # Script flow diagrams
@@ -1983,7 +1983,7 @@ For EVERY feature implementation, developers MUST follow this process:
           self.knowledge_base = SharedKnowledgeBase()
           self.peer_review_ai = PeerReviewAI()
           self.community_connector = CommunityConnector()
-          
+
       def enable_collaboration(self):
           """Full collaboration features."""
           # Real-time session sharing
@@ -2018,7 +2018,7 @@ For EVERY feature implementation, developers MUST follow this process:
           self.success_estimator = SuccessEstimator()
           self.time_estimator = TimeEstimator()
           self.resource_predictor = ResourcePredictor()
-          
+
       def predict_analysis(self, target):
           """Comprehensive prediction."""
           # Predict protection types
@@ -2053,7 +2053,7 @@ For EVERY feature implementation, developers MUST follow this process:
           self.recovery_engine = RecoveryEngine()
           self.fallback_strategies = FallbackStrategies()
           self.self_healer = SelfHealingEngine()
-          
+
       def ensure_resilience(self):
           """Complete resilience system."""
           # Continuous state saving
@@ -2081,7 +2081,7 @@ For EVERY feature implementation, developers MUST follow this process:
 ### New Critical Components Added:
 
 1. **Learning & Evolution** (Phase 11): Continuous improvement from successes/failures
-2. **Multi-Agent System** (Phase 12): Specialized agents working collaboratively  
+2. **Multi-Agent System** (Phase 12): Specialized agents working collaboratively
 3. **Real-Time Adaptation** (Phase 13): Dynamic script modification during execution
 4. **Semantic Understanding** (Phase 14): Deep code comprehension and intent analysis
 5. **Exploit Chaining** (Phase 15): Automated vulnerability chain construction
@@ -2186,7 +2186,7 @@ Would you like to deploy this script to the actual application? (y/n)
 ### 1. Analysis Engine Integration
 The AI system leverages all existing analysis engines:
 - Binary structure analysis
-- Protection detection  
+- Protection detection
 - String and pattern analysis
 - Network protocol identification
 - Cross-reference analysis

@@ -15,7 +15,7 @@ This document summarizes the implementation of the Plugin System Update Plan for
 
 #### 1.2 Add Help Buttons (Completed)
 - Added help buttons next to each plugin section header
-- Created `create_help_button()` method 
+- Created `create_help_button()` method
 - Implemented `open_plugin_documentation()` and `show_embedded_help()` methods
 - Help content covers Custom Plugins, Frida Scripts, Ghidra Scripts, and Built-in Actions
 
@@ -76,7 +76,7 @@ Created `PluginEditor` widget with:
 #### Plugin Editor Dialog
 Created `PluginEditorDialog` with:
 - **Multi-tab Interface**: Editor, Testing, Documentation
-- **Testing Tab**: 
+- **Testing Tab**:
   - Test binary selection
   - Real-time output display
   - Process control (Run/Stop)

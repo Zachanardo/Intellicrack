@@ -85,10 +85,11 @@ class DashboardManager:
         Collects information about the currently loaded binary including
         file size, path, name, and last modification time.
         """
-        if (hasattr(self.app, "binary_path") and
-            self.app.binary_path and
-            os.path.exists(self.app.binary_path)):
-
+        if (
+            hasattr(self.app, "binary_path")
+            and self.app.binary_path
+            and os.path.exists(self.app.binary_path)
+        ):
             try:
                 binary_size = os.path.getsize(self.app.binary_path)
                 binary_name = os.path.basename(self.app.binary_path)
@@ -99,7 +100,9 @@ class DashboardManager:
                     "path": self.app.binary_path,
                     "size": binary_size,
                     "size_formatted": self._format_size(binary_size),
-                    "last_modified": datetime.datetime.fromtimestamp(last_modified).strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_modified": datetime.datetime.fromtimestamp(last_modified).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
                 }
 
                 self.logger.debug("Updated binary stats for %s", binary_name)
@@ -132,7 +135,9 @@ class DashboardManager:
                 "types": patch_types,
             }
 
-            self.logger.debug("Updated patch stats: %s total, %s applied", patch_count, applied_count)
+            self.logger.debug(
+                "Updated patch stats: %s total, %s applied", patch_count, applied_count
+            )
 
         else:
             self.stats["patches"] = {
@@ -149,8 +154,7 @@ class DashboardManager:
         """
         if hasattr(self.app, "analyze_results") and self.app.analyze_results:
             result_count = len(self.app.analyze_results)
-            last_run = (self.recent_activities[0]["timestamp"]
-                       if self.recent_activities else "Never")
+            last_run = self.recent_activities[0]["timestamp"] if self.recent_activities else "Never"
 
             self.stats["analysis"] = {
                 "count": result_count,
@@ -171,9 +175,7 @@ class DashboardManager:
         Monitors license server status including running state
         and port configuration for network-based license operations.
         """
-        if (hasattr(self.app, "license_server_instance") and
-            self.app.license_server_instance):
-
+        if hasattr(self.app, "license_server_instance") and self.app.license_server_instance:
             server = self.app.license_server_instance
             self.stats["license_server"] = {
                 "running": getattr(server, "running", False),
@@ -261,7 +263,7 @@ class DashboardManager:
 
         # Limit the number of recent activities
         if len(self.recent_activities) > self.max_recent_activities:
-            self.recent_activities = self.recent_activities[:self.max_recent_activities]
+            self.recent_activities = self.recent_activities[: self.max_recent_activities]
 
         self.logger.info("Activity added: %s - %s", activity_type, description)
 
@@ -285,8 +287,7 @@ class DashboardManager:
         return self.recent_activities.copy()
 
     def clear_activities(self) -> None:
-        """Clear all recent activities from the dashboard.
-        """
+        """Clear all recent activities from the dashboard."""
         self.recent_activities.clear()
         self.logger.info("Recent activities cleared")
 
@@ -305,7 +306,9 @@ class DashboardManager:
             "patch_count": self.stats.get("patches", {}).get("count", 0),
             "analysis_count": self.stats.get("analysis", {}).get("count", 0),
             "license_server_running": self.stats.get("license_server", {}).get("running", False),
-            "advanced_features_active": self.stats.get("advanced_analysis", {}).get("active_count", 0),
+            "advanced_features_active": self.stats.get("advanced_analysis", {}).get(
+                "active_count", 0
+            ),
             "recent_activity_count": len(self.recent_activities),
         }
 

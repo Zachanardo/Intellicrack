@@ -28,7 +28,7 @@ Intellicrack supports multiple symbolic execution engines with automatic platfor
 ### Windows Users
 1. **Available Engines**: angr (full features), simconcolic (fallback)
 2. **Recommended**: Always use "Symbolic Execution" (angr)
-3. **UI Behavior**: 
+3. **UI Behavior**:
    - "Concolic Execution" shows informative message directing to angr
    - No manticore errors or missing dependency warnings
 

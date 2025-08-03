@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import hashlib
 import json
 import logging
@@ -32,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import joblib
+
     JOBLIB_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in additional_runners: %s", e)
@@ -40,6 +40,7 @@ except ImportError as e:
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in additional_runners: %s", e)
@@ -47,8 +48,9 @@ except ImportError as e:
     PSUTIL_AVAILABLE = False
 
 
-def run_comprehensive_analysis(binary_path: str, output_dir: str | None = None,
-                             analyses: list[str] | None = None) -> dict[str, Any]:
+def run_comprehensive_analysis(
+    binary_path: str, output_dir: str | None = None, analyses: list[str] | None = None
+) -> dict[str, Any]:
     """Run comprehensive analysis pipeline on a binary.
 
     Args:
@@ -70,9 +72,14 @@ def run_comprehensive_analysis(binary_path: str, output_dir: str | None = None,
     # Default analyses if none specified
     if analyses is None:
         analyses = [
-            "binary_info", "format_analysis", "protection_scan",
-            "string_extraction", "entropy_analysis", "pattern_search",
-            "vulnerability_scan", "license_analysis",
+            "binary_info",
+            "format_analysis",
+            "protection_scan",
+            "string_extraction",
+            "entropy_analysis",
+            "pattern_search",
+            "vulnerability_scan",
+            "license_analysis",
         ]
 
     results = {
@@ -109,13 +116,17 @@ def run_comprehensive_analysis(binary_path: str, output_dir: str | None = None,
             elif analysis == "protection_scan":
                 results["analyses"]["protection_scan"] = scan_protectors(binary_path)
                 # Also run comprehensive protection scan
-                results["analyses"]["comprehensive_protection"] = run_comprehensive_protection_scan(binary_path)
+                results["analyses"]["comprehensive_protection"] = run_comprehensive_protection_scan(
+                    binary_path
+                )
 
             elif analysis == "string_extraction":
                 # Use distributed processing for strings
                 from .distributed_processing import _distributed_string_extraction
+
                 results["analyses"]["strings"] = _distributed_string_extraction(
-                    binary_path, {"min_length": 4},
+                    binary_path,
+                    {"min_length": 4},
                 )
 
             elif analysis == "entropy_analysis":
@@ -130,8 +141,14 @@ def run_comprehensive_analysis(binary_path: str, output_dir: str | None = None,
             elif analysis == "license_analysis":
                 # Specialized license analysis
                 license_patterns = [
-                    b"license", b"LICENSE", b"activation", b"serial",
-                    b"trial", b"expire", b"register", b"key",
+                    b"license",
+                    b"LICENSE",
+                    b"activation",
+                    b"serial",
+                    b"trial",
+                    b"expire",
+                    b"register",
+                    b"key",
                 ]
                 results["analyses"]["license"] = analyze_patterns(binary_path, license_patterns)
 
@@ -314,6 +331,7 @@ def run_autonomous_crack(binary_path: str, target_type: str | None = None) -> di
         # Phase 3: Verify patches (validation only for safety)
         if patches.get("suggested_patches"):
             from ..exploitation.exploitation import verify_patches_without_applying
+
             simulation = verify_patches_without_applying(binary_path, patches["suggested_patches"])
             results["patching_phase"]["simulation"] = simulation
 
@@ -332,7 +350,9 @@ def run_autonomous_crack(binary_path: str, target_type: str | None = None) -> di
     return results
 
 
-def run_full_autonomous_mode(binary_path: str, config: dict[str, Any] | None = None) -> dict[str, Any]:
+def run_full_autonomous_mode(
+    binary_path: str, config: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Run full autonomous operation mode.
 
     Args:
@@ -362,11 +382,18 @@ def run_full_autonomous_mode(binary_path: str, config: dict[str, Any] | None = N
         # Phase 1: Comprehensive analysis
         results["phases"]["analysis"] = run_comprehensive_analysis(
             binary_path,
-            analyses=None if config["analysis_depth"] == "full" else ["binary_info", "protection_scan"],
+            analyses=None
+            if config["analysis_depth"] == "full"
+            else ["binary_info", "protection_scan"],
         )
 
         # Phase 2: Protection removal
-        if results["phases"]["analysis"].get("analyses", {}).get("protection_scan", {}).get("protections_found"):
+        if (
+            results["phases"]["analysis"]
+            .get("analyses", {})
+            .get("protection_scan", {})
+            .get("protections_found")
+        ):
             from ..analysis.security_analysis import run_tpm_bypass, run_vm_bypass
 
             results["phases"]["protection_removal"] = {
@@ -463,9 +490,11 @@ def run_incremental_analysis_ui(binary_path: str, cache_dir: str | None = None) 
 
         # Add UI-specific information
         results["ui_data"] = {
-            "cache_percentage": (results["cache_hits"] /
-                               (results["cache_hits"] + results["cache_misses"]) * 100
-                               if results["cache_hits"] + results["cache_misses"] > 0 else 0),
+            "cache_percentage": (
+                results["cache_hits"] / (results["cache_hits"] + results["cache_misses"]) * 100
+                if results["cache_hits"] + results["cache_misses"] > 0
+                else 0
+            ),
             "new_analyses": list(results.get("new_results", {}).keys()),
             "cached_analyses": list(results.get("cached_results", {}).keys()),
         }
@@ -516,11 +545,13 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> dict
 
                     # Look for license check patterns
                     if _is_license_check_pattern(cfg):
-                        results["license_checks_found"].append({
-                            "function": func["name"],
-                            "address": func["address"],
-                            "complexity": cfg.get("complexity", 0),
-                        })
+                        results["license_checks_found"].append(
+                            {
+                                "function": func["name"],
+                                "address": func["address"],
+                                "complexity": cfg.get("complexity", 0),
+                            }
+                        )
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error(f"Error analyzing function {func['name']}: {e}")
@@ -538,8 +569,9 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> dict
         return {"error": str(e)}
 
 
-def run_external_tool(tool_name: str, binary_path: str,
-                     args: list[str] | None = None) -> dict[str, Any]:
+def run_external_tool(
+    tool_name: str, binary_path: str, args: list[str] | None = None
+) -> dict[str, Any]:
     """Run external analysis tool.
 
     Args:
@@ -609,6 +641,7 @@ def run_external_tool(tool_name: str, binary_path: str,
 
 
 # Platform-specific functions
+
 
 def run_windows_activator(product: str = "windows", method: str = "kms") -> dict[str, Any]:
     """Run Windows activation.
@@ -722,6 +755,7 @@ def run_adobe_licensex_manually(action: str = "bypass") -> dict[str, Any]:
 
 # Utility functions
 
+
 def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> dict[str, Any]:
     """Validate a dataset for ML training.
 
@@ -744,7 +778,11 @@ def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> dict[st
         if dataset_type == "binary":
             # Validate binary dataset
             if os.path.isdir(dataset_path):
-                files = [f for f in os.listdir(dataset_path) if f.endswith((".exe", ".dll", ".so", ".dylib"))]
+                files = [
+                    f
+                    for f in os.listdir(dataset_path)
+                    if f.endswith((".exe", ".dll", ".so", ".dylib"))
+                ]
                 results["file_count"] = len(files)
 
                 if len(files) == 0:
@@ -771,8 +809,7 @@ def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> dict[st
     return results
 
 
-def verify_hash(file_path: str, expected_hash: str,
-               algorithm: str = "sha256") -> dict[str, Any]:
+def verify_hash(file_path: str, expected_hash: str, algorithm: str = "sha256") -> dict[str, Any]:
     """Verify file hash.
 
     Args:
@@ -809,8 +846,7 @@ def verify_hash(file_path: str, expected_hash: str,
     return results
 
 
-def run_external_command(command: str | list[str],
-                        timeout: int = 60) -> dict[str, Any]:
+def run_external_command(command: str | list[str], timeout: int = 60) -> dict[str, Any]:
     """Run external command.
 
     Args:
@@ -830,7 +866,9 @@ def run_external_command(command: str | list[str],
         if isinstance(command, str):
             command = command.split()
 
-        result = subprocess.run(command, capture_output=True, text=True, timeout=timeout, check=False)
+        result = subprocess.run(
+            command, capture_output=True, text=True, timeout=timeout, check=False
+        )
 
         results["executed"] = True
         results["return_code"] = result.returncode
@@ -1048,20 +1086,42 @@ def _detect_usb_dongles() -> list[dict[str, Any]]:
             devices = usb.core.find(find_all=True)
             for device in devices:
                 try:
-                    manufacturer = usb.util.get_string(device, device.iManufacturer) if device.iManufacturer else "Unknown"
-                    product = usb.util.get_string(device, device.iProduct) if device.iProduct else "Unknown"
+                    manufacturer = (
+                        usb.util.get_string(device, device.iManufacturer)
+                        if device.iManufacturer
+                        else "Unknown"
+                    )
+                    product = (
+                        usb.util.get_string(device, device.iProduct)
+                        if device.iProduct
+                        else "Unknown"
+                    )
 
                     # Check for known dongle manufacturers
-                    known_vendors = ["sentinel", "hasp", "aladdin", "wibu", "securikey", "rockey", "marx", "eutron"]
-                    if any(vendor in manufacturer.lower() or vendor in product.lower() for vendor in known_vendors):
-                        dongles.append({
-                            "type": "usb_dongle",
-                            "vendor_id": device.idVendor,
-                            "product_id": device.idProduct,
-                            "manufacturer": manufacturer,
-                            "product": product,
-                            "confidence": 0.9,
-                        })
+                    known_vendors = [
+                        "sentinel",
+                        "hasp",
+                        "aladdin",
+                        "wibu",
+                        "securikey",
+                        "rockey",
+                        "marx",
+                        "eutron",
+                    ]
+                    if any(
+                        vendor in manufacturer.lower() or vendor in product.lower()
+                        for vendor in known_vendors
+                    ):
+                        dongles.append(
+                            {
+                                "type": "usb_dongle",
+                                "vendor_id": device.idVendor,
+                                "product_id": device.idProduct,
+                                "manufacturer": manufacturer,
+                                "product": product,
+                                "confidence": 0.9,
+                            }
+                        )
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.debug("Failed to get USB device info: %s", e)
                     continue
@@ -1070,6 +1130,7 @@ def _detect_usb_dongles() -> list[dict[str, Any]]:
             logger.error("Import error in additional_runners: %s", e)
             # Fallback to platform-specific methods
             import platform
+
             system = platform.system().lower()
 
             if system == "windows":
@@ -1094,10 +1155,12 @@ def _detect_windows_usb_dongles() -> list[dict[str, Any]]:
     dongles = []
 
     try:
-
         # Use PowerShell to query USB devices
-        cmd = ["powershell", "-Command",
-               "Get-WmiObject -Class Win32_USBDevice | Select-Object DeviceID, Description, Manufacturer | ConvertTo-Json"]
+        cmd = [
+            "powershell",
+            "-Command",
+            "Get-WmiObject -Class Win32_USBDevice | Select-Object DeviceID, Description, Manufacturer | ConvertTo-Json",
+        ]
 
         result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
@@ -1110,17 +1173,35 @@ def _detect_windows_usb_dongles() -> list[dict[str, Any]]:
                 mfg = device.get("Manufacturer", "").lower()
 
                 # Check for dongle keywords
-                if any(keyword in desc or keyword in mfg for keyword in
-                      ["sentinel", "hasp", "wibu", "aladdin", "dongle", "key", "securikey"]):
-                    dongles.append({
-                        "type": "windows_usb_dongle",
-                        "device_id": device.get("DeviceID"),
-                        "description": device.get("Description"),
-                        "manufacturer": device.get("Manufacturer"),
-                        "confidence": 0.85,
-                    })
+                if any(
+                    keyword in desc or keyword in mfg
+                    for keyword in [
+                        "sentinel",
+                        "hasp",
+                        "wibu",
+                        "aladdin",
+                        "dongle",
+                        "key",
+                        "securikey",
+                    ]
+                ):
+                    dongles.append(
+                        {
+                            "type": "windows_usb_dongle",
+                            "device_id": device.get("DeviceID"),
+                            "description": device.get("Description"),
+                            "manufacturer": device.get("Manufacturer"),
+                            "confidence": 0.85,
+                        }
+                    )
 
-    except (OSError, ValueError, RuntimeError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
+    except (
+        OSError,
+        ValueError,
+        RuntimeError,
+        json.JSONDecodeError,
+        subprocess.TimeoutExpired,
+    ) as e:
         logger.debug("Windows USB dongle detection error: %s", e)
 
     return dongles
@@ -1137,20 +1218,23 @@ def _detect_linux_usb_dongles() -> list[dict[str, Any]]:
     dongles = []
 
     try:
-
         # Use lsusb to list USB devices
         result = subprocess.run(["lsusb"], check=False, capture_output=True, text=True, timeout=5)
         if result.returncode == 0:
             for line in result.stdout.split("\n"):
                 if line.strip():
                     line_lower = line.lower()
-                    if any(keyword in line_lower for keyword in
-                          ["sentinel", "hasp", "wibu", "aladdin", "dongle", "key"]):
-                        dongles.append({
-                            "type": "linux_usb_dongle",
-                            "description": line.strip(),
-                            "confidence": 0.8,
-                        })
+                    if any(
+                        keyword in line_lower
+                        for keyword in ["sentinel", "hasp", "wibu", "aladdin", "dongle", "key"]
+                    ):
+                        dongles.append(
+                            {
+                                "type": "linux_usb_dongle",
+                                "description": line.strip(),
+                                "confidence": 0.8,
+                            }
+                        )
 
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
         logger.debug("Linux USB dongle detection error: %s", e)
@@ -1175,8 +1259,16 @@ def _detect_dongle_processes() -> list[dict[str, Any]]:
     try:
         # Known dongle process names
         dongle_processes = [
-            "aksusbd", "hasplms", "wkssvc", "nhsrvice", "aksusbd",
-            "sentinel", "wibukey", "cryptkey", "securikey", "rockey",
+            "aksusbd",
+            "hasplms",
+            "wkssvc",
+            "nhsrvice",
+            "aksusbd",
+            "sentinel",
+            "wibukey",
+            "cryptkey",
+            "securikey",
+            "rockey",
         ]
 
         for proc in psutil.process_iter(["pid", "name", "exe"]):
@@ -1184,15 +1276,19 @@ def _detect_dongle_processes() -> list[dict[str, Any]]:
                 proc_name = proc.info["name"].lower() if proc.info["name"] else ""
                 proc_exe = proc.info["exe"].lower() if proc.info["exe"] else ""
 
-                if any(dongle_proc in proc_name or dongle_proc in proc_exe
-                      for dongle_proc in dongle_processes):
-                    processes.append({
-                        "type": "dongle_process",
-                        "pid": proc.info["pid"],
-                        "name": proc.info["name"],
-                        "exe": proc.info["exe"],
-                        "confidence": 0.9,
-                    })
+                if any(
+                    dongle_proc in proc_name or dongle_proc in proc_exe
+                    for dongle_proc in dongle_processes
+                ):
+                    processes.append(
+                        {
+                            "type": "dongle_process",
+                            "pid": proc.info["pid"],
+                            "name": proc.info["name"],
+                            "exe": proc.info["exe"],
+                            "confidence": 0.9,
+                        }
+                    )
 
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 logger.error("Error in additional_runners: %s", e)
@@ -1215,6 +1311,7 @@ def _detect_dongle_drivers() -> list[dict[str, Any]]:
 
     try:
         import platform
+
         system = platform.system().lower()
 
         if system == "windows":
@@ -1239,7 +1336,6 @@ def _detect_windows_dongle_drivers() -> list[dict[str, Any]]:
     drivers = []
 
     try:
-
         # Check for known dongle drivers
         driver_patterns = ["hasp", "sentinel", "wibu", "aksusb", "securikey"]
 
@@ -1254,12 +1350,14 @@ def _detect_windows_dongle_drivers() -> list[dict[str, Any]]:
             for row in reader:
                 driver_name = row.get("Display Name", "").lower()
                 if any(pattern in driver_name for pattern in driver_patterns):
-                    drivers.append({
-                        "type": "windows_dongle_driver",
-                        "name": row.get("Display Name"),
-                        "path": row.get("Path"),
-                        "confidence": 0.85,
-                    })
+                    drivers.append(
+                        {
+                            "type": "windows_dongle_driver",
+                            "name": row.get("Display Name"),
+                            "path": row.get("Path"),
+                            "confidence": 0.85,
+                        }
+                    )
 
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
         logger.debug("Windows driver detection error: %s", e)
@@ -1278,20 +1376,22 @@ def _detect_linux_dongle_drivers() -> list[dict[str, Any]]:
     drivers = []
 
     try:
-
         # Check loaded kernel modules
         result = subprocess.run(["lsmod"], check=False, capture_output=True, text=True, timeout=5)
         if result.returncode == 0:
             for line in result.stdout.split("\n")[1:]:  # Skip header
                 if line.strip():
                     module_name = line.split()[0].lower()
-                    if any(pattern in module_name for pattern in
-                          ["hasp", "sentinel", "wibu", "dongle"]):
-                        drivers.append({
-                            "type": "linux_dongle_driver",
-                            "module": module_name,
-                            "confidence": 0.8,
-                        })
+                    if any(
+                        pattern in module_name for pattern in ["hasp", "sentinel", "wibu", "dongle"]
+                    ):
+                        drivers.append(
+                            {
+                                "type": "linux_dongle_driver",
+                                "module": module_name,
+                                "confidence": 0.8,
+                            }
+                        )
 
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
         logger.debug("Linux driver detection error: %s", e)
@@ -1327,12 +1427,14 @@ def _detect_license_dongles() -> list[dict[str, Any]]:
             try:
                 for file_path in glob.glob(pattern, recursive=True):
                     if os.path.isfile(file_path):
-                        license_files.append({
-                            "type": "license_file",
-                            "path": file_path,
-                            "size": os.path.getsize(file_path),
-                            "confidence": 0.7,
-                        })
+                        license_files.append(
+                            {
+                                "type": "license_file",
+                                "path": file_path,
+                                "size": os.path.getsize(file_path),
+                                "confidence": 0.7,
+                            }
+                        )
             except (OSError, ValueError, RuntimeError) as e:
                 logger.debug("Failed to search pattern '%s': %s", pattern, e)
                 continue
@@ -1365,12 +1467,14 @@ def _detect_network_dongles() -> list[dict[str, Any]]:
                 sock.settimeout(1)
                 result = sock.connect_ex(("localhost", port))
                 if result == 0:
-                    network_dongles.append({
-                        "type": "network_dongle",
-                        "host": "localhost",
-                        "port": port,
-                        "confidence": 0.8,
-                    })
+                    network_dongles.append(
+                        {
+                            "type": "network_dongle",
+                            "host": "localhost",
+                            "port": port,
+                            "confidence": 0.8,
+                        }
+                    )
                 sock.close()
             except (OSError, ValueError, RuntimeError) as e:
                 logger.debug("Port %d connection failed: %s", port, e)
@@ -1419,11 +1523,19 @@ def detect_hardware_dongles() -> dict[str, Any]:
         results["network_dongles"] = network_dongles
 
         # Analyze findings
-        total_detected = len(results["usb_devices"]) + len(process_dongles) + len(driver_dongles) + len(license_dongles) + len(network_dongles)
+        total_detected = (
+            len(results["usb_devices"])
+            + len(process_dongles)
+            + len(driver_dongles)
+            + len(license_dongles)
+            + len(network_dongles)
+        )
         if total_detected > 0:
             results["detected"] = True
             results["confidence"] = min(0.95, 0.3 + (total_detected * 0.15))
-            results["message"] = f"Detected {total_detected} potential hardware protection mechanism(s)"
+            results["message"] = (
+                f"Detected {total_detected} potential hardware protection mechanism(s)"
+            )
         else:
             results["detected"] = False
             results["confidence"] = 0.8
@@ -1448,6 +1560,7 @@ def detect_local_tpm_protection(binary_path: str) -> dict[str, Any]:
     """
     try:
         from ..protection.protection_detection import detect_tpm_protection as tpm_detect
+
         return tpm_detect(binary_path)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error detecting TPM protection: %s", e)
@@ -1507,8 +1620,9 @@ def run_local_protection_scan(binary_path: str) -> dict[str, Any]:
         results["summary"] = {
             "total_protections": len(results["protections"]),
             "protection_types": list(results["protections"].keys()),
-            "protection_level": "high" if len(results["protections"]) > 3 else
-                              ("medium" if len(results["protections"]) > 1 else "low"),
+            "protection_level": "high"
+            if len(results["protections"]) > 3
+            else ("medium" if len(results["protections"]) > 1 else "low"),
         }
 
         return results
@@ -1519,6 +1633,7 @@ def run_local_protection_scan(binary_path: str) -> dict[str, Any]:
 
 
 # Helper functions
+
 
 def _generate_analysis_summary(analyses: dict[str, Any]) -> dict[str, Any]:
     """Generate summary from analysis results.
@@ -1674,15 +1789,22 @@ def _verify_crack(binary_path: str) -> dict[str, Any]:
             verification_result["verified"] = verification_result["confidence"] > 0.7
 
             if verification_result["verified"]:
-                verification_result["findings"].append(f"Crack verification successful with {verification_result['confidence']:.2f} confidence")
+                verification_result["findings"].append(
+                    f"Crack verification successful with {verification_result['confidence']:.2f} confidence"
+                )
             else:
-                verification_result["warnings"].append(f"Crack verification inconclusive (confidence: {verification_result['confidence']:.2f})")
+                verification_result["warnings"].append(
+                    f"Crack verification inconclusive (confidence: {verification_result['confidence']:.2f})"
+                )
         else:
             verification_result["warnings"].append("No verification methods succeeded")
             verification_result["confidence"] = 0.0
 
-        logger.info("Crack verification completed. Verified: %s, Confidence: %.2f",
-                   verification_result["verified"], verification_result["confidence"])
+        logger.info(
+            "Crack verification completed. Verified: %s, Confidence: %.2f",
+            verification_result["verified"],
+            verification_result["confidence"],
+        )
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in crack verification: %s", e)
@@ -1722,10 +1844,10 @@ def _verify_static_analysis(binary_path: str) -> dict[str, Any]:
             # Look for patterns indicating successful patching
             crack_patterns = [
                 b"\x90\x90\x90",  # NOP sleds
-                b"\xEB",          # JMP instructions
-                b"\xB0\x01",      # MOV AL, 1
-                b"\x31\xC0",      # XOR EAX, EAX
-                b"\xC3",           # RET
+                b"\xeb",  # JMP instructions
+                b"\xb0\x01",  # MOV AL, 1
+                b"\x31\xc0",  # XOR EAX, EAX
+                b"\xc3",  # RET
             ]
 
             patterns_found = 0
@@ -1737,7 +1859,9 @@ def _verify_static_analysis(binary_path: str) -> dict[str, Any]:
             if patterns_found > 0:
                 result["confidence"] = min(0.9, 0.3 + (patterns_found * 0.2))
                 result["success"] = True
-                result["checks"].append(f"Static analysis suggests binary has been modified ({patterns_found} patterns)")
+                result["checks"].append(
+                    f"Static analysis suggests binary has been modified ({patterns_found} patterns)"
+                )
             else:
                 result["checks"].append("No obvious patch patterns detected")
 
@@ -1784,7 +1908,8 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
             # Run with timeout to prevent hanging
             proc = subprocess.run(
                 [binary_path, "--version"],  # Try common version flag
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=10,
             )
@@ -1807,7 +1932,8 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
         try:
             proc = subprocess.run(
                 [binary_path],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=5,
             )
@@ -1816,8 +1942,15 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
 
             # Look for license failure messages
             license_errors = [
-                "license", "trial", "expired", "invalid", "demo",
-                "activation", "serial", "key", "registration",
+                "license",
+                "trial",
+                "expired",
+                "invalid",
+                "demo",
+                "activation",
+                "serial",
+                "key",
+                "registration",
             ]
 
             has_license_errors = any(error in output for error in license_errors)
@@ -1850,7 +1983,8 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
 
                 proc = subprocess.run(
                     [binary_path, "--help"],
-                    check=False, capture_output=True,
+                    check=False,
+                    capture_output=True,
                     text=True,
                     timeout=5,
                     env=env,
@@ -1893,7 +2027,7 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
         # Protection 1: Check for debugger detection bypass
         try:
             with open(binary_path, "rb") as f:
-                binary_data = f.read(min(1024*1024, 1000000))  # Read first 1MB
+                binary_data = f.read(min(1024 * 1024, 1000000))  # Read first 1MB
 
             # Look for common anti-debug patterns that should be NOPed
             anti_debug_patterns = [
@@ -1902,13 +2036,17 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
                 b"NtQueryInformationProcess",
             ]
 
-            debug_protection_found = sum(1 for pattern in anti_debug_patterns if pattern in binary_data)
+            debug_protection_found = sum(
+                1 for pattern in anti_debug_patterns if pattern in binary_data
+            )
 
             if debug_protection_found == 0:
                 result["protections"].append("Anti-debugging protection appears bypassed")
                 result["confidence"] += 0.3
             else:
-                result["protections"].append(f"Anti-debugging functions still present ({debug_protection_found})")
+                result["protections"].append(
+                    f"Anti-debugging functions still present ({debug_protection_found})"
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in additional_runners: %s", e)
@@ -1923,7 +2061,9 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
                 result["protections"].append("VM detection appears bypassed")
                 result["confidence"] += 0.2
             else:
-                result["protections"].append(f"VM detection strings still present ({vm_detection_found})")
+                result["protections"].append(
+                    f"VM detection strings still present ({vm_detection_found})"
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in additional_runners: %s", e)
@@ -1932,11 +2072,15 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
         # Protection 3: Check for integrity checks bypass
         try:
             integrity_patterns = [b"CRC", b"checksum", b"hash", b"MD5", b"SHA"]
-            integrity_checks_found = sum(1 for pattern in integrity_patterns if pattern in binary_data)
+            integrity_checks_found = sum(
+                1 for pattern in integrity_patterns if pattern in binary_data
+            )
 
             # If integrity checks are found but binary still runs, they may be bypassed
             if integrity_checks_found > 0:
-                result["protections"].append("Integrity check functions present but may be bypassed")
+                result["protections"].append(
+                    "Integrity check functions present but may be bypassed"
+                )
                 result["confidence"] += 0.2
             else:
                 result["protections"].append("No obvious integrity check functions found")
@@ -1976,19 +2120,21 @@ def _verify_license_bypass(binary_path: str) -> dict[str, Any]:
         # Check 1: Look for hardcoded success returns
         try:
             with open(binary_path, "rb") as f:
-                binary_data = f.read(min(1024*1024, 1000000))
+                binary_data = f.read(min(1024 * 1024, 1000000))
 
             # Look for patterns indicating license bypass
             bypass_patterns = [
-                b"\xB0\x01\xC3",    # MOV AL, 1; RET (return true)
-                b"\x31\xC0\x40\xC3", # XOR EAX, EAX; INC EAX; RET (return 1)
-                b"\xB8\x01\x00\x00\x00\xC3",  # MOV EAX, 1; RET
+                b"\xb0\x01\xc3",  # MOV AL, 1; RET (return true)
+                b"\x31\xc0\x40\xc3",  # XOR EAX, EAX; INC EAX; RET (return 1)
+                b"\xb8\x01\x00\x00\x00\xc3",  # MOV EAX, 1; RET
             ]
 
             bypass_patterns_found = sum(1 for pattern in bypass_patterns if pattern in binary_data)
 
             if bypass_patterns_found > 0:
-                result["license_checks"].append(f"Found {bypass_patterns_found} potential license bypass pattern(s)")
+                result["license_checks"].append(
+                    f"Found {bypass_patterns_found} potential license bypass pattern(s)"
+                )
                 result["confidence"] += 0.4
             else:
                 result["license_checks"].append("No obvious license bypass patterns detected")
@@ -2002,7 +2148,9 @@ def _verify_license_bypass(binary_path: str) -> dict[str, Any]:
             nop_sequences = binary_data.count(b"\x90\x90\x90")  # Three or more NOPs
 
             if nop_sequences > 10:  # Threshold for significant NOPing
-                result["license_checks"].append(f"Found {nop_sequences} NOP sequences (potential NOPed license checks)")
+                result["license_checks"].append(
+                    f"Found {nop_sequences} NOP sequences (potential NOPed license checks)"
+                )
                 result["confidence"] += 0.3
             elif nop_sequences > 0:
                 result["license_checks"].append(f"Found {nop_sequences} small NOP sequences")
@@ -2020,7 +2168,9 @@ def _verify_license_bypass(binary_path: str) -> dict[str, Any]:
             license_refs_found = sum(1 for string in license_strings if string in binary_data)
 
             if license_refs_found > 0:
-                result["license_checks"].append(f"License-related strings still present ({license_refs_found})")
+                result["license_checks"].append(
+                    f"License-related strings still present ({license_refs_found})"
+                )
                 # This could be normal - the strings might still exist but checks bypassed
                 result["confidence"] += 0.1
             else:
@@ -2056,7 +2206,6 @@ def _verify_patch_integrity(binary_path: str) -> dict[str, Any]:
     result = {"valid": False, "confidence": 0.0, "integrity_checks": []}
 
     try:
-
         # Check 1: File exists and is readable
         if not os.path.exists(binary_path):
             result["integrity_checks"].append("Binary file does not exist")
@@ -2086,7 +2235,9 @@ def _verify_patch_integrity(binary_path: str) -> dict[str, Any]:
                 result["integrity_checks"].append("Valid Mach-O executable header detected")
                 result["confidence"] += 0.3
             else:
-                result["integrity_checks"].append("Executable header format unrecognized or corrupted")
+                result["integrity_checks"].append(
+                    "Executable header format unrecognized or corrupted"
+                )
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in additional_runners: %s", e)
@@ -2095,6 +2246,7 @@ def _verify_patch_integrity(binary_path: str) -> dict[str, Any]:
         # Check 3: Basic executable validation
         try:
             import platform
+
             system = platform.system()
 
             if system == "Windows" and binary_path.lower().endswith(".exe"):
@@ -2146,6 +2298,7 @@ def _find_ghidra_installation() -> str | None:
     # Try dynamic path discovery first
     try:
         from ..core.path_discovery import find_tool
+
         ghidra_path = find_tool("ghidra")
         if ghidra_path:
             return ghidra_path
@@ -2263,7 +2416,9 @@ def _is_license_check_pattern(cfg: dict[str, Any]) -> bool:
         file_access = cfg.get("file_access", 0)
         if registry_access > 0 or file_access > 2:
             pattern_score += 1.0
-            logger.debug("Registry/file access detected: reg=%d, file=%d", registry_access, file_access)
+            logger.debug(
+                "Registry/file access detected: reg=%d, file=%d", registry_access, file_access
+            )
 
         # Pattern 10: Network operations (online license validation)
         network_calls = cfg.get("network_operations", 0)
@@ -2275,8 +2430,13 @@ def _is_license_check_pattern(cfg: dict[str, Any]) -> bool:
         confidence_threshold = 5.0  # Minimum score to consider it a license check
         is_license_pattern = pattern_score >= confidence_threshold
 
-        logger.info("License pattern analysis: score=%.1f/%.1f, threshold=%.1f, result=%s",
-                   pattern_score, max_score, confidence_threshold, is_license_pattern)
+        logger.info(
+            "License pattern analysis: score=%.1f/%.1f, threshold=%.1f, result=%s",
+            pattern_score,
+            max_score,
+            confidence_threshold,
+            is_license_pattern,
+        )
 
         return is_license_pattern
 
@@ -2298,10 +2458,29 @@ def _identify_license_related_calls(function_calls: list[str]) -> int:
     """
     """Identify license-related function calls."""
     license_keywords = [
-        "license", "serial", "key", "activation", "trial", "demo",
-        "validate", "verify", "check", "auth", "register", "unlock",
-        "decrypt", "encode", "hash", "crypt", "sign", "cert",
-        "dongle", "hasp", "sentinel", "wibu", "flexlm",
+        "license",
+        "serial",
+        "key",
+        "activation",
+        "trial",
+        "demo",
+        "validate",
+        "verify",
+        "check",
+        "auth",
+        "register",
+        "unlock",
+        "decrypt",
+        "encode",
+        "hash",
+        "crypt",
+        "sign",
+        "cert",
+        "dongle",
+        "hasp",
+        "sentinel",
+        "wibu",
+        "flexlm",
     ]
 
     count = 0
@@ -2326,10 +2505,29 @@ def _count_license_strings(string_refs: list[str]) -> int:
     """
     """Count license-related string references."""
     license_patterns = [
-        "license", "trial", "demo", "expired", "invalid", "activation",
-        "serial", "key", "unlock", "register", "auth", "verify",
-        "pirate", "crack", "illegal", "copy", "protection",
-        "dongles", "hasp", "sentinel", "wibu", "error", "fail",
+        "license",
+        "trial",
+        "demo",
+        "expired",
+        "invalid",
+        "activation",
+        "serial",
+        "key",
+        "unlock",
+        "register",
+        "auth",
+        "verify",
+        "pirate",
+        "crack",
+        "illegal",
+        "copy",
+        "protection",
+        "dongles",
+        "hasp",
+        "sentinel",
+        "wibu",
+        "error",
+        "fail",
     ]
 
     count = 0
@@ -2509,7 +2707,9 @@ def run_section_analysis(binary_path: str) -> dict[str, Any]:
             if analysis["entropy"] > 7.0:
                 analysis["suspicious"] = True
                 analysis["reason"] = "High entropy - possible packing"
-            elif "WRITE" in analysis["characteristics"] and "EXECUTE" in analysis["characteristics"]:
+            elif (
+                "WRITE" in analysis["characteristics"] and "EXECUTE" in analysis["characteristics"]
+            ):
                 analysis["suspicious"] = True
                 analysis["reason"] = "Writable and executable"
 
@@ -2548,10 +2748,21 @@ def run_import_export_analysis(binary_path: str) -> dict[str, Any]:
 
         # Analyze dangerous imports
         dangerous_apis = [
-            "LoadLibrary", "GetProcAddress", "VirtualAlloc", "VirtualProtect",
-            "WriteProcessMemory", "CreateRemoteThread", "SetWindowsHookEx",
-            "RegOpenKey", "RegSetValue", "CreateFile", "DeleteFile",
-            "WinExec", "ShellExecute", "system", "exec",
+            "LoadLibrary",
+            "GetProcAddress",
+            "VirtualAlloc",
+            "VirtualProtect",
+            "WriteProcessMemory",
+            "CreateRemoteThread",
+            "SetWindowsHookEx",
+            "RegOpenKey",
+            "RegSetValue",
+            "CreateFile",
+            "DeleteFile",
+            "WinExec",
+            "ShellExecute",
+            "system",
+            "exec",
         ]
 
         dangerous_imports = []
@@ -2590,10 +2801,21 @@ def run_weak_crypto_detection(binary_path: str) -> dict[str, Any]:
 
         # Patterns for weak crypto
         weak_crypto_patterns = [
-            b"MD5", b"SHA1", b"DES", b"RC4", b"ECB",
-            b"md5_", b"sha1_", b"des_", b"rc4_",
-            b"MD5Init", b"SHA1Init", b"DESCrypt",
-            b"hardcoded_key", b"static_iv", b"weak_seed",
+            b"MD5",
+            b"SHA1",
+            b"DES",
+            b"RC4",
+            b"ECB",
+            b"md5_",
+            b"sha1_",
+            b"des_",
+            b"rc4_",
+            b"MD5Init",
+            b"SHA1Init",
+            b"DESCrypt",
+            b"hardcoded_key",
+            b"static_iv",
+            b"weak_seed",
         ]
 
         # Search for patterns
@@ -2604,16 +2826,20 @@ def run_weak_crypto_detection(binary_path: str) -> dict[str, Any]:
         if pattern_results.get("strings"):
             for string in pattern_results["strings"]:
                 # Look for hex strings that might be keys
-                if len(string) in [16, 24, 32, 48, 64] and all(c in "0123456789abcdefABCDEF" for c in string):
+                if len(string) in [16, 24, 32, 48, 64] and all(
+                    c in "0123456789abcdefABCDEF" for c in string
+                ):
                     hardcoded_keys.append(string)
 
         weak_algorithms = []
         for pattern, matches in pattern_results.get("matches", {}).items():
             if matches:
-                weak_algorithms.append({
-                    "algorithm": pattern.decode("utf-8", errors="ignore"),
-                    "occurrences": len(matches),
-                })
+                weak_algorithms.append(
+                    {
+                        "algorithm": pattern.decode("utf-8", errors="ignore"),
+                        "occurrences": len(matches),
+                    }
+                )
 
         return {
             "status": "success",
@@ -2662,23 +2888,27 @@ def run_generate_patch_suggestions(binary_path: str) -> dict[str, Any]:
         # Generate suggestions based on analysis
         if analysis.get("license_checks"):
             for check in analysis["license_checks"]:
-                suggestions.append({
-                    "type": "license_bypass",
-                    "address": check["address"],
-                    "description": f"Bypass license check at {check['address']}",
-                    "patch": generator.generate_nop_sled(check.get("size", 4)),
-                    "confidence": 0.8,
-                })
+                suggestions.append(
+                    {
+                        "type": "license_bypass",
+                        "address": check["address"],
+                        "description": f"Bypass license check at {check['address']}",
+                        "patch": generator.generate_nop_sled(check.get("size", 4)),
+                        "confidence": 0.8,
+                    }
+                )
 
         if analysis.get("trial_checks"):
             for check in analysis["trial_checks"]:
-                suggestions.append({
-                    "type": "trial_bypass",
-                    "address": check["address"],
-                    "description": f"Bypass trial check at {check['address']}",
-                    "patch": generator.generate_simple_payload("license_bypass"),
-                    "confidence": 0.7,
-                })
+                suggestions.append(
+                    {
+                        "type": "trial_bypass",
+                        "address": check["address"],
+                        "description": f"Bypass trial check at {check['address']}",
+                        "patch": generator.generate_simple_payload("license_bypass"),
+                        "confidence": 0.7,
+                    }
+                )
 
         return {
             "status": "success",

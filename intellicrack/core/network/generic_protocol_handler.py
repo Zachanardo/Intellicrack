@@ -1,4 +1,5 @@
 """Generic protocol handler for network communication and data processing."""
+
 import socket
 import threading
 import time
@@ -28,8 +29,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
-
-
 
 
 class GenericProtocolHandler(LicenseProtocolHandler):
@@ -178,15 +177,26 @@ class GenericProtocolHandler(LicenseProtocolHandler):
 
         """
         # Log the request
-        self.log_request(initial_data, str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"))
+        self.log_request(
+            initial_data,
+            str(
+                client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"
+            ),
+        )
 
         # Store request for analysis
-        self.captured_requests.append({
-            "timestamp": time.time(),
-            "data": initial_data,
-            "hex": initial_data.hex(),
-            "source": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"),
-        })
+        self.captured_requests.append(
+            {
+                "timestamp": time.time(),
+                "data": initial_data,
+                "hex": initial_data.hex(),
+                "source": str(
+                    client_socket.getpeername()
+                    if hasattr(client_socket, "getpeername")
+                    else "unknown"
+                ),
+            }
+        )
 
         # Generate response
         response = self.generate_response(initial_data)
@@ -200,15 +210,28 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                     # For UDP-like sockets
                     client_socket.sendto(response, client_socket.getpeername())
 
-                self.log_response(response, str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"))
+                self.log_response(
+                    response,
+                    str(
+                        client_socket.getpeername()
+                        if hasattr(client_socket, "getpeername")
+                        else "unknown"
+                    ),
+                )
 
                 # Store response
-                self.captured_responses.append({
-                    "timestamp": time.time(),
-                    "data": response,
-                    "hex": response.hex(),
-                    "destination": str(client_socket.getpeername() if hasattr(client_socket, "getpeername") else "unknown"),
-                })
+                self.captured_responses.append(
+                    {
+                        "timestamp": time.time(),
+                        "data": response,
+                        "hex": response.hex(),
+                        "destination": str(
+                            client_socket.getpeername()
+                            if hasattr(client_socket, "getpeername")
+                            else "unknown"
+                        ),
+                    }
+                )
 
             except Exception as e:
                 self.logger.error("Failed to send response: %s", e)
@@ -248,7 +271,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                 return b"\x00\x00\x00\x00\x00\x00\x00\x01"  # Success + handle
 
             if request_data[:2] == b"\x02\x00":  # Common query
-                return b"\x00\x00\xFF\xFF\xFF\xFF"  # Max licenses available
+                return b"\x00\x00\xff\xff\xff\xff"  # Max licenses available
 
         # Default response for unknown requests
         return b"OK\x00"

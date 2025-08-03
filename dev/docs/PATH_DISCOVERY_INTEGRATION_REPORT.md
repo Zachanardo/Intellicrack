@@ -64,14 +64,14 @@ This report summarizes the current integration status of the `path_discovery` mo
 - **intellicrack/core/network/ssl_interceptor.py**
   - Has its own `_find_executable` method (lines 309-326)
   - Should use `find_tool` from path_discovery instead
-  
+
 ### 3. Hardcoded Tool Paths Still Present
 Several files still have hardcoded paths that could benefit from path_discovery:
 
 - **intellicrack/utils/runner_functions.py**
   - Lines 456-461: Hardcoded Ghidra locations
   - Lines 506-508: Manual analyzeHeadless path construction
-  
+
 - **intellicrack/core/processing/qemu_emulator.py**
   - Lines 148-169: Direct QEMU binary validation without path_discovery
 
@@ -102,7 +102,7 @@ Several files still have hardcoded paths that could benefit from path_discovery:
 5. **Remove Unused Imports**
    - Remove path_discovery imports from files not using it:
      - tool_wrappers.py
-     - additional_runners.py  
+     - additional_runners.py
      - main_app.py
 
 ### Low Priority

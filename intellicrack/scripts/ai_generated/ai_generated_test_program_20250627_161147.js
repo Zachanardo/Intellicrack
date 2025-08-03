@@ -37,7 +37,7 @@
     run: function() {
         console.log("[AI-Generated] Initializing Bypass_test_program...");
 
-        
+
         // Initialize protection detection
         this.target_module = Process.enumerateModules()[0];
         this.protection_counters = {
@@ -50,7 +50,7 @@
         console.log("[Init] Base address: " + this.target_module.base);
 
 
-        
+
         // License check bypass hooks
         var license_functions = ["strcmp", "strcasecmp", "memcmp"];
         license_functions.forEach(function(func_name) {{
@@ -100,7 +100,7 @@
         });
 
 
-        
+
         // License validation bypass
         console.log("[Bypass] Setting up license validation bypass...");
 
@@ -134,7 +134,7 @@
         console.log("[AI-Generated] Script initialized successfully");
     },
 
-    
+
     // Helper functions for protection types: LICENSE_CHECK, TIME_BOMB, NETWORK_VALIDATION
     // Helper functions
     findLicenseStrings: function() {

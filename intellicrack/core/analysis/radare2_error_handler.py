@@ -195,7 +195,9 @@ class R2ErrorHandler:
             duration = time.time() - start_time
             self._record_performance(operation_name, duration, success=True)
 
-    def handle_error(self, error: Exception, operation_name: str, context: dict[str, Any] = None) -> bool:
+    def handle_error(
+        self, error: Exception, operation_name: str, context: dict[str, Any] = None
+    ) -> bool:
         """Main error handling entry point.
 
         Args:
@@ -241,7 +243,9 @@ class R2ErrorHandler:
                 self.logger.critical(f"Error in error handler: {recovery_error}")
                 return False
 
-    def _create_error_event(self, error: Exception, operation_name: str, context: dict[str, Any]) -> ErrorEvent:
+    def _create_error_event(
+        self, error: Exception, operation_name: str, context: dict[str, Any]
+    ) -> ErrorEvent:
         """Create error event from exception"""
         error_type = type(error).__name__
         severity = self._classify_error_severity(error, operation_name)
@@ -371,7 +375,7 @@ class R2ErrorHandler:
         # Calculate delay with exponential backoff
         delay = action.delay
         if action.exponential_backoff and error_event.recovery_attempts > 0:
-            delay *= (2 ** error_event.recovery_attempts)
+            delay *= 2**error_event.recovery_attempts
 
         # Wait before retry
         if delay > 0:
@@ -567,14 +571,18 @@ class R2ErrorHandler:
         """Record performance metrics"""
         if operation_name not in self.performance_monitor["operation_times"]:
             self.performance_monitor["operation_times"][operation_name] = []
-            self.performance_monitor["failure_rates"][operation_name] = {"successes": 0, "failures": 0}
+            self.performance_monitor["failure_rates"][operation_name] = {
+                "successes": 0,
+                "failures": 0,
+            }
 
         self.performance_monitor["operation_times"][operation_name].append(duration)
 
         # Keep only last 100 measurements
         if len(self.performance_monitor["operation_times"][operation_name]) > 100:
-            self.performance_monitor["operation_times"][operation_name] = \
-                self.performance_monitor["operation_times"][operation_name][-100:]
+            self.performance_monitor["operation_times"][operation_name] = self.performance_monitor[
+                "operation_times"
+            ][operation_name][-100:]
 
         # Update failure rate
         if success:
@@ -585,14 +593,20 @@ class R2ErrorHandler:
     def _record_recovery_success(self, action_name: str):
         """Record successful recovery"""
         if action_name not in self.performance_monitor["recovery_success_rates"]:
-            self.performance_monitor["recovery_success_rates"][action_name] = {"successes": 0, "failures": 0}
+            self.performance_monitor["recovery_success_rates"][action_name] = {
+                "successes": 0,
+                "failures": 0,
+            }
 
         self.performance_monitor["recovery_success_rates"][action_name]["successes"] += 1
 
     def _record_recovery_failure(self, action_name: str):
         """Record failed recovery"""
         if action_name not in self.performance_monitor["recovery_success_rates"]:
-            self.performance_monitor["recovery_success_rates"][action_name] = {"successes": 0, "failures": 0}
+            self.performance_monitor["recovery_success_rates"][action_name] = {
+                "successes": 0,
+                "failures": 0,
+            }
 
         self.performance_monitor["recovery_success_rates"][action_name]["failures"] += 1
 

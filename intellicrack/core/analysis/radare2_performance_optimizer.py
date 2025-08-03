@@ -53,11 +53,11 @@ class OptimizationStrategy(Enum):
 class AnalysisLevel(Enum):
     """Analysis depth levels for performance tuning"""
 
-    MINIMAL = "a"          # Basic analysis
-    LIGHT = "aa"           # Light analysis
-    STANDARD = "aaa"       # Standard analysis
-    COMPREHENSIVE = "aaaa" # Full analysis
-    DEEP = "aaaaa"         # Deep analysis
+    MINIMAL = "a"  # Basic analysis
+    LIGHT = "aa"  # Light analysis
+    STANDARD = "aaa"  # Standard analysis
+    COMPREHENSIVE = "aaaa"  # Full analysis
+    DEEP = "aaaaa"  # Deep analysis
 
 
 @dataclass
@@ -67,10 +67,10 @@ class PerformanceProfile:
     name: str
     max_file_size: int  # In bytes
     analysis_level: AnalysisLevel
-    memory_limit: int   # In MB
-    timeout: int       # In seconds
+    memory_limit: int  # In MB
+    timeout: int  # In seconds
     parallel_workers: int
-    chunk_size: int    # For large file processing
+    chunk_size: int  # For large file processing
     cache_enabled: bool
     optimization_flags: list[str]
     description: str
@@ -124,10 +124,14 @@ class R2PerformanceOptimizer:
             chunk_size=10 * 1024 * 1024,  # 10MB
             cache_enabled=True,
             optimization_flags=[
-                "-e", "anal.timeout=1800",
-                "-e", "esil.timeout=30",
-                "-e", "anal.depth=16",
-                "-e", "anal.bb.maxsize=1024",
+                "-e",
+                "anal.timeout=1800",
+                "-e",
+                "esil.timeout=30",
+                "-e",
+                "anal.depth=16",
+                "-e",
+                "anal.bb.maxsize=1024",
             ],
             description="Light analysis for large binaries",
         ),
@@ -141,12 +145,18 @@ class R2PerformanceOptimizer:
             chunk_size=50 * 1024 * 1024,  # 50MB
             cache_enabled=False,  # Disable cache for huge files
             optimization_flags=[
-                "-e", "anal.timeout=3600",
-                "-e", "esil.timeout=10",
-                "-e", "anal.depth=8",
-                "-e", "anal.bb.maxsize=512",
-                "-e", "io.cache=false",
-                "-e", "bin.cache=false",
+                "-e",
+                "anal.timeout=3600",
+                "-e",
+                "esil.timeout=10",
+                "-e",
+                "anal.depth=8",
+                "-e",
+                "anal.bb.maxsize=512",
+                "-e",
+                "io.cache=false",
+                "-e",
+                "bin.cache=false",
             ],
             description="Minimal analysis for huge binaries",
         ),
@@ -185,7 +195,7 @@ class R2PerformanceOptimizer:
         self.adaptive_thresholds = {
             "memory_warning": 0.8,  # 80% of available memory
             "memory_critical": 0.9,  # 90% of available memory
-            "cpu_throttle": 0.9,     # 90% CPU usage
+            "cpu_throttle": 0.9,  # 90% CPU usage
             "analysis_timeout_multiplier": 1.5,
         }
 
@@ -199,7 +209,9 @@ class R2PerformanceOptimizer:
             "memory_available": psutil.virtual_memory().available,
             "memory_percent": psutil.virtual_memory().percent,
             "cpu_percent": psutil.cpu_percent(interval=1),
-            "disk_usage": psutil.disk_usage("/").percent if os.name != "nt" else psutil.disk_usage("C:\\").percent,
+            "disk_usage": psutil.disk_usage("/").percent
+            if os.name != "nt"
+            else psutil.disk_usage("C:\\").percent,
         }
 
     def optimize_for_binary(self, binary_path: str) -> dict[str, Any]:
@@ -268,7 +280,9 @@ class R2PerformanceOptimizer:
                     if info:
                         characteristics["file_type"] = info.get("core", {}).get("type", "unknown")
                         characteristics["architecture"] = info.get("bin", {}).get("arch", "unknown")
-                        characteristics["is_stripped"] = not info.get("bin", {}).get("stripped", True)
+                        characteristics["is_stripped"] = not info.get("bin", {}).get(
+                            "stripped", True
+                        )
 
                         # Get section and import counts for complexity estimation
                         sections = r2.cmdj("iSj")
@@ -280,7 +294,9 @@ class R2PerformanceOptimizer:
                             characteristics["import_count"] = len(imports)
 
                     # Estimate complexity
-                    characteristics["complexity_estimate"] = self._estimate_complexity(characteristics)
+                    characteristics["complexity_estimate"] = self._estimate_complexity(
+                        characteristics
+                    )
 
                 except Exception as e:
                     self.logger.warning(f"Failed to get detailed binary info: {e}")
@@ -344,7 +360,9 @@ class R2PerformanceOptimizer:
         # Default to huge files profile
         return self.PERFORMANCE_PROFILES["huge_files"]
 
-    def _customize_profile_for_system(self, profile: PerformanceProfile, binary_info: dict[str, Any]) -> dict[str, Any]:
+    def _customize_profile_for_system(
+        self, profile: PerformanceProfile, binary_info: dict[str, Any]
+    ) -> dict[str, Any]:
         """Customize profile based on current system resources"""
         system_info = self._get_system_info()
 
@@ -384,7 +402,9 @@ class R2PerformanceOptimizer:
 
         return config
 
-    def _apply_strategy_optimizations(self, config: dict[str, Any], binary_info: dict[str, Any]) -> dict[str, Any]:
+    def _apply_strategy_optimizations(
+        self, config: dict[str, Any], binary_info: dict[str, Any]
+    ) -> dict[str, Any]:
         """Apply strategy-specific optimizations"""
         if self.strategy == OptimizationStrategy.MEMORY_CONSERVATIVE:
             config = self._apply_memory_conservative_optimizations(config)
@@ -405,10 +425,14 @@ class R2PerformanceOptimizer:
 
         # Add memory-saving flags
         memory_flags = [
-            "-e", "io.cache=false",
-            "-e", "bin.cache=false",
-            "-e", "anal.depth=8",  # Reduce analysis depth
-            "-e", "anal.bb.maxsize=256",  # Smaller basic blocks
+            "-e",
+            "io.cache=false",
+            "-e",
+            "bin.cache=false",
+            "-e",
+            "anal.depth=8",  # Reduce analysis depth
+            "-e",
+            "anal.bb.maxsize=256",  # Smaller basic blocks
         ]
         config["r2_flags"].extend(memory_flags)
 
@@ -430,10 +454,14 @@ class R2PerformanceOptimizer:
 
         # Add speed optimization flags
         speed_flags = [
-            "-e", "io.cache=true",
-            "-e", "bin.cache=true",
-            "-e", "anal.jmp.tbl=true",
-            "-e", "anal.hasnext=true",
+            "-e",
+            "io.cache=true",
+            "-e",
+            "bin.cache=true",
+            "-e",
+            "anal.jmp.tbl=true",
+            "-e",
+            "anal.hasnext=true",
         ]
         config["r2_flags"].extend(speed_flags)
 
@@ -442,19 +470,27 @@ class R2PerformanceOptimizer:
 
         return config
 
-    def _apply_large_file_optimizations(self, config: dict[str, Any], binary_info: dict[str, Any]) -> dict[str, Any]:
+    def _apply_large_file_optimizations(
+        self, config: dict[str, Any], binary_info: dict[str, Any]
+    ) -> dict[str, Any]:
         """Apply optimizations specifically for large files"""
         file_size = binary_info["file_size"]
 
         # Use memory mapping for very large files
         if file_size > 500 * 1024 * 1024:  # >500MB
             large_file_flags = [
-                "-e", "io.cache=false",
-                "-e", "bin.cache=false",
-                "-e", "anal.depth=4",
-                "-e", "anal.bb.maxsize=128",
-                "-e", "esil.timeout=5",
-                "-e", "anal.timeout=" + str(config["timeout"]),
+                "-e",
+                "io.cache=false",
+                "-e",
+                "bin.cache=false",
+                "-e",
+                "anal.depth=4",
+                "-e",
+                "anal.bb.maxsize=128",
+                "-e",
+                "esil.timeout=5",
+                "-e",
+                "anal.timeout=" + str(config["timeout"]),
             ]
             config["r2_flags"].extend(large_file_flags)
 
@@ -566,7 +602,7 @@ class R2PerformanceOptimizer:
             # Apply configuration flags
             for i in range(0, len(config["r2_flags"]), 2):
                 if i + 1 < len(config["r2_flags"]):
-                    flag = config["r2_flags"][i+1]
+                    flag = config["r2_flags"][i + 1]
                     r2_session.cmd(f"e {flag}")
 
             # Set memory limits
@@ -594,7 +630,9 @@ class R2PerformanceOptimizer:
         stats["total_file_size"] += file_size
         stats["avg_file_size"] = stats["total_file_size"] / stats["usage_count"]
 
-        self.logger.debug(f"Profile {profile_name} used {stats['usage_count']} times, avg file size: {stats['avg_file_size']:.2f} bytes")
+        self.logger.debug(
+            f"Profile {profile_name} used {stats['usage_count']} times, avg file size: {stats['avg_file_size']:.2f} bytes"
+        )
 
     def get_performance_report(self) -> dict[str, Any]:
         """Generate comprehensive performance report"""
@@ -603,17 +641,29 @@ class R2PerformanceOptimizer:
             "strategy": self.strategy.value,
             "metrics": {
                 "memory_usage": {
-                    "current": self.performance_metrics["memory_usage"][-1] if self.performance_metrics["memory_usage"] else 0,
-                    "average": sum(self.performance_metrics["memory_usage"]) / len(self.performance_metrics["memory_usage"]) if self.performance_metrics["memory_usage"] else 0,
+                    "current": self.performance_metrics["memory_usage"][-1]
+                    if self.performance_metrics["memory_usage"]
+                    else 0,
+                    "average": sum(self.performance_metrics["memory_usage"])
+                    / len(self.performance_metrics["memory_usage"])
+                    if self.performance_metrics["memory_usage"]
+                    else 0,
                     "peak": self.performance_metrics["resource_peaks"]["memory"],
                 },
                 "cpu_usage": {
-                    "current": self.performance_metrics["cpu_usage"][-1] if self.performance_metrics["cpu_usage"] else 0,
-                    "average": sum(self.performance_metrics["cpu_usage"]) / len(self.performance_metrics["cpu_usage"]) if self.performance_metrics["cpu_usage"] else 0,
+                    "current": self.performance_metrics["cpu_usage"][-1]
+                    if self.performance_metrics["cpu_usage"]
+                    else 0,
+                    "average": sum(self.performance_metrics["cpu_usage"])
+                    / len(self.performance_metrics["cpu_usage"])
+                    if self.performance_metrics["cpu_usage"]
+                    else 0,
                     "peak": self.performance_metrics["resource_peaks"]["cpu"],
                 },
                 "analysis_times": self.performance_metrics["analysis_times"].copy(),
-                "optimization_effectiveness": self.performance_metrics["optimization_effectiveness"].copy(),
+                "optimization_effectiveness": self.performance_metrics[
+                    "optimization_effectiveness"
+                ].copy(),
             },
             "recommendations": self._generate_recommendations(),
         }
@@ -626,7 +676,9 @@ class R2PerformanceOptimizer:
 
         # Memory recommendations
         if self.performance_metrics["resource_peaks"]["memory"] > 90:
-            recommendations.append("Consider using memory-conservative strategy for future analyses")
+            recommendations.append(
+                "Consider using memory-conservative strategy for future analyses"
+            )
             recommendations.append("Reduce parallel workers to decrease memory usage")
 
         # CPU recommendations
@@ -643,7 +695,9 @@ class R2PerformanceOptimizer:
 
         return recommendations
 
-    def benchmark_analysis_types(self, binary_path: str, analysis_types: list[str]) -> dict[str, dict[str, float]]:
+    def benchmark_analysis_types(
+        self, binary_path: str, analysis_types: list[str]
+    ) -> dict[str, dict[str, float]]:
         """Benchmark different analysis types for performance comparison"""
         results = {}
 
@@ -707,7 +761,9 @@ class R2PerformanceOptimizer:
             self.logger.error(f"Cleanup failed: {e}")
 
 
-def create_performance_optimizer(strategy: OptimizationStrategy = OptimizationStrategy.BALANCED) -> R2PerformanceOptimizer:
+def create_performance_optimizer(
+    strategy: OptimizationStrategy = OptimizationStrategy.BALANCED,
+) -> R2PerformanceOptimizer:
     """Create performance optimizer instance"""
     return R2PerformanceOptimizer(strategy)
 

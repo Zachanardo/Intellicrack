@@ -43,7 +43,7 @@ def create_mock_results():
             self.type = det_type
             self.confidence = confidence
             self.version = version
-    
+
     class MockICPAnalysis:
         def __init__(self):
             self.file_type = "PE32"
@@ -56,7 +56,7 @@ def create_mock_results():
                 MockDetection("Themida", "Protector", 0.42, "3.1"),
                 MockDetection("Custom Cryptor", "Cryptor", 0.30)
             ]
-    
+
     return {
         "file_info": {
             "file_path": "/test/sample.exe",
@@ -81,14 +81,14 @@ def create_mock_results():
 def main():
     """Test the export dialog"""
     app = QApplication(sys.argv)
-    
+
     # Create mock results
     mock_results = create_mock_results()
-    
+
     # Create and show the export dialog
     dialog = ExportDialog(mock_results)
     dialog.show()
-    
+
     # Run the application
     sys.exit(app.exec())
 

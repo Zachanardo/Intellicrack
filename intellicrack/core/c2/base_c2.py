@@ -38,8 +38,9 @@ class BaseC2:
         self.running = False
         self.stats = {"start_time": None}
 
-    def initialize_protocols(self, protocols_config: list[dict[str, Any]],
-                           encryption_manager: Any) -> None:
+    def initialize_protocols(
+        self, protocols_config: list[dict[str, Any]], encryption_manager: Any
+    ) -> None:
         """Initialize communication protocols with error handling.
 
         Args:
@@ -53,6 +54,7 @@ class BaseC2:
 
                 if protocol_type == "https":
                     from .communication_protocols import HttpsProtocol
+
                     protocol = HttpsProtocol(
                         encryption_manager,
                         proto_config.get("server_url", "https://localhost:8443"),
@@ -60,6 +62,7 @@ class BaseC2:
                     )
                 elif protocol_type == "dns":
                     from .communication_protocols import DnsProtocol
+
                     protocol = DnsProtocol(
                         encryption_manager,
                         proto_config.get("domain", "localhost"),
@@ -67,6 +70,7 @@ class BaseC2:
                     )
                 elif protocol_type == "tcp":
                     from .communication_protocols import TcpProtocol
+
                     protocol = TcpProtocol(
                         encryption_manager,
                         proto_config.get("host", "localhost"),
@@ -76,11 +80,13 @@ class BaseC2:
                     self.logger.warning(f"Unknown protocol type: {protocol_type}")
                     continue
 
-                self.protocols.append({
-                    "type": protocol_type,
-                    "handler": protocol,
-                    "priority": proto_config.get("priority", 99),
-                })
+                self.protocols.append(
+                    {
+                        "type": protocol_type,
+                        "handler": protocol,
+                        "priority": proto_config.get("priority", 99),
+                    }
+                )
 
             # Sort by priority
             self.protocols.sort(key=lambda x: x["priority"])

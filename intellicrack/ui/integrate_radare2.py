@@ -104,6 +104,7 @@ def integrate_with_main_app():
 
         # Method 1: Check if running in QApplication context
         from PyQt6.QtWidgets import QApplication
+
         app = QApplication.instance()
         if app:
             # Look for IntellicrackApp in top-level widgets
@@ -115,6 +116,7 @@ def integrate_with_main_app():
         # Method 2: Check global variables (if app stores itself globally)
         if not main_app:
             import __main__
+
             if hasattr(__main__, "app") and hasattr(__main__.app, "__class__"):
                 if "IntellicrackApp" in str(type(__main__.app)):
                     main_app = __main__.app
@@ -124,7 +126,9 @@ def integrate_with_main_app():
             for _, module in sys.modules.items():
                 if hasattr(module, "app"):
                     app_candidate = module.app
-                    if hasattr(app_candidate, "__class__") and "IntellicrackApp" in str(type(app_candidate)):
+                    if hasattr(app_candidate, "__class__") and "IntellicrackApp" in str(
+                        type(app_candidate)
+                    ):
                         main_app = app_candidate
                         break
 
@@ -215,7 +219,6 @@ def example_manual_integration():
     #     print("Integration failed - check logs for details")
 
 
-
 def example_automatic_integration():
     """Example of automatic integration.
 
@@ -230,7 +233,6 @@ def example_automatic_integration():
     #     print("Automatic radare2 integration successful!")
     # else:
     #     print("Automatic integration failed - try manual integration")
-
 
 
 def example_standalone_app():
@@ -248,7 +250,6 @@ def example_standalone_app():
     #     app.exec()
     # else:
     #     print("Failed to create standalone application")
-
 
 
 __all__ = [

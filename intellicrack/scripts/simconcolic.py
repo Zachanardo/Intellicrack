@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import time
 from collections.abc import Callable
@@ -28,6 +27,7 @@ __version__ = "1.0.0"
 
 # Configure logger for SimConcolic
 logger = logging.getLogger(__name__)
+
 
 class Plugin:
     """Base class for SimConcolic plugins"""
@@ -80,12 +80,16 @@ class Plugin:
         # Store fork metadata
         if not hasattr(self, "fork_history"):
             self.fork_history = []
-        self.fork_history.append({
-            "timestamp": time.time(),
-            "state_address": state.address,
-            "fork_number": self.fork_count,
-            "parent_constraints": len(state.constraints) if hasattr(state, "constraints") else 0,
-        })
+        self.fork_history.append(
+            {
+                "timestamp": time.time(),
+                "state_address": state.address,
+                "fork_number": self.fork_count,
+                "parent_constraints": len(state.constraints)
+                if hasattr(state, "constraints")
+                else 0,
+            }
+        )
 
     def will_terminate_state_callback(self, state, *args, **kwargs):
         """Called before a state is terminated"""
@@ -114,13 +118,15 @@ class Plugin:
         termination_info = getattr(self, "termination_pending", {}).get(state_id, {})
 
         # Record terminated state
-        self.terminated_states.append({
-            "timestamp": time.time(),
-            "address": state.address,
-            "state_id": state_id,
-            "reason": termination_info.get("reason", "unknown"),
-            "duration": time.time() - termination_info.get("timestamp", time.time()),
-        })
+        self.terminated_states.append(
+            {
+                "timestamp": time.time(),
+                "address": state.address,
+                "state_id": state_id,
+                "reason": termination_info.get("reason", "unknown"),
+                "duration": time.time() - termination_info.get("timestamp", time.time()),
+            }
+        )
 
         # Clean up pending termination
         if hasattr(self, "termination_pending") and state_id in self.termination_pending:
@@ -129,12 +135,15 @@ class Plugin:
         # Update total states analyzed
         self.total_states_analyzed = getattr(self, "total_states_analyzed", 0) + 1
 
-        logger.debug(f"State at 0x{state.address:x} terminated (total: {self.total_states_analyzed})")
+        logger.debug(
+            f"State at 0x{state.address:x} terminated (total: {self.total_states_analyzed})"
+        )
 
     def _get_memory_usage(self):
         """Get current memory usage in MB"""
         try:
             import psutil
+
             process = psutil.Process()
             return process.memory_info().rss / 1024 / 1024  # Convert to MB
         except:
@@ -163,12 +172,16 @@ class State:
         self.id = state_id or f"state_{address:x}"
 
         # Create CPU with instruction pointer
-        self.cpu = type("CPU", (object,), {
-            "instruction_pointer": address,
-            "PC": address,  # Alias for instruction_pointer
-            "memory": {},
-            "registers": {},
-        })
+        self.cpu = type(
+            "CPU",
+            (object,),
+            {
+                "instruction_pointer": address,
+                "PC": address,  # Alias for instruction_pointer
+                "memory": {},
+                "registers": {},
+            },
+        )
 
     def abandon(self):
         """Abandon this state (terminate exploration)"""
@@ -305,8 +318,13 @@ class BinaryAnalyzer:
                 fork_state_id = f"state_{state_counter}"
                 state_counter += 1
                 forked_state = State(forked_address, self, fork_state_id)
-                forked_state.input_symbols["stdin"] = f"fork_input_for_addr_{forked_address:x}".encode()
-                forked_state.input_symbols["argv"] = [b"./program", f"fork_arg_for_addr_{forked_address:x}".encode()]
+                forked_state.input_symbols["stdin"] = (
+                    f"fork_input_for_addr_{forked_address:x}".encode()
+                )
+                forked_state.input_symbols["argv"] = [
+                    b"./program",
+                    f"fork_arg_for_addr_{forked_address:x}".encode(),
+                ]
                 self._states[forked_state.id] = forked_state
 
             # Execute the hook callbacks

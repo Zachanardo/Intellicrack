@@ -35,6 +35,7 @@ logger = get_logger(__name__)
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in optimization_config: %s", e)
@@ -175,6 +176,7 @@ class OptimizationManager:
 
     def _create_rule_handler(self, rule: OptimizationRule) -> Callable:
         """Create handler for optimization rule."""
+
         def handler(metric_name: str, level: str, value: float):
             # Check if rule applies
             if not self._rule_matches(rule, metric_name, level):
@@ -208,13 +210,13 @@ class OptimizationManager:
         time_since_last = datetime.now() - rule.last_triggered
         return time_since_last.total_seconds() >= rule.cooldown_seconds
 
-    def _execute_optimization(self, rule: OptimizationRule, metric_name: str,
-                              level: str, value: float):
+    def _execute_optimization(
+        self, rule: OptimizationRule, metric_name: str, level: str, value: float
+    ):
         """Execute optimization action."""
         with self.lock:
             try:
-                logger.info(
-                    f"Executing optimization rule '{rule.name}' for {metric_name}={value}")
+                logger.info(f"Executing optimization rule '{rule.name}' for {metric_name}={value}")
 
                 if rule.action == "gc":
                     self._execute_garbage_collection()
@@ -230,15 +232,13 @@ class OptimizationManager:
                 self._update_optimization_stats(rule.name, "executed")
 
             except Exception as e:
-                logger.error(
-                    f"Error executing optimization rule '{rule.name}': {e}")
+                logger.error(f"Error executing optimization rule '{rule.name}': {e}")
                 self._update_optimization_stats(rule.name, "error")
 
     def _execute_garbage_collection(self):
         """Execute garbage collection optimization."""
         if not PSUTIL_AVAILABLE:
-            logger.warning(
-                "psutil not available - skipping memory monitoring during GC")
+            logger.warning("psutil not available - skipping memory monitoring during GC")
             gc.collect()
             return
 
@@ -261,8 +261,7 @@ class OptimizationManager:
             self.gc_stats["objects_collected"] += collected
             self.gc_stats["memory_freed_mb"] += memory_freed_mb
 
-            logger.info(
-                f"GC collected {collected} objects, freed {memory_freed_mb:.2f}MB")
+            logger.info(f"GC collected {collected} objects, freed {memory_freed_mb:.2f}MB")
         except Exception as e:
             logger.warning(f"Error during garbage collection monitoring: {e}")
             # Fallback - just run GC without monitoring
@@ -282,8 +281,7 @@ class OptimizationManager:
 
         logger.info(f"Cleared {cleared_entries} cache entries")
 
-    def _execute_logging(self, rule: OptimizationRule, metric_name: str,
-                         level: str, value: float):
+    def _execute_logging(self, rule: OptimizationRule, metric_name: str, level: str, value: float):
         """Execute logging optimization action."""
         log_message = f"Performance alert - {rule.name}: {metric_name}={value} ({level})"
 
@@ -305,8 +303,7 @@ class OptimizationManager:
 
         self.optimization_stats[rule_name][action] += 1
         if action == "executed":
-            self.optimization_stats[rule_name]["last_execution"] = datetime.now(
-            ).isoformat()
+            self.optimization_stats[rule_name]["last_execution"] = datetime.now().isoformat()
 
     def add_custom_rule(self, rule: OptimizationRule):
         """Add custom optimization rule."""
@@ -388,8 +385,7 @@ class OptimizationManager:
     def benchmark_optimizations(self) -> dict[str, float]:
         """Benchmark optimization effectiveness."""
         if not PSUTIL_AVAILABLE:
-            logger.warning(
-                "psutil not available - returning simplified benchmark")
+            logger.warning("psutil not available - returning simplified benchmark")
             return {"cpu_percent": 0.0, "memory_percent": 0.0}
 
         try:
@@ -400,7 +396,8 @@ class OptimizationManager:
             baseline_objects = len(gc.get_objects())
 
             logger.debug(
-                f"Baseline measurement: {baseline_memory} bytes memory, {baseline_objects} objects")
+                f"Baseline measurement: {baseline_memory} bytes memory, {baseline_objects} objects"
+            )
 
             # Create some load
             test_data = []
@@ -423,8 +420,7 @@ class OptimizationManager:
             # Calculate metrics
             memory_saved = (before_memory - after_memory) / 1024 / 1024
             objects_cleaned = before_objects - after_objects
-            memory_efficiency = memory_saved / \
-                optimization_time if optimization_time > 0 else 0
+            memory_efficiency = memory_saved / optimization_time if optimization_time > 0 else 0
 
             # Cleanup test data
             del test_data
@@ -491,31 +487,22 @@ class OptimizationManager:
                 config_data = json.load(f)
 
             # Update configuration
-            self.config.enable_monitoring = config_data.get(
-                "enable_monitoring", True)
-            self.config.monitoring_interval = config_data.get(
-                "monitoring_interval", 1.0)
-            self.config.max_history_size = config_data.get(
-                "max_history_size", 1000)
-            self.config.enable_gc_optimization = config_data.get(
-                "enable_gc_optimization", True)
-            self.config.gc_threshold_mb = config_data.get(
-                "gc_threshold_mb", 100.0)
+            self.config.enable_monitoring = config_data.get("enable_monitoring", True)
+            self.config.monitoring_interval = config_data.get("monitoring_interval", 1.0)
+            self.config.max_history_size = config_data.get("max_history_size", 1000)
+            self.config.enable_gc_optimization = config_data.get("enable_gc_optimization", True)
+            self.config.gc_threshold_mb = config_data.get("gc_threshold_mb", 100.0)
             self.config.enable_cache_optimization = config_data.get(
-                "enable_cache_optimization", True)
+                "enable_cache_optimization", True
+            )
 
             # Update cache config
             cache_config = config_data.get("cache_config", {})
-            self.config.cache_config.max_size = cache_config.get(
-                "max_size", 1000)
-            self.config.cache_config.ttl_seconds = cache_config.get(
-                "ttl_seconds", 300)
-            self.config.cache_config.cleanup_interval = cache_config.get(
-                "cleanup_interval", 60)
-            self.config.cache_config.enable_lru = cache_config.get(
-                "enable_lru", True)
-            self.config.cache_config.enable_stats = cache_config.get(
-                "enable_stats", True)
+            self.config.cache_config.max_size = cache_config.get("max_size", 1000)
+            self.config.cache_config.ttl_seconds = cache_config.get("ttl_seconds", 300)
+            self.config.cache_config.cleanup_interval = cache_config.get("cleanup_interval", 60)
+            self.config.cache_config.enable_lru = cache_config.get("enable_lru", True)
+            self.config.cache_config.enable_stats = cache_config.get("enable_stats", True)
 
             # Update optimization rules
             self.config.optimization_rules.clear()
@@ -547,30 +534,29 @@ class OptimizationManager:
         # Memory recommendations
         if self.gc_stats["memory_freed_mb"] > 50:
             recommendations.append(
-                "Consider increasing GC frequency - significant memory is being freed")
+                "Consider increasing GC frequency - significant memory is being freed"
+            )
 
         # Cache recommendations
         cache_stats = summary["cache_stats"]
         if cache_stats["hits"] > 0:
-            hit_rate = cache_stats["hits"] / \
-                (cache_stats["hits"] + cache_stats["misses"])
+            hit_rate = cache_stats["hits"] / (cache_stats["hits"] + cache_stats["misses"])
             if hit_rate < 0.5:
-                recommendations.append(
-                    "Low cache hit rate - consider increasing cache size or TTL")
+                recommendations.append("Low cache hit rate - consider increasing cache size or TTL")
 
         # Performance recommendations
         perf_summary = summary["performance_summary"]
         system_health = perf_summary.get("system_health", {})
 
         if system_health.get("score", 100) < 70:
-            recommendations.append(
-                "System health is degraded - consider running optimizations")
+            recommendations.append("System health is degraded - consider running optimizations")
 
         # Rule-specific recommendations
         for rule_name, stats in self.optimization_stats.items():
             if stats["executed"] > 10:
                 recommendations.append(
-                    f"Rule '{rule_name}' is triggering frequently - consider adjusting thresholds")
+                    f"Rule '{rule_name}' is triggering frequently - consider adjusting thresholds"
+                )
 
         return recommendations
 

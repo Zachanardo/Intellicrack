@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 # Try to import psutil for enhanced process management
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in process_utils: %s", e)
@@ -52,7 +53,8 @@ def _get_process_pid_windows(process_name: str) -> int | None:
     try:
         result = subprocess.run(
             ["tasklist", "/fi", f"imagename eq {process_name}", "/fo", "csv"],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
             timeout=10,
         )
@@ -80,7 +82,8 @@ def _get_process_pid_unix(process_name: str) -> int | None:
     try:
         result = subprocess.run(
             ["ps", "aux"],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
             timeout=10,
         )
@@ -134,7 +137,8 @@ def _get_process_list_windows() -> list[dict[str, Any]]:
     try:
         result = subprocess.run(
             ["tasklist", "/fo", "csv"],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
             timeout=30,
         )
@@ -145,12 +149,14 @@ def _get_process_list_windows() -> list[dict[str, Any]]:
                 for line in lines[1:]:
                     parts = [part.strip('"') for part in line.split(",")]
                     if len(parts) >= 2:
-                        processes.append({
-                            "name": parts[0],
-                            "pid": int(parts[1]),
-                            "cpu_percent": 0.0,  # Not available in tasklist
-                            "memory_percent": 0.0,  # Not available in tasklist
-                        })
+                        processes.append(
+                            {
+                                "name": parts[0],
+                                "pid": int(parts[1]),
+                                "cpu_percent": 0.0,  # Not available in tasklist
+                                "memory_percent": 0.0,  # Not available in tasklist
+                            }
+                        )
 
     except Exception as e:
         logger.debug(f"Windows process list failed: {e}")
@@ -165,7 +171,8 @@ def _get_process_list_unix() -> list[dict[str, Any]]:
     try:
         result = subprocess.run(
             ["ps", "aux", "--no-headers"],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
             timeout=30,
         )
@@ -176,12 +183,14 @@ def _get_process_list_unix() -> list[dict[str, Any]]:
                     parts = line.split()
                     if len(parts) >= 11:
                         try:
-                            processes.append({
-                                "name": parts[10],  # Command name
-                                "pid": int(parts[1]),
-                                "cpu_percent": float(parts[2]),
-                                "memory_percent": float(parts[3]),
-                            })
+                            processes.append(
+                                {
+                                    "name": parts[10],  # Command name
+                                    "pid": int(parts[1]),
+                                    "cpu_percent": float(parts[2]),
+                                    "memory_percent": float(parts[3]),
+                                }
+                            )
                         except (ValueError, IndexError) as e:
                             logger.error("Error in process_utils: %s", e)
                             continue
@@ -219,7 +228,8 @@ def kill_process(pid: int, force: bool = False) -> bool:
             # Use taskkill on Windows
             result = subprocess.run(
                 ["taskkill", "/PID", str(pid), "/F" if force else "/T"],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
             )
             return result.returncode == 0
         # Use kill signal on Unix
@@ -252,7 +262,8 @@ def is_process_running(pid: int) -> bool:
         if platform.system() == "Windows":
             result = subprocess.run(
                 ["tasklist", "/fi", f"PID eq {pid}"],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
             )
             return str(pid) in result.stdout
@@ -346,7 +357,8 @@ def run_as_admin(command: list[str]) -> tuple[bool, str]:
             # Use runas on Windows
             result = subprocess.run(
                 ["runas", "/user:Administrator"] + command,
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=60,
             )
@@ -354,7 +366,8 @@ def run_as_admin(command: list[str]) -> tuple[bool, str]:
             # Use sudo on Unix systems
             result = subprocess.run(
                 ["sudo"] + command,
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=60,
             )
@@ -491,8 +504,13 @@ def detect_hardware_dongles() -> list[dict[str, Any]]:
         if platform.system() == "Windows":
             try:
                 # Use WMI to query USB devices
-                result = subprocess.run(["wmic", "path", "win32_usbhub", "get", "deviceid,description"],
-                                      check=False, capture_output=True, text=True, timeout=10)
+                result = subprocess.run(
+                    ["wmic", "path", "win32_usbhub", "get", "deviceid,description"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
 
                 if result.returncode == 0:
                     lines = result.stdout.strip().split("\n")[1:]  # Skip header
@@ -507,12 +525,14 @@ def detect_hardware_dongles() -> list[dict[str, Any]]:
                                 dongle_vendors = ["Sentinel", "HASP", "Rainbow", "SafeNet", "Wibu"]
                                 for vendor in dongle_vendors:
                                     if vendor.lower() in description.lower():
-                                        dongles.append({
-                                            "vendor": vendor,
-                                            "device_id": device_id,
-                                            "description": description,
-                                            "type": "USB",
-                                        })
+                                        dongles.append(
+                                            {
+                                                "vendor": vendor,
+                                                "device_id": device_id,
+                                                "description": description,
+                                                "type": "USB",
+                                            }
+                                        )
 
             except Exception as e:
                 logger.debug(f"Windows dongle detection failed: {e}")
@@ -520,7 +540,9 @@ def detect_hardware_dongles() -> list[dict[str, Any]]:
         elif platform.system() == "Linux":
             try:
                 # Use lsusb to list USB devices
-                result = subprocess.run(["lsusb"], check=False, capture_output=True, text=True, timeout=10)
+                result = subprocess.run(
+                    ["lsusb"], check=False, capture_output=True, text=True, timeout=10
+                )
 
                 if result.returncode == 0:
                     lines = result.stdout.strip().split("\n")
@@ -529,11 +551,13 @@ def detect_hardware_dongles() -> list[dict[str, Any]]:
                         dongle_vendors = ["Sentinel", "HASP", "Rainbow", "SafeNet", "Wibu"]
                         for vendor in dongle_vendors:
                             if vendor.lower() in line.lower():
-                                dongles.append({
-                                    "vendor": vendor,
-                                    "device_info": line.strip(),
-                                    "type": "USB",
-                                })
+                                dongles.append(
+                                    {
+                                        "vendor": vendor,
+                                        "device_info": line.strip(),
+                                        "type": "USB",
+                                    }
+                                )
 
             except Exception as e:
                 logger.debug(f"Linux dongle detection failed: {e}")
@@ -563,9 +587,20 @@ def detect_tpm_protection() -> dict[str, Any]:
         if platform.system() == "Windows":
             try:
                 # Check TPM using WMI
-                result = subprocess.run(["wmic", "/namespace:\\\\root\\cimv2\\security\\microsofttpm",
-                                       "path", "win32_tpm", "get", "IsEnabled_InitialValue,IsActivated_InitialValue,ManufacturerVersion"],
-                                      check=False, capture_output=True, text=True, timeout=10)
+                result = subprocess.run(
+                    [
+                        "wmic",
+                        "/namespace:\\\\root\\cimv2\\security\\microsofttpm",
+                        "path",
+                        "win32_tpm",
+                        "get",
+                        "IsEnabled_InitialValue,IsActivated_InitialValue,ManufacturerVersion",
+                    ],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
 
                 if result.returncode == 0 and result.stdout.strip():
                     tpm_info["present"] = True
@@ -588,8 +623,13 @@ def detect_tpm_protection() -> dict[str, Any]:
 
             # Alternative method - check registry
             try:
-                result = subprocess.run(["reg", "query", "HKLM\\SYSTEM\\CurrentControlSet\\Services\\TPM"],
-                                      check=False, capture_output=True, text=True, timeout=5)
+                result = subprocess.run(
+                    ["reg", "query", "HKLM\\SYSTEM\\CurrentControlSet\\Services\\TPM"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
                 if result.returncode == 0:
                     tpm_info["present"] = True
                     tpm_info["details"].append("TPM service found in registry")
@@ -607,9 +647,13 @@ def detect_tpm_protection() -> dict[str, Any]:
                         tpm_info["details"].append(f"TPM device found: {device}")
 
                 # Check dmesg for TPM messages
-                result = subprocess.run(["dmesg"], check=False, capture_output=True, text=True, timeout=5)
+                result = subprocess.run(
+                    ["dmesg"], check=False, capture_output=True, text=True, timeout=5
+                )
                 if result.returncode == 0:
-                    tpm_lines = [line for line in result.stdout.split("\n") if "tpm" in line.lower()]
+                    tpm_lines = [
+                        line for line in result.stdout.split("\n") if "tpm" in line.lower()
+                    ]
                     if tpm_lines:
                         tpm_info["present"] = True
                         tpm_info["details"].extend(tpm_lines[:3])  # Add first 3 TPM-related lines

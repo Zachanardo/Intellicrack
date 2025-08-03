@@ -32,8 +32,6 @@ to reduce code duplication and standardize plugin initialization.
 """
 
 
-
-
 class PluginMetadata:
     """Standard plugin metadata container."""
 

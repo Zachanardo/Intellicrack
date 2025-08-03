@@ -20,7 +20,7 @@ foreach ($package in $urls.Keys) {
     $url = $urls[$package]
     $filename = Split-Path $url -Leaf
     $output = ".\intel_gpu_wheels\$filename"
-    
+
     Write-Host "Downloading $package..." -ForegroundColor Yellow
     try {
         Invoke-WebRequest -Uri $url -OutFile $output -UseBasicParsing

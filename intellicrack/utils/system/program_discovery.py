@@ -42,6 +42,7 @@ IS_MACOS = sys.platform.startswith("darwin")
 if IS_WINDOWS:
     try:
         import winreg
+
         HAS_WINREG = True
     except ImportError as e:
         logger.error("Import error in program_discovery: %s", e)
@@ -110,10 +111,21 @@ class ProgramDiscoveryEngine:
 
     # Registry paths for Windows program discovery
     WINDOWS_REGISTRY_PATHS = [
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG else (None, None),
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG else (None, None),
-        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG else (None, None),
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Classes\Applications") if HAS_WINREG else (None, None),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
+        if HAS_WINREG
+        else (None, None),
+        (
+            winreg.HKEY_LOCAL_MACHINE,
+            r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+        )
+        if HAS_WINREG
+        else (None, None),
+        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall")
+        if HAS_WINREG
+        else (None, None),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Classes\Applications")
+        if HAS_WINREG
+        else (None, None),
     ]
 
     # Priority targets for analysis (higher score = higher priority)
@@ -123,7 +135,6 @@ class ProgramDiscoveryEngine:
         "firewall": 10,
         "vpn": 10,
         "security": 10,
-
         # Development tools
         "debugger": 9,
         "disassembler": 9,
@@ -134,7 +145,6 @@ class ProgramDiscoveryEngine:
         "radare2": 9,
         "x64dbg": 9,
         "ollydbg": 9,
-
         # Commercial software with licensing
         "adobe": 8,
         "autodesk": 8,
@@ -143,24 +153,20 @@ class ProgramDiscoveryEngine:
         "matlab": 8,
         "vmware": 8,
         "virtualbox": 8,
-
         # Games and entertainment
         "steam": 7,
         "game": 7,
         "unity": 7,
         "unreal": 7,
-
         # Common applications
         "browser": 6,
         "chrome": 6,
         "firefox": 6,
         "edge": 6,
-
         # System utilities
         "system": 5,
         "utility": 5,
         "tool": 5,
-
         # Default priority
         "default": 3,
     }
@@ -391,15 +397,52 @@ class ProgramDiscoveryEngine:
                         filename_lower = file_path.name.lower()
                         licensing_indicators = [
                             # Common licensing terms
-                            "license", "licence", "eula", "terms", "agreement", "copyright",
-                            "legal", "rights", "disclaimer", "activation", "serial", "key",
-                            "keyfile", "authenticate", "register", "unlock", "crack", "patch",
-                            "keygen", "dongle", "hasp", "sentinel", "flexlm", "safenet",
-                            "token", "permit", "grant", "cert", "sig", "fingerprint",
-                            "expire", "timeout", "protected", "secured", "locked",
+                            "license",
+                            "licence",
+                            "eula",
+                            "terms",
+                            "agreement",
+                            "copyright",
+                            "legal",
+                            "rights",
+                            "disclaimer",
+                            "activation",
+                            "serial",
+                            "key",
+                            "keyfile",
+                            "authenticate",
+                            "register",
+                            "unlock",
+                            "crack",
+                            "patch",
+                            "keygen",
+                            "dongle",
+                            "hasp",
+                            "sentinel",
+                            "flexlm",
+                            "safenet",
+                            "token",
+                            "permit",
+                            "grant",
+                            "cert",
+                            "sig",
+                            "fingerprint",
+                            "expire",
+                            "timeout",
+                            "protected",
+                            "secured",
+                            "locked",
                         ]
 
-                        if any(pattern in filename_lower for pattern in licensing_indicators) or file_path.suffix.lower() in [".lic", ".license", ".key", ".dat", ".bin"]:
+                        if any(
+                            pattern in filename_lower for pattern in licensing_indicators
+                        ) or file_path.suffix.lower() in [
+                            ".lic",
+                            ".license",
+                            ".key",
+                            ".dat",
+                            ".bin",
+                        ]:
                             analysis["has_licensing"] = True
                             analysis["licensing_files"].append(str(file_path))
 
@@ -425,6 +468,7 @@ class ProgramDiscoveryEngine:
         """Get architecture from PE file."""
         try:
             import struct
+
             with open(pe_path, "rb") as f:
                 # Read DOS header
                 dos_header = f.read(64)
@@ -449,10 +493,10 @@ class ProgramDiscoveryEngine:
 
                 # Map machine type to architecture
                 arch_map = {
-                    0x014c: "x86",     # IMAGE_FILE_MACHINE_I386
-                    0x8664: "x64",     # IMAGE_FILE_MACHINE_AMD64
-                    0x01c0: "ARM",     # IMAGE_FILE_MACHINE_ARM
-                    0xaa64: "ARM64",   # IMAGE_FILE_MACHINE_ARM64
+                    0x014C: "x86",  # IMAGE_FILE_MACHINE_I386
+                    0x8664: "x64",  # IMAGE_FILE_MACHINE_AMD64
+                    0x01C0: "ARM",  # IMAGE_FILE_MACHINE_ARM
+                    0xAA64: "ARM64",  # IMAGE_FILE_MACHINE_ARM64
                 }
 
                 return arch_map.get(machine_type, "Unknown")
@@ -467,6 +511,7 @@ class ProgramDiscoveryEngine:
             if HAS_WINREG:
                 try:
                     import win32api
+
                     version_info = win32api.GetFileVersionInfo(str(exe_path), "\\")
 
                     version = f"{version_info['FileVersionMS'] >> 16}.{version_info['FileVersionMS'] & 0xFFFF}.{version_info['FileVersionLS'] >> 16}.{version_info['FileVersionLS'] & 0xFFFF}"
@@ -492,8 +537,9 @@ class ProgramDiscoveryEngine:
         """Get version and publisher info from Unix executable."""
         try:
             # Try to get version from --version flag
-            result = subprocess.run([str(exe_path), "--version"],
-                                  check=False, capture_output=True, text=True, timeout=5)
+            result = subprocess.run(
+                [str(exe_path), "--version"], check=False, capture_output=True, text=True, timeout=5
+            )
             if result.returncode == 0 and result.stdout:
                 version_line = result.stdout.split("\n")[0]
                 # Extract version number if present
@@ -539,7 +585,9 @@ class ProgramDiscoveryEngine:
         # Try different package managers
         try:
             # Debian/Ubuntu - dpkg
-            result = subprocess.run(["dpkg", "-l"], check=False, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["dpkg", "-l"], check=False, capture_output=True, text=True, timeout=30
+            )
             if result.returncode == 0:
                 programs.extend(self._parse_dpkg_output(result.stdout))
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
@@ -547,7 +595,9 @@ class ProgramDiscoveryEngine:
 
         try:
             # Red Hat/CentOS - rpm
-            result = subprocess.run(["rpm", "-qa"], check=False, capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["rpm", "-qa"], check=False, capture_output=True, text=True, timeout=30
+            )
             if result.returncode == 0:
                 programs.extend(self._parse_rpm_output(result.stdout))
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
@@ -591,25 +641,27 @@ class ProgramDiscoveryEngine:
                     version = parts[2]
                     description = " ".join(parts[3:])
 
-                    programs.append(ProgramInfo(
-                        name=name,
-                        display_name=name,
-                        version=version,
-                        publisher="Unknown",
-                        install_location="/usr",
-                        executable_paths=[],
-                        icon_path=None,
-                        uninstall_string=f"apt remove {name}",
-                        install_date=None,
-                        estimated_size=None,
-                        architecture="Unknown",
-                        file_types=[],
-                        description=description,
-                        registry_key=None,
-                        discovery_method="dpkg",
-                        confidence_score=0.9,
-                        analysis_priority=self._calculate_analysis_priority(name, "/usr"),
-                    ))
+                    programs.append(
+                        ProgramInfo(
+                            name=name,
+                            display_name=name,
+                            version=version,
+                            publisher="Unknown",
+                            install_location="/usr",
+                            executable_paths=[],
+                            icon_path=None,
+                            uninstall_string=f"apt remove {name}",
+                            install_date=None,
+                            estimated_size=None,
+                            architecture="Unknown",
+                            file_types=[],
+                            description=description,
+                            registry_key=None,
+                            discovery_method="dpkg",
+                            confidence_score=0.9,
+                            analysis_priority=self._calculate_analysis_priority(name, "/usr"),
+                        )
+                    )
 
         return programs
 
@@ -627,25 +679,27 @@ class ProgramDiscoveryEngine:
                     release = match.group(3)
                     arch = match.group(4)
 
-                    programs.append(ProgramInfo(
-                        name=name,
-                        display_name=name,
-                        version=f"{version}-{release}",
-                        publisher="Unknown",
-                        install_location="/usr",
-                        executable_paths=[],
-                        icon_path=None,
-                        uninstall_string=f"rpm -e {name}",
-                        install_date=None,
-                        estimated_size=None,
-                        architecture=arch,
-                        file_types=[],
-                        description=f"RPM package {name}",
-                        registry_key=None,
-                        discovery_method="rpm",
-                        confidence_score=0.9,
-                        analysis_priority=self._calculate_analysis_priority(name, "/usr"),
-                    ))
+                    programs.append(
+                        ProgramInfo(
+                            name=name,
+                            display_name=name,
+                            version=f"{version}-{release}",
+                            publisher="Unknown",
+                            install_location="/usr",
+                            executable_paths=[],
+                            icon_path=None,
+                            uninstall_string=f"rpm -e {name}",
+                            install_date=None,
+                            estimated_size=None,
+                            architecture=arch,
+                            file_types=[],
+                            description=f"RPM package {name}",
+                            registry_key=None,
+                            discovery_method="rpm",
+                            confidence_score=0.9,
+                            analysis_priority=self._calculate_analysis_priority(name, "/usr"),
+                        )
+                    )
 
         return programs
 
@@ -659,7 +713,9 @@ class ProgramDiscoveryEngine:
                 for i in range(winreg.QueryInfoKey(key)[0]):
                     try:
                         subkey_name = winreg.EnumKey(key, i)
-                        program = self._extract_program_from_registry(hkey, path, subkey_name, include_system)
+                        program = self._extract_program_from_registry(
+                            hkey, path, subkey_name, include_system
+                        )
                         if program:
                             programs.append(program)
                     except (OSError, ValueError) as e:
@@ -671,8 +727,9 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _extract_program_from_registry(self, hkey, path: str, subkey_name: str,
-                                     include_system: bool) -> ProgramInfo | None:
+    def _extract_program_from_registry(
+        self, hkey, path: str, subkey_name: str, include_system: bool
+    ) -> ProgramInfo | None:
         """Extract program information from a registry entry."""
         try:
             with winreg.OpenKey(hkey, f"{path}\\{subkey_name}") as subkey:
@@ -723,7 +780,9 @@ class ProgramDiscoveryEngine:
                     registry_key=f"{path}\\{subkey_name}",
                     discovery_method="windows_registry",
                     confidence_score=0.9,
-                    analysis_priority=self._calculate_analysis_priority(display_name, install_location or ""),
+                    analysis_priority=self._calculate_analysis_priority(
+                        display_name, install_location or ""
+                    ),
                 )
 
                 return program_info
@@ -744,16 +803,24 @@ class ProgramDiscoveryEngine:
     def _is_system_component(self, display_name: str, subkey_name: str) -> bool:
         """Check if a program is a system component."""
         system_indicators = [
-            "microsoft visual c++", "microsoft .net", "windows",
-            "update", "kb", "hotfix", "security update",
-            "service pack", "redistributable", "runtime",
+            "microsoft visual c++",
+            "microsoft .net",
+            "windows",
+            "update",
+            "kb",
+            "hotfix",
+            "security update",
+            "service pack",
+            "redistributable",
+            "runtime",
         ]
 
         name_lower = display_name.lower()
         key_lower = subkey_name.lower()
 
-        return any(indicator in name_lower or indicator in key_lower
-                  for indicator in system_indicators)
+        return any(
+            indicator in name_lower or indicator in key_lower for indicator in system_indicators
+        )
 
     def _should_use_cache(self) -> bool:
         """Check if cached data should be used."""

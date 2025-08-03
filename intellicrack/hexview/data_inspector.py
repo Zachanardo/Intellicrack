@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import datetime
 import logging
 import struct
@@ -308,9 +307,11 @@ class DataInterpreter:
                 if len(data) >= 16:
                     # Parse GUID (little-endian format)
                     guid_parts = struct.unpack("<IHH8B", data[:16])
-                    return f"{guid_parts[0]:08X}-{guid_parts[1]:04X}-{guid_parts[2]:04X}-" \
-                           f"{guid_parts[3]:02X}{guid_parts[4]:02X}-" + \
-                           "".join(f"{guid_parts[_i]:02X}" for _i in range(5, 11))
+                    return (
+                        f"{guid_parts[0]:08X}-{guid_parts[1]:04X}-{guid_parts[2]:04X}-"
+                        f"{guid_parts[3]:02X}{guid_parts[4]:02X}-"
+                        + "".join(f"{guid_parts[_i]:02X}" for _i in range(5, 11))
+                    )
 
             elif data_type == DataType.IPV4_ADDRESS:
                 if len(data) >= 4:
@@ -569,9 +570,15 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
         input_layout = QHBoxLayout()
 
         self.input_type_combo = QComboBox()
-        self.input_type_combo.addItems([
-            "Hex", "Decimal", "ASCII", "UTF-8", "Binary",
-        ])
+        self.input_type_combo.addItems(
+            [
+                "Hex",
+                "Decimal",
+                "ASCII",
+                "UTF-8",
+                "Binary",
+            ]
+        )
         input_layout.addWidget(QLabel("Type:"))
         input_layout.addWidget(self.input_type_combo)
 
@@ -803,7 +810,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
 
                 new_data = b""
                 for i in range(0, len(binary_clean), 8):
-                    byte_str = binary_clean[i:i+8]
+                    byte_str = binary_clean[i : i + 8]
                     new_data += bytes([int(byte_str, 2)])
 
             else:

@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import hashlib
 import json
 import logging
@@ -58,6 +57,7 @@ try:
         optimize_for_gpu,
         to_device,
     )
+
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     GPU_AUTOLOADER_AVAILABLE = False
@@ -65,10 +65,12 @@ except ImportError:
 try:
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     import os
+
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
     import tensorflow as tf
     from tensorflow import keras
+
     HAS_TENSORFLOW = True
 except ImportError as e:
     logger.error("Import error in model_manager_module: %s", e)
@@ -79,6 +81,7 @@ except ImportError as e:
 try:
     import onnx
     import onnxruntime as ort
+
     HAS_ONNX = True
 except ImportError as e:
     logger.error("Import error in model_manager_module: %s", e)
@@ -86,6 +89,7 @@ except ImportError as e:
 
 try:
     import joblib
+
     HAS_JOBLIB = True
 except ImportError as e:
     logger.error("Import error in model_manager_module: %s", e)
@@ -99,22 +103,23 @@ class ModelBackend(ABC):
     def load_model(self, model_path: str) -> Any:
         """Load a model from the given path."""
         # Implementation should use model_path to load the actual model
-        raise NotImplementedError(
-            f"Subclasses must implement load_model for path: {model_path}")
+        raise NotImplementedError(f"Subclasses must implement load_model for path: {model_path}")
 
     @abstractmethod
     def predict(self, model: Any, input_data: Any) -> Any:
         """Make predictions using the model."""
         # Implementation should use both model and input_data for predictions
         raise NotImplementedError(
-            f"Subclasses must implement predict with model {type(model)} and data {type(input_data)}")
+            f"Subclasses must implement predict with model {type(model)} and data {type(input_data)}"
+        )
 
     @abstractmethod
     def get_model_info(self, model: Any) -> dict[str, Any]:
         """Get information about the model."""
         # Implementation should extract information from the model object
         raise NotImplementedError(
-            f"Subclasses must implement get_model_info for model {type(model)}")
+            f"Subclasses must implement get_model_info for model {type(model)}"
+        )
 
 
 class PyTorchBackend(ModelBackend):
@@ -165,8 +170,7 @@ class PyTorchBackend(ModelBackend):
 
         if hasattr(model, "parameters"):
             try:
-                info["parameters"] = sum(_p.numel()
-                                         for _p in model.parameters())
+                info["parameters"] = sum(_p.numel() for _p in model.parameters())
             except (AttributeError, RuntimeError) as e:
                 logger.debug("Failed to count PyTorch model parameters: %s", e)
 
@@ -216,8 +220,7 @@ class TensorFlowBackend(ModelBackend):
             try:
                 info["parameters"] = model.count_params()
             except (AttributeError, RuntimeError) as e:
-                logger.debug(
-                    "Failed to count TensorFlow model parameters: %s", e)
+                logger.debug("Failed to count TensorFlow model parameters: %s", e)
 
         return info
 
@@ -272,18 +275,22 @@ class ONNXBackend(ModelBackend):
 
         try:
             for _input_meta in model.get_inputs():
-                info["inputs"].append({
-                    "name": _input_meta.name,
-                    "shape": _input_meta.shape,
-                    "type": _input_meta.type,
-                })
+                info["inputs"].append(
+                    {
+                        "name": _input_meta.name,
+                        "shape": _input_meta.shape,
+                        "type": _input_meta.type,
+                    }
+                )
 
             for _output_meta in model.get_outputs():
-                info["outputs"].append({
-                    "name": _output_meta.name,
-                    "shape": _output_meta.shape,
-                    "type": _output_meta.type,
-                })
+                info["outputs"].append(
+                    {
+                        "name": _output_meta.name,
+                        "shape": _output_meta.shape,
+                        "type": _output_meta.type,
+                    }
+                )
         except (AttributeError, RuntimeError) as e:
             logger.debug("Failed to get ONNX model input/output info: %s", e)
 
@@ -349,7 +356,8 @@ class ModelCache:
         """
         self.logger = logging.getLogger(__name__ + ".ModelCache")
         self.cache_dir = cache_dir or os.path.join(
-            os.path.expanduser("~"), ".intellicrack", "model_cache")
+            os.path.expanduser("~"), ".intellicrack", "model_cache"
+        )
         self.max_cache_size = max_cache_size
         self.cache = {}
         self.access_times = {}
@@ -433,8 +441,7 @@ class ModelManager:
             cache_size: Maximum number of models to keep in cache
 
         """
-        self.models_dir = models_dir or os.path.join(
-            os.path.dirname(__file__), "..", "models")
+        self.models_dir = models_dir or os.path.join(os.path.dirname(__file__), "..", "models")
         self.cache = ModelCache(max_cache_size=cache_size)
         self.backends = self._initialize_backends()
         self.loaded_models = {}
@@ -519,8 +526,13 @@ class ModelManager:
         # Default fallback
         return "sklearn"
 
-    def register_model(self, model_id: str, model_path: str,
-                       model_type: str = None, metadata: dict[str, Any] = None):
+    def register_model(
+        self,
+        model_id: str,
+        model_path: str,
+        model_type: str = None,
+        metadata: dict[str, Any] = None,
+    ):
         """Register a model with the manager."""
         with self.lock:
             if not os.path.exists(model_path):
@@ -755,8 +767,7 @@ class ModelManager:
                 model_name = model_info.get("model_name", model_id)
                 if repo_name and model_name:
                     # Construct path to downloaded model
-                    repo_dir = os.path.join(
-                        self.models_dir, "repositories", repo_name)
+                    repo_dir = os.path.join(self.models_dir, "repositories", repo_name)
                     model_path = os.path.join(repo_dir, model_name)
                     if os.path.exists(model_path):
                         return model_path
@@ -834,8 +845,7 @@ class ModelManager:
 
             # Check if we have the appropriate backend
             if model_type.lower() not in self.backends:
-                logger.error(
-                    "Backend not available for model type: %s", model_type)
+                logger.error("Backend not available for model type: %s", model_type)
                 return False
 
             backend = self.backends[model_type.lower()]
@@ -853,29 +863,35 @@ class ModelManager:
                     # Handle different data formats
                     if hasattr(training_data, "shape"):
                         # NumPy array or similar
-                        X = training_data[:, :-
-                                          1] if training_data.shape[1] > 1 else training_data
-                        y = training_data[:, -1] if training_data.shape[1] > 1 else np.zeros(
-                            len(training_data))
+                        X = training_data[:, :-1] if training_data.shape[1] > 1 else training_data
+                        y = (
+                            training_data[:, -1]
+                            if training_data.shape[1] > 1
+                            else np.zeros(len(training_data))
+                        )
                     elif isinstance(training_data, (list, tuple)):
                         # Convert to numpy arrays
                         X = np.array(training_data)
                         y = np.zeros(len(training_data))  # Dummy labels
                     else:
-                        logger.warning(
-                            "Unsupported training data format for sklearn")
+                        logger.warning("Unsupported training data format for sklearn")
                         return False
 
                     # Split data for training and validation using train_test_split
                     X_train, X_val, y_train, y_val = train_test_split(
-                        X, y, test_size=0.2, random_state=42, stratify=y if len(np.unique(y)) > 1 else None,
+                        X,
+                        y,
+                        test_size=0.2,
+                        random_state=42,
+                        stratify=y if len(np.unique(y)) > 1 else None,
                     )
 
-                    logger.info(f"Split data: {len(X_train)} training samples, {len(X_val)} validation samples")
+                    logger.info(
+                        f"Split data: {len(X_train)} training samples, {len(X_val)} validation samples"
+                    )
 
                     # Create and train model
-                    model = RandomForestClassifier(
-                        n_estimators=10, random_state=42)
+                    model = RandomForestClassifier(n_estimators=10, random_state=42)
                     model.fit(X_train, y_train)
 
                     # Evaluate on validation set
@@ -899,8 +915,7 @@ class ModelManager:
                     }
                     self.cache.put(model_id, model_data)
 
-                    logger.info(
-                        "Model training completed successfully: %s", model_id)
+                    logger.info("Model training completed successfully: %s", model_id)
                     return True
 
                 except ImportError:
@@ -932,7 +947,8 @@ class ModelManager:
                     train_size = int(0.8 * len(X_tensor))
                     val_size = len(X_tensor) - train_size
                     train_dataset, val_dataset = torch.utils.data.random_split(
-                        TensorDataset(X_tensor, y_tensor), [train_size, val_size],
+                        TensorDataset(X_tensor, y_tensor),
+                        [train_size, val_size],
                     )
 
                     # Create data loaders
@@ -1017,10 +1033,12 @@ class ModelManager:
                         train_acc = 100 * train_correct / train_total
                         val_acc = 100 * val_correct / val_total
 
-                        logger.info(f"Epoch [{epoch+1}/{num_epochs}], "
-                                  f"Train Loss: {train_loss/len(train_loader):.4f}, "
-                                  f"Train Acc: {train_acc:.2f}%, "
-                                  f"Val Acc: {val_acc:.2f}%")
+                        logger.info(
+                            f"Epoch [{epoch+1}/{num_epochs}], "
+                            f"Train Loss: {train_loss/len(train_loader):.4f}, "
+                            f"Train Acc: {train_acc:.2f}%, "
+                            f"Val Acc: {val_acc:.2f}%"
+                        )
 
                         best_val_acc = max(best_val_acc, val_acc)
 
@@ -1074,8 +1092,12 @@ class ModelManager:
 
                     # Split data
                     from sklearn.model_selection import train_test_split
+
                     X_train, X_val, y_train, y_val = train_test_split(
-                        X, y, test_size=0.2, random_state=42,
+                        X,
+                        y,
+                        test_size=0.2,
+                        random_state=42,
                     )
 
                     # Determine number of classes
@@ -1087,14 +1109,18 @@ class ModelManager:
                         y_val = tf.keras.utils.to_categorical(y_val, num_classes)
 
                     # Build model
-                    model = keras.Sequential([
-                        layers.Dense(128, activation="relu", input_shape=(X.shape[1],)),
-                        layers.Dropout(0.2),
-                        layers.Dense(64, activation="relu"),
-                        layers.Dropout(0.2),
-                        layers.Dense(num_classes if num_classes > 2 else 1,
-                                   activation="softmax" if num_classes > 2 else "sigmoid"),
-                    ])
+                    model = keras.Sequential(
+                        [
+                            layers.Dense(128, activation="relu", input_shape=(X.shape[1],)),
+                            layers.Dropout(0.2),
+                            layers.Dense(64, activation="relu"),
+                            layers.Dropout(0.2),
+                            layers.Dense(
+                                num_classes if num_classes > 2 else 1,
+                                activation="softmax" if num_classes > 2 else "sigmoid",
+                            ),
+                        ]
+                    )
 
                     # Compile model
                     if num_classes > 2:
@@ -1119,7 +1145,8 @@ class ModelManager:
 
                     # Train model
                     history = model.fit(
-                        X_train, y_train,
+                        X_train,
+                        y_train,
                         validation_data=(X_val, y_val),
                         epochs=20,
                         batch_size=32,
@@ -1130,8 +1157,10 @@ class ModelManager:
                     # Get final validation accuracy
                     val_loss, val_acc = model.evaluate(X_val, y_val, verbose=0)
 
-                    logger.info(f"TensorFlow training completed - "
-                              f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
+                    logger.info(
+                        f"TensorFlow training completed - "
+                        f"Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}"
+                    )
 
                     # Store trained model
                     model_id = f"trained_tensorflow_model_{len(self.cache.cache)}"
@@ -1163,8 +1192,7 @@ class ModelManager:
                     return False
 
             else:
-                logger.error(
-                    "Unsupported model type for training: %s", model_type)
+                logger.error("Unsupported model type for training: %s", model_type)
                 return False
 
         except Exception as e:
@@ -1197,9 +1225,9 @@ class ModelManager:
                 # Sklearn or sklearn-compatible model
                 try:
                     import joblib
+
                     joblib.dump(model, str(save_path))
-                    logger.info(
-                        "Model (type: %s) saved using joblib: %s", model_type, path)
+                    logger.info("Model (type: %s) saved using joblib: %s", model_type, path)
                     return True
                 except ImportError:
                     # Fallback to pickle
@@ -1212,6 +1240,7 @@ class ModelManager:
                 # PyTorch model
                 try:
                     import torch
+
                     torch.save(model.state_dict(), str(save_path))
                     logger.info("PyTorch model saved: %s", path)
                     return True
@@ -1245,7 +1274,9 @@ class ModelManager:
         """Get available repositories."""
         return self.get_available_repositories()
 
-    def evaluate_model_with_split(self, model_id: str, data: Any, labels: Any, test_size: float = 0.2, random_state: int = 42) -> dict[str, Any]:
+    def evaluate_model_with_split(
+        self, model_id: str, data: Any, labels: Any, test_size: float = 0.2, random_state: int = 42
+    ) -> dict[str, Any]:
         """Evaluate a model using train_test_split for proper validation.
 
         Args:
@@ -1280,7 +1311,10 @@ class ModelManager:
 
             # Use train_test_split to create training and test sets
             X_train, X_test, y_train, y_test = train_test_split(
-                data, labels, test_size=test_size, random_state=random_state,
+                data,
+                labels,
+                test_size=test_size,
+                random_state=random_state,
                 stratify=labels if len(np.unique(labels)) > 1 else None,
             )
 
@@ -1302,11 +1336,13 @@ class ModelManager:
                 train_score = model.score(X_train, y_train)
                 test_score = model.score(X_test, y_test)
 
-                evaluation_results.update({
-                    "train_score": train_score,
-                    "test_score": test_score,
-                    "overfitting_gap": train_score - test_score,
-                })
+                evaluation_results.update(
+                    {
+                        "train_score": train_score,
+                        "test_score": test_score,
+                        "overfitting_gap": train_score - test_score,
+                    }
+                )
 
                 # Get predictions for additional metrics
                 y_pred = model.predict(X_test)
@@ -1318,10 +1354,12 @@ class ModelManager:
                     report = classification_report(y_test, y_pred, output_dict=True)
                     cm = confusion_matrix(y_test, y_pred)
 
-                    evaluation_results.update({
-                        "classification_report": report,
-                        "confusion_matrix": cm.tolist(),
-                    })
+                    evaluation_results.update(
+                        {
+                            "classification_report": report,
+                            "confusion_matrix": cm.tolist(),
+                        }
+                    )
 
             elif isinstance(backend, PyTorchBackend) and HAS_TORCH:
                 # For PyTorch models, implement evaluation logic
@@ -1349,13 +1387,17 @@ class ModelManager:
                     train_accuracy = (train_preds == y_train_t).float().mean().item()
                     test_accuracy = (test_preds == y_test_t).float().mean().item()
 
-                evaluation_results.update({
-                    "train_accuracy": train_accuracy,
-                    "test_accuracy": test_accuracy,
-                    "backend": "pytorch",
-                })
+                evaluation_results.update(
+                    {
+                        "train_accuracy": train_accuracy,
+                        "test_accuracy": test_accuracy,
+                        "backend": "pytorch",
+                    }
+                )
 
-            logger.info(f"Model evaluation completed with test score: {evaluation_results.get('test_score', evaluation_results.get('test_accuracy', 'N/A'))}")
+            logger.info(
+                f"Model evaluation completed with test score: {evaluation_results.get('test_score', evaluation_results.get('test_accuracy', 'N/A'))}"
+            )
             return evaluation_results
 
         except ImportError as e:
@@ -1382,6 +1424,7 @@ class AsyncModelManager:
 
     def load_model_async(self, model_id: str, callback: Callable = None):
         """Load a model asynchronously."""
+
         def load_worker():
             """Worker function to load a model asynchronously.
 
@@ -1405,6 +1448,7 @@ class AsyncModelManager:
 
     def predict_async(self, model_id: str, input_data: Any, callback: Callable = None):
         """Make predictions asynchronously."""
+
         def predict_worker():
             """Worker function to make predictions asynchronously.
 
@@ -1460,10 +1504,16 @@ class ModelFineTuner:
         self.training_history = {}
         self.lock = threading.RLock()
 
-    def fine_tune_model(self, model_id: str, training_data: Any,
-                        validation_data: Any = None, epochs: int = 10,
-                        learning_rate: float = 0.001, batch_size: int = 32,
-                        callback: Callable = None) -> dict[str, Any]:
+    def fine_tune_model(
+        self,
+        model_id: str,
+        training_data: Any,
+        validation_data: Any = None,
+        epochs: int = 10,
+        learning_rate: float = 0.001,
+        batch_size: int = 32,
+        callback: Callable = None,
+    ) -> dict[str, Any]:
         """Fine-tune a pre-trained model on custom data.
 
         Args:
@@ -1497,21 +1547,33 @@ class ModelFineTuner:
             try:
                 if model_type in ["pytorch", "pth"] and HAS_TORCH:
                     results = self._fine_tune_pytorch(
-                        model, training_data, validation_data,
-                        epochs, learning_rate, batch_size, callback,
+                        model,
+                        training_data,
+                        validation_data,
+                        epochs,
+                        learning_rate,
+                        batch_size,
+                        callback,
                     )
                 elif model_type in ["tensorflow", "h5"] and HAS_TENSORFLOW:
                     results = self._fine_tune_tensorflow(
-                        model, training_data, validation_data,
-                        epochs, learning_rate, batch_size, callback,
+                        model,
+                        training_data,
+                        validation_data,
+                        epochs,
+                        learning_rate,
+                        batch_size,
+                        callback,
                     )
                 elif model_type in ["sklearn", "joblib"] and HAS_JOBLIB:
                     results = self._fine_tune_sklearn(
-                        model, training_data, validation_data, callback,
+                        model,
+                        training_data,
+                        validation_data,
+                        callback,
                     )
                 else:
-                    raise ValueError(
-                        f"Fine-tuning not supported for model type: {model_type}")
+                    raise ValueError(f"Fine-tuning not supported for model type: {model_type}")
 
                 # Save fine-tuned model
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1535,7 +1597,9 @@ class ModelFineTuner:
 
                 # Register the fine-tuned model
                 self.model_manager.register_model(
-                    fine_tuned_id, fine_tuned_path, model_type,
+                    fine_tuned_id,
+                    fine_tuned_path,
+                    model_type,
                     metadata={
                         "base_model": model_id,
                         "fine_tuning_params": {
@@ -1553,8 +1617,7 @@ class ModelFineTuner:
                 # Store training history
                 self.training_history[fine_tuned_id] = results
 
-                logger.info(
-                    "Fine-tuning completed. New model ID: %s", fine_tuned_id)
+                logger.info("Fine-tuning completed. New model ID: %s", fine_tuned_id)
 
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Fine-tuning failed: %s", e)
@@ -1562,10 +1625,16 @@ class ModelFineTuner:
 
             return results
 
-    def _fine_tune_pytorch(self, model: Any, training_data: Any,
-                           validation_data: Any, epochs: int,
-                           learning_rate: float, batch_size: int,
-                           callback: Callable) -> dict[str, Any]:
+    def _fine_tune_pytorch(
+        self,
+        model: Any,
+        training_data: Any,
+        validation_data: Any,
+        epochs: int,
+        learning_rate: float,
+        batch_size: int,
+        callback: Callable,
+    ) -> dict[str, Any]:
         """Fine-tune a PyTorch model."""
         if not HAS_TORCH or torch is None or nn is None:
             return {"error": "PyTorch not available"}
@@ -1589,8 +1658,7 @@ class ModelFineTuner:
             torch.tensor(training_data[0]).float(),
             torch.tensor(training_data[1]).long(),
         )
-        train_loader = DataLoader(
-            train_dataset, batch_size=batch_size, shuffle=True)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
         val_loader = None
         if validation_data is not None:
@@ -1635,15 +1703,20 @@ class ModelFineTuner:
 
             # Callback for progress updates
             if callback:
-                callback(_epoch + 1, epochs, avg_train_loss,
-                         avg_val_loss if val_loader else None)
+                callback(_epoch + 1, epochs, avg_train_loss, avg_val_loss if val_loader else None)
 
         return results
 
-    def _fine_tune_tensorflow(self, model: Any, training_data: Any,
-                              validation_data: Any, epochs: int,
-                              learning_rate: float, batch_size: int,
-                              callback: Callable) -> dict[str, Any]:
+    def _fine_tune_tensorflow(
+        self,
+        model: Any,
+        training_data: Any,
+        validation_data: Any,
+        epochs: int,
+        learning_rate: float,
+        batch_size: int,
+        callback: Callable,
+    ) -> dict[str, Any]:
         """Fine-tune a TensorFlow model."""
         # Compile model with new learning rate
         model.compile(
@@ -1655,6 +1728,7 @@ class ModelFineTuner:
         # Prepare callbacks
         callbacks = []
         if callback:
+
             class ProgressCallback(keras.callbacks.Callback):
                 """Keras callback to report training progress to the parent callback.
 
@@ -1670,13 +1744,14 @@ class ModelFineTuner:
                         logs: Dictionary containing training metrics (loss, val_loss, etc.)
 
                     """
-                    callback(epoch + 1, epochs, logs.get("loss"),
-                             logs.get("val_loss"))
+                    callback(epoch + 1, epochs, logs.get("loss"), logs.get("val_loss"))
+
             callbacks.append(ProgressCallback())
 
         # Train the model
         history = model.fit(
-            training_data[0], training_data[1],
+            training_data[0],
+            training_data[1],
             validation_data=validation_data,
             epochs=epochs,
             batch_size=batch_size,
@@ -1690,8 +1765,9 @@ class ModelFineTuner:
             "metrics": history.history,
         }
 
-    def _fine_tune_sklearn(self, model: Any, training_data: Any,
-                           validation_data: Any, callback: Callable) -> dict[str, Any]:
+    def _fine_tune_sklearn(
+        self, model: Any, training_data: Any, validation_data: Any, callback: Callable
+    ) -> dict[str, Any]:
         """Fine-tune a scikit-learn model."""
         # For sklearn, we typically retrain on new data
         X_train, y_train = training_data
@@ -1720,8 +1796,9 @@ class ModelFineTuner:
         return self.training_history.get(model_id)
 
 
-def import_custom_model(model_path: str, model_type: str = None,
-                        model_id: str = None) -> dict[str, Any]:
+def import_custom_model(
+    model_path: str, model_type: str = None, model_id: str = None
+) -> dict[str, Any]:
     """Import a custom AI model into the system.
 
     Args:
@@ -1769,6 +1846,7 @@ def import_custom_model(model_path: str, model_type: str = None,
 
 
 # Standalone convenience functions for backward compatibility
+
 
 def load_model(model_id: str, model_path: str | None = None):
     """Load a model using the global model manager.
@@ -1840,6 +1918,7 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto"):
         # Save based on format
         if model_format in ["pickle", "pkl"]:
             import pickle as pickle_lib
+
             with open(save_path, "wb") as f:
                 pickle_lib.dump(model, f)
         elif model_format == "joblib":
@@ -1847,17 +1926,18 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto"):
                 joblib.dump(model, save_path)
             else:
                 import pickle as pickle_lib
+
                 with open(save_path, "wb") as f:
                     pickle_lib.dump(model, f)
         elif model_format == "pytorch":
             if HAS_TORCH and torch is not None:
                 torch.save(model, save_path)
             else:
-                raise ImportError(
-                    "PyTorch not available for saving .pt/.pth files")
+                raise ImportError("PyTorch not available for saving .pt/.pth files")
         else:
             # Default to pickle
             import pickle as pickle_lib
+
             with open(save_path, "wb") as f:
                 pickle_lib.dump(model, f)
 
@@ -1957,8 +2037,7 @@ def configure_ai_provider(provider_name: str, config: dict[str, Any]) -> dict[st
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to configure AI provider %s: %s",
-                     provider_name, e)
+        logger.error("Failed to configure AI provider %s: %s", provider_name, e)
         return {
             "success": False,
             "error": str(e),

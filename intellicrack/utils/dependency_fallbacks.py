@@ -32,12 +32,14 @@ SKLEARN_AVAILABLE = False
 LIEF_AVAILABLE = False
 PYELFTOOLS_AVAILABLE = False
 
+
 # Safe import functions
 def safe_import_numpy():
     """Safely import numpy with fallback."""
     global NUMPY_AVAILABLE
     try:
         import numpy as np
+
         NUMPY_AVAILABLE = True
         return np
     except ImportError:
@@ -52,11 +54,13 @@ def safe_import_numpy():
         NUMPY_AVAILABLE = False
         return create_numpy_fallback()
 
+
 def safe_import_pandas():
     """Safely import pandas with fallback."""
     global PANDAS_AVAILABLE
     try:
         import pandas as pd
+
         PANDAS_AVAILABLE = True
         return pd
     except ImportError:
@@ -71,11 +75,13 @@ def safe_import_pandas():
         PANDAS_AVAILABLE = False
         return create_pandas_fallback()
 
+
 def safe_import_sklearn():
     """Safely import sklearn with fallback."""
     global SKLEARN_AVAILABLE
     try:
         import sklearn
+
         SKLEARN_AVAILABLE = True
         return sklearn
     except ImportError:
@@ -90,17 +96,20 @@ def safe_import_sklearn():
         SKLEARN_AVAILABLE = False
         return create_sklearn_fallback()
 
+
 def safe_import_lief():
     """Safely import lief with fallback."""
     global LIEF_AVAILABLE
     try:
         import lief
+
         LIEF_AVAILABLE = True
         return lief
     except ImportError:
         logger.warning("lief not available - using fallback")
         LIEF_AVAILABLE = False
         return create_lief_fallback()
+
 
 def safe_import_pyelftools():
     """Safely import pyelftools with fallback."""
@@ -115,7 +124,9 @@ def safe_import_pyelftools():
         test_max = maxint  # Just reference it to ensure it's valid
 
         # Log successful import with usage verification
-        logger.debug(f"pyelftools available - bytes2str: {test_str}, maxint: {test_max}, ELFFile: {ELFFile}")
+        logger.debug(
+            f"pyelftools available - bytes2str: {test_str}, maxint: {test_max}, ELFFile: {ELFFile}"
+        )
 
         PYELFTOOLS_AVAILABLE = True
         return True
@@ -124,9 +135,11 @@ def safe_import_pyelftools():
         PYELFTOOLS_AVAILABLE = False
         return False
 
+
 # Fallback implementations
 def create_numpy_fallback():
     """Create a minimal numpy fallback."""
+
     class NumpyFallback:
         """Minimal numpy replacement for when numpy is unavailable."""
 
@@ -175,6 +188,7 @@ def create_numpy_fallback():
             def randn(*shape):
                 """Generate random normal distribution."""
                 import random
+
                 if len(shape) == 0:
                     return random.gauss(0, 1)
                 if len(shape) == 1:
@@ -182,15 +196,25 @@ def create_numpy_fallback():
                 if len(shape) == 2:
                     return [[random.gauss(0, 1) for _ in range(shape[1])] for _ in range(shape[0])]
                 if len(shape) == 3:
-                    return [[[random.gauss(0, 1) for _ in range(shape[2])] for _ in range(shape[1])] for _ in range(shape[0])]
+                    return [
+                        [[random.gauss(0, 1) for _ in range(shape[2])] for _ in range(shape[1])]
+                        for _ in range(shape[0])
+                    ]
                 if len(shape) == 4:
-                    return [[[[random.gauss(0, 1) for _ in range(shape[3])] for _ in range(shape[2])] for _ in range(shape[1])] for _ in range(shape[0])]
+                    return [
+                        [
+                            [[random.gauss(0, 1) for _ in range(shape[3])] for _ in range(shape[2])]
+                            for _ in range(shape[1])
+                        ]
+                        for _ in range(shape[0])
+                    ]
                 raise ValueError("Too many dimensions for fallback randn")
 
             @staticmethod
             def rand(*shape):
                 """Generate random uniform distribution [0, 1)."""
                 import random
+
                 if len(shape) == 0:
                     return random.random()  # noqa: S311
                 if len(shape) == 1:
@@ -203,6 +227,7 @@ def create_numpy_fallback():
             def randint(low, high, size=None):
                 """Generate random integers."""
                 import random
+
                 if size is None:
                     return random.randint(low, high - 1)  # noqa: S311
                 if isinstance(size, int):
@@ -213,6 +238,7 @@ def create_numpy_fallback():
             def uniform(low, high, size=None):
                 """Generate uniform random values."""
                 import random
+
                 if size is None:
                     return random.uniform(low, high)  # noqa: S311
                 if isinstance(size, int):
@@ -223,6 +249,7 @@ def create_numpy_fallback():
             def normal(loc=0.0, scale=1.0, size=None):
                 """Generate normal distribution."""
                 import random
+
                 if size is None:
                     return random.gauss(loc, scale)
                 if isinstance(size, int):
@@ -233,6 +260,7 @@ def create_numpy_fallback():
             def choice(a, size=None, p=None):
                 """Random choice from array."""
                 import random
+
                 if p is not None:
                     # Weighted choice
                     if size is None:
@@ -246,6 +274,7 @@ def create_numpy_fallback():
             def random(size=None):
                 """Generate random floats [0, 1)."""
                 import random
+
                 if size is None:
                     return random.random()  # noqa: S311
                 if isinstance(size, int):
@@ -254,8 +283,10 @@ def create_numpy_fallback():
 
     return NumpyFallback()
 
+
 def create_pandas_fallback():
     """Create a minimal pandas fallback."""
+
     class DataFrameFallback:
         """Minimal DataFrame replacement for when pandas is unavailable."""
 
@@ -284,8 +315,10 @@ def create_pandas_fallback():
 
     return PandasFallback()
 
+
 def create_sklearn_fallback():
     """Create a minimal sklearn fallback."""
+
     class RandomForestFallback:
         """Minimal RandomForest replacement for when sklearn is unavailable."""
 
@@ -294,7 +327,9 @@ def create_sklearn_fallback():
 
         def fit(self, X, y):
             """Fit the model (fallback does nothing)."""
-            logger.debug(f"RandomForest fallback fit called with {len(X)} samples and {len(y)} labels")
+            logger.debug(
+                f"RandomForest fallback fit called with {len(X)} samples and {len(y)} labels"
+            )
             return self
 
         def predict(self, X):
@@ -357,8 +392,10 @@ def create_sklearn_fallback():
 
     return SklearnFallback()
 
+
 def create_lief_fallback():
     """Create a minimal lief fallback."""
+
     class LiefFallback:
         """Minimal lief replacement for when lief is unavailable."""
 
@@ -378,6 +415,7 @@ def create_lief_fallback():
             logger.debug(f"Lief fallback parse called for: {filename}")
 
     return LiefFallback()
+
 
 # Safe module replacer
 class SafeModuleReplacer:
@@ -406,8 +444,10 @@ class SafeModuleReplacer:
             self.replaced_modules.discard(module_name)
             logger.info(f"Restored original {module_name}")
 
+
 # Global replacer instance
 _module_replacer = SafeModuleReplacer()
+
 
 def initialize_safe_imports():
     """Initialize safe imports by testing and replacing problematic modules."""
@@ -416,6 +456,7 @@ def initialize_safe_imports():
     # Test and replace numpy if needed
     try:
         import numpy
+
         test_array = numpy.array([1, 2, 3])
         logger.info("✅ numpy working correctly - test array shape: %s", test_array.shape)
     except Exception as e:
@@ -425,6 +466,7 @@ def initialize_safe_imports():
     # Test and replace pandas if needed
     try:
         import pandas
+
         test_df = pandas.DataFrame({"test": [1, 2, 3]})
         logger.info("✅ pandas working correctly - test df shape: %s", test_df.shape)
     except Exception as e:
@@ -437,11 +479,18 @@ def initialize_safe_imports():
     except Exception as e:
         logger.warning(f"sklearn issue detected: {e}")
         _module_replacer.replace_module("sklearn", create_sklearn_fallback)
-        _module_replacer.replace_module("sklearn.ensemble", lambda: create_sklearn_fallback().ensemble)
-        _module_replacer.replace_module("sklearn.cluster", lambda: create_sklearn_fallback().cluster)
-        _module_replacer.replace_module("sklearn.preprocessing", lambda: create_sklearn_fallback().preprocessing)
+        _module_replacer.replace_module(
+            "sklearn.ensemble", lambda: create_sklearn_fallback().ensemble
+        )
+        _module_replacer.replace_module(
+            "sklearn.cluster", lambda: create_sklearn_fallback().cluster
+        )
+        _module_replacer.replace_module(
+            "sklearn.preprocessing", lambda: create_sklearn_fallback().preprocessing
+        )
 
     logger.info("Safe import initialization complete")
+
 
 def get_dependency_status():
     """Get status of all dependencies."""
@@ -462,6 +511,7 @@ def get_dependency_status():
         logger.info(f"  {status_icon} {dep}")
 
     return status
+
 
 # Auto-initialize when module is imported
 try:

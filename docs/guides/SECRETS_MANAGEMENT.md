@@ -10,7 +10,7 @@ Intellicrack uses a centralized secrets management system to securely handle API
   - Environment variables (.env files)
   - OS keychain (Windows Credential Manager, macOS Keychain, Linux Secret Service)
   - Encrypted file storage with PBKDF2 key derivation
-  
+
 - **Security Features**:
   - Automatic encryption for file-based storage
   - OS keychain integration for secure storage

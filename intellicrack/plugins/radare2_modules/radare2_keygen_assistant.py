@@ -113,27 +113,27 @@ class R2KeygenAssistant:
     # Crypto constants database
     CRYPTO_CONSTANTS = {
         "MD5": {
-            "init": [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476],
-            "k": [0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee],
+            "init": [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476],
+            "k": [0xD76AA478, 0xE8C7B756, 0x242070DB, 0xC1BDCEEE],
         },
         "SHA1": {
-            "init": [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0],
+            "init": [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0],
         },
         "SHA256": {
-            "init": [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a],
-            "k": [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5],
+            "init": [0x6A09E667, 0xBB67AE85, 0x3C6EF372, 0xA54FF53A],
+            "k": [0x428A2F98, 0x71374491, 0xB5C0FBCF, 0xE9B5DBA5],
         },
         "AES": {
-            "sbox": [0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5],
+            "sbox": [0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5],
             "rcon": [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80],
         },
         "TEA": {
-            "delta": 0x9e3779b9,
-            "sum": 0xc6ef3720,
+            "delta": 0x9E3779B9,
+            "sum": 0xC6EF3720,
         },
         "CRC32": {
-            "poly": 0xedb88320,
-            "init": 0xffffffff,
+            "poly": 0xEDB88320,
+            "init": 0xFFFFFFFF,
         },
     }
 
@@ -354,8 +354,8 @@ class R2KeygenAssistant:
         # Look for format strings
         format_patterns = [
             r"%[0-9]*[xX]",  # Hex format
-            r"%[0-9]*d",     # Decimal format
-            r"%[0-9]*s",      # String format
+            r"%[0-9]*d",  # Decimal format
+            r"%[0-9]*s",  # String format
         ]
 
         for fmt in format_patterns:
@@ -402,16 +402,20 @@ class R2KeygenAssistant:
 
         if value <= 0xFFFFFFFF:
             # 32-bit value
-            search_values.extend([
-                struct.pack("<I", value).hex(),  # Little endian
-                struct.pack(">I", value).hex(),   # Big endian
-            ])
+            search_values.extend(
+                [
+                    struct.pack("<I", value).hex(),  # Little endian
+                    struct.pack(">I", value).hex(),  # Big endian
+                ]
+            )
         else:
             # 64-bit value
-            search_values.extend([
-                struct.pack("<Q", value).hex(),
-                struct.pack(">Q", value).hex(),
-            ])
+            search_values.extend(
+                [
+                    struct.pack("<Q", value).hex(),
+                    struct.pack(">Q", value).hex(),
+                ]
+            )
 
         for hex_val in search_values:
             results = self.r2.cmd(f"/x {hex_val}")
@@ -425,10 +429,12 @@ class R2KeygenAssistant:
                 for line in results.strip().split("\n"):
                     if line.startswith("0x"):
                         addr = int(line.split()[0], 16)
-                        self.extracted_keys[algo_name][const_type].append({
-                            "address": addr,
-                            "value": value,
-                        })
+                        self.extracted_keys[algo_name][const_type].append(
+                            {
+                                "address": addr,
+                                "value": value,
+                            }
+                        )
 
     def _extract_rsa_keys(self):
         """Extract RSA keys from binary"""
@@ -466,7 +472,7 @@ class R2KeygenAssistant:
         # Look for sequences of non-zero bytes (potential modulus)
         for i in range(0, len(data) - 128, 4):
             # Check if this could be a modulus
-            chunk = data[i:i+256]
+            chunk = data[i : i + 256]
 
             # RSA modulus characteristics:
             # - Starts with high bit set
@@ -489,17 +495,35 @@ class R2KeygenAssistant:
                         "exponent": exponent,
                     }
 
-                    print(f"[+] Found potential RSA-{modulus.bit_length()} key at 0x{start_addr + i:x}")
+                    print(
+                        f"[+] Found potential RSA-{modulus.bit_length()} key at 0x{start_addr + i:x}"
+                    )
 
     def _extract_aes_keys(self):
         """Extract AES keys from binary"""
         print("[*] Searching for AES keys...")
 
         # AES S-box pattern
-        aes_sbox = bytes([
-            0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5,
-            0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
-        ])
+        aes_sbox = bytes(
+            [
+                0x63,
+                0x7C,
+                0x77,
+                0x7B,
+                0xF2,
+                0x6B,
+                0x6F,
+                0xC5,
+                0x30,
+                0x01,
+                0x67,
+                0x2B,
+                0xFE,
+                0xD7,
+                0xAB,
+                0x76,
+            ]
+        )
 
         # Search for S-box
         results = self.r2.cmd(f"/x {aes_sbox.hex()}")
@@ -569,10 +593,12 @@ class R2KeygenAssistant:
                     if "XOR" not in self.extracted_keys:
                         self.extracted_keys["XOR"] = []
 
-                    self.extracted_keys["XOR"].append({
-                        "address": op.address,
-                        "key": op.parameters.get("key", 0),
-                    })
+                    self.extracted_keys["XOR"].append(
+                        {
+                            "address": op.address,
+                            "key": op.parameters.get("key", 0),
+                        }
+                    )
 
     def _extract_custom_constants(self):
         """Extract custom constants from validation"""
@@ -611,11 +637,13 @@ class R2KeygenAssistant:
 
                     # Filter out small values and addresses
                     if 0x100 <= value <= 0xFFFFFFFF:
-                        constants.append({
-                            "value": value,
-                            "hex": hex(value),
-                            "context": line.strip(),
-                        })
+                        constants.append(
+                            {
+                                "value": value,
+                                "hex": hex(value),
+                                "context": line.strip(),
+                            }
+                        )
 
         return constants
 
@@ -639,9 +667,9 @@ class R2KeygenAssistant:
 
         return templates
 
-    def _generate_keygen_template(self, flow: ValidationFlow,
-                                 algo_chain: list[CryptoAlgorithm],
-                                 language: KeygenLanguage) -> KeygenTemplate | None:
+    def _generate_keygen_template(
+        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm], language: KeygenLanguage
+    ) -> KeygenTemplate | None:
         """Generate keygen template for specific language"""
         print(f"[*] Generating {language.value} keygen...")
 
@@ -654,8 +682,9 @@ class R2KeygenAssistant:
         # Add more languages as needed
         return None
 
-    def _generate_python_keygen(self, flow: ValidationFlow,
-                               algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
+    def _generate_python_keygen(
+        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
+    ) -> KeygenTemplate:
         """Generate Python keygen"""
         code = []
         dependencies = []
@@ -812,8 +841,9 @@ class R2KeygenAssistant:
             # Generic hex format
             code.append("    serial = digest.hex().upper()[:16]")
 
-    def _generate_cpp_keygen(self, flow: ValidationFlow,
-                            algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
+    def _generate_cpp_keygen(
+        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
+    ) -> KeygenTemplate:
         """Generate C++ keygen"""
         code = []
         dependencies = []
@@ -857,7 +887,9 @@ class R2KeygenAssistant:
             if algo == CryptoAlgorithm.MD5:
                 code.append(f"    // Step {i+1}: MD5 hash")
                 code.append("    unsigned char md5_digest[MD5_DIGEST_LENGTH];")
-                code.append(f"    MD5((unsigned char*){current_var}.c_str(), {current_var}.length(), md5_digest);")
+                code.append(
+                    f"    MD5((unsigned char*){current_var}.c_str(), {current_var}.length(), md5_digest);"
+                )
                 current_var = "md5_digest"
 
             elif algo == CryptoAlgorithm.CUSTOM_XOR:
@@ -935,8 +967,9 @@ class R2KeygenAssistant:
             code.append("};")
             code.append("")
 
-    def _generate_java_keygen(self, flow: ValidationFlow,
-                             algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
+    def _generate_java_keygen(
+        self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
+    ) -> KeygenTemplate:
         """Generate Java keygen"""
         code = []
         dependencies = []
@@ -992,7 +1025,9 @@ class R2KeygenAssistant:
                 code.append(f"        byte[] xorResult = new byte[{current_var}.length];")
                 code.append(f"        for (int i = 0; i < {current_var}.length; i += 4) {{")
                 code.append("            int chunk = 0;")
-                code.append("            for (int j = 0; j < 4 && i+j < " + current_var + ".length; j++) {")
+                code.append(
+                    "            for (int j = 0; j < 4 && i+j < " + current_var + ".length; j++) {"
+                )
                 code.append(f"                chunk |= ({current_var}[i+j] & 0xFF) << (j*8);")
                 code.append("            }")
                 code.append("            chunk ^= xorKey;")
@@ -1010,11 +1045,15 @@ class R2KeygenAssistant:
         if flow.serial_format == "4x4":
             code.append("        for (int i = 0; i < 8 && i < " + current_var + ".length; i++) {")
             code.append("            if (i > 0 && i % 2 == 0) serial.append('-');")
-            code.append(f'            serial.append(String.format("%02X", {current_var}[i] & 0xFF));')
+            code.append(
+                f'            serial.append(String.format("%02X", {current_var}[i] & 0xFF));'
+            )
             code.append("        }")
         else:
             code.append("        for (int i = 0; i < 8 && i < " + current_var + ".length; i++) {")
-            code.append(f'            serial.append(String.format("%02X", {current_var}[i] & 0xFF));')
+            code.append(
+                f'            serial.append(String.format("%02X", {current_var}[i] & 0xFF));'
+            )
             code.append("        }")
 
         code.append("        return serial.toString();")
@@ -1101,8 +1140,9 @@ class R2KeygenAssistant:
         print("\n[*] Analyzing license functions for keygen generation...")
 
         # Convert to addresses
-        target_addrs = [int(f["address"], 16) for f in license_functions
-                       if f.get("confidence", 0) > 0.7]
+        target_addrs = [
+            int(f["address"], 16) for f in license_functions if f.get("confidence", 0) > 0.7
+        ]
 
         # Analyze validation flows
         self.analyze_validation(target_addrs)

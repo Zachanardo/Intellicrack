@@ -108,9 +108,15 @@ class ICPAnalysisWidget(QWidget):
         # Scan mode selector
         header_layout.addWidget(QLabel("Scan Mode:"))
         self.scan_mode_combo = QComboBox()
-        self.scan_mode_combo.addItems([
-            "Normal", "Deep", "Heuristic", "Aggressive", "All",
-        ])
+        self.scan_mode_combo.addItems(
+            [
+                "Normal",
+                "Deep",
+                "Heuristic",
+                "Aggressive",
+                "All",
+            ]
+        )
         self.scan_mode_combo.setCurrentText("Deep")
         header_layout.addWidget(self.scan_mode_combo)
 
@@ -222,20 +228,24 @@ class ICPAnalysisWidget(QWidget):
         if result.file_infos:
             for file_info in result.file_infos:
                 # Add file type as parent
-                file_item = QTreeWidgetItem([
-                    file_info.filetype,
-                    f"Size: {file_info.size}",
-                    "",
-                ])
+                file_item = QTreeWidgetItem(
+                    [
+                        file_info.filetype,
+                        f"Size: {file_info.size}",
+                        "",
+                    ]
+                )
                 self.detections_tree.addTopLevelItem(file_item)
 
                 # Add detections as children
                 for detection in file_info.detections:
-                    detection_item = QTreeWidgetItem([
-                        detection.name,
-                        detection.type,
-                        f"{detection.confidence * 100:.0f}%",
-                    ])
+                    detection_item = QTreeWidgetItem(
+                        [
+                            detection.name,
+                            detection.type,
+                            f"{detection.confidence * 100:.0f}%",
+                        ]
+                    )
 
                     # Color code by type
                     if detection.type == "Packer":
@@ -252,6 +262,7 @@ class ICPAnalysisWidget(QWidget):
         # Update raw JSON
         if result.raw_json:
             import json
+
             self.raw_json_text.setText(
                 json.dumps(result.raw_json, indent=2),
             )

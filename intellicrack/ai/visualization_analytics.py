@@ -39,6 +39,7 @@ logger = get_logger(__name__)
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in visualization_analytics: %s", e)
@@ -125,8 +126,7 @@ class DataCollector:
         data gathering from various AI components for real-time
         visualization and analytics.
         """
-        self.data_store: dict[str, deque] = defaultdict(
-            lambda: deque(maxlen=1000))
+        self.data_store: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         self.collectors: dict[MetricType, Callable] = {}
         self.collection_enabled = True
         self.collection_interval = 10  # seconds
@@ -183,23 +183,27 @@ class DataCollector:
             # Overall system health
             system_health = metrics_summary.get("system_health", {})
             if system_health:
-                data_points.append(DataPoint(
-                    timestamp=datetime.now(),
-                    value=system_health.get("score", 0),
-                    label="System Health Score",
-                    category="health",
-                ))
+                data_points.append(
+                    DataPoint(
+                        timestamp=datetime.now(),
+                        value=system_health.get("score", 0),
+                        label="System Health Score",
+                        category="health",
+                    )
+                )
 
             # Operation performance
             operation_summary = metrics_summary.get("operation_summary", {})
             for op_name, stats in operation_summary.items():
                 avg_time = stats.get("avg_execution_time", 0)
-                data_points.append(DataPoint(
-                    timestamp=datetime.now(),
-                    value=avg_time,
-                    label=f"{op_name} Avg Time",
-                    category="execution_time",
-                ))
+                data_points.append(
+                    DataPoint(
+                        timestamp=datetime.now(),
+                        value=avg_time,
+                        label=f"{op_name} Avg Time",
+                        category="execution_time",
+                    )
+                )
 
             return data_points
 
@@ -215,21 +219,24 @@ class DataCollector:
             data_points = []
 
             if "success_rate" in insights:
-                data_points.append(DataPoint(
-                    timestamp=datetime.now(),
-                    value=insights["success_rate"] *
-                    100,  # Convert to percentage
-                    label="Overall Success Rate",
-                    category="success_rate",
-                ))
+                data_points.append(
+                    DataPoint(
+                        timestamp=datetime.now(),
+                        value=insights["success_rate"] * 100,  # Convert to percentage
+                        label="Overall Success Rate",
+                        category="success_rate",
+                    )
+                )
 
             if "avg_confidence" in insights:
-                data_points.append(DataPoint(
-                    timestamp=datetime.now(),
-                    value=insights["avg_confidence"] * 100,
-                    label="Average Confidence",
-                    category="confidence",
-                ))
+                data_points.append(
+                    DataPoint(
+                        timestamp=datetime.now(),
+                        value=insights["avg_confidence"] * 100,
+                        label="Average Confidence",
+                        category="confidence",
+                    )
+                )
 
             return data_points
 
@@ -243,50 +250,58 @@ class DataCollector:
 
         if not PSUTIL_AVAILABLE:
             # Return default fallback data points when psutil is not available
-            data_points.extend([
-                DataPoint(
-                    timestamp=datetime.now(),
-                    value=50.0,
-                    label="CPU Usage",
-                    category="cpu",
-                ),
-                DataPoint(
-                    timestamp=datetime.now(),
-                    value=60.0,
-                    label="Memory Usage",
-                    category="memory",
-                ),
-            ])
+            data_points.extend(
+                [
+                    DataPoint(
+                        timestamp=datetime.now(),
+                        value=50.0,
+                        label="CPU Usage",
+                        category="cpu",
+                    ),
+                    DataPoint(
+                        timestamp=datetime.now(),
+                        value=60.0,
+                        label="Memory Usage",
+                        category="memory",
+                    ),
+                ]
+            )
             return data_points
 
         try:
             # CPU usage
             cpu_percent = psutil.cpu_percent()
-            data_points.append(DataPoint(
-                timestamp=datetime.now(),
-                value=cpu_percent,
-                label="CPU Usage",
-                category="cpu",
-            ))
+            data_points.append(
+                DataPoint(
+                    timestamp=datetime.now(),
+                    value=cpu_percent,
+                    label="CPU Usage",
+                    category="cpu",
+                )
+            )
 
             # Memory usage
             memory = psutil.virtual_memory()
-            data_points.append(DataPoint(
-                timestamp=datetime.now(),
-                value=memory.percent,
-                label="Memory Usage",
-                category="memory",
-            ))
+            data_points.append(
+                DataPoint(
+                    timestamp=datetime.now(),
+                    value=memory.percent,
+                    label="Memory Usage",
+                    category="memory",
+                )
+            )
 
             # Disk I/O
             disk_io = psutil.disk_io_counters()
             if disk_io:
-                data_points.append(DataPoint(
-                    timestamp=datetime.now(),
-                    value=disk_io.read_bytes / (1024 * 1024),  # MB
-                    label="Disk Read MB",
-                    category="disk_io",
-                ))
+                data_points.append(
+                    DataPoint(
+                        timestamp=datetime.now(),
+                        value=disk_io.read_bytes / (1024 * 1024),  # MB
+                        label="Disk Read MB",
+                        category="disk_io",
+                    )
+                )
 
             return data_points
 
@@ -304,12 +319,14 @@ class DataCollector:
             current_time = datetime.now()
             error_rate = 5.0  # Placeholder - would calculate from actual errors
 
-            data_points.append(DataPoint(
-                timestamp=current_time,
-                value=error_rate,
-                label="Error Rate",
-                category="errors",
-            ))
+            data_points.append(
+                DataPoint(
+                    timestamp=current_time,
+                    value=error_rate,
+                    label="Error Rate",
+                    category="errors",
+                )
+            )
 
             return data_points
 
@@ -324,23 +341,27 @@ class DataCollector:
             data_points = []
 
             if "total_records" in insights:
-                data_points.append(DataPoint(
-                    timestamp=datetime.now(),
-                    value=insights["total_records"],
-                    label="Total Learning Records",
-                    category="learning_volume",
-                ))
+                data_points.append(
+                    DataPoint(
+                        timestamp=datetime.now(),
+                        value=insights["total_records"],
+                        label="Total Learning Records",
+                        category="learning_volume",
+                    )
+                )
 
             # Learning stats
             learning_stats = insights.get("learning_stats", {})
             for stat_name, value in learning_stats.items():
                 if isinstance(value, (int, float)):
-                    data_points.append(DataPoint(
-                        timestamp=datetime.now(),
-                        value=value,
-                        label=f"Learning {stat_name}",
-                        category="learning_progress",
-                    ))
+                    data_points.append(
+                        DataPoint(
+                            timestamp=datetime.now(),
+                            value=value,
+                            label=f"Learning {stat_name}",
+                            category="learning_progress",
+                        )
+                    )
 
             return data_points
 
@@ -358,20 +379,24 @@ class DataCollector:
             data_points = []
 
             if "total_chains" in stats:
-                data_points.append(DataPoint(
-                    timestamp=datetime.now(),
-                    value=stats["total_chains"],
-                    label="Total Exploit Chains",
-                    category="exploit_chains",
-                ))
+                data_points.append(
+                    DataPoint(
+                        timestamp=datetime.now(),
+                        value=stats["total_chains"],
+                        label="Total Exploit Chains",
+                        category="exploit_chains",
+                    )
+                )
 
             if "avg_success_probability" in stats:
-                data_points.append(DataPoint(
-                    timestamp=datetime.now(),
-                    value=stats["avg_success_probability"] * 100,
-                    label="Avg Chain Success Rate",
-                    category="chain_success",
-                ))
+                data_points.append(
+                    DataPoint(
+                        timestamp=datetime.now(),
+                        value=stats["avg_success_probability"] * 100,
+                        label="Avg Chain Success Rate",
+                        category="chain_success",
+                    )
+                )
 
             return data_points
 
@@ -389,19 +414,23 @@ class DataCollector:
             active_agents = 3
             total_tasks = 150
 
-            data_points.append(DataPoint(
-                timestamp=datetime.now(),
-                value=active_agents,
-                label="Active Agents",
-                category="agent_activity",
-            ))
+            data_points.append(
+                DataPoint(
+                    timestamp=datetime.now(),
+                    value=active_agents,
+                    label="Active Agents",
+                    category="agent_activity",
+                )
+            )
 
-            data_points.append(DataPoint(
-                timestamp=datetime.now(),
-                value=total_tasks,
-                label="Total Tasks Processed",
-                category="task_volume",
-            ))
+            data_points.append(
+                DataPoint(
+                    timestamp=datetime.now(),
+                    value=total_tasks,
+                    label="Total Tasks Processed",
+                    category="task_volume",
+                )
+            )
 
             return data_points
 
@@ -417,8 +446,7 @@ class DataCollector:
         # Filter by time range (in seconds)
         cutoff_time = datetime.now() - timedelta(seconds=time_range)
         filtered_data = [
-            point for point in self.data_store[metric_type.value]
-            if point.timestamp >= cutoff_time
+            point for point in self.data_store[metric_type.value] if point.timestamp >= cutoff_time
         ]
 
         return filtered_data
@@ -486,7 +514,9 @@ class ChartGenerator:
         }
 
     @profile_ai_operation("chart_generation")
-    def generate_chart(self, template_name: str, custom_options: dict[str, Any] = None) -> ChartData:
+    def generate_chart(
+        self, template_name: str, custom_options: dict[str, Any] = None
+    ) -> ChartData:
         """Generate chart from template."""
         if template_name not in self.chart_templates:
             raise ValueError(f"Unknown chart template: {template_name}")
@@ -496,8 +526,7 @@ class ChartGenerator:
         # Collect data for all metrics in template
         all_data_points = []
         for metric_type in template["metrics"]:
-            data_points = self.data_collector.get_data(
-                metric_type, template["time_range"])
+            data_points = self.data_collector.get_data(metric_type, template["time_range"])
             all_data_points.extend(data_points)
 
         # Merge custom options
@@ -553,29 +582,34 @@ class ChartGenerator:
         # Add nodes for each exploit type with stats-based sizing
         for exploit_type in ExploitType:
             # Use stats to determine node size based on usage frequency
-            usage_count = stats.get("exploit_types", {}).get(
-                exploit_type.value, 0)
-            node_size = min(1.0 + (usage_count * 0.1),
-                            3.0)  # Scale based on usage
+            usage_count = stats.get("exploit_types", {}).get(exploit_type.value, 0)
+            node_size = min(1.0 + (usage_count * 0.1), 3.0)  # Scale based on usage
 
-            network_data.append(DataPoint(
-                timestamp=datetime.now(),
-                value=node_size,  # Node size based on stats
-                label=exploit_type.value,
-                category="exploit_type",
-                metadata={"node_type": "exploit",
-                          "color": "#ff6b6b", "usage_count": usage_count},
-            ))
+            network_data.append(
+                DataPoint(
+                    timestamp=datetime.now(),
+                    value=node_size,  # Node size based on stats
+                    label=exploit_type.value,
+                    category="exploit_type",
+                    metadata={
+                        "node_type": "exploit",
+                        "color": "#ff6b6b",
+                        "usage_count": usage_count,
+                    },
+                )
+            )
 
         # Add nodes for complexity levels
         for complexity in ChainComplexity:
-            network_data.append(DataPoint(
-                timestamp=datetime.now(),
-                value=0.8,
-                label=complexity.value,
-                category="complexity",
-                metadata={"node_type": "complexity", "color": "#4ecdc4"},
-            ))
+            network_data.append(
+                DataPoint(
+                    timestamp=datetime.now(),
+                    value=0.8,
+                    label=complexity.value,
+                    category="complexity",
+                    metadata={"node_type": "complexity", "color": "#4ecdc4"},
+                )
+            )
 
         chart_data = ChartData(
             chart_id=str(uuid.uuid4()),
@@ -605,14 +639,20 @@ class ChartGenerator:
                 # Mock frequency data
                 frequency = max(0, 100 - abs(i - j) * 20 + (i + j) * 5)
 
-                heatmap_data.append(DataPoint(
-                    timestamp=datetime.now(),
-                    value=frequency,
-                    label=f"{exploit_type.value}-{severity}",
-                    category="heatmap_cell",
-                    metadata={
-                        "x": i, "y": j, "exploit_type": exploit_type.value, "severity": severity},
-                ))
+                heatmap_data.append(
+                    DataPoint(
+                        timestamp=datetime.now(),
+                        value=frequency,
+                        label=f"{exploit_type.value}-{severity}",
+                        category="heatmap_cell",
+                        metadata={
+                            "x": i,
+                            "y": j,
+                            "exploit_type": exploit_type.value,
+                            "severity": severity,
+                        },
+                    )
+                )
 
         chart_data = ChartData(
             chart_id=str(uuid.uuid4()),
@@ -728,15 +768,15 @@ class DashboardManager:
 
         return dashboard
 
-    def create_custom_dashboard(self, name: str, description: str,
-                                chart_configs: list[dict[str, Any]]) -> Dashboard:
+    def create_custom_dashboard(
+        self, name: str, description: str, chart_configs: list[dict[str, Any]]
+    ) -> Dashboard:
         """Create custom dashboard."""
         charts = []
 
         for chart_config in chart_configs:
             try:
-                chart = self.chart_generator.generate_custom_chart(
-                    chart_config)
+                chart = self.chart_generator.generate_custom_chart(chart_config)
                 charts.append(chart)
             except Exception as e:
                 logger.error(f"Error generating custom chart: {e}")
@@ -860,8 +900,7 @@ class AnalyticsEngine:
     @profile_ai_operation("trend_analysis")
     def analyze_performance_trends(self, time_range: int = 86400) -> dict[str, Any]:
         """Analyze performance trends over time."""
-        performance_data = self.data_collector.get_data(
-            MetricType.PERFORMANCE, time_range)
+        performance_data = self.data_collector.get_data(MetricType.PERFORMANCE, time_range)
 
         if not performance_data:
             return {"trend": "no_data", "analysis": "Insufficient data for trend analysis"}
@@ -912,8 +951,7 @@ class AnalyticsEngine:
     @profile_ai_operation("success_rate_analysis")
     def analyze_success_patterns(self) -> dict[str, Any]:
         """Analyze success rate patterns."""
-        success_data = self.data_collector.get_data(
-            MetricType.SUCCESS_RATE, 86400)
+        success_data = self.data_collector.get_data(MetricType.SUCCESS_RATE, 86400)
 
         if not success_data:
             return {"analysis": "No success rate data available"}
@@ -969,8 +1007,7 @@ class AnalyticsEngine:
     @profile_ai_operation("resource_efficiency_analysis")
     def analyze_resource_efficiency(self) -> dict[str, Any]:
         """Analyze resource usage efficiency."""
-        resource_data = self.data_collector.get_data(
-            MetricType.RESOURCE_USAGE, 3600)
+        resource_data = self.data_collector.get_data(MetricType.RESOURCE_USAGE, 3600)
 
         if not resource_data:
             return {"analysis": "No resource usage data available"}
@@ -1021,8 +1058,7 @@ class AnalyticsEngine:
 
     def _calculate_overall_efficiency(self, efficiency_analysis: dict[str, dict[str, Any]]) -> str:
         """Calculate overall efficiency rating."""
-        ratings = [analysis["efficiency_rating"]
-                   for analysis in efficiency_analysis.values()]
+        ratings = [analysis["efficiency_rating"] for analysis in efficiency_analysis.values()]
 
         if "concerning" in ratings:
             return "needs_optimization"
@@ -1043,27 +1079,21 @@ class AnalyticsEngine:
         }
 
         # Generate overall recommendations
-        performance_trend = report["performance_trends"].get(
-            "trend", "unknown")
+        performance_trend = report["performance_trends"].get("trend", "unknown")
         success_rate = report["success_patterns"].get("mean_success_rate", 0)
-        efficiency_rating = report["resource_efficiency"].get(
-            "overall_rating", "unknown")
+        efficiency_rating = report["resource_efficiency"].get("overall_rating", "unknown")
 
         if performance_trend == "declining":
-            report["recommendations"].append(
-                "Performance is declining - investigate bottlenecks")
+            report["recommendations"].append("Performance is declining - investigate bottlenecks")
 
         if success_rate < 80:
-            report["recommendations"].append(
-                "Success rate below target - review error handling")
+            report["recommendations"].append("Success rate below target - review error handling")
 
         if efficiency_rating == "needs_optimization":
-            report["recommendations"].append(
-                "Resource usage needs optimization")
+            report["recommendations"].append("Resource usage needs optimization")
 
         if not report["recommendations"]:
-            report["recommendations"].append(
-                "System performing well - continue monitoring")
+            report["recommendations"].append("System performing well - continue monitoring")
 
         return report
 
@@ -1096,8 +1126,9 @@ class VisualizationAnalytics:
         """Refresh dashboard data."""
         return self.dashboard_manager.refresh_dashboard(dashboard_id)
 
-    def create_custom_dashboard(self, name: str, description: str,
-                                chart_configs: list[dict[str, Any]]) -> Dashboard:
+    def create_custom_dashboard(
+        self, name: str, description: str, chart_configs: list[dict[str, Any]]
+    ) -> Dashboard:
         """Create custom dashboard."""
         return self.dashboard_manager.create_custom_dashboard(name, description, chart_configs)
 

@@ -1,4 +1,5 @@
 """Keygen dialog for generating license keys and serial numbers."""
+
 import json
 import os
 import platform
@@ -56,9 +57,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
-
 class KeygenWorker(QThread):
     """Background worker for keygen operations."""
 
@@ -112,6 +110,7 @@ class KeygenWorker(QThread):
 
             try:
                 from ...utils.exploitation import generate_license_key
+
                 result = generate_license_key(
                     self.binary_path,
                     algorithm=self.kwargs.get("algorithm", "auto"),
@@ -124,13 +123,15 @@ class KeygenWorker(QThread):
                 self.batch_progress.emit(_i + 1, count)
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in keygen_dialog: %s", e)
-                keys.append({
-                    "batch_id": _i + 1,
-                    "key": "",
-                    "error": str(e),
-                    "algorithm": self.kwargs.get("algorithm", "auto"),
-                    "format": self.kwargs.get("format_type", "auto"),
-                })
+                keys.append(
+                    {
+                        "batch_id": _i + 1,
+                        "key": "",
+                        "error": str(e),
+                        "algorithm": self.kwargs.get("algorithm", "auto"),
+                        "format": self.kwargs.get("format_type", "auto"),
+                    }
+                )
 
         self.batch_completed.emit(keys)
 
@@ -212,8 +213,9 @@ class KeygenDialog(BinarySelectionDialog):
     def setup_header(self, layout):
         """Setup header with binary selection."""
         # Use the base class method with analyze button
-        super().setup_header(layout, show_label=True,
-                           extra_buttons=[("Analyze Binary", self.analyze_binary)])
+        super().setup_header(
+            layout, show_label=True, extra_buttons=[("Analyze Binary", self.analyze_binary)]
+        )
 
     def setup_tabs(self, layout):
         """Setup main tab widget."""
@@ -245,18 +247,31 @@ class KeygenDialog(BinarySelectionDialog):
         # Algorithm selection
         config_layout.addWidget(QLabel("Algorithm:"), 0, 0)
         self.algorithm_combo = QComboBox()
-        self.algorithm_combo.addItems([
-            "Auto-Detect", "Simple", "Formatted", "RSA", "AES",
-            "Checksum", "Hardware-Locked",
-        ])
+        self.algorithm_combo.addItems(
+            [
+                "Auto-Detect",
+                "Simple",
+                "Formatted",
+                "RSA",
+                "AES",
+                "Checksum",
+                "Hardware-Locked",
+            ]
+        )
         config_layout.addWidget(self.algorithm_combo, 0, 1)
 
         # Format selection
         config_layout.addWidget(QLabel("Format:"), 1, 0)
         self.format_combo = QComboBox()
-        self.format_combo.addItems([
-            "Auto-Detect", "Alphanumeric", "Formatted", "Hex", "Base64",
-        ])
+        self.format_combo.addItems(
+            [
+                "Auto-Detect",
+                "Alphanumeric",
+                "Formatted",
+                "Hex",
+                "Base64",
+            ]
+        )
         config_layout.addWidget(self.format_combo, 1, 1)
 
         # Custom length
@@ -280,7 +295,9 @@ class KeygenDialog(BinarySelectionDialog):
         # Generate button
         self.generate_btn = QPushButton("Generate License Key")
         self.generate_btn.clicked.connect(self.generate_single_key)
-        self.generate_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 10px; }")
+        self.generate_btn.setStyleSheet(
+            "QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 10px; }"
+        )
         gen_layout.addWidget(self.generate_btn)
 
         # Generated key display
@@ -337,17 +354,30 @@ class KeygenDialog(BinarySelectionDialog):
 
         config_layout.addWidget(QLabel("Algorithm:"), 1, 0)
         self.batch_algorithm_combo = QComboBox()
-        self.batch_algorithm_combo.addItems([
-            "Auto-Detect", "Simple", "Formatted", "RSA", "AES",
-            "Checksum", "Hardware-Locked",
-        ])
+        self.batch_algorithm_combo.addItems(
+            [
+                "Auto-Detect",
+                "Simple",
+                "Formatted",
+                "RSA",
+                "AES",
+                "Checksum",
+                "Hardware-Locked",
+            ]
+        )
         config_layout.addWidget(self.batch_algorithm_combo, 1, 1)
 
         config_layout.addWidget(QLabel("Format:"), 2, 0)
         self.batch_format_combo = QComboBox()
-        self.batch_format_combo.addItems([
-            "Auto-Detect", "Alphanumeric", "Formatted", "Hex", "Base64",
-        ])
+        self.batch_format_combo.addItems(
+            [
+                "Auto-Detect",
+                "Alphanumeric",
+                "Formatted",
+                "Hex",
+                "Base64",
+            ]
+        )
         config_layout.addWidget(self.batch_format_combo, 2, 1)
 
         layout.addWidget(config_group)
@@ -357,7 +387,9 @@ class KeygenDialog(BinarySelectionDialog):
 
         self.batch_generate_btn = QPushButton("Generate Batch")
         self.batch_generate_btn.clicked.connect(self.generate_batch_keys)
-        self.batch_generate_btn.setStyleSheet("QPushButton { background-color: #FF9800; color: white; font-weight: bold; }")
+        self.batch_generate_btn.setStyleSheet(
+            "QPushButton { background-color: #FF9800; color: white; font-weight: bold; }"
+        )
 
         self.batch_stop_btn = QPushButton("Stop")
         self.batch_stop_btn.clicked.connect(self.stop_batch_generation)
@@ -384,9 +416,15 @@ class KeygenDialog(BinarySelectionDialog):
         # Results table
         self.batch_table = QTableWidget()
         self.batch_table.setColumnCount(5)
-        self.batch_table.setHorizontalHeaderLabels([
-            "ID", "Generated Key", "Algorithm", "Format", "Status",
-        ])
+        self.batch_table.setHorizontalHeaderLabels(
+            [
+                "ID",
+                "Generated Key",
+                "Algorithm",
+                "Format",
+                "Status",
+            ]
+        )
 
         # Set column widths
         header = self.batch_table.horizontalHeader()
@@ -421,7 +459,9 @@ class KeygenDialog(BinarySelectionDialog):
 
         self.existing_keys_input = QTextEdit()
         self.existing_keys_input.setMaximumHeight(100)
-        self.existing_keys_input.setPlaceholderText("Paste existing license keys (one per line) to analyze patterns...")
+        self.existing_keys_input.setPlaceholderText(
+            "Paste existing license keys (one per line) to analyze patterns..."
+        )
         input_layout.addWidget(self.existing_keys_input)
 
         self.analyze_keys_btn = QPushButton("Analyze Key Patterns")
@@ -442,17 +482,19 @@ class KeygenDialog(BinarySelectionDialog):
     def setup_footer(self, layout):
         """Setup footer with status and close button."""
         from ..dialog_utils import setup_footer
+
         setup_footer(self, layout)
 
     def connect_signals(self):
         """Connect internal signals."""
         from ..dialog_utils import connect_binary_signals
-        connect_binary_signals(self)
 
+        connect_binary_signals(self)
 
     def on_binary_path_changed(self, text):
         """Handle binary path change."""
         from ..dialog_utils import on_binary_path_changed
+
         on_binary_path_changed(self, text)
 
     def auto_analyze_binary(self):
@@ -592,7 +634,8 @@ class KeygenDialog(BinarySelectionDialog):
 
         # Start worker thread
         self.worker = KeygenWorker(
-            self.binary_path, "single",
+            self.binary_path,
+            "single",
             algorithm=algorithm,
             format_type=format_type,
             custom_length=custom_length,
@@ -661,6 +704,7 @@ class KeygenDialog(BinarySelectionDialog):
         if key:
             try:
                 from PyQt6.QtWidgets import QApplication
+
                 QApplication.clipboard().setText(key)
                 self.status_label.setText("Key copied to clipboard")
             except (OSError, ValueError, RuntimeError) as e:
@@ -694,7 +738,9 @@ class KeygenDialog(BinarySelectionDialog):
             result = getattr(self, "last_generated_result", {})
             content = "# License Key Generated by Intellicrack Professional Keygen\n"
             content += f"# Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
-            content += f"# Binary: {os.path.basename(self.binary_path) if self.binary_path else 'N/A'}\n"
+            content += (
+                f"# Binary: {os.path.basename(self.binary_path) if self.binary_path else 'N/A'}\n"
+            )
             content += f"# Algorithm: {result.get('algorithm', 'unknown')}\n"
             content += f"# Format: {result.get('format', 'unknown')}\n"
 
@@ -702,7 +748,9 @@ class KeygenDialog(BinarySelectionDialog):
                 analysis = result["analysis"]
                 content += f"# Detection Confidence: {analysis.get('confidence', 0):.1%}\n"
                 if analysis.get("detected_algorithms"):
-                    content += f"# Detected Algorithms: {', '.join(analysis['detected_algorithms'])}\n"
+                    content += (
+                        f"# Detected Algorithms: {', '.join(analysis['detected_algorithms'])}\n"
+                    )
 
             content += f"\n# License Key:\n{self.last_generated_key}\n"
 
@@ -725,7 +773,8 @@ class KeygenDialog(BinarySelectionDialog):
 
             # Show success message with option to open folder
             reply = QMessageBox.question(
-                self, "Key Saved",
+                self,
+                "Key Saved",
                 f"Key saved successfully to:\n{file_path}\n\nWould you like to open the generated_keys folder?",
                 QMessageBox.Yes | QMessageBox.No,
             )
@@ -757,7 +806,8 @@ class KeygenDialog(BinarySelectionDialog):
         count = self.batch_count_spin.value()
         if count > 100:
             reply = QMessageBox.question(
-                self, "Large Batch",
+                self,
+                "Large Batch",
                 f"You're about to generate {count} keys. This may take a while. Continue?",
                 QMessageBox.Yes | QMessageBox.No,
             )
@@ -797,7 +847,8 @@ class KeygenDialog(BinarySelectionDialog):
 
         # Start worker thread
         self.worker = KeygenWorker(
-            self.binary_path, "batch",
+            self.binary_path,
+            "batch",
             count=count,
             algorithm=algorithm,
             format_type=format_type,
@@ -821,7 +872,7 @@ class KeygenDialog(BinarySelectionDialog):
 
         for i, key_data in enumerate(keys):
             # ID
-            self.batch_table.setItem(i, 0, QTableWidgetItem(str(key_data.get("batch_id", i+1))))
+            self.batch_table.setItem(i, 0, QTableWidgetItem(str(key_data.get("batch_id", i + 1))))
 
             # Key
             key_text = key_data.get("key", "Error")
@@ -884,7 +935,9 @@ class KeygenDialog(BinarySelectionDialog):
         default_path = os.path.join(default_dir, default_filename)
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Keys", default_path,
+            self,
+            "Export Keys",
+            default_path,
             "Text Files (*.txt);;JSON Files (*.json);;CSV Files (*.csv)",
         )
 
@@ -895,20 +948,25 @@ class KeygenDialog(BinarySelectionDialog):
                         json.dump(self.generated_keys, f, indent=2)
                 elif file_path.endswith(".csv"):
                     import csv
+
                     with open(file_path, "w", newline="", encoding="utf-8") as f:
                         writer = csv.writer(f)
                         writer.writerow(["ID", "Key", "Algorithm", "Format", "Status"])
                         for _key_data in self.generated_keys:
-                            writer.writerow([
-                                _key_data.get("batch_id", ""),
-                                _key_data.get("key", ""),
-                                _key_data.get("algorithm", ""),
-                                _key_data.get("format", ""),
-                                "Error" if "error" in _key_data else "Generated",
-                            ])
+                            writer.writerow(
+                                [
+                                    _key_data.get("batch_id", ""),
+                                    _key_data.get("key", ""),
+                                    _key_data.get("algorithm", ""),
+                                    _key_data.get("format", ""),
+                                    "Error" if "error" in _key_data else "Generated",
+                                ]
+                            )
                 else:  # txt
                     with open(file_path, "w", encoding="utf-8") as f:
-                        f.write(f"License Keys Generated from: {os.path.basename(self.binary_path)}\n")
+                        f.write(
+                            f"License Keys Generated from: {os.path.basename(self.binary_path)}\n"
+                        )
                         f.write("=" * 60 + "\n\n")
                         for _key_data in self.generated_keys:
                             if "error" not in _key_data:
@@ -931,6 +989,7 @@ class KeygenDialog(BinarySelectionDialog):
 
         try:
             from ...utils.exploitation import analyze_existing_keys
+
             analysis = analyze_existing_keys(keys)
 
             # Format results
@@ -948,14 +1007,18 @@ class KeygenDialog(BinarySelectionDialog):
 
             if analysis.get("patterns"):
                 analysis_text += "Length Statistics:\n"
-                analysis_text += f"  • Average Length: {analysis['patterns'].get('avg_length', 0):.1f}\n"
+                analysis_text += (
+                    f"  • Average Length: {analysis['patterns'].get('avg_length', 0):.1f}\n"
+                )
                 analysis_text += f"  • Min Length: {analysis['patterns'].get('min_length', 0)}\n"
                 analysis_text += f"  • Max Length: {analysis['patterns'].get('max_length', 0)}\n\n"
 
             if analysis.get("recommendations"):
                 analysis_text += "Recommendations for Key Generation:\n"
                 analysis_text += f"  • Suggested Format: {analysis['recommendations'].get('format', 'alphanumeric').title()}\n"
-                analysis_text += f"  • Suggested Length: {analysis['recommendations'].get('length', 25)}\n"
+                analysis_text += (
+                    f"  • Suggested Length: {analysis['recommendations'].get('length', 25)}\n"
+                )
 
             self.key_analysis_display.setPlainText(analysis_text)
 

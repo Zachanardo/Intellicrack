@@ -18,8 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
-
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QHBoxLayout,
@@ -268,13 +266,23 @@ class HelpDocumentationWidget(QWidget):
     def populate_features_tree(self):
         """Populate the features tree with all 78 features."""
         # Binary Analysis (11 features)
-        binary_analysis = QTreeWidgetItem(self.features_tree, ["Binary Analysis", "", "Core analysis capabilities"])
-        self.add_feature(binary_analysis, "Static Binary Analysis", "✓", "PE, ELF, Mach-O format analysis")
-        self.add_feature(binary_analysis, "Control Flow Graph", "✓", "CFG generation and visualization")
+        binary_analysis = QTreeWidgetItem(
+            self.features_tree, ["Binary Analysis", "", "Core analysis capabilities"]
+        )
+        self.add_feature(
+            binary_analysis, "Static Binary Analysis", "✓", "PE, ELF, Mach-O format analysis"
+        )
+        self.add_feature(
+            binary_analysis, "Control Flow Graph", "✓", "CFG generation and visualization"
+        )
         self.add_feature(binary_analysis, "Symbolic Execution", "✓", "Path exploration with Angr")
         self.add_feature(binary_analysis, "Taint Analysis", "✓", "Data flow tracking")
-        self.add_feature(binary_analysis, "ROP Gadget Finder", "✓", "Return-oriented programming chains")
-        self.add_feature(binary_analysis, "Binary Similarity Search", "✓", "Find similar code patterns")
+        self.add_feature(
+            binary_analysis, "ROP Gadget Finder", "✓", "Return-oriented programming chains"
+        )
+        self.add_feature(
+            binary_analysis, "Binary Similarity Search", "✓", "Find similar code patterns"
+        )
         self.add_feature(binary_analysis, "Multi-Format Analysis", "✓", "LIEF-based manipulation")
         self.add_feature(binary_analysis, "Import/Export Analysis", "✓", "API usage detection")
         self.add_feature(binary_analysis, "Section Analysis", "✓", "Entropy and permissions")
@@ -282,7 +290,9 @@ class HelpDocumentationWidget(QWidget):
         self.add_feature(binary_analysis, "Ghidra Integration", "✓", "Advanced decompilation")
 
         # License & Protection Detection (8 features)
-        protection = QTreeWidgetItem(self.features_tree, ["Protection Detection", "", "License and protection mechanisms"])
+        protection = QTreeWidgetItem(
+            self.features_tree, ["Protection Detection", "", "License and protection mechanisms"]
+        )
         self.add_feature(protection, "Deep License Analysis", "✓", "Pattern recognition")
         self.add_feature(protection, "Commercial Protection", "✓", "Themida, VMProtect, etc.")
         self.add_feature(protection, "Hardware Dongle Detection", "✓", "SafeNet, HASP, CodeMeter")
@@ -293,7 +303,9 @@ class HelpDocumentationWidget(QWidget):
         self.add_feature(protection, "License Weakness Detection", "✓", "Trial periods, activation")
 
         # Dynamic Analysis (6 features)
-        dynamic = QTreeWidgetItem(self.features_tree, ["Dynamic Analysis", "", "Runtime monitoring and instrumentation"])
+        dynamic = QTreeWidgetItem(
+            self.features_tree, ["Dynamic Analysis", "", "Runtime monitoring and instrumentation"]
+        )
         self.add_feature(dynamic, "API Hooking", "✓", "Runtime API interception")
         self.add_feature(dynamic, "Deep Runtime Monitoring", "✓", "Process behavior analysis")
         self.add_feature(dynamic, "Dynamic Memory Analysis", "✓", "Memory pattern scanning")
@@ -302,7 +314,9 @@ class HelpDocumentationWidget(QWidget):
         self.add_feature(dynamic, "Memory Keyword Scan", "✓", "Search process memory")
 
         # Network Analysis (7 features)
-        network = QTreeWidgetItem(self.features_tree, ["Network Analysis", "", "Network traffic and protocols"])
+        network = QTreeWidgetItem(
+            self.features_tree, ["Network Analysis", "", "Network traffic and protocols"]
+        )
         self.add_feature(network, "Traffic Capture", "✓", "Packet sniffing")
         self.add_feature(network, "Protocol Fingerprinting", "✓", "License protocol detection")
         self.add_feature(network, "License Server Emulation", "✓", "Mock server responses")
@@ -312,7 +326,9 @@ class HelpDocumentationWidget(QWidget):
         self.add_feature(network, "Traffic Report Generation", "✓", "Detailed analysis reports")
 
         # Vulnerability Detection (5 features)
-        vulnerability = QTreeWidgetItem(self.features_tree, ["Vulnerability Detection", "", "Security weakness identification"])
+        vulnerability = QTreeWidgetItem(
+            self.features_tree, ["Vulnerability Detection", "", "Security weakness identification"]
+        )
         self.add_feature(vulnerability, "Static Vulnerability Scan", "✓", "Code analysis")
         self.add_feature(vulnerability, "Weak Crypto Detection", "✓", "Insecure algorithms")
         self.add_feature(vulnerability, "ML Vulnerability Prediction", "✓", "AI-based detection")
@@ -320,7 +336,9 @@ class HelpDocumentationWidget(QWidget):
         self.add_feature(vulnerability, "Checksum Verification", "✓", "Integrity checks")
 
         # Patching & Modification (7 features)
-        patching = QTreeWidgetItem(self.features_tree, ["Patching", "", "Binary modification capabilities"])
+        patching = QTreeWidgetItem(
+            self.features_tree, ["Patching", "", "Binary modification capabilities"]
+        )
         self.add_feature(patching, "Automated Patch Planning", "✓", "Intelligent patch generation")
         self.add_feature(patching, "AI-Driven Patching", "✓", "ML-based suggestions")
         self.add_feature(patching, "Static File Patching", "✓", "Direct binary modification")
@@ -330,7 +348,9 @@ class HelpDocumentationWidget(QWidget):
         self.add_feature(patching, "Payload Generation", "✓", "Custom patch creation")
 
         # AI & ML Integration (5 features)
-        ai_ml = QTreeWidgetItem(self.features_tree, ["AI Integration", "", "Machine learning features"])
+        ai_ml = QTreeWidgetItem(
+            self.features_tree, ["AI Integration", "", "Machine learning features"]
+        )
         self.add_feature(ai_ml, "AI Assistant", "✓", "Interactive guidance")
         self.add_feature(ai_ml, "ML Vulnerability Prediction", "✓", "Pattern-based detection")
         self.add_feature(ai_ml, "Binary Similarity ML", "✓", "Code pattern matching")
@@ -338,21 +358,27 @@ class HelpDocumentationWidget(QWidget):
         self.add_feature(ai_ml, "Model Fine-tuning", "✓", "Custom training")
 
         # Distributed & Performance (4 features)
-        distributed = QTreeWidgetItem(self.features_tree, ["Performance", "", "Optimization and scaling"])
+        distributed = QTreeWidgetItem(
+            self.features_tree, ["Performance", "", "Optimization and scaling"]
+        )
         self.add_feature(distributed, "Distributed Processing", "✓", "Multi-core analysis")
         self.add_feature(distributed, "GPU Acceleration", "✓", "CUDA/OpenCL support")
         self.add_feature(distributed, "Incremental Caching", "✓", "Analysis optimization")
         self.add_feature(distributed, "Memory Optimization", "✓", "Large file handling")
 
         # Reporting (4 features)
-        reporting = QTreeWidgetItem(self.features_tree, ["Reporting", "", "Documentation and reports"])
+        reporting = QTreeWidgetItem(
+            self.features_tree, ["Reporting", "", "Documentation and reports"]
+        )
         self.add_feature(reporting, "PDF Report Generation", "✓", "Professional reports")
         self.add_feature(reporting, "HTML Reports", "✓", "Interactive reports")
         self.add_feature(reporting, "Network Reports", "✓", "Traffic analysis")
         self.add_feature(reporting, "Custom Templates", "✓", "Report customization")
 
         # Plugin System (4 features)
-        plugins = QTreeWidgetItem(self.features_tree, ["Plugin System", "", "Extensibility framework"])
+        plugins = QTreeWidgetItem(
+            self.features_tree, ["Plugin System", "", "Extensibility framework"]
+        )
         self.add_feature(plugins, "Python Plugins", "✓", "Custom modules")
         self.add_feature(plugins, "Frida Scripts", "✓", "Dynamic plugins")
         self.add_feature(plugins, "Ghidra Scripts", "✓", "Analysis plugins")

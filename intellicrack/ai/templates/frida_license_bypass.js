@@ -84,8 +84,8 @@
 
                             // Detect license-related comparisons
                             const licenseKeywords = ["license", "trial", "expire", "valid", "key", "serial"];
-                            this.isLicenseCheck = licenseKeywords.some(keyword => 
-                                this.str1.toLowerCase().includes(keyword) || 
+                            this.isLicenseCheck = licenseKeywords.some(keyword =>
+                                this.str1.toLowerCase().includes(keyword) ||
                                 this.str2.toLowerCase().includes(keyword)
                             );
 

@@ -1,4 +1,5 @@
 """Guided workflow wizard for step-by-step analysis assistance."""
+
 import datetime
 import os
 from typing import Any
@@ -49,10 +50,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
 try:
     import pefile
+
     HAS_PEFILE = True
 except ImportError as e:
     logger.error("Import error in guided_workflow_wizard: %s", e)
@@ -83,6 +83,7 @@ class GuidedWorkflowWizard(QWizard):
         self.setWizardStyle(QWizard.ModernStyle)
 
         import intellicrack
+
         self.base_path = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
         icon_path = os.path.join(self.base_path, "intellicrack", "assets", "icon.ico")
         if os.path.exists(icon_path):
@@ -110,7 +111,9 @@ class GuidedWorkflowWizard(QWizard):
         """Create the introduction page."""
         page = QWizardPage()
         page.setTitle("Welcome to Intellicrack")
-        page.setSubTitle("This wizard will guide you through analyzing and patching your first binary")
+        page.setSubTitle(
+            "This wizard will guide you through analyzing and patching your first binary"
+        )
 
         layout = QVBoxLayout()
 
@@ -131,7 +134,9 @@ class GuidedWorkflowWizard(QWizard):
         splash_path = os.path.join(self.base_path, "intellicrack", "assets", "splash.png")
         if os.path.exists(splash_path):
             image_label = QLabel()
-            pixmap = QPixmap(splash_path).scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            pixmap = QPixmap(splash_path).scaled(
+                400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
             image_label.setPixmap(pixmap)
             image_label.setAlignment(Qt.AlignCenter)
             layout.addWidget(image_label)
@@ -285,7 +290,9 @@ class GuidedWorkflowWizard(QWizard):
         self.dynamic_analysis_cb.setToolTip("Analyze the binary during execution")
 
         self.symbolic_execution_cb = QCheckBox("Symbolic Execution")
-        self.symbolic_execution_cb.setToolTip("Use symbolic execution to explore multiple code paths")
+        self.symbolic_execution_cb.setToolTip(
+            "Use symbolic execution to explore multiple code paths"
+        )
 
         self.ml_analysis_cb = QCheckBox("ML-assisted Analysis")
         self.ml_analysis_cb.setToolTip("Use machine learning to identify potential vulnerabilities")
@@ -502,7 +509,9 @@ class GuidedWorkflowWizard(QWizard):
         self.static_vuln_scan_cb.setChecked(True)
 
         self.ml_vuln_prediction_cb = QCheckBox("ML-Based Vulnerability Prediction")
-        self.ml_vuln_prediction_cb.setToolTip("Use machine learning models to predict vulnerabilities")
+        self.ml_vuln_prediction_cb.setToolTip(
+            "Use machine learning models to predict vulnerabilities"
+        )
 
         self.buffer_overflow_cb = QCheckBox("Buffer Overflow Detection")
         self.buffer_overflow_cb.setChecked(True)
@@ -885,7 +894,7 @@ class GuidedWorkflowWizard(QWizard):
                     machine_type = getattr(pe.FILE_HEADER, "Machine", 0)
 
                     machine_types = {
-                        0x014c: "x86 (32-bit)",
+                        0x014C: "x86 (32-bit)",
                         0x0200: "IA64",
                         0x8664: "x64 (64-bit)",
                     }
@@ -897,7 +906,9 @@ class GuidedWorkflowWizard(QWizard):
                     try:
                         timestamp = getattr(pe.FILE_HEADER, "TimeDateStamp", 0)
                         compile_time = datetime.datetime.fromtimestamp(timestamp)
-                        info_text += f"<b>Compiled:</b> {compile_time.strftime('%Y-%m-%d %H:%M:%S')}<br>"
+                        info_text += (
+                            f"<b>Compiled:</b> {compile_time.strftime('%Y-%m-%d %H:%M:%S')}<br>"
+                        )
                     except (OSError, ValueError, RuntimeError) as e:
                         logger.error("Error in guided_workflow_wizard: %s", e)
 
@@ -919,6 +930,7 @@ class GuidedWorkflowWizard(QWizard):
     def format_size(self, size_bytes: int) -> str:
         """Format a file size in bytes to a human-readable string."""
         from ...utils.core.string_utils import format_bytes
+
         return format_bytes(size_bytes)
 
     def on_finished(self, result: int) -> None:

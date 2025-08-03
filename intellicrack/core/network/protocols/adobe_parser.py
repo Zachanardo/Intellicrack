@@ -29,6 +29,7 @@ from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 @dataclass
 class AdobeRequest:
     """Adobe licensing request structure"""
@@ -43,6 +44,7 @@ class AdobeRequest:
     headers: dict[str, str]
     auth_token: str
 
+
 @dataclass
 class AdobeResponse:
     """Adobe licensing response structure"""
@@ -53,6 +55,7 @@ class AdobeResponse:
     license_data: dict[str, Any]
     digital_signature: str
     response_headers: dict[str, str]
+
 
 class AdobeLicensingParser:
     """Real Adobe licensing protocol parser and response generator"""
@@ -140,7 +143,7 @@ class AdobeLicensingParser:
         self.logger = get_logger(__name__)
         self.active_activations = {}  # Track active activations
         self.machine_signatures = {}  # Store machine fingerprints
-        self.subscription_data = {}   # Store subscription information
+        self.subscription_data = {}  # Store subscription information
         self._initialize_server_keys()
 
     def _initialize_server_keys(self):
@@ -197,12 +200,24 @@ class AdobeLicensingParser:
             request_type = self._determine_request_type(request_line, headers, request_data)
 
             # Extract Adobe-specific fields
-            client_id = self._extract_field(request_data, headers, ["client_id", "clientId", "adobeId"])
-            machine_id = self._extract_field(request_data, headers, ["machine_id", "machineId", "deviceId"])
-            product_id = self._extract_field(request_data, headers, ["product_id", "productId", "appId"])
-            serial_number = self._extract_field(request_data, headers, ["serial_number", "serialNumber", "ngl_serial"])
-            activation_id = self._extract_field(request_data, headers, ["activation_id", "activationId", "licenseId"])
-            auth_token = self._extract_field(request_data, headers, ["authorization", "auth_token", "bearer_token"])
+            client_id = self._extract_field(
+                request_data, headers, ["client_id", "clientId", "adobeId"]
+            )
+            machine_id = self._extract_field(
+                request_data, headers, ["machine_id", "machineId", "deviceId"]
+            )
+            product_id = self._extract_field(
+                request_data, headers, ["product_id", "productId", "appId"]
+            )
+            serial_number = self._extract_field(
+                request_data, headers, ["serial_number", "serialNumber", "ngl_serial"]
+            )
+            activation_id = self._extract_field(
+                request_data, headers, ["activation_id", "activationId", "licenseId"]
+            )
+            auth_token = self._extract_field(
+                request_data, headers, ["authorization", "auth_token", "bearer_token"]
+            )
 
             # Remove 'Bearer ' prefix if present
             if auth_token and auth_token.startswith("Bearer "):
@@ -227,8 +242,9 @@ class AdobeLicensingParser:
             self.logger.error(f"Failed to parse Adobe request: {e}")
             return None
 
-    def _determine_request_type(self, request_line: str, headers: dict[str, str],
-                               data: dict[str, Any]) -> str:
+    def _determine_request_type(
+        self, request_line: str, headers: dict[str, str], data: dict[str, Any]
+    ) -> str:
         """Determine Adobe request type from URL and data"""
         request_line_lower = request_line.lower()
 
@@ -275,8 +291,9 @@ class AdobeLicensingParser:
         # Default to verification
         return "verification"
 
-    def _extract_field(self, data: dict[str, Any], headers: dict[str, str],
-                      field_names: list[str]) -> str | None:
+    def _extract_field(
+        self, data: dict[str, Any], headers: dict[str, str], field_names: list[str]
+    ) -> str | None:
         """Extract field from request data or headers"""
         # Check data first
         for field_name in field_names:
@@ -497,7 +514,7 @@ class AdobeLicensingParser:
         if "subscription" in request.request_type:
             heartbeat_interval = 1800  # 30 minutes for subscription checks
         elif "trial" in str(request.license_data.get("license_type", "")):
-            heartbeat_interval = 900   # 15 minutes for trial licenses
+            heartbeat_interval = 900  # 15 minutes for trial licenses
 
         return AdobeResponse(
             status="success",
@@ -743,7 +760,9 @@ class AdobeLicensingParser:
             # Add standard headers
             http_response += f"Content-Length: {len(body_json)}\r\n"
             http_response += "Server: intellicrack-adobe-emulator\r\n"
-            http_response += f"Date: {time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())}\r\n"
+            http_response += (
+                f"Date: {time.strftime('%a, %d %b %Y %H:%M:%S GMT', time.gmtime())}\r\n"
+            )
             http_response += "Connection: close\r\n"
             http_response += "\r\n"
             http_response += body_json
@@ -754,7 +773,9 @@ class AdobeLicensingParser:
             self.logger.error(f"Failed to serialize Adobe response: {e}")
             # Return minimal error response
             error_body = '{"status": "error", "message": "Internal server error"}'
-            return (f"HTTP/1.1 500 Internal Server Error\r\n"
-                   f"Content-Type: application/json\r\n"
-                   f"Content-Length: {len(error_body)}\r\n"
-                   f"\r\n{error_body}")
+            return (
+                f"HTTP/1.1 500 Internal Server Error\r\n"
+                f"Content-Type: application/json\r\n"
+                f"Content-Length: {len(error_body)}\r\n"
+                f"\r\n{error_body}"
+            )

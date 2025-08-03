@@ -42,7 +42,6 @@ from rich.table import Table
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
-
 @dataclass
 class PipelineData:
     """Data passed between pipeline stages"""
@@ -53,11 +52,14 @@ class PipelineData:
 
     def to_json(self) -> str:
         """Convert to JSON string"""
-        return json.dumps({
-            "content": self.content,
-            "metadata": self.metadata,
-            "format": self.format,
-        }, default=str)
+        return json.dumps(
+            {
+                "content": self.content,
+                "metadata": self.metadata,
+                "format": self.format,
+            },
+            default=str,
+        )
 
     @classmethod
     def from_json(cls, json_str: str) -> "PipelineData":
@@ -130,7 +132,11 @@ class PipelineStage(ABC):
         if isinstance(input_data.content, (str, Path)):
             try:
                 path_str = str(input_data.content)
-                if ".." in path_str or path_str.startswith("/etc/") or path_str.startswith("/root/"):
+                if (
+                    ".." in path_str
+                    or path_str.startswith("/etc/")
+                    or path_str.startswith("/root/")
+                ):
                     return False
             except (AttributeError, TypeError):
                 pass
@@ -201,22 +207,19 @@ class FilterStage(PipelineStage):
         if "vulnerability" in self.filter_expr:
             # Filter for vulnerabilities
             if isinstance(content, dict) and "vulnerabilities" in content:
-                filtered = [v for v in content["vulnerabilities"]
-                           if self._matches_filter(v)]
+                filtered = [v for v in content["vulnerabilities"] if self._matches_filter(v)]
                 content["vulnerabilities"] = filtered
 
         elif "imports" in self.filter_expr:
             # Filter imports
             if isinstance(content, dict) and "imports" in content:
-                filtered = [i for i in content["imports"]
-                           if self._matches_filter(i)]
+                filtered = [i for i in content["imports"] if self._matches_filter(i)]
                 content["imports"] = filtered
 
         elif "high_severity" in self.filter_expr:
             # Filter high severity items
             if isinstance(content, list):
-                content = [item for item in content
-                          if self._is_high_severity(item)]
+                content = [item for item in content if self._is_high_severity(item)]
 
         return PipelineData(
             content=content,
@@ -330,6 +333,7 @@ class TransformStage(PipelineStage):
 
         # Render table to string
         import io
+
         string_io = io.StringIO()
         console = Console(file=string_io)
         console.print(table)
@@ -419,7 +423,9 @@ class Pipeline:
 
         # Execute each stage
         for i, stage in enumerate(self.stages):
-            self.console.print(f"[cyan]Executing stage {i+1}/{len(self.stages)}: {stage.name}[/cyan]")
+            self.console.print(
+                f"[cyan]Executing stage {i+1}/{len(self.stages)}: {stage.name}[/cyan]"
+            )
 
             try:
                 # Validate input
@@ -431,7 +437,9 @@ class Pipeline:
 
                 # Check for errors
                 if isinstance(data.content, dict) and "error" in data.content:
-                    self.console.print(f"[red]Error in stage {stage.name}: {data.content['error']}[/red]")
+                    self.console.print(
+                        f"[red]Error in stage {stage.name}: {data.content['error']}[/red]"
+                    )
                     if not data.metadata.get("continue_on_error", False):
                         break
 
@@ -514,7 +522,9 @@ def parse_pipeline_command(command: str) -> Pipeline:
                     path_str = str(path)
                     for sensitive_dir in sensitive_dirs:
                         if path_str.startswith(sensitive_dir):
-                            raise ValueError(f"Cannot write to sensitive directory: {sensitive_dir}")
+                            raise ValueError(
+                                f"Cannot write to sensitive directory: {sensitive_dir}"
+                            )
                 except Exception as e:
                     raise ValueError(f"Invalid output path: {e}")
                 pipeline.add_stage(OutputStage(output_path))

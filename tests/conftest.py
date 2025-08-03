@@ -115,12 +115,12 @@ def isolated_test_env():
         docker_available = True
     except:
         pass
-    
+
     if docker_available and os.environ.get('INTELLICRACK_USE_DOCKER', '').lower() == 'true':
         # Use Docker container for isolation
         import docker
         client = docker.from_env()
-        
+
         # Create a minimal container for testing
         container = client.containers.run(
             "python:3.9-slim",
@@ -139,13 +139,13 @@ def isolated_test_env():
             cpu_quota=50000,  # Limit CPU usage
             network_mode='none'  # No network access for safety
         )
-        
+
         try:
             # Return container exec function for running commands
             def run_in_container(cmd):
                 result = container.exec_run(cmd, workdir='/intellicrack')
                 return result.exit_code, result.output.decode()
-            
+
             yield run_in_container
         finally:
             container.stop()
@@ -153,25 +153,25 @@ def isolated_test_env():
     else:
         # Fallback to isolated directory with enhanced security
         temp_dir = tempfile.mkdtemp(prefix="intellicrack_isolated_")
-        
+
         # Create a restricted environment
         restricted_env = os.environ.copy()
         restricted_env['INTELLICRACK_ISOLATED'] = '1'
         restricted_env['PATH'] = ''  # Clear PATH for safety
-        
+
         # Set restrictive permissions
         if sys.platform == "win32":
             try:
                 import win32api
                 import win32con
                 import win32security
-                
+
                 # Get current user SID
                 user_sid = win32security.GetTokenInformation(
                     win32security.GetCurrentProcessToken(),
                     win32security.TokenUser
                 )[0]
-                
+
                 # Create DACL with minimal permissions
                 dacl = win32security.ACL()
                 dacl.AddAccessAllowedAce(
@@ -179,7 +179,7 @@ def isolated_test_env():
                     win32con.GENERIC_READ | win32con.GENERIC_WRITE,
                     user_sid
                 )
-                
+
                 # Apply security descriptor
                 sd = win32security.SECURITY_DESCRIPTOR()
                 sd.SetSecurityDescriptorDacl(1, dacl, 0)
@@ -194,16 +194,16 @@ def isolated_test_env():
         else:
             # Unix-like systems
             os.chmod(temp_dir, 0o700)
-        
+
         # Create sandbox info
         sandbox_info = {
             'path': Path(temp_dir),
             'env': restricted_env,
             'is_docker': False
         }
-        
+
         yield sandbox_info
-        
+
         # Cleanup
         shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -220,12 +220,12 @@ def verify_no_mocks(monkeypatch):
             "MOCKING DETECTED! All tests must use REAL data. "
             "No mock objects, fake responses, or simulated data allowed."
         )
-    
+
     # Block unittest.mock
     monkeypatch.setattr("unittest.mock.Mock", mock_error)
     monkeypatch.setattr("unittest.mock.MagicMock", mock_error)
     monkeypatch.setattr("unittest.mock.patch", mock_error)
-    
+
     # Block pytest-mock
     if "pytest_mock" in sys.modules:
         monkeypatch.setattr("pytest_mock.MockFixture", mock_error)
@@ -284,7 +284,7 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         # Add a marker to track real data usage
         item.add_marker(pytest.mark.real_data)
-        
+
         # Warn if test name suggests mocking
         if any(word in item.name.lower() for word in ["mock", "fake", "stub", "dummy"]):
             raise ValueError(

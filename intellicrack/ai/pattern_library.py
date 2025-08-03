@@ -30,11 +30,11 @@ logger = get_logger(__name__)
 class ProtectionComplexity(Enum):
     """Protection complexity levels."""
 
-    TRIVIAL = "trivial"      # Simple string comparison
-    SIMPLE = "simple"        # Basic obfuscation
-    MODERATE = "moderate"    # Multiple checks, some obfuscation
-    COMPLEX = "complex"      # Advanced anti-debugging, encryption
-    EXTREME = "extreme"      # VM, packer, multiple layers
+    TRIVIAL = "trivial"  # Simple string comparison
+    SIMPLE = "simple"  # Basic obfuscation
+    MODERATE = "moderate"  # Multiple checks, some obfuscation
+    COMPLEX = "complex"  # Advanced anti-debugging, encryption
+    EXTREME = "extreme"  # VM, packer, multiple layers
 
 
 @dataclass
@@ -74,8 +74,7 @@ class AdvancedPatternLibrary:
         # License Check Patterns
         self.patterns["string_comparison_license"] = ProtectionPattern(
             name="String Comparison License Check",
-            indicators=["strcmp", "strcasecmp",
-                        "memcmp", "wcscmp", "_stricmp"],
+            indicators=["strcmp", "strcasecmp", "memcmp", "wcscmp", "_stricmp"],
             bypass_strategy="hook_comparison_return_zero",
             confidence=0.92,
             complexity=ProtectionComplexity.SIMPLE,
@@ -160,8 +159,7 @@ for func in functions:
         # Time-based Protection Patterns
         self.patterns["time_bomb_check"] = ProtectionPattern(
             name="Time Bomb Protection",
-            indicators=["GetSystemTime", "time",
-                        "clock", "GetTickCount", "expire"],
+            indicators=["GetSystemTime", "time", "clock", "GetTickCount", "expire"],
             bypass_strategy="hook_time_functions",
             confidence=0.87,
             complexity=ProtectionComplexity.MODERATE,
@@ -218,8 +216,7 @@ for time_func in time_functions:
         # Network Validation Patterns
         self.patterns["online_license_validation"] = ProtectionPattern(
             name="Online License Validation",
-            indicators=["InternetOpen", "HttpSendRequest",
-                        "connect", "send", "recv"],
+            indicators=["InternetOpen", "HttpSendRequest", "connect", "send", "recv"],
             bypass_strategy="block_network_calls",
             confidence=0.85,
             complexity=ProtectionComplexity.COMPLEX,
@@ -280,8 +277,7 @@ for net_func in network_functions:
         # Registry-based Protection Patterns
         self.patterns["registry_license_storage"] = ProtectionPattern(
             name="Registry License Storage",
-            indicators=["RegOpenKey", "RegQueryValue",
-                        "RegSetValue", "RegCreateKey"],
+            indicators=["RegOpenKey", "RegQueryValue", "RegSetValue", "RegCreateKey"],
             bypass_strategy="fake_registry_values",
             confidence=0.89,
             complexity=ProtectionComplexity.SIMPLE,
@@ -337,8 +333,11 @@ for reg_func in registry_functions:
         # Anti-debugging Patterns
         self.patterns["debugger_detection"] = ProtectionPattern(
             name="Debugger Detection",
-            indicators=["IsDebuggerPresent",
-                        "CheckRemoteDebuggerPresent", "NtQueryInformationProcess"],
+            indicators=[
+                "IsDebuggerPresent",
+                "CheckRemoteDebuggerPresent",
+                "NtQueryInformationProcess",
+            ],
             bypass_strategy="hook_debug_apis",
             confidence=0.94,
             complexity=ProtectionComplexity.MODERATE,
@@ -454,8 +453,7 @@ for indicator in vm_indicators:
         # Cryptographic Protection Patterns
         self.patterns["crypto_license_validation"] = ProtectionPattern(
             name="Cryptographic License Validation",
-            indicators=["CryptVerifySignature",
-                        "RSA_verify", "EVP_Verify", "CryptHashData"],
+            indicators=["CryptVerifySignature", "RSA_verify", "EVP_Verify", "CryptHashData"],
             bypass_strategy="bypass_crypto_verification",
             confidence=0.79,
             complexity=ProtectionComplexity.EXTREME,
@@ -522,14 +520,15 @@ for crypto_func in crypto_functions:
         for pattern in self.patterns.values():
             match_score = 0
             for indicator in indicators:
-                if any(pattern_indicator.lower() in indicator.lower()
-                       for pattern_indicator in pattern.indicators):
+                if any(
+                    pattern_indicator.lower() in indicator.lower()
+                    for pattern_indicator in pattern.indicators
+                ):
                     match_score += 1
 
             if match_score > 0:
                 # Adjust confidence based on match score
-                adjusted_confidence = pattern.confidence * \
-                    (match_score / len(pattern.indicators))
+                adjusted_confidence = pattern.confidence * (match_score / len(pattern.indicators))
                 pattern_copy = ProtectionPattern(
                     name=pattern.name,
                     indicators=pattern.indicators,
@@ -617,21 +616,18 @@ for crypto_func in crypto_functions:
         matching_patterns = self.get_pattern_by_indicators(all_indicators)
 
         # Filter by confidence threshold
-        detected_patterns = [
-            p for p in matching_patterns if p.confidence > 0.7]
+        detected_patterns = [p for p in matching_patterns if p.confidence > 0.7]
 
         logger.info(f"Detected {len(detected_patterns)} protection patterns")
         for pattern in detected_patterns:
-            logger.info(
-                f"  - {pattern.name}: {pattern.confidence:.2f} confidence")
+            logger.info(f"  - {pattern.name}: {pattern.confidence:.2f} confidence")
 
         return detected_patterns
 
     def update_success_rate(self, pattern_name: str, success: bool):
         """Update pattern success rate based on results."""
         if pattern_name not in self.success_history:
-            self.success_history[pattern_name] = {
-                "attempts": 0, "successes": 0}
+            self.success_history[pattern_name] = {"attempts": 0, "successes": 0}
 
         self.success_history[pattern_name]["attempts"] += 1
         if success:
@@ -643,11 +639,11 @@ for crypto_func in crypto_functions:
             new_rate = history["successes"] / history["attempts"]
             # Use exponential moving average to update
             current_rate = self.patterns[pattern_name].success_rate
-            self.patterns[pattern_name].success_rate = 0.7 * \
-                current_rate + 0.3 * new_rate
+            self.patterns[pattern_name].success_rate = 0.7 * current_rate + 0.3 * new_rate
 
             logger.info(
-                f"Updated {pattern_name} success rate: {self.patterns[pattern_name].success_rate:.2f}")
+                f"Updated {pattern_name} success rate: {self.patterns[pattern_name].success_rate:.2f}"
+            )
 
     def get_pattern_statistics(self) -> dict[str, Any]:
         """Get statistics about pattern usage and success rates."""
@@ -672,14 +668,15 @@ for crypto_func in crypto_functions:
                     }
 
             if success_rates:
-                stats["average_success_rate"] = sum(
-                    success_rates) / len(success_rates)
+                stats["average_success_rate"] = sum(success_rates) / len(success_rates)
 
                 # Find most and least successful
-                best_pattern = max(stats["pattern_usage"].items(),
-                                   key=lambda x: x[1]["success_rate"])
-                worst_pattern = min(stats["pattern_usage"].items(),
-                                    key=lambda x: x[1]["success_rate"])
+                best_pattern = max(
+                    stats["pattern_usage"].items(), key=lambda x: x[1]["success_rate"]
+                )
+                worst_pattern = min(
+                    stats["pattern_usage"].items(), key=lambda x: x[1]["success_rate"]
+                )
 
                 stats["most_successful"] = best_pattern[0]
                 stats["least_successful"] = worst_pattern[0]
@@ -689,15 +686,18 @@ for crypto_func in crypto_functions:
     def export_patterns(self) -> dict[str, Any]:
         """Export all patterns for analysis or backup."""
         return {
-            "patterns": {name: {
-                "name": p.name,
-                "indicators": p.indicators,
-                "bypass_strategy": p.bypass_strategy,
-                "confidence": p.confidence,
-                "complexity": p.complexity.value,
-                "success_rate": p.success_rate,
-                "description": p.description,
-            } for name, p in self.patterns.items()},
+            "patterns": {
+                name: {
+                    "name": p.name,
+                    "indicators": p.indicators,
+                    "bypass_strategy": p.bypass_strategy,
+                    "confidence": p.confidence,
+                    "complexity": p.complexity.value,
+                    "success_rate": p.success_rate,
+                    "description": p.description,
+                }
+                for name, p in self.patterns.items()
+            },
             "success_history": self.success_history,
             "statistics": self.get_pattern_statistics(),
         }

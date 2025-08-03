@@ -34,6 +34,7 @@ from .interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInter
 # Set up logging
 logger = logging.getLogger(__name__)
 
+
 class LocalFileRepository(ModelRepositoryInterface):
     """Repository adapter for the local file system."""
 
@@ -75,8 +76,7 @@ class LocalFileRepository(ModelRepositoryInterface):
     def _save_metadata(self):
         """Save metadata for local models."""
         metadata = {
-            model_id: model_info.to_dict()
-            for model_id, model_info in self.models_cache.items()
+            model_id: model_info.to_dict() for model_id, model_info in self.models_cache.items()
         }
 
         try:
@@ -176,9 +176,13 @@ class LocalFileRepository(ModelRepositoryInterface):
         return self.models_cache.get(model_id)
 
     # pylint: disable=too-many-locals
-    def download_model(self, model_id: str, destination_path: str,
-                      progress_callback: DownloadProgressCallback | None = None) -> tuple[bool, str]:
-        """"Download" a model from the local repository (copy the file).
+    def download_model(
+        self,
+        model_id: str,
+        destination_path: str,
+        progress_callback: DownloadProgressCallback | None = None,
+    ) -> tuple[bool, str]:
+        """ "Download" a model from the local repository (copy the file).
 
         Args:
             model_id: ID of the model to download

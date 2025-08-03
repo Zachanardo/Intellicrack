@@ -30,6 +30,7 @@ try:
     from rich.panel import Panel
     from rich.table import Table
     from rich.text import Text
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -73,10 +74,13 @@ class ASCIIChartGenerator:
             "triangle": "▲",
         }
 
-    def generate_bar_chart(self, data: dict[str, int | float],
-                          title: str = "Bar Chart",
-                          show_values: bool = True,
-                          color_coding: bool = True) -> str:
+    def generate_bar_chart(
+        self,
+        data: dict[str, int | float],
+        title: str = "Bar Chart",
+        show_values: bool = True,
+        color_coding: bool = True,
+    ) -> str:
         """Generate horizontal bar chart.
 
         Args:
@@ -128,9 +132,9 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_histogram(self, values: list[int | float],
-                          bins: int = 10,
-                          title: str = "Histogram") -> str:
+    def generate_histogram(
+        self, values: list[int | float], bins: int = 10, title: str = "Histogram"
+    ) -> str:
         """Generate histogram chart.
 
         Args:
@@ -168,8 +172,7 @@ class ASCIIChartGenerator:
         hist_data = dict(zip(bin_labels, bin_counts, strict=False))
         return self.generate_bar_chart(hist_data, title)
 
-    def generate_line_chart(self, data: dict[str, int | float],
-                           title: str = "Line Chart") -> str:
+    def generate_line_chart(self, data: dict[str, int | float], title: str = "Line Chart") -> str:
         """Generate simple line chart.
 
         Args:
@@ -239,8 +242,10 @@ class ASCIIChartGenerator:
                                 for step in range(1, steps):
                                     intermediate_x = start_x + (end_x - start_x) * step // steps
                                     intermediate_y = start_y + (end_y - start_y) * step // steps
-                                    if (0 <= intermediate_x < chart_width and
-                                        0 <= intermediate_y < chart_height):
+                                    if (
+                                        0 <= intermediate_x < chart_width
+                                        and 0 <= intermediate_y < chart_height
+                                    ):
                                         if chart[intermediate_y][intermediate_x] == " ":
                                             chart[intermediate_y][intermediate_x] = "·"
 
@@ -290,8 +295,7 @@ class ASCIIChartGenerator:
         self.console.print(Panel(centered_chart, border_style="cyan", title="Chart Data"))
         self.console.print()
 
-    def create_styled_legend(self, data: dict[str, int | float],
-                           title: str = "Legend") -> None:
+    def create_styled_legend(self, data: dict[str, int | float], title: str = "Legend") -> None:
         """Create a styled legend for chart data using rich Text formatting.
 
         Args:
@@ -327,8 +331,7 @@ class ASCIIChartGenerator:
             self.console.print(Align.center(entry))
         self.console.print()
 
-    def generate_pie_chart(self, data: dict[str, int | float],
-                          title: str = "Pie Chart") -> str:
+    def generate_pie_chart(self, data: dict[str, int | float], title: str = "Pie Chart") -> str:
         """Generate ASCII pie chart representation.
 
         Args:
@@ -369,8 +372,9 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_scatter_plot(self, points: list[tuple[float, float]],
-                             title: str = "Scatter Plot") -> str:
+    def generate_scatter_plot(
+        self, points: list[tuple[float, float]], title: str = "Scatter Plot"
+    ) -> str:
         """Generate scatter plot.
 
         Args:
@@ -447,10 +451,12 @@ class ASCIIChartGenerator:
                 category_counts[category.replace("_", " ").title()] = 1
 
         if category_counts:
-            charts.append(self.generate_bar_chart(
-                category_counts,
-                "Analysis Categories",
-            ))
+            charts.append(
+                self.generate_bar_chart(
+                    category_counts,
+                    "Analysis Categories",
+                )
+            )
 
         # 2. Vulnerability severity distribution
         vuln_data = analysis_results.get("vulnerabilities", {})
@@ -464,11 +470,13 @@ class ASCIIChartGenerator:
                         severity_counts[severity.title()] += 1
 
                 if severity_counts:
-                    charts.append("\n" + "="*50 + "\n")
-                    charts.append(self.generate_pie_chart(
-                        dict(severity_counts),
-                        "Vulnerability Severity Distribution",
-                    ))
+                    charts.append("\n" + "=" * 50 + "\n")
+                    charts.append(
+                        self.generate_pie_chart(
+                            dict(severity_counts),
+                            "Vulnerability Severity Distribution",
+                        )
+                    )
 
         # 3. Protection status
         prot_data = analysis_results.get("protections", {})
@@ -477,23 +485,27 @@ class ASCIIChartGenerator:
             disabled_count = len(prot_data) - enabled_count
 
             if enabled_count + disabled_count > 0:
-                charts.append("\n" + "="*50 + "\n")
-                charts.append(self.generate_pie_chart(
-                    {"Enabled": enabled_count, "Disabled": disabled_count},
-                    "Security Protections Status",
-                ))
+                charts.append("\n" + "=" * 50 + "\n")
+                charts.append(
+                    self.generate_pie_chart(
+                        {"Enabled": enabled_count, "Disabled": disabled_count},
+                        "Security Protections Status",
+                    )
+                )
 
         # 4. String analysis histogram
         strings_data = analysis_results.get("strings", [])
         if isinstance(strings_data, list) and strings_data:
             string_lengths = [len(s) for s in strings_data if isinstance(s, str)]
             if string_lengths:
-                charts.append("\n" + "="*50 + "\n")
-                charts.append(self.generate_histogram(
-                    string_lengths,
-                    bins=8,
-                    title="String Length Distribution",
-                ))
+                charts.append("\n" + "=" * 50 + "\n")
+                charts.append(
+                    self.generate_histogram(
+                        string_lengths,
+                        bins=8,
+                        title="String Length Distribution",
+                    )
+                )
 
         return "\n".join(charts) if charts else "No chartable data available"
 
@@ -635,9 +647,9 @@ class ASCIIChartGenerator:
         )
 
 
-def create_analysis_charts(analysis_results: dict[str, Any],
-                          chart_type: str = "summary",
-                          use_rich: bool = True) -> str:
+def create_analysis_charts(
+    analysis_results: dict[str, Any], chart_type: str = "summary", use_rich: bool = True
+) -> str:
     """Create charts from analysis results.
 
     Args:

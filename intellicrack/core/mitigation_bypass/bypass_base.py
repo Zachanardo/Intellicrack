@@ -1,4 +1,3 @@
-
 """Base classes for mitigation bypass techniques.
 
 Copyright (C) 2025 Zachary Flint

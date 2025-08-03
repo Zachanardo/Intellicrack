@@ -184,7 +184,9 @@ class PEStructureModel(QAbstractItemModel):
                 dll_groups[imp.dll_name].append(imp)
 
             for dll_name, dll_imports in dll_groups.items():
-                dll_item = PEStructureItem(f"{dll_name} ({len(dll_imports)} functions)", imports_root)
+                dll_item = PEStructureItem(
+                    f"{dll_name} ({len(dll_imports)} functions)", imports_root
+                )
                 imports_root.append_child(dll_item)
 
                 for imp in dll_imports[:20]:  # Limit to first 20 for performance
@@ -228,7 +230,10 @@ class PEStructureModel(QAbstractItemModel):
                 if signing_cert.subject:
                     # Extract CN from subject
                     subject_parts = signing_cert.subject.split(",")
-                    cn_part = next((part.strip() for part in subject_parts if part.strip().startswith("CN=")), None)
+                    cn_part = next(
+                        (part.strip() for part in subject_parts if part.strip().startswith("CN=")),
+                        None,
+                    )
                     if cn_part:
                         cert_info = f"{cert_info} - {cn_part[3:]}"  # Remove 'CN=' prefix
 
@@ -255,12 +260,17 @@ class PEStructureModel(QAbstractItemModel):
                     cert_item.append_child(detail_item)
 
             # Trust status
-            trust_item = PEStructureItem(f"Trust Status: {certificates.trust_status}", certificates_root)
+            trust_item = PEStructureItem(
+                f"Trust Status: {certificates.trust_status}", certificates_root
+            )
             certificates_root.append_child(trust_item)
 
             # Additional certificates in chain
             if len(certificates.certificates) > 1:
-                chain_item = PEStructureItem(f"Certificate Chain ({len(certificates.certificates)} certificates)", certificates_root)
+                chain_item = PEStructureItem(
+                    f"Certificate Chain ({len(certificates.certificates)} certificates)",
+                    certificates_root,
+                )
                 certificates_root.append_child(chain_item)
 
                 for i, cert in enumerate(certificates.certificates[1:], 1):
@@ -268,7 +278,14 @@ class PEStructureModel(QAbstractItemModel):
                     # Try to get CN from subject
                     if cert.subject:
                         subject_parts = cert.subject.split(",")
-                        cn_part = next((part.strip() for part in subject_parts if part.strip().startswith("CN=")), None)
+                        cn_part = next(
+                            (
+                                part.strip()
+                                for part in subject_parts
+                                if part.strip().startswith("CN=")
+                            ),
+                            None,
+                        )
                         if cn_part:
                             cert_name = f"{cert_name} - {cn_part[3:]}"
 
@@ -316,7 +333,9 @@ class PEStructureModel(QAbstractItemModel):
 
         return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
+    def headerData(
+        self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
+    ) -> Any:
         """Return header data"""
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             if section == 0:

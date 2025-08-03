@@ -49,9 +49,16 @@ class NetworkAnalysisPlugin:
 
         # Check for network-related strings
         network_indicators = [
-            b"http://", b"https://", b"ftp://",
-            b"socket", b"connect", b"bind", b"listen",
-            b"send", b"recv", b"WSAStartup",
+            b"http://",
+            b"https://",
+            b"ftp://",
+            b"socket",
+            b"connect",
+            b"bind",
+            b"listen",
+            b"send",
+            b"recv",
+            b"WSAStartup",
         ]
 
         try:
@@ -90,7 +97,6 @@ class NetworkAnalysisPlugin:
             b"WSARecv": "Windows async receive",
             b"WSAAccept": "Windows async accept",
             b"WSAIoctl": "Windows socket I/O control",
-
             # Standard socket APIs
             b"socket": "Socket creation",
             b"connect": "Socket connection",
@@ -111,7 +117,6 @@ class NetworkAnalysisPlugin:
             b"htonl": "Host to network byte order (long)",
             b"ntohs": "Network to host byte order (short)",
             b"ntohl": "Network to host byte order (long)",
-
             # SSL/TLS APIs
             b"SSL_connect": "SSL connection",
             b"SSL_read": "SSL read",
@@ -184,7 +189,9 @@ class NetworkAnalysisPlugin:
 
         return result
 
-    def scan_ports(self, target_host: str, start_port: int = 1, end_port: int = 1000, timeout: float = 0.5) -> list[dict[str, Any]]:
+    def scan_ports(
+        self, target_host: str, start_port: int = 1, end_port: int = 1000, timeout: float = 0.5
+    ) -> list[dict[str, Any]]:
         """Scan ports on target host using sockets."""
         open_ports = []
 
@@ -202,20 +209,34 @@ class NetworkAnalysisPlugin:
                     except:
                         # Common port services
                         common_ports = {
-                            21: "ftp", 22: "ssh", 23: "telnet", 25: "smtp",
-                            53: "dns", 80: "http", 110: "pop3", 143: "imap",
-                            443: "https", 445: "smb", 3306: "mysql", 3389: "rdp",
-                            5432: "postgresql", 6379: "redis", 8080: "http-alt",
-                            8443: "https-alt", 27017: "mongodb",
+                            21: "ftp",
+                            22: "ssh",
+                            23: "telnet",
+                            25: "smtp",
+                            53: "dns",
+                            80: "http",
+                            110: "pop3",
+                            143: "imap",
+                            443: "https",
+                            445: "smb",
+                            3306: "mysql",
+                            3389: "rdp",
+                            5432: "postgresql",
+                            6379: "redis",
+                            8080: "http-alt",
+                            8443: "https-alt",
+                            27017: "mongodb",
                         }
                         service_name = common_ports.get(port, "unknown")
 
-                    open_ports.append({
-                        "port": port,
-                        "service": service_name,
-                        "state": "open",
-                        "protocol": "tcp",
-                    })
+                    open_ports.append(
+                        {
+                            "port": port,
+                            "service": service_name,
+                            "state": "open",
+                            "protocol": "tcp",
+                        }
+                    )
             except TimeoutError:
                 # Port is filtered or host is down
                 pass
@@ -264,22 +285,30 @@ class NetworkAnalysisPlugin:
 
                             # New connection detected
                             if conn_id not in initial_connections:
-                                connection_log.append({
-                                    "timestamp": time.time(),
-                                    "type": "new_connection",
-                                    "local": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A",
-                                    "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
-                                    "pid": conn.pid if hasattr(conn, "pid") else "N/A",
-                                })
+                                connection_log.append(
+                                    {
+                                        "timestamp": time.time(),
+                                        "type": "new_connection",
+                                        "local": f"{conn.laddr.ip}:{conn.laddr.port}"
+                                        if conn.laddr
+                                        else "N/A",
+                                        "remote": f"{conn.raddr.ip}:{conn.raddr.port}"
+                                        if conn.raddr
+                                        else "N/A",
+                                        "pid": conn.pid if hasattr(conn, "pid") else "N/A",
+                                    }
+                                )
 
                     # Check for closed connections
                     closed_connections = initial_connections - current_connections
                     for conn_id in closed_connections:
-                        connection_log.append({
-                            "timestamp": time.time(),
-                            "type": "closed_connection",
-                            "connection": conn_id,
-                        })
+                        connection_log.append(
+                            {
+                                "timestamp": time.time(),
+                                "type": "closed_connection",
+                                "connection": conn_id,
+                            }
+                        )
 
                     initial_connections = current_connections
                     time.sleep(1)  # Check every second
@@ -293,7 +322,9 @@ class NetworkAnalysisPlugin:
             result["statistics"] = {
                 "total_events": len(connection_log),
                 "new_connections": sum(1 for c in connection_log if c["type"] == "new_connection"),
-                "closed_connections": sum(1 for c in connection_log if c["type"] == "closed_connection"),
+                "closed_connections": sum(
+                    1 for c in connection_log if c["type"] == "closed_connection"
+                ),
             }
 
         # Start monitoring in a separate thread
@@ -336,36 +367,48 @@ class NetworkAnalysisPlugin:
 
                         # Check for suspicious ports
                         if conn.raddr.port in suspicious_ports:
-                            result["suspicious_activity"].append({
-                                "type": "suspicious_port",
-                                "details": f"Connection to suspicious port {conn.raddr.port} at {ip}",
-                                "severity": "medium",
-                            })
+                            result["suspicious_activity"].append(
+                                {
+                                    "type": "suspicious_port",
+                                    "details": f"Connection to suspicious port {conn.raddr.port} at {ip}",
+                                    "severity": "medium",
+                                }
+                            )
 
             # Identify patterns
             if port_frequency:
-                most_used_ports = sorted(port_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
-                result["patterns"].append({
-                    "type": "port_usage",
-                    "description": "Most frequently used ports",
-                    "data": most_used_ports,
-                })
+                most_used_ports = sorted(port_frequency.items(), key=lambda x: x[1], reverse=True)[
+                    :5
+                ]
+                result["patterns"].append(
+                    {
+                        "type": "port_usage",
+                        "description": "Most frequently used ports",
+                        "data": most_used_ports,
+                    }
+                )
 
             if ip_frequency:
-                most_connected_ips = sorted(ip_frequency.items(), key=lambda x: x[1], reverse=True)[:5]
-                result["patterns"].append({
-                    "type": "ip_connections",
-                    "description": "Most frequently connected IPs",
-                    "data": most_connected_ips,
-                })
+                most_connected_ips = sorted(ip_frequency.items(), key=lambda x: x[1], reverse=True)[
+                    :5
+                ]
+                result["patterns"].append(
+                    {
+                        "type": "ip_connections",
+                        "description": "Most frequently connected IPs",
+                        "data": most_connected_ips,
+                    }
+                )
 
             # Check for potential port scanning
             if len(port_frequency) > 50:
-                result["suspicious_activity"].append({
-                    "type": "possible_port_scan",
-                    "details": f"Large number of different ports in use: {len(port_frequency)}",
-                    "severity": "high",
-                })
+                result["suspicious_activity"].append(
+                    {
+                        "type": "possible_port_scan",
+                        "details": f"Large number of different ports in use: {len(port_frequency)}",
+                        "severity": "high",
+                    }
+                )
 
         except Exception as e:
             result["error"] = str(e)
@@ -390,7 +433,9 @@ class NetworkAnalysisPlugin:
     def monitor_traffic(self, target_process=None):
         """Monitor network traffic and connections."""
         results = []
-        results.append(f"Starting network monitoring{' for process: ' + str(target_process) if target_process else ''}...")
+        results.append(
+            f"Starting network monitoring{' for process: ' + str(target_process) if target_process else ''}..."
+        )
 
         try:
             import socket
@@ -422,19 +467,23 @@ class NetworkAnalysisPlugin:
                         except (socket.herror, socket.gaierror, OSError):
                             remote_host = conn.raddr.ip
 
-                    active_connections.append({
-                        "local": local_addr,
-                        "remote": remote_addr,
-                        "remote_host": remote_host,
-                        "status": conn.status,
-                        "pid": conn.pid if hasattr(conn, "pid") else "N/A",
-                    })
+                    active_connections.append(
+                        {
+                            "local": local_addr,
+                            "remote": remote_addr,
+                            "remote_host": remote_host,
+                            "status": conn.status,
+                            "pid": conn.pid if hasattr(conn, "pid") else "N/A",
+                        }
+                    )
 
             if active_connections:
                 results.append(f"Found {len(active_connections)} active network connections:")
                 for i, conn in enumerate(active_connections[:10]):  # Show max 10
                     host_info = f" [{conn['remote_host']}]" if conn["remote_host"] else ""
-                    results.append(f"  {i+1}. {conn['local']} -> {conn['remote']}{host_info} (PID: {conn['pid']})")
+                    results.append(
+                        f"  {i+1}. {conn['local']} -> {conn['remote']}{host_info} (PID: {conn['pid']})"
+                    )
                 if len(active_connections) > 10:
                     results.append(f"  ... and {len(active_connections) - 10} more connections")
             else:
@@ -445,10 +494,12 @@ class NetworkAnalysisPlugin:
             for conn in psutil.net_connections(kind="inet"):
                 if conn.status == psutil.CONN_LISTEN:
                     local_addr = f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A"
-                    listening_ports.append({
-                        "address": local_addr,
-                        "pid": conn.pid if hasattr(conn, "pid") else "N/A",
-                    })
+                    listening_ports.append(
+                        {
+                            "address": local_addr,
+                            "pid": conn.pid if hasattr(conn, "pid") else "N/A",
+                        }
+                    )
 
             if listening_ports:
                 results.append(f"\nListening ports ({len(listening_ports)}):")
@@ -515,10 +566,12 @@ class NetworkAnalysisPlugin:
 
         return info
 
+
 def register():
     """Register and return an instance of the network analysis plugin."""
     plugin = NetworkAnalysisPlugin()
     # Register cleanup on exit
     import atexit
+
     atexit.register(plugin.cleanup_sockets)
     return plugin

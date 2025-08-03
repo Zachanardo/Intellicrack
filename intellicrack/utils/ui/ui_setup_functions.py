@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 from typing import Any
 
 # Optional imports with graceful fallbacks
@@ -49,8 +48,10 @@ else:
 
         def __init__(self, *args, **kwargs):
             pass
+
         def __getattr__(self, name):
             return MockQtClass
+
         def __call__(self, *args, **kwargs):
             return MockQtClass()
 
@@ -64,9 +65,11 @@ logger = setup_logger(__name__)
 
 try:
     import matplotlib
+
     matplotlib.use("qtagg")
     from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
     from matplotlib.figure import Figure
+
     HAS_MATPLOTLIB = True
 except ImportError as e:
     logger.error("Import error in ui_setup_functions: %s", e)
@@ -296,10 +299,16 @@ def setup_training_tab(parent: Any) -> Any | None:
     model_type_label = QLabel("Model Type:")
     model_type_combo = QComboBox()
     model_type_combo.setObjectName("model_type_combo")
-    model_type_combo.addItems([
-        "Random Forest", "XGBoost", "Neural Network",
-        "SVM", "Logistic Regression", "Ensemble",
-    ])
+    model_type_combo.addItems(
+        [
+            "Random Forest",
+            "XGBoost",
+            "Neural Network",
+            "SVM",
+            "Logistic Regression",
+            "Ensemble",
+        ]
+    )
 
     model_type_layout.addWidget(model_type_label)
     model_type_layout.addWidget(model_type_combo)

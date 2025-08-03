@@ -1,5 +1,4 @@
-"""Tab components for Intellicrack UI
-"""
+"""Tab components for Intellicrack UI"""
 
 from .ai_assistant_tab import AIAssistantTab
 from .analysis_tab import AnalysisTab

@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 from typing import Any
 
@@ -28,12 +27,12 @@ logger = logging.getLogger(__name__)
 
 try:
     from PyQt6.QtWidgets import QInputDialog
+
     PYQT6_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in rop_generator: %s", e)
     PYQT6_AVAILABLE = False
     QInputDialog = None
-
 
 
 class ROPChainGenerator:
@@ -65,8 +64,12 @@ class ROPChainGenerator:
         self.binary_path = binary_path
         return True
 
-    def add_target_function(self, function_name: str, function_address: str | None = None,
-                           description: str | None = None) -> None:
+    def add_target_function(
+        self,
+        function_name: str,
+        function_address: str | None = None,
+        description: str | None = None,
+    ) -> None:
         """Add a target function for ROP chain generation"""
         target = {
             "name": function_name,
@@ -217,13 +220,15 @@ class ROPChainGenerator:
 
                 for section_data, section_base in code_sections:
                     for insn in md.disasm(section_data, section_base):
-                        instructions.append({
-                            "address": insn.address,
-                            "mnemonic": insn.mnemonic,
-                            "op_str": insn.op_str,
-                            "bytes": insn.bytes,
-                            "size": insn.size,
-                        })
+                        instructions.append(
+                            {
+                                "address": insn.address,
+                                "mnemonic": insn.mnemonic,
+                                "op_str": insn.op_str,
+                                "bytes": insn.bytes,
+                                "size": insn.size,
+                            }
+                        )
 
                         # Limit to prevent excessive memory usage
                         if len(instructions) > 50000:
@@ -277,7 +282,12 @@ class ROPChainGenerator:
                         for section in binary.sections:
                             if section.characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
                                 section_data = bytes(section.content)
-                                sections.append((section_data, section.virtual_address + binary.optional_header.imagebase))
+                                sections.append(
+                                    (
+                                        section_data,
+                                        section.virtual_address + binary.optional_header.imagebase,
+                                    )
+                                )
                 elif binary_data[:4] == b"\x7fELF":  # ELF
                     if hasattr(lief, "parse"):
                         binary = lief.parse(list(binary_data))
@@ -301,6 +311,7 @@ class ROPChainGenerator:
     def _parse_objdump_output(self, objdump_output: str) -> list[dict[str, Any]]:
         """Parse objdump disassembly output."""
         from ...utils.system.windows_structures import parse_objdump_line
+
         instructions = []
 
         for line in objdump_output.split("\n"):
@@ -319,44 +330,44 @@ class ROPChainGenerator:
         # Common x86/x64 instruction patterns ending in ret (0xC3)
         gadget_patterns = [
             # pop reg; ret patterns
-            (b"\x58\xC3", "pop eax ; ret"),  # pop eax; ret
-            (b"\x59\xC3", "pop ecx ; ret"),  # pop ecx; ret
-            (b"\x5A\xC3", "pop edx ; ret"),  # pop edx; ret
-            (b"\x5B\xC3", "pop ebx ; ret"),  # pop ebx; ret
-            (b"\x5C\xC3", "pop esp ; ret"),  # pop esp; ret
-            (b"\x5D\xC3", "pop ebp ; ret"),  # pop ebp; ret
-            (b"\x5E\xC3", "pop esi ; ret"),  # pop esi; ret
-            (b"\x5F\xC3", "pop edi ; ret"),  # pop edi; ret
-
+            (b"\x58\xc3", "pop eax ; ret"),  # pop eax; ret
+            (b"\x59\xc3", "pop ecx ; ret"),  # pop ecx; ret
+            (b"\x5a\xc3", "pop edx ; ret"),  # pop edx; ret
+            (b"\x5b\xc3", "pop ebx ; ret"),  # pop ebx; ret
+            (b"\x5c\xc3", "pop esp ; ret"),  # pop esp; ret
+            (b"\x5d\xc3", "pop ebp ; ret"),  # pop ebp; ret
+            (b"\x5e\xc3", "pop esi ; ret"),  # pop esi; ret
+            (b"\x5f\xc3", "pop edi ; ret"),  # pop edi; ret
             # mov reg, reg; ret patterns (partial)
-            (b"\x89\xC0\xC3", "mov eax, eax ; ret"),
-            (b"\x89\xC8\xC3", "mov eax, ecx ; ret"),
-
+            (b"\x89\xc0\xc3", "mov eax, eax ; ret"),
+            (b"\x89\xc8\xc3", "mov eax, ecx ; ret"),
             # xor reg, reg; ret patterns
-            (b"\x31\xC0\xC3", "xor eax, eax ; ret"),
-            (b"\x31\xC9\xC3", "xor ecx, ecx ; ret"),
-
+            (b"\x31\xc0\xc3", "xor eax, eax ; ret"),
+            (b"\x31\xc9\xc3", "xor ecx, ecx ; ret"),
             # Simple ret
-            (b"\xC3", "ret"),
-
+            (b"\xc3", "ret"),
             # ret imm16
-            (b"\xC2\x00\x00", "ret 0"),
-            (b"\xC2\x04\x00", "ret 4"),
-            (b"\xC2\x08\x00", "ret 8"),
+            (b"\xc2\x00\x00", "ret 0"),
+            (b"\xc2\x04\x00", "ret 4"),
+            (b"\xc2\x08\x00", "ret 8"),
         ]
 
         base_address = self._get_code_base_address(binary_data)
 
         for pattern, instruction in gadget_patterns:
             for i in range(len(binary_data) - len(pattern) + 1):
-                if binary_data[i:i+len(pattern)] == pattern:
-                    instructions.append({
-                        "address": base_address + i,
-                        "mnemonic": instruction.split()[0],
-                        "op_str": " ".join(instruction.split()[1:]) if len(instruction.split()) > 1 else "",
-                        "instruction": instruction,
-                        "size": len(pattern),
-                    })
+                if binary_data[i : i + len(pattern)] == pattern:
+                    instructions.append(
+                        {
+                            "address": base_address + i,
+                            "mnemonic": instruction.split()[0],
+                            "op_str": " ".join(instruction.split()[1:])
+                            if len(instruction.split()) > 1
+                            else "",
+                            "instruction": instruction,
+                            "size": len(pattern),
+                        }
+                    )
 
                 # Limit results
                 if len(instructions) > 1000:
@@ -364,7 +375,9 @@ class ROPChainGenerator:
 
         return instructions
 
-    def _extract_gadget_sequences(self, instructions: list[dict[str, Any]]) -> list[list[dict[str, Any]]]:
+    def _extract_gadget_sequences(
+        self, instructions: list[dict[str, Any]]
+    ) -> list[list[dict[str, Any]]]:
         """Extract instruction sequences that end in control transfer instructions."""
         sequences = []
         max_gadget_length = min(self.max_gadget_size, 8)  # Reasonable limit
@@ -382,7 +395,7 @@ class ROPChainGenerator:
                 start_idx = max(0, end_idx - start_offset + 1)
 
                 if start_idx <= end_idx:
-                    sequence = instructions[start_idx:end_idx + 1]
+                    sequence = instructions[start_idx : end_idx + 1]
 
                     # Validate sequence doesn't contain unwanted instructions
                     if self._is_valid_gadget_sequence(sequence):
@@ -417,7 +430,9 @@ class ROPChainGenerator:
             # Analyze what the gadget does
             gadget_info = {
                 "address": sequence[0]["address"],
-                "instruction": " ; ".join(f"{i['mnemonic']} {i['op_str']}".strip() for i in sequence),
+                "instruction": " ; ".join(
+                    f"{i['mnemonic']} {i['op_str']}".strip() for i in sequence
+                ),
                 "size": len(sequence),
                 "type": self._determine_gadget_type(sequence),
                 "useful_for": self._determine_gadget_utility(sequence),
@@ -517,11 +532,36 @@ class ROPChainGenerator:
         # Create a minimal set of common gadgets
         base_addr = 0x400000
         fallback_gadgets = [
-            {"address": hex(base_addr + 0x1000), "instruction": "pop eax ; ret", "type": "pop_reg", "size": 2},
-            {"address": hex(base_addr + 0x1010), "instruction": "pop ebx ; ret", "type": "pop_reg", "size": 2},
-            {"address": hex(base_addr + 0x1020), "instruction": "pop ecx ; ret", "type": "pop_reg", "size": 2},
-            {"address": hex(base_addr + 0x1030), "instruction": "mov eax, ebx ; ret", "type": "mov_reg_reg", "size": 3},
-            {"address": hex(base_addr + 0x1040), "instruction": "xor eax, eax ; ret", "type": "logic_reg", "size": 3},
+            {
+                "address": hex(base_addr + 0x1000),
+                "instruction": "pop eax ; ret",
+                "type": "pop_reg",
+                "size": 2,
+            },
+            {
+                "address": hex(base_addr + 0x1010),
+                "instruction": "pop ebx ; ret",
+                "type": "pop_reg",
+                "size": 2,
+            },
+            {
+                "address": hex(base_addr + 0x1020),
+                "instruction": "pop ecx ; ret",
+                "type": "pop_reg",
+                "size": 2,
+            },
+            {
+                "address": hex(base_addr + 0x1030),
+                "instruction": "mov eax, ebx ; ret",
+                "type": "mov_reg_reg",
+                "size": 3,
+            },
+            {
+                "address": hex(base_addr + 0x1040),
+                "instruction": "xor eax, eax ; ret",
+                "type": "logic_reg",
+                "size": 3,
+            },
             {"address": hex(base_addr + 0x1050), "instruction": "ret", "type": "ret", "size": 1},
         ]
 
@@ -534,14 +574,17 @@ class ROPChainGenerator:
         analyzing gadget dependencies and creating working exploit chains.
         """
         try:
-            self.logger.info("Starting real ROP chain generation for %d targets", len(self.target_functions))
+            self.logger.info(
+                "Starting real ROP chain generation for %d targets", len(self.target_functions)
+            )
 
             for target in self.target_functions:
                 chain = self._build_rop_chain_for_target(target)
                 if chain:
                     self.chains.append(chain)
-                    self.logger.info("Built ROP chain for %s: %d gadgets",
-                                   target["name"], len(chain["gadgets"]))
+                    self.logger.info(
+                        "Built ROP chain for %s: %d gadgets", target["name"], len(chain["gadgets"])
+                    )
                 else:
                     self.logger.warning("Failed to build ROP chain for %s", target["name"])
 
@@ -615,14 +658,20 @@ class ROPChainGenerator:
                 "requirements_met": requirements,
                 "validation_status": "valid" if is_valid else "potentially_invalid",
                 "complexity_score": self._calculate_chain_complexity(chain_gadgets),
-                "success_probability": self._estimate_success_probability(chain_gadgets, requirements),
+                "success_probability": self._estimate_success_probability(
+                    chain_gadgets, requirements
+                ),
             }
 
         except Exception as e:
-            self.logger.error("Error building ROP chain for %s: %s", target.get("name", "unknown"), e)
+            self.logger.error(
+                "Error building ROP chain for %s: %s", target.get("name", "unknown"), e
+            )
             return None
 
-    def _build_real_rop_chain(self, target_info: dict[str, Any], chain_type: str, requirements: dict[str, Any]) -> dict[str, Any]:
+    def _build_real_rop_chain(
+        self, target_info: dict[str, Any], chain_type: str, requirements: dict[str, Any]
+    ) -> dict[str, Any]:
         """Build a functional ROP chain for the specified target.
 
         Args:
@@ -635,7 +684,11 @@ class ROPChainGenerator:
 
         """
         try:
-            self.logger.info("Building real ROP chain for target: %s, type: %s", target_info.get("name", "unknown"), chain_type)
+            self.logger.info(
+                "Building real ROP chain for target: %s, type: %s",
+                target_info.get("name", "unknown"),
+                chain_type,
+            )
 
             # Ensure we have gadgets available
             if not self.gadgets:
@@ -661,16 +714,26 @@ class ROPChainGenerator:
 
             # Build chain based on type
             if chain_type == "shell_execution":
-                chain_data = self._build_shell_execution_chain(chain_data, control_gadgets, stack_gadgets, target_info)
+                chain_data = self._build_shell_execution_chain(
+                    chain_data, control_gadgets, stack_gadgets, target_info
+                )
             elif chain_type == "memory_permission":
-                chain_data = self._build_memory_permission_chain(chain_data, control_gadgets, stack_gadgets, target_info)
+                chain_data = self._build_memory_permission_chain(
+                    chain_data, control_gadgets, stack_gadgets, target_info
+                )
             elif chain_type == "license_bypass":
-                chain_data = self._build_license_bypass_chain(chain_data, control_gadgets, arithmetic_gadgets, target_info)
+                chain_data = self._build_license_bypass_chain(
+                    chain_data, control_gadgets, arithmetic_gadgets, target_info
+                )
             elif chain_type == "comparison_bypass":
-                chain_data = self._build_comparison_bypass_chain(chain_data, control_gadgets, arithmetic_gadgets, target_info)
+                chain_data = self._build_comparison_bypass_chain(
+                    chain_data, control_gadgets, arithmetic_gadgets, target_info
+                )
             else:
                 # Generic chain building
-                chain_data = self._build_generic_chain(chain_data, control_gadgets, stack_gadgets, target_info)
+                chain_data = self._build_generic_chain(
+                    chain_data, control_gadgets, stack_gadgets, target_info
+                )
 
             # Validate the built chain
             if self._validate_chain(chain_data):
@@ -680,8 +743,11 @@ class ROPChainGenerator:
                 # Generate final payload
                 chain_data["payload"] = self._assemble_chain_payload(chain_data)
 
-                self.logger.info("Successfully built ROP chain with %d gadgets, success probability: %.2f",
-                               len(chain_data["gadgets_used"]), chain_data["success_probability"])
+                self.logger.info(
+                    "Successfully built ROP chain with %d gadgets, success probability: %.2f",
+                    len(chain_data["gadgets_used"]),
+                    chain_data["success_probability"],
+                )
                 return chain_data
             self.logger.warning("Built chain failed validation")
             return None
@@ -698,97 +764,148 @@ class ROPChainGenerator:
     def _is_stack_gadget(self, gadget: dict[str, Any]) -> bool:
         """Check if gadget manipulates stack."""
         disasm = gadget.get("disasm", "").lower()
-        return any(instr in disasm for instr in ["pop", "push", "add esp", "add rsp", "sub esp", "sub rsp"])
+        return any(
+            instr in disasm for instr in ["pop", "push", "add esp", "add rsp", "sub esp", "sub rsp"]
+        )
 
     def _is_arithmetic_gadget(self, gadget: dict[str, Any]) -> bool:
         """Check if gadget performs arithmetic operations."""
         disasm = gadget.get("disasm", "").lower()
         return any(instr in disasm for instr in ["add", "sub", "xor", "or", "and", "mov", "lea"])
 
-    def _build_shell_execution_chain(self, chain_data: dict[str, Any], control_gadgets: list[dict],
-                                   stack_gadgets: list[dict], target_info: dict[str, Any]) -> dict[str, Any]:
+    def _build_shell_execution_chain(
+        self,
+        chain_data: dict[str, Any],
+        control_gadgets: list[dict],
+        stack_gadgets: list[dict],
+        target_info: dict[str, Any],
+    ) -> dict[str, Any]:
         """Build ROP chain for shell execution."""
         # Find gadgets for setting up system() or execve() call
         pop_gadgets = [g for g in stack_gadgets if "pop" in g.get("disasm", "").lower()]
 
         # Use control gadgets for flow control and register setup
         ret_gadgets = [g for g in control_gadgets if "ret" in g.get("disasm", "").lower()]
-        jmp_gadgets = [g for g in control_gadgets if any(j in g.get("disasm", "").lower() for j in ["jmp", "call"])]
+        jmp_gadgets = [
+            g
+            for g in control_gadgets
+            if any(j in g.get("disasm", "").lower() for j in ["jmp", "call"])
+        ]
         mov_gadgets = [g for g in control_gadgets if "mov" in g.get("disasm", "").lower()]
 
         # Add control flow gadgets for reliable chain execution
         if ret_gadgets:
             # Use return gadget for clean control flow
             chain_data["gadgets_used"].append(ret_gadgets[0])
-            chain_data["stack_layout"].append({
-                "type": "gadget",
-                "address": ret_gadgets[0]["address"],
-                "purpose": "control_flow",
-                "description": "Clean return for chain continuation",
-            })
+            chain_data["stack_layout"].append(
+                {
+                    "type": "gadget",
+                    "address": ret_gadgets[0]["address"],
+                    "purpose": "control_flow",
+                    "description": "Clean return for chain continuation",
+                }
+            )
             chain_data["constraints_met"].append("control_flow")
 
         # Add register setup gadgets from control_gadgets
         if mov_gadgets:
             # Use mov gadget for register setup
             chain_data["gadgets_used"].append(mov_gadgets[0])
-            chain_data["stack_layout"].append({
-                "type": "gadget",
-                "address": mov_gadgets[0]["address"],
-                "purpose": "register_setup",
-                "description": "Set up registers for system call",
-            })
+            chain_data["stack_layout"].append(
+                {
+                    "type": "gadget",
+                    "address": mov_gadgets[0]["address"],
+                    "purpose": "register_setup",
+                    "description": "Set up registers for system call",
+                }
+            )
 
         if pop_gadgets:
             # Use first available pop gadget for stack setup
             chain_data["gadgets_used"].append(pop_gadgets[0])
-            chain_data["stack_layout"].extend([
-                {"type": "gadget", "address": pop_gadgets[0]["address"], "purpose": "stack_setup"},
-                {"type": "string", "value": "/bin/sh", "purpose": "shell_command"},
-                {"type": "address", "value": target_info.get("address", 0), "purpose": "target_function"},
-            ])
+            chain_data["stack_layout"].extend(
+                [
+                    {
+                        "type": "gadget",
+                        "address": pop_gadgets[0]["address"],
+                        "purpose": "stack_setup",
+                    },
+                    {"type": "string", "value": "/bin/sh", "purpose": "shell_command"},
+                    {
+                        "type": "address",
+                        "value": target_info.get("address", 0),
+                        "purpose": "target_function",
+                    },
+                ]
+            )
             chain_data["constraints_met"].append("stack_control")
 
         # Add jump gadgets for advanced control flow if needed
         if jmp_gadgets and target_info.get("requires_jump", False):
             chain_data["gadgets_used"].append(jmp_gadgets[0])
-            chain_data["stack_layout"].append({
-                "type": "gadget",
-                "address": jmp_gadgets[0]["address"],
-                "purpose": "advanced_flow",
-                "description": "Jump to target function or bypass",
-            })
+            chain_data["stack_layout"].append(
+                {
+                    "type": "gadget",
+                    "address": jmp_gadgets[0]["address"],
+                    "purpose": "advanced_flow",
+                    "description": "Jump to target function or bypass",
+                }
+            )
             chain_data["constraints_met"].append("advanced_control")
 
         return chain_data
 
-    def _build_memory_permission_chain(self, chain_data: dict[str, Any], control_gadgets: list[dict],
-                                     stack_gadgets: list[dict], target_info: dict[str, Any]) -> dict[str, Any]:
+    def _build_memory_permission_chain(
+        self,
+        chain_data: dict[str, Any],
+        control_gadgets: list[dict],
+        stack_gadgets: list[dict],
+        target_info: dict[str, Any],
+    ) -> dict[str, Any]:
         """Build ROP chain for memory permission changes."""
         # Find gadgets for setting up mprotect() call
         mov_gadgets = [g for g in control_gadgets if "mov" in g.get("disasm", "").lower()]
 
         if mov_gadgets and stack_gadgets:
             chain_data["gadgets_used"].extend([mov_gadgets[0], stack_gadgets[0]])
-            chain_data["stack_layout"].extend([
-                {"type": "gadget", "address": mov_gadgets[0]["address"], "purpose": "register_setup"},
-                {"type": "value", "value": 0x1000, "purpose": "page_size"},
-                {"type": "value", "value": 0x7, "purpose": "rwx_permissions"},
-                {"type": "address", "value": target_info.get("address", 0), "purpose": "target_function"},
-            ])
+            chain_data["stack_layout"].extend(
+                [
+                    {
+                        "type": "gadget",
+                        "address": mov_gadgets[0]["address"],
+                        "purpose": "register_setup",
+                    },
+                    {"type": "value", "value": 0x1000, "purpose": "page_size"},
+                    {"type": "value", "value": 0x7, "purpose": "rwx_permissions"},
+                    {
+                        "type": "address",
+                        "value": target_info.get("address", 0),
+                        "purpose": "target_function",
+                    },
+                ]
+            )
             chain_data["constraints_met"].append("memory_control")
 
         return chain_data
 
-    def _build_license_bypass_chain(self, chain_data: dict[str, Any], control_gadgets: list[dict],
-                                   arithmetic_gadgets: list[dict], target_info: dict[str, Any]) -> dict[str, Any]:
+    def _build_license_bypass_chain(
+        self,
+        chain_data: dict[str, Any],
+        control_gadgets: list[dict],
+        arithmetic_gadgets: list[dict],
+        target_info: dict[str, Any],
+    ) -> dict[str, Any]:
         """Build ROP chain for license validation bypass."""
         # Find gadgets for modifying return values or comparison results
         xor_gadgets = [g for g in arithmetic_gadgets if "xor" in g.get("disasm", "").lower()]
         mov_gadgets = [g for g in arithmetic_gadgets if "mov" in g.get("disasm", "").lower()]
 
         # Use control gadgets for bypass flow control
-        jmp_gadgets = [g for g in control_gadgets if any(j in g.get("disasm", "").lower() for j in ["jmp", "je", "jne", "jz", "jnz"])]
+        jmp_gadgets = [
+            g
+            for g in control_gadgets
+            if any(j in g.get("disasm", "").lower() for j in ["jmp", "je", "jne", "jz", "jnz"])
+        ]
         call_gadgets = [g for g in control_gadgets if "call" in g.get("disasm", "").lower()]
         ret_gadgets = [g for g in control_gadgets if "ret" in g.get("disasm", "").lower()]
 
@@ -796,111 +913,177 @@ class ROPChainGenerator:
         if jmp_gadgets:
             # Use conditional jump gadgets to skip license validation
             chain_data["gadgets_used"].append(jmp_gadgets[0])
-            chain_data["stack_layout"].append({
-                "type": "gadget",
-                "address": jmp_gadgets[0]["address"],
-                "purpose": "bypass_check",
-                "description": "Jump over license validation code",
-            })
+            chain_data["stack_layout"].append(
+                {
+                    "type": "gadget",
+                    "address": jmp_gadgets[0]["address"],
+                    "purpose": "bypass_check",
+                    "description": "Jump over license validation code",
+                }
+            )
             chain_data["constraints_met"].append("validation_bypass")
 
         # Use call gadgets to redirect execution flow
         if call_gadgets and target_info.get("bypass_target"):
             chain_data["gadgets_used"].append(call_gadgets[0])
-            chain_data["stack_layout"].append({
-                "type": "gadget",
-                "address": call_gadgets[0]["address"],
-                "purpose": "redirect_execution",
-                "description": "Call success function directly",
-            })
+            chain_data["stack_layout"].append(
+                {
+                    "type": "gadget",
+                    "address": call_gadgets[0]["address"],
+                    "purpose": "redirect_execution",
+                    "description": "Call success function directly",
+                }
+            )
             chain_data["constraints_met"].append("execution_redirect")
 
         if xor_gadgets:
             # XOR to zero out register (often used for success return)
             chain_data["gadgets_used"].append(xor_gadgets[0])
-            chain_data["stack_layout"].extend([
-                {"type": "gadget", "address": xor_gadgets[0]["address"], "purpose": "zero_register"},
-                {"type": "value", "value": 1, "purpose": "success_value"},
-                {"type": "address", "value": target_info.get("address", 0), "purpose": "return_address"},
-            ])
+            chain_data["stack_layout"].extend(
+                [
+                    {
+                        "type": "gadget",
+                        "address": xor_gadgets[0]["address"],
+                        "purpose": "zero_register",
+                    },
+                    {"type": "value", "value": 1, "purpose": "success_value"},
+                    {
+                        "type": "address",
+                        "value": target_info.get("address", 0),
+                        "purpose": "return_address",
+                    },
+                ]
+            )
             chain_data["constraints_met"].append("return_value_control")
         elif mov_gadgets:
             # Use mov to set success value if xor not available
             chain_data["gadgets_used"].append(mov_gadgets[0])
-            chain_data["stack_layout"].extend([
-                {"type": "gadget", "address": mov_gadgets[0]["address"], "purpose": "set_register"},
-                {"type": "value", "value": 1, "purpose": "success_value"},
-                {"type": "address", "value": target_info.get("address", 0), "purpose": "return_address"},
-            ])
+            chain_data["stack_layout"].extend(
+                [
+                    {
+                        "type": "gadget",
+                        "address": mov_gadgets[0]["address"],
+                        "purpose": "set_register",
+                    },
+                    {"type": "value", "value": 1, "purpose": "success_value"},
+                    {
+                        "type": "address",
+                        "value": target_info.get("address", 0),
+                        "purpose": "return_address",
+                    },
+                ]
+            )
             chain_data["constraints_met"].append("return_value_control")
 
         # Use return gadgets for clean chain termination
         if ret_gadgets:
             chain_data["gadgets_used"].append(ret_gadgets[0])
-            chain_data["stack_layout"].append({
-                "type": "gadget",
-                "address": ret_gadgets[0]["address"],
-                "purpose": "chain_termination",
-                "description": "Clean return after bypass",
-            })
+            chain_data["stack_layout"].append(
+                {
+                    "type": "gadget",
+                    "address": ret_gadgets[0]["address"],
+                    "purpose": "chain_termination",
+                    "description": "Clean return after bypass",
+                }
+            )
             chain_data["constraints_met"].append("clean_exit")
 
         return chain_data
 
-    def _build_comparison_bypass_chain(self, chain_data: dict[str, Any], control_gadgets: list[dict],
-                                     arithmetic_gadgets: list[dict], target_info: dict[str, Any]) -> dict[str, Any]:
+    def _build_comparison_bypass_chain(
+        self,
+        chain_data: dict[str, Any],
+        control_gadgets: list[dict],
+        arithmetic_gadgets: list[dict],
+        target_info: dict[str, Any],
+    ) -> dict[str, Any]:
         """Build ROP chain for bypassing string/memory comparisons."""
         # Find gadgets for manipulating comparison operands
         mov_gadgets = [g for g in arithmetic_gadgets if "mov" in g.get("disasm", "").lower()]
 
         # Use control gadgets to bypass comparison flow
-        jmp_gadgets = [g for g in control_gadgets if any(j in g.get("disasm", "").lower()
-                                                        for j in ["jmp", "je", "jne", "jz", "jnz", "jl", "jg"])]
+        jmp_gadgets = [
+            g
+            for g in control_gadgets
+            if any(
+                j in g.get("disasm", "").lower()
+                for j in ["jmp", "je", "jne", "jz", "jnz", "jl", "jg"]
+            )
+        ]
         call_gadgets = [g for g in control_gadgets if "call" in g.get("disasm", "").lower()]
 
         # Use conditional jump gadgets to skip comparison entirely
         if jmp_gadgets:
             chain_data["gadgets_used"].append(jmp_gadgets[0])
-            chain_data["stack_layout"].append({
-                "type": "gadget",
-                "address": jmp_gadgets[0]["address"],
-                "purpose": "skip_comparison",
-                "description": "Jump over string/memory comparison code",
-            })
+            chain_data["stack_layout"].append(
+                {
+                    "type": "gadget",
+                    "address": jmp_gadgets[0]["address"],
+                    "purpose": "skip_comparison",
+                    "description": "Jump over string/memory comparison code",
+                }
+            )
             chain_data["constraints_met"].append("comparison_bypass")
 
         # Use call gadgets to directly invoke success path
         if call_gadgets and target_info.get("success_function"):
             chain_data["gadgets_used"].append(call_gadgets[0])
-            chain_data["stack_layout"].append({
-                "type": "gadget",
-                "address": call_gadgets[0]["address"],
-                "purpose": "call_success",
-                "description": "Direct call to success function",
-            })
+            chain_data["stack_layout"].append(
+                {
+                    "type": "gadget",
+                    "address": call_gadgets[0]["address"],
+                    "purpose": "call_success",
+                    "description": "Direct call to success function",
+                }
+            )
             chain_data["constraints_met"].append("success_redirect")
 
         if mov_gadgets:
             chain_data["gadgets_used"].append(mov_gadgets[0])
-            chain_data["stack_layout"].extend([
-                {"type": "gadget", "address": mov_gadgets[0]["address"], "purpose": "operand_setup"},
-                {"type": "string", "value": "valid_key", "purpose": "comparison_value"},
-                {"type": "address", "value": target_info.get("address", 0), "purpose": "comparison_target"},
-            ])
+            chain_data["stack_layout"].extend(
+                [
+                    {
+                        "type": "gadget",
+                        "address": mov_gadgets[0]["address"],
+                        "purpose": "operand_setup",
+                    },
+                    {"type": "string", "value": "valid_key", "purpose": "comparison_value"},
+                    {
+                        "type": "address",
+                        "value": target_info.get("address", 0),
+                        "purpose": "comparison_target",
+                    },
+                ]
+            )
             chain_data["constraints_met"].append("comparison_control")
 
         return chain_data
 
-    def _build_generic_chain(self, chain_data: dict[str, Any], control_gadgets: list[dict],
-                           stack_gadgets: list[dict], target_info: dict[str, Any]) -> dict[str, Any]:
+    def _build_generic_chain(
+        self,
+        chain_data: dict[str, Any],
+        control_gadgets: list[dict],
+        stack_gadgets: list[dict],
+        target_info: dict[str, Any],
+    ) -> dict[str, Any]:
         """Build generic ROP chain for unknown target types."""
         # Use available gadgets for basic control flow
         if control_gadgets:
             chain_data["gadgets_used"].append(control_gadgets[0])
-            chain_data["stack_layout"].extend([
-                {"type": "gadget", "address": control_gadgets[0]["address"], "purpose": "control_flow"},
-                {"type": "address", "value": target_info.get("address", 0), "purpose": "target_function"},
-            ])
+            chain_data["stack_layout"].extend(
+                [
+                    {
+                        "type": "gadget",
+                        "address": control_gadgets[0]["address"],
+                        "purpose": "control_flow",
+                    },
+                    {
+                        "type": "address",
+                        "value": target_info.get("address", 0),
+                        "purpose": "target_function",
+                    },
+                ]
+            )
             chain_data["constraints_met"].append("basic_control")
 
         # Use stack gadgets for stack manipulation
@@ -911,22 +1094,26 @@ class ROPChainGenerator:
 
             if pop_gadgets:
                 chain_data["gadgets_used"].append(pop_gadgets[0])
-                chain_data["stack_layout"].append({
-                    "type": "gadget",
-                    "address": pop_gadgets[0]["address"],
-                    "purpose": "stack_manipulation",
-                    "description": "Generic stack control for chain execution",
-                })
+                chain_data["stack_layout"].append(
+                    {
+                        "type": "gadget",
+                        "address": pop_gadgets[0]["address"],
+                        "purpose": "stack_manipulation",
+                        "description": "Generic stack control for chain execution",
+                    }
+                )
                 chain_data["constraints_met"].append("stack_control")
 
             if push_gadgets:
                 chain_data["gadgets_used"].append(push_gadgets[0])
-                chain_data["stack_layout"].append({
-                    "type": "gadget",
-                    "address": push_gadgets[0]["address"],
-                    "purpose": "stack_setup",
-                    "description": "Prepare stack for generic payload",
-                })
+                chain_data["stack_layout"].append(
+                    {
+                        "type": "gadget",
+                        "address": push_gadgets[0]["address"],
+                        "purpose": "stack_setup",
+                        "description": "Prepare stack for generic payload",
+                    }
+                )
                 chain_data["constraints_met"].append("stack_preparation")
 
         return chain_data
@@ -994,7 +1181,9 @@ class ROPChainGenerator:
             "shell_execution": {
                 "needs_args": True,
                 "needs_pivot": True,
-                "required_registers": ["rdi", "rsi", "rdx"] if self.arch == "x86_64" else ["eax", "ebx", "ecx"],
+                "required_registers": ["rdi", "rsi", "rdx"]
+                if self.arch == "x86_64"
+                else ["eax", "ebx", "ecx"],
                 "required_gadgets": ["pop_reg", "mov_reg_reg"],
                 "stack_alignment": 16 if self.arch == "x86_64" else 4,
                 "min_gadgets": 3,
@@ -1002,7 +1191,9 @@ class ROPChainGenerator:
             "memory_permission": {
                 "needs_args": True,
                 "needs_pivot": False,
-                "required_registers": ["rdi", "rsi", "rdx"] if self.arch == "x86_64" else ["eax", "ebx", "ecx"],
+                "required_registers": ["rdi", "rsi", "rdx"]
+                if self.arch == "x86_64"
+                else ["eax", "ebx", "ecx"],
                 "required_gadgets": ["pop_reg", "mov_reg_reg"],
                 "stack_alignment": 16 if self.arch == "x86_64" else 4,
                 "min_gadgets": 2,
@@ -1044,20 +1235,24 @@ class ROPChainGenerator:
         for reg in required_registers:
             pop_gadget = self._find_gadget_for_register("pop_reg", reg)
             if pop_gadget:
-                setup_gadgets.append({
-                    **pop_gadget,
-                    "chain_role": "register_setup",
-                    "target_register": reg,
-                })
+                setup_gadgets.append(
+                    {
+                        **pop_gadget,
+                        "chain_role": "register_setup",
+                        "target_register": reg,
+                    }
+                )
 
         # If we couldn't find specific register gadgets, use generic ones
         if not setup_gadgets and required_registers:
             generic_pops = [g for g in self.gadgets if g.get("type") == "pop_reg"]
             if generic_pops:
-                setup_gadgets.append({
-                    **generic_pops[0],
-                    "chain_role": "generic_setup",
-                })
+                setup_gadgets.append(
+                    {
+                        **generic_pops[0],
+                        "chain_role": "generic_setup",
+                    }
+                )
 
         return setup_gadgets
 
@@ -1068,15 +1263,19 @@ class ROPChainGenerator:
         # Check requirements for specific argument patterns
         required_args = requirements.get("arguments", [])
         if required_args:
-            self.logger.debug(f"Looking for gadgets to satisfy {len(required_args)} argument requirements")
+            self.logger.debug(
+                f"Looking for gadgets to satisfy {len(required_args)} argument requirements"
+            )
 
         # Look for mov gadgets to set up arguments
         mov_gadgets = [g for g in self.gadgets if g.get("type") == "mov_reg_reg"]
         if mov_gadgets:
-            arg_gadgets.append({
-                **mov_gadgets[0],
-                "chain_role": "argument_setup",
-            })
+            arg_gadgets.append(
+                {
+                    **mov_gadgets[0],
+                    "chain_role": "argument_setup",
+                }
+            )
 
         return arg_gadgets
 
@@ -1089,36 +1288,46 @@ class ROPChainGenerator:
             instruction = gadget.get("instruction", "").lower()
             if any(stack_op in instruction for stack_op in ["esp", "rsp", "add", "sub"]):
                 if gadget.get("type") in ["arith_reg", "mov_reg_reg"]:
-                    pivot_gadgets.append({
-                        **gadget,
-                        "chain_role": "stack_pivot",
-                    })
+                    pivot_gadgets.append(
+                        {
+                            **gadget,
+                            "chain_role": "stack_pivot",
+                        }
+                    )
                     break  # One pivot gadget is usually enough
 
         return pivot_gadgets
 
-    def _find_execution_gadgets(self, target: dict[str, Any], requirements: dict[str, Any]) -> list[dict[str, Any]]:
+    def _find_execution_gadgets(
+        self, target: dict[str, Any], requirements: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """Find gadgets for final execution/function call."""
         execution_control = requirements.get("execution_control", "call")
-        self.logger.debug(f"Finding execution gadgets for {target} with control type: {execution_control}")
+        self.logger.debug(
+            f"Finding execution gadgets for {target} with control type: {execution_control}"
+        )
         exec_gadgets = []
 
         # For most targets, we need a way to transfer control
         call_gadgets = [g for g in self.gadgets if g.get("type") in ["call_reg", "jmp_reg"]]
         if call_gadgets:
-            exec_gadgets.append({
-                **call_gadgets[0],
-                "chain_role": "execution",
-                "target_function": target.get("name", "unknown"),
-            })
+            exec_gadgets.append(
+                {
+                    **call_gadgets[0],
+                    "chain_role": "execution",
+                    "target_function": target.get("name", "unknown"),
+                }
+            )
         else:
             # Fallback to simple ret
             ret_gadgets = [g for g in self.gadgets if g.get("type") == "ret"]
             if ret_gadgets:
-                exec_gadgets.append({
-                    **ret_gadgets[0],
-                    "chain_role": "return",
-                })
+                exec_gadgets.append(
+                    {
+                        **ret_gadgets[0],
+                        "chain_role": "return",
+                    }
+                )
 
         return exec_gadgets
 
@@ -1134,8 +1343,12 @@ class ROPChainGenerator:
 
         return None
 
-    def _build_chain_payload(self, chain_gadgets: list[dict[str, Any]],
-                           target: dict[str, Any], requirements: dict[str, Any]) -> list[str]:
+    def _build_chain_payload(
+        self,
+        chain_gadgets: list[dict[str, Any]],
+        target: dict[str, Any],
+        requirements: dict[str, Any],
+    ) -> list[str]:
         """Build the actual payload for the ROP chain."""
         payload = []
 
@@ -1163,7 +1376,9 @@ class ROPChainGenerator:
 
         return payload
 
-    def _validate_gadget_chain(self, chain_gadgets: list[dict[str, Any]], requirements: dict[str, Any]) -> bool:
+    def _validate_gadget_chain(
+        self, chain_gadgets: list[dict[str, Any]], requirements: dict[str, Any]
+    ) -> bool:
         """Validate the ROP chain for basic correctness."""
         if len(chain_gadgets) < requirements.get("min_gadgets", 1):
             return False
@@ -1202,8 +1417,9 @@ class ROPChainGenerator:
 
         return complexity
 
-    def _estimate_success_probability(self, chain_gadgets: list[dict[str, Any]],
-                                    requirements: dict[str, Any]) -> float:
+    def _estimate_success_probability(
+        self, chain_gadgets: list[dict[str, Any]], requirements: dict[str, Any]
+    ) -> float:
         """Estimate the probability of successful exploitation."""
         base_probability = 0.8  # Start with 80% base
 
@@ -1235,16 +1451,20 @@ class ROPChainGenerator:
             pop_gadgets = [g for g in self.gadgets if g.get("type") == "pop_reg"]
 
             if pop_gadgets:
-                chain_gadgets.append({
-                    **pop_gadgets[0],
-                    "chain_role": "setup",
-                })
+                chain_gadgets.append(
+                    {
+                        **pop_gadgets[0],
+                        "chain_role": "setup",
+                    }
+                )
 
             if ret_gadgets:
-                chain_gadgets.append({
-                    **ret_gadgets[0],
-                    "chain_role": "return",
-                })
+                chain_gadgets.append(
+                    {
+                        **ret_gadgets[0],
+                        "chain_role": "return",
+                    }
+                )
 
             if chain_gadgets:
                 payload = [g.get("address", "0x0") for g in chain_gadgets]
@@ -1288,7 +1508,9 @@ class ROPChainGenerator:
             .address { color: blue; }
         """
 
-        html = get_base_html_template("ROP Chain Generation Report", custom_css) + f"""
+        html = (
+            get_base_html_template("ROP Chain Generation Report", custom_css)
+            + f"""
         <body>
             <h1>ROP Chain Generation Report</h1>
             <p>Binary: {self.binary_path}</p>
@@ -1306,6 +1528,7 @@ class ROPChainGenerator:
             <table>
                 <tr><th>Name</th><th>Address</th><th>Description</th></tr>
         """
+        )
 
         for _target in self.target_functions:
             html += f"""
@@ -1358,6 +1581,7 @@ class ROPChainGenerator:
             """
 
         from ...utils.reporting.html_templates import close_html
+
         html += close_html()
 
         # Save to file if filename provided
@@ -1543,11 +1767,13 @@ def run_rop_chain_generator(app: Any) -> None:
         return
 
     # Create and configure the generator
-    generator = ROPChainGenerator({
-        "max_chain_length": 20,
-        "max_gadget_size": 10,
-        "arch": "x86_64",  # Default to x86_64
-    })
+    generator = ROPChainGenerator(
+        {
+            "max_chain_length": 20,
+            "max_gadget_size": 10,
+            "arch": "x86_64",  # Default to x86_64
+        }
+    )
 
     # Set binary
     if hasattr(app, "update_output"):
@@ -1555,7 +1781,9 @@ def run_rop_chain_generator(app: Any) -> None:
 
     if generator.set_binary(app.binary_path):
         if hasattr(app, "update_output"):
-            app.update_output.emit(f"log_message([ROP Chain Generator] Binary set: {app.binary_path})")
+            app.update_output.emit(
+                f"log_message([ROP Chain Generator] Binary set: {app.binary_path})"
+            )
 
         # Handle architecture selection if PyQt6 is available
         if PYQT6_AVAILABLE:
@@ -1604,7 +1832,9 @@ def run_rop_chain_generator(app: Any) -> None:
 
         if generator.find_gadgets():
             if hasattr(app, "update_output"):
-                app.update_output.emit(f"log_message([ROP Chain Generator] Found {len(generator.gadgets)} gadgets)")
+                app.update_output.emit(
+                    f"log_message([ROP Chain Generator] Found {len(generator.gadgets)} gadgets)"
+                )
 
             # Generate chains
             if hasattr(app, "update_output"):
@@ -1612,7 +1842,9 @@ def run_rop_chain_generator(app: Any) -> None:
 
             if generator.generate_chains():
                 if hasattr(app, "update_output"):
-                    app.update_output.emit(f"log_message([ROP Chain Generator] Generated {len(generator.chains)} chains)")
+                    app.update_output.emit(
+                        f"log_message([ROP Chain Generator] Generated {len(generator.chains)} chains)"
+                    )
 
                 # Get results
                 results = generator.get_results()
@@ -1620,9 +1852,15 @@ def run_rop_chain_generator(app: Any) -> None:
                 # Display summary
                 if hasattr(app, "update_output"):
                     app.update_output.emit("log_message([ROP Chain Generator] Results:)")
-                    app.update_output.emit(f"log_message(- Total gadgets: {results['summary']['total_gadgets']})")
-                    app.update_output.emit(f"log_message(- Total chains: {results['summary']['total_chains']})")
-                    app.update_output.emit(f"log_message(- Total targets: {results['summary']['total_targets']})")
+                    app.update_output.emit(
+                        f"log_message(- Total gadgets: {results['summary']['total_gadgets']})"
+                    )
+                    app.update_output.emit(
+                        f"log_message(- Total chains: {results['summary']['total_chains']})"
+                    )
+                    app.update_output.emit(
+                        f"log_message(- Total targets: {results['summary']['total_targets']})"
+                    )
 
                 # Add to analyze results
                 if not hasattr(app, "analyze_results"):
@@ -1641,7 +1879,9 @@ def run_rop_chain_generator(app: Any) -> None:
 
                     app.analyze_results.append("Gadgets:")
                     for j, gadget in enumerate(chain["gadgets"]):
-                        app.analyze_results.append(f"  {j+1}. {gadget['address']}: {gadget['instruction']}")
+                        app.analyze_results.append(
+                            f"  {j+1}. {gadget['address']}: {gadget['instruction']}"
+                        )
 
                     app.analyze_results.append("Payload:")
                     for _addr in chain["payload"]:
@@ -1658,14 +1898,20 @@ def run_rop_chain_generator(app: Any) -> None:
                     )
                     if report_path:
                         if hasattr(app, "update_output"):
-                            app.update_output.emit(f"log_message([ROP Chain Generator] Report saved to {report_path})")
+                            app.update_output.emit(
+                                f"log_message([ROP Chain Generator] Report saved to {report_path})"
+                            )
 
                         # Ask if user wants to open the report
                         ask_open_report(app, report_path)
                     elif hasattr(app, "update_output"):
-                        app.update_output.emit("log_message([ROP Chain Generator] Failed to generate report)")
+                        app.update_output.emit(
+                            "log_message([ROP Chain Generator] Failed to generate report)"
+                        )
             elif hasattr(app, "update_output"):
-                app.update_output.emit("log_message([ROP Chain Generator] Failed to generate chains)")
+                app.update_output.emit(
+                    "log_message([ROP Chain Generator] Failed to generate chains)"
+                )
         elif hasattr(app, "update_output"):
             app.update_output.emit("log_message([ROP Chain Generator] Failed to find gadgets)")
     elif hasattr(app, "update_output"):

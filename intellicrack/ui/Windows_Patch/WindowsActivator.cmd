@@ -395,12 +395,12 @@ echo:             [3] TSforge             - Windows / Office / ESU
 )
 echo:             [4] KMS38               - Windows
 echo:             [5] Online KMS          - Windows / Office
-echo:             __________________________________________________ 
+echo:             __________________________________________________
 echo:
 echo:             [6] Check Activation Status
 echo:             [7] Change Windows Edition
 echo:             [8] Change Office Edition
-echo:             __________________________________________________      
+echo:             __________________________________________________
 echo:
 echo:             [9] Troubleshoot
 echo:             [E] Extras
@@ -448,12 +448,12 @@ echo:
 echo:
 echo:
 echo:           ______________________________________________________
-echo:           
+echo:
 echo:                [1] Extract $OEM$ Folder
-echo:                  
-echo:                [2] Download Genuine Windows / Office 
-echo:                ____________________________________________      
-echo:                                                                          
+echo:
+echo:                [2] Download Genuine Windows / Office
+echo:                ____________________________________________
+echo:
 echo:                [0] Go to Main Menu
 echo:           ______________________________________________________
 echo:
@@ -493,7 +493,7 @@ echo:
 echo:
 echo:
 echo:
-echo:                     Extract $OEM$ folder on the desktop           
+echo:                     Extract $OEM$ folder on the desktop
 echo:         ____________________________________________________________
 echo:
 echo:            [1] HWID             [Windows]
@@ -509,7 +509,7 @@ echo:
 call :dk_color2 %_White% "            [R] " %_Green% "ReadMe"
 echo:            [0] Go Back
 echo:         ____________________________________________________________
-echo:  
+echo:
 call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard :"
 choice /C:12345678R0 /N
 set _erl=%errorlevel%
@@ -811,7 +811,7 @@ call :dk_inskey "[%key%]"
 
 ::========================================================================================================================================
 
-::  Change Windows region to USA to avoid activation issues as Windows store license is not available in many countries 
+::  Change Windows region to USA to avoid activation issues as Windows store license is not available in many countries
 
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKCU\Control Panel\International\Geo" /v Name %nul6%') do set "name=%%b"
 for /f "skip=2 tokens=2*" %%a in ('reg query "HKCU\Control Panel\International\Geo" /v Nation %nul6%') do set "nation=%%b"
@@ -1430,9 +1430,9 @@ exit /b
 
 set w=
 set results=
-if exist "%ProgramFiles%\KM%w%Spico" set pupfound= KM%w%Spico 
+if exist "%ProgramFiles%\KM%w%Spico" set pupfound= KM%w%Spico
 if not defined pupfound (
-reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "AutoPico" %nul% && set pupfound= KM%w%Spico 
+reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\taskcache\tasks" /f Path /s | find /i "AutoPico" %nul% && set pupfound= KM%w%Spico
 )
 
 set hcount=0
@@ -2176,7 +2176,7 @@ echo                 [3] Download Office
 echo:
 echo                 [0] %_exitmsg%
 echo         ____________________________________________________________
-echo: 
+echo:
 call :dk_color2 %_White% "             " %_Green% "Choose a menu option using your keyboard [1,2,3,0]"
 choice /C:1230 /N
 set _el=!errorlevel!
@@ -2259,8 +2259,8 @@ set _68=HKLM\SOFTWARE\Microsoft\Office
 set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=Office 2010 MSI )
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=Office 2010 MSI )
-%nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
-%nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
+%nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R
+%nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R
 
 if %winbuild% GEQ 10240 (
 for /f "delims=" %%a in ('%psc% "(Get-AppxPackage -name 'Microsoft.Office.Desktop' | Select-Object -ExpandProperty InstallLocation)" %nul6%') do (if exist "%%a\Integration\Integrator.exe" set o16uwp=Office UWP )
@@ -2466,7 +2466,7 @@ call :dk_color %Gray% "Checking Old Office With Sub License    [Found. Update Of
 ::========================================================================================================================================
 
 ::  mass grave[.]dev/office-license-is-not-genuine
-::  Add registry keys for volume products so that 'non-genuine' banner won't appear 
+::  Add registry keys for volume products so that 'non-genuine' banner won't appear
 ::  Script already is using MAK instead of GVLK so it won't appear anyway, but registry keys are added incase Office installs default GVLK grace key for volume products
 
 set "kmskey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform\0ff1ce15-a989-479d-af46-f275c6370663"
@@ -3758,7 +3758,7 @@ $MemoryStream.Close()
 ::
 ::========================================================================================================================================
 ::
-::  If you want to use a different sppc.dll or without base64 format, then create a folder named "BIN" where this script is located and 
+::  If you want to use a different sppc.dll or without base64 format, then create a folder named "BIN" where this script is located and
 ::  place these two files in that "BIN" folder. sppc32.dll, sppc64.dll
 ::  Script will auto pick that instead of using the below from base64 section. You can also delete the below code in that case.
 ::
@@ -4003,14 +4003,14 @@ echo:
 echo:
 echo:
 echo        ______________________________________________________________
-echo: 
+echo:
 echo               [1] Activate - Windows
 echo               [2] Activate - ESU
 echo               [3] Activate - Office [All]
 echo               [4] Activate - Office [Project/Visio]
 echo               [5] Activate - All
-echo               _______________________________________________  
-echo: 
+echo               _______________________________________________
+echo:
 echo                   Advanced Options:
 echo:
 echo               [A] Activate - Windows %KS% Host
@@ -4022,7 +4022,7 @@ echo               [E] Reset    - Rearm/Timers
 ) else (
 echo               [E] Reset    - Rearm/Timers/Tamper/Lock
 )
-echo               _______________________________________________       
+echo               _______________________________________________
 echo:
 echo               [6] Remove TSforge Activation
 echo               [7] Download Office
@@ -4555,8 +4555,8 @@ set _68=HKLM\SOFTWARE\Microsoft\Office
 set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_86%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=Office 2010 MSI )
 for /f "skip=2 tokens=2*" %%a in ('"reg query %_68%\14.0\Common\InstallRoot /v Path" %nul6%') do if exist "%%b\*Picker.dll" (set o14msi=Office 2010 MSI )
-%nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
-%nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
+%nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R
+%nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R
 
 if not "%o14msi%%o14c2r%"=="" (
 echo:
@@ -5863,7 +5863,7 @@ namespace LibTSforge.SPP
                 try
                 {
                     LoadConfig(actId);
-                } 
+                }
                 catch (ArgumentException)
                 {
 
@@ -6796,7 +6796,7 @@ namespace LibTSforge.SPP
 
                             if (File.Exists(psPath)) return psPath;
                         }
-                    } 
+                    }
                     else
                     {
                         return psPath;
@@ -7335,7 +7335,7 @@ namespace LibTSforge.Modifiers
             if (actId == Guid.Empty) throw new ArgumentException("Activation ID must be specified for generated product key install.");
 
             PKeyConfig pkc = new PKeyConfig();
-            
+
             try
             {
                 pkc.LoadConfig(actId);
@@ -7645,7 +7645,7 @@ namespace LibTSforge.Modifiers
                 }
 
                 kmsChargeData = writer.GetBytes();
-            } 
+            }
             else
             {
                 for (int i = 0; i < currClients; i++)
@@ -8213,7 +8213,7 @@ namespace LibTSforge.Activators
                     try
                     {
                         shortauth = BitConverter.ToUInt64(Convert.FromBase64String(uniqueId.Split('&')[1]), 0);
-                    } 
+                    }
                     catch
                     {
                         throw new FormatException("Key Unique ID has invalid format.");
@@ -8264,7 +8264,7 @@ namespace LibTSforge.Activators
                         KeyAsStr = key,
                         ValueAsStr = hwidBlockName,
                         Data = tsHwidData
-                    }, 
+                    },
                     new PSBlock
                     {
                         Type = BlockType.NAMED,
@@ -10229,7 +10229,7 @@ $tsactids = @($args)
 
 function Get-WmiInfo {
     param ([string]$tsactid, [string]$property)
-    
+
     $query = "SELECT ID, $property FROM SoftwareLicensingProduct WHERE ID='$tsactid'"
     $record = Get-WmiObject -Query $query
     if ($record) {
@@ -10331,12 +10331,12 @@ function Windows-ActID {
         [string]$edition,
         [string]$keytype
     )
-    
+
     $filePatterns = @(
         "$SysPath\spp\tokens\skus\$edition\$edition*.xrm-ms",
         "$SysPath\spp\tokens\skus\Security-SPP-Component-SKU-$edition\*-$edition-*.xrm-ms"
     )
-    
+
     switch ($keytype) {
         "zero" {
             $licenseTypes = @('OEM_DM', 'OEM_COA_SLP', 'OEM_COA_NSLP', 'MAK', 'RETAIL')
@@ -10351,14 +10351,14 @@ function Windows-ActID {
             $licenseTypes = @('KMS_')
         }
     }
-    
+
     $softwareLicensingProducts = Get-WmiObject -Query "SELECT ID, Description, LicenseFamily FROM SoftwareLicensingProduct WHERE ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f'" | Where-Object { $_.LicenseFamily -eq $edition }
-    
+
     $orderedLicenses = @()
     foreach ($type in $licenseTypes) {
         $orderedLicenses += $softwareLicensingProducts | Where-Object { $_.Description -match $type } | Select-Object -ExpandProperty ID
     }
-    
+
     $fileIds = @()
     $muiLockedIds = @()
     $kmsCountedIdCounts = @{}
@@ -10371,27 +10371,27 @@ function Windows-ActID {
         @{name = 'SLGetProductSkuInformation'; returnType = [Int32]; parameters = @([IntPtr], [Guid].MakeByRefType(), [String], [UInt32].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()) },
         @{name = 'SLGetLicense'; returnType = [Int32]; parameters = @([IntPtr], [Guid].MakeByRefType(), [UInt32].MakeByRefType(), [IntPtr].MakeByRefType()) }
     )
-    
+
     foreach ($method in $methods) {
         $t.DefinePInvokeMethod($method.name, 'slc.dll', 22, 1, $method.returnType, $method.parameters, 1, 3).SetImplementationFlags(128)
     }
-    
+
     $w = $t.CreateType()
     $m = [Runtime.InteropServices.Marshal]
 
     function GetLicenseInfo($SkuId, $checkType) {
         $result = $false
         $c = 0; $b = 0
-        
+
         [void]$w::SLGetProductSkuInformation($hSLC, [ref][Guid]$SkuId, "fileId", [ref]$null, [ref]$c, [ref]$b)
         $FileId = $m::PtrToStringUni($b)
-        
+
         $c = 0; $b = 0
         [void]$w::SLGetLicense($hSLC, [ref][Guid]$FileId, [ref]$c, [ref]$b)
         $blob = New-Object byte[] $c; $m::Copy($b, $blob, 0, $c)
         $cont = [Text.Encoding]::UTF8.GetString($blob)
         $xml = [xml]$cont.SubString($cont.IndexOf('<r'))
-        
+
         if ($checkType -eq 'MUI') {
             $xml.licenseGroup.license[0].grant | foreach {
                 $_.allConditions.allConditions.productPolicies.policyStr | where { $_.name -eq 'Kernel-MUI-Language-Allowed' } | foreach {
@@ -10406,7 +10406,7 @@ function Windows-ActID {
                 }
             }
         }
-        
+
         return $result
     }
 
@@ -10423,7 +10423,7 @@ function Windows-ActID {
             $muiLockedIds += $id
         }
     }
-    
+
     foreach ($filePattern in $filePatterns) {
         $files = Get-ChildItem -Path $filePattern -Filter '*.xrm-ms' -ErrorAction SilentlyContinue
         foreach ($file in $files) {
@@ -10437,7 +10437,7 @@ function Windows-ActID {
             }
         }
     }
-    
+
     if ($kmsCountedIdCounts.Count -gt 0) {
         $idWithMostIds = $kmsCountedIdCounts.GetEnumerator() | Sort-Object Value -Descending
         $fileIds = $idWithMostIds | Select-Object -ExpandProperty Key
@@ -10446,12 +10446,12 @@ function Windows-ActID {
         if ($fileIds.Count -eq 0) {
             $fileIds = $orderedLicenses
         }
-    
+
         $fileIds = $orderedLicenses | Where-Object { $fileIds -contains $_ -and $muiLockedIds -notcontains $_ } | Select-Object -Unique
     }
-    
+
     [void]$w::SLClose($hSLC)
-    
+
     $pkeyconfig = "$SysPath\spp\tokens\pkeyconfig\pkeyconfig.xrm-ms"
     if ($keytype -eq 'kmshost') {
         $csvlkPath = "$SysPath\spp\tokens\pkeyconfig\pkeyconfig-csvlk.xrm-ms"
@@ -10459,13 +10459,13 @@ function Windows-ActID {
             $pkeyconfig = $csvlkPath
         }
     }
-    
+
     $data = [xml][Text.Encoding]::UTF8.GetString([Convert]::FromBase64String(([xml](get-content $pkeyconfig)).licenseGroup.license.otherInfo.infoTables.infoList.infoBin.InnerText))
-    
+
     $betaIds = @()
     $excludedIds = @()
     $checkedIds = @()
-    
+
     foreach ($id in $fileIds) {
         $actConfig = $data.ProductKeyConfiguration.Configurations.Configuration | Where-Object { $_.ActConfigId -eq "{$id}" }
         if ($actConfig) {
@@ -10475,17 +10475,17 @@ function Windows-ActID {
                 $excludedIds += $id
                 continue
             }
-    
+
             if ($productDescription -match 'Beta|RC |Next |Test|Pre-') {
                 $betaIds += $id
                 continue
             }
-    
+
             if ($keytype -ne 'kmshost' -and $productEditionID -eq '$edition') {
                 $checkedIds += $id
                 continue
             }
-    
+
             $refGroupId = $actConfig.RefGroupId
             $publicKey = $data.ProductKeyConfiguration.PublicKeys.PublicKey | Where-Object { $_.GroupId -eq $refGroupId -and $_.AlgorithmId -eq 'msft:rm/algorithm/pkey/2009' }
             if ($publicKey) {
@@ -10499,21 +10499,21 @@ function Windows-ActID {
             }
         }
     }
-    
+
     $prefinalIds = @()
     $finalIds = @()
-    
+
     $prefinalIds = $fileIds | Where-Object { $excludedIds -notcontains $_ } | Select-Object -Unique
     $finalIds = $prefinalIds | Where-Object { $betaIds -notcontains $_ } | Select-Object -Unique
-    
+
     if ($finalIds.Count -eq 0) {
         $finalIds = $prefinalIds
     }
-    
+
     if ($checkedIds.Count -gt 0) {
         $finalIds = $checkedIds + $finalIds
     }
-    
+
     $firstId = $finalIds | Select-Object -First 1
     return $firstId.ToLower()
 }
@@ -10543,9 +10543,9 @@ function Office-ActID {
 
     $filteredConfigs = @()
     foreach ($type in $productKeyTypes) {
-        $filteredConfigs += $configurations | Where-Object { 
-            $_.EditionId -eq $edition -and 
-            $_.ProductKeyType -eq $type -and 
+        $filteredConfigs += $configurations | Where-Object {
+            $_.EditionId -eq $edition -and
+            $_.ProductKeyType -eq $type -and
             $_.ProductDescription -notmatch 'demo|MSDN|PIN'
         }
     }
@@ -10554,7 +10554,7 @@ function Office-ActID {
 
     if ($filterPreview.Count -ne 0) {
         $filteredConfigs = $filterPreview
-    } 
+    }
 
     $firstConfig = ($filteredConfigs | Select-Object -First 1).ActConfigID -replace '^\{|\}$', ''
     return $firstConfig.ToLower()
@@ -10894,7 +10894,7 @@ echo                 [2] Remove KM38 Protection
 echo:
 echo                 [0] %_exitmsg%
 echo:           ______________________________________________________
-echo: 
+echo:
 call :dk_color2 %_White% "              " %_Green% "Choose a menu option using your keyboard [1,2,0]"
 choice /C:120 /N
 set _el=!errorlevel!
@@ -11693,13 +11693,13 @@ call :dk_color %_Yellow% "              Old renewal task found, run activation t
 )
 )
 echo        ______________________________________________________________
-echo: 
+echo:
 echo               [1] Activate - Windows
 echo               [2] Activate - Office [All]
 echo               [3] Activate - Office [Project/Visio]
 echo               [4] Activate - All
-echo               _______________________________________________  
-echo: 
+echo               _______________________________________________
+echo:
 if %_norentsk%==0 (
 echo               [5] Renewal Task With Activation       [Yes]
 ) else (
@@ -11711,7 +11711,7 @@ echo               [6] Change Edition If Needed           [Yes]
 call :dk_color2 %_White% "              [6] Change Edition If Needed            " %_Yellow% "[No]"
 )
 echo               [7] Uninstall Online %KS%
-echo               _______________________________________________       
+echo               _______________________________________________
 echo:
 if defined _server (
 echo               [8] Set %KS% Server/Port [%_server%] [%_port%]
@@ -11988,8 +11988,8 @@ call :dk_color %Gray% "Checking Ohook                          [Ohook activation
 set o14c2r=
 set _68=HKLM\SOFTWARE\Microsoft\Office
 set _86=HKLM\SOFTWARE\Wow6432Node\Microsoft\Office
-%nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
-%nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R 
+%nul% reg query %_68%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R
+%nul% reg query %_86%\14.0\CVH /f Click2run /k         && set o14c2r=Office 2010 C2R
 
 if not "%o14c2r%"=="" (
 echo:
@@ -12329,7 +12329,7 @@ exit /b
 
 ::========================================================================================================================================
 
-::  After retail to volume conversion, new product ID needs .OSPPReady key in registry, otherwise product info may not fully reflect 
+::  After retail to volume conversion, new product ID needs .OSPPReady key in registry, otherwise product info may not fully reflect
 
 :ks_osppready
 
@@ -12345,7 +12345,7 @@ set "_osppready=%_config%"
 
 reg add %_osppready% /f /v %_altoffid%.OSPPReady /t %_osppt% /d 1 %nul1%
 
-::  Office builds before 16.0.10730.20102 need the Installed license product ID in ProductReleaseIds, otherwise product info may not fully reflect 
+::  Office builds before 16.0.10730.20102 need the Installed license product ID in ProductReleaseIds, otherwise product info may not fully reflect
 
 if exist "%_oLPath%\Word2019VL_KMS_Client_AE*.xrm-ms" exit /b
 
@@ -13198,7 +13198,7 @@ echo     C:\Program Files\Activation-Renewal\Logs.txt
 echo ______________________________________________________________________________________________
 echo:
 echo   This Script is a part of MAS project.
-echo:   
+echo:
 echo   Homepage: mass grave[.]dev
 echo      Email: mas.help@outlook.com
 )>"%_dest%\Info.txt"
@@ -15481,13 +15481,13 @@ echo:
 echo:
 echo:
 echo:       _______________________________________________________________
-echo:                                                   
+echo:
 call :dk_color2 %_White% "             [1] " %_Green% "Help"
 echo:             ___________________________________________________
-echo:                                                                      
+echo:
 echo:             [2] Dism RestoreHealth
 echo:             [3] SFC Scannow
-echo:                                                                      
+echo:
 echo:             [4] Fix WMI
 echo:             [5] Fix Licensing
 echo:             [6] Fix WPA Registry
@@ -15495,7 +15495,7 @@ echo:             ___________________________________________________
 echo:
 echo:             [0] %_exitmsg%
 echo:       _______________________________________________________________
-echo:          
+echo:
 call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard :"
 choice /C:1234560 /N
 set _erl=%errorlevel%
@@ -15599,15 +15599,15 @@ title  sfc /scannow
 
 echo:
 echo %line%
-echo:    
+echo:
 echo      SFC will repair missing or corrupted system files.
 echo      It is recommended you run the DISM option first before this one.
 echo      This will take 10-15 minutes or more..
 echo:
-echo      If SFC could not fix something, then run the command again to see if it may be able 
+echo      If SFC could not fix something, then run the command again to see if it may be able
 echo      to the next time. Sometimes it may take running the sfc /scannow command 3 times
 echo      restarting the PC after each time to completely fix everything that it's able to.
-echo:   
+echo:
 echo %line%
 echo:
 choice /C:09 /N /M ">    [9] Continue [0] Go back : "
@@ -15660,7 +15660,7 @@ goto :at_back
 
 echo:
 echo %line%
-echo:   
+echo:
 echo      Notes:
 echo:
 echo       - This option helps in troubleshooting activation issues.
@@ -15726,14 +15726,14 @@ echo [Successful]
 )
 )
 
-::  Below registry key (Volatile & Protected) gets created after the ClipSVC License cleanup command, and gets automatically deleted after 
+::  Below registry key (Volatile & Protected) gets created after the ClipSVC License cleanup command, and gets automatically deleted after
 ::  system restart. It needs to be deleted to activate the system without restart.
 
 set "RegKey=HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ClipSVC\Volatile\PersistedSystemState"
 set "_ident=HKU\S-1-5-19\SOFTWARE\Microsoft\IdentityCRL"
 
 reg query "%RegKey%" %nul% && %nul% call :regownstart
-reg delete "%RegKey%" /f %nul% 
+reg delete "%RegKey%" /f %nul%
 
 echo:
 echo Deleting a Volatile ^& Protected Registry Key...
@@ -16064,7 +16064,7 @@ pause %nul1%
 
 if defined uwp16 (
 echo:
-echo Skipping repair for Office 16.0 UWP... 
+echo Skipping repair for Office 16.0 UWP...
 echo:
 )
 
@@ -16385,7 +16385,7 @@ if ($env:permerror -eq 'Error Found In SPP Registries') {
     $acl.ResetAccessRule($rule)
     $acl.SetAccessRule($rule)
     Set-Acl -Path 'HKLM:\SYSTEM\WPA' -AclObject $acl
-	
+
     $acl = Get-Acl 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform'
     $rule = New-Object System.Security.AccessControl.RegistryAccessRule ('NT Service\sppsvc', 'SetValue', 'ContainerInherit, ObjectInherit', 'None', 'Allow')
     $acl.ResetAccessRule($rule)
@@ -16408,7 +16408,7 @@ if (-not (Test-Path 'Registry::HKU\S-1-5-20\Software\Microsoft\Windows NT\Curren
 
 function Take-Permissions {
     param($rootKey, $key, [System.Security.Principal.SecurityIdentifier]$sid = 'S-1-5-32-545', $recurse = $true)
-    
+
     switch -regex ($rootKey) {
         'HKCU|HKEY_CURRENT_USER' { $rootKey = 'CurrentUser' }
         'HKLM|HKEY_LOCAL_MACHINE' { $rootKey = 'LocalMachine' }
@@ -16757,7 +16757,7 @@ if /i "%targetedition%"=="ServerRdsh" (
 echo:
 call :dk_color %Red% "==== Note ===="
 echo:
-echo Once the edition is changed to "%targetedition%", 
+echo Once the edition is changed to "%targetedition%",
 echo the system may not be able to properly change edition later.
 echo:
 echo [1] Continue Anyway
@@ -17594,7 +17594,7 @@ echo:
 echo                 [5] Change Office Update Channel
 echo                 [0] %_exitmsg%
 echo         ____________________________________________________________
-echo: 
+echo:
 call :dk_color2 %_White% "           " %_Green% "Choose a menu option using your keyboard [1,2,3,4,5,0]"
 choice /C:123450 /N
 set _el=!errorlevel!
@@ -17628,7 +17628,7 @@ echo:
 echo:
 echo:
 echo:
-echo                 O365/Mondo editions have the latest features.     
+echo                 O365/Mondo editions have the latest features.
 echo         ____________________________________________________________
 echo:
 echo                 [1] Office Suites     - Retail
@@ -17639,7 +17639,7 @@ echo                 ____________________________________________
 echo:
 echo                 [0] Go Back
 echo         ____________________________________________________________
-echo: 
+echo:
 call :dk_color2 %_White% "            " %_Green% "Choose a menu option using your keyboard [1,2,3,4,0]"
 choice /C:12340 /N
 set _el=!errorlevel!

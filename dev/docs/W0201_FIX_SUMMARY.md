@@ -21,7 +21,7 @@ After the initial fix, additional steps were taken to ensure functionality:
 - Identified attributes used as collections (lists, dicts)
 - Changed their initialization from `None` to appropriate empty collections:
   - `_hex_viewer_dialogs`: `[]`
-  - `reports`: `[]`  
+  - `reports`: `[]`
   - `log_access_history`: `[]`
   - `ai_conversation_history`: `[]`
 

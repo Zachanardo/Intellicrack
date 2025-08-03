@@ -21,10 +21,14 @@ UI Style Utilities
 Common styles and style generators to eliminate duplication across UI components.
 """
 
-def get_progress_bar_style(border_width: int = 1, border_color: str = "#444",
-                          background_color: str = "#2a2a2a",
-                          chunk_color: str = "#0d7377",
-                          border_radius: int = 3) -> str:
+
+def get_progress_bar_style(
+    border_width: int = 1,
+    border_color: str = "#444",
+    background_color: str = "#2a2a2a",
+    chunk_color: str = "#0d7377",
+    border_radius: int = 3,
+) -> str:
     """Generate consistent progress bar stylesheet.
 
     Args:

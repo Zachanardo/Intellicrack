@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import math
 from collections import Counter
@@ -100,9 +99,13 @@ def detect_packing(binary_path: str | Path) -> list[str]:
         for name, entropy, size in section_entropies:
             results.append(f"  {name}: Entropy: {entropy:.4f}, Size: {size:.2f} KB")
             if entropy > 7.0:
-                results.append(f"  ⚠️ Very high entropy (>{entropy:.4f}) indicates packing/encryption")
+                results.append(
+                    f"  ⚠️ Very high entropy (>{entropy:.4f}) indicates packing/encryption"
+                )
             elif entropy > 6.5:
-                results.append(f"  ⚠️ High entropy (>{entropy:.4f}) suggests compression or obfuscation")
+                results.append(
+                    f"  ⚠️ High entropy (>{entropy:.4f}) suggests compression or obfuscation"
+                )
 
         # Check imports - packed files often have few imports
         if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
@@ -146,7 +149,9 @@ def detect_packing(binary_path: str | Path) -> list[str]:
         suspicious_sections = [".ndata", "UPX", ".packed", ".nsp", ".enigma"]
         for section in pe.sections:
             name = section.Name.decode("utf-8", "ignore").strip("\x00")
-            if any(suspicious_name.lower() in name.lower() for suspicious_name in suspicious_sections):
+            if any(
+                suspicious_name.lower() in name.lower() for suspicious_name in suspicious_sections
+            ):
                 results.append(f"  ⚠️ Suspicious section name: {name}")
 
         # Executable & writable sections (often used by self-modifying packers)
@@ -168,7 +173,10 @@ def detect_packing(binary_path: str | Path) -> list[str]:
             results.append("  ⚠️ PACKED/ENCRYPTED - Very high entropy sections detected")
         elif any("High entropy" in result_line for result_line in results):
             results.append("  ⚠️ PROBABLE PACKING - High entropy sections detected")
-        elif any(("Very few imports" in result_line or "No import directory" in result_line) for result_line in results):
+        elif any(
+            ("Very few imports" in result_line or "No import directory" in result_line)
+            for result_line in results
+        ):
             results.append("  ⚠️ PROBABLE PACKING - Abnormal import structure")
         elif any("both executable and writable" in result_line for result_line in results):
             results.append("  ⚠️ POSSIBLE PACKING - Self-modifying code structure detected")
@@ -206,7 +214,10 @@ def detect_protection(binary_path: str | Path) -> dict[str, Any]:
 
     # Run packing detection
     packing_results = detect_packing(binary_path)
-    if any("PACKED" in result_line or "PROBABLE PACKING" in result_line for result_line in packing_results):
+    if any(
+        "PACKED" in result_line or "PROBABLE PACKING" in result_line
+        for result_line in packing_results
+    ):
         results["packing"] = True
         results["details"].extend(packing_results)
 
@@ -388,11 +399,13 @@ def check_anti_debug_tricks(binary_path: str | Path) -> list[dict[str, Any]]:
             for import_entry in pe.DIRECTORY_ENTRY_IMPORT:
                 for import_item in import_entry.imports:
                     if import_item.name and b"IsDebuggerPresent" in import_item.name:
-                        tricks.append({
-                            "name": "IsDebuggerPresent",
-                            "description": "Checks for attached debugger via API",
-                            "severity": "medium",
-                        })
+                        tricks.append(
+                            {
+                                "name": "IsDebuggerPresent",
+                                "description": "Checks for attached debugger via API",
+                                "severity": "medium",
+                            }
+                        )
 
         pe.close()
 
@@ -511,6 +524,7 @@ def inject_comprehensive_api_hooks(app, script: str = None) -> None:
     try:
         # Try to use Frida for _real injection if available
         import importlib.util
+
         if importlib.util.find_spec("frida") is None:
             raise ImportError("Frida not available")
 

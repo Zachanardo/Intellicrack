@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import os
 import sys
@@ -38,6 +37,7 @@ def check_weasyprint_dependencies() -> list[str]:
 
     try:
         import cffi
+
         # Store CFFI version for debugging
         cffi_version = getattr(cffi, "__version__", "unknown")
         logger.info(f"✓ CFFI dependency found (version: {cffi_version})")
@@ -47,6 +47,7 @@ def check_weasyprint_dependencies() -> list[str]:
 
     try:
         import cairocffi
+
         # Store Cairo version for debugging
         cairo_version = getattr(cairocffi, "__version__", "unknown")
         logger.info(f"✓ Cairo dependency found (version: {cairo_version})")
@@ -56,6 +57,7 @@ def check_weasyprint_dependencies() -> list[str]:
 
     try:
         import tinycss2
+
         # Store TinyCSS2 version for debugging
         css_version = getattr(tinycss2, "__version__", "unknown")
         logger.info(f"✓ TinyCSS2 dependency found (version: {css_version})")
@@ -66,7 +68,9 @@ def check_weasyprint_dependencies() -> list[str]:
     if sys.platform == "win32":
         try:
             gtk_paths = [
-                os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "GTK3-Runtime Win64", "bin"),
+                os.path.join(
+                    os.environ.get("ProgramFiles", r"C:\Program Files"), "GTK3-Runtime Win64", "bin"
+                ),
                 r"C:\GTK\bin",
                 os.environ.get("GTK_BASEPATH", "") + "\\bin",
             ]
@@ -106,8 +110,15 @@ def check_and_install_dependencies() -> bool:
 
     # Core dependencies
     core_deps = [
-        "psutil", "requests", "pefile", "capstone", "keystone",
-        "unicorn", "lief", "yara", "cryptography",
+        "psutil",
+        "requests",
+        "pefile",
+        "capstone",
+        "keystone",
+        "unicorn",
+        "lief",
+        "yara",
+        "cryptography",
     ]
 
     for dep in core_deps:
@@ -155,9 +166,18 @@ def install_dependencies(deps: list[str]) -> bool:
     try:
         for dep in deps:
             logger.info("Installing %s...", dep)
-            result = subprocess.run([
-                sys.executable, "-m", "pip", "install", dep,
-            ], capture_output=True, text=True, check=False)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    dep,
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
 
             if result.returncode == 0:
                 logger.info("✓ Successfully installed %s", dep)
@@ -191,6 +211,7 @@ def setup_required_environment() -> dict[str, Any]:
     # Check GUI availability
     try:
         import PyQt6.QtCore
+
         # Get PyQt6 version for logging
         pyqt_version = getattr(PyQt6.QtCore, "PYQT_VERSION_STR", "unknown")
         env_status["gui_available"] = True
@@ -203,11 +224,14 @@ def setup_required_environment() -> dict[str, Any]:
     try:
         import numpy
         import sklearn
+
         # Get versions for logging
         numpy_version = getattr(numpy, "__version__", "unknown")
         sklearn_version = getattr(sklearn, "__version__", "unknown")
         env_status["ml_available"] = True
-        logger.info(f"✓ Machine learning features available (numpy {numpy_version}, sklearn {sklearn_version})")
+        logger.info(
+            f"✓ Machine learning features available (numpy {numpy_version}, sklearn {sklearn_version})"
+        )
     except ImportError:
         logger.warning("✗ ML features not available")
         env_status["missing_dependencies"].extend(["numpy", "scikit-learn"])
@@ -215,6 +239,7 @@ def setup_required_environment() -> dict[str, Any]:
     # Check dynamic analysis
     try:
         import frida
+
         # Get Frida version for logging
         frida_version = getattr(frida, "__version__", "unknown")
         env_status["dynamic_analysis_available"] = True
@@ -226,6 +251,7 @@ def setup_required_environment() -> dict[str, Any]:
     # Check symbolic execution
     try:
         import angr
+
         # Get angr version for logging
         angr_version = getattr(angr, "__version__", "unknown")
         env_status["symbolic_execution_available"] = True

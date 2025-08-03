@@ -4,7 +4,7 @@
 
 ### 1. Syntax Errors (3 files) ✅
 - **cfg_explorer.py:567** - Fixed unterminated f-string literal
-- **main_app.py:9937** - Fixed unterminated f-string literal  
+- **main_app.py:9937** - Fixed unterminated f-string literal
 - **runner_functions.py:664** - Fixed unterminated f-string literal
 
 ### 2. Undefined Variable Errors (4 files) ✅

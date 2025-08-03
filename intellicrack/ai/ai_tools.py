@@ -56,7 +56,8 @@ class AIAssistant:
                 "lines_of_code": len(code.split("\n")),
                 "complexity": basic_analysis.get("complexity", "unknown"),
                 "insights": basic_analysis.get("insights", []) + ai_analysis.get("insights", []),
-                "suggestions": basic_analysis.get("suggestions", []) + ai_analysis.get("suggestions", []),
+                "suggestions": basic_analysis.get("suggestions", [])
+                + ai_analysis.get("suggestions", []),
                 "security_issues": basic_analysis.get("security_issues", []),
                 "patterns": basic_analysis.get("patterns", []),
                 "ai_enabled": ai_analysis.get("ai_enabled", False),
@@ -100,18 +101,15 @@ class AIAssistant:
         if language in ["c", "cpp"]:
             # C/C++ specific analysis
             if "strcpy" in code or "sprintf" in code:
-                security_issues.append(
-                    "Use of unsafe string functions (strcpy, sprintf)")
-                suggestions.append(
-                    "Replace with safer alternatives like strncpy, snprintf")
+                security_issues.append("Use of unsafe string functions (strcpy, sprintf)")
+                suggestions.append("Replace with safer alternatives like strncpy, snprintf")
 
             if "gets(" in code:
                 security_issues.append("Use of dangerous gets() function")
                 suggestions.append("Replace gets() with fgets()")
 
             if "system(" in code:
-                security_issues.append(
-                    "Use of system() function (potential command injection)")
+                security_issues.append("Use of system() function (potential command injection)")
                 suggestions.append("Validate input before system() calls")
 
             patterns.append("C/C++ buffer management patterns detected")
@@ -119,13 +117,11 @@ class AIAssistant:
         elif language == "python":
             # Python specific analysis
             if "eval(" in code or "exec(" in code:
-                security_issues.append(
-                    "Use of eval() or exec() (code injection risk)")
+                security_issues.append("Use of eval() or exec() (code injection risk)")
                 suggestions.append("Avoid dynamic code execution")
 
             if "pickle.loads" in code:
-                security_issues.append(
-                    "Use of pickle.loads() (deserialization risk)")
+                security_issues.append("Use of pickle.loads() (deserialization risk)")
                 suggestions.append("Validate pickle data sources")
 
             patterns.append("Python dynamic execution patterns detected")
@@ -134,31 +130,31 @@ class AIAssistant:
             # Assembly specific analysis
             if any(instr in code.lower() for instr in ["call", "jmp", "ret"]):
                 patterns.append("Control flow instructions detected")
-                insights.append(
-                    "Assembly code contains control flow modifications")
+                insights.append("Assembly code contains control flow modifications")
 
             if any(instr in code.lower() for instr in ["mov", "lea", "push", "pop"]):
                 patterns.append("Data movement instructions detected")
 
             if "int 0x80" in code.lower() or "syscall" in code.lower():
                 insights.append("System calls detected in assembly")
-                suggestions.append(
-                    "Review system call usage for security implications")
+                suggestions.append("Review system call usage for security implications")
 
         # General analysis
-        comment_lines = len(
-            [line for line in lines if line.strip().startswith(("#", "//", "/*"))])
-        code_lines = len([line for line in lines if line.strip(
-        ) and not line.strip().startswith(("#", "//", "/*"))])
+        comment_lines = len([line for line in lines if line.strip().startswith(("#", "//", "/*"))])
+        code_lines = len(
+            [
+                line
+                for line in lines
+                if line.strip() and not line.strip().startswith(("#", "//", "/*"))
+            ]
+        )
 
         if code_lines > 0:
             comment_ratio = comment_lines / code_lines
             if comment_ratio < 0.1:
-                suggestions.append(
-                    "Consider adding more code comments for maintainability")
+                suggestions.append("Consider adding more code comments for maintainability")
             elif comment_ratio > 0.5:
-                insights.append(
-                    "Well-documented code with good comment coverage")
+                insights.append("Well-documented code with good comment coverage")
 
         return {
             "complexity": complexity,
@@ -172,17 +168,20 @@ class AIAssistant:
     def _calculate_complexity(self, code: str, language: str) -> str:
         """Calculate code complexity."""
         lines = code.split("\n")
-        code_lines = len([line for line in lines if line.strip(
-        ) and not line.strip().startswith(("#", "//", "/*"))])
+        code_lines = len(
+            [
+                line
+                for line in lines
+                if line.strip() and not line.strip().startswith(("#", "//", "/*"))
+            ]
+        )
 
         # Count control structures
-        control_keywords = ["if", "else", "while",
-                            "for", "switch", "case", "try", "catch"]
+        control_keywords = ["if", "else", "while", "for", "switch", "case", "try", "catch"]
         if language == "assembly":
             control_keywords = ["jmp", "je", "jne", "jz", "jnz", "call", "ret"]
 
-        control_count = sum(code.lower().count(keyword)
-                            for keyword in control_keywords)
+        control_count = sum(code.lower().count(keyword) for keyword in control_keywords)
 
         # Simple complexity scoring
         if code_lines < 20 and control_count < 5:
@@ -206,8 +205,7 @@ class AIAssistant:
                         return {"ai_enabled": False, "insights": [], "suggestions": []}
                     self._llm_manager = llm_manager
                 except (ImportError, AttributeError, ValueError, TypeError) as e:
-                    logger.debug(
-                        "Failed to initialize LLM manager: %s", e, exc_info=True)
+                    logger.debug("Failed to initialize LLM manager: %s", e, exc_info=True)
                     return {"ai_enabled": False, "insights": [], "suggestions": []}
 
             # Create analysis prompt
@@ -229,8 +227,7 @@ class AIAssistant:
 
             # Send to LLM
             messages = [
-                LLMMessage(role="system",
-                           content="You are an autonomous code security expert."),
+                LLMMessage(role="system", content="You are an autonomous code security expert."),
                 LLMMessage(role="user", content=prompt),
             ]
 
@@ -238,8 +235,7 @@ class AIAssistant:
 
             if response and response.content:
                 # Parse response for insights and suggestions
-                ai_insights, ai_suggestions = self._parse_ai_code_response(
-                    response.content)
+                ai_insights, ai_suggestions = self._parse_ai_code_response(response.content)
                 return {
                     "ai_enabled": True,
                     "insights": ai_insights,
@@ -256,12 +252,14 @@ class AIAssistant:
     def _parse_ai_code_response(self, response: str) -> tuple:
         """Parse AI response to extract insights and suggestions."""
         from .response_parser import parse_security_analysis_response
+
         insights, suggestions = parse_security_analysis_response(response)
         return insights[:5], suggestions[:5]  # Limit to top 5 each
 
     def _get_timestamp(self) -> str:
         """Get current timestamp for analysis."""
         import datetime
+
         return datetime.datetime.now().isoformat()
 
     def get_suggestions(self, context: str) -> list[str]:
@@ -271,42 +269,52 @@ class AIAssistant:
         suggestions = []
 
         if "license" in context_lower or "activation" in context_lower:
-            suggestions.extend([
-                "Analyze license validation routines",
-                "Search for activation key checks",
-                "Look for trial period limitations",
-                "Examine license file dependencies",
-            ])
+            suggestions.extend(
+                [
+                    "Analyze license validation routines",
+                    "Search for activation key checks",
+                    "Look for trial period limitations",
+                    "Examine license file dependencies",
+                ]
+            )
         elif "protection" in context_lower or "obfuscation" in context_lower:
-            suggestions.extend([
-                "Detect packing and obfuscation",
-                "Identify anti-debugging techniques",
-                "Look for virtual machine detection",
-                "Analyze code flow obfuscation",
-            ])
+            suggestions.extend(
+                [
+                    "Detect packing and obfuscation",
+                    "Identify anti-debugging techniques",
+                    "Look for virtual machine detection",
+                    "Analyze code flow obfuscation",
+                ]
+            )
         elif "network" in context_lower or "communication" in context_lower:
-            suggestions.extend([
-                "Monitor network traffic patterns",
-                "Analyze protocol communications",
-                "Check for license server connections",
-                "Examine SSL/TLS certificate validation",
-            ])
+            suggestions.extend(
+                [
+                    "Monitor network traffic patterns",
+                    "Analyze protocol communications",
+                    "Check for license server connections",
+                    "Examine SSL/TLS certificate validation",
+                ]
+            )
         elif "vulnerability" in context_lower or "exploit" in context_lower:
-            suggestions.extend([
-                "Scan for buffer overflow opportunities",
-                "Look for privilege escalation vectors",
-                "Analyze input validation weaknesses",
-                "Check for race condition vulnerabilities",
-            ])
+            suggestions.extend(
+                [
+                    "Scan for buffer overflow opportunities",
+                    "Look for privilege escalation vectors",
+                    "Analyze input validation weaknesses",
+                    "Check for race condition vulnerabilities",
+                ]
+            )
         else:
             # Default general suggestions
-            suggestions.extend([
-                "Analyze the binary structure and format",
-                "Look for protection mechanisms and obfuscation",
-                "Check for network communications and protocols",
-                "Examine string patterns and embedded data",
-                "Review import tables and external dependencies",
-            ])
+            suggestions.extend(
+                [
+                    "Analyze the binary structure and format",
+                    "Look for protection mechanisms and obfuscation",
+                    "Check for network communications and protocols",
+                    "Examine string patterns and embedded data",
+                    "Review import tables and external dependencies",
+                ]
+            )
 
         return suggestions[:5]  # Return top 5 suggestions
 
@@ -352,16 +360,32 @@ class AIAssistant:
                 question_lower = question.lower()
                 if "license" in question_lower or "activation" in question_lower:
                     response = vuln_engine.analyze_license_patterns(question, context)
-                    return response if response else "Consider analyzing license validation routines, checking for activation key algorithms, and examining trial period limitations."
+                    return (
+                        response
+                        if response
+                        else "Consider analyzing license validation routines, checking for activation key algorithms, and examining trial period limitations."
+                    )
                 if "protection" in question_lower or "security" in question_lower:
                     response = vuln_engine.analyze_protection_mechanisms(question, context)
-                    return response if response else "Look for anti-debugging techniques, packing detection, and code obfuscation patterns."
+                    return (
+                        response
+                        if response
+                        else "Look for anti-debugging techniques, packing detection, and code obfuscation patterns."
+                    )
                 if "vulnerability" in question_lower or "exploit" in question_lower:
                     response = vuln_engine.find_vulnerabilities(question, context)
-                    return response if response else "Focus on buffer overflow analysis, input validation checks, and privilege escalation vectors."
+                    return (
+                        response
+                        if response
+                        else "Focus on buffer overflow analysis, input validation checks, and privilege escalation vectors."
+                    )
                 if "network" in question_lower or "communication" in question_lower:
                     response = vuln_engine.analyze_network_behavior(question, context)
-                    return response if response else "Monitor network traffic, analyze protocol communications, and check SSL/TLS implementations."
+                    return (
+                        response
+                        if response
+                        else "Monitor network traffic, analyze protocol communications, and check SSL/TLS implementations."
+                    )
                 return f"To answer '{question}', I recommend starting with binary structure analysis and examining protection mechanisms."
             except Exception as e:
                 logger.error("Vulnerability engine error: %s", e)
@@ -396,6 +420,7 @@ class CodeAnalyzer:
         """Analyze binary file using comprehensive static and AI analysis."""
         try:
             import os
+
             if not os.path.exists(file_path):
                 return {"error": f"File not found: {file_path}"}
 
@@ -420,25 +445,23 @@ class CodeAnalyzer:
             # Perform format-specific analysis
             format_analysis = self._perform_format_specific_analysis(file_path)
             result["findings"].extend(format_analysis.get("findings", []))
-            result["security_issues"].extend(
-                format_analysis.get("security_issues", []))
-            result["protection_mechanisms"].extend(
-                format_analysis.get("protection_mechanisms", []))
+            result["security_issues"].extend(format_analysis.get("security_issues", []))
+            result["protection_mechanisms"].extend(format_analysis.get("protection_mechanisms", []))
 
             # Perform AI-enhanced analysis if available
             ai_analysis = self._perform_ai_binary_analysis(file_path, result)
             if ai_analysis.get("ai_enabled", False):
                 result["findings"].extend(ai_analysis.get("findings", []))
-                result["recommendations"].extend(
-                    ai_analysis.get("recommendations", []))
-                result["confidence"] = max(
-                    result["confidence"], ai_analysis.get("confidence", 0.0))
+                result["recommendations"].extend(ai_analysis.get("recommendations", []))
+                result["confidence"] = max(result["confidence"], ai_analysis.get("confidence", 0.0))
                 result["ai_insights"] = ai_analysis.get("insights", [])
 
             # Calculate overall confidence
             if not result["confidence"]:
                 result["confidence"] = min(
-                    0.9, 0.5 + (len(result["findings"]) * 0.1) + (len(result["security_issues"]) * 0.15))
+                    0.9,
+                    0.5 + (len(result["findings"]) * 0.1) + (len(result["security_issues"]) * 0.15),
+                )
 
             return result
 
@@ -451,7 +474,8 @@ class CodeAnalyzer:
         try:
             lines = assembly_code.split("\n")
             instruction_count = len(
-                [line for line in lines if line.strip() and not line.strip().startswith(";")])
+                [line for line in lines if line.strip() and not line.strip().startswith(";")]
+            )
 
             # Initialize result structure
             result = {
@@ -472,23 +496,22 @@ class CodeAnalyzer:
             result.update(pattern_analysis)
 
             # Perform vulnerability analysis
-            vuln_analysis = self._analyze_assembly_vulnerabilities(
-                assembly_code)
+            vuln_analysis = self._analyze_assembly_vulnerabilities(assembly_code)
             result["vulnerabilities"].extend(vuln_analysis)
 
             # Perform AI-enhanced analysis if available
             ai_analysis = self._perform_ai_assembly_analysis(assembly_code)
             if ai_analysis.get("ai_enabled", False):
                 result["patterns"].extend(ai_analysis.get("patterns", []))
-                result["vulnerabilities"].extend(
-                    ai_analysis.get("vulnerabilities", []))
-                result["recommendations"].extend(
-                    ai_analysis.get("recommendations", []))
+                result["vulnerabilities"].extend(ai_analysis.get("vulnerabilities", []))
+                result["recommendations"].extend(ai_analysis.get("recommendations", []))
                 result["ai_insights"] = ai_analysis.get("insights", [])
 
             # Calculate confidence based on analysis depth
             result["confidence"] = min(
-                0.95, 0.6 + (len(result["patterns"]) * 0.08) + (len(result["vulnerabilities"]) * 0.12))
+                0.95,
+                0.6 + (len(result["patterns"]) * 0.08) + (len(result["vulnerabilities"]) * 0.12),
+            )
 
             return result
 
@@ -544,7 +567,9 @@ class CodeAnalyzer:
             context_parts = []
 
             if analysis_result.get("analysis_type") == "binary":
-                context_parts.append(f"binary {analysis_result.get('metadata', {}).get('format', 'unknown')} file")
+                context_parts.append(
+                    f"binary {analysis_result.get('metadata', {}).get('format', 'unknown')} file"
+                )
             elif analysis_result.get("code_type") == "assembly":
                 context_parts.append("assembly code")
 
@@ -561,9 +586,13 @@ class CodeAnalyzer:
             # Add specific suggestions based on findings
             specific_suggestions = []
             if analysis_result.get("protection_mechanisms"):
-                specific_suggestions.append("Analyze detected protection mechanisms for bypass opportunities")
+                specific_suggestions.append(
+                    "Analyze detected protection mechanisms for bypass opportunities"
+                )
             if analysis_result.get("security_issues"):
-                specific_suggestions.append("Investigate identified security issues for exploitation")
+                specific_suggestions.append(
+                    "Investigate identified security issues for exploitation"
+                )
             if analysis_result.get("patterns"):
                 specific_suggestions.append("Examine code patterns for behavioral insights")
 
@@ -576,6 +605,7 @@ class CodeAnalyzer:
     def _get_timestamp(self) -> str:
         """Get current timestamp for analysis."""
         import datetime
+
         return datetime.datetime.now().isoformat()
 
     def _perform_basic_binary_analysis(self, file_path: str) -> dict[str, Any]:
@@ -593,8 +623,11 @@ class CodeAnalyzer:
             header = None
             try:
                 from .ai_file_tools import get_ai_file_tools
+
                 ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
-                file_data = ai_file_tools.read_file(file_path, purpose="Binary header analysis for protection detection")
+                file_data = ai_file_tools.read_file(
+                    file_path, purpose="Binary header analysis for protection detection"
+                )
                 if file_data.get("status") == "success" and file_data.get("content"):
                     # Convert string content to bytes if needed
                     content = file_data["content"]
@@ -613,16 +646,13 @@ class CodeAnalyzer:
             # Detect file format
             if header.startswith(b"MZ"):
                 result["metadata"]["format"] = "PE"
-                result["findings"].append(
-                    "Windows Portable Executable (PE) format detected")
+                result["findings"].append("Windows Portable Executable (PE) format detected")
             elif header.startswith(b"\x7fELF"):
                 result["metadata"]["format"] = "ELF"
-                result["findings"].append(
-                    "Linux Executable and Linkable Format (ELF) detected")
+                result["findings"].append("Linux Executable and Linkable Format (ELF) detected")
             elif header[:4] in [b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf"]:
                 result["metadata"]["format"] = "Mach-O"
-                result["findings"].append(
-                    "macOS Mach-O executable format detected")
+                result["findings"].append("macOS Mach-O executable format detected")
             else:
                 result["metadata"]["format"] = "Unknown"
                 result["findings"].append("Unknown binary format")
@@ -630,16 +660,16 @@ class CodeAnalyzer:
             # Check for common strings
             try:
                 strings_data = header.decode("ascii", errors="ignore")
-                if any(keyword in strings_data.lower() for keyword in ["license", "trial", "activation"]):
-                    result["findings"].append(
-                        "License-related strings detected in binary")
+                if any(
+                    keyword in strings_data.lower()
+                    for keyword in ["license", "trial", "activation"]
+                ):
+                    result["findings"].append("License-related strings detected in binary")
                 if any(keyword in strings_data.lower() for keyword in ["debug", "test", "dev"]):
-                    result["findings"].append(
-                        "Development/debug strings found")
+                    result["findings"].append("Development/debug strings found")
             except (UnicodeDecodeError, AttributeError) as e:
                 logger.debug("String analysis failed: %s", e)
-                result["findings"].append(
-                    "String analysis failed - binary data detected")
+                result["findings"].append("String analysis failed - binary data detected")
 
             return result
 
@@ -660,29 +690,31 @@ class CodeAnalyzer:
             # Try to use pefile for PE analysis
             try:
                 from ..utils.core.import_patterns import PEFILE_AVAILABLE, pefile
+
                 if PEFILE_AVAILABLE:
                     pe = pefile.PE(file_path)
-                    result["findings"].append(
-                        "PE structure successfully parsed")
+                    result["findings"].append("PE structure successfully parsed")
 
                     # Check for common protections
                     if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
-                        imports = [imp.dll.decode()
-                                   for imp in pe.DIRECTORY_ENTRY_IMPORT]
+                        imports = [imp.dll.decode() for imp in pe.DIRECTORY_ENTRY_IMPORT]
                         if any("crypt" in imp.lower() for imp in imports):
                             result["protection_mechanisms"].append(
-                                "Cryptographic libraries detected")
+                                "Cryptographic libraries detected"
+                            )
                         if any("debug" in imp.lower() for imp in imports):
-                            result["findings"].append(
-                                "Debugging libraries imported")
+                            result["findings"].append("Debugging libraries imported")
 
                     # Check sections
                     for section in pe.sections:
-                        section_name = section.Name.decode(
-                            "utf-8", errors="ignore").strip("\x00")
-                        if section.Characteristics & 0x20000000 and section.Characteristics & 0x80000000:
+                        section_name = section.Name.decode("utf-8", errors="ignore").strip("\x00")
+                        if (
+                            section.Characteristics & 0x20000000
+                            and section.Characteristics & 0x80000000
+                        ):
                             result["security_issues"].append(
-                                f"Writable and executable section: {section_name}")
+                                f"Writable and executable section: {section_name}"
+                            )
             except (AttributeError, IndexError, ValueError) as e:
                 logger.debug("PE section analysis failed: %s", e)
                 result["errors"].append("PE section analysis failed")
@@ -690,31 +722,35 @@ class CodeAnalyzer:
             # Try to use lief for cross-platform analysis
             try:
                 from ..utils.import_patterns import LIEF_AVAILABLE, lief
+
                 if LIEF_AVAILABLE:
                     binary = lief.parse(file_path)
                     if binary:
-                        result["findings"].append(
-                            f"Binary type: {binary.format}")
+                        result["findings"].append(f"Binary type: {binary.format}")
 
                         # Check for imported functions
                         if hasattr(binary, "imported_functions"):
                             for func in binary.imported_functions[:10]:
-                                if any(keyword in func.lower() for keyword in ["crypt", "hash", "verify"]):
+                                if any(
+                                    keyword in func.lower()
+                                    for keyword in ["crypt", "hash", "verify"]
+                                ):
                                     result["protection_mechanisms"].append(
-                                        f"Security function: {func}")
+                                        f"Security function: {func}"
+                                    )
             except (AttributeError, TypeError, ImportError) as e:
                 logger.debug("LIEF binary analysis failed: %s", e)
-                result["errors"].append(
-                    "Cross-platform binary analysis failed")
+                result["errors"].append("Cross-platform binary analysis failed")
 
         except (FileNotFoundError, PermissionError, OSError, RuntimeError) as e:
-            logger.debug("Format-specific analysis error: %s",
-                         e, exc_info=True)
+            logger.debug("Format-specific analysis error: %s", e, exc_info=True)
             result["findings"].append(f"Analysis error: {e!s}")
 
         return result
 
-    def _perform_ai_binary_analysis(self, file_path: str, basic_result: dict[str, Any]) -> dict[str, Any]:
+    def _perform_ai_binary_analysis(
+        self, file_path: str, basic_result: dict[str, Any]
+    ) -> dict[str, Any]:
         """Perform AI-enhanced binary analysis using AI assistant."""
         try:
             # First try to use AI assistant for suggestions
@@ -750,8 +786,7 @@ class CodeAnalyzer:
                         }
                     self._llm_manager = llm_manager
                 except (ImportError, AttributeError, ValueError, TypeError) as e:
-                    logger.debug(
-                        "Failed to initialize LLM manager: %s", e, exc_info=True)
+                    logger.debug("Failed to initialize LLM manager: %s", e, exc_info=True)
                     return {
                         "ai_enabled": True,
                         "findings": ai_suggestions[:3],
@@ -780,15 +815,16 @@ class CodeAnalyzer:
 
             messages = [
                 LLMMessage(
-                    role="system", content="You are a cybersecurity expert specializing in binary analysis and malware detection."),
+                    role="system",
+                    content="You are a cybersecurity expert specializing in binary analysis and malware detection.",
+                ),
                 LLMMessage(role="user", content=prompt),
             ]
 
             response = llm_manager.chat(messages)
 
             if response and response.content:
-                findings, recommendations = self._parse_ai_binary_response(
-                    response.content)
+                findings, recommendations = self._parse_ai_binary_response(response.content)
                 # Combine AI assistant suggestions with LLM findings
                 all_findings = list(set(ai_suggestions[:2] + findings))
                 return {
@@ -807,6 +843,7 @@ class CodeAnalyzer:
     def _parse_ai_binary_response(self, response: str) -> tuple:
         """Parse AI response for binary analysis."""
         from .response_parser import parse_simple_response
+
         findings, recommendations = parse_simple_response(response)
         return findings[:8], recommendations[:6]
 
@@ -864,22 +901,22 @@ class CodeAnalyzer:
 
             # Buffer overflow patterns
             if any(instr in line for instr in ["strcpy", "strcat", "sprintf"]):
-                vulnerabilities.append(
-                    "Potentially unsafe string function usage")
+                vulnerabilities.append("Potentially unsafe string function usage")
 
             # Stack-based buffer overflow
             if "sub esp," in line or "add esp," in line:
-                vulnerabilities.append(
-                    "Stack allocation detected - check for buffer overflows")
+                vulnerabilities.append("Stack allocation detected - check for buffer overflows")
 
             # Format string vulnerabilities
             if "printf" in line and "%" in assembly_code:
                 vulnerabilities.append("Potential format string vulnerability")
 
             # Privilege escalation
-            if any(instr in line for instr in ["int 0x80", "syscall"]) and "setuid" in assembly_code.lower():
-                vulnerabilities.append(
-                    "Potential privilege escalation attempt")
+            if (
+                any(instr in line for instr in ["int 0x80", "syscall"])
+                and "setuid" in assembly_code.lower()
+            ):
+                vulnerabilities.append("Potential privilege escalation attempt")
 
         return list(set(vulnerabilities))
 
@@ -895,7 +932,9 @@ class CodeAnalyzer:
             ai_security_issues = ai_analysis.get("security_issues", [])
 
             # Also get context-specific suggestions
-            context_suggestions = self.ai_assistant.get_suggestions("assembly code vulnerability analysis")
+            context_suggestions = self.ai_assistant.get_suggestions(
+                "assembly code vulnerability analysis"
+            )
 
             # Try advanced LLM analysis if available
             from .llm_backends import LLMManager, LLMMessage
@@ -915,8 +954,7 @@ class CodeAnalyzer:
                         }
                     self._llm_manager = llm_manager
                 except (ImportError, AttributeError, ValueError, TypeError) as e:
-                    logger.debug(
-                        "Failed to initialize LLM manager: %s", e, exc_info=True)
+                    logger.debug("Failed to initialize LLM manager: %s", e, exc_info=True)
                     # Return AI assistant analysis if LLM fails
                     return {
                         "ai_enabled": True,
@@ -945,7 +983,9 @@ class CodeAnalyzer:
 
             messages = [
                 LLMMessage(
-                    role="system", content="You are an autonomous assembly language and reverse engineering expert."),
+                    role="system",
+                    content="You are an autonomous assembly language and reverse engineering expert.",
+                ),
                 LLMMessage(role="user", content=prompt),
             ]
 
@@ -953,7 +993,8 @@ class CodeAnalyzer:
 
             if response and response.content:
                 patterns, vulnerabilities, recommendations = self._parse_ai_assembly_response(
-                    response.content)
+                    response.content
+                )
                 # Combine AI assistant and LLM insights
                 all_patterns = list(set(ai_analysis.get("patterns", []) + patterns))
                 all_vulnerabilities = list(set(ai_security_issues + vulnerabilities))
@@ -996,7 +1037,9 @@ class CodeAnalyzer:
 
         # Parse using shared utility
         sections = ResponseLineParser.parse_lines_by_sections(
-            response, section_keywords, process_line,
+            response,
+            section_keywords,
+            process_line,
         )
 
         patterns = sections.get("patterns", [])
@@ -1068,8 +1111,11 @@ def explain_code(code: str, language: str = "auto", detail_level: str = "medium"
             language = _detect_code_language(code)
 
         lines = code.split("\n")
-        code_lines = [line for line in lines if line.strip(
-        ) and not line.strip().startswith(("#", "//", "/*"))]
+        code_lines = [
+            line
+            for line in lines
+            if line.strip() and not line.strip().startswith(("#", "//", "/*"))
+        ]
         line_count = len(code_lines)
 
         # Build explanation based on detail level
@@ -1084,7 +1130,9 @@ def explain_code(code: str, language: str = "auto", detail_level: str = "medium"
             explanation += f"- Language: {language}\n"
             explanation += f"- Code complexity: {static_insights.get('complexity', 'unknown')}\n"
             explanation += f"- Functions/methods: {static_insights.get('function_count', 0)}\n"
-            explanation += f"- Control structures: {static_insights.get('control_structures', 0)}\n\n"
+            explanation += (
+                f"- Control structures: {static_insights.get('control_structures', 0)}\n\n"
+            )
 
             # Add structural insights
             if static_insights.get("imports"):
@@ -1116,12 +1164,16 @@ def explain_code(code: str, language: str = "auto", detail_level: str = "medium"
                 explanation += f"- Purpose: {static_insights['main_purpose']}\n"
 
             if static_insights.get("key_patterns"):
-                explanation += "- Key patterns: " + \
-                    ", ".join(static_insights["key_patterns"][:3]) + "\n"
+                explanation += (
+                    "- Key patterns: " + ", ".join(static_insights["key_patterns"][:3]) + "\n"
+                )
 
             if static_insights.get("security_notes"):
-                explanation += "- Security considerations: " + \
-                    "; ".join(static_insights["security_notes"][:2]) + "\n"
+                explanation += (
+                    "- Security considerations: "
+                    + "; ".join(static_insights["security_notes"][:2])
+                    + "\n"
+                )
         else:
             explanation += f"Basic Analysis: {line_count} lines of {language} code\n"
             if static_insights.get("main_purpose"):
@@ -1154,7 +1206,6 @@ Address: 0x00401960 NewBytes: B001C3 // Replace complex validation with "MOV AL,
 
 This bypasses the key validation and forces the software to always report a successful license check.
         """,
-
         """
 Example 2: Trial Period Expiration
 
@@ -1172,7 +1223,6 @@ Address: 0x00405230 NewBytes: 31C0C3 // Replace time check with "XOR EAX, EAX; R
 
 The patch causes the expiration check to always pass, effectively creating an infinite trial period.
         """,
-
         """
 Example 3: Online Activation DRM
 
@@ -1233,38 +1283,52 @@ def _analyze_code_structure(code: str, language: str) -> dict[str, Any]:
     try:
         # Count functions and methods
         if language == "python":
-            result["functions"] = [line.strip()
-                                   for line in lines if line.strip().startswith("def ")]
+            result["functions"] = [
+                line.strip() for line in lines if line.strip().startswith("def ")
+            ]
             result["function_count"] = len(result["functions"])
-            result["imports"] = [line.strip()
-                                 for line in lines if line.strip().startswith(("import ", "from "))]
+            result["imports"] = [
+                line.strip() for line in lines if line.strip().startswith(("import ", "from "))
+            ]
 
             # Detect main purpose
             if any("flask" in imp.lower() or "django" in imp.lower() for imp in result["imports"]):
                 result["main_purpose"] = "Web application"
-            elif any("numpy" in imp.lower() or "pandas" in imp.lower() for imp in result["imports"]):
+            elif any(
+                "numpy" in imp.lower() or "pandas" in imp.lower() for imp in result["imports"]
+            ):
                 result["main_purpose"] = "Data analysis"
-            elif any("tkinter" in imp.lower() or "pyqt" in imp.lower() for imp in result["imports"]):
+            elif any(
+                "tkinter" in imp.lower() or "pyqt" in imp.lower() for imp in result["imports"]
+            ):
                 result["main_purpose"] = "GUI application"
 
         elif language in ["c", "cpp"]:
-            result["functions"] = [line.strip() for line in lines if "(" in line and ")" in line and any(
-                ret in line for ret in ["int ", "void ", "char ", "float "])]
+            result["functions"] = [
+                line.strip()
+                for line in lines
+                if "(" in line
+                and ")" in line
+                and any(ret in line for ret in ["int ", "void ", "char ", "float "])
+            ]
             result["function_count"] = len(result["functions"])
-            result["imports"] = [line.strip()
-                                 for line in lines if line.strip().startswith("#include")]
+            result["imports"] = [
+                line.strip() for line in lines if line.strip().startswith("#include")
+            ]
 
             # Security analysis for C/C++
             if any("strcpy" in line or "strcat" in line for line in lines):
-                result["security_notes"].append(
-                    "Uses potentially unsafe string functions")
+                result["security_notes"].append("Uses potentially unsafe string functions")
             if any("malloc" in line or "free" in line for line in lines):
                 result["key_patterns"].append("Manual memory management")
 
         elif language == "assembly":
             result["main_purpose"] = "Low-level system code"
-            asm_lines = [line.strip().lower() for line in lines if line.strip(
-            ) and not line.strip().startswith(";")]
+            asm_lines = [
+                line.strip().lower()
+                for line in lines
+                if line.strip() and not line.strip().startswith(";")
+            ]
 
             if any("syscall" in line or "int 0x80" in line for line in asm_lines):
                 result["key_patterns"].append("System calls")
@@ -1274,17 +1338,22 @@ def _analyze_code_structure(code: str, language: str) -> dict[str, Any]:
                 result["key_patterns"].append("Stack operations")
 
         # Count control structures
-        control_keywords = ["if", "else", "while",
-                            "for", "switch", "case", "try", "catch"]
+        control_keywords = ["if", "else", "while", "for", "switch", "case", "try", "catch"]
         if language == "assembly":
             control_keywords = ["jmp", "je", "jne", "jz", "jnz", "call", "ret"]
 
         result["control_structures"] = sum(
-            code.lower().count(keyword) for keyword in control_keywords)
+            code.lower().count(keyword) for keyword in control_keywords
+        )
 
         # Determine complexity
-        code_lines = len([line for line in lines if line.strip(
-        ) and not line.strip().startswith(("#", "//", "/*"))])
+        code_lines = len(
+            [
+                line
+                for line in lines
+                if line.strip() and not line.strip().startswith(("#", "//", "/*"))
+            ]
+        )
         if code_lines > 100 or result["control_structures"] > 15:
             result["complexity"] = "high"
         elif code_lines > 20 or result["control_structures"] > 5:
@@ -1322,7 +1391,9 @@ def _get_ai_code_explanation(code: str, language: str) -> str:
 
         messages = [
             LLMMessage(
-                role="system", content="You are a helpful programming tutor who explains code clearly."),
+                role="system",
+                content="You are a helpful programming tutor who explains code clearly.",
+            ),
             LLMMessage(role="user", content=prompt),
         ]
 

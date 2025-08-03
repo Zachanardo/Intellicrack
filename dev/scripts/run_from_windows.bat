@@ -15,7 +15,7 @@ set PYTHONPATH=%CD%;%PYTHONPATH%
 
 echo.
 echo Current directory: %CD%
-echo Python executable: 
+echo Python executable:
 python --version
 echo.
 echo UV executable:

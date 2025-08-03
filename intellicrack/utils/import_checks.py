@@ -23,8 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class ImportChecker:
-    """Utility class for checking and managing optional imports.
-    """
+    """Utility class for checking and managing optional imports."""
 
     def __init__(self):
         """Initialize the import checker with empty caches."""
@@ -65,9 +64,9 @@ class ImportChecker:
             self._import_cache[cache_key] = False
             return False
 
-    def safe_import(self, module_name: str,
-                   fallback: Any | None = None,
-                   package_name: str | None = None) -> tuple[bool, Any]:
+    def safe_import(
+        self, module_name: str, fallback: Any | None = None, package_name: str | None = None
+    ) -> tuple[bool, Any]:
         """Safely import a module with fallback.
 
         Args:
@@ -115,16 +114,19 @@ class ImportChecker:
 # Global import checker instance
 _import_checker = ImportChecker()
 
+
 # Convenience functions using global instance
 def check_import(module_name: str, package_name: str | None = None) -> bool:
     """Check if a module can be imported."""
     return _import_checker.check_import(module_name, package_name)
 
-def safe_import(module_name: str,
-               fallback: Any | None = None,
-               package_name: str | None = None) -> tuple[bool, Any]:
+
+def safe_import(
+    module_name: str, fallback: Any | None = None, package_name: str | None = None
+) -> tuple[bool, Any]:
     """Safely import a module with fallback."""
     return _import_checker.safe_import(module_name, fallback, package_name)
+
 
 def get_available_imports(module_list: list[str]) -> dict[str, bool]:
     """Check availability of multiple modules."""
@@ -321,6 +323,7 @@ def get_fallback_implementations() -> dict[str, Any]:
 
     # Simple numpy-like operations
     if not NUMPY_AVAILABLE:
+
         class NumpyFallback:
             """Fallback numpy-like operations when numpy is not available."""
 
@@ -334,21 +337,25 @@ def get_fallback_implementations() -> dict[str, Any]:
                 def uniform(low, high):
                     """Generate uniform random value."""
                     import random
+
                     return random.uniform(low, high)  # noqa: S311
 
                 @staticmethod
                 def normal(loc=0.0, scale=1.0):
                     """Generate normal distribution value."""
                     import random
+
                     return random.gauss(loc, scale)
 
                 @staticmethod
                 def choice(a, p=None):
                     """Random choice from array."""
                     import random
+
                     if p is not None:
                         return random.choices(a, weights=p, k=1)[0]  # noqa: S311
                     return random.choice(a)  # noqa: S311
+
             @staticmethod
             def array(data):
                 """Convert data to array-like structure."""
@@ -366,7 +373,7 @@ def get_fallback_implementations() -> dict[str, Any]:
                     return 0
                 mean_val = sum(data) / len(data)
                 variance = sum((x - mean_val) ** 2 for x in data) / len(data)
-                return variance ** 0.5
+                return variance**0.5
 
         fallbacks["numpy"] = NumpyFallback()
 
@@ -381,21 +388,31 @@ def get_fallback_implementations() -> dict[str, Any]:
             @staticmethod
             def get(url, **kwargs):
                 """Perform HTTP GET request using urllib."""
-                logger.debug(f"Fallback HTTP GET to {url} with {len(kwargs)} kwargs: {list(kwargs.keys())}")
+                logger.debug(
+                    f"Fallback HTTP GET to {url} with {len(kwargs)} kwargs: {list(kwargs.keys())}"
+                )
                 try:
                     response = urllib.request.urlopen(url)
-                    return type("Response", (), {
-                        "status_code": response.getcode(),
-                        "text": response.read().decode("utf-8"),
-                        "content": response.read(),
-                    })()
+                    return type(
+                        "Response",
+                        (),
+                        {
+                            "status_code": response.getcode(),
+                            "text": response.read().decode("utf-8"),
+                            "content": response.read(),
+                        },
+                    )()
                 except Exception as e:
                     logger.error("Exception in import_checks: %s", e)
-                    return type("Response", (), {
-                        "status_code": 500,
-                        "text": str(e),
-                        "content": b"",
-                    })()
+                    return type(
+                        "Response",
+                        (),
+                        {
+                            "status_code": 500,
+                            "text": str(e),
+                            "content": b"",
+                        },
+                    )()
 
         fallbacks["requests"] = RequestsFallback()
 

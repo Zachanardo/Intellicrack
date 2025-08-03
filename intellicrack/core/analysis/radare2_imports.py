@@ -1,4 +1,5 @@
 """Radare2 import/export analysis module for binary function analysis."""
+
 import logging
 from typing import Any
 
@@ -26,8 +27,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
-
-
 
 
 class R2ImportExportAnalyzer:
@@ -163,9 +162,15 @@ class R2ImportExportAnalyzer:
                     }
 
                     # Add additional analysis
-                    normalized_import["api_type"] = self._classify_api_type(normalized_import["name"])
-                    normalized_import["risk_level"] = self._assess_api_risk(normalized_import["name"])
-                    normalized_import["description"] = self._get_api_description(normalized_import["name"])
+                    normalized_import["api_type"] = self._classify_api_type(
+                        normalized_import["name"]
+                    )
+                    normalized_import["risk_level"] = self._assess_api_risk(
+                        normalized_import["name"]
+                    )
+                    normalized_import["description"] = self._get_api_description(
+                        normalized_import["name"]
+                    )
 
                     imports.append(normalized_import)
 
@@ -203,8 +208,12 @@ class R2ImportExportAnalyzer:
                     }
 
                     # Add additional analysis
-                    normalized_export["function_purpose"] = self._analyze_export_purpose(normalized_export["name"])
-                    normalized_export["api_category"] = self._classify_api_type(normalized_export["name"])
+                    normalized_export["function_purpose"] = self._analyze_export_purpose(
+                        normalized_export["name"]
+                    )
+                    normalized_export["api_category"] = self._classify_api_type(
+                        normalized_export["name"]
+                    )
 
                     exports.append(normalized_export)
 
@@ -232,8 +241,12 @@ class R2ImportExportAnalyzer:
 
                     # Analyze library characteristics
                     dependency["library_type"] = self._classify_library_type(dependency["name"])
-                    dependency["security_impact"] = self._assess_library_security_impact(dependency["name"])
-                    dependency["common_apis"] = self._get_common_apis_for_library(dependency["name"])
+                    dependency["security_impact"] = self._assess_library_security_impact(
+                        dependency["name"]
+                    )
+                    dependency["common_apis"] = self._get_common_apis_for_library(
+                        dependency["name"]
+                    )
 
                     dependencies.append(dependency)
 
@@ -321,51 +334,85 @@ class R2ImportExportAnalyzer:
             api_name = imp.get("name", "").lower()
 
             # System Information
-            if any(pattern in api_name for pattern in ["getsysteminfo", "getversion", "getenvironmentvar"]):
+            if any(
+                pattern in api_name
+                for pattern in ["getsysteminfo", "getversion", "getenvironmentvar"]
+            ):
                 categories["system_info"].append(imp)
 
             # File Operations
-            elif any(pattern in api_name for pattern in ["createfile", "readfile", "writefile", "deletefile", "findfile"]):
+            elif any(
+                pattern in api_name
+                for pattern in ["createfile", "readfile", "writefile", "deletefile", "findfile"]
+            ):
                 categories["file_operations"].append(imp)
 
             # Registry Operations
-            elif any(pattern in api_name for pattern in ["regopen", "regquery", "regset", "regdelete", "regenum"]):
+            elif any(
+                pattern in api_name
+                for pattern in ["regopen", "regquery", "regset", "regdelete", "regenum"]
+            ):
                 categories["registry_operations"].append(imp)
 
             # Network Operations
-            elif any(pattern in api_name for pattern in ["socket", "connect", "send", "recv", "wsastartup", "internetopen"]):
+            elif any(
+                pattern in api_name
+                for pattern in ["socket", "connect", "send", "recv", "wsastartup", "internetopen"]
+            ):
                 categories["network_operations"].append(imp)
 
             # Process Management
-            elif any(pattern in api_name for pattern in ["createprocess", "openprocess", "terminateprocess", "getmodule"]):
+            elif any(
+                pattern in api_name
+                for pattern in ["createprocess", "openprocess", "terminateprocess", "getmodule"]
+            ):
                 categories["process_management"].append(imp)
 
             # Memory Management
-            elif any(pattern in api_name for pattern in ["virtualloc", "heapalloc", "malloc", "free", "memcpy"]):
+            elif any(
+                pattern in api_name
+                for pattern in ["virtualloc", "heapalloc", "malloc", "free", "memcpy"]
+            ):
                 categories["memory_management"].append(imp)
 
             # Cryptography
-            elif any(pattern in api_name for pattern in ["crypt", "hash", "encrypt", "decrypt", "generatekey"]):
+            elif any(
+                pattern in api_name
+                for pattern in ["crypt", "hash", "encrypt", "decrypt", "generatekey"]
+            ):
                 categories["cryptography"].append(imp)
 
             # User Interface
-            elif any(pattern in api_name for pattern in ["messagebox", "createwindow", "showwindow", "getdc"]):
+            elif any(
+                pattern in api_name
+                for pattern in ["messagebox", "createwindow", "showwindow", "getdc"]
+            ):
                 categories["user_interface"].append(imp)
 
             # Debugging
-            elif any(pattern in api_name for pattern in ["isdebuggerpresent", "outputdebugstring", "debugbreak"]):
+            elif any(
+                pattern in api_name
+                for pattern in ["isdebuggerpresent", "outputdebugstring", "debugbreak"]
+            ):
                 categories["debugging"].append(imp)
 
             # Security
-            elif any(pattern in api_name for pattern in ["adjusttoken", "lookupprivilege", "impersonate"]):
+            elif any(
+                pattern in api_name for pattern in ["adjusttoken", "lookupprivilege", "impersonate"]
+            ):
                 categories["security"].append(imp)
 
             # Time/Date
-            elif any(pattern in api_name for pattern in ["getsystemtime", "getlocaltime", "filetimetosystemtime"]):
+            elif any(
+                pattern in api_name
+                for pattern in ["getsystemtime", "getlocaltime", "filetimetosystemtime"]
+            ):
                 categories["time_date"].append(imp)
 
             # Error Handling
-            elif any(pattern in api_name for pattern in ["getlasterror", "seterrormode", "formatmessage"]):
+            elif any(
+                pattern in api_name for pattern in ["getlasterror", "seterrormode", "formatmessage"]
+            ):
                 categories["error_handling"].append(imp)
 
         return categories
@@ -375,12 +422,21 @@ class R2ImportExportAnalyzer:
         suspicious = []
 
         suspicious_patterns = {
-            "code_injection": ["virtualallocex", "writeprocessmemory", "createremotethread", "setwindowshookex"],
+            "code_injection": [
+                "virtualallocex",
+                "writeprocessmemory",
+                "createremotethread",
+                "setwindowshookex",
+            ],
             "process_hollowing": ["ntunmapviewofsection", "zwunmapviewofsection", "resumethread"],
             "persistence": ["regsetvalueex", "createservice", "setwinhook", "createfile.*startup"],
             "evasion": ["isdebuggerpresent", "checkremotedebugger", "gettickcount", "sleep"],
             "data_theft": ["cryptdecrypt", "cryptencrypt", "internetreadfile", "ftpputfile"],
-            "privilege_escalation": ["adjusttokenprivileges", "seservicestatus", "impersonateloggedonuser"],
+            "privilege_escalation": [
+                "adjusttokenprivileges",
+                "seservicestatus",
+                "impersonateloggedonuser",
+            ],
         }
 
         for imp in imports:
@@ -388,12 +444,14 @@ class R2ImportExportAnalyzer:
 
             for category, patterns in suspicious_patterns.items():
                 if any(pattern in api_name for pattern in patterns):
-                    suspicious.append({
-                        "api": imp,
-                        "category": category,
-                        "risk_level": "high",
-                        "description": f'API commonly used for {category.replace("_", " ")}',
-                    })
+                    suspicious.append(
+                        {
+                            "api": imp,
+                            "category": category,
+                            "risk_level": "high",
+                            "description": f'API commonly used for {category.replace("_", " ")}',
+                        }
+                    )
                     break
 
         return suspicious
@@ -403,11 +461,21 @@ class R2ImportExportAnalyzer:
         license_apis = []
 
         license_api_patterns = {
-            "hardware_fingerprinting": ["getvolumeinformation", "getcomputername", "getusername", "getcurrenthwprofile"],
+            "hardware_fingerprinting": [
+                "getvolumeinformation",
+                "getcomputername",
+                "getusername",
+                "getcurrenthwprofile",
+            ],
             "registry_licensing": ["regopenkeyex", "regqueryvalueex", "regsetvalueex"],
             "file_licensing": ["createfile", "readfile", "writefile", "getfileattributes"],
             "network_licensing": ["internetopen", "internetconnect", "httpsendrequest"],
-            "crypto_licensing": ["cryptcreatehash", "crypthashdata", "cryptdecrypt", "cryptencrypt"],
+            "crypto_licensing": [
+                "cryptcreatehash",
+                "crypthashdata",
+                "cryptdecrypt",
+                "cryptencrypt",
+            ],
             "time_licensing": ["getsystemtime", "getlocaltime", "comparesystemtime"],
         }
 
@@ -416,12 +484,14 @@ class R2ImportExportAnalyzer:
 
             for category, patterns in license_api_patterns.items():
                 if any(pattern in api_name for pattern in patterns):
-                    license_apis.append({
-                        "api": imp,
-                        "license_category": category,
-                        "usage_purpose": self._get_license_usage_purpose(category),
-                        "bypass_difficulty": self._assess_bypass_difficulty(category),
-                    })
+                    license_apis.append(
+                        {
+                            "api": imp,
+                            "license_category": category,
+                            "usage_purpose": self._get_license_usage_purpose(category),
+                            "bypass_difficulty": self._assess_bypass_difficulty(category),
+                        }
+                    )
                     break
 
         return license_apis
@@ -444,12 +514,14 @@ class R2ImportExportAnalyzer:
 
             for category, patterns in crypto_patterns.items():
                 if any(pattern in api_name for pattern in patterns):
-                    crypto_apis.append({
-                        "api": imp,
-                        "crypto_category": category,
-                        "algorithm_type": self._identify_crypto_algorithm(api_name),
-                        "security_strength": self._assess_crypto_strength(api_name),
-                    })
+                    crypto_apis.append(
+                        {
+                            "api": imp,
+                            "crypto_category": category,
+                            "algorithm_type": self._identify_crypto_algorithm(api_name),
+                            "security_strength": self._assess_crypto_strength(api_name),
+                        }
+                    )
                     break
 
         return crypto_apis
@@ -459,8 +531,16 @@ class R2ImportExportAnalyzer:
         anti_analysis_apis = []
 
         anti_analysis_patterns = {
-            "debugger_detection": ["isdebuggerpresent", "checkremotedebugger", "ntqueryinformationprocess"],
-            "vm_detection": ["getmodulehandle.*vbox", "getmodulehandle.*vmware", "createfile.*pipe"],
+            "debugger_detection": [
+                "isdebuggerpresent",
+                "checkremotedebugger",
+                "ntqueryinformationprocess",
+            ],
+            "vm_detection": [
+                "getmodulehandle.*vbox",
+                "getmodulehandle.*vmware",
+                "createfile.*pipe",
+            ],
             "analysis_evasion": ["virtualprotect", "gettickcount", "sleep", "timegettime"],
             "code_obfuscation": ["virtualalloc", "heapalloc", "memcpy", "memmove"],
         }
@@ -470,12 +550,14 @@ class R2ImportExportAnalyzer:
 
             for category, patterns in anti_analysis_patterns.items():
                 if any(pattern in api_name for pattern in patterns):
-                    anti_analysis_apis.append({
-                        "api": imp,
-                        "anti_analysis_category": category,
-                        "evasion_technique": self._identify_evasion_technique(category),
-                        "countermeasure": self._suggest_countermeasure(category),
-                    })
+                    anti_analysis_apis.append(
+                        {
+                            "api": imp,
+                            "anti_analysis_category": category,
+                            "evasion_technique": self._identify_evasion_technique(category),
+                            "countermeasure": self._suggest_countermeasure(category),
+                        }
+                    )
                     break
 
         return anti_analysis_apis
@@ -484,16 +566,27 @@ class R2ImportExportAnalyzer:
         """Identify network-related APIs."""
         network_apis = []
 
-        network_patterns = ["socket", "connect", "send", "recv", "wsastartup", "internetopen", "httpopen", "ftpopen"]
+        network_patterns = [
+            "socket",
+            "connect",
+            "send",
+            "recv",
+            "wsastartup",
+            "internetopen",
+            "httpopen",
+            "ftpopen",
+        ]
 
         for imp in imports:
             api_name = imp.get("name", "").lower()
             if any(pattern in api_name for pattern in network_patterns):
-                network_apis.append({
-                    "api": imp,
-                    "network_purpose": self._identify_network_purpose(api_name),
-                    "protocol": self._identify_network_protocol(api_name),
-                })
+                network_apis.append(
+                    {
+                        "api": imp,
+                        "network_purpose": self._identify_network_purpose(api_name),
+                        "protocol": self._identify_network_protocol(api_name),
+                    }
+                )
 
         return network_apis
 
@@ -501,16 +594,26 @@ class R2ImportExportAnalyzer:
         """Identify file system APIs."""
         file_apis = []
 
-        file_patterns = ["createfile", "readfile", "writefile", "deletefile", "copyfile", "movefile", "findfile"]
+        file_patterns = [
+            "createfile",
+            "readfile",
+            "writefile",
+            "deletefile",
+            "copyfile",
+            "movefile",
+            "findfile",
+        ]
 
         for imp in imports:
             api_name = imp.get("name", "").lower()
             if any(pattern in api_name for pattern in file_patterns):
-                file_apis.append({
-                    "api": imp,
-                    "file_operation": self._identify_file_operation(api_name),
-                    "access_type": self._identify_file_access_type(api_name),
-                })
+                file_apis.append(
+                    {
+                        "api": imp,
+                        "file_operation": self._identify_file_operation(api_name),
+                        "access_type": self._identify_file_access_type(api_name),
+                    }
+                )
 
         return file_apis
 
@@ -523,11 +626,13 @@ class R2ImportExportAnalyzer:
         for imp in imports:
             api_name = imp.get("name", "").lower()
             if any(pattern in api_name for pattern in registry_patterns):
-                registry_apis.append({
-                    "api": imp,
-                    "registry_operation": self._identify_registry_operation(api_name),
-                    "typical_usage": self._identify_registry_usage(api_name),
-                })
+                registry_apis.append(
+                    {
+                        "api": imp,
+                        "registry_operation": self._identify_registry_operation(api_name),
+                        "typical_usage": self._identify_registry_usage(api_name),
+                    }
+                )
 
         return registry_apis
 
@@ -535,16 +640,26 @@ class R2ImportExportAnalyzer:
         """Identify process management APIs."""
         process_apis = []
 
-        process_patterns = ["createprocess", "openprocess", "terminateprocess", "getmodule", "enumprocess"]
+        process_patterns = [
+            "createprocess",
+            "openprocess",
+            "terminateprocess",
+            "getmodule",
+            "enumprocess",
+        ]
 
         for imp in imports:
             api_name = imp.get("name", "").lower()
             if any(pattern in api_name for pattern in process_patterns):
-                process_apis.append({
-                    "api": imp,
-                    "process_operation": self._identify_process_operation(api_name),
-                    "security_implications": self._assess_process_security_implications(api_name),
-                })
+                process_apis.append(
+                    {
+                        "api": imp,
+                        "process_operation": self._identify_process_operation(api_name),
+                        "security_implications": self._assess_process_security_implications(
+                            api_name
+                        ),
+                    }
+                )
 
         return process_apis
 
@@ -552,16 +667,26 @@ class R2ImportExportAnalyzer:
         """Identify memory management APIs."""
         memory_apis = []
 
-        memory_patterns = ["virtualloc", "virtualfree", "heapalloc", "heapfree", "malloc", "free", "memcpy"]
+        memory_patterns = [
+            "virtualloc",
+            "virtualfree",
+            "heapalloc",
+            "heapfree",
+            "malloc",
+            "free",
+            "memcpy",
+        ]
 
         for imp in imports:
             api_name = imp.get("name", "").lower()
             if any(pattern in api_name for pattern in memory_patterns):
-                memory_apis.append({
-                    "api": imp,
-                    "memory_operation": self._identify_memory_operation(api_name),
-                    "allocation_type": self._identify_allocation_type(api_name),
-                })
+                memory_apis.append(
+                    {
+                        "api": imp,
+                        "memory_operation": self._identify_memory_operation(api_name),
+                        "allocation_type": self._identify_allocation_type(api_name),
+                    }
+                )
 
         return memory_apis
 
@@ -569,16 +694,23 @@ class R2ImportExportAnalyzer:
         """Identify debugging-related APIs."""
         debug_apis = []
 
-        debug_patterns = ["isdebuggerpresent", "outputdebugstring", "debugbreak", "waitfordebugevent"]
+        debug_patterns = [
+            "isdebuggerpresent",
+            "outputdebugstring",
+            "debugbreak",
+            "waitfordebugevent",
+        ]
 
         for imp in imports:
             api_name = imp.get("name", "").lower()
             if any(pattern in api_name for pattern in debug_patterns):
-                debug_apis.append({
-                    "api": imp,
-                    "debug_purpose": self._identify_debug_purpose(api_name),
-                    "anti_debug_potential": self._assess_anti_debug_potential(api_name),
-                })
+                debug_apis.append(
+                    {
+                        "api": imp,
+                        "debug_purpose": self._identify_debug_purpose(api_name),
+                        "anti_debug_potential": self._assess_anti_debug_potential(api_name),
+                    }
+                )
 
         return debug_apis
 
@@ -603,7 +735,12 @@ class R2ImportExportAnalyzer:
         """Assess the risk level of an API."""
         name_lower = api_name.lower()
 
-        high_risk_apis = ["virtualallocex", "writeprocessmemory", "createremotethread", "isdebuggerpresent"]
+        high_risk_apis = [
+            "virtualallocex",
+            "writeprocessmemory",
+            "createremotethread",
+            "isdebuggerpresent",
+        ]
         medium_risk_apis = ["createprocess", "regsetvalue", "cryptencrypt", "internetopen"]
 
         if any(api in name_lower for api in high_risk_apis):
@@ -654,14 +791,16 @@ class R2ImportExportAnalyzer:
                 lib_name = self._guess_library_from_function(function_name)
 
                 # Add to imports
-                imports.append({
-                    "name": function_name,
-                    "library": lib_name,
-                    "address": hex(address),
-                    "type": "plt",
-                    "source": "PLT section",
-                    "calling_convention": "cdecl",  # Default for PLT
-                })
+                imports.append(
+                    {
+                        "name": function_name,
+                        "library": lib_name,
+                        "address": hex(address),
+                        "type": "plt",
+                        "source": "PLT section",
+                        "calling_convention": "cdecl",  # Default for PLT
+                    }
+                )
 
     def _guess_library_from_function(self, function_name: str) -> str:
         """Guess the library name based on the function name."""
@@ -683,24 +822,20 @@ class R2ImportExportAnalyzer:
             "getpid": "libc.so.6",
             "fork": "libc.so.6",
             "execve": "libc.so.6",
-
             # libpthread functions
             "pthread_create": "libpthread.so.0",
             "pthread_join": "libpthread.so.0",
             "pthread_mutex_lock": "libpthread.so.0",
             "pthread_mutex_unlock": "libpthread.so.0",
-
             # libdl functions
             "dlopen": "libdl.so.2",
             "dlsym": "libdl.so.2",
             "dlclose": "libdl.so.2",
-
             # libm functions
             "sin": "libm.so.6",
             "cos": "libm.so.6",
             "sqrt": "libm.so.6",
             "pow": "libm.so.6",
-
             # Windows API functions (for cross-platform analysis)
             "CreateFileA": "kernel32.dll",
             "CreateFileW": "kernel32.dll",
@@ -713,12 +848,10 @@ class R2ImportExportAnalyzer:
             "LoadLibraryA": "kernel32.dll",
             "LoadLibraryW": "kernel32.dll",
             "GetProcAddress": "kernel32.dll",
-
             "MessageBoxA": "user32.dll",
             "MessageBoxW": "user32.dll",
             "CreateWindowExA": "user32.dll",
             "CreateWindowExW": "user32.dll",
-
             "RegOpenKeyExA": "advapi32.dll",
             "RegOpenKeyExW": "advapi32.dll",
             "CryptAcquireContextA": "advapi32.dll",
@@ -898,31 +1031,64 @@ class R2ImportExportAnalyzer:
 
         # Read access patterns
         read_patterns = [
-            "readfile", "getfileattributes", "getfilesize", "findfirst", "findnext",
-            "getfileinformationbyhandle", "readfileex", "readfilescatter",
-            "openfile", "createfile.*generic_read", "_read", "fread", "fgets",
-            "getprivateprofilestring", "loadlibrary", "loadimage",
+            "readfile",
+            "getfileattributes",
+            "getfilesize",
+            "findfirst",
+            "findnext",
+            "getfileinformationbyhandle",
+            "readfileex",
+            "readfilescatter",
+            "openfile",
+            "createfile.*generic_read",
+            "_read",
+            "fread",
+            "fgets",
+            "getprivateprofilestring",
+            "loadlibrary",
+            "loadimage",
         ]
 
         # Write access patterns
         write_patterns = [
-            "writefile", "setfileattributes", "setendoffile", "createfile.*generic_write",
-            "writefileex", "writefilegather", "_write", "fwrite", "fputs",
-            "setprivateprofilestring", "copyfile", "movefile", "deletefile",
-            "createfile.*file_write", "flushfilebuffers",
+            "writefile",
+            "setfileattributes",
+            "setendoffile",
+            "createfile.*generic_write",
+            "writefileex",
+            "writefilegather",
+            "_write",
+            "fwrite",
+            "fputs",
+            "setprivateprofilestring",
+            "copyfile",
+            "movefile",
+            "deletefile",
+            "createfile.*file_write",
+            "flushfilebuffers",
         ]
 
         # Execute access patterns
         execute_patterns = [
-            "createprocess", "shellexecute", "winexec", "loadlibrary",
-            "createfile.*file_execute", "mapviewoffile.*file_map_execute",
+            "createprocess",
+            "shellexecute",
+            "winexec",
+            "loadlibrary",
+            "createfile.*file_execute",
+            "mapviewoffile.*file_map_execute",
         ]
 
         # Modify/Delete patterns
         modify_patterns = [
-            "setfilepointer", "setfiletime", "setfilevaliddata",
-            "deletefile", "removedirectory", "movefileex", "replaceifle",
-            "truncatefile", "setfileinformationbyhandle",
+            "setfilepointer",
+            "setfiletime",
+            "setfilevaliddata",
+            "deletefile",
+            "removedirectory",
+            "movefileex",
+            "replaceifle",
+            "truncatefile",
+            "setfileinformationbyhandle",
         ]
 
         # Check for read access
@@ -968,7 +1134,10 @@ class R2ImportExportAnalyzer:
                 access_types = ["Read", "Write", "Execute"]
 
         # Check for directory operations
-        if any(pattern in name_lower for pattern in ["createdirectory", "removedirectory", "findfirstfile"]):
+        if any(
+            pattern in name_lower
+            for pattern in ["createdirectory", "removedirectory", "findfirstfile"]
+        ):
             if "Directory" not in access_types:
                 access_types.append("Directory")
 
@@ -1010,56 +1179,89 @@ class R2ImportExportAnalyzer:
         # License/Activation patterns
         license_patterns = [
             "software\\microsoft\\windows\\currentversion\\uninstall",
-            "software\\licenses", "software\\registration", "activation",
-            "serial", "productkey", "licensekey", "trial", "evaluation",
+            "software\\licenses",
+            "software\\registration",
+            "activation",
+            "serial",
+            "productkey",
+            "licensekey",
+            "trial",
+            "evaluation",
         ]
 
         # Configuration/Settings patterns
         config_patterns = [
             "software\\microsoft\\windows\\currentversion\\run",
-            "software\\policies", "settings", "preferences", "configuration",
-            "options", "parameters", "software\\classes",
+            "software\\policies",
+            "settings",
+            "preferences",
+            "configuration",
+            "options",
+            "parameters",
+            "software\\classes",
         ]
 
         # Security/Permission patterns
         security_patterns = [
-            "sam\\sam", "security\\policy", "system\\currentcontrolset\\control\\lsa",
+            "sam\\sam",
+            "security\\policy",
+            "system\\currentcontrolset\\control\\lsa",
             "software\\microsoft\\windows\\currentversion\\policies",
-            "privileges", "accesscontrol", "permissions",
+            "privileges",
+            "accesscontrol",
+            "permissions",
         ]
 
         # System Information patterns
         system_patterns = [
-            "hardware\\description\\system", "system\\currentcontrolset\\control",
+            "hardware\\description\\system",
+            "system\\currentcontrolset\\control",
             "software\\microsoft\\windows nt\\currentversion",
-            "processor", "bios", "systeminfo",
+            "processor",
+            "bios",
+            "systeminfo",
         ]
 
         # Persistence/Autostart patterns
         persistence_patterns = [
-            "run", "runonce", "runonceex", "startup", "services",
+            "run",
+            "runonce",
+            "runonceex",
+            "startup",
+            "services",
             "software\\microsoft\\windows\\currentversion\\explorer\\shell folders",
-            "userinit", "winlogon", "bootexecute",
+            "userinit",
+            "winlogon",
+            "bootexecute",
         ]
 
         # Network Configuration patterns
         network_patterns = [
             "system\\currentcontrolset\\services\\tcpip",
             "software\\microsoft\\windows\\currentversion\\internet settings",
-            "networkaddress", "proxy", "dns",
+            "networkaddress",
+            "proxy",
+            "dns",
         ]
 
         # User/Account patterns
         user_patterns = [
             "software\\microsoft\\windows\\currentversion\\explorer",
-            "identities", "profilelist", "userdata", "accounts",
+            "identities",
+            "profilelist",
+            "userdata",
+            "accounts",
         ]
 
         # Software Installation patterns
         install_patterns = [
-            "uninstall", "installer", "components", "setup",
+            "uninstall",
+            "installer",
+            "components",
+            "setup",
             "software\\microsoft\\windows\\currentversion\\installer",
-            "installdate", "displayversion",
+            "installdate",
+            "displayversion",
         ]
 
         # Check for specific usage patterns
@@ -1261,22 +1463,33 @@ class R2ImportExportAnalyzer:
 
         # Add security concerns
         if suspicious_count > 0:
-            assessment["security_concerns"].append(f"Contains {suspicious_count} suspicious API calls")
+            assessment["security_concerns"].append(
+                f"Contains {suspicious_count} suspicious API calls"
+            )
         if anti_analysis_count > 0:
-            assessment["security_concerns"].append(f"Contains {anti_analysis_count} anti-analysis techniques")
+            assessment["security_concerns"].append(
+                f"Contains {anti_analysis_count} anti-analysis techniques"
+            )
         if crypto_count > 0:
-            assessment["security_concerns"].append(f"Uses {crypto_count} cryptographic APIs - potential license protection")
+            assessment["security_concerns"].append(
+                f"Uses {crypto_count} cryptographic APIs - potential license protection"
+            )
 
         return assessment
 
-    def _get_api_cross_references(self, r2: R2Session, imports: list[dict[str, Any]]) -> dict[str, Any]:
+    def _get_api_cross_references(
+        self, r2: R2Session, imports: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Get cross-references for important APIs."""
         xrefs = {}
 
         # Focus on license and crypto APIs
-        important_apis = [imp for imp in imports if
-                         self._classify_api_type(imp.get("name", "")) in ["cryptography"] or
-                         "license" in imp.get("name", "").lower()]
+        important_apis = [
+            imp
+            for imp in imports
+            if self._classify_api_type(imp.get("name", "")) in ["cryptography"]
+            or "license" in imp.get("name", "").lower()
+        ]
 
         for api in important_apis[:10]:  # Limit for performance
             api_name = api.get("name", "")
@@ -1292,7 +1505,9 @@ class R2ImportExportAnalyzer:
         return xrefs
 
 
-def analyze_binary_imports_exports(binary_path: str, radare2_path: str | None = None) -> dict[str, Any]:
+def analyze_binary_imports_exports(
+    binary_path: str, radare2_path: str | None = None
+) -> dict[str, Any]:
     """Perform comprehensive import/export analysis on a binary.
 
     Args:

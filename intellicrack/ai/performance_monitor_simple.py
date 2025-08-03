@@ -1,5 +1,4 @@
-"""Production performance monitor for AI operations.
-"""
+"""Production performance monitor for AI operations."""
 
 import logging
 import threading
@@ -35,11 +34,13 @@ class PerformanceMonitor:
         with self.lock:
             if operation_id in self.start_times:
                 duration = end_time - self.start_times[operation_id]
-                self.metrics[operation_name].append({
-                    "duration": duration,
-                    "timestamp": end_time,
-                    "success": success,
-                })
+                self.metrics[operation_name].append(
+                    {
+                        "duration": duration,
+                        "timestamp": end_time,
+                        "success": success,
+                    }
+                )
                 self.operation_counts[operation_name] += 1
                 if not success:
                     self.error_counts[operation_name] += 1
@@ -64,7 +65,8 @@ class PerformanceMonitor:
                 "avg_duration": sum(durations) / len(durations),
                 "min_duration": min(durations),
                 "max_duration": max(durations),
-                "error_rate": self.error_counts[operation_name] / self.operation_counts[operation_name],
+                "error_rate": self.error_counts[operation_name]
+                / self.operation_counts[operation_name],
                 "total_operations": self.operation_counts[operation_name],
             }
 
@@ -100,12 +102,14 @@ class AsyncPerformanceMonitor:
             with self.lock:
                 if operation_id in self.active_operations:
                     op_info = self.active_operations.pop(operation_id)
-                    self.completed_operations.append({
-                        "name": operation_name,
-                        "duration": end_time - op_info["start_time"],
-                        "success": success,
-                        "timestamp": end_time,
-                    })
+                    self.completed_operations.append(
+                        {
+                            "name": operation_name,
+                            "duration": end_time - op_info["start_time"],
+                            "success": success,
+                            "timestamp": end_time,
+                        }
+                    )
 
         return result
 
@@ -122,6 +126,7 @@ _async_monitor = AsyncPerformanceMonitor()
 
 def profile_ai_operation(operation_name: str = None):
     """Decorator for profiling AI operations with real performance tracking."""
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -138,6 +143,7 @@ def profile_ai_operation(operation_name: str = None):
                 raise
 
         return wrapper
+
     return decorator
 
 

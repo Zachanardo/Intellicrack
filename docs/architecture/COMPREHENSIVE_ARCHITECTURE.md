@@ -62,7 +62,7 @@ The core module contains the primary analysis capabilities:
 
 **Analysis Pipeline:**
 ```
-Binary Input → Static Analysis → Dynamic Analysis → 
+Binary Input → Static Analysis → Dynamic Analysis →
 Protection Detection → Bypass Generation → Report Generation
 ```
 
@@ -133,8 +133,8 @@ Extensible plugin architecture supporting:
 
 ### AI Integration Flow
 ```
-User Request → Context Analysis → Model Selection → 
-Prompt Engineering → Response Generation → 
+User Request → Context Analysis → Model Selection →
+Prompt Engineering → Response Generation →
 Code Validation → Script Generation → Testing
 ```
 

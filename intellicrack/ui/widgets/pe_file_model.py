@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in pe_file_model: %s", e)
@@ -244,7 +245,9 @@ class PEFileModel(BinaryFileModel):
                 for imp in entry.imports:
                     import_info = ImportInfo(
                         dll_name=dll_name,
-                        function_name=imp.name.decode("utf-8", errors="ignore") if imp.name else f"Ordinal_{imp.ordinal}",
+                        function_name=imp.name.decode("utf-8", errors="ignore")
+                        if imp.name
+                        else f"Ordinal_{imp.ordinal}",
                         ordinal=imp.ordinal,
                         address=imp.address,
                         hint=imp.hint,
@@ -264,10 +267,14 @@ class PEFileModel(BinaryFileModel):
         try:
             for exp in self.pe.DIRECTORY_ENTRY_EXPORT.symbols:  # pylint: disable=no-member
                 export_info = ExportInfo(
-                    function_name=exp.name.decode("utf-8", errors="ignore") if exp.name else f"Ordinal_{exp.ordinal}",
+                    function_name=exp.name.decode("utf-8", errors="ignore")
+                    if exp.name
+                    else f"Ordinal_{exp.ordinal}",
                     ordinal=exp.ordinal,
                     address=exp.address,
-                    forwarder=exp.forwarder.decode("utf-8", errors="ignore") if exp.forwarder else None,
+                    forwarder=exp.forwarder.decode("utf-8", errors="ignore")
+                    if exp.forwarder
+                    else None,
                 )
                 self.exports.append(export_info)
 
@@ -320,7 +327,7 @@ class PEFileModel(BinaryFileModel):
                 "entry_point": self.entry_point,
                 "image_base": self.image_base,
             },
-        # pylint: enable=no-member
+            # pylint: enable=no-member
         )
         self.structures.append(nt_header)
 
@@ -345,15 +352,29 @@ class PEFileModel(BinaryFileModel):
             self.structures.append(section_struct)
 
         # Data Directories
-        if hasattr(self.pe, "OPTIONAL_HEADER") and hasattr(self.pe.OPTIONAL_HEADER, "DATA_DIRECTORY"):
+        if hasattr(self.pe, "OPTIONAL_HEADER") and hasattr(
+            self.pe.OPTIONAL_HEADER, "DATA_DIRECTORY"
+        ):
             # pylint: disable=no-member
             for i, directory in enumerate(self.pe.OPTIONAL_HEADER.DATA_DIRECTORY):
                 if directory.VirtualAddress and directory.Size:
                     dir_names = [
-                        "Export Table", "Import Table", "Resource Table", "Exception Table",
-                        "Certificate Table", "Base Relocation Table", "Debug", "Architecture",
-                        "Global Ptr", "TLS Table", "Load Config Table", "Bound Import",
-                        "IAT", "Delay Import Descriptor", "COM+ Runtime Header", "Reserved",
+                        "Export Table",
+                        "Import Table",
+                        "Resource Table",
+                        "Exception Table",
+                        "Certificate Table",
+                        "Base Relocation Table",
+                        "Debug",
+                        "Architecture",
+                        "Global Ptr",
+                        "TLS Table",
+                        "Load Config Table",
+                        "Bound Import",
+                        "IAT",
+                        "Delay Import Descriptor",
+                        "COM+ Runtime Header",
+                        "Reserved",
                     ]
 
                     dir_name = dir_names[i] if i < len(dir_names) else f"Directory {i}"
@@ -460,14 +481,16 @@ class PEFileModel(BinaryFileModel):
         if self.certificates and self.certificates.is_signed:
             signing_cert = self.certificates.signing_certificate
             if signing_cert:
-                info.update({
-                    "certificate_subject": signing_cert.subject,
-                    "certificate_issuer": signing_cert.issuer,
-                    "certificate_valid": signing_cert.is_valid,
-                    "certificate_expired": signing_cert.is_expired,
-                    "trust_status": self.certificates.trust_status,
-                    "certificate_count": len(self.certificates.certificates),
-                })
+                info.update(
+                    {
+                        "certificate_subject": signing_cert.subject,
+                        "certificate_issuer": signing_cert.issuer,
+                        "certificate_valid": signing_cert.is_valid,
+                        "certificate_expired": signing_cert.is_expired,
+                        "trust_status": self.certificates.trust_status,
+                        "certificate_count": len(self.certificates.certificates),
+                    }
+                )
 
         return info
 

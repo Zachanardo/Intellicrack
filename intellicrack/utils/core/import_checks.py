@@ -31,6 +31,7 @@ to avoid code duplication across modules.
 # Binary analysis libraries
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
@@ -39,6 +40,7 @@ except ImportError as e:
 
 try:
     import lief
+
     LIEF_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
@@ -47,6 +49,7 @@ except ImportError as e:
 
 try:
     import capstone
+
     CAPSTONE_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
@@ -55,6 +58,7 @@ except ImportError as e:
 
 try:
     from elftools.elf.elffile import ELFFile
+
     PYELFTOOLS_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
@@ -64,6 +68,7 @@ except ImportError as e:
 # System monitoring
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
@@ -73,6 +78,7 @@ except ImportError as e:
 # Instrumentation
 try:
     import frida
+
     FRIDA_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
@@ -82,6 +88,7 @@ except ImportError as e:
 # Visualization
 try:
     import matplotlib.pyplot as plt
+
     MATPLOTLIB_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
@@ -91,6 +98,7 @@ except ImportError as e:
 # PDF generation
 try:
     import pdfkit
+
     PDFKIT_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
@@ -101,13 +109,17 @@ except ImportError as e:
 try:
     # Configure TensorFlow to prevent GPU initialization issues
     import os
+
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+    os.environ["CUDA_VISIBLE_DEVICES"] = (
+        "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+    )
 
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
     import tensorflow as tf
+
     # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
     tf.config.set_visible_devices([], "GPU")
     TENSORFLOW_AVAILABLE = True
@@ -120,6 +132,7 @@ except ImportError as e:
 try:
     from PyQt6.QtCore import QThread, QTimer, pyqtSignal
     from PyQt6.QtWidgets import QApplication, QWidget
+
     HAS_PYQT = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
@@ -133,6 +146,7 @@ except ImportError as e:
 # Numerical computing
 try:
     import numpy as np
+
     HAS_NUMPY = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
@@ -143,6 +157,7 @@ except ImportError as e:
 try:
     if platform.system() == "Windows":
         import winreg
+
         WINREG_AVAILABLE = True
     else:
         WINREG_AVAILABLE = False

@@ -50,17 +50,17 @@ except ImportError:
 class _SHA3Wrapper:
     def __init__(self, hash_obj):
         self._hash = hash_obj
-    
+
     def update(self, data):
         self._hash.update(data)
         return self
-    
+
     def digest(self):
         return self._hash.digest()
-    
+
     def hexdigest(self):
         return self._hash.hexdigest()
-    
+
     def copy(self):
         return _SHA3Wrapper(self._hash.copy())
 

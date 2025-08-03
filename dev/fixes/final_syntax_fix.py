@@ -9,15 +9,15 @@ def fix_indentation_errors(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
-        
+
         original_content = content
         lines = content.split('\n')
         new_lines = []
-        
+
         i = 0
         while i < len(lines):
             line = lines[i]
-            
+
             # Fix common indentation patterns
             if line.strip():
                 # If line starts with function/class but is indented wrong
@@ -39,25 +39,25 @@ def fix_indentation_errors(file_path):
                     new_lines.append(line)
             else:
                 new_lines.append(line)
-            
+
             i += 1
-        
+
         content = '\n'.join(new_lines)
-        
+
         # Fix specific syntax patterns
-        content = re.sub(r'^(\s*)def ([^:]+):\s*\n(\s*)"""([^"]+)"""\s*\n(\s*)(return .+)', 
+        content = re.sub(r'^(\s*)def ([^:]+):\s*\n(\s*)"""([^"]+)"""\s*\n(\s*)(return .+)',
                         r'\1def \2:\n\3"""\4"""\n\1    \6', content, flags=re.MULTILINE)
-        
+
         if content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             print(f"Fixed indentation in {file_path.relative_to(Path('C:/Intellicrack'))}")
             return True
-            
+
     except Exception as e:
         print(f"Error processing {file_path}: {e}")
         return False
-    
+
     return False
 
 # Files with known syntax errors

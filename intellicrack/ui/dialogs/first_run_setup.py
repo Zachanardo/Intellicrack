@@ -57,7 +57,6 @@ class SetupWorker(QThread):
                 self.status.emit("Installing llama-cpp-python...")
                 self._install_package("llama-cpp-python")
 
-
         self.progress.emit(100)
         self.status.emit("Setup complete!")
         self.finished.emit(self.success)
@@ -73,7 +72,6 @@ class SetupWorker(QThread):
         except Exception as e:
             logger.error(f"Error installing {package}: {e}")
             self.success = False
-
 
 
 class FirstRunSetupDialog(QDialog):
@@ -125,7 +123,6 @@ class FirstRunSetupDialog(QDialog):
             check.setChecked(True)
             self.component_checks["install_llama"] = check
             components_layout.addWidget(check)
-
 
         components_group.setLayout(components_layout)
         layout.addWidget(components_group)

@@ -180,54 +180,56 @@ class KernelInjector:
 
         # COFF Header (20 bytes)
         coff_header = bytearray(20)
-        struct.pack_into("<H", coff_header, 0, 0x8664)    # Machine: AMD64
-        struct.pack_into("<H", coff_header, 2, 3)         # Number of sections
-        struct.pack_into("<I", coff_header, 4, 0x65A2C3F0) # Timestamp
-        struct.pack_into("<I", coff_header, 8, 0)          # Pointer to symbol table
-        struct.pack_into("<I", coff_header, 12, 0)         # Number of symbols
-        struct.pack_into("<H", coff_header, 16, 0xF0)      # Size of optional header
-        struct.pack_into("<H", coff_header, 18, 0x22)      # Characteristics (IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_LARGE_ADDRESS_AWARE)
+        struct.pack_into("<H", coff_header, 0, 0x8664)  # Machine: AMD64
+        struct.pack_into("<H", coff_header, 2, 3)  # Number of sections
+        struct.pack_into("<I", coff_header, 4, 0x65A2C3F0)  # Timestamp
+        struct.pack_into("<I", coff_header, 8, 0)  # Pointer to symbol table
+        struct.pack_into("<I", coff_header, 12, 0)  # Number of symbols
+        struct.pack_into("<H", coff_header, 16, 0xF0)  # Size of optional header
+        struct.pack_into(
+            "<H", coff_header, 18, 0x22
+        )  # Characteristics (IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_LARGE_ADDRESS_AWARE)
 
         # Optional Header (240 bytes for PE32+)
         opt_header = bytearray(240)
-        struct.pack_into("<H", opt_header, 0, 0x20B)       # Magic: PE32+
-        struct.pack_into("<B", opt_header, 2, 14)          # Major linker version
-        struct.pack_into("<B", opt_header, 3, 29)          # Minor linker version
-        struct.pack_into("<I", opt_header, 4, 0x1000)      # Size of code
-        struct.pack_into("<I", opt_header, 8, 0x1000)      # Size of initialized data
-        struct.pack_into("<I", opt_header, 12, 0)          # Size of uninitialized data
-        struct.pack_into("<I", opt_header, 16, 0x1000)     # Address of entry point
-        struct.pack_into("<I", opt_header, 20, 0x1000)     # Base of code
-        struct.pack_into("<Q", opt_header, 24, 0x140000000) # Image base (typical for drivers)
-        struct.pack_into("<I", opt_header, 32, 0x1000)     # Section alignment
-        struct.pack_into("<I", opt_header, 36, 0x200)      # File alignment
-        struct.pack_into("<H", opt_header, 40, 10)         # Major OS version
-        struct.pack_into("<H", opt_header, 42, 0)          # Minor OS version
-        struct.pack_into("<H", opt_header, 44, 0)          # Major image version
-        struct.pack_into("<H", opt_header, 46, 0)          # Minor image version
-        struct.pack_into("<H", opt_header, 48, 10)         # Major subsystem version
-        struct.pack_into("<H", opt_header, 50, 0)          # Minor subsystem version
-        struct.pack_into("<I", opt_header, 52, 0)          # Win32 version value
-        struct.pack_into("<I", opt_header, 56, 0x4000)     # Size of image
-        struct.pack_into("<I", opt_header, 60, 0x400)      # Size of headers
-        struct.pack_into("<I", opt_header, 64, 0)          # Checksum
-        struct.pack_into("<H", opt_header, 68, 1)          # Subsystem: NATIVE
-        struct.pack_into("<H", opt_header, 70, 0x8160)     # DLL characteristics
-        struct.pack_into("<Q", opt_header, 72, 0x100000)   # Size of stack reserve
-        struct.pack_into("<Q", opt_header, 80, 0x1000)     # Size of stack commit
-        struct.pack_into("<Q", opt_header, 88, 0x100000)   # Size of heap reserve
-        struct.pack_into("<Q", opt_header, 96, 0x1000)     # Size of heap commit
-        struct.pack_into("<I", opt_header, 104, 0)         # Loader flags
-        struct.pack_into("<I", opt_header, 108, 16)        # Number of RVA and sizes
+        struct.pack_into("<H", opt_header, 0, 0x20B)  # Magic: PE32+
+        struct.pack_into("<B", opt_header, 2, 14)  # Major linker version
+        struct.pack_into("<B", opt_header, 3, 29)  # Minor linker version
+        struct.pack_into("<I", opt_header, 4, 0x1000)  # Size of code
+        struct.pack_into("<I", opt_header, 8, 0x1000)  # Size of initialized data
+        struct.pack_into("<I", opt_header, 12, 0)  # Size of uninitialized data
+        struct.pack_into("<I", opt_header, 16, 0x1000)  # Address of entry point
+        struct.pack_into("<I", opt_header, 20, 0x1000)  # Base of code
+        struct.pack_into("<Q", opt_header, 24, 0x140000000)  # Image base (typical for drivers)
+        struct.pack_into("<I", opt_header, 32, 0x1000)  # Section alignment
+        struct.pack_into("<I", opt_header, 36, 0x200)  # File alignment
+        struct.pack_into("<H", opt_header, 40, 10)  # Major OS version
+        struct.pack_into("<H", opt_header, 42, 0)  # Minor OS version
+        struct.pack_into("<H", opt_header, 44, 0)  # Major image version
+        struct.pack_into("<H", opt_header, 46, 0)  # Minor image version
+        struct.pack_into("<H", opt_header, 48, 10)  # Major subsystem version
+        struct.pack_into("<H", opt_header, 50, 0)  # Minor subsystem version
+        struct.pack_into("<I", opt_header, 52, 0)  # Win32 version value
+        struct.pack_into("<I", opt_header, 56, 0x4000)  # Size of image
+        struct.pack_into("<I", opt_header, 60, 0x400)  # Size of headers
+        struct.pack_into("<I", opt_header, 64, 0)  # Checksum
+        struct.pack_into("<H", opt_header, 68, 1)  # Subsystem: NATIVE
+        struct.pack_into("<H", opt_header, 70, 0x8160)  # DLL characteristics
+        struct.pack_into("<Q", opt_header, 72, 0x100000)  # Size of stack reserve
+        struct.pack_into("<Q", opt_header, 80, 0x1000)  # Size of stack commit
+        struct.pack_into("<Q", opt_header, 88, 0x100000)  # Size of heap reserve
+        struct.pack_into("<Q", opt_header, 96, 0x1000)  # Size of heap commit
+        struct.pack_into("<I", opt_header, 104, 0)  # Loader flags
+        struct.pack_into("<I", opt_header, 108, 16)  # Number of RVA and sizes
 
         # Data directories (16 entries, 8 bytes each)
         data_dirs = bytearray(128)
         # Export table
-        struct.pack_into("<I", data_dirs, 0, 0x2000)       # RVA
-        struct.pack_into("<I", data_dirs, 4, 0x100)        # Size
+        struct.pack_into("<I", data_dirs, 0, 0x2000)  # RVA
+        struct.pack_into("<I", data_dirs, 4, 0x100)  # Size
         # Import table
-        struct.pack_into("<I", data_dirs, 8, 0x2100)       # RVA
-        struct.pack_into("<I", data_dirs, 12, 0x100)       # Size
+        struct.pack_into("<I", data_dirs, 8, 0x2100)  # RVA
+        struct.pack_into("<I", data_dirs, 12, 0x100)  # Size
 
         opt_header[112:240] = data_dirs
 
@@ -237,35 +239,41 @@ class KernelInjector:
         # .text section
         text_section = bytearray(40)
         text_section[0:8] = b".text\x00\x00\x00"
-        struct.pack_into("<I", text_section, 8, 0x800)      # Virtual size
-        struct.pack_into("<I", text_section, 12, 0x1000)    # Virtual address
-        struct.pack_into("<I", text_section, 16, 0x800)     # Size of raw data
-        struct.pack_into("<I", text_section, 20, 0x400)     # Pointer to raw data
-        struct.pack_into("<I", text_section, 24, 0)         # Pointer to relocations
-        struct.pack_into("<I", text_section, 28, 0)         # Pointer to line numbers
-        struct.pack_into("<H", text_section, 32, 0)         # Number of relocations
-        struct.pack_into("<H", text_section, 34, 0)         # Number of line numbers
-        struct.pack_into("<I", text_section, 36, 0x60000020) # Characteristics (CODE | EXECUTE | READ)
+        struct.pack_into("<I", text_section, 8, 0x800)  # Virtual size
+        struct.pack_into("<I", text_section, 12, 0x1000)  # Virtual address
+        struct.pack_into("<I", text_section, 16, 0x800)  # Size of raw data
+        struct.pack_into("<I", text_section, 20, 0x400)  # Pointer to raw data
+        struct.pack_into("<I", text_section, 24, 0)  # Pointer to relocations
+        struct.pack_into("<I", text_section, 28, 0)  # Pointer to line numbers
+        struct.pack_into("<H", text_section, 32, 0)  # Number of relocations
+        struct.pack_into("<H", text_section, 34, 0)  # Number of line numbers
+        struct.pack_into(
+            "<I", text_section, 36, 0x60000020
+        )  # Characteristics (CODE | EXECUTE | READ)
         sections.extend(text_section)
 
         # .data section
         data_section = bytearray(40)
         data_section[0:8] = b".data\x00\x00\x00"
-        struct.pack_into("<I", data_section, 8, 0x200)      # Virtual size
-        struct.pack_into("<I", data_section, 12, 0x2000)    # Virtual address
-        struct.pack_into("<I", data_section, 16, 0x200)     # Size of raw data
-        struct.pack_into("<I", data_section, 20, 0xC00)     # Pointer to raw data
-        struct.pack_into("<I", data_section, 36, 0xC0000040) # Characteristics (INITIALIZED_DATA | READ | WRITE)
+        struct.pack_into("<I", data_section, 8, 0x200)  # Virtual size
+        struct.pack_into("<I", data_section, 12, 0x2000)  # Virtual address
+        struct.pack_into("<I", data_section, 16, 0x200)  # Size of raw data
+        struct.pack_into("<I", data_section, 20, 0xC00)  # Pointer to raw data
+        struct.pack_into(
+            "<I", data_section, 36, 0xC0000040
+        )  # Characteristics (INITIALIZED_DATA | READ | WRITE)
         sections.extend(data_section)
 
         # .rdata section (exports/imports)
         rdata_section = bytearray(40)
         rdata_section[0:8] = b".rdata\x00\x00"
-        struct.pack_into("<I", rdata_section, 8, 0x200)      # Virtual size
-        struct.pack_into("<I", rdata_section, 12, 0x3000)    # Virtual address
-        struct.pack_into("<I", rdata_section, 16, 0x200)     # Size of raw data
-        struct.pack_into("<I", rdata_section, 20, 0xE00)     # Pointer to raw data
-        struct.pack_into("<I", rdata_section, 36, 0x40000040) # Characteristics (INITIALIZED_DATA | READ)
+        struct.pack_into("<I", rdata_section, 8, 0x200)  # Virtual size
+        struct.pack_into("<I", rdata_section, 12, 0x3000)  # Virtual address
+        struct.pack_into("<I", rdata_section, 16, 0x200)  # Size of raw data
+        struct.pack_into("<I", rdata_section, 20, 0xE00)  # Pointer to raw data
+        struct.pack_into(
+            "<I", rdata_section, 36, 0x40000040
+        )  # Characteristics (INITIALIZED_DATA | READ)
         sections.extend(rdata_section)
 
         # Padding to file alignment
@@ -284,16 +292,18 @@ class KernelInjector:
         rdata_data += b"\x00" * (0x200 - len(rdata_data))
 
         # Combine all parts
-        driver_binary = (dos_header +
-                        b"\x00" * (0x80 - len(dos_header)) +  # Pad to PE offset
-                        pe_signature +
-                        coff_header +
-                        opt_header +
-                        sections +
-                        padding +
-                        text_data +
-                        data_data +
-                        rdata_data)
+        driver_binary = (
+            dos_header
+            + b"\x00" * (0x80 - len(dos_header))  # Pad to PE offset
+            + pe_signature
+            + coff_header
+            + opt_header
+            + sections
+            + padding
+            + text_data
+            + data_data
+            + rdata_data
+        )
 
         logger.debug(f"Generated driver binary: {len(driver_binary)} bytes")
         return bytes(driver_binary)
@@ -307,17 +317,17 @@ class KernelInjector:
 
         # DriverEntry function (typical kernel driver entry point)
         # mov rax, 0  ; STATUS_SUCCESS
-        code.extend(b"\x48\xC7\xC0\x00\x00\x00\x00")
+        code.extend(b"\x48\xc7\xc0\x00\x00\x00\x00")
         # ret
-        code.extend(b"\xC3")
+        code.extend(b"\xc3")
 
         # DriverUnload function
-        code.extend(b"\x48\xC7\xC0\x00\x00\x00\x00")  # mov rax, 0
-        code.extend(b"\xC3")  # ret
+        code.extend(b"\x48\xc7\xc0\x00\x00\x00\x00")  # mov rax, 0
+        code.extend(b"\xc3")  # ret
 
         # DeviceIoControl handler stub
-        code.extend(b"\x48\xC7\xC0\x00\x00\x00\x00")  # mov rax, 0 (STATUS_SUCCESS)
-        code.extend(b"\xC3")  # ret
+        code.extend(b"\x48\xc7\xc0\x00\x00\x00\x00")  # mov rax, 0 (STATUS_SUCCESS)
+        code.extend(b"\xc3")  # ret
 
         # Injection routine stub (would implement APC injection in real driver)
         # This is where kernel-mode injection logic would go:
@@ -328,8 +338,8 @@ class KernelInjector:
         # 5. Return status
 
         # For now, just return success
-        code.extend(b"\x48\xC7\xC0\x00\x00\x00\x00")  # mov rax, 0
-        code.extend(b"\xC3")  # ret
+        code.extend(b"\x48\xc7\xc0\x00\x00\x00\x00")  # mov rax, 0
+        code.extend(b"\xc3")  # ret
 
         # Add some realistic padding and nops
         while len(code) < 0x200:
@@ -343,26 +353,26 @@ class KernelInjector:
         export_table = bytearray()
 
         # Export directory table
-        export_table.extend(struct.pack("<I", 0))         # Export flags
-        export_table.extend(struct.pack("<I", 0))         # Time/date stamp
-        export_table.extend(struct.pack("<H", 0))         # Major version
-        export_table.extend(struct.pack("<H", 0))         # Minor version
-        export_table.extend(struct.pack("<I", 0x3050))    # Name RVA
-        export_table.extend(struct.pack("<I", 1))         # Ordinal base
-        export_table.extend(struct.pack("<I", 1))         # Number of functions
-        export_table.extend(struct.pack("<I", 1))         # Number of names
-        export_table.extend(struct.pack("<I", 0x3040))    # Address table RVA
-        export_table.extend(struct.pack("<I", 0x3044))    # Name pointer RVA
-        export_table.extend(struct.pack("<I", 0x3048))    # Ordinal table RVA
+        export_table.extend(struct.pack("<I", 0))  # Export flags
+        export_table.extend(struct.pack("<I", 0))  # Time/date stamp
+        export_table.extend(struct.pack("<H", 0))  # Major version
+        export_table.extend(struct.pack("<H", 0))  # Minor version
+        export_table.extend(struct.pack("<I", 0x3050))  # Name RVA
+        export_table.extend(struct.pack("<I", 1))  # Ordinal base
+        export_table.extend(struct.pack("<I", 1))  # Number of functions
+        export_table.extend(struct.pack("<I", 1))  # Number of names
+        export_table.extend(struct.pack("<I", 0x3040))  # Address table RVA
+        export_table.extend(struct.pack("<I", 0x3044))  # Name pointer RVA
+        export_table.extend(struct.pack("<I", 0x3048))  # Ordinal table RVA
 
         # Address table
-        export_table.extend(struct.pack("<I", 0x1000))    # DriverEntry RVA
+        export_table.extend(struct.pack("<I", 0x1000))  # DriverEntry RVA
 
         # Name pointer table
-        export_table.extend(struct.pack("<I", 0x3060))    # Name RVA
+        export_table.extend(struct.pack("<I", 0x3060))  # Name RVA
 
         # Ordinal table
-        export_table.extend(struct.pack("<H", 0))         # Ordinal
+        export_table.extend(struct.pack("<H", 0))  # Ordinal
 
         # Names
         export_table.extend(b"IntellicrackDrv.sys\x00")
@@ -370,24 +380,24 @@ class KernelInjector:
 
         # Import table (minimal - imports from ntoskrnl)
         import_table = bytearray()
-        import_table.extend(struct.pack("<I", 0x3100))     # Import lookup table RVA
-        import_table.extend(struct.pack("<I", 0))          # Time/date stamp
-        import_table.extend(struct.pack("<I", 0))          # Forwarder chain
-        import_table.extend(struct.pack("<I", 0x3120))     # DLL name RVA
-        import_table.extend(struct.pack("<I", 0x3108))     # Import address table RVA
+        import_table.extend(struct.pack("<I", 0x3100))  # Import lookup table RVA
+        import_table.extend(struct.pack("<I", 0))  # Time/date stamp
+        import_table.extend(struct.pack("<I", 0))  # Forwarder chain
+        import_table.extend(struct.pack("<I", 0x3120))  # DLL name RVA
+        import_table.extend(struct.pack("<I", 0x3108))  # Import address table RVA
 
         # Null terminator for import table
         import_table.extend(b"\x00" * 20)
 
         # Import lookup/address tables
-        import_table.extend(struct.pack("<Q", 0x3130))     # Function name RVA
-        import_table.extend(struct.pack("<Q", 0))          # Null terminator
+        import_table.extend(struct.pack("<Q", 0x3130))  # Function name RVA
+        import_table.extend(struct.pack("<Q", 0))  # Null terminator
 
         # DLL name
         import_table.extend(b"ntoskrnl.exe\x00")
 
         # Function names
-        import_table.extend(struct.pack("<H", 0))          # Hint
+        import_table.extend(struct.pack("<H", 0))  # Hint
         import_table.extend(b"IoCreateDevice\x00")
 
         return bytes(export_table + import_table)
@@ -473,10 +483,10 @@ class KernelInjector:
             self.driver_handle = self.kernel32.CreateFileW(
                 device_name,
                 0xC0000000,  # GENERIC_READ | GENERIC_WRITE
-                0,           # No sharing
+                0,  # No sharing
                 None,
-                3,           # OPEN_EXISTING
-                0,           # Normal attributes
+                3,  # OPEN_EXISTING
+                0,  # Normal attributes
                 None,
             )
 

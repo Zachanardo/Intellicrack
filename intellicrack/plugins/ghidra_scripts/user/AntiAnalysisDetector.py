@@ -308,16 +308,25 @@ class AntiAnalysisDetector(GhidraScript):
     # Anti-VM artifacts to check
     VM_ARTIFACTS = [
         # VMware
-        "VMware", "vmware", "VBOX", "VirtualBox",
-        "vmtoolsd.exe", "vmwaretray.exe", "vmwareuser.exe",
-
+        "VMware",
+        "vmware",
+        "VBOX",
+        "VirtualBox",
+        "vmtoolsd.exe",
+        "vmwaretray.exe",
+        "vmwareuser.exe",
         # VirtualBox
-        "VBoxService.exe", "VBoxTray.exe", "VBoxMouse",
-        "VBoxGuest", "VBoxSF", "VBoxVideo",
-
+        "VBoxService.exe",
+        "VBoxTray.exe",
+        "VBoxMouse",
+        "VBoxGuest",
+        "VBoxSF",
+        "VBoxVideo",
         # Generic VM
-        "vmsrvc", "vmusrvc", "xenservice", "qemu-ga",
-
+        "vmsrvc",
+        "vmusrvc",
+        "xenservice",
+        "qemu-ga",
         # Registry keys
         "HARDWARE\\DEVICEMAP\\Scsi\\Scsi Port 0",
         "SYSTEM\\CurrentControlSet\\Services\\Disk\\Enum",
@@ -326,15 +335,15 @@ class AntiAnalysisDetector(GhidraScript):
 
     # CPU instructions for detection
     DETECTION_INSTRUCTIONS = [
-        "cpuid",      # CPU identification
-        "rdtsc",      # Read timestamp counter
-        "int 3",      # Breakpoint interrupt
-        "int 2d",     # Windows debug interrupt
+        "cpuid",  # CPU identification
+        "rdtsc",  # Read timestamp counter
+        "int 3",  # Breakpoint interrupt
+        "int 2d",  # Windows debug interrupt
         "in al, dx",  # Port I/O (VM detection)
-        "sidt",       # Store IDT register
-        "sgdt",       # Store GDT register
-        "sldt",       # Store LDT register
-        "str",         # Store task register
+        "sidt",  # Store IDT register
+        "sgdt",  # Store GDT register
+        "sldt",  # Store LDT register
+        "str",  # Store task register
     ]
 
     def run(self):
@@ -403,14 +412,18 @@ class AntiAnalysisDetector(GhidraScript):
                 if refs:
                     for ref in refs:
                         if ref.getReferenceType().isCall():
-                            findings["anti_debug"].append({
-                                "type": "API Call",
-                                "name": api,
-                                "address": ref.getFromAddress(),
-                                "description": self.get_api_description(api),
-                            })
+                            findings["anti_debug"].append(
+                                {
+                                    "type": "API Call",
+                                    "name": api,
+                                    "address": ref.getFromAddress(),
+                                    "description": self.get_api_description(api),
+                                }
+                            )
                             print(f"  [+] Found {api} at {ref.getFromAddress()}")
-                            safe_ghidra_call("createBookmark", ref.getFromAddress(), "AntiDebug", f"{api} call")
+                            safe_ghidra_call(
+                                "createBookmark", ref.getFromAddress(), "AntiDebug", f"{api} call"
+                            )
 
     def find_vm_artifacts(self, findings):
         """Search for VM-related strings and artifacts"""
@@ -422,18 +435,24 @@ class AntiAnalysisDetector(GhidraScript):
             # Get all memory blocks to search
             for block in memory.getBlocks():
                 if block.isInitialized():
-                    addresses = safe_ghidra_call("findBytes", block.getStart(), artifact.encode(), 50)
+                    addresses = safe_ghidra_call(
+                        "findBytes", block.getStart(), artifact.encode(), 50
+                    )
 
                     for addr in addresses:
                         if addr:
-                            findings["anti_vm"].append({
-                                "type": "VM Artifact",
-                                "name": artifact,
-                                "address": addr,
-                                "description": "Potential VM detection string",
-                            })
+                            findings["anti_vm"].append(
+                                {
+                                    "type": "VM Artifact",
+                                    "name": artifact,
+                                    "address": addr,
+                                    "description": "Potential VM detection string",
+                                }
+                            )
                             print(f"  [+] Found VM artifact '{artifact}' at {addr}")
-                            safe_ghidra_call("createBookmark", addr, "AntiVM", f"VM artifact: {artifact}")
+                            safe_ghidra_call(
+                                "createBookmark", addr, "AntiVM", f"VM artifact: {artifact}"
+                            )
 
     def find_detection_instructions(self, findings):
         """Find CPU instructions used for detection"""
@@ -446,14 +465,18 @@ class AntiAnalysisDetector(GhidraScript):
             mnemonic = instr.getMnemonicString().lower()
 
             if mnemonic in self.DETECTION_INSTRUCTIONS:
-                findings["cpu_detection"].append({
-                    "type": "CPU Instruction",
-                    "instruction": mnemonic,
-                    "address": instr.getAddress(),
-                    "description": self.get_instruction_description(mnemonic),
-                })
+                findings["cpu_detection"].append(
+                    {
+                        "type": "CPU Instruction",
+                        "instruction": mnemonic,
+                        "address": instr.getAddress(),
+                        "description": self.get_instruction_description(mnemonic),
+                    }
+                )
                 print(f"  [+] Found {mnemonic} instruction at {instr.getAddress()}")
-                safe_ghidra_call("createBookmark", instr.getAddress(), "Detection", f"{mnemonic} instruction")
+                safe_ghidra_call(
+                    "createBookmark", instr.getAddress(), "Detection", f"{mnemonic} instruction"
+                )
 
     def find_timing_checks(self, findings):
         """Find potential timing-based anti-analysis"""
@@ -473,12 +496,14 @@ class AntiAnalysisDetector(GhidraScript):
             # If two timing calls are close together, likely a timing check
             distance = addr2.getOffset() - addr1.getOffset()
             if distance < 0x100:  # Within 256 bytes
-                findings["timing_checks"].append({
-                    "type": "Timing Check",
-                    "start": addr1,
-                    "end": addr2,
-                    "description": "Potential timing-based anti-debugging check",
-                })
+                findings["timing_checks"].append(
+                    {
+                        "type": "Timing Check",
+                        "start": addr1,
+                        "end": addr2,
+                        "description": "Potential timing-based anti-debugging check",
+                    }
+                )
                 print(f"  [+] Found timing check between {addr1} and {addr2}")
                 safe_ghidra_call("createBookmark", addr1, "Timing", "Timing check start")
 
@@ -487,22 +512,26 @@ class AntiAnalysisDetector(GhidraScript):
         # Look for SetUnhandledExceptionFilter
         seh_refs = self.find_api_refs("SetUnhandledExceptionFilter")
         for ref in seh_refs:
-            findings["exception_tricks"].append({
-                "type": "Exception Handler",
-                "api": "SetUnhandledExceptionFilter",
-                "address": ref,
-                "description": "Custom exception handler (possible anti-debug)",
-            })
+            findings["exception_tricks"].append(
+                {
+                    "type": "Exception Handler",
+                    "api": "SetUnhandledExceptionFilter",
+                    "address": ref,
+                    "description": "Custom exception handler (possible anti-debug)",
+                }
+            )
             safe_ghidra_call("createBookmark", ref, "Exception", "SEH manipulation")
 
         # Look for int3 instructions (breakpoints)
         int3_addrs = self.find_instruction("int3")
         for addr in int3_addrs:
-            findings["exception_tricks"].append({
-                "type": "INT3 Breakpoint",
-                "address": addr,
-                "description": "Hardcoded breakpoint (possible anti-debug trap)",
-            })
+            findings["exception_tricks"].append(
+                {
+                    "type": "INT3 Breakpoint",
+                    "address": addr,
+                    "description": "Hardcoded breakpoint (possible anti-debug trap)",
+                }
+            )
             safe_ghidra_call("createBookmark", addr, "Exception", "INT3 trap")
 
     def find_api_refs(self, api_name):
@@ -513,7 +542,7 @@ class AntiAnalysisDetector(GhidraScript):
 
         for symbol in symbol_table.getSymbols(api_name):
             refs = safe_ghidra_call("getReferencesTo", symbol.getAddress())
-            for ref in (refs or []):
+            for ref in refs or []:
                 if ref.getReferenceType().isCall():
                     refs.append(ref.getFromAddress())
 
@@ -610,6 +639,7 @@ class AntiAnalysisDetector(GhidraScript):
         if score < 50:
             return "High - Advanced anti-analysis protection"
         return "Very High - Heavily protected/obfuscated"
+
 
 # Run the script
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ Provides essential runtime libraries:
 3. Verify installation: Open Device Manager → Display adapters → Should show "Intel(R) Arc(TM)" or "Intel(R) Iris(R) Xe"
 
 ### Step 2: Install Intel GPU Compute Runtime
-1. Download the latest `intel-opencl-icd-*.exe` 
+1. Download the latest `intel-opencl-icd-*.exe`
 2. Run as Administrator
 3. Follow installation wizard
 
@@ -103,13 +103,13 @@ print(f"XPU available: {torch.xpu.is_available()}")
 if torch.xpu.is_available():
     device_count = torch.xpu.device_count()
     print(f"Number of XPU devices: {device_count}")
-    
+
     for i in range(device_count):
         props = torch.xpu.get_device_properties(i)
         print(f"\nDevice {i}: {props.name}")
         print(f"  Total Memory: {props.total_memory / 1024**3:.2f} GB")
         print(f"  Driver Version: {props.driver_version}")
-    
+
     # Test computation
     device = "xpu:0"
     x = torch.randn(1000, 1000).to(device)
@@ -148,7 +148,7 @@ Matrix multiplication successful on xpu:0
 
 #### 3. "XPU not available" despite having Intel GPU
 - **Cause**: Missing or outdated drivers/runtime
-- **Solution**: 
+- **Solution**:
   1. Update Intel GPU drivers
   2. Install Intel Compute Runtime
   3. Reinstall PyTorch XPU version

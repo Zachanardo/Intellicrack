@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import hashlib
 import json
 import logging
@@ -42,11 +41,13 @@ HAS_NUMPY = False
 
 try:
     import torch
+
     HAS_TORCH = True
 
     # Import unified GPU system
     try:
         from ..utils.gpu_autoloader import get_device, get_gpu_info, optimize_for_gpu, to_device
+
         GPU_AUTOLOADER_AVAILABLE = True
     except ImportError:
         GPU_AUTOLOADER_AVAILABLE = False
@@ -59,9 +60,11 @@ except ImportError as e:
 try:
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     import os
+
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
     import tensorflow as tf
+
     HAS_TENSORFLOW = True
 except ImportError as e:
     logger.error("Import error in llm_backends: %s", e)
@@ -69,6 +72,7 @@ except ImportError as e:
 
 try:
     import numpy as np
+
     HAS_NUMPY = True
 except ImportError as e:
     logger.error("Import error in llm_backends: %s", e)
@@ -117,8 +121,7 @@ class LLMConfig:
         if self.model and not self.model_name:
             self.model_name = self.model
         elif not self.model_name and not self.model:
-            raise ValueError(
-                "Either 'model_name' or 'model' must be specified")
+            raise ValueError("Either 'model_name' or 'model' must be specified")
 
         # Set default custom_params if None
         if self.custom_params is None:
@@ -159,24 +162,24 @@ class LLMBackend:
         self.config = config
         self.is_initialized = False
         self.tools = []
-        self.logger = logging.getLogger(
-            __name__ + "." + self.__class__.__name__)
+        self.logger = logging.getLogger(__name__ + "." + self.__class__.__name__)
 
     def initialize(self) -> bool:
         """Initialize the backend."""
         logger.warning(
-            "Base LLMBackend.initialize() called - subclasses should override this method")
+            "Base LLMBackend.initialize() called - subclasses should override this method"
+        )
         self.is_initialized = False
         return False
 
     def chat(self, messages: list[LLMMessage], tools: list[dict] | None = None) -> LLMResponse:
         """Send chat messages and get response."""
         # Log the messages and tools for debugging
-        logger.debug(
-            f"Chat called with {len(messages)} messages and {len(tools or [])} tools")
+        logger.debug(f"Chat called with {len(messages)} messages and {len(tools or [])} tools")
 
         logger.error(
-            "Base LLMBackend.chat() called - this method must be implemented by subclasses")
+            "Base LLMBackend.chat() called - this method must be implemented by subclasses"
+        )
         return LLMResponse(
             content="Error: LLM backend not properly initialized. Please use a concrete backend implementation.",
             finish_reason="error",
@@ -229,13 +232,11 @@ class OpenAIBackend(LLMBackend):
             # Test connection
             self.client.models.list()
             self.is_initialized = True
-            logger.info("OpenAI backend initialized with model: %s",
-                        self.config.model_name)
+            logger.info("OpenAI backend initialized with model: %s", self.config.model_name)
             return True
 
         except ImportError:
-            logger.error(
-                "OpenAI package not installed. Install with: pip install openai")
+            logger.error("OpenAI package not installed. Install with: pip install openai")
             return False
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize OpenAI backend: %s", e)
@@ -266,8 +267,7 @@ class OpenAIBackend(LLMBackend):
 
         # Add tools if provided and enabled
         if tools and self.config.tools_enabled:
-            request_params["tools"] = [
-                {"type": "function", "function": _tool} for _tool in tools]
+            request_params["tools"] = [{"type": "function", "function": _tool} for _tool in tools]
             request_params["tool_choice"] = "auto"
 
         try:
@@ -321,13 +321,11 @@ class AnthropicBackend(LLMBackend):
 
             self.client = anthropic.Anthropic(api_key=api_key)
             self.is_initialized = True
-            logger.info("Anthropic backend initialized with model: %s",
-                        self.config.model_name)
+            logger.info("Anthropic backend initialized with model: %s", self.config.model_name)
             return True
 
         except ImportError:
-            logger.error(
-                "Anthropic package not installed. Install with: pip install anthropic")
+            logger.error("Anthropic package not installed. Install with: pip install anthropic")
             return False
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize Anthropic backend: %s", e)
@@ -346,8 +344,7 @@ class AnthropicBackend(LLMBackend):
             if _msg.role == "system":
                 system_message = _msg.content
             else:
-                anthropic_messages.append(
-                    {"role": _msg.role, "content": _msg.content})
+                anthropic_messages.append({"role": _msg.role, "content": _msg.content})
 
         request_params = {
             "model": self.config.model_name,
@@ -401,8 +398,7 @@ class LlamaCppBackend(LLMBackend):
             from llama_cpp import Llama
 
             if not self.config.model_path or not os.path.exists(self.config.model_path):
-                logger.error("GGUF model file not found: %s",
-                             self.config.model_path)
+                logger.error("GGUF model file not found: %s", self.config.model_path)
                 return False
 
             # Initialize llama.cpp with GGUF model
@@ -414,13 +410,13 @@ class LlamaCppBackend(LLMBackend):
             )
 
             self.is_initialized = True
-            logger.info(
-                "llama.cpp backend initialized with GGUF model: %s", self.config.model_path)
+            logger.info("llama.cpp backend initialized with GGUF model: %s", self.config.model_path)
             return True
 
         except ImportError:
             logger.error(
-                "llama-cpp-python not installed. Install with: pip install llama-cpp-python")
+                "llama-cpp-python not installed. Install with: pip install llama-cpp-python"
+            )
             return False
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Failed to initialize llama.cpp backend: %s", e)
@@ -468,14 +464,11 @@ class LlamaCppBackend(LLMBackend):
 
         for _msg in messages:
             if _msg.role == "system":
-                prompt_parts.append(
-                    f"<|im_start|>system\n{_msg.content}<|im_end|>")
+                prompt_parts.append(f"<|im_start|>system\n{_msg.content}<|im_end|>")
             elif _msg.role == "user":
-                prompt_parts.append(
-                    f"<|im_start|>user\n{_msg.content}<|im_end|>")
+                prompt_parts.append(f"<|im_start|>user\n{_msg.content}<|im_end|>")
             elif _msg.role == "assistant":
-                prompt_parts.append(
-                    f"<|im_start|>assistant\n{_msg.content}<|im_end|>")
+                prompt_parts.append(f"<|im_start|>assistant\n{_msg.content}<|im_end|>")
 
         prompt_parts.append("<|im_start|>assistant\n")
         return "\n".join(prompt_parts)
@@ -498,14 +491,16 @@ class LlamaCppBackend(LLMBackend):
                     # Try to parse as JSON
                     args = json.loads(args_str) if args_str else {}
 
-                    tool_calls.append({
-                        "id": f"call_{hashlib.sha256(_match.group(0).encode()).hexdigest()[:8]}",
-                        "type": "function",
-                        "function": {
-                            "name": tool_name,
-                            "arguments": json.dumps(args),
-                        },
-                    })
+                    tool_calls.append(
+                        {
+                            "id": f"call_{hashlib.sha256(_match.group(0).encode()).hexdigest()[:8]}",
+                            "type": "function",
+                            "function": {
+                                "name": tool_name,
+                                "arguments": json.dumps(args),
+                            },
+                        }
+                    )
                 except (json.JSONDecodeError, KeyError, ValueError) as e:
                     logger.error("Error in llm_backends: %s", e)
                     continue
@@ -532,8 +527,7 @@ class OllamaBackend(LLMBackend):
 
         """
         super().__init__(config)
-        self.base_url = config.api_base or get_secret(
-            "OLLAMA_API_BASE", "http://localhost:11434")
+        self.base_url = config.api_base or get_secret("OLLAMA_API_BASE", "http://localhost:11434")
 
     def initialize(self) -> bool:
         """Initialize Ollama connection."""
@@ -541,16 +535,14 @@ class OllamaBackend(LLMBackend):
             try:
                 import requests
             except ImportError:
-                logger.error(
-                    "requests library not available for Ollama backend")
+                logger.error("requests library not available for Ollama backend")
                 return False
 
             # Test connection to Ollama
             response = requests.get(f"{self.base_url}/api/tags", timeout=5)
             if response.status_code == 200:
                 self.is_initialized = True
-                logger.info(
-                    "Ollama backend initialized with model: %s", self.config.model_name)
+                logger.info("Ollama backend initialized with model: %s", self.config.model_name)
                 return True
             logger.error("Ollama not accessible at %s", self.base_url)
             return False
@@ -576,8 +568,7 @@ class OllamaBackend(LLMBackend):
         # Convert messages to Ollama format
         ollama_messages = []
         for _msg in messages:
-            ollama_messages.append(
-                {"role": _msg.role, "content": _msg.content})
+            ollama_messages.append({"role": _msg.role, "content": _msg.content})
 
         request_data = {
             "model": self.config.model_name,
@@ -639,12 +630,14 @@ class LocalGGUFBackend(LLMBackend):
         try:
             # Import the GGUF manager
             from .local_gguf_server import gguf_manager
+
             self.gguf_manager = gguf_manager
 
             # Check if server dependencies are available
             if not self.gguf_manager.server.can_run():
                 logger.error(
-                    "GGUF server dependencies not available (need Flask and llama-cpp-python)")
+                    "GGUF server dependencies not available (need Flask and llama-cpp-python)"
+                )
                 return False
 
             # Start server if not running
@@ -657,8 +650,7 @@ class LocalGGUFBackend(LLMBackend):
             # Load model if specified and not already loaded
             if self.config.model_path:
                 if not self.gguf_manager.current_model:
-                    logger.info(
-                        f"Loading GGUF model: {self.config.model_path}")
+                    logger.info(f"Loading GGUF model: {self.config.model_path}")
 
                     # Extract model parameters from config
                     model_params = {
@@ -673,7 +665,9 @@ class LocalGGUFBackend(LLMBackend):
                     if hasattr(self.config, "custom_params") and self.config.custom_params:
                         model_params.update(self.config.custom_params)
 
-                    if not self.gguf_manager.server.load_model(self.config.model_path, **model_params):
+                    if not self.gguf_manager.server.load_model(
+                        self.config.model_path, **model_params
+                    ):
                         logger.error("Failed to load GGUF model")
                         return False
 
@@ -716,10 +710,12 @@ class LocalGGUFBackend(LLMBackend):
         # Convert messages to OpenAI-compatible format
         openai_messages = []
         for msg in messages:
-            openai_messages.append({
-                "role": msg.role,
-                "content": msg.content,
-            })
+            openai_messages.append(
+                {
+                    "role": msg.role,
+                    "content": msg.content,
+                }
+            )
 
         request_data = {
             "model": self.config.model_name,
@@ -797,13 +793,15 @@ class PyTorchLLMBackend(LLMBackend):
             from .quantization_manager import get_quantization_manager
 
             if not self.config.model_path or not os.path.exists(self.config.model_path):
-                logger.error("PyTorch model file not found: %s",
-                             self.config.model_path)
+                logger.error("PyTorch model file not found: %s", self.config.model_path)
                 return False
 
             # Get device from config or auto-detect
-            device_str = self.config.custom_params.get(
-                "device", "auto") if self.config.custom_params else "auto"
+            device_str = (
+                self.config.custom_params.get("device", "auto")
+                if self.config.custom_params
+                else "auto"
+            )
             if device_str == "auto":
                 if GPU_AUTOLOADER_AVAILABLE:
                     device_str = get_device()
@@ -821,8 +819,11 @@ class PyTorchLLMBackend(LLMBackend):
             self.device = torch.device(device_str)
 
             # Check for quantization settings
-            quantization_type = self.config.custom_params.get(
-                "quantization", "none") if self.config.custom_params else "none"
+            quantization_type = (
+                self.config.custom_params.get("quantization", "none")
+                if self.config.custom_params
+                else "none"
+            )
 
             if quantization_type != "none":
                 # Use quantization manager
@@ -839,14 +840,15 @@ class PyTorchLLMBackend(LLMBackend):
                     return False
 
                 # Load tokenizer separately
-                model_dir = os.path.dirname(self.config.model_path) if os.path.isfile(
-                    self.config.model_path) else self.config.model_path
-                self.tokenizer = AutoTokenizer.from_pretrained(
-                    model_dir, trust_remote_code=True)
+                model_dir = (
+                    os.path.dirname(self.config.model_path)
+                    if os.path.isfile(self.config.model_path)
+                    else self.config.model_path
+                )
+                self.tokenizer = AutoTokenizer.from_pretrained(model_dir, trust_remote_code=True)
             else:
                 # Standard loading without quantization
-                logger.info("Loading PyTorch model from: %s",
-                            self.config.model_path)
+                logger.info("Loading PyTorch model from: %s", self.config.model_path)
 
                 # Try to load associated config.json for model architecture
                 model_dir = os.path.dirname(self.config.model_path)
@@ -856,36 +858,39 @@ class PyTorchLLMBackend(LLMBackend):
                     # Load from directory with config
                     self.model = AutoModelForCausalLM.from_pretrained(
                         model_dir,
-                        torch_dtype=torch.float16 if self.device.type in ["cuda", "xpu"] else torch.float32,
+                        torch_dtype=torch.float16
+                        if self.device.type in ["cuda", "xpu"]
+                        else torch.float32,
                         device_map="auto" if self.device.type in ["cuda", "xpu"] else None,
                         trust_remote_code=True,
                     )
                     self.tokenizer = AutoTokenizer.from_pretrained(
-                        model_dir, trust_remote_code=True)
+                        model_dir, trust_remote_code=True
+                    )
                 else:
                     # Load raw checkpoint - need model name for architecture
                     if not self.config.model_name:
-                        logger.error(
-                            "Model name required for loading raw PyTorch checkpoint")
+                        logger.error("Model name required for loading raw PyTorch checkpoint")
                         return False
 
                     # Load tokenizer from model name
                     self.tokenizer = AutoTokenizer.from_pretrained(
-                        self.config.model_name, trust_remote_code=True)
+                        self.config.model_name, trust_remote_code=True
+                    )
 
                     # Load model architecture and weights
                     self.model = AutoModelForCausalLM.from_pretrained(
                         self.config.model_name,
-                        torch_dtype=torch.float16 if self.device.type in ["cuda", "xpu"] else torch.float32,
+                        torch_dtype=torch.float16
+                        if self.device.type in ["cuda", "xpu"]
+                        else torch.float32,
                         trust_remote_code=True,
                     )
 
                     # Load checkpoint weights
-                    checkpoint = torch.load(
-                        self.config.model_path, map_location=self.device)
+                    checkpoint = torch.load(self.config.model_path, map_location=self.device)
                     if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
-                        self.model.load_state_dict(
-                            checkpoint["model_state_dict"])
+                        self.model.load_state_dict(checkpoint["model_state_dict"])
                     else:
                         self.model.load_state_dict(checkpoint)
 
@@ -899,13 +904,15 @@ class PyTorchLLMBackend(LLMBackend):
             self.model.eval()
 
             self.is_initialized = True
-            logger.info("PyTorch backend initialized with model: %s",
-                        self.config.model_name or "custom")
+            logger.info(
+                "PyTorch backend initialized with model: %s", self.config.model_name or "custom"
+            )
             return True
 
         except ImportError:
             logger.error(
-                "PyTorch or transformers not installed. Install with: pip install torch transformers")
+                "PyTorch or transformers not installed. Install with: pip install torch transformers"
+            )
             return False
         except Exception as e:
             logger.error("Failed to initialize PyTorch backend: %s", e)
@@ -918,7 +925,9 @@ class PyTorchLLMBackend(LLMBackend):
 
         # Log tool usage for PyTorch models (limited tool support)
         if tools:
-            logger.warning("PyTorch backend has limited tool support. %d tools ignored.", len(tools))
+            logger.warning(
+                "PyTorch backend has limited tool support. %d tools ignored.", len(tools)
+            )
 
         try:
             if not HAS_TORCH:
@@ -938,7 +947,8 @@ class PyTorchLLMBackend(LLMBackend):
 
             # Tokenize
             inputs = self.tokenizer(
-                prompt, return_tensors="pt", truncation=True, max_length=self.config.context_length)
+                prompt, return_tensors="pt", truncation=True, max_length=self.config.context_length
+            )
             inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
             # Generate
@@ -953,7 +963,8 @@ class PyTorchLLMBackend(LLMBackend):
 
             # Decode response
             response = self.tokenizer.decode(
-                outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True)
+                outputs[0][inputs["input_ids"].shape[-1] :], skip_special_tokens=True
+            )
 
             return LLMResponse(
                 content=response,
@@ -979,6 +990,7 @@ class PyTorchLLMBackend(LLMBackend):
         try:
             if GPU_AUTOLOADER_AVAILABLE:
                 from ..utils.gpu_autoloader import empty_cache
+
                 empty_cache()
             elif HAS_TORCH and torch.cuda.is_available():
                 torch.cuda.empty_cache()
@@ -1008,8 +1020,7 @@ class TensorFlowLLMBackend(LLMBackend):
             from transformers import AutoTokenizer, TFAutoModelForCausalLM
 
             if not self.config.model_path or not os.path.exists(self.config.model_path):
-                logger.error("TensorFlow model path not found: %s",
-                             self.config.model_path)
+                logger.error("TensorFlow model path not found: %s", self.config.model_path)
                 return False
 
             # Check GPU availability
@@ -1020,46 +1031,37 @@ class TensorFlowLLMBackend(LLMBackend):
                 logger.info("Using CPU for TensorFlow model")
 
             # Load model
-            logger.info("Loading TensorFlow model from: %s",
-                        self.config.model_path)
+            logger.info("Loading TensorFlow model from: %s", self.config.model_path)
 
             if os.path.isdir(self.config.model_path):
                 # SavedModel format
                 if os.path.exists(os.path.join(self.config.model_path, "saved_model.pb")):
-                    self.model = tf.keras.models.load_model(
-                        self.config.model_path)
+                    self.model = tf.keras.models.load_model(self.config.model_path)
                 else:
                     # Try as transformers model directory
-                    self.model = TFAutoModelForCausalLM.from_pretrained(
-                        self.config.model_path)
-                    self.tokenizer = AutoTokenizer.from_pretrained(
-                        self.config.model_path)
+                    self.model = TFAutoModelForCausalLM.from_pretrained(self.config.model_path)
+                    self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_path)
             # .h5 file
             elif self.config.model_path.endswith(".h5"):
                 if not self.config.model_name:
-                    logger.error(
-                        "Model name required for loading .h5 files")
+                    logger.error("Model name required for loading .h5 files")
                     return False
 
                 # Load base model and weights
-                self.model = TFAutoModelForCausalLM.from_pretrained(
-                    self.config.model_name)
+                self.model = TFAutoModelForCausalLM.from_pretrained(self.config.model_name)
                 self.model.load_weights(self.config.model_path)
-                self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.config.model_name)
+                self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
 
             if self.tokenizer is None and self.config.model_name:
                 # Try to load tokenizer from model name
-                self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.config.model_name)
+                self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
 
             self.is_initialized = True
             logger.info("TensorFlow backend initialized")
             return True
 
         except ImportError:
-            logger.error(
-                "TensorFlow not installed. Install with: pip install tensorflow")
+            logger.error("TensorFlow not installed. Install with: pip install tensorflow")
             return False
         except Exception as e:
             logger.error("Failed to initialize TensorFlow backend: %s", e)
@@ -1072,10 +1074,11 @@ class TensorFlowLLMBackend(LLMBackend):
 
         # Log tool usage for TensorFlow models (limited tool support)
         if tools:
-            logger.warning("TensorFlow backend has limited tool support. %d tools ignored.", len(tools))
+            logger.warning(
+                "TensorFlow backend has limited tool support. %d tools ignored.", len(tools)
+            )
 
         try:
-
             # Convert messages to prompt
             prompt = ""
             for msg in messages:
@@ -1090,7 +1093,8 @@ class TensorFlowLLMBackend(LLMBackend):
 
             # Tokenize
             inputs = self.tokenizer(
-                prompt, return_tensors="tf", truncation=True, max_length=self.config.context_length)
+                prompt, return_tensors="tf", truncation=True, max_length=self.config.context_length
+            )
 
             # Generate
             outputs = self.model.generate(
@@ -1103,7 +1107,8 @@ class TensorFlowLLMBackend(LLMBackend):
 
             # Decode response
             response = self.tokenizer.decode(
-                outputs[0][len(inputs.input_ids[0]):], skip_special_tokens=True)
+                outputs[0][len(inputs.input_ids[0]) :], skip_special_tokens=True
+            )
 
             return LLMResponse(
                 content=response,
@@ -1157,14 +1162,12 @@ class ONNXLLMBackend(LLMBackend):
             from transformers import AutoTokenizer
 
             if not self.config.model_path or not os.path.exists(self.config.model_path):
-                logger.error("ONNX model file not found: %s",
-                             self.config.model_path)
+                logger.error("ONNX model file not found: %s", self.config.model_path)
                 return False
 
             # Create inference session
             providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
-            self.session = ort.InferenceSession(
-                self.config.model_path, providers=providers)
+            self.session = ort.InferenceSession(self.config.model_path, providers=providers)
 
             # Log which provider is being used
             actual_provider = self.session.get_providers()[0]
@@ -1172,8 +1175,7 @@ class ONNXLLMBackend(LLMBackend):
 
             # Load tokenizer
             if self.config.model_name:
-                self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.config.model_name)
+                self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
             else:
                 # Try to load from same directory
                 model_dir = os.path.dirname(self.config.model_path)
@@ -1181,8 +1183,7 @@ class ONNXLLMBackend(LLMBackend):
                 if any(os.path.exists(os.path.join(model_dir, f)) for f in tokenizer_files):
                     self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
                 else:
-                    logger.error(
-                        "Tokenizer not found. Specify model_name for tokenizer loading")
+                    logger.error("Tokenizer not found. Specify model_name for tokenizer loading")
                     return False
 
             self.is_initialized = True
@@ -1190,8 +1191,7 @@ class ONNXLLMBackend(LLMBackend):
             return True
 
         except ImportError:
-            logger.error(
-                "ONNX Runtime not installed. Install with: pip install onnxruntime")
+            logger.error("ONNX Runtime not installed. Install with: pip install onnxruntime")
             return False
         except Exception as e:
             logger.error("Failed to initialize ONNX backend: %s", e)
@@ -1224,7 +1224,8 @@ class ONNXLLMBackend(LLMBackend):
 
             # Tokenize
             inputs = self.tokenizer(
-                prompt, return_tensors="np", truncation=True, max_length=self.config.context_length)
+                prompt, return_tensors="np", truncation=True, max_length=self.config.context_length
+            )
 
             # Get input names from session
             input_names = [inp.name for inp in self.session.get_inputs()]
@@ -1237,7 +1238,8 @@ class ONNXLLMBackend(LLMBackend):
                     ort_inputs[name] = inputs["input_ids"]
                 elif name == "attention_mask":
                     ort_inputs[name] = inputs.get(
-                        "attention_mask", np.ones_like(inputs["input_ids"]))
+                        "attention_mask", np.ones_like(inputs["input_ids"])
+                    )
 
             # Run inference
             outputs = self.session.run(output_names, ort_inputs)
@@ -1248,12 +1250,11 @@ class ONNXLLMBackend(LLMBackend):
             predicted_ids = np.argmax(logits, axis=-1)
 
             # Decode response
-            response = self.tokenizer.decode(
-                predicted_ids[0], skip_special_tokens=True)
+            response = self.tokenizer.decode(predicted_ids[0], skip_special_tokens=True)
 
             # Extract only the generated part
             if prompt in response:
-                response = response[len(prompt):]
+                response = response[len(prompt) :]
 
             return LLMResponse(
                 content=response,
@@ -1300,8 +1301,7 @@ class SafetensorsBackend(LLMBackend):
             from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
             if not self.config.model_path or not os.path.exists(self.config.model_path):
-                logger.error("Safetensors model file not found: %s",
-                             self.config.model_path)
+                logger.error("Safetensors model file not found: %s", self.config.model_path)
                 return False
 
             # Detect device
@@ -1309,7 +1309,9 @@ class SafetensorsBackend(LLMBackend):
                 device_str = get_device()
                 gpu_info = get_gpu_info()
                 self.device = torch.device(device_str)
-                logger.info(f"Using {gpu_info.get('gpu_type', 'unknown')} device for Safetensors model: {device_str}")
+                logger.info(
+                    f"Using {gpu_info.get('gpu_type', 'unknown')} device for Safetensors model: {device_str}"
+                )
             elif torch.cuda.is_available():
                 self.device = torch.device("cuda")
                 logger.info("Using CUDA device for Safetensors model")
@@ -1318,8 +1320,7 @@ class SafetensorsBackend(LLMBackend):
                 logger.info("Using CPU for Safetensors model")
 
             # Load model
-            logger.info("Loading Safetensors model from: %s",
-                        self.config.model_path)
+            logger.info("Loading Safetensors model from: %s", self.config.model_path)
 
             # Check if this is a single file or directory
             if os.path.isfile(self.config.model_path):
@@ -1341,8 +1342,7 @@ class SafetensorsBackend(LLMBackend):
                 else:
                     # Need model name for architecture
                     if not self.config.model_name:
-                        logger.error(
-                            "Model name required for loading single safetensors file")
+                        logger.error("Model name required for loading single safetensors file")
                         return False
 
                     # Initialize model from name
@@ -1356,8 +1356,7 @@ class SafetensorsBackend(LLMBackend):
                     self.model.load_state_dict(state_dict)
 
                     # Load tokenizer
-                    self.tokenizer = AutoTokenizer.from_pretrained(
-                        self.config.model_name)
+                    self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_name)
             else:
                 # Directory with safetensors files
                 self.model = AutoModelForCausalLM.from_pretrained(
@@ -1365,8 +1364,7 @@ class SafetensorsBackend(LLMBackend):
                     torch_dtype=torch.float16 if self.device.type == "cuda" else torch.float32,
                     device_map="auto" if self.device.type in ["cuda", "xpu"] else None,
                 )
-                self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.config.model_path)
+                self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_path)
 
             # Move model to device
             if GPU_AUTOLOADER_AVAILABLE and to_device:
@@ -1382,8 +1380,7 @@ class SafetensorsBackend(LLMBackend):
             return True
 
         except ImportError:
-            logger.error(
-                "safetensors not installed. Install with: pip install safetensors")
+            logger.error("safetensors not installed. Install with: pip install safetensors")
             return False
         except Exception as e:
             logger.error("Failed to initialize Safetensors backend: %s", e)
@@ -1396,7 +1393,9 @@ class SafetensorsBackend(LLMBackend):
 
         # Log tool usage for SafeTensors models (limited tool support)
         if tools:
-            logger.warning("SafeTensors backend has limited tool support. %d tools ignored.", len(tools))
+            logger.warning(
+                "SafeTensors backend has limited tool support. %d tools ignored.", len(tools)
+            )
 
         try:
             if not HAS_TORCH:
@@ -1416,7 +1415,8 @@ class SafetensorsBackend(LLMBackend):
 
             # Tokenize
             inputs = self.tokenizer(
-                prompt, return_tensors="pt", truncation=True, max_length=self.config.context_length)
+                prompt, return_tensors="pt", truncation=True, max_length=self.config.context_length
+            )
             inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
             # Generate
@@ -1431,7 +1431,8 @@ class SafetensorsBackend(LLMBackend):
 
             # Decode response
             response = self.tokenizer.decode(
-                outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True)
+                outputs[0][inputs["input_ids"].shape[-1] :], skip_special_tokens=True
+            )
 
             return LLMResponse(
                 content=response,
@@ -1457,6 +1458,7 @@ class SafetensorsBackend(LLMBackend):
         try:
             if GPU_AUTOLOADER_AVAILABLE:
                 from ..utils.gpu_autoloader import empty_cache
+
                 empty_cache()
             elif HAS_TORCH and torch.cuda.is_available():
                 torch.cuda.empty_cache()
@@ -1488,8 +1490,7 @@ class GPTQBackend(LLMBackend):
             from transformers import AutoTokenizer
 
             if not self.config.model_path or not os.path.exists(self.config.model_path):
-                logger.error("GPTQ model path not found: %s",
-                             self.config.model_path)
+                logger.error("GPTQ model path not found: %s", self.config.model_path)
                 return False
 
             # GPTQ requires GPU
@@ -1500,7 +1501,9 @@ class GPTQBackend(LLMBackend):
                     logger.error("GPTQ models require GPU")
                     return False
                 self.device = torch.device(device_str)
-                logger.info(f"Using {gpu_info.get('gpu_type', 'unknown')} device for GPTQ model: {device_str}")
+                logger.info(
+                    f"Using {gpu_info.get('gpu_type', 'unknown')} device for GPTQ model: {device_str}"
+                )
             elif torch.cuda.is_available():
                 self.device = torch.device("cuda")
                 logger.info("Using CUDA device for GPTQ model")
@@ -1520,11 +1523,9 @@ class GPTQBackend(LLMBackend):
                     use_triton=False,
                     quantize_config=None,
                 )
-                self.tokenizer = AutoTokenizer.from_pretrained(
-                    self.config.model_path)
+                self.tokenizer = AutoTokenizer.from_pretrained(self.config.model_path)
             else:
-                logger.error(
-                    "GPTQ models should be in a directory with config files")
+                logger.error("GPTQ models should be in a directory with config files")
                 return False
 
             self.is_initialized = True
@@ -1532,8 +1533,7 @@ class GPTQBackend(LLMBackend):
             return True
 
         except ImportError:
-            logger.error(
-                "auto-gptq not installed. Install with: pip install auto-gptq")
+            logger.error("auto-gptq not installed. Install with: pip install auto-gptq")
             return False
         except Exception as e:
             logger.error("Failed to initialize GPTQ backend: %s", e)
@@ -1563,7 +1563,8 @@ class GPTQBackend(LLMBackend):
 
             # Tokenize
             inputs = self.tokenizer(
-                prompt, return_tensors="pt", truncation=True, max_length=self.config.context_length)
+                prompt, return_tensors="pt", truncation=True, max_length=self.config.context_length
+            )
             inputs = inputs.to(self.device)
 
             # Generate
@@ -1576,7 +1577,8 @@ class GPTQBackend(LLMBackend):
 
             # Decode response
             response = self.tokenizer.decode(
-                outputs[0][inputs.input_ids.shape[-1]:], skip_special_tokens=True)
+                outputs[0][inputs.input_ids.shape[-1] :], skip_special_tokens=True
+            )
 
             return LLMResponse(
                 content=response,
@@ -1602,6 +1604,7 @@ class GPTQBackend(LLMBackend):
         try:
             if GPU_AUTOLOADER_AVAILABLE:
                 from ..utils.gpu_autoloader import empty_cache
+
                 empty_cache()
             elif HAS_TORCH and torch.cuda.is_available():
                 torch.cuda.empty_cache()
@@ -1634,8 +1637,7 @@ class HuggingFaceLocalBackend(LLMBackend):
             from transformers import AutoModelForCausalLM, AutoTokenizer
 
             if not self.config.model_path or not os.path.exists(self.config.model_path):
-                logger.error(
-                    "Hugging Face model directory not found: %s", self.config.model_path)
+                logger.error("Hugging Face model directory not found: %s", self.config.model_path)
                 return False
 
             if not os.path.isdir(self.config.model_path):
@@ -1653,7 +1655,9 @@ class HuggingFaceLocalBackend(LLMBackend):
                 device_str = get_device()
                 gpu_info = get_gpu_info()
                 self.device = torch.device(device_str)
-                logger.info(f"Using {gpu_info.get('gpu_type', 'unknown')} device for Hugging Face model: {device_str}")
+                logger.info(
+                    f"Using {gpu_info.get('gpu_type', 'unknown')} device for Hugging Face model: {device_str}"
+                )
             elif torch.cuda.is_available():
                 self.device = torch.device("cuda")
                 logger.info("Using CUDA device for Hugging Face model")
@@ -1662,18 +1666,21 @@ class HuggingFaceLocalBackend(LLMBackend):
                 logger.info("Using CPU for Hugging Face model")
 
             # Load model
-            logger.info("Loading Hugging Face model from: %s",
-                        self.config.model_path)
+            logger.info("Loading Hugging Face model from: %s", self.config.model_path)
 
             # Check model size and available memory
-            model_size = sum(os.path.getsize(os.path.join(self.config.model_path, f))
-                             for f in os.listdir(self.config.model_path)
-                             if f.endswith((".bin", ".safetensors")))
+            model_size = sum(
+                os.path.getsize(os.path.join(self.config.model_path, f))
+                for f in os.listdir(self.config.model_path)
+                if f.endswith((".bin", ".safetensors"))
+            )
 
             logger.info("Model size: %.2f GB", model_size / 1e9)
 
             # Load with appropriate strategy
-            gpu_available = (GPU_AUTOLOADER_AVAILABLE and get_gpu_info()["available"]) or torch.cuda.is_available()
+            gpu_available = (
+                GPU_AUTOLOADER_AVAILABLE and get_gpu_info()["available"]
+            ) or torch.cuda.is_available()
             if model_size > 10e9 and gpu_available:
                 # Large model - use device_map
                 self.model = AutoModelForCausalLM.from_pretrained(
@@ -1687,7 +1694,9 @@ class HuggingFaceLocalBackend(LLMBackend):
                 # Smaller model or CPU only
                 self.model = AutoModelForCausalLM.from_pretrained(
                     self.config.model_path,
-                    torch_dtype=torch.float16 if self.device.type in ["cuda", "xpu"] else torch.float32,
+                    torch_dtype=torch.float16
+                    if self.device.type in ["cuda", "xpu"]
+                    else torch.float32,
                     trust_remote_code=True,
                     low_cpu_mem_usage=True,
                 )
@@ -1701,7 +1710,8 @@ class HuggingFaceLocalBackend(LLMBackend):
 
             # Load tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(
-                self.config.model_path, trust_remote_code=True)
+                self.config.model_path, trust_remote_code=True
+            )
 
             # Set pad token if not set
             if self.tokenizer.pad_token is None:
@@ -1713,6 +1723,7 @@ class HuggingFaceLocalBackend(LLMBackend):
                 with init_empty_weights():
                     # Initialize empty model skeleton
                     from transformers import AutoConfig
+
                     config = AutoConfig.from_pretrained(self.config.model_path)
                     empty_model = AutoModelForCausalLM.from_config(config)
 
@@ -1749,7 +1760,9 @@ class HuggingFaceLocalBackend(LLMBackend):
 
         # Log tool usage for Hugging Face models (limited tool support)
         if tools:
-            logger.warning("Hugging Face backend has limited tool support. %d tools ignored.", len(tools))
+            logger.warning(
+                "Hugging Face backend has limited tool support. %d tools ignored.", len(tools)
+            )
 
         try:
             if not HAS_TORCH:
@@ -1760,8 +1773,7 @@ class HuggingFaceLocalBackend(LLMBackend):
                 # Use chat template
                 chat_messages = []
                 for msg in messages:
-                    chat_messages.append(
-                        {"role": msg.role, "content": msg.content})
+                    chat_messages.append({"role": msg.role, "content": msg.content})
 
                 prompt = self.tokenizer.apply_chat_template(
                     chat_messages,
@@ -1783,7 +1795,8 @@ class HuggingFaceLocalBackend(LLMBackend):
 
             # Tokenize
             inputs = self.tokenizer(
-                prompt, return_tensors="pt", truncation=True, max_length=self.config.context_length)
+                prompt, return_tensors="pt", truncation=True, max_length=self.config.context_length
+            )
             inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
 
             # Generate
@@ -1799,13 +1812,13 @@ class HuggingFaceLocalBackend(LLMBackend):
 
             # Decode response
             response = self.tokenizer.decode(
-                outputs[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True)
+                outputs[0][inputs["input_ids"].shape[-1] :], skip_special_tokens=True
+            )
 
             return LLMResponse(
                 content=response,
                 finish_reason="stop",
-                model=self.config.model_name or os.path.basename(
-                    self.config.model_path),
+                model=self.config.model_name or os.path.basename(self.config.model_path),
             )
 
         except Exception as e:
@@ -1826,6 +1839,7 @@ class HuggingFaceLocalBackend(LLMBackend):
         try:
             if GPU_AUTOLOADER_AVAILABLE:
                 from ..utils.gpu_autoloader import empty_cache
+
                 empty_cache()
             elif HAS_TORCH and torch.cuda.is_available():
                 torch.cuda.empty_cache()
@@ -1855,10 +1869,10 @@ class LLMManager:
         if enable_lazy_loading:
             try:
                 from .lazy_model_loader import get_lazy_manager
+
                 self.lazy_manager = get_lazy_manager()
                 self.lazy_wrappers = {}
-                logger.info(
-                    "LLM Manager initialized with lazy loading support")
+                logger.info("LLM Manager initialized with lazy loading support")
             except ImportError as e:
                 logger.warning("Lazy loading not available: %s", e)
                 self.enable_lazy_loading = False
@@ -1881,22 +1895,24 @@ class LLMManager:
 
         logger.info("LLM Manager initialized")
 
-    def register_llm(self, llm_id: str, config: LLMConfig, use_lazy_loading: bool | None = None) -> bool:
+    def register_llm(
+        self, llm_id: str, config: LLMConfig, use_lazy_loading: bool | None = None
+    ) -> bool:
         """Register an LLM configuration with optional lazy loading."""
         with self.lock:
             try:
                 # Determine if we should use lazy loading
-                use_lazy = use_lazy_loading if use_lazy_loading is not None else self.enable_lazy_loading
+                use_lazy = (
+                    use_lazy_loading if use_lazy_loading is not None else self.enable_lazy_loading
+                )
 
                 if use_lazy and self.lazy_manager:
                     # Register with lazy loading
                     backend_class = self._get_backend_class(config.provider)
                     if backend_class is None:
-                        raise ValueError(
-                            f"Unsupported LLM provider: {config.provider}")
+                        raise ValueError(f"Unsupported LLM provider: {config.provider}")
 
-                    wrapper = self.lazy_manager.register_model(
-                        llm_id, backend_class, config)
+                    wrapper = self.lazy_manager.register_model(llm_id, backend_class, config)
                     self.lazy_wrappers[llm_id] = wrapper
                     self.configs[llm_id] = config
 
@@ -1904,21 +1920,18 @@ class LLMManager:
                     if not self.active_backend:
                         self.active_backend = llm_id
 
-                    logger.info("Registered lazy LLM: %s (%s)",
-                                llm_id, config.provider.value)
+                    logger.info("Registered lazy LLM: %s (%s)", llm_id, config.provider.value)
                     return True
                 # Standard immediate loading
                 backend_class = self._get_backend_class(config.provider)
                 if backend_class is None:
-                    raise ValueError(
-                        f"Unsupported LLM provider: {config.provider}")
+                    raise ValueError(f"Unsupported LLM provider: {config.provider}")
 
                 backend = backend_class(config)
 
                 # Initialize backend
                 if not backend.initialize():
-                    logger.error(
-                        "Failed to initialize LLM backend: %s", llm_id)
+                    logger.error("Failed to initialize LLM backend: %s", llm_id)
                     return False
 
                 self.backends[llm_id] = backend
@@ -1928,8 +1941,7 @@ class LLMManager:
                 if not self.active_backend:
                     self.active_backend = llm_id
 
-                logger.info("Registered LLM: %s (%s)",
-                            llm_id, config.provider.value)
+                logger.info("Registered LLM: %s (%s)", llm_id, config.provider.value)
                 return True
 
             except (OSError, ValueError, RuntimeError) as e:
@@ -1964,8 +1976,9 @@ class LLMManager:
             logger.info("Set active LLM: %s", llm_id)
             return True
 
-    def chat(self, messages: list[LLMMessage], llm_id: str | None = None,
-             tools: list[dict] | None = None) -> LLMResponse | None:
+    def chat(
+        self, messages: list[LLMMessage], llm_id: str | None = None, tools: list[dict] | None = None
+    ) -> LLMResponse | None:
         """Send chat messages to LLM."""
         with self.lock:
             backend_id = llm_id or self.active_backend
@@ -1980,8 +1993,7 @@ class LLMManager:
                 if self.lazy_manager:
                     backend = self.lazy_manager.get_model(backend_id)
                     if backend is None:
-                        logger.error(
-                            "Failed to load lazy LLM backend: %s", backend_id)
+                        logger.error("Failed to load lazy LLM backend: %s", backend_id)
                         return None
             elif backend_id in self.backends:
                 backend = self.backends[backend_id]
@@ -1991,8 +2003,7 @@ class LLMManager:
 
             try:
                 response = backend.chat(messages, tools)
-                logger.debug("LLM response from %s: %d chars",
-                             backend_id, len(response.content))
+                logger.debug("LLM response from %s: %d chars", backend_id, len(response.content))
                 return response
 
             except (OSError, ValueError, RuntimeError) as e:
@@ -2048,15 +2059,20 @@ class LLMManager:
             self.backends[llm_id].register_tools(tools)
             logger.info("Registered %d tools for LLM: %s", len(tools), llm_id)
 
-    def generate_script_content(self, prompt: str, script_type: str, context_data: dict[str, Any] = None,
-                                max_tokens: int = 4000, llm_id: str | None = None) -> str | None:
+    def generate_script_content(
+        self,
+        prompt: str,
+        script_type: str,
+        context_data: dict[str, Any] = None,
+        max_tokens: int = 4000,
+        llm_id: str | None = None,
+    ) -> str | None:
         """Generate script content using LLM."""
         with self.lock:
             backend_id = llm_id or self.active_backend
 
             if not backend_id or backend_id not in self.backends:
-                logger.error(
-                    "No active LLM backend available for script generation")
+                logger.error("No active LLM backend available for script generation")
                 return None
 
             # Prepare system prompt for script generation
@@ -2091,11 +2107,11 @@ Return ONLY the script code, no explanations or markdown formatting."""
             try:
                 response = backend.chat(messages)
                 if response and response.content:
-                    logger.info("Generated %s script: %d characters",
-                                script_type, len(response.content))
+                    logger.info(
+                        "Generated %s script: %d characters", script_type, len(response.content)
+                    )
                     return response.content.strip()
-                logger.error(
-                    "LLM returned empty response for script generation")
+                logger.error("LLM returned empty response for script generation")
                 return None
 
             except Exception as e:
@@ -2105,16 +2121,20 @@ Return ONLY the script code, no explanations or markdown formatting."""
                 # Restore original token limit
                 backend.config.max_tokens = original_max_tokens
 
-    def refine_script_content(self, original_script: str, error_feedback: str,
-                              test_results: dict[str, Any], script_type: str,
-                              llm_id: str | None = None) -> str | None:
+    def refine_script_content(
+        self,
+        original_script: str,
+        error_feedback: str,
+        test_results: dict[str, Any],
+        script_type: str,
+        llm_id: str | None = None,
+    ) -> str | None:
         """Refine existing script based on test results and feedback."""
         with self.lock:
             backend_id = llm_id or self.active_backend
 
             if not backend_id or backend_id not in self.backends:
-                logger.error(
-                    "No active LLM backend available for script refinement")
+                logger.error("No active LLM backend available for script refinement")
                 return None
 
             # Prepare refinement prompt
@@ -2150,26 +2170,26 @@ Please provide the complete refined script that fixes these issues."""
             try:
                 response = self.backends[backend_id].chat(messages)
                 if response and response.content:
-                    logger.info("Refined %s script: %d characters",
-                                script_type, len(response.content))
+                    logger.info(
+                        "Refined %s script: %d characters", script_type, len(response.content)
+                    )
                     return response.content.strip()
-                logger.error(
-                    "LLM returned empty response for script refinement")
+                logger.error("LLM returned empty response for script refinement")
                 return None
 
             except Exception as e:
                 logger.error("Script refinement failed: %s", e)
                 return None
 
-    def analyze_protection_patterns(self, binary_data: dict[str, Any],
-                                    llm_id: str | None = None) -> dict[str, Any] | None:
+    def analyze_protection_patterns(
+        self, binary_data: dict[str, Any], llm_id: str | None = None
+    ) -> dict[str, Any] | None:
         """Analyze binary data to identify protection patterns."""
         with self.lock:
             backend_id = llm_id or self.active_backend
 
             if not backend_id or backend_id not in self.backends:
-                logger.error(
-                    "No active LLM backend available for pattern analysis")
+                logger.error("No active LLM backend available for pattern analysis")
                 return None
 
             system_prompt = """You are an expert binary analyst specializing in protection mechanism detection.
@@ -2204,37 +2224,38 @@ Please analyze this data and provide detailed protection pattern analysis in JSO
                         return result
                     except json.JSONDecodeError:
                         # Return as text if not valid JSON
-                        logger.warning(
-                            "LLM response was not valid JSON, returning as text")
+                        logger.warning("LLM response was not valid JSON, returning as text")
                         return {"analysis": response.content}
                 else:
-                    logger.error(
-                        "LLM returned empty response for pattern analysis")
+                    logger.error("LLM returned empty response for pattern analysis")
                     return None
 
             except Exception as e:
                 logger.error("Protection pattern analysis failed: %s", e)
                 return None
 
-    def stream_script_generation(self, prompt: str, script_type: str,
-                                 context_data: dict[str, Any] = None,
-                                 llm_id: str | None = None):
+    def stream_script_generation(
+        self,
+        prompt: str,
+        script_type: str,
+        context_data: dict[str, Any] = None,
+        llm_id: str | None = None,
+    ):
         """Generate script with streaming support for long generation times."""
         # Note: Streaming implementation would depend on backend support
         # For now, fall back to regular generation
-        logger.info(
-            "Streaming script generation requested, falling back to standard generation")
+        logger.info("Streaming script generation requested, falling back to standard generation")
         return self.generate_script_content(prompt, script_type, context_data, llm_id=llm_id)
 
-    def validate_script_syntax(self, script_content: str, script_type: str,
-                               llm_id: str | None = None) -> dict[str, Any]:
+    def validate_script_syntax(
+        self, script_content: str, script_type: str, llm_id: str | None = None
+    ) -> dict[str, Any]:
         """Use LLM to validate script syntax and detect common issues."""
         with self.lock:
             backend_id = llm_id or self.active_backend
 
             if not backend_id or backend_id not in self.backends:
-                logger.error(
-                    "No active LLM backend available for script validation")
+                logger.error("No active LLM backend available for script validation")
                 return {"valid": False, "errors": ["No LLM backend available"]}
 
             system_prompt = f"""You are a {script_type} code validator and syntax checker.
@@ -2275,8 +2296,7 @@ Please analyze this script and return validation results in JSON format."""
                         logger.info("Script validation completed")
                         return result
                     except json.JSONDecodeError:
-                        logger.warning(
-                            "LLM validation response was not valid JSON")
+                        logger.warning("LLM validation response was not valid JSON")
                         return {
                             "valid": False,
                             "errors": ["Failed to parse validation response"],
@@ -2331,8 +2351,13 @@ Please analyze this script and return validation results in JSON format."""
             if callback in self.progress_callbacks:
                 self.progress_callbacks.remove(callback)
 
-    def load_model_in_background(self, llm_id: str, config: LLMConfig,
-                                priority: int = 0, callback: ProgressCallback | None = None) -> LoadingTask | None:
+    def load_model_in_background(
+        self,
+        llm_id: str,
+        config: LLMConfig,
+        priority: int = 0,
+        callback: ProgressCallback | None = None,
+    ) -> LoadingTask | None:
         """Load a model in the background with progress tracking."""
         if not self.background_loader:
             logger.warning("Background loading not enabled")
@@ -2471,15 +2496,16 @@ Please analyze this script and return validation results in JSON format."""
 
         return memory_info
 
-    def configure_lazy_loading(self,
-                               max_loaded_models: int = 3,
-                               idle_unload_time: int = 1800):
+    def configure_lazy_loading(self, max_loaded_models: int = 3, idle_unload_time: int = 1800):
         """Configure lazy loading parameters."""
         if self.lazy_manager:
             self.lazy_manager.max_loaded_models = max_loaded_models
             self.lazy_manager.idle_unload_time = idle_unload_time
-            logger.info("Updated lazy loading config: max_models=%d, idle_time=%d",
-                        max_loaded_models, idle_unload_time)
+            logger.info(
+                "Updated lazy loading config: max_models=%d, idle_time=%d",
+                max_loaded_models,
+                idle_unload_time,
+            )
 
     def preload_model(self, llm_id: str) -> bool:
         """Manually preload a lazy model."""
@@ -2522,7 +2548,9 @@ def create_openai_config(model_name: str = "gpt-4", api_key: str = None, **kwarg
     )
 
 
-def create_anthropic_config(model_name: str = "claude-3-5-sonnet-20241022", api_key: str = None, **kwargs) -> LLMConfig:
+def create_anthropic_config(
+    model_name: str = "claude-3-5-sonnet-20241022", api_key: str = None, **kwargs
+) -> LLMConfig:
     """Create Anthropic configuration."""
     return LLMConfig(
         provider=LLMProvider.ANTHROPIC,

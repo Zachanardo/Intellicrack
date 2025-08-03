@@ -5,7 +5,7 @@
 ### 1. Direct Asset File References ✅
 All directly referenced asset files exist:
 - `assets/icon.ico` ✅
-- `assets/icon_preview.png` ✅ 
+- `assets/icon_preview.png` ✅
 - `assets/binary-file-icon.png` ✅ (fixed from binary_icon.png)
 
 ### 2. Theme Icons (QIcon.fromTheme) ⚠️

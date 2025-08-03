@@ -24,6 +24,7 @@ Common UI button utilities to avoid code duplication.
 
 try:
     from PyQt6.QtWidgets import QPushButton
+
     PYQT_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in ui_button_common: %s", e)
@@ -53,7 +54,9 @@ def add_extra_buttons(header_layout, extra_buttons, widget_refs=None):
 
         # Apply special styling for Analyze Binary button
         if button_text == "Analyze Binary":
-            btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; font-weight: bold; }")
+            btn.setStyleSheet(
+                "QPushButton { background-color: #2196F3; color: white; font-weight: bold; }"
+            )
 
         header_layout.addWidget(btn)
         buttons[button_text] = btn

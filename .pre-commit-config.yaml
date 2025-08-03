@@ -8,7 +8,7 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [commit]
-      
+
       - id: no-mock-validation
         name: Verify no mock/fake data in tests
         entry: python scripts/verify_no_mocks.py
@@ -16,7 +16,7 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [commit]
-      
+
       - id: test-real-functionality
         name: Run real functionality tests
         entry: pytest tests/unit -k "not slow" --tb=short
@@ -24,11 +24,39 @@ repos:
         pass_filenames: false
         stages: [commit]
 
+  # Code Quality - Advanced Linting & Formatting
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # Security - Secret Scanning
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+
+  # Security - Vulnerability Scanning
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.10
+    hooks:
+      - id: bandit
+        args: ['-r', 'intellicrack/', '-f', 'json', '-o', 'bandit-report.json']
+        exclude: ^tests/
+
+  # Basic Git Hygiene
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
       - id: check-added-large-files
-        args: ['--maxkb=1000']
+        args: ['--maxkb=10000']
+      - id: check-ast
+      - id: debug-statements

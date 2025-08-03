@@ -1,6 +1,6 @@
 [run]
 source = intellicrack
-omit = 
+omit =
     */tests/*
     */migrations/*
     */__pycache__/*

@@ -156,36 +156,107 @@ class NLPCodeProcessor:
         """Build vocabulary for code analysis."""
         return {
             "authentication": [
-                "login", "signin", "authenticate", "verify", "credential", "password",
-                "token", "session", "auth", "validate_user", "check_password",
+                "login",
+                "signin",
+                "authenticate",
+                "verify",
+                "credential",
+                "password",
+                "token",
+                "session",
+                "auth",
+                "validate_user",
+                "check_password",
             ],
             "authorization": [
-                "authorize", "permission", "access", "role", "privilege", "allow",
-                "deny", "grant", "revoke", "check_access", "has_permission",
+                "authorize",
+                "permission",
+                "access",
+                "role",
+                "privilege",
+                "allow",
+                "deny",
+                "grant",
+                "revoke",
+                "check_access",
+                "has_permission",
             ],
             "validation": [
-                "validate", "verify", "check", "sanitize", "filter", "clean",
-                "ensure", "confirm", "assert", "is_valid", "meets_criteria",
+                "validate",
+                "verify",
+                "check",
+                "sanitize",
+                "filter",
+                "clean",
+                "ensure",
+                "confirm",
+                "assert",
+                "is_valid",
+                "meets_criteria",
             ],
             "encryption": [
-                "encrypt", "decrypt", "hash", "cipher", "crypto", "encode",
-                "decode", "scramble", "secure", "protect", "obfuscate",
+                "encrypt",
+                "decrypt",
+                "hash",
+                "cipher",
+                "crypto",
+                "encode",
+                "decode",
+                "scramble",
+                "secure",
+                "protect",
+                "obfuscate",
             ],
             "communication": [
-                "send", "receive", "transmit", "broadcast", "message", "signal",
-                "notify", "alert", "communicate", "exchange", "transfer",
+                "send",
+                "receive",
+                "transmit",
+                "broadcast",
+                "message",
+                "signal",
+                "notify",
+                "alert",
+                "communicate",
+                "exchange",
+                "transfer",
             ],
             "security": [
-                "secure", "protect", "defend", "guard", "shield", "safe",
-                "security", "vulnerability", "threat", "attack", "exploit",
+                "secure",
+                "protect",
+                "defend",
+                "guard",
+                "shield",
+                "safe",
+                "security",
+                "vulnerability",
+                "threat",
+                "attack",
+                "exploit",
             ],
             "license": [
-                "license", "key", "activation", "registration", "trial",
-                "expire", "valid", "invalid", "check", "verify",
+                "license",
+                "key",
+                "activation",
+                "registration",
+                "trial",
+                "expire",
+                "valid",
+                "invalid",
+                "check",
+                "verify",
             ],
             "error_handling": [
-                "error", "exception", "catch", "handle", "try", "finally",
-                "throw", "raise", "fail", "abort", "recover",
+                "error",
+                "exception",
+                "catch",
+                "handle",
+                "try",
+                "finally",
+                "throw",
+                "raise",
+                "fail",
+                "abort",
+                "recover",
             ],
         }
 
@@ -228,28 +299,64 @@ class NLPCodeProcessor:
         """Load keywords for intent classification."""
         return {
             SemanticIntent.AUTHENTICATION: [
-                "authenticate", "login", "signin", "password", "credential",
-                "verify_user", "check_login", "validate_password",
+                "authenticate",
+                "login",
+                "signin",
+                "password",
+                "credential",
+                "verify_user",
+                "check_login",
+                "validate_password",
             ],
             SemanticIntent.AUTHORIZATION: [
-                "authorize", "permission", "access_control", "role_check",
-                "privilege", "grant", "deny", "allow",
+                "authorize",
+                "permission",
+                "access_control",
+                "role_check",
+                "privilege",
+                "grant",
+                "deny",
+                "allow",
             ],
             SemanticIntent.VALIDATION: [
-                "validate", "verify", "check", "sanitize", "filter",
-                "ensure", "confirm", "is_valid",
+                "validate",
+                "verify",
+                "check",
+                "sanitize",
+                "filter",
+                "ensure",
+                "confirm",
+                "is_valid",
             ],
             SemanticIntent.ENCRYPTION: [
-                "encrypt", "decrypt", "hash", "cipher", "crypto",
-                "encode", "decode", "secure",
+                "encrypt",
+                "decrypt",
+                "hash",
+                "cipher",
+                "crypto",
+                "encode",
+                "decode",
+                "secure",
             ],
             SemanticIntent.BUSINESS_LOGIC: [
-                "calculate", "process", "compute", "determine", "evaluate",
-                "assess", "analyze", "transform",
+                "calculate",
+                "process",
+                "compute",
+                "determine",
+                "evaluate",
+                "assess",
+                "analyze",
+                "transform",
             ],
             SemanticIntent.SECURITY_CHECK: [
-                "security", "protect", "defend", "guard", "shield",
-                "vulnerability", "threat", "attack",
+                "security",
+                "protect",
+                "defend",
+                "guard",
+                "shield",
+                "vulnerability",
+                "threat",
+                "attack",
             ],
         }
 
@@ -257,24 +364,51 @@ class NLPCodeProcessor:
         """Load keywords for business logic pattern recognition."""
         return {
             BusinessLogicPattern.LICENSE_VALIDATION: [
-                "license", "key", "activation", "trial", "expire",
-                "valid", "registration", "serial",
+                "license",
+                "key",
+                "activation",
+                "trial",
+                "expire",
+                "valid",
+                "registration",
+                "serial",
             ],
             BusinessLogicPattern.USER_MANAGEMENT: [
-                "user", "account", "profile", "create_user", "delete_user",
-                "update_user", "manage",
+                "user",
+                "account",
+                "profile",
+                "create_user",
+                "delete_user",
+                "update_user",
+                "manage",
             ],
             BusinessLogicPattern.ACCESS_CONTROL: [
-                "access", "permission", "role", "privilege", "acl",
-                "authorization", "grant", "deny",
+                "access",
+                "permission",
+                "role",
+                "privilege",
+                "acl",
+                "authorization",
+                "grant",
+                "deny",
             ],
             BusinessLogicPattern.DATA_VALIDATION: [
-                "validate", "verify", "check", "sanitize", "clean",
-                "format", "constraint",
+                "validate",
+                "verify",
+                "check",
+                "sanitize",
+                "clean",
+                "format",
+                "constraint",
             ],
             BusinessLogicPattern.AUDIT_LOGGING: [
-                "audit", "log", "track", "record", "monitor",
-                "trace", "history",
+                "audit",
+                "log",
+                "track",
+                "record",
+                "monitor",
+                "trace",
+                "history",
             ],
         }
 
@@ -294,8 +428,7 @@ class NLPCodeProcessor:
 
         # Extract vocabulary matches
         for category, keywords in self.vocabulary.items():
-            matches = sum(1 for keyword in keywords if keyword.lower()
-                          in normalized_code.lower())
+            matches = sum(1 for keyword in keywords if keyword.lower() in normalized_code.lower())
             features["vocabulary_matches"][category] = matches
 
         # Extract pattern matches
@@ -307,23 +440,19 @@ class NLPCodeProcessor:
 
         # Calculate intent scores
         for intent, keywords in self.intent_keywords.items():
-            score = sum(1 for keyword in keywords if keyword.lower()
-                        in normalized_code.lower())
+            score = sum(1 for keyword in keywords if keyword.lower() in normalized_code.lower())
             features["intent_scores"][intent.value] = score
 
         # Calculate business pattern scores
         for pattern, keywords in self.business_keywords.items():
-            score = sum(1 for keyword in keywords if keyword.lower()
-                        in normalized_code.lower())
+            score = sum(1 for keyword in keywords if keyword.lower() in normalized_code.lower())
             features["business_scores"][pattern.value] = score
 
         # Extract complexity indicators
-        features["complexity_indicators"] = self._extract_complexity_indicators(
-            code)
+        features["complexity_indicators"] = self._extract_complexity_indicators(code)
 
         # Extract semantic tokens
-        features["semantic_tokens"] = self._extract_semantic_tokens(
-            code, function_name)
+        features["semantic_tokens"] = self._extract_semantic_tokens(code, function_name)
 
         return features
 
@@ -347,7 +476,9 @@ class NLPCodeProcessor:
             "loop_statements": len(re.findall(r"\b(for|while)\b", code, re.IGNORECASE)),
             "function_calls": len(re.findall(r"\w+\s*\(", code)),
             "return_statements": len(re.findall(r"\breturn\b", code, re.IGNORECASE)),
-            "exception_handling": len(re.findall(r"\b(try|catch|except|finally)\b", code, re.IGNORECASE)),
+            "exception_handling": len(
+                re.findall(r"\b(try|catch|except|finally)\b", code, re.IGNORECASE)
+            ),
             "nested_blocks": self._count_nested_blocks(code),
         }
 
@@ -383,9 +514,20 @@ class NLPCodeProcessor:
 
         # Filter common words
         meaningful_tokens = [
-            token.lower() for token in tokens
-            if len(token) > 2 and token.lower() not in {
-                "the", "and", "for", "get", "set", "new", "old", "tmp", "temp",
+            token.lower()
+            for token in tokens
+            if len(token) > 2
+            and token.lower()
+            not in {
+                "the",
+                "and",
+                "for",
+                "get",
+                "set",
+                "new",
+                "old",
+                "tmp",
+                "temp",
             }
         ]
 
@@ -445,8 +587,11 @@ class SemanticCodeAnalyzer:
             # Try to use AIFileTools for file reading if available
             try:
                 from .ai_file_tools import get_ai_file_tools
+
                 ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
-                file_data = ai_file_tools.read_file(file_path, purpose="Semantic code analysis for protection patterns")
+                file_data = ai_file_tools.read_file(
+                    file_path, purpose="Semantic code analysis for protection patterns"
+                )
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
                 else:
@@ -467,10 +612,8 @@ class SemanticCodeAnalyzer:
 
         # Perform analysis
         try:
-            analysis_result = self._perform_semantic_analysis(
-                file_path, content)
-            analysis_result.analysis_time = (
-                datetime.now() - start_time).total_seconds()
+            analysis_result = self._perform_semantic_analysis(file_path, content)
+            analysis_result.analysis_time = (datetime.now() - start_time).total_seconds()
 
             # Cache result
             self.analysis_cache[file_hash] = analysis_result
@@ -478,8 +621,7 @@ class SemanticCodeAnalyzer:
             # Record learning experience
             get_learning_engine().record_experience(
                 task_type="semantic_code_analysis",
-                input_data={"file_path": file_path,
-                            "content_length": len(content)},
+                input_data={"file_path": file_path, "content_length": len(content)},
                 output_data={
                     "nodes_found": len(analysis_result.semantic_nodes),
                     "relationships_found": len(analysis_result.relationships),
@@ -489,8 +631,7 @@ class SemanticCodeAnalyzer:
                 confidence=analysis_result.confidence,
                 execution_time=analysis_result.analysis_time,
                 memory_usage=0,
-                context={"analyzer": "semantic",
-                         "file_type": Path(file_path).suffix},
+                context={"analyzer": "semantic", "file_type": Path(file_path).suffix},
             )
 
             return analysis_result
@@ -508,8 +649,7 @@ class SemanticCodeAnalyzer:
                 execution_time=(datetime.now() - start_time).total_seconds(),
                 memory_usage=0,
                 error_message=str(e),
-                context={"analyzer": "semantic",
-                         "file_type": Path(file_path).suffix},
+                context={"analyzer": "semantic", "file_type": Path(file_path).suffix},
             )
 
             return self._create_empty_result(file_path)
@@ -532,23 +672,19 @@ class SemanticCodeAnalyzer:
         relationships = self._analyze_relationships(semantic_nodes)
 
         # Detect intent mismatches
-        intent_mismatches = self._detect_intent_mismatches(
-            semantic_nodes, content)
+        intent_mismatches = self._detect_intent_mismatches(semantic_nodes, content)
 
         # Map business logic patterns
         business_logic_map = self._map_business_logic(semantic_nodes)
 
         # Calculate complexity metrics
-        complexity_metrics = self._calculate_complexity_metrics(
-            semantic_nodes, content)
+        complexity_metrics = self._calculate_complexity_metrics(semantic_nodes, content)
 
         # Generate semantic summary
-        semantic_summary = self._generate_semantic_summary(
-            semantic_nodes, relationships)
+        semantic_summary = self._generate_semantic_summary(semantic_nodes, relationships)
 
         # Calculate overall confidence
-        confidence = self._calculate_analysis_confidence(
-            semantic_nodes, relationships)
+        confidence = self._calculate_analysis_confidence(semantic_nodes, relationships)
 
         return SemanticAnalysisResult(
             analysis_id=analysis_id,
@@ -573,26 +709,26 @@ class SemanticCodeAnalyzer:
 
                 for node in ast.walk(tree):
                     if isinstance(node, (ast.FunctionDef, ast.ClassDef, ast.AsyncFunctionDef)):
-                        ast_nodes.append({
-                            "type": type(node).__name__,
-                            "name": node.name,
-                            "line": node.lineno,
-                            "col": node.col_offset,
-                            "content": self._extract_node_content(content, node),
-                            "docstring": ast.get_docstring(node),
-                            "node": node,
-                        })
+                        ast_nodes.append(
+                            {
+                                "type": type(node).__name__,
+                                "name": node.name,
+                                "line": node.lineno,
+                                "col": node.col_offset,
+                                "content": self._extract_node_content(content, node),
+                                "docstring": ast.get_docstring(node),
+                                "node": node,
+                            }
+                        )
 
             else:
                 # For non-Python files, use regex-based parsing
-                ast_nodes.extend(
-                    self._parse_non_python_structure(content, file_path))
+                ast_nodes.extend(self._parse_non_python_structure(content, file_path))
 
         except Exception as e:
             logger.warning(f"Failed to parse AST for {file_path}: {e}")
             # Fallback to regex-based parsing
-            ast_nodes.extend(
-                self._parse_non_python_structure(content, file_path))
+            ast_nodes.extend(self._parse_non_python_structure(content, file_path))
 
         return ast_nodes
 
@@ -605,40 +741,46 @@ class SemanticCodeAnalyzer:
             # Function declarations
             function_pattern = r"function\s+(\w+)\s*\([^)]*\)\s*\{"
             for match in re.finditer(function_pattern, content):
-                ast_nodes.append({
-                    "type": "Function",
-                    "name": match.group(1),
-                    "line": content[:match.start()].count("\n") + 1,
-                    "col": match.start() - content.rfind("\n", 0, match.start()),
-                    "content": self._extract_function_body(content, match.start()),
-                    "docstring": None,
-                })
+                ast_nodes.append(
+                    {
+                        "type": "Function",
+                        "name": match.group(1),
+                        "line": content[: match.start()].count("\n") + 1,
+                        "col": match.start() - content.rfind("\n", 0, match.start()),
+                        "content": self._extract_function_body(content, match.start()),
+                        "docstring": None,
+                    }
+                )
 
             # Class declarations
             class_pattern = r"class\s+(\w+)(?:\s+extends\s+\w+)?\s*\{"
             for match in re.finditer(class_pattern, content):
-                ast_nodes.append({
-                    "type": "Class",
-                    "name": match.group(1),
-                    "line": content[:match.start()].count("\n") + 1,
-                    "col": match.start() - content.rfind("\n", 0, match.start()),
-                    "content": self._extract_class_body(content, match.start()),
-                    "docstring": None,
-                })
+                ast_nodes.append(
+                    {
+                        "type": "Class",
+                        "name": match.group(1),
+                        "line": content[: match.start()].count("\n") + 1,
+                        "col": match.start() - content.rfind("\n", 0, match.start()),
+                        "content": self._extract_class_body(content, match.start()),
+                        "docstring": None,
+                    }
+                )
 
         # C/C++ function patterns
         elif file_path.endswith((".c", ".cpp", ".h", ".hpp")):
             # Function definitions
             func_pattern = r"(?:[\w\s\*]+\s+)?(\w+)\s*\([^)]*\)\s*\{"
             for match in re.finditer(func_pattern, content):
-                ast_nodes.append({
-                    "type": "Function",
-                    "name": match.group(1),
-                    "line": content[:match.start()].count("\n") + 1,
-                    "col": match.start() - content.rfind("\n", 0, match.start()),
-                    "content": self._extract_function_body(content, match.start()),
-                    "docstring": None,
-                })
+                ast_nodes.append(
+                    {
+                        "type": "Function",
+                        "name": match.group(1),
+                        "line": content[: match.start()].count("\n") + 1,
+                        "col": match.start() - content.rfind("\n", 0, match.start()),
+                        "content": self._extract_function_body(content, match.start()),
+                        "docstring": None,
+                    }
+                )
 
         return ast_nodes
 
@@ -682,20 +824,18 @@ class SemanticCodeAnalyzer:
             node_name = ast_node.get("name", "")
 
             # Extract NLP features
-            nlp_features = self.nlp_processor.extract_semantic_features(
-                node_content, node_name)
+            nlp_features = self.nlp_processor.extract_semantic_features(node_content, node_name)
 
             # Determine semantic intent
-            semantic_intent = self._determine_semantic_intent(
-                nlp_features, node_name, node_content)
+            semantic_intent = self._determine_semantic_intent(nlp_features, node_name, node_content)
 
             # Determine business pattern
             business_pattern = self._determine_business_pattern(
-                nlp_features, node_name, node_content)
+                nlp_features, node_name, node_content
+            )
 
             # Calculate confidence
-            confidence = self._calculate_node_confidence(
-                nlp_features, semantic_intent)
+            confidence = self._calculate_node_confidence(nlp_features, semantic_intent)
 
             node_id = f"{ast_node.get('type', 'unknown')}_{node_name}_{ast_node.get('line', 0)}"
 
@@ -722,8 +862,9 @@ class SemanticCodeAnalyzer:
             logger.error(f"Failed to create semantic node: {e}")
             return None
 
-    def _determine_semantic_intent(self, nlp_features: dict[str, Any],
-                                   node_name: str, content: str) -> SemanticIntent:
+    def _determine_semantic_intent(
+        self, nlp_features: dict[str, Any], node_name: str, content: str
+    ) -> SemanticIntent:
         """Determine semantic intent of code node."""
         intent_scores = nlp_features.get("intent_scores", {})
 
@@ -734,22 +875,36 @@ class SemanticCodeAnalyzer:
                 try:
                     return SemanticIntent(max_intent[0])
                 except ValueError as e:
-                    self.logger.error(
-                        "Value error in semantic_code_analyzer: %s", e)
+                    self.logger.error("Value error in semantic_code_analyzer: %s", e)
 
         # Fallback to name and content-based analysis
         node_name_lower = node_name.lower()
         content_lower = content.lower()
 
-        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["auth", "login", "signin", "verify"]):
+        if any(
+            keyword in node_name_lower or keyword in content_lower
+            for keyword in ["auth", "login", "signin", "verify"]
+        ):
             return SemanticIntent.AUTHENTICATION
-        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["validate", "check", "verify"]):
+        if any(
+            keyword in node_name_lower or keyword in content_lower
+            for keyword in ["validate", "check", "verify"]
+        ):
             return SemanticIntent.VALIDATION
-        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["encrypt", "decrypt", "hash"]):
+        if any(
+            keyword in node_name_lower or keyword in content_lower
+            for keyword in ["encrypt", "decrypt", "hash"]
+        ):
             return SemanticIntent.ENCRYPTION
-        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["send", "receive", "connect"]):
+        if any(
+            keyword in node_name_lower or keyword in content_lower
+            for keyword in ["send", "receive", "connect"]
+        ):
             return SemanticIntent.COMMUNICATION
-        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["process", "calculate", "compute"]):
+        if any(
+            keyword in node_name_lower or keyword in content_lower
+            for keyword in ["process", "calculate", "compute"]
+        ):
             return SemanticIntent.DATA_PROCESSING
         if any(keyword in node_name_lower for keyword in ["error", "exception", "handle"]):
             return SemanticIntent.ERROR_HANDLING
@@ -759,8 +914,9 @@ class SemanticCodeAnalyzer:
             return SemanticIntent.CONFIGURATION
         return SemanticIntent.BUSINESS_LOGIC
 
-    def _determine_business_pattern(self, nlp_features: dict[str, Any],
-                                    node_name: str, content: str) -> BusinessLogicPattern | None:
+    def _determine_business_pattern(
+        self, nlp_features: dict[str, Any], node_name: str, content: str
+    ) -> BusinessLogicPattern | None:
         """Determine business logic pattern."""
         business_scores = nlp_features.get("business_scores", {})
 
@@ -771,34 +927,50 @@ class SemanticCodeAnalyzer:
                 try:
                     return BusinessLogicPattern(max_pattern[0])
                 except ValueError as e:
-                    self.logger.error(
-                        "Value error in semantic_code_analyzer: %s", e)
+                    self.logger.error("Value error in semantic_code_analyzer: %s", e)
 
         # Fallback to name-based analysis
         node_name_lower = node_name.lower()
         content_lower = content.lower()
 
-        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["license", "key", "activation"]):
+        if any(
+            keyword in node_name_lower or keyword in content_lower
+            for keyword in ["license", "key", "activation"]
+        ):
             return BusinessLogicPattern.LICENSE_VALIDATION
-        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["user", "account", "profile"]):
+        if any(
+            keyword in node_name_lower or keyword in content_lower
+            for keyword in ["user", "account", "profile"]
+        ):
             return BusinessLogicPattern.USER_MANAGEMENT
-        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["access", "permission", "role"]):
+        if any(
+            keyword in node_name_lower or keyword in content_lower
+            for keyword in ["access", "permission", "role"]
+        ):
             return BusinessLogicPattern.ACCESS_CONTROL
-        if any(keyword in node_name_lower or keyword in content_lower for keyword in ["validate", "check", "verify"]):
+        if any(
+            keyword in node_name_lower or keyword in content_lower
+            for keyword in ["validate", "check", "verify"]
+        ):
             return BusinessLogicPattern.DATA_VALIDATION
         if any(keyword in node_name_lower for keyword in ["audit", "log", "track"]):
             return BusinessLogicPattern.AUDIT_LOGGING
 
         return None
 
-    def _calculate_node_confidence(self, nlp_features: dict[str, Any],
-                                   semantic_intent: SemanticIntent) -> float:
+    def _calculate_node_confidence(
+        self, nlp_features: dict[str, Any], semantic_intent: SemanticIntent
+    ) -> float:
         """Calculate confidence score for semantic node."""
         confidence = 0.5  # Base confidence
 
         # Add confidence boost for high-value intents
-        high_value_intents = [SemanticIntent.AUTHENTICATION, SemanticIntent.ENCRYPTION,
-                              SemanticIntent.AUTHORIZATION, SemanticIntent.VALIDATION]
+        high_value_intents = [
+            SemanticIntent.AUTHENTICATION,
+            SemanticIntent.ENCRYPTION,
+            SemanticIntent.AUTHORIZATION,
+            SemanticIntent.VALIDATION,
+        ]
         if semantic_intent in high_value_intents:
             confidence += 0.1
 
@@ -816,19 +988,23 @@ class SemanticCodeAnalyzer:
 
         return min(1.0, confidence)
 
-    def _analyze_relationships(self, semantic_nodes: list[SemanticNode]) -> list[SemanticRelationship]:
+    def _analyze_relationships(
+        self, semantic_nodes: list[SemanticNode]
+    ) -> list[SemanticRelationship]:
         """Analyze relationships between semantic nodes."""
         relationships = []
 
         for i, node1 in enumerate(semantic_nodes):
-            for node2 in semantic_nodes[i+1:]:
+            for node2 in semantic_nodes[i + 1 :]:
                 relationship = self._detect_relationship(node1, node2)
                 if relationship:
                     relationships.append(relationship)
 
         return relationships
 
-    def _detect_relationship(self, node1: SemanticNode, node2: SemanticNode) -> SemanticRelationship | None:
+    def _detect_relationship(
+        self, node1: SemanticNode, node2: SemanticNode
+    ) -> SemanticRelationship | None:
         """Detect relationship between two semantic nodes."""
         # Check for function calls
         if node2.name in node1.content or node1.name in node2.content:
@@ -843,8 +1019,10 @@ class SemanticCodeAnalyzer:
             confidence = 0.7
 
         # Check for sequential processing
-        elif (node1.location["line"] < node2.location["line"] and
-              abs(node1.location["line"] - node2.location["line"]) < 20):
+        elif (
+            node1.location["line"] < node2.location["line"]
+            and abs(node1.location["line"] - node2.location["line"]) < 20
+        ):
             relationship_type = "sequential"
             strength = 0.4
             confidence = 0.6
@@ -864,8 +1042,9 @@ class SemanticCodeAnalyzer:
             description=f"{relationship_type} relationship between {node1.name} and {node2.name}",
         )
 
-    def _detect_intent_mismatches(self, semantic_nodes: list[SemanticNode],
-                                  content: str) -> list[IntentMismatch]:
+    def _detect_intent_mismatches(
+        self, semantic_nodes: list[SemanticNode], content: str
+    ) -> list[IntentMismatch]:
         """Detect mismatches between intent and implementation."""
         mismatches = []
 
@@ -987,7 +1166,9 @@ class SemanticCodeAnalyzer:
 
         return patterns
 
-    def _map_business_logic(self, semantic_nodes: list[SemanticNode]) -> dict[str, BusinessLogicPattern]:
+    def _map_business_logic(
+        self, semantic_nodes: list[SemanticNode]
+    ) -> dict[str, BusinessLogicPattern]:
         """Map business logic patterns in the code."""
         business_map = {}
 
@@ -997,32 +1178,45 @@ class SemanticCodeAnalyzer:
 
         return business_map
 
-    def _calculate_complexity_metrics(self, semantic_nodes: list[SemanticNode],
-                                      content: str) -> dict[str, float]:
+    def _calculate_complexity_metrics(
+        self, semantic_nodes: list[SemanticNode], content: str
+    ) -> dict[str, float]:
         """Calculate complexity metrics."""
         return {
             "semantic_complexity": len(semantic_nodes),
             "intent_diversity": len(set(node.semantic_intent for node in semantic_nodes)),
-            "business_pattern_count": len(set(node.business_pattern for node in semantic_nodes if node.business_pattern)),
-            "avg_node_confidence": sum(node.confidence for node in semantic_nodes) / len(semantic_nodes) if semantic_nodes else 0,
+            "business_pattern_count": len(
+                set(node.business_pattern for node in semantic_nodes if node.business_pattern)
+            ),
+            "avg_node_confidence": sum(node.confidence for node in semantic_nodes)
+            / len(semantic_nodes)
+            if semantic_nodes
+            else 0,
             "content_length": len(content),
-            "function_count": sum(1 for node in semantic_nodes if node.node_type.lower() == "functiondef"),
+            "function_count": sum(
+                1 for node in semantic_nodes if node.node_type.lower() == "functiondef"
+            ),
         }
 
-    def _generate_semantic_summary(self, semantic_nodes: list[SemanticNode],
-                                   relationships: list[SemanticRelationship]) -> dict[str, Any]:
+    def _generate_semantic_summary(
+        self, semantic_nodes: list[SemanticNode], relationships: list[SemanticRelationship]
+    ) -> dict[str, Any]:
         """Generate semantic summary."""
-        intent_counts = Counter(
-            node.semantic_intent for node in semantic_nodes)
+        intent_counts = Counter(node.semantic_intent for node in semantic_nodes)
         pattern_counts = Counter(
-            node.business_pattern for node in semantic_nodes if node.business_pattern)
+            node.business_pattern for node in semantic_nodes if node.business_pattern
+        )
 
         return {
             "total_nodes": len(semantic_nodes),
             "total_relationships": len(relationships),
             "intent_distribution": {intent.value: count for intent, count in intent_counts.items()},
-            "business_pattern_distribution": {pattern.value: count for pattern, count in pattern_counts.items()},
-            "primary_intent": intent_counts.most_common(1)[0][0].value if intent_counts else "unknown",
+            "business_pattern_distribution": {
+                pattern.value: count for pattern, count in pattern_counts.items()
+            },
+            "primary_intent": intent_counts.most_common(1)[0][0].value
+            if intent_counts
+            else "unknown",
             "complexity_level": self._assess_complexity_level(semantic_nodes),
         }
 
@@ -1034,8 +1228,9 @@ class SemanticCodeAnalyzer:
             return "medium"
         return "high"
 
-    def _calculate_analysis_confidence(self, semantic_nodes: list[SemanticNode],
-                                       relationships: list[SemanticRelationship]) -> float:
+    def _calculate_analysis_confidence(
+        self, semantic_nodes: list[SemanticNode], relationships: list[SemanticRelationship]
+    ) -> float:
         """Calculate overall analysis confidence."""
         if not semantic_nodes:
             return 0.0
@@ -1044,12 +1239,14 @@ class SemanticCodeAnalyzer:
         relationship_confidences = [rel.confidence for rel in relationships]
 
         avg_node_confidence = sum(node_confidences) / len(node_confidences)
-        avg_rel_confidence = sum(relationship_confidences) / len(
-            relationship_confidences) if relationship_confidences else 0.5
+        avg_rel_confidence = (
+            sum(relationship_confidences) / len(relationship_confidences)
+            if relationship_confidences
+            else 0.5
+        )
 
         # Weight node confidence more heavily
-        overall_confidence = (avg_node_confidence * 0.7) + \
-            (avg_rel_confidence * 0.3)
+        overall_confidence = (avg_node_confidence * 0.7) + (avg_rel_confidence * 0.3)
 
         return min(1.0, overall_confidence)
 
@@ -1058,8 +1255,11 @@ class SemanticCodeAnalyzer:
         if content is None:
             try:
                 from .ai_file_tools import get_ai_file_tools
+
                 ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
-                file_data = ai_file_tools.read_file(file_path, purpose="File hash calculation for caching")
+                file_data = ai_file_tools.read_file(
+                    file_path, purpose="File hash calculation for caching"
+                )
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
                 else:
@@ -1132,8 +1332,7 @@ class SemanticCodeAnalyzer:
 
         # Calculate average confidence
         if all_results:
-            insights["avg_confidence"] = sum(
-                r.confidence for r in all_results) / len(all_results)
+            insights["avg_confidence"] = sum(r.confidence for r in all_results) / len(all_results)
 
         # Complexity overview
         insights["complexity_overview"] = {

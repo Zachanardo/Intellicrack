@@ -42,6 +42,7 @@ try:
     from cryptography.hazmat.primitives.asymmetric import padding, rsa
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
     HAS_CRYPTOGRAPHY = True
 except ImportError as e:
     logger.error("Import error in encryption_manager: %s", e)
@@ -194,9 +195,9 @@ class EncryptionManager:
                 raise ValueError("Invalid encrypted data length")
 
             # Extract components
-            iv = encrypted_data[:self.iv_size]
-            ciphertext = encrypted_data[self.iv_size:-self.hmac_size]
-            received_mac = encrypted_data[-self.hmac_size:]
+            iv = encrypted_data[: self.iv_size]
+            ciphertext = encrypted_data[self.iv_size : -self.hmac_size]
+            received_mac = encrypted_data[-self.hmac_size :]
 
             # Get decryption key
             key = self._get_session_key(session_id) if session_id else self.master_key
@@ -325,7 +326,8 @@ class EncryptionManager:
             # Clean up old session keys (older than 1 hour)
             cutoff_time = current_time - 3600
             expired_sessions = [
-                session_id for session_id, info in self.session_keys.items()
+                session_id
+                for session_id, info in self.session_keys.items()
                 if info["created_at"] < cutoff_time
             ]
 
@@ -334,7 +336,9 @@ class EncryptionManager:
 
             self.last_key_rotation = current_time
 
-            self.logger.info(f"Rotated encryption keys, removed {len(expired_sessions)} expired sessions")
+            self.logger.info(
+                f"Rotated encryption keys, removed {len(expired_sessions)} expired sessions"
+            )
 
         except Exception as e:
             self.logger.error(f"Key rotation failed: {e}")
@@ -386,7 +390,9 @@ class EncryptionManager:
             self.logger.error(f"File encryption failed: {e}")
             raise
 
-    def decrypt_file(self, encrypted_file_path: str, output_path: str = None, session_id: str = None) -> str:
+    def decrypt_file(
+        self, encrypted_file_path: str, output_path: str = None, session_id: str = None
+    ) -> str:
         """Decrypt a file using AES-256.
 
         Args:
@@ -503,7 +509,9 @@ class EncryptionManager:
                 "active_sessions": 0,
                 "total_encryptions": 0,
                 "last_key_rotation": self.last_key_rotation,
-                "time_until_rotation": max(0, self.key_rotation_interval - (current_time - self.last_key_rotation)),
+                "time_until_rotation": max(
+                    0, self.key_rotation_interval - (current_time - self.last_key_rotation)
+                ),
             }
 
             # Calculate active sessions and usage
@@ -525,7 +533,8 @@ class EncryptionManager:
             cutoff_time = current_time - 3600  # 1 hour expiry
 
             expired_sessions = [
-                session_id for session_id, info in self.session_keys.items()
+                session_id
+                for session_id, info in self.session_keys.items()
                 if info["created_at"] < cutoff_time
             ]
 

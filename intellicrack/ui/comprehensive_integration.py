@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget
 
 from ..utils.logger import get_logger
@@ -60,7 +59,9 @@ class ComprehensiveR2Integration:
 
         """
         try:
-            self.logger.info(f"Starting comprehensive radare2 integration with {type(main_app).__name__}")
+            self.logger.info(
+                f"Starting comprehensive radare2 integration with {type(main_app).__name__}"
+            )
 
             # Detect application type and use appropriate integration method
             integration_method = self._detect_integration_method(main_app)

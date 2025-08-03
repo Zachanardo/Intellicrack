@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import fnmatch
 import logging
 import os
@@ -68,8 +67,7 @@ class FileApprovalDialog(QDialog):
         layout.addWidget(details_text)
 
         # Warning
-        warning = QLabel(
-            "⚠️ Only approve if you trust the AI's analysis purpose.")
+        warning = QLabel("⚠️ Only approve if you trust the AI's analysis purpose.")
         warning.setStyleSheet("color: orange; font-weight: bold;")
         layout.addWidget(warning)
 
@@ -77,8 +75,7 @@ class FileApprovalDialog(QDialog):
         button_layout = QHBoxLayout()
 
         self.approve_btn = QPushButton("Approve")
-        self.approve_btn.setStyleSheet(
-            "background-color: #4CAF50; color: white;")
+        self.approve_btn.setStyleSheet("background-color: #4CAF50; color: white;")
         self.approve_btn.clicked.connect(self.accept)
 
         self.deny_btn = QPushButton("Deny")
@@ -105,13 +102,33 @@ class FileSearchTool:
         """Initialize file search tool with app instance."""
         self.app_instance = app_instance
         self.common_license_patterns = [
-            "*license*", "*licensing*", "*lic*", "*auth*", "*activation*",
-            "*register*", "*serial*", "*key*", "*crack*", "*patch*",
-            "*trial*", "*demo*", "*evaluation*", "*expire*", "*validity*",
-            "*.cfg", "*.ini", "*.conf", "*.reg", "*.dat", "*.db", "*.sqlite",
+            "*license*",
+            "*licensing*",
+            "*lic*",
+            "*auth*",
+            "*activation*",
+            "*register*",
+            "*serial*",
+            "*key*",
+            "*crack*",
+            "*patch*",
+            "*trial*",
+            "*demo*",
+            "*evaluation*",
+            "*expire*",
+            "*validity*",
+            "*.cfg",
+            "*.ini",
+            "*.conf",
+            "*.reg",
+            "*.dat",
+            "*.db",
+            "*.sqlite",
         ]
 
-    def search_license_files(self, search_path: str, custom_patterns: list[str] = None) -> dict[str, Any]:
+    def search_license_files(
+        self, search_path: str, custom_patterns: list[str] = None
+    ) -> dict[str, Any]:
         """Search for license-related files in the specified path.
 
         Args:
@@ -196,8 +213,14 @@ Purpose: Find licensing-related files for analysis to identify protection mechan
 
         """
         high_priority_patterns = [
-            "license.txt", "license.dat", "license.key", "serial.txt",
-            "activation.dat", "auth.cfg", "registration.ini", "*.lic",
+            "license.txt",
+            "license.dat",
+            "license.key",
+            "serial.txt",
+            "activation.dat",
+            "auth.cfg",
+            "registration.ini",
+            "*.lic",
         ]
 
         return self.search_license_files(program_directory, high_priority_patterns)
@@ -211,7 +234,9 @@ class FileReadTool:
         self.app_instance = app_instance
         self.max_file_size = 10 * 1024 * 1024  # 10MB limit
 
-    def read_file_content(self, file_path: str, purpose: str = "License analysis") -> dict[str, Any]:
+    def read_file_content(
+        self, file_path: str, purpose: str = "License analysis"
+    ) -> dict[str, Any]:
         """Read the content of a file with user approval.
 
         Args:
@@ -265,8 +290,7 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
                             encoding = _enc
                             break
                     except UnicodeDecodeError as e:
-                        logger.error(
-                            "UnicodeDecodeError in ai_file_tools: %s", e)
+                        logger.error("UnicodeDecodeError in ai_file_tools: %s", e)
                         continue
 
             if content is None:
@@ -297,7 +321,9 @@ The AI wants to read this file to analyze licensing mechanisms and identify pote
             logger.error("Error reading file %s: %s", file_path, e)
             return {"status": "error", "message": str(e)}
 
-    def read_multiple_files(self, file_paths: list[str], purpose: str = "License analysis") -> dict[str, Any]:
+    def read_multiple_files(
+        self, file_paths: list[str], purpose: str = "License analysis"
+    ) -> dict[str, Any]:
         """Read multiple files with a single approval request.
 
         Args:
@@ -340,8 +366,7 @@ Files:
         }
 
         for _file_path in valid_paths:
-            file_result = self.read_file_content(
-                str(file_path), f"{purpose} (batch)")
+            file_result = self.read_file_content(str(file_path), f"{purpose} (batch)")
             if file_result["status"] == "success":
                 results["files_read"].append(file_result)
 
@@ -357,7 +382,9 @@ class AIFileTools:
         self.search_tool = FileSearchTool(app_instance)
         self.read_tool = FileReadTool(app_instance)
 
-    def search_for_license_files(self, base_path: str, custom_patterns: list[str] = None) -> dict[str, Any]:
+    def search_for_license_files(
+        self, base_path: str, custom_patterns: list[str] = None
+    ) -> dict[str, Any]:
         """Search for license-related files."""
         return self.search_tool.search_license_files(base_path, custom_patterns)
 
@@ -365,7 +392,9 @@ class AIFileTools:
         """Read a single file."""
         return self.read_tool.read_file_content(file_path, purpose)
 
-    def read_multiple_files(self, file_paths: list[str], purpose: str = "License analysis") -> dict[str, Any]:
+    def read_multiple_files(
+        self, file_paths: list[str], purpose: str = "License analysis"
+    ) -> dict[str, Any]:
         """Read multiple files."""
         return self.read_tool.read_multiple_files(file_paths, purpose)
 
@@ -399,8 +428,7 @@ class AIFileTools:
 
         # If we found potential license files, offer to read them
         if license_scan["files_found"]:
-            file_paths = [_f["path"]
-                          for _f in license_scan["files_found"][:5]]  # Limit to first 5
+            file_paths = [_f["path"] for _f in license_scan["files_found"][:5]]  # Limit to first 5
 
             read_results = self.read_multiple_files(
                 file_paths,
@@ -409,8 +437,7 @@ class AIFileTools:
 
             if read_results["status"] == "success":
                 for _file_data in read_results["files_read"]:
-                    analysis["file_contents"][_file_data["file_path"]
-                                              ] = _file_data["content"]
+                    analysis["file_contents"][_file_data["file_path"]] = _file_data["content"]
 
         # Generate analysis summary
         analysis["analysis_summary"] = {

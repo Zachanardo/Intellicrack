@@ -1,4 +1,5 @@
 """Radare2 AI integration module for enhanced binary analysis using AI models."""
+
 import logging
 import os
 from typing import Any
@@ -49,6 +50,7 @@ try:
         from sklearn.ensemble import IsolationForest, RandomForestClassifier
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.preprocessing import StandardScaler
+
         SKLEARN_AVAILABLE = True
     except:
         # Use fallback implementations
@@ -71,7 +73,6 @@ except Exception as e:
     StandardScaler = None
     joblib = None
     SKLEARN_AVAILABLE = False
-
 
 
 class R2AIEngine:
@@ -251,12 +252,29 @@ class R2AIEngine:
 
         return {
             "total_strings": float(total_strings),
-            "license_string_ratio": float(len(string_analysis.get("license_strings", [])) / max(1, total_strings)),
-            "crypto_string_ratio": float(len(string_analysis.get("crypto_strings", [])) / max(1, total_strings)),
-            "error_string_ratio": float(len(string_analysis.get("error_message_strings", [])) / max(1, total_strings)),
-            "debug_string_ratio": float(len(string_analysis.get("debug_strings", [])) / max(1, total_strings)),
-            "average_entropy": float(string_analysis.get("string_entropy_analysis", {}).get("average_entropy", 0)),
-            "high_entropy_ratio": float(len(string_analysis.get("string_entropy_analysis", {}).get("high_entropy_strings", [])) / max(1, total_strings)),
+            "license_string_ratio": float(
+                len(string_analysis.get("license_strings", [])) / max(1, total_strings)
+            ),
+            "crypto_string_ratio": float(
+                len(string_analysis.get("crypto_strings", [])) / max(1, total_strings)
+            ),
+            "error_string_ratio": float(
+                len(string_analysis.get("error_message_strings", [])) / max(1, total_strings)
+            ),
+            "debug_string_ratio": float(
+                len(string_analysis.get("debug_strings", [])) / max(1, total_strings)
+            ),
+            "average_entropy": float(
+                string_analysis.get("string_entropy_analysis", {}).get("average_entropy", 0)
+            ),
+            "high_entropy_ratio": float(
+                len(
+                    string_analysis.get("string_entropy_analysis", {}).get(
+                        "high_entropy_strings", []
+                    )
+                )
+                / max(1, total_strings)
+            ),
             "suspicious_patterns": float(len(string_analysis.get("suspicious_patterns", []))),
         }
 
@@ -268,12 +286,24 @@ class R2AIEngine:
 
         return {
             "total_imports": float(total_imports),
-            "crypto_api_ratio": float(len(api_categories.get("cryptography", [])) / max(1, total_imports)),
-            "network_api_ratio": float(len(api_categories.get("network_operations", [])) / max(1, total_imports)),
-            "file_api_ratio": float(len(api_categories.get("file_operations", [])) / max(1, total_imports)),
-            "registry_api_ratio": float(len(api_categories.get("registry_operations", [])) / max(1, total_imports)),
-            "process_api_ratio": float(len(api_categories.get("process_management", [])) / max(1, total_imports)),
-            "debug_api_ratio": float(len(api_categories.get("debugging", [])) / max(1, total_imports)),
+            "crypto_api_ratio": float(
+                len(api_categories.get("cryptography", [])) / max(1, total_imports)
+            ),
+            "network_api_ratio": float(
+                len(api_categories.get("network_operations", [])) / max(1, total_imports)
+            ),
+            "file_api_ratio": float(
+                len(api_categories.get("file_operations", [])) / max(1, total_imports)
+            ),
+            "registry_api_ratio": float(
+                len(api_categories.get("registry_operations", [])) / max(1, total_imports)
+            ),
+            "process_api_ratio": float(
+                len(api_categories.get("process_management", [])) / max(1, total_imports)
+            ),
+            "debug_api_ratio": float(
+                len(api_categories.get("debugging", [])) / max(1, total_imports)
+            ),
             "suspicious_api_count": float(len(import_analysis.get("suspicious_apis", []))),
             "anti_analysis_api_count": float(len(import_analysis.get("anti_analysis_apis", []))),
         }
@@ -425,8 +455,12 @@ class R2AIEngine:
             probabilities = self.vulnerability_classifier.predict_proba([feature_vector])[0]
 
             vulnerability_types = [
-                "buffer_overflow", "format_string", "integer_overflow",
-                "use_after_free", "race_condition", "privilege_escalation",
+                "buffer_overflow",
+                "format_string",
+                "integer_overflow",
+                "use_after_free",
+                "race_condition",
+                "privilege_escalation",
             ]
 
             results = {}
@@ -434,7 +468,11 @@ class R2AIEngine:
                 if i < len(probabilities):
                     results[vuln_type] = {
                         "probability": float(probabilities[i]),
-                        "predicted": bool(predictions == i if hasattr(predictions, "__iter__") else predictions == i),
+                        "predicted": bool(
+                            predictions == i
+                            if hasattr(predictions, "__iter__")
+                            else predictions == i
+                        ),
                     }
 
             return {
@@ -496,8 +534,12 @@ class R2AIEngine:
                 "function_count": len(cluster_functions),
                 "average_size": np.mean([f.get("size", 0) for f in cluster_functions]),
                 "average_complexity": np.mean([f.get("complexity", 0) for f in cluster_functions]),
-                "has_license_functions": any(f.get("has_license_keywords", 0) for f in cluster_functions),
-                "has_crypto_functions": any(f.get("has_crypto_keywords", 0) for f in cluster_functions),
+                "has_license_functions": any(
+                    f.get("has_license_keywords", 0) for f in cluster_functions
+                ),
+                "has_crypto_functions": any(
+                    f.get("has_crypto_keywords", 0) for f in cluster_functions
+                ),
             }
 
         return {
@@ -600,33 +642,41 @@ class R2AIEngine:
 
         # Generate bypass strategies based on feature analysis
         if string_features.get("license_string_ratio", 0) > 0.1:
-            suggestions["bypass_strategies"].append({
-                "strategy": "String patching",
-                "description": "Patch license validation strings",
-                "success_probability": 0.8,
-                "difficulty": "easy",
-            })
+            suggestions["bypass_strategies"].append(
+                {
+                    "strategy": "String patching",
+                    "description": "Patch license validation strings",
+                    "success_probability": 0.8,
+                    "difficulty": "easy",
+                }
+            )
 
         if import_features.get("crypto_api_ratio", 0) > 0.1:
-            suggestions["bypass_strategies"].append({
-                "strategy": "Crypto bypass",
-                "description": "Bypass cryptographic license validation",
-                "success_probability": 0.6,
-                "difficulty": "medium",
-            })
+            suggestions["bypass_strategies"].append(
+                {
+                    "strategy": "Crypto bypass",
+                    "description": "Bypass cryptographic license validation",
+                    "success_probability": 0.6,
+                    "difficulty": "medium",
+                }
+            )
 
         if import_features.get("registry_api_ratio", 0) > 0.1:
-            suggestions["bypass_strategies"].append({
-                "strategy": "Registry manipulation",
-                "description": "Modify registry-based license checks",
-                "success_probability": 0.9,
-                "difficulty": "easy",
-            })
+            suggestions["bypass_strategies"].append(
+                {
+                    "strategy": "Registry manipulation",
+                    "description": "Modify registry-based license checks",
+                    "success_probability": 0.9,
+                    "difficulty": "easy",
+                }
+            )
 
         # Calculate overall confidence
         total_strategies = len(suggestions["bypass_strategies"])
         if total_strategies > 0:
-            avg_probability = np.mean([s["success_probability"] for s in suggestions["bypass_strategies"]])
+            avg_probability = np.mean(
+                [s["success_probability"] for s in suggestions["bypass_strategies"]]
+            )
             suggestions["confidence_scores"]["overall_success_probability"] = float(avg_probability)
             suggestions["confidence_scores"]["strategy_count"] = total_strategies
 
@@ -724,9 +774,9 @@ class R2AIEngine:
         import_features = features.get("import_features", {})
 
         complexity_score = (
-            string_features.get("license_string_ratio", 0) * 2 +
-            import_features.get("crypto_api_ratio", 0) * 3 +
-            string_features.get("average_entropy", 0) / 8
+            string_features.get("license_string_ratio", 0) * 2
+            + import_features.get("crypto_api_ratio", 0) * 3
+            + string_features.get("average_entropy", 0) / 8
         )
 
         if complexity_score > 2:
@@ -865,7 +915,9 @@ class R2AIEngine:
         """Get model performance metrics."""
         return {
             "license_detector_status": "trained" if self.license_detector else "not_trained",
-            "vulnerability_classifier_status": "trained" if self.vulnerability_classifier else "not_trained",
+            "vulnerability_classifier_status": "trained"
+            if self.vulnerability_classifier
+            else "not_trained",
             "feature_extraction_success": True,
             "model_versions": {
                 "license_detector": "1.0",

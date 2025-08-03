@@ -20,24 +20,25 @@ logger = get_logger(__name__)
 HAS_YAML = False
 try:
     import yaml
+
     HAS_YAML = True
 except ImportError:
-    logger.warning(
-        "PyYAML not available - YAML support disabled. Install with: pip install pyyaml")
+    logger.warning("PyYAML not available - YAML support disabled. Install with: pip install pyyaml")
 
 # Optional JSON Schema validation
 HAS_JSONSCHEMA = False
 try:
     import jsonschema
+
     HAS_JSONSCHEMA = True
 except ImportError:
     logger.warning(
-        "jsonschema not available - schema validation disabled. Install with: pip install jsonschema")
+        "jsonschema not available - schema validation disabled. Install with: pip install jsonschema"
+    )
 
 
 class ConfigValidationError(Exception):
     """Raised when configuration validation fails."""
-
 
 
 class ConfigAsCodeManager:
@@ -59,8 +60,7 @@ class ConfigAsCodeManager:
         # Schema definitions
         self.schemas = self._load_schemas()
 
-        logger.info(
-            f"ConfigAsCodeManager initialized with directory: {self.config_dir}")
+        logger.info(f"ConfigAsCodeManager initialized with directory: {self.config_dir}")
 
     def _load_schemas(self) -> dict[str, dict[str, Any]]:
         """Load JSON schemas for validation."""
@@ -72,9 +72,21 @@ class ConfigAsCodeManager:
             "properties": {
                 "provider": {
                     "type": "string",
-                    "enum": ["openai", "anthropic", "llamacpp", "ollama", "huggingface",
-                             "local_api", "local_gguf", "pytorch", "tensorflow", "onnx",
-                             "safetensors", "gptq", "huggingface_local"],
+                    "enum": [
+                        "openai",
+                        "anthropic",
+                        "llamacpp",
+                        "ollama",
+                        "huggingface",
+                        "local_api",
+                        "local_gguf",
+                        "pytorch",
+                        "tensorflow",
+                        "onnx",
+                        "safetensors",
+                        "gptq",
+                        "huggingface_local",
+                    ],
                 },
                 "model_name": {"type": "string"},
                 "api_key": {"type": ["string", "null"]},
@@ -194,8 +206,7 @@ class ConfigAsCodeManager:
 
         """
         if not HAS_JSONSCHEMA:
-            logger.warning(
-                "Schema validation skipped - jsonschema not available")
+            logger.warning("Schema validation skipped - jsonschema not available")
             return True
 
         if schema_name not in self.schemas:
@@ -205,8 +216,7 @@ class ConfigAsCodeManager:
 
         try:
             jsonschema.validate(config, schema)
-            logger.debug(
-                f"Configuration validation passed for schema: {schema_name}")
+            logger.debug(f"Configuration validation passed for schema: {schema_name}")
             return True
         except jsonschema.ValidationError as e:
             error_msg = f"Configuration validation failed: {e.message}"
@@ -234,8 +244,7 @@ class ConfigAsCodeManager:
         file_path = Path(file_path)
 
         if not file_path.exists():
-            raise FileNotFoundError(
-                f"Configuration file not found: {file_path}")
+            raise FileNotFoundError(f"Configuration file not found: {file_path}")
 
         # Determine file format
         suffix = file_path.suffix.lower()
@@ -244,8 +253,7 @@ class ConfigAsCodeManager:
             with open(file_path, encoding="utf-8") as f:
                 if suffix in [".yaml", ".yml"]:
                     if not HAS_YAML:
-                        raise ConfigValidationError(
-                            "YAML support not available - install PyYAML")
+                        raise ConfigValidationError("YAML support not available - install PyYAML")
                     config = yaml.safe_load(f)
                 elif suffix == ".json":
                     config = json.load(f)
@@ -259,7 +267,8 @@ class ConfigAsCodeManager:
                     else:
                         if not HAS_YAML:
                             raise ConfigValidationError(
-                                "Could not determine file format and YAML not available")
+                                "Could not determine file format and YAML not available"
+                            )
                         config = yaml.safe_load(f)
 
             logger.info(f"Loaded configuration from: {file_path}")
@@ -274,14 +283,15 @@ class ConfigAsCodeManager:
             return config
 
         except (yaml.YAMLError if HAS_YAML else Exception, json.JSONDecodeError) as e:
-            raise ConfigValidationError(
-                f"Failed to parse configuration file: {e}") from e
+            raise ConfigValidationError(f"Failed to parse configuration file: {e}") from e
 
-    def save_config(self,
-                    config: dict[str, Any],
-                    file_path: str | Path,
-                    format_type: str | None = None,
-                    validate: bool = True) -> None:
+    def save_config(
+        self,
+        config: dict[str, Any],
+        file_path: str | Path,
+        format_type: str | None = None,
+        validate: bool = True,
+    ) -> None:
         """Save configuration to YAML or JSON file.
 
         Args:
@@ -317,19 +327,22 @@ class ConfigAsCodeManager:
             with open(file_path, "w", encoding="utf-8") as f:
                 if format_type == "yaml":
                     if not HAS_YAML:
-                        raise ConfigValidationError(
-                            "YAML support not available - install PyYAML")
-                    yaml.dump(config, f, default_flow_style=False, sort_keys=False,
-                              allow_unicode=True, indent=2)
+                        raise ConfigValidationError("YAML support not available - install PyYAML")
+                    yaml.dump(
+                        config,
+                        f,
+                        default_flow_style=False,
+                        sort_keys=False,
+                        allow_unicode=True,
+                        indent=2,
+                    )
                 else:
-                    json.dump(config, f, indent=2,
-                              ensure_ascii=False, default=str)
+                    json.dump(config, f, indent=2, ensure_ascii=False, default=str)
 
             logger.info(f"Saved configuration to: {file_path}")
 
         except Exception as e:
-            raise ConfigValidationError(
-                f"Failed to save configuration: {e}") from e
+            raise ConfigValidationError(f"Failed to save configuration: {e}") from e
 
     def _substitute_env_vars(self, obj: Any) -> Any:
         """Recursively substitute environment variables in configuration.
@@ -351,8 +364,7 @@ class ConfigAsCodeManager:
 
         def replace_var(match):
             var_name = match.group(1)
-            default_value = match.group(
-                2) if match.group(2) is not None else ""
+            default_value = match.group(2) if match.group(2) is not None else ""
 
             return os.environ.get(var_name, default_value)
 
@@ -541,8 +553,7 @@ class ConfigAsCodeManager:
                 config["models"][llm_id] = model_config
 
         # Export fallback chains
-        config["fallback_chains"] = fallback_manager.export_configuration().get(
-            "chains", {})
+        config["fallback_chains"] = fallback_manager.export_configuration().get("chains", {})
         config["default_settings"]["default_chain"] = fallback_manager.default_chain_id
 
         return config
@@ -599,9 +610,9 @@ class ConfigAsCodeManager:
         except Exception as e:
             logger.error(f"Failed to apply fallback chains: {e}")
 
-    def generate_config_files(self,
-                              output_dir: str | None = None,
-                              environments: list[str] = None) -> list[Path]:
+    def generate_config_files(
+        self, output_dir: str | None = None, environments: list[str] = None
+    ) -> list[Path]:
         """Generate configuration files for multiple environments.
 
         Args:
@@ -642,8 +653,7 @@ class ConfigAsCodeManager:
             self.save_config(template, file_path)
             generated_files.append(file_path)
 
-        logger.info(
-            f"Generated {len(generated_files)} configuration files in {output_dir}")
+        logger.info(f"Generated {len(generated_files)} configuration files in {output_dir}")
         return generated_files
 
 
@@ -659,9 +669,9 @@ def get_config_as_code_manager() -> ConfigAsCodeManager:
     return _CONFIG_AS_CODE_MANAGER
 
 
-def load_config_file(file_path: str | Path,
-                     apply_to_system: bool = True,
-                     validate: bool = True) -> dict[str, Any]:
+def load_config_file(
+    file_path: str | Path, apply_to_system: bool = True, validate: bool = True
+) -> dict[str, Any]:
     """Convenience function to load and optionally apply configuration.
 
     Args:
@@ -682,8 +692,7 @@ def load_config_file(file_path: str | Path,
     return config
 
 
-def save_current_config(file_path: str | Path,
-                        format_type: str = "yaml") -> None:
+def save_current_config(file_path: str | Path, format_type: str = "yaml") -> None:
     """Convenience function to save current system configuration.
 
     Args:
@@ -696,8 +705,7 @@ def save_current_config(file_path: str | Path,
     manager.save_config(config, file_path, format_type)
 
 
-def create_config_template(output_path: str | Path,
-                           environment: str = "development") -> None:
+def create_config_template(output_path: str | Path, environment: str = "development") -> None:
     """Create a template configuration file.
 
     Args:

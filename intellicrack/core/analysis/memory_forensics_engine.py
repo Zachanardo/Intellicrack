@@ -33,6 +33,7 @@ try:
     from volatility3.cli import text_renderer
     from volatility3.framework import automagic, configuration, constants, contexts, plugins
     from volatility3.framework.configuration import requirements
+
     VOLATILITY3_AVAILABLE = True
 except ImportError:
     VOLATILITY3_AVAILABLE = False
@@ -153,10 +154,10 @@ class MemoryAnalysisResult:
     def has_suspicious_activity(self) -> bool:
         """Check if any suspicious activity was detected"""
         return (
-            any(p.is_hidden for p in self.processes) or
-            any(p.suspicious_indicators for p in self.processes) or
-            any(m.is_suspicious for m in self.modules) or
-            len(self.security_findings) > 0
+            any(p.is_hidden for p in self.processes)
+            or any(p.suspicious_indicators for p in self.processes)
+            or any(m.is_suspicious for m in self.modules)
+            or len(self.security_findings) > 0
         )
 
     @property
@@ -319,7 +320,9 @@ class MemoryForensicsEngine:
 
             # Try using subprocess to gather system information about the dump
             try:
-                file_result = subprocess.run(["file", dump_path], check=False, capture_output=True, text=True, timeout=10)
+                file_result = subprocess.run(
+                    ["file", dump_path], check=False, capture_output=True, text=True, timeout=10
+                )
                 if file_result.returncode == 0:
                     result.analysis_profile = file_result.stdout.strip()
                     logger.debug(f"File command output: {file_result.stdout}")
@@ -366,7 +369,11 @@ class MemoryForensicsEngine:
                         signature = struct.unpack("<Q", header_data[:8])[0]
                         if signature == 0x45474150:  # 'PAGE' in little-endian
                             # Parse Windows dump header
-                            dump_type = struct.unpack("<I", header_data[0xF88:0xF8C])[0] if len(header_data) > 0xF8C else 0
+                            dump_type = (
+                                struct.unpack("<I", header_data[0xF88:0xF8C])[0]
+                                if len(header_data) > 0xF8C
+                                else 0
+                            )
                             logger.info(f"Windows crash dump detected, type: {dump_type}")
 
                     # Look for common Windows signatures
@@ -375,7 +382,11 @@ class MemoryForensicsEngine:
                         if b"Windows 11" in header_data or b"22H2" in header_data:
                             logger.info(f"Detected Windows 11 from dump file: {dump_path}")
                             return AnalysisProfile.WINDOWS_11.value
-                        if b"Windows 10" in header_data or b"2004" in header_data or b"21H1" in header_data:
+                        if (
+                            b"Windows 10" in header_data
+                            or b"2004" in header_data
+                            or b"21H1" in header_data
+                        ):
                             logger.info(f"Detected Windows 10 from dump file: {dump_path}")
                             return AnalysisProfile.WINDOWS_10.value
                         if b"Windows 7" in header_data:
@@ -389,18 +400,37 @@ class MemoryForensicsEngine:
                             elf_magic = struct.unpack("4s", header_data[:4])[0]
                             if elf_magic == b"\x7fELF":
                                 # Parse ELF header
-                                e_machine = struct.unpack("<H", header_data[18:20])[0] if len(header_data) > 20 else 0
-                                logger.info(f"ELF binary detected in dump, machine type: {e_machine}")
+                                e_machine = (
+                                    struct.unpack("<H", header_data[18:20])[0]
+                                    if len(header_data) > 20
+                                    else 0
+                                )
+                                logger.info(
+                                    f"ELF binary detected in dump, machine type: {e_machine}"
+                                )
                         logger.info(f"Detected Linux from dump file: {dump_path}")
                         return AnalysisProfile.LINUX_GENERIC.value
 
                     # Look for macOS signatures
-                    elif b"Darwin" in header_data or b"MacOS" in header_data or b"mach_kernel" in header_data:
+                    elif (
+                        b"Darwin" in header_data
+                        or b"MacOS" in header_data
+                        or b"mach_kernel" in header_data
+                    ):
                         # Check for Mach-O header using struct
                         if len(header_data) >= 8:
                             mach_magic = struct.unpack("<I", header_data[:4])[0]
-                            if mach_magic in [0xfeedface, 0xfeedfacf, 0xcefaedfe, 0xcffaedfe]:  # Mach-O magic numbers
-                                cpu_type = struct.unpack("<I", header_data[4:8])[0] if len(header_data) >= 8 else 0
+                            if mach_magic in [
+                                0xFEEDFACE,
+                                0xFEEDFACF,
+                                0xCEFAEDFE,
+                                0xCFFAEDFE,
+                            ]:  # Mach-O magic numbers
+                                cpu_type = (
+                                    struct.unpack("<I", header_data[4:8])[0]
+                                    if len(header_data) >= 8
+                                    else 0
+                                )
                                 logger.info(f"Mach-O binary detected in dump, CPU type: {cpu_type}")
                         logger.info(f"Detected macOS from dump file: {dump_path}")
                         return AnalysisProfile.MAC_OSX.value
@@ -423,7 +453,9 @@ class MemoryForensicsEngine:
                     return AnalysisProfile.MAC_OSX.value
 
             # Default to Windows 10 if detection fails
-            logger.debug(f"Profile detection inconclusive for {dump_path}, defaulting to Windows 10")
+            logger.debug(
+                f"Profile detection inconclusive for {dump_path}, defaulting to Windows 10"
+            )
             return AnalysisProfile.WINDOWS_10.value
 
         except Exception as e:
@@ -441,7 +473,9 @@ class MemoryForensicsEngine:
 
             # Set profile if specified
             if profile != "auto":
-                self.vol_config["automagic.LayerStacker.stackers.intel.symbol_table_class"] = profile
+                self.vol_config["automagic.LayerStacker.stackers.intel.symbol_table_class"] = (
+                    profile
+                )
 
             # Apply automagic
             automagic.run(self.automagics, self.vol_context, self.vol_config, "plugins")
@@ -473,16 +507,22 @@ class MemoryForensicsEngine:
             try:
                 # Check if the specific plugin requirement is satisfied
                 if plugin_requirements.name not in self.vol_context.layers:
-                    unsatisfied_requirements.append(f"Required layer '{plugin_requirements.name}' not available")
+                    unsatisfied_requirements.append(
+                        f"Required layer '{plugin_requirements.name}' not available"
+                    )
 
                 # Check if the plugin's requirements can be satisfied
-                automagics_list = [automagic() for automagic in automagic.available(self.vol_context)]
+                automagics_list = [
+                    automagic() for automagic in automagic.available(self.vol_context)
+                ]
                 for automagic_instance in automagics_list:
                     automagic_instance.run(self.vol_context, self.vol_config)
 
                 # Verify translation layer requirement is satisfied again after automagics
                 if not self.vol_context.layers.get(plugin_requirements.name):
-                    unsatisfied_requirements.append(f"Translation layer '{plugin_requirements.name}' still not available after automagics")
+                    unsatisfied_requirements.append(
+                        f"Translation layer '{plugin_requirements.name}' still not available after automagics"
+                    )
 
             except Exception as e:
                 unsatisfied_requirements.append(f"Automagic failed: {e}")
@@ -511,7 +551,9 @@ class MemoryForensicsEngine:
                         config_key = f"plugins.{plugin_name}.{key}"
                         self.vol_config[config_key] = value
                     else:
-                        logger.warning(f"Invalid config type for {key}: expected {type(expected_type)}, got {type(value)}")
+                        logger.warning(
+                            f"Invalid config type for {key}: expected {type(expected_type)}, got {type(value)}"
+                        )
                 else:
                     # Accept unknown configuration keys
                     valid_config[key] = value
@@ -535,7 +577,9 @@ class MemoryForensicsEngine:
                         logger.debug(f"Failed to render result: {render_error}")
                         formatted_output.append(str(result))
 
-                logger.info(f"Plugin {plugin_name} executed successfully with {len(results)} results")
+                logger.info(
+                    f"Plugin {plugin_name} executed successfully with {len(results)} results"
+                )
                 if formatted_output:
                     logger.debug(f"Formatted output sample: {formatted_output[0][:200]}...")
 
@@ -688,7 +732,9 @@ class MemoryForensicsEngine:
 
         try:
             # Run strings plugin or manual extraction
-            dump_path = self.vol_config.get("automagic.LayerStacker.single_location", "").replace("file://", "")
+            dump_path = self.vol_config.get("automagic.LayerStacker.single_location", "").replace(
+                "file://", ""
+            )
 
             if dump_path and os.path.exists(dump_path):
                 extracted_strings = self._extract_strings_fallback(dump_path, min_length)
@@ -749,8 +795,14 @@ class MemoryForensicsEngine:
 
         # Check for common malware process names
         suspicious_names = [
-            "svchost.exe", "explorer.exe", "winlogon.exe", "services.exe",
-            "lsass.exe", "csrss.exe", "smss.exe", "wininit.exe",
+            "svchost.exe",
+            "explorer.exe",
+            "winlogon.exe",
+            "services.exe",
+            "lsass.exe",
+            "csrss.exe",
+            "smss.exe",
+            "wininit.exe",
         ]
 
         # Check if process name is suspicious (common system process names used by malware)
@@ -775,12 +827,16 @@ class MemoryForensicsEngine:
                     is_in_system_dir = any(image_path.startswith(path) for path in legitimate_paths)
 
                     if not is_in_system_dir:
-                        indicators.append(f"System process name in non-system location: {image_path}")
+                        indicators.append(
+                            f"System process name in non-system location: {image_path}"
+                        )
 
                     # Check for suspicious file extensions
                     suspicious_extensions = [".tmp", ".dat", ".bin", ".exe~", ".scr"]
                     if any(image_path.endswith(ext) for ext in suspicious_extensions):
-                        indicators.append(f"Suspicious file extension for system process: {image_path}")
+                        indicators.append(
+                            f"Suspicious file extension for system process: {image_path}"
+                        )
 
             except Exception:
                 # Continue analysis if path checking fails
@@ -804,8 +860,9 @@ class MemoryForensicsEngine:
             # This would involve comparing multiple process listing methods
             # For now, mark processes with suspicious characteristics as potentially hidden
             for process in processes:
-                if (process.ppid == 0 and process.name.lower() != "system" and
-                    process.pid != 4):  # System process usually has PID 4
+                if (
+                    process.ppid == 0 and process.name.lower() != "system" and process.pid != 4
+                ):  # System process usually has PID 4
                     process.is_hidden = True
 
         except Exception as e:
@@ -819,9 +876,21 @@ class MemoryForensicsEngine:
 
             # Check for suspicious module names
             suspicious_module_names = [
-                "keylogger", "rootkit", "backdoor", "trojan", "virus",
-                "malware", "hack", "crack", "exploit", "inject",
-                "stealer", "rat", "bot", "miner", "dropper",
+                "keylogger",
+                "rootkit",
+                "backdoor",
+                "trojan",
+                "virus",
+                "malware",
+                "hack",
+                "crack",
+                "exploit",
+                "inject",
+                "stealer",
+                "rat",
+                "bot",
+                "miner",
+                "dropper",
             ]
 
             # Check if module name contains suspicious keywords
@@ -839,7 +908,9 @@ class MemoryForensicsEngine:
 
             for legitimate_dll, variants in masquerading_patterns.items():
                 if module_name in variants:
-                    logger.warning(f"Potential DLL masquerading detected: {module_name} (imitating {legitimate_dll})")
+                    logger.warning(
+                        f"Potential DLL masquerading detected: {module_name} (imitating {legitimate_dll})"
+                    )
                     return True
 
             # Check for unsigned modules in system directories
@@ -862,7 +933,9 @@ class MemoryForensicsEngine:
         except Exception:
             return False
 
-    def _detect_security_issues(self, analysis_result: MemoryAnalysisResult) -> list[dict[str, Any]]:
+    def _detect_security_issues(
+        self, analysis_result: MemoryAnalysisResult
+    ) -> list[dict[str, Any]]:
         """Detect security issues based on analysis results"""
         findings = []
 
@@ -870,55 +943,70 @@ class MemoryForensicsEngine:
             # Check for hidden processes
             hidden_count = analysis_result.hidden_process_count
             if hidden_count > 0:
-                findings.append({
-                    "type": "hidden_processes",
-                    "severity": "high",
-                    "description": f"Found {hidden_count} potentially hidden processes",
-                    "count": hidden_count,
-                })
+                findings.append(
+                    {
+                        "type": "hidden_processes",
+                        "severity": "high",
+                        "description": f"Found {hidden_count} potentially hidden processes",
+                        "count": hidden_count,
+                    }
+                )
 
             # Check for suspicious modules
             suspicious_modules = [m for m in analysis_result.modules if m.is_suspicious]
             if suspicious_modules:
-                findings.append({
-                    "type": "suspicious_modules",
-                    "severity": "medium",
-                    "description": f"Found {len(suspicious_modules)} suspicious modules",
-                    "modules": [m.name for m in suspicious_modules[:5]],
-                })
+                findings.append(
+                    {
+                        "type": "suspicious_modules",
+                        "severity": "medium",
+                        "description": f"Found {len(suspicious_modules)} suspicious modules",
+                        "modules": [m.name for m in suspicious_modules[:5]],
+                    }
+                )
 
             # Check for unusual network connections
             external_connections = [
-                c for c in analysis_result.network_connections
+                c
+                for c in analysis_result.network_connections
                 if not c.remote_addr.startswith(("127.", "192.168.", "10.", "172."))
             ]
             if len(external_connections) > 10:
-                findings.append({
-                    "type": "excessive_network_activity",
-                    "severity": "medium",
-                    "description": f"Found {len(external_connections)} external network connections",
-                    "count": len(external_connections),
-                })
+                findings.append(
+                    {
+                        "type": "excessive_network_activity",
+                        "severity": "medium",
+                        "description": f"Found {len(external_connections)} external network connections",
+                        "count": len(external_connections),
+                    }
+                )
 
             # Check for credential-related strings
             credential_strings = [
-                s for s in analysis_result.memory_strings
-                if any(keyword in s.value.lower() for keyword in ["password", "credential", "token", "key"])
+                s
+                for s in analysis_result.memory_strings
+                if any(
+                    keyword in s.value.lower()
+                    for keyword in ["password", "credential", "token", "key"]
+                )
             ]
             if credential_strings:
-                findings.append({
-                    "type": "credential_material",
-                    "severity": "high",
-                    "description": f"Found {len(credential_strings)} potential credential strings",
-                    "count": len(credential_strings),
-                })
+                findings.append(
+                    {
+                        "type": "credential_material",
+                        "severity": "high",
+                        "description": f"Found {len(credential_strings)} potential credential strings",
+                        "count": len(credential_strings),
+                    }
+                )
 
         except Exception as e:
             logger.error(f"Security issue detection failed: {e}")
 
         return findings
 
-    def analyze_process_memory(self, process_id: int, dump_path: str | None = None) -> dict[str, Any]:
+    def analyze_process_memory(
+        self, process_id: int, dump_path: str | None = None
+    ) -> dict[str, Any]:
         """Analyze live process memory or specific process from dump
 
         Args:
@@ -948,7 +1036,9 @@ class MemoryForensicsEngine:
                     "process_id": process_id,
                     "process_info": target_process,
                     "modules": [m for m in full_analysis.modules],  # All modules for context
-                    "connections": [c for c in full_analysis.network_connections if c.pid == process_id],
+                    "connections": [
+                        c for c in full_analysis.network_connections if c.pid == process_id
+                    ],
                     "analysis_status": "completed",
                 }
             # Live process memory analysis implementation
@@ -982,7 +1072,9 @@ class MemoryForensicsEngine:
             priv_flags = win32security.TOKEN_ADJUST_PRIVILEGES | win32security.TOKEN_QUERY
             h_token = win32security.OpenProcessToken(win32api.GetCurrentProcess(), priv_flags)
             privilege_id = win32security.LookupPrivilegeValue(None, win32security.SE_DEBUG_NAME)
-            win32security.AdjustTokenPrivileges(h_token, 0, [(privilege_id, win32security.SE_PRIVILEGE_ENABLED)])
+            win32security.AdjustTokenPrivileges(
+                h_token, 0, [(privilege_id, win32security.SE_PRIVILEGE_ENABLED)]
+            )
 
             # Open target process
             PROCESS_ALL_ACCESS = 0x1F0FFF
@@ -998,11 +1090,13 @@ class MemoryForensicsEngine:
             for module in modules:
                 try:
                     module_name = win32process.GetModuleFileNameEx(h_process, module)
-                    module_info.append({
-                        "base": hex(module),
-                        "name": module_name,
-                        "path": module_name,
-                    })
+                    module_info.append(
+                        {
+                            "base": hex(module),
+                            "name": module_name,
+                            "path": module_name,
+                        }
+                    )
                 except:
                     continue
 
@@ -1049,20 +1143,33 @@ class MemoryForensicsEngine:
                         ctypes.byref(bytes_read),
                     ):
                         # Analyze memory content
-                        memory_data = buffer.raw[:bytes_read.value]
+                        memory_data = buffer.raw[: bytes_read.value]
                         strings = self.extract_strings(memory_data)
 
-                        memory_regions.append({
-                            "address": hex(address),
-                            "size": mbi.RegionSize,
-                            "protection": self._get_protection_string(mbi.Protect),
-                            "type": self._get_memory_type(mbi.Type),
-                            "strings_found": len(strings),
-                            "interesting_strings": [s for s in strings if any(
-                                keyword in s.lower() for keyword in
-                                ["password", "token", "key", "secret", "api", "credential"]
-                            )][:10],  # Limit to 10 interesting strings
-                        })
+                        memory_regions.append(
+                            {
+                                "address": hex(address),
+                                "size": mbi.RegionSize,
+                                "protection": self._get_protection_string(mbi.Protect),
+                                "type": self._get_memory_type(mbi.Type),
+                                "strings_found": len(strings),
+                                "interesting_strings": [
+                                    s
+                                    for s in strings
+                                    if any(
+                                        keyword in s.lower()
+                                        for keyword in [
+                                            "password",
+                                            "token",
+                                            "key",
+                                            "secret",
+                                            "api",
+                                            "credential",
+                                        ]
+                                    )
+                                ][:10],  # Limit to 10 interesting strings
+                            }
+                        )
 
                 address += mbi.RegionSize
 
@@ -1070,17 +1177,20 @@ class MemoryForensicsEngine:
             handles = []
             try:
                 import psutil
+
                 proc = psutil.Process(process_id)
 
                 # Get process handles information
                 try:
                     open_files = proc.open_files()
                     for file_obj in open_files:
-                        handles.append({
-                            "type": "file",
-                            "path": file_obj.path,
-                            "fd": getattr(file_obj, "fd", "N/A"),
-                        })
+                        handles.append(
+                            {
+                                "type": "file",
+                                "path": file_obj.path,
+                                "fd": getattr(file_obj, "fd", "N/A"),
+                            }
+                        )
                 except (psutil.AccessDenied, AttributeError):
                     pass
 
@@ -1089,11 +1199,13 @@ class MemoryForensicsEngine:
                     memory_maps = proc.memory_maps()
                     for mmap in memory_maps:
                         if hasattr(mmap, "path") and mmap.path:
-                            handles.append({
-                                "type": "memory_map",
-                                "path": mmap.path,
-                                "size": getattr(mmap, "rss", 0),
-                            })
+                            handles.append(
+                                {
+                                    "type": "memory_map",
+                                    "path": mmap.path,
+                                    "size": getattr(mmap, "rss", 0),
+                                }
+                            )
                 except (psutil.AccessDenied, AttributeError):
                     pass
 
@@ -1105,13 +1217,16 @@ class MemoryForensicsEngine:
             connections = []
             try:
                 import psutil
+
                 proc = psutil.Process(process_id)
                 for conn in proc.connections():
-                    connections.append({
-                        "local": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A",
-                        "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
-                        "status": conn.status,
-                    })
+                    connections.append(
+                        {
+                            "local": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A",
+                            "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A",
+                            "status": conn.status,
+                        }
+                    )
             except:
                 pass
 
@@ -1128,7 +1243,9 @@ class MemoryForensicsEngine:
                 "connections": connections,
                 "total_regions": len(memory_regions),
                 "total_handles": len(handles),
-                "suspicious_strings": sum(len(r.get("interesting_strings", [])) for r in memory_regions),
+                "suspicious_strings": sum(
+                    len(r.get("interesting_strings", [])) for r in memory_regions
+                ),
             }
 
         except Exception as e:
@@ -1165,7 +1282,10 @@ class MemoryForensicsEngine:
             with open(maps_path) as f:
                 for line in f:
                     # Parse memory mapping
-                    match = re.match(r"([0-9a-f]+)-([0-9a-f]+) ([-rwxp]{4}) ([0-9a-f]+) ([\d:]+) (\d+)\s*(.*)?", line)
+                    match = re.match(
+                        r"([0-9a-f]+)-([0-9a-f]+) ([-rwxp]{4}) ([0-9a-f]+) ([\d:]+) (\d+)\s*(.*)?",
+                        line,
+                    )
                     if match:
                         start = int(match.group(1), 16)
                         end = int(match.group(2), 16)
@@ -1194,24 +1314,41 @@ class MemoryForensicsEngine:
                         try:
                             with open(mem_path, "rb") as mem_file:
                                 mem_file.seek(start)
-                                memory_data = mem_file.read(min(end - start, 0x10000))  # Read up to 64KB
+                                memory_data = mem_file.read(
+                                    min(end - start, 0x10000)
+                                )  # Read up to 64KB
 
                                 # Extract strings
                                 strings = self.extract_strings(memory_data)
                                 region_info["strings_found"] = len(strings)
-                                region_info["interesting_strings"] = [s for s in strings if any(
-                                    keyword in s.lower() for keyword in
-                                    ["password", "token", "key", "secret", "api", "credential", "ssh", "private"]
-                                )][:10]
+                                region_info["interesting_strings"] = [
+                                    s
+                                    for s in strings
+                                    if any(
+                                        keyword in s.lower()
+                                        for keyword in [
+                                            "password",
+                                            "token",
+                                            "key",
+                                            "secret",
+                                            "api",
+                                            "credential",
+                                            "ssh",
+                                            "private",
+                                        ]
+                                    )
+                                ][:10]
 
                                 # Look for specific patterns
                                 if pathname and (".so" in pathname or "lib" in pathname):
-                                    modules.append({
-                                        "base": hex(start),
-                                        "name": os.path.basename(pathname),
-                                        "path": pathname,
-                                        "size": end - start,
-                                    })
+                                    modules.append(
+                                        {
+                                            "base": hex(start),
+                                            "name": os.path.basename(pathname),
+                                            "path": pathname,
+                                            "size": end - start,
+                                        }
+                                    )
                         except:
                             region_info["read_error"] = True
 
@@ -1249,12 +1386,14 @@ class MemoryForensicsEngine:
                                                 if f"socket:[{inode}]" in link:
                                                     local_addr = self._parse_linux_addr(fields[1])
                                                     remote_addr = self._parse_linux_addr(fields[2])
-                                                    connections.append({
-                                                        "protocol": proto,
-                                                        "local": local_addr,
-                                                        "remote": remote_addr,
-                                                        "state": fields[3],
-                                                    })
+                                                    connections.append(
+                                                        {
+                                                            "protocol": proto,
+                                                            "local": local_addr,
+                                                            "remote": remote_addr,
+                                                            "state": fields[3],
+                                                        }
+                                                    )
                                             except:
                                                 continue
             except:
@@ -1277,7 +1416,9 @@ class MemoryForensicsEngine:
                 "memory_regions": memory_regions,
                 "connections": connections,
                 "total_regions": len(memory_regions),
-                "suspicious_strings": sum(len(r.get("interesting_strings", [])) for r in memory_regions),
+                "suspicious_strings": sum(
+                    len(r.get("interesting_strings", [])) for r in memory_regions
+                ),
                 "possible_injections": injected_regions,
             }
 
@@ -1322,7 +1463,7 @@ class MemoryForensicsEngine:
                 host_ip = ".".join(str(b) for b in reversed(host_bytes))
             else:
                 # IPv6
-                host_ip = ":".join(host[i:i+4] for i in range(0, len(host), 4))
+                host_ip = ":".join(host[i : i + 4] for i in range(0, len(host), 4))
             port_num = int(port, 16)
             return f"{host_ip}:{port_num}"
         except:
@@ -1361,7 +1502,9 @@ class MemoryForensicsEngine:
             logger.error(f"String extraction failed: {e}")
             return []
 
-    def generate_icp_supplemental_data(self, analysis_result: MemoryAnalysisResult) -> dict[str, Any]:
+    def generate_icp_supplemental_data(
+        self, analysis_result: MemoryAnalysisResult
+    ) -> dict[str, Any]:
         """Generate supplemental data for ICP backend integration
 
         Args:
@@ -1393,43 +1536,51 @@ class MemoryForensicsEngine:
         # Process suspicious processes
         for process in analysis_result.processes:
             if process.suspicious_indicators or process.is_hidden:
-                supplemental_data["process_indicators"].append({
-                    "pid": process.pid,
-                    "name": process.name,
-                    "is_hidden": process.is_hidden,
-                    "indicators": process.suspicious_indicators,
-                    "parent_pid": process.ppid,
-                })
+                supplemental_data["process_indicators"].append(
+                    {
+                        "pid": process.pid,
+                        "name": process.name,
+                        "is_hidden": process.is_hidden,
+                        "indicators": process.suspicious_indicators,
+                        "parent_pid": process.ppid,
+                    }
+                )
 
         # Process suspicious modules
         for module in analysis_result.modules:
             if module.is_suspicious:
-                supplemental_data["module_indicators"].append({
-                    "name": module.name,
-                    "path": module.path,
-                    "base_address": hex(module.base_address),
-                    "size": module.size,
-                })
+                supplemental_data["module_indicators"].append(
+                    {
+                        "name": module.name,
+                        "path": module.path,
+                        "base_address": hex(module.base_address),
+                        "size": module.size,
+                    }
+                )
 
         # Process network connections
         for conn in analysis_result.network_connections:
             if not conn.remote_addr.startswith(("127.", "192.168.", "10.")):
-                supplemental_data["network_indicators"].append({
-                    "local_endpoint": f"{conn.local_addr}:{conn.local_port}",
-                    "remote_endpoint": f"{conn.remote_addr}:{conn.remote_port}",
-                    "protocol": conn.protocol,
-                    "state": conn.state,
-                    "pid": conn.pid,
-                })
+                supplemental_data["network_indicators"].append(
+                    {
+                        "local_endpoint": f"{conn.local_addr}:{conn.local_port}",
+                        "remote_endpoint": f"{conn.remote_addr}:{conn.remote_port}",
+                        "protocol": conn.protocol,
+                        "state": conn.state,
+                        "pid": conn.pid,
+                    }
+                )
 
         # Process security findings
         for finding in analysis_result.security_findings:
-            supplemental_data["security_indicators"].append({
-                "type": finding.get("type", "unknown"),
-                "severity": finding.get("severity", "low"),
-                "description": finding.get("description", ""),
-                "evidence": finding,
-            })
+            supplemental_data["security_indicators"].append(
+                {
+                    "type": finding.get("type", "unknown"),
+                    "severity": finding.get("severity", "low"),
+                    "description": finding.get("description", ""),
+                    "evidence": finding,
+                }
+            )
 
         return supplemental_data
 
@@ -1451,7 +1602,9 @@ class MemoryForensicsEngine:
             },
         }
 
-    def export_analysis_report(self, analysis_result: MemoryAnalysisResult, output_path: str) -> tuple[bool, str]:
+    def export_analysis_report(
+        self, analysis_result: MemoryAnalysisResult, output_path: str
+    ) -> tuple[bool, str]:
         """Export memory analysis results to JSON report
 
         Args:

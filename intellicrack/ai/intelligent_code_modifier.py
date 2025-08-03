@@ -137,8 +137,11 @@ class CodeAnalyzer:
             content = None
             try:
                 from .ai_file_tools import get_ai_file_tools
+
                 ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
-                file_data = ai_file_tools.read_file(file_path, purpose="Code analysis for intelligent modification")
+                file_data = ai_file_tools.read_file(
+                    file_path, purpose="Code analysis for intelligent modification"
+                )
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
             except (ImportError, AttributeError, KeyError):
@@ -228,8 +231,7 @@ class CodeAnalyzer:
         # Function patterns
         function_pattern = r"(?:function\s+(\w+)|(\w+)\s*[:=]\s*(?:function|\([^)]*\)\s*=>))"
         function_matches = re.findall(function_pattern, content)
-        functions = [match[0] or match[1]
-                     for match in function_matches if match[0] or match[1]]
+        functions = [match[0] or match[1] for match in function_matches if match[0] or match[1]]
 
         # Class patterns
         class_pattern = r"class\s+(\w+)"
@@ -282,7 +284,11 @@ class CodeAnalyzer:
         complexity = 1  # Base complexity
 
         for node in ast.walk(tree):
-            if isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor)) or isinstance(node, ast.ExceptHandler) or isinstance(node, (ast.And, ast.Or)):
+            if (
+                isinstance(node, (ast.If, ast.While, ast.For, ast.AsyncFor))
+                or isinstance(node, ast.ExceptHandler)
+                or isinstance(node, (ast.And, ast.Or))
+            ):
                 complexity += 1
 
         return complexity
@@ -291,8 +297,18 @@ class CodeAnalyzer:
         """Extract external dependencies from imports."""
         # Filter out standard library and relative imports
         standard_libs = {
-            "os", "sys", "json", "time", "datetime", "pathlib", "re",
-            "collections", "itertools", "functools", "typing", "enum",
+            "os",
+            "sys",
+            "json",
+            "time",
+            "datetime",
+            "pathlib",
+            "re",
+            "collections",
+            "itertools",
+            "functools",
+            "typing",
+            "enum",
         }
 
         dependencies = []
@@ -311,8 +327,7 @@ class CodeAnalyzer:
 class DiffGenerator:
     """Generates and formats code diffs."""
 
-    def generate_unified_diff(self, original: str, modified: str,
-                              filename: str = "file") -> str:
+    def generate_unified_diff(self, original: str, modified: str, filename: str = "file") -> str:
         """Generate unified diff format."""
         original_lines = original.splitlines(keepends=True)
         modified_lines = modified.splitlines(keepends=True)
@@ -342,55 +357,69 @@ class DiffGenerator:
         for tag, i1, i2, j1, j2 in differ.get_opcodes():
             if tag == "equal":
                 for i in range(i1, i2):
-                    diff_data["original_lines"].append({
-                        "line_number": i + 1,
-                        "content": original_lines[i],
-                        "type": "unchanged",
-                    })
-                    diff_data["modified_lines"].append({
-                        "line_number": j1 + (i - i1) + 1,
-                        "content": original_lines[i],
-                        "type": "unchanged",
-                    })
+                    diff_data["original_lines"].append(
+                        {
+                            "line_number": i + 1,
+                            "content": original_lines[i],
+                            "type": "unchanged",
+                        }
+                    )
+                    diff_data["modified_lines"].append(
+                        {
+                            "line_number": j1 + (i - i1) + 1,
+                            "content": original_lines[i],
+                            "type": "unchanged",
+                        }
+                    )
 
             elif tag == "delete":
                 for i in range(i1, i2):
-                    diff_data["original_lines"].append({
-                        "line_number": i + 1,
-                        "content": original_lines[i],
-                        "type": "deleted",
-                    })
+                    diff_data["original_lines"].append(
+                        {
+                            "line_number": i + 1,
+                            "content": original_lines[i],
+                            "type": "deleted",
+                        }
+                    )
 
             elif tag == "insert":
                 for j in range(j1, j2):
-                    diff_data["modified_lines"].append({
-                        "line_number": j + 1,
-                        "content": modified_lines[j],
-                        "type": "added",
-                    })
+                    diff_data["modified_lines"].append(
+                        {
+                            "line_number": j + 1,
+                            "content": modified_lines[j],
+                            "type": "added",
+                        }
+                    )
 
             elif tag == "replace":
                 for i in range(i1, i2):
-                    diff_data["original_lines"].append({
-                        "line_number": i + 1,
-                        "content": original_lines[i],
-                        "type": "modified",
-                    })
+                    diff_data["original_lines"].append(
+                        {
+                            "line_number": i + 1,
+                            "content": original_lines[i],
+                            "type": "modified",
+                        }
+                    )
                 for j in range(j1, j2):
-                    diff_data["modified_lines"].append({
-                        "line_number": j + 1,
-                        "content": modified_lines[j],
-                        "type": "modified",
-                    })
+                    diff_data["modified_lines"].append(
+                        {
+                            "line_number": j + 1,
+                            "content": modified_lines[j],
+                            "type": "modified",
+                        }
+                    )
 
             if tag != "equal":
-                diff_data["changes"].append({
-                    "type": tag,
-                    "original_start": i1,
-                    "original_end": i2,
-                    "modified_start": j1,
-                    "modified_end": j2,
-                })
+                diff_data["changes"].append(
+                    {
+                        "type": tag,
+                        "original_start": i1,
+                        "original_end": i2,
+                        "modified_start": j1,
+                        "modified_end": j2,
+                    }
+                )
 
         return diff_data
 
@@ -446,8 +475,9 @@ class IntelligentCodeModifier:
         self.backup_directory = Path.home() / ".intellicrack" / "code_backups"
         self.backup_directory.mkdir(parents=True, exist_ok=True)
 
-    def gather_project_context(self, project_root: str,
-                               target_files: list[str] = None) -> dict[str, CodeContext]:
+    def gather_project_context(
+        self, project_root: str, target_files: list[str] = None
+    ) -> dict[str, CodeContext]:
         """Gather context about the entire project."""
         logger.info(f"Gathering project context from: {project_root}")
 
@@ -457,7 +487,8 @@ class IntelligentCodeModifier:
         # Find relevant files
         if target_files:
             files_to_analyze = [
-                project_path / f for f in target_files if (project_path / f).exists()]
+                project_path / f for f in target_files if (project_path / f).exists()
+            ]
         else:
             files_to_analyze = []
             for ext in self.analyzer.supported_extensions.keys():
@@ -465,16 +496,14 @@ class IntelligentCodeModifier:
 
         # Limit number of files to analyze
         if len(files_to_analyze) > self.max_context_files:
-            files_to_analyze = files_to_analyze[:self.max_context_files]
-            logger.warning(
-                f"Limited analysis to {self.max_context_files} files")
+            files_to_analyze = files_to_analyze[: self.max_context_files]
+            logger.warning(f"Limited analysis to {self.max_context_files} files")
 
         # Analyze each file
         for file_path in files_to_analyze:
             try:
                 relative_path = file_path.relative_to(project_path)
-                context[str(relative_path)] = self.analyzer.analyze_file(
-                    str(file_path))
+                context[str(relative_path)] = self.analyzer.analyze_file(str(file_path))
             except Exception as e:
                 logger.error(f"Failed to analyze {file_path}: {e}")
 
@@ -482,10 +511,14 @@ class IntelligentCodeModifier:
         logger.info(f"Analyzed {len(context)} files for project context")
         return context
 
-    def create_modification_request(self, description: str, target_files: list[str],
-                                    requirements: list[str] = None,
-                                    constraints: list[str] = None,
-                                    context_files: list[str] = None) -> ModificationRequest:
+    def create_modification_request(
+        self,
+        description: str,
+        target_files: list[str],
+        requirements: list[str] = None,
+        constraints: list[str] = None,
+        context_files: list[str] = None,
+    ) -> ModificationRequest:
         """Create a new modification request."""
         request_id = f"mod_{int(datetime.now().timestamp())}"
 
@@ -516,8 +549,7 @@ class IntelligentCodeModifier:
                 response = self._get_ai_modification_response(prompt)
 
                 # Parse response into code changes
-                file_changes = self._parse_modification_response(
-                    response, target_file, request)
+                file_changes = self._parse_modification_response(response, target_file, request)
                 changes.extend(file_changes)
 
             except Exception as e:
@@ -530,8 +562,9 @@ class IntelligentCodeModifier:
         logger.info(f"Generated {len(changes)} code changes")
         return changes
 
-    def _create_modification_prompt(self, request: ModificationRequest,
-                                    context: CodeContext) -> str:
+    def _create_modification_prompt(
+        self, request: ModificationRequest, context: CodeContext
+    ) -> str:
         """Create a prompt for AI modification."""
         prompt = f"""
 # Code Modification Request
@@ -593,7 +626,9 @@ Requirements:
         try:
             messages = [
                 LLMMessage(
-                    role="system", content="You are an expert code modification assistant. Provide only working, production-ready code modifications."),
+                    role="system",
+                    content="You are an expert code modification assistant. Provide only working, production-ready code modifications.",
+                ),
                 LLMMessage(role="user", content=prompt),
             ]
 
@@ -604,19 +639,18 @@ Requirements:
             logger.error(f"Failed to get AI response: {e}")
             return ""
 
-    def _parse_modification_response(self, response: str, file_path: str,
-                                     request: ModificationRequest) -> list[CodeChange]:
+    def _parse_modification_response(
+        self, response: str, file_path: str, request: ModificationRequest
+    ) -> list[CodeChange]:
         """Parse AI response into CodeChange objects."""
         changes = []
 
         try:
             # Extract JSON from response
-            json_match = re.search(
-                r"```json\s*(\{.*?\})\s*```", response, re.DOTALL)
+            json_match = re.search(r"```json\s*(\{.*?\})\s*```", response, re.DOTALL)
             if not json_match:
                 # Try to find JSON without code blocks
-                json_match = re.search(
-                    r'(\{.*"modifications".*\})', response, re.DOTALL)
+                json_match = re.search(r'(\{.*"modifications".*\})', response, re.DOTALL)
 
             if not json_match:
                 logger.warning("No JSON found in AI response")
@@ -633,24 +667,21 @@ Requirements:
                 try:
                     mod_type = ModificationType(mod_type_str)
                 except ValueError as e:
-                    logger.error(
-                        "Value error in intelligent_code_modifier: %s", e)
+                    logger.error("Value error in intelligent_code_modifier: %s", e)
                     mod_type = ModificationType.FUNCTION_MODIFICATION
 
                 change = CodeChange(
                     change_id=change_id,
                     file_path=file_path,
                     modification_type=mod_type,
-                    description=mod.get(
-                        "description", "AI-generated modification"),
+                    description=mod.get("description", "AI-generated modification"),
                     original_code=mod.get("original_code", ""),
                     modified_code=mod.get("modified_code", ""),
                     start_line=mod.get("start_line", 1),
                     end_line=mod.get("end_line", 1),
                     confidence=float(mod.get("confidence", 0.5)),
                     reasoning=mod.get("reasoning", ""),
-                    impact_analysis={"impact": mod.get(
-                        "impact", "Unknown impact")},
+                    impact_analysis={"impact": mod.get("impact", "Unknown impact")},
                 )
 
                 changes.append(change)
@@ -706,8 +737,7 @@ Requirements:
         preview_data["files_affected"] = list(preview_data["files_affected"])
         return preview_data
 
-    def apply_changes(self, change_ids: list[str],
-                      create_backup: bool = True) -> dict[str, Any]:
+    def apply_changes(self, change_ids: list[str], create_backup: bool = True) -> dict[str, Any]:
         """Apply the specified changes to files."""
         results = {
             "applied": [],
@@ -756,16 +786,14 @@ Requirements:
                     for change in file_changes:
                         change.status = ChangeStatus.FAILED
                         results["failed"].append(change.change_id)
-                    results["errors"].append(
-                        f"Failed to apply changes to {file_path}")
+                    results["errors"].append(f"Failed to apply changes to {file_path}")
 
             except Exception as e:
                 logger.error(f"Error applying changes to {file_path}: {e}")
                 for change in file_changes:
                     change.status = ChangeStatus.FAILED
                     results["failed"].append(change.change_id)
-                results["errors"].append(
-                    f"Exception applying {file_path}: {e!s}")
+                results["errors"].append(f"Exception applying {file_path}: {e!s}")
 
         return results
 
@@ -777,6 +805,7 @@ Requirements:
         backup_path = self.backup_directory / backup_name
 
         import shutil
+
         shutil.copy2(source_path, backup_path)
 
         logger.info(f"Created backup: {backup_path}")
@@ -789,8 +818,11 @@ Requirements:
             content = None
             try:
                 from .ai_file_tools import get_ai_file_tools
+
                 ai_file_tools = get_ai_file_tools(getattr(self, "app_instance", None))
-                file_data = ai_file_tools.read_file(file_path, purpose="Read file for applying code modifications")
+                file_data = ai_file_tools.read_file(
+                    file_path, purpose="Read file for applying code modifications"
+                )
                 if file_data.get("status") == "success" and file_data.get("content"):
                     content = file_data["content"]
             except (ImportError, AttributeError, KeyError):
@@ -813,8 +845,7 @@ Requirements:
 
                 # Validate line numbers
                 if start_idx < 0 or end_idx > len(lines):
-                    logger.warning(
-                        f"Invalid line range for change {change.change_id}")
+                    logger.warning(f"Invalid line range for change {change.change_id}")
                     continue
 
                 # Replace lines
@@ -851,8 +882,7 @@ Requirements:
 
     def get_modification_history(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get modification history."""
-        history = sorted(self.modification_history,
-                         key=lambda c: c.created_at, reverse=True)
+        history = sorted(self.modification_history, key=lambda c: c.created_at, reverse=True)
 
         return [
             {

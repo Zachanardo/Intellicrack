@@ -1,4 +1,5 @@
 """CI/CD configuration dialog for plugin development workflows."""
+
 import json
 import os
 from datetime import datetime
@@ -57,7 +58,6 @@ except ImportError:
     yaml = None
 
 
-
 class PipelineThread(QThread):
     """Thread for running CI/CD pipeline"""
 
@@ -83,6 +83,7 @@ class PipelineThread(QThread):
                     result = original_method()
                     self.stage_completed.emit(stage_name, result)
                     return result
+
                 return wrapper
 
             # Wrap each stage method
@@ -489,7 +490,8 @@ class CICDDialog(PluginDialogBase):
     def reset_configuration(self):
         """Reset configuration to defaults"""
         reply = QMessageBox.question(
-            self, "Reset Configuration",
+            self,
+            "Reset Configuration",
             "Are you sure you want to reset to default configuration?",
             QMessageBox.Yes | QMessageBox.No,
         )
@@ -554,7 +556,8 @@ class CICDDialog(PluginDialogBase):
             return
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Report",
+            self,
+            "Export Report",
             f"pipeline_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
             "Text Files (*.txt);;JSON Files (*.json);;All Files (*.*)",
         )
@@ -600,7 +603,8 @@ class CICDDialog(PluginDialogBase):
             f.write(workflow)
 
         QMessageBox.information(
-            self, "Generated",
+            self,
+            "Generated",
             f"GitHub Actions workflow saved to:\n{workflow_path}\n\n"
             "Commit this file to your repository to enable CI/CD.",
         )
@@ -612,7 +616,9 @@ class CICDDialog(PluginDialogBase):
 
         # Clear console
         self.console_output.clear()
-        self.console_output.append(f"🚀 Starting CI/CD pipeline for {os.path.basename(self.plugin_path)}\n")
+        self.console_output.append(
+            f"🚀 Starting CI/CD pipeline for {os.path.basename(self.plugin_path)}\n"
+        )
 
         # Reset stage widgets
         for stage_widget in self.stage_widgets.values():
@@ -706,8 +712,9 @@ class CICDDialog(PluginDialogBase):
                 """)
 
         # Update progress
-        completed = sum(1 for w in self.stage_widgets.values()
-                       if w.status_label.text() in ["✅", "❌"])
+        completed = sum(
+            1 for w in self.stage_widgets.values() if w.status_label.text() in ["✅", "❌"]
+        )
         self.progress_bar.setValue(completed)
 
         # Log errors

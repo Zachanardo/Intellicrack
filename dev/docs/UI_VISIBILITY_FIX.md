@@ -25,7 +25,7 @@ Added lazy loading trigger in `/intellicrack/ui/main_app.py`:
 
 ### 3. Affected GroupBoxes
 - Project Management
-- Binary Management  
+- Binary Management
 - Recent Files
 - Activity Log
 - Project Files

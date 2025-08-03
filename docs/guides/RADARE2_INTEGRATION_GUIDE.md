@@ -86,10 +86,10 @@ from intellicrack.utils.radare2_utils import R2Session
 with R2Session('/path/to/binary') as r2:
     # Analyze binary
     r2.analyze_all('aaa')
-    
+
     # Get functions
     functions = r2.get_functions()
-    
+
     # Decompile function
     decompiled = r2.decompile_function(0x1000)
 ```
@@ -493,10 +493,10 @@ print(f"Found {len(license_strings)} license-related strings")
 if license_functions:
     bypass_gen = R2BypassGenerator('/path/to/protected_software.exe')
     bypass_result = bypass_gen.generate_bypass_strategies()
-    
+
     print(f"\nBypass Strategy: {bypass_result['recommended_approach']}")
     print(f"Confidence: {bypass_result['confidence_score']*100:.1f}%")
-    
+
     # Apply patch if recommended
     if bypass_result['recommended_approach'] == 'patch':
         patches = bypass_result['bypass_strategies']['patch']['patches']
@@ -533,7 +533,7 @@ if vuln_results['buffer_overflows']:
         print(f"  Function: {vuln['function']}")
         print(f"  Address: {hex(vuln['address'])}")
         print(f"  Severity: {vuln['severity']}")
-        
+
         # Generate exploit suggestion
         exploit = vuln_engine.generate_exploit_suggestion(vuln)
         if exploit:
@@ -576,7 +576,7 @@ def on_vulnerability_detected(update: AnalysisUpdate):
     print(f"  Binary: {update.binary_path}")
     print(f"  Severity: {update.severity}")
     print(f"  Details: {update.data}")
-    
+
     # Send alert (email, webhook, etc.)
     # send_security_alert(update)
 
@@ -613,11 +613,11 @@ try:
     # Keep running
     while True:
         time.sleep(10)
-        
+
         # Periodically check status
         status = analyzer.get_status()
         print(f"\rActive analyses: {status['active_analyses']}, Queue: {status['queue_size']}", end='')
-        
+
 except KeyboardInterrupt:
     print("\n\nStopping analyzer...")
     analyzer.stop_realtime_analysis()

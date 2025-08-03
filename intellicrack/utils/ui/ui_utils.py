@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 from collections.abc import Callable
 from enum import Enum
@@ -83,8 +82,9 @@ class ProgressTracker:
         self.is_cancelled = False
 
 
-def show_message(message: str, msg_type: MessageType = MessageType.INFO,
-                 title: str = None, parent: Any = None) -> None:
+def show_message(
+    message: str, msg_type: MessageType = MessageType.INFO, title: str = None, parent: Any = None
+) -> None:
     """Display a message to the user.
 
     Args:
@@ -123,16 +123,19 @@ def show_message(message: str, msg_type: MessageType = MessageType.INFO,
 
     # Store message in parent if it has a message history
     if parent and hasattr(parent, "message_history"):
-        parent.message_history.append({
-            "type": msg_type.value,
-            "title": title,
-            "message": message,
-            "timestamp": str(type(logger).__module__),  # Simple timestamp placeholder
-        })
+        parent.message_history.append(
+            {
+                "type": msg_type.value,
+                "title": title,
+                "message": message,
+                "timestamp": str(type(logger).__module__),  # Simple timestamp placeholder
+            }
+        )
 
 
-def get_user_input(prompt: str, default: str = "",
-                  title: str = "Input Required", parent: Any = None) -> str | None:
+def get_user_input(
+    prompt: str, default: str = "", title: str = "Input Required", parent: Any = None
+) -> str | None:
     """Get text input from the user.
 
     Args:
@@ -178,11 +181,13 @@ def get_user_input(prompt: str, default: str = "",
 
         # Store input history in parent if available
         if parent and hasattr(parent, "input_history"):
-            parent.input_history.append({
-                "prompt": prompt,
-                "result": result,
-                "title": title,
-            })
+            parent.input_history.append(
+                {
+                    "prompt": prompt,
+                    "result": result,
+                    "title": title,
+                }
+            )
 
         return result
     except (KeyboardInterrupt, EOFError) as e:
@@ -190,8 +195,9 @@ def get_user_input(prompt: str, default: str = "",
         return None
 
 
-def update_progress(progress: int, message: str = None,
-                   callback: Callable[[int, str], None] | None = None) -> None:
+def update_progress(
+    progress: int, message: str = None, callback: Callable[[int, str], None] | None = None
+) -> None:
     """Update progress display.
 
     Args:
@@ -209,8 +215,7 @@ def update_progress(progress: int, message: str = None,
         print(f"Progress: {progress}%")
 
 
-def confirm_action(message: str, title: str = "Confirm Action",
-                  parent: Any = None) -> bool:
+def confirm_action(message: str, title: str = "Confirm Action", parent: Any = None) -> bool:
     """Ask user to confirm an action.
 
     Args:
@@ -229,7 +234,9 @@ def confirm_action(message: str, title: str = "Confirm Action",
         # Sanitize title and message to prevent injection
         safe_title = title.replace("\n", " ").replace("\r", " ")
         safe_message = message.replace("\n", " ").replace("\r", " ")
-        response = input(f"{safe_title}: {safe_message} (y/n): ").strip().lower()  # Input validated below
+        response = (
+            input(f"{safe_title}: {safe_message} (y/n): ").strip().lower()
+        )  # Input validated below
         # Validate response - only accept specific values (y/yes)
         return response in ("y", "yes")
     except (KeyboardInterrupt, EOFError) as e:
@@ -237,9 +244,13 @@ def confirm_action(message: str, title: str = "Confirm Action",
         return False
 
 
-def select_from_list(items: list[str], prompt: str = "Select an item",
-                    title: str = "Selection", allow_multiple: bool = False,
-                    parent: Any = None) -> list[str] | None:
+def select_from_list(
+    items: list[str],
+    prompt: str = "Select an item",
+    title: str = "Selection",
+    allow_multiple: bool = False,
+    parent: Any = None,
+) -> list[str] | None:
     """Let user select from a list of items.
 
     Args:
@@ -318,8 +329,7 @@ def create_status_bar_message(message: str, timeout: int = 5000) -> dict[str, An
     }
 
 
-def format_table_data(headers: list[str], rows: list[list[Any]],
-                     max_width: int = 80) -> str:
+def format_table_data(headers: list[str], rows: list[list[Any]], max_width: int = 80) -> str:
     """Format data as a text table.
 
     Args:
@@ -354,11 +364,11 @@ def format_table_data(headers: list[str], rows: list[list[Any]],
     header_parts = []
     for i, header in enumerate(headers):
         if i < len(col_widths):
-            header_parts.append(str(header).ljust(col_widths[i])[:col_widths[i]])
+            header_parts.append(str(header).ljust(col_widths[i])[: col_widths[i]])
     lines.append(" | ".join(header_parts))
 
     # Separator
-    sep_parts = ["-" * w for w in col_widths[:len(headers)]]
+    sep_parts = ["-" * w for w in col_widths[: len(headers)]]
     lines.append("-+-".join(sep_parts))
 
     # Rows
@@ -366,7 +376,7 @@ def format_table_data(headers: list[str], rows: list[list[Any]],
         row_parts = []
         for i, cell in enumerate(row):
             if i < len(col_widths):
-                row_parts.append(str(cell).ljust(col_widths[i])[:col_widths[i]])
+                row_parts.append(str(cell).ljust(col_widths[i])[: col_widths[i]])
         lines.append(" | ".join(row_parts))
 
     return "\n".join(lines)

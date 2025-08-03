@@ -1,4 +1,5 @@
 """License protocol handler for processing license validation requests."""
+
 import logging
 import os
 import threading
@@ -37,7 +38,6 @@ for various license verification protocols including FlexLM, HASP, Adobe, and ot
 """
 
 
-
 class LicenseProtocolHandler(ABC):
     """Base class for license protocol handlers.
 
@@ -73,9 +73,13 @@ class LicenseProtocolHandler(ABC):
 
         # Initialize protocol-specific configuration
         self.port = self.config.get("port", int(os.environ.get("LICENSE_PROTOCOL_PORT", "8080")))
-        self.host = self.config.get("host", os.environ.get("LICENSE_PROTOCOL_HOST", "localhost"))  # Default to localhost for security
+        self.host = self.config.get(
+            "host", os.environ.get("LICENSE_PROTOCOL_HOST", "localhost")
+        )  # Default to localhost for security
         self.bind_host = self.config.get("bind_host", self.host)  # Allow separate bind host
-        self.timeout = self.config.get("timeout", int(os.environ.get("LICENSE_PROTOCOL_TIMEOUT", "30")))
+        self.timeout = self.config.get(
+            "timeout", int(os.environ.get("LICENSE_PROTOCOL_TIMEOUT", "30"))
+        )
 
         self.logger.info("Initialized %s protocol handler", self.__class__.__name__)
 
@@ -404,11 +408,13 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         import time
 
         # Store request for analysis
-        self.captured_requests.append({
-            "timestamp": time.time(),
-            "data": request_data,
-            "hex": request_data.hex(),
-        })
+        self.captured_requests.append(
+            {
+                "timestamp": time.time(),
+                "data": request_data,
+                "hex": request_data.hex(),
+            }
+        )
 
         # Parse FlexLM request to determine type
         if len(request_data) < 4:
@@ -431,7 +437,10 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
                 feature = parts[1]
                 # Generate a success response with configurable license details
                 import time
-                expiry = "0" if self.license_type == "permanent" else str(int(time.time()) + 86400 * 365)
+
+                expiry = (
+                    "0" if self.license_type == "permanent" else str(int(time.time()) + 86400 * 365)
+                )
                 response = f"GRANT {feature} {self.feature_version} {self.license_type} {expiry} 0 0 0 HOSTID=ANY\n"
                 return response.encode("utf-8")
 
@@ -478,9 +487,15 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         self.hasp_memory_size = self.config.get("hasp_memory_size", 0x20000)  # 128KB default
         self.hasp_version = self.config.get("hasp_version", "7.50")
         self.hasp_vendor_id = self.config.get("hasp_vendor_id", 0x1234)
-        self.license_features = self.config.get("license_features", [
-            "PROFESSIONAL", "ENTERPRISE", "DEVELOPER", "RUNTIME",
-        ])
+        self.license_features = self.config.get(
+            "license_features",
+            [
+                "PROFESSIONAL",
+                "ENTERPRISE",
+                "DEVELOPER",
+                "RUNTIME",
+            ],
+        )
         self.hasp_emulator_version = self.config.get("hasp_emulator_version", "HASP_EMU_v2.1")
 
     def clear_data(self) -> None:
@@ -587,11 +602,13 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         import time
 
         # Store request for analysis
-        self.captured_requests.append({
-            "timestamp": time.time(),
-            "data": request_data,
-            "hex": request_data.hex(),
-        })
+        self.captured_requests.append(
+            {
+                "timestamp": time.time(),
+                "data": request_data,
+                "hex": request_data.hex(),
+            }
+        )
 
         # HASP protocol uses binary format
         if len(request_data) < 8:
@@ -606,6 +623,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             if command_id == 0x01:  # HASP_LOGIN
                 # Login response: success status + dynamic handle
                 import random
+
                 handle = random.randint(0x10000000, 0x7FFFFFFF)  # Generate dynamic handle
                 response = struct.pack("<II", 0x00000000, handle)  # Success + handle
                 # Store handle for this session
@@ -644,7 +662,9 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         return struct.pack("<I", 0x00000000) + encrypted
                     except ImportError:
                         # Fallback to XOR if cryptography not available, but warn
-                        self.logger.warning("cryptography library not available - using weak XOR encryption")
+                        self.logger.warning(
+                            "cryptography library not available - using weak XOR encryption"
+                        )
                         encrypted = bytes(b ^ 0xAA for b in data_to_encrypt)
                         return struct.pack("<I", 0x00000000) + encrypted
                 return struct.pack("<I", 0x00000000)
@@ -675,14 +695,18 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         return struct.pack("<I", 0x00000000) + decrypted
                     except ImportError:
                         # Fallback to XOR if cryptography not available
-                        self.logger.warning("cryptography library not available - using weak XOR decryption")
+                        self.logger.warning(
+                            "cryptography library not available - using weak XOR decryption"
+                        )
                         decrypted = bytes(b ^ 0xAA for b in data_to_decrypt)
                         return struct.pack("<I", 0x00000000) + decrypted
                 return struct.pack("<I", 0x00000000)
 
             if command_id == 0x05:  # HASP_GET_SIZE
                 # Return size of available memory from configuration
-                return struct.pack("<II", 0x00000000, self.hasp_memory_size)  # Success + configured size
+                return struct.pack(
+                    "<II", 0x00000000, self.hasp_memory_size
+                )  # Success + configured size
 
             if command_id == 0x06:  # HASP_READ
                 # Read memory response
@@ -743,7 +767,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         except struct.error as e:
             logger.error("struct.error in license_protocol_handler: %s", e)
             # Malformed packet
-            return b"\xFF\xFF\xFF\xFF"  # Error response
+            return b"\xff\xff\xff\xff"  # Error response
 
 
 # Import generic implementation

@@ -20,6 +20,7 @@ Simple Analysis Plugin Template
 Basic template for straightforward binary analysis tasks
 """
 
+
 class SimpleAnalysisPlugin:
     """Simple analysis plugin for basic binary examination."""
 
@@ -35,10 +36,12 @@ class SimpleAnalysisPlugin:
 
         # Your analysis code here
         import os
+
         file_size = os.path.getsize(binary_path)
         results.append(f"File size: {file_size:,} bytes")
 
         return results
+
 
 def register():
     """Register and return an instance of the simple analysis plugin."""

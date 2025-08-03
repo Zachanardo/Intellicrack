@@ -103,21 +103,30 @@ class ModelLoadingDialog(QDialog):
         # Model name
         self.model_name_combo = QComboBox()
         self.model_name_combo.setEditable(True)
-        self.model_name_combo.addItems([
-            "llama2", "codellama", "mistral", "gpt-3.5-turbo",
-            "gpt-4", "claude-2", "claude-instant",
-        ])
+        self.model_name_combo.addItems(
+            [
+                "llama2",
+                "codellama",
+                "mistral",
+                "gpt-3.5-turbo",
+                "gpt-4",
+                "claude-2",
+                "claude-instant",
+            ]
+        )
         config_layout.addRow("Model Name:", self.model_name_combo)
 
         # API URL
         self.api_url_combo = QComboBox()
         self.api_url_combo.setEditable(True)
-        self.api_url_combo.addItems([
-            "http://localhost:11434",  # Ollama
-            "http://localhost:1234",   # LM Studio
-            "https://api.openai.com/v1",
-            "https://api.anthropic.com/v1",
-        ])
+        self.api_url_combo.addItems(
+            [
+                "http://localhost:11434",  # Ollama
+                "http://localhost:1234",  # LM Studio
+                "https://api.openai.com/v1",
+                "https://api.anthropic.com/v1",
+            ]
+        )
         config_layout.addRow("API URL:", self.api_url_combo)
 
         # Priority
@@ -204,16 +213,15 @@ class ModelLoadingDialog(QDialog):
 
             if task:
                 logger.info(f"Submitted loading task for: {model_id}")
-                QMessageBox.information(self, "Success",
-                    f"Model loading task submitted:\n{model_id}")
+                QMessageBox.information(
+                    self, "Success", f"Model loading task submitted:\n{model_id}"
+                )
             else:
-                QMessageBox.critical(self, "Error",
-                    "Failed to submit loading task")
+                QMessageBox.critical(self, "Error", "Failed to submit loading task")
 
         except Exception as e:
             logger.error(f"Error loading model: {e}")
-            QMessageBox.critical(self, "Error",
-                f"Error loading model:\n{e!s}")
+            QMessageBox.critical(self, "Error", f"Error loading model:\n{e!s}")
 
     def get_next_id(self):
         """Get next available ID number."""
@@ -252,8 +260,7 @@ class ModelLoadingDialog(QDialog):
         self.refresh_loaded_models()
 
         # Show notification
-        QMessageBox.information(self, "Model Loaded",
-            f"Model successfully loaded:\n{model_id}")
+        QMessageBox.information(self, "Model Loaded", f"Model successfully loaded:\n{model_id}")
 
     def closeEvent(self, event):
         """Handle dialog close."""

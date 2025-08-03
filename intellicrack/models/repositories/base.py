@@ -39,10 +39,16 @@ from .interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInter
 # Set up logging
 logger = logging.getLogger(__name__)
 
+
 class CacheManager:
     """Manages caching of API responses and model metadata."""
 
-    def __init__(self, cache_dir: str = os.path.join(os.path.dirname(__file__), "..", "cache"), ttl_seconds: int = 3600, max_size_mb: int = 100):
+    def __init__(
+        self,
+        cache_dir: str = os.path.join(os.path.dirname(__file__), "..", "cache"),
+        ttl_seconds: int = 3600,
+        max_size_mb: int = 100,
+    ):
         """Initialize the cache manager.
 
         Args:
@@ -186,7 +192,8 @@ class CacheManager:
         """Remove expired cache entries."""
         current_time = time.time()
         expired_keys = [
-            key for key, entry in self.cache_index.items()
+            key
+            for key, entry in self.cache_index.items()
             if entry.get("expiry_time", 0) < current_time
         ]
 
@@ -203,9 +210,7 @@ class CacheManager:
             Current size in megabytes
 
         """
-        total_size = sum(
-            entry.get("size", 0) for entry in self.cache_index.values()
-        )
+        total_size = sum(entry.get("size", 0) for entry in self.cache_index.values())
         return total_size / (1024 * 1024)  # Convert bytes to MB
 
     def _manage_cache_size(self):
@@ -248,7 +253,7 @@ class RateLimiter:
         """
         self.config = config or RateLimitConfig()
         self.minute_counters = {}  # Resource -> (count, timestamp)
-        self.day_counters = {}     # Resource -> (count, timestamp)
+        self.day_counters = {}  # Resource -> (count, timestamp)
 
     def check_limit(self, resource: str) -> tuple[bool, str]:
         """Check if a request is allowed for the given resource.
@@ -286,13 +291,19 @@ class RateLimiter:
         # Check limits
         if minute_count >= self.config.requests_per_minute:
             wait_time = 60 - (current_time - minute_start)
-            return False, f"Rate limit exceeded for {resource}. Try again in {wait_time:.1f} seconds."
+            return (
+                False,
+                f"Rate limit exceeded for {resource}. Try again in {wait_time:.1f} seconds.",
+            )
 
         if day_count >= self.config.requests_per_day:
             wait_time = 86400 - (current_time - day_start)
             hours = wait_time // 3600
             minutes = (wait_time % 3600) // 60
-            return False, f"Daily rate limit exceeded for {resource}. Try again in {hours:.0f}h {minutes:.0f}m."
+            return (
+                False,
+                f"Daily rate limit exceeded for {resource}. Try again in {hours:.0f}h {minutes:.0f}m.",
+            )
 
         return True, ""
 
@@ -338,15 +349,17 @@ class RateLimiter:
 class APIRepositoryBase(ModelRepositoryInterface):
     """Base class for API-based model repositories."""
 
-    def __init__(self,
-                 repository_name: str,
-                 api_endpoint: str,
-                 api_key: str = "",
-                 timeout: int = 60,
-                 proxy: str = "",
-                 rate_limit_config: RateLimitConfig | None = None,
-                 cache_config: dict[str, Any] | None = None,
-                 download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads")):
+    def __init__(
+        self,
+        repository_name: str,
+        api_endpoint: str,
+        api_key: str = "",
+        timeout: int = 60,
+        proxy: str = "",
+        rate_limit_config: RateLimitConfig | None = None,
+        cache_config: dict[str, Any] | None = None,
+        download_dir: str = os.path.join(os.path.dirname(__file__), "..", "downloads"),
+    ):
         """Initialize the API repository.
 
         Args:
@@ -371,7 +384,9 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
         # Initialize cache manager
         cache_params = cache_config or {}
-        cache_dir = cache_params.get("cache_dir", os.path.join(os.path.dirname(__file__), "..", "cache", repository_name))
+        cache_dir = cache_params.get(
+            "cache_dir", os.path.join(os.path.dirname(__file__), "..", "cache", repository_name)
+        )
         ttl_seconds = cache_params.get("ttl", 3600)
         max_size_mb = cache_params.get("max_size_mb", 100)
         self.cache_manager = CacheManager(cache_dir, ttl_seconds, max_size_mb)
@@ -391,14 +406,16 @@ class APIRepositoryBase(ModelRepositoryInterface):
             }
 
     # pylint: disable=too-many-locals
-    def _make_request(self,
-                     endpoint: str,
-                     method: str = "GET",
-                     params: dict[str, Any] | None = None,
-                     data: dict[str, Any] | None = None,
-                     headers: dict[str, str] | None = None,
-                     use_cache: bool = True,
-                     cache_ttl: int | None = None) -> tuple[bool, Any, str]:
+    def _make_request(
+        self,
+        endpoint: str,
+        method: str = "GET",
+        params: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        use_cache: bool = True,
+        cache_ttl: int | None = None,
+    ) -> tuple[bool, Any, str]:
         """Make an API request with rate limiting, caching, and error handling.
 
         Args:
@@ -491,8 +508,12 @@ class APIRepositoryBase(ModelRepositoryInterface):
             return False, None, f"Request error: {e!s}"
 
     # pylint: disable=too-many-locals
-    def download_model(self, model_id: str, destination_path: str,
-                      progress_callback: DownloadProgressCallback | None = None) -> tuple[bool, str]:
+    def download_model(
+        self,
+        model_id: str,
+        destination_path: str,
+        progress_callback: DownloadProgressCallback | None = None,
+    ) -> tuple[bool, str]:
         """Download a model from the repository.
 
         Args:

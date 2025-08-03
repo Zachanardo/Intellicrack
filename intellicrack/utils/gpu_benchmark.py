@@ -47,6 +47,7 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> dict[str, Any]:
     try:
         # Try to use our GPU acceleration module
         from ..core.gpu_acceleration import get_gpu_accelerator
+
         accelerator = get_gpu_accelerator()
 
         results["gpu_available"] = accelerator.framework != "cpu"
@@ -58,10 +59,10 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> dict[str, Any]:
 
         # Perform pattern search for common binary patterns
         patterns_to_search = [
-            (b"\x4D\x5A", "MZ Header"),  # PE executable
-            (b"\x7F\x45\x4C\x46", "ELF Header"),  # ELF executable
+            (b"\x4d\x5a", "MZ Header"),  # PE executable
+            (b"\x7f\x45\x4c\x46", "ELF Header"),  # ELF executable
             (b"\x00\x00\x00\x00", "Null bytes"),
-            (b"\xFF\xFF\xFF\xFF", "Max bytes"),
+            (b"\xff\xff\xff\xff", "Max bytes"),
             (b"LICENSE", "License string"),
             (b"ACTIVATION", "Activation string"),
             (b"SERIAL", "Serial string"),
@@ -98,11 +99,13 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> dict[str, Any]:
             high_entropy_blocks = []
             for i, entropy in enumerate(entropy_result["block_entropies"]):
                 if entropy > 7.0:  # High entropy threshold
-                    high_entropy_blocks.append({
-                        "block_index": i,
-                        "offset": i * 4096,
-                        "entropy": entropy,
-                    })
+                    high_entropy_blocks.append(
+                        {
+                            "block_index": i,
+                            "offset": i * 4096,
+                            "entropy": entropy,
+                        }
+                    )
 
             if high_entropy_blocks and hasattr(app, "update_output"):
                 app.update_output.emit(
@@ -120,9 +123,11 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> dict[str, Any]:
 
         # Calculate performance metrics
         if results["gpu_available"]:
-            total_gpu_time = sum(
-                r.get("execution_time", 0) for r in pattern_results
-            ) + entropy_result.get("execution_time", 0) + hash_result.get("execution_time", 0)
+            total_gpu_time = (
+                sum(r.get("execution_time", 0) for r in pattern_results)
+                + entropy_result.get("execution_time", 0)
+                + hash_result.get("execution_time", 0)
+            )
 
             # Estimate CPU time based on typical speedups
             speedup_factors = {
@@ -175,8 +180,8 @@ def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any
     """
     if test_sizes is None:
         test_sizes = [
-            1024 * 1024,      # 1 MB
-            10 * 1024 * 1024, # 10 MB
+            1024 * 1024,  # 1 MB
+            10 * 1024 * 1024,  # 10 MB
             50 * 1024 * 1024,  # 50 MB
         ]
 
@@ -195,9 +200,9 @@ def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any
         # First third: low entropy (zeros)
         # Second third: medium entropy (pattern)
         pattern = b"ABCD" * (size // 12)
-        data[size//3:2*size//3] = pattern[:size//3]
+        data[size // 3 : 2 * size // 3] = pattern[: size // 3]
         # Last third: high entropy (random)
-        data[2*size//3:] = np.random.bytes(size//3)
+        data[2 * size // 3 :] = np.random.bytes(size // 3)
         test_data[size] = bytes(data)
 
     if hasattr(app, "update_output"):
@@ -238,6 +243,7 @@ def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any
             if framework == "cupy":
                 try:
                     import cupy as cp
+
                     # Data transfer
                     transfer_start = time.time()
                     data_gpu = cp.asarray(np.frombuffer(data, dtype=np.uint8))
@@ -249,7 +255,7 @@ def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any
                     # Simple matching for benchmark
                     matches = 0
                     for i in range(0, len(data_gpu) - len(pattern_gpu), 1000):
-                        if cp.all(data_gpu[i:i+len(pattern_gpu)] == pattern_gpu):
+                        if cp.all(data_gpu[i : i + len(pattern_gpu)] == pattern_gpu):
                             matches += 1
                     cp.cuda.Stream.null.synchronize()
 
@@ -278,11 +284,15 @@ def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any
                     search_start = time.time()
                     # In a real implementation, this would be a CUDA kernel
                     # For benchmark purposes, we access the data to ensure it's used
-                    result_count = len(d_data) // len(d_pattern)  # Simple calculation using GPU data
+                    result_count = len(d_data) // len(
+                        d_pattern
+                    )  # Simple calculation using GPU data
                     numba_cuda.synchronize()
                     search_time = time.time() - search_start
                     framework_results["pattern_search"][f"{size_mb}MB"] = search_time
-                    framework_results["results_found"] = framework_results.get("results_found", 0) + result_count
+                    framework_results["results_found"] = (
+                        framework_results.get("results_found", 0) + result_count
+                    )
 
                 except Exception as e:
                     logger.error(f"Numba benchmark failed: {e}")
@@ -326,7 +336,9 @@ def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any
                 framework_results["entropy_values"] = framework_results.get("entropy_values", {})
                 framework_results["entropy_values"][f"{size_mb}MB"] = float(entropy)
 
-            framework_results["total_time"] += search_time + framework_results.get("data_transfer", {}).get(f"{size_mb}MB", 0)
+            framework_results["total_time"] += search_time + framework_results.get(
+                "data_transfer", {}
+            ).get(f"{size_mb}MB", 0)
 
         if framework_results["pattern_search"]:
             results["benchmarks"][framework] = framework_results

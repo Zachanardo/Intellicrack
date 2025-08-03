@@ -7,7 +7,6 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-
 from PyQt6.QtCore import QObject, pyqtSignal
 
 try:
@@ -28,6 +27,7 @@ except ImportError:
     def get_logger(name):
         """Create a logger instance for the given name."""
         return logging.getLogger(name)
+
 
 logger = get_logger(__name__)
 
@@ -65,7 +65,8 @@ class AnalysisResultOrchestrator(QObject):
             logger.info(f"Registered handler: {handler.__class__.__name__}")
         else:
             logger.warning(
-                f"Handler {handler.__class__.__name__} missing on_analysis_complete slot")
+                f"Handler {handler.__class__.__name__} missing on_analysis_complete slot"
+            )
 
     def unregister_handler(self, handler: QObject):
         """Remove a handler from the registry.
@@ -84,8 +85,7 @@ class AnalysisResultOrchestrator(QObject):
         Distributes the result to all registered handlers.
         """
         self._current_result = result
-        logger.info(
-            f"Orchestrator received analysis result for: {result.file_path}")
+        logger.info(f"Orchestrator received analysis result for: {result.file_path}")
 
         # Distribute to all handlers
         for handler in self.handlers:
@@ -96,8 +96,7 @@ class AnalysisResultOrchestrator(QObject):
                     "Processing complete",
                 )
             except Exception as e:
-                logger.error(
-                    f"Handler {handler.__class__.__name__} error: {e}")
+                logger.error(f"Handler {handler.__class__.__name__} error: {e}")
                 self.handler_status.emit(
                     handler.__class__.__name__,
                     f"Error: {e!s}",
@@ -128,7 +127,11 @@ class AnalysisResultOrchestrator(QObject):
                         "ICP processing complete",
                     )
                 # Fallback to general analysis method if ICP result can be converted
-                elif hasattr(handler, "on_analysis_complete") and hasattr(self, "_current_result") and self._current_result:
+                elif (
+                    hasattr(handler, "on_analysis_complete")
+                    and hasattr(self, "_current_result")
+                    and self._current_result
+                ):
                     handler.on_analysis_complete(self._current_result)
                     self.handler_status.emit(
                         handler.__class__.__name__,
@@ -182,7 +185,9 @@ class AnalysisResultOrchestrator(QObject):
         logger.info(f"ICPScanResult validation passed for {result.file_path}")
         return True
 
-    def merge_icp_with_unified_result(self, icp_result: "ICPScanResult", unified_result: UnifiedProtectionResult | None = None) -> UnifiedProtectionResult:
+    def merge_icp_with_unified_result(
+        self, icp_result: "ICPScanResult", unified_result: UnifiedProtectionResult | None = None
+    ) -> UnifiedProtectionResult:
         """Merge ICP scan results with unified protection result.
 
         Args:
@@ -197,7 +202,9 @@ class AnalysisResultOrchestrator(QObject):
             if UnifiedProtectionResult:
                 # Create new unified result from ICP data
                 unified_result = UnifiedProtectionResult()
-                unified_result.file_path = icp_result.file_path if hasattr(icp_result, "file_path") else None
+                unified_result.file_path = (
+                    icp_result.file_path if hasattr(icp_result, "file_path") else None
+                )
                 unified_result.analysis_timestamp = getattr(icp_result, "timestamp", None)
             else:
                 logger.error("UnifiedProtectionResult not available")
@@ -221,11 +228,15 @@ class AnalysisResultOrchestrator(QObject):
         if hasattr(icp_result, "overall_confidence") and hasattr(unified_result, "confidence"):
             # Average the confidence scores
             if unified_result.confidence:
-                unified_result.confidence = (unified_result.confidence + icp_result.overall_confidence) / 2
+                unified_result.confidence = (
+                    unified_result.confidence + icp_result.overall_confidence
+                ) / 2
             else:
                 unified_result.confidence = icp_result.overall_confidence
 
-        logger.info(f"Merged ICPScanResult with UnifiedProtectionResult for {unified_result.file_path}")
+        logger.info(
+            f"Merged ICPScanResult with UnifiedProtectionResult for {unified_result.file_path}"
+        )
         return unified_result
 
     def extract_icp_recommendations(self, result: "ICPScanResult") -> list:
@@ -252,9 +263,13 @@ class AnalysisResultOrchestrator(QObject):
             for protection in result.protections:
                 if hasattr(protection, "type") and hasattr(protection, "bypass_difficulty"):
                     if protection.bypass_difficulty == "low":
-                        recommendations.append(f"Protection '{protection.type}' has low bypass difficulty - standard techniques should work")
+                        recommendations.append(
+                            f"Protection '{protection.type}' has low bypass difficulty - standard techniques should work"
+                        )
                     elif protection.bypass_difficulty == "high":
-                        recommendations.append(f"Protection '{protection.type}' requires advanced bypass techniques")
+                        recommendations.append(
+                            f"Protection '{protection.type}' requires advanced bypass techniques"
+                        )
 
         # Add tool-specific recommendations
         if hasattr(result, "suggested_tools"):

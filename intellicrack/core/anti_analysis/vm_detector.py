@@ -32,8 +32,7 @@ including VMware, VirtualBox, Hyper-V, QEMU, and others.
 
 
 class VMDetector(BaseDetector):
-    """Comprehensive virtual machine detection using multiple techniques.
-    """
+    """Comprehensive virtual machine detection using multiple techniques."""
 
     def __init__(self):
         """Initialize the virtual machine detector with detection methods and signatures."""
@@ -56,21 +55,41 @@ class VMDetector(BaseDetector):
         self.vm_signatures = {
             "vmware": {
                 "processes": ["vmtoolsd.exe", "vmwaretray.exe", "vmwareuser.exe"],
-                "files": [os.path.join(os.environ.get("ProgramFiles", "C:\\\\Program Files"), "VMware", "VMware Tools"), "/usr/bin/vmware-toolbox-cmd"],
+                "files": [
+                    os.path.join(
+                        os.environ.get("ProgramFiles", "C:\\\\Program Files"),
+                        "VMware",
+                        "VMware Tools",
+                    ),
+                    "/usr/bin/vmware-toolbox-cmd",
+                ],
                 "registry": [r"HKLM\\SOFTWARE\\VMware, Inc.\\VMware Tools"],
                 "hardware": ["VMware Virtual Platform", "VMware SVGA", "VMware Virtual USB"],
                 "mac_prefixes": ["00:05:69", "00:0C:29", "00:1C:14", "00:50:56"],
             },
             "virtualbox": {
                 "processes": ["VBoxService.exe", "VBoxTray.exe"],
-                "files": [os.path.join(os.environ.get("ProgramFiles", r"C:\\Program Files"), "Oracle", "VirtualBox Guest Additions")],
+                "files": [
+                    os.path.join(
+                        os.environ.get("ProgramFiles", r"C:\\Program Files"),
+                        "Oracle",
+                        "VirtualBox Guest Additions",
+                    )
+                ],
                 "registry": [r"HKLM\\SOFTWARE\\Oracle\\VirtualBox Guest Additions"],
                 "hardware": ["VirtualBox", "VBOX HARDDISK", "VBOX CD-ROM"],
                 "mac_prefixes": ["08:00:27"],
             },
             "hyperv": {
                 "processes": ["vmconnect.exe", "vmms.exe"],
-                "files": [os.path.join(os.environ.get("SystemRoot", "C:\\\\Windows"), "System32", "drivers", "vmbus.sys")],
+                "files": [
+                    os.path.join(
+                        os.environ.get("SystemRoot", "C:\\\\Windows"),
+                        "System32",
+                        "drivers",
+                        "vmbus.sys",
+                    )
+                ],
                 "registry": [r"HKLM\\SOFTWARE\\Microsoft\\Virtual Machine\\Guest\\Parameters"],
                 "hardware": ["Microsoft Corporation Virtual Machine"],
                 "mac_prefixes": ["00:15:5D"],
@@ -83,7 +102,13 @@ class VMDetector(BaseDetector):
             },
             "parallels": {
                 "processes": ["prl_tools.exe", "prl_cc.exe"],
-                "files": [os.path.join(os.environ.get("ProgramFiles", r"C:\\Program Files"), "Parallels", "Parallels Tools")],
+                "files": [
+                    os.path.join(
+                        os.environ.get("ProgramFiles", r"C:\\Program Files"),
+                        "Parallels",
+                        "Parallels Tools",
+                    )
+                ],
                 "hardware": ["Parallels Virtual Platform"],
                 "mac_prefixes": ["00:1C:42"],
             },
@@ -126,7 +151,9 @@ class VMDetector(BaseDetector):
             # Calculate evasion score (how hard to evade detection)
             results["evasion_score"] = self._calculate_evasion_score(results["detections"])
 
-            self.logger.info(f"VM detection complete: {results['is_vm']} (confidence: {results['confidence']:.2f})")
+            self.logger.info(
+                f"VM detection complete: {results['is_vm']} (confidence: {results['confidence']:.2f})"
+            )
             return results
 
         except Exception as e:
@@ -150,11 +177,15 @@ class VMDetector(BaseDetector):
             if platform.system() == "Windows":
                 try:
                     import wmi
+
                     c = wmi.WMI()
                     for processor in c.Win32_Processor():
                         if hasattr(processor, "Manufacturer"):
                             manufacturer = processor.Manufacturer.lower()
-                            if any(vm in manufacturer for vm in ["vmware", "virtualbox", "microsoft hv"]):
+                            if any(
+                                vm in manufacturer
+                                for vm in ["vmware", "virtualbox", "microsoft hv"]
+                            ):
                                 details["vendor"] = manufacturer
                                 return True, 0.8, details
                 except ImportError as e:
@@ -172,8 +203,12 @@ class VMDetector(BaseDetector):
         try:
             # Try to get hypervisor brand
             if platform.system() == "Linux":
-                result = subprocess.run(["dmidecode", "-s", "system-product-name"],
-                                      check=False, capture_output=True, text=True)
+                result = subprocess.run(
+                    ["dmidecode", "-s", "system-product-name"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
                 if result.returncode == 0:
                     product = result.stdout.strip().lower()
                     for vm_type, signatures in self.vm_signatures.items():
@@ -196,6 +231,7 @@ class VMDetector(BaseDetector):
             if platform.system() == "Windows":
                 try:
                     import wmi
+
                     c = wmi.WMI()
 
                     # Check system info
@@ -255,7 +291,9 @@ class VMDetector(BaseDetector):
                 for process in sigs.get("processes", []):
                     if process.lower() in processes:
                         details["detected_processes"].append(process)
-                        details["vm_type"] = vm_type  # Use vm_type to indicate which VM was detected
+                        details["vm_type"] = (
+                            vm_type  # Use vm_type to indicate which VM was detected
+                        )
 
             if details["detected_processes"]:
                 return True, 0.7, details
@@ -361,7 +399,9 @@ class VMDetector(BaseDetector):
         try:
             # Get network interfaces
             if platform.system() == "Windows":
-                result = subprocess.run(["ipconfig", "/all"], check=False, capture_output=True, text=True)
+                result = subprocess.run(
+                    ["ipconfig", "/all"], check=False, capture_output=True, text=True
+                )
                 output = result.stdout
             else:
                 result = subprocess.run(["ip", "link"], check=False, capture_output=True, text=True)
@@ -369,13 +409,14 @@ class VMDetector(BaseDetector):
 
             # Extract MAC addresses
             import re
+
             mac_pattern = r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})"
             macs = re.findall(mac_pattern, output)
 
             # Check against known VM MAC prefixes
             for mac in macs:
                 mac_str = "".join(mac).replace(":", "").replace("-", "")
-                mac_prefix = ":".join([mac_str[i:i+2] for i in range(0, 6, 2)])
+                mac_prefix = ":".join([mac_str[i : i + 2] for i in range(0, 6, 2)])
 
                 for vm_type, sigs in self.vm_signatures.items():
                     for prefix in sigs.get("mac_prefixes", []):
@@ -409,6 +450,7 @@ class VMDetector(BaseDetector):
             elif platform.system() == "Windows":
                 try:
                     import wmi
+
                     c = wmi.WMI()
                     for bios in c.Win32_BIOS():
                         if hasattr(bios, "Manufacturer"):
@@ -432,12 +474,20 @@ class VMDetector(BaseDetector):
         try:
             if platform.system() == "Windows":
                 # Check loaded drivers
-                result = subprocess.run(["driverquery"], check=False, capture_output=True, text=True)
+                result = subprocess.run(
+                    ["driverquery"], check=False, capture_output=True, text=True
+                )
                 drivers = result.stdout.lower()
 
                 vm_drivers = [
-                    "vmci", "vmmouse", "vmhgfs", "vboxguest",
-                    "vboxmouse", "vboxsf", "vboxvideo", "vm3dmp",
+                    "vmci",
+                    "vmmouse",
+                    "vmhgfs",
+                    "vboxguest",
+                    "vboxmouse",
+                    "vboxsf",
+                    "vboxvideo",
+                    "vm3dmp",
                 ]
 
                 for driver in vm_drivers:
@@ -450,8 +500,14 @@ class VMDetector(BaseDetector):
                 modules = result.stdout.lower()
 
                 vm_modules = [
-                    "vmw_vmci", "vmw_balloon", "vmwgfx", "vboxguest",
-                    "vboxsf", "vboxvideo", "virtio_balloon", "virtio_pci",
+                    "vmw_vmci",
+                    "vmw_balloon",
+                    "vmwgfx",
+                    "vboxguest",
+                    "vboxsf",
+                    "vboxvideo",
+                    "virtio_balloon",
+                    "virtio_pci",
                 ]
 
                 for module in vm_modules:
@@ -771,27 +827,31 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
         mods = []
 
         if vm_type.lower() == "vmware":
-            mods.extend([
-                {
-                    "action": "delete",
-                    "key": r"HKLM\SOFTWARE\VMware, Inc.",
-                    "description": "Remove VMware software keys",
-                },
-                {
-                    "action": "rename",
-                    "key": r"HKLM\SYSTEM\CurrentControlSet\Services\vmtools",
-                    "new_name": "svchost_helper",
-                    "description": "Rename VMware Tools service",
-                },
-            ])
+            mods.extend(
+                [
+                    {
+                        "action": "delete",
+                        "key": r"HKLM\SOFTWARE\VMware, Inc.",
+                        "description": "Remove VMware software keys",
+                    },
+                    {
+                        "action": "rename",
+                        "key": r"HKLM\SYSTEM\CurrentControlSet\Services\vmtools",
+                        "new_name": "svchost_helper",
+                        "description": "Rename VMware Tools service",
+                    },
+                ]
+            )
         elif vm_type.lower() == "virtualbox":
-            mods.extend([
-                {
-                    "action": "delete",
-                    "key": r"HKLM\SOFTWARE\Oracle\VirtualBox Guest Additions",
-                    "description": "Remove VirtualBox guest additions keys",
-                },
-            ])
+            mods.extend(
+                [
+                    {
+                        "action": "delete",
+                        "key": r"HKLM\SOFTWARE\Oracle\VirtualBox Guest Additions",
+                        "description": "Remove VirtualBox guest additions keys",
+                    },
+                ]
+            )
 
         return mods
 
@@ -800,18 +860,20 @@ Interceptor.attach(Module.findExportByName(null, 'IsDebuggerPresent'), {
         ops = []
 
         if vm_type.lower() == "vmware":
-            ops.extend([
-                {
-                    "action": "rename",
-                    "path": r"C:\Program Files\VMware\VMware Tools\vmtoolsd.exe",
-                    "new_name": "svchost32.exe",
-                    "description": "Rename VMware Tools daemon",
-                },
-                {
-                    "action": "hide",
-                    "path": r"C:\Windows\System32\drivers\vmmouse.sys",
-                    "description": "Hide VMware mouse driver",
-                },
-            ])
+            ops.extend(
+                [
+                    {
+                        "action": "rename",
+                        "path": r"C:\Program Files\VMware\VMware Tools\vmtoolsd.exe",
+                        "new_name": "svchost32.exe",
+                        "description": "Rename VMware Tools daemon",
+                    },
+                    {
+                        "action": "hide",
+                        "path": r"C:\Windows\System32\drivers\vmmouse.sys",
+                        "description": "Hide VMware mouse driver",
+                    },
+                ]
+            )
 
         return ops

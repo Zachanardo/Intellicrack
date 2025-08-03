@@ -26,20 +26,20 @@ class TestProtectionDetectionPerformance:
             dos_header += b'\x00' * 40
             dos_header += b'\x80\x00\x00\x00'
             dos_header += b'\x00' * 60
-            
+
             pe_signature = b'PE\x00\x00'
             coff_header = b'\x4c\x01\x03\x00' + b'\x00' * 16
             optional_header = b'\x0b\x01\x0e\x00' + b'\x00' * 220
-            
+
             section_data = b'\x2e\x74\x65\x78\x74\x00\x00\x00'
             section_data += b'\x00\x10\x00\x00\x00\x10\x00\x00\x00\x10\x00\x00\x00\x04\x00\x00'
             section_data += b'\x00' * 16
             section_data += b'\x20\x00\x00\x60'
-            
+
             temp_file.write(dos_header + pe_signature + coff_header + optional_header + section_data)
             temp_file.flush()
             yield temp_file.name
-        
+
         try:
             os.unlink(temp_file.name)
         except:
@@ -54,25 +54,25 @@ class TestProtectionDetectionPerformance:
             dos_header += b'\x00' * 40
             dos_header += b'\x80\x00\x00\x00'
             dos_header += b'\x00' * 60
-            
+
             pe_signature = b'PE\x00\x00'
             coff_header = b'\x4c\x01\x03\x00' + b'\x00' * 16
             optional_header = b'\x0b\x01\x0e\x00' + b'\x00' * 220
-            
+
             upx_section = b'UPX0\x00\x00\x00\x00'
             upx_section += b'\x00\x10\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00'
             upx_section += b'\x00' * 16
             upx_section += b'\x80\x00\x00\x60'
-            
+
             upx1_section = b'UPX1\x00\x00\x00\x00'
             upx1_section += b'\x00\x20\x00\x00\x00\x20\x00\x00\x00\x10\x00\x00\x00\x14\x00\x00'
             upx1_section += b'\x00' * 16
             upx1_section += b'\x80\x00\x00\x60'
-            
+
             temp_file.write(dos_header + pe_signature + coff_header + optional_header + upx_section + upx1_section)
             temp_file.flush()
             yield temp_file.name
-        
+
         try:
             os.unlink(temp_file.name)
         except:
@@ -87,24 +87,24 @@ class TestProtectionDetectionPerformance:
             dos_header += b'\x00' * 40
             dos_header += b'\x80\x00\x00\x00'
             dos_header += b'\x00' * 60
-            
+
             pe_signature = b'PE\x00\x00'
             coff_header = b'\x4c\x01\x03\x00' + b'\x00' * 16
             optional_header = b'\x0b\x01\x0e\x00' + b'\x00' * 220
-            
+
             vmp_section = b'.vmp0\x00\x00\x00'
             vmp_section += b'\x00\x10\x00\x00\x00\x10\x00\x00\x00\x10\x00\x00\x00\x04\x00\x00'
             vmp_section += b'\x00' * 16
             vmp_section += b'\x60\x00\x00\xe0'
-            
+
             vmp_signature = b'\x68\x00\x00\x00\x00\xc3'
             vmp_signature += b'\x55\x8b\xec\x83\xec\x08\x53\x56\x57'
             vmp_signature += b'\x8b\x75\x08\x33\xdb\x83\xfe\xff'
-            
+
             temp_file.write(dos_header + pe_signature + coff_header + optional_header + vmp_section + vmp_signature)
             temp_file.flush()
             yield temp_file.name
-        
+
         try:
             os.unlink(temp_file.name)
         except:
@@ -122,9 +122,9 @@ class TestProtectionDetectionPerformance:
         def detect_protections():
             detector = ProtectionDetector()
             return detector.analyze_file(sample_pe_file)
-        
+
         result = benchmark(detect_protections)
-        
+
         assert result is not None, "Protection detection must return results"
         assert 'protections' in result, "Result must contain protections data"
         assert isinstance(result['protections'], list), "Protections must be a list"
@@ -136,9 +136,9 @@ class TestProtectionDetectionPerformance:
         def analyze_advanced_protections():
             analyzer = IntellicrackProtectionAdvanced()
             return analyzer.deep_analyze(vmprotect_pe_file)
-        
+
         result = benchmark(analyze_advanced_protections)
-        
+
         assert result is not None, "Advanced analysis must return results"
         assert 'analysis' in result, "Result must contain analysis data"
         assert 'confidence' in result, "Result must contain confidence score"
@@ -150,9 +150,9 @@ class TestProtectionDetectionPerformance:
         def detect_packer():
             detector = ProtectionDetector()
             return detector.detect_packer(packed_pe_file)
-        
+
         result = benchmark(detect_packer)
-        
+
         assert result is not None, "Packer detection must return results"
         assert 'packer' in result or 'packed' in result, "Result must indicate packer information"
         assert benchmark.stats.mean < 0.3, "Packer detection should be under 300ms"
@@ -165,9 +165,9 @@ class TestProtectionDetectionPerformance:
             with open(sample_pe_file, 'rb') as f:
                 data = f.read()
             return analyzer.calculate_entropy(data)
-        
+
         result = benchmark(analyze_entropy)
-        
+
         assert result is not None, "Entropy analysis must return value"
         assert isinstance(result, (int, float)), "Entropy must be numeric"
         assert 0 <= result <= 8, "Entropy must be between 0 and 8"
@@ -179,9 +179,9 @@ class TestProtectionDetectionPerformance:
         def run_yara_scan():
             engine = YaraPatternEngine()
             return engine.scan_file(sample_pe_file)
-        
+
         result = benchmark(run_yara_scan)
-        
+
         assert result is not None, "YARA scan must return results"
         assert 'matches' in result, "Result must contain matches"
         assert isinstance(result['matches'], list), "Matches must be a list"
@@ -192,18 +192,18 @@ class TestProtectionDetectionPerformance:
         """Benchmark REAL analysis cache operations."""
         def cache_operations():
             cache = AnalysisCache()
-            
+
             key = f"test_{int(time.time())}"
             data = {'analysis': 'test_data', 'timestamp': time.time()}
-            
+
             cache.store(key, data)
             retrieved = cache.get(key)
             cache.invalidate(key)
-            
+
             return retrieved
-        
+
         result = benchmark(cache_operations)
-        
+
         assert result is not None, "Cache operations must return data"
         assert 'analysis' in result, "Cached data must contain analysis"
         assert benchmark.stats.mean < 0.01, "Cache operations should be under 10ms"
@@ -212,7 +212,7 @@ class TestProtectionDetectionPerformance:
         """Test REAL concurrent protection detection performance."""
         results = []
         errors = []
-        
+
         def detect_protection(file_path, thread_id):
             try:
                 detector = ProtectionDetector()
@@ -220,25 +220,25 @@ class TestProtectionDetectionPerformance:
                 results.append((thread_id, result))
             except Exception as e:
                 errors.append((thread_id, str(e)))
-        
+
         files = [sample_pe_file, packed_pe_file, vmprotect_pe_file] * 3
         threads = []
         start_time = time.time()
-        
+
         for i, file_path in enumerate(files):
             thread = threading.Thread(target=detect_protection, args=(file_path, i))
             threads.append(thread)
             thread.start()
-        
+
         for thread in threads:
             thread.join(timeout=10.0)
-        
+
         end_time = time.time()
-        
+
         assert len(errors) == 0, f"Concurrent detection errors: {errors}"
         assert len(results) == len(files), f"Expected {len(files)} results, got {len(results)}"
         assert end_time - start_time < 5.0, "Concurrent detection should complete under 5 seconds"
-        
+
         for thread_id, result in results:
             assert result is not None, f"Thread {thread_id} returned None"
             assert 'protections' in result, f"Thread {thread_id} missing protections data"
@@ -246,18 +246,18 @@ class TestProtectionDetectionPerformance:
     def test_protection_detection_memory_usage(self, sample_pe_file, process_memory):
         """Test REAL protection detection memory efficiency."""
         initial_memory = process_memory.rss
-        
+
         detector = ProtectionDetector()
-        
+
         for i in range(50):
             result = detector.analyze_file(sample_pe_file)
             assert result is not None, f"Analysis {i} failed"
             assert 'protections' in result, f"Analysis {i} missing protections"
-        
+
         current_process = psutil.Process()
         final_memory = current_process.memory_info().rss
         memory_increase = final_memory - initial_memory
-        
+
         assert memory_increase < 100 * 1024 * 1024, "Memory increase should be under 100MB for 50 analyses"
 
     @pytest.mark.benchmark
@@ -266,9 +266,9 @@ class TestProtectionDetectionPerformance:
         def load_signatures():
             detector = ProtectionDetector()
             return detector.load_signature_database()
-        
+
         result = benchmark(load_signatures)
-        
+
         assert result is not None, "Signature loading must return result"
         assert result.get('signatures_loaded', 0) > 0, "Must load actual signatures"
         assert benchmark.stats.mean < 1.0, "Signature loading should be under 1 second"
@@ -276,29 +276,29 @@ class TestProtectionDetectionPerformance:
     def test_protection_detection_accuracy_vs_speed(self, sample_pe_file, packed_pe_file, vmprotect_pe_file):
         """Test REAL protection detection accuracy vs speed tradeoff."""
         detector = ProtectionDetector()
-        
+
         test_files = [
             (sample_pe_file, "clean"),
             (packed_pe_file, "packed"),
             (vmprotect_pe_file, "vmprotect")
         ]
-        
+
         for file_path, expected_type in test_files:
             start_time = time.time()
-            
+
             quick_result = detector.quick_scan(file_path)
             quick_time = time.time() - start_time
-            
+
             start_time = time.time()
             detailed_result = detector.detailed_scan(file_path)
             detailed_time = time.time() - start_time
-            
+
             assert quick_result is not None, f"Quick scan failed for {expected_type}"
             assert detailed_result is not None, f"Detailed scan failed for {expected_type}"
-            
+
             assert quick_time < 0.5, f"Quick scan too slow for {expected_type}: {quick_time}s"
             assert detailed_time < 3.0, f"Detailed scan too slow for {expected_type}: {detailed_time}s"
-            
+
             assert detailed_time > quick_time, f"Detailed scan not slower than quick for {expected_type}"
 
     @pytest.mark.benchmark
@@ -307,9 +307,9 @@ class TestProtectionDetectionPerformance:
         def run_protection_core():
             core = IntellicrackProtectionCore()
             return core.analyze_protection_mechanisms(sample_pe_file)
-        
+
         result = benchmark(run_protection_core)
-        
+
         assert result is not None, "Protection core must return results"
         assert 'mechanisms' in result, "Result must contain mechanisms"
         assert isinstance(result['mechanisms'], list), "Mechanisms must be a list"
@@ -318,16 +318,16 @@ class TestProtectionDetectionPerformance:
     def test_protection_analysis_consistency(self, sample_pe_file):
         """Test REAL protection analysis consistency across multiple runs."""
         detector = ProtectionDetector()
-        
+
         results = []
         for _ in range(10):
             result = detector.analyze_file(sample_pe_file)
             results.append(result)
-        
+
         for result in results:
             assert result is not None, "Analysis must not return None"
             assert 'protections' in result, "Analysis must contain protections"
-        
+
         first_result = results[0]
         for i, result in enumerate(results[1:], 1):
             assert len(result['protections']) == len(first_result['protections']), \
@@ -336,16 +336,16 @@ class TestProtectionDetectionPerformance:
     def test_protection_detection_error_handling(self):
         """Test REAL protection detection error handling performance."""
         detector = ProtectionDetector()
-        
+
         start_time = time.time()
-        
+
         invalid_files = [
             "/nonexistent/file.exe",
             "",
             None,
             "not_a_file.txt"
         ]
-        
+
         for invalid_file in invalid_files:
             try:
                 result = detector.analyze_file(invalid_file)
@@ -353,26 +353,26 @@ class TestProtectionDetectionPerformance:
                     pass
             except Exception:
                 pass
-        
+
         end_time = time.time()
-        
+
         assert end_time - start_time < 0.5, "Error handling should be fast (under 500ms)"
 
     def test_protection_detection_stress_test(self, sample_pe_file, packed_pe_file):
         """Stress test REAL protection detection under heavy load."""
         detector = ProtectionDetector()
-        
+
         start_time = time.time()
-        
+
         files = [sample_pe_file, packed_pe_file] * 25
-        
+
         for i, file_path in enumerate(files):
             result = detector.analyze_file(file_path)
             assert result is not None, f"Stress test analysis {i} failed"
             assert 'protections' in result, f"Stress test {i} missing protections"
-        
+
         end_time = time.time()
-        
+
         assert end_time - start_time < 30.0, "Stress test should complete under 30 seconds"
 
     @pytest.mark.benchmark
@@ -382,9 +382,9 @@ class TestProtectionDetectionPerformance:
             analyzer = IntellicrackProtectionAdvanced()
             protection_info = analyzer.analyze_protection(vmprotect_pe_file)
             return analyzer.recommend_bypass_strategies(protection_info)
-        
+
         result = benchmark(generate_bypass_recommendations)
-        
+
         assert result is not None, "Bypass recommendations must be generated"
         assert 'strategies' in result, "Result must contain strategies"
         assert len(result['strategies']) > 0, "Must recommend at least one strategy"
@@ -394,15 +394,15 @@ class TestProtectionDetectionPerformance:
         """Test REAL protection analysis cache efficiency."""
         cache = AnalysisCache()
         detector = ProtectionDetector()
-        
+
         first_analysis_start = time.time()
         first_result = detector.analyze_file_with_cache(sample_pe_file, cache)
         first_analysis_time = time.time() - first_analysis_start
-        
+
         second_analysis_start = time.time()
         second_result = detector.analyze_file_with_cache(sample_pe_file, cache)
         second_analysis_time = time.time() - second_analysis_start
-        
+
         assert first_result is not None, "First analysis must return result"
         assert second_result is not None, "Second analysis must return result"
         assert second_analysis_time < first_analysis_time * 0.1, "Cached analysis should be 10x faster"

@@ -49,6 +49,7 @@ PLUGIN_SUPPORTED_FORMATS = ["PE", "ELF", "Mach-O", "Raw"]
 PLUGIN_REQUIRES = ["hashlib", "struct"]
 PLUGIN_OPTIONAL = ["pefile", "lief"]
 
+
 class AdvancedDemoPlugin(BasePlugin):
     """Advanced plugin template demonstrating comprehensive integration with Intellicrack.
 
@@ -135,12 +136,14 @@ class AdvancedDemoPlugin(BasePlugin):
         """Return comprehensive plugin metadata."""
         metadata = super().get_metadata()
         # Add plugin-specific information
-        metadata.update({
-            "requirements": PLUGIN_REQUIRES,
-            "optional_deps": PLUGIN_OPTIONAL,
-            "available_libs": self.available_libs,
-            "analysis_count": self.analysis_count,
-        })
+        metadata.update(
+            {
+                "requirements": PLUGIN_REQUIRES,
+                "optional_deps": PLUGIN_OPTIONAL,
+                "available_libs": self.available_libs,
+                "analysis_count": self.analysis_count,
+            }
+        )
         return metadata
 
     def validate_binary(self, binary_path: str) -> tuple[bool, str]:
@@ -155,7 +158,10 @@ class AdvancedDemoPlugin(BasePlugin):
             # Check file size
             file_size = path.stat().st_size
             if file_size > self.config["max_file_size"]:
-                return False, f"File too large: {file_size} bytes (max: {self.config['max_file_size']})"
+                return (
+                    False,
+                    f"File too large: {file_size} bytes (max: {self.config['max_file_size']})",
+                )
 
             # Check if file is readable
             if not os.access(binary_path, os.R_OK):
@@ -175,6 +181,7 @@ class AdvancedDemoPlugin(BasePlugin):
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of binary data."""
         import math
+
         if not data:
             return 0.0
 
@@ -343,7 +350,9 @@ class AdvancedDemoPlugin(BasePlugin):
             update_progress("Detecting packers...")
             packer_info = self._detect_packer(binary_path)
             if packer_info["detected"]:
-                results.append(f"[PACKER] Packer detected: {packer_info['packer_name']} (confidence: {packer_info['confidence']:.1%})")
+                results.append(
+                    f"[PACKER] Packer detected: {packer_info['packer_name']} (confidence: {packer_info['confidence']:.1%})"
+                )
             else:
                 results.append("[PACKER] No common packers detected")
 
@@ -356,12 +365,16 @@ class AdvancedDemoPlugin(BasePlugin):
 
             # Step 7: Advanced analysis (if available)
             update_progress("Performing advanced analysis...")
-            if self.available_libs.get("pefile", False) and binary_path.lower().endswith((".exe", ".dll")):
+            if self.available_libs.get("pefile", False) and binary_path.lower().endswith(
+                (".exe", ".dll")
+            ):
                 results.append("[INFO] PE analysis available (pefile installed)")
             elif self.available_libs.get("lief", False):
                 results.append("[INFO] Advanced analysis available (LIEF installed)")
             else:
-                results.append("[INFO] Advanced analysis unavailable (install pefile/lief for more features)")
+                results.append(
+                    "[INFO] Advanced analysis unavailable (install pefile/lief for more features)"
+                )
 
             # Analysis summary
             analysis_time = time.time() - start_time
@@ -398,7 +411,9 @@ class AdvancedDemoPlugin(BasePlugin):
                             results.append("[TYPE] Windows PE executable detected")
                         elif header.startswith(b"\x7fELF"):
                             results.append("[TYPE] Linux ELF executable detected")
-                        elif header.startswith(b"\xca\xfe\xba\xbe") or header.startswith(b"\xfe\xed\xfa"):
+                        elif header.startswith(b"\xca\xfe\xba\xbe") or header.startswith(
+                            b"\xfe\xed\xfa"
+                        ):
                             results.append("[TYPE] macOS Mach-O executable detected")
                         else:
                             results.append("[TYPE] Unknown or raw binary format")
@@ -520,6 +535,7 @@ class AdvancedDemoPlugin(BasePlugin):
             if patch_options.get("create_backup", True):
                 backup_path = binary_path + f".backup_{int(time.time())}"
                 import shutil
+
                 shutil.copy2(binary_path, backup_path)
                 results.append(f"[BACKUP] Created backup: {os.path.basename(backup_path)}")
 
@@ -569,9 +585,11 @@ class AdvancedDemoPlugin(BasePlugin):
 
                             # Apply patch if it looks like a text string
                             if any(32 <= c <= 126 for c in context):
-                                binary_data[offset:offset+len(old_pattern)] = new_pattern
+                                binary_data[offset : offset + len(old_pattern)] = new_pattern
                                 patches_applied += 1
-                                results.append(f"[PATCH] Replaced '{old_pattern.decode('ascii', errors='ignore')}' at offset 0x{offset:x}")
+                                results.append(
+                                    f"[PATCH] Replaced '{old_pattern.decode('ascii', errors='ignore')}' at offset 0x{offset:x}"
+                                )
 
                             offset += len(old_pattern)
 
@@ -597,9 +615,11 @@ class AdvancedDemoPlugin(BasePlugin):
 
                         if b"license" in nearby or b"trial" in nearby or b"demo" in nearby:
                             # Convert conditional jump to NOP (defensive technique)
-                            binary_data[offset:offset+len(pattern)] = b"\x90" * len(pattern)
+                            binary_data[offset : offset + len(pattern)] = b"\x90" * len(pattern)
                             patches_applied += 1
-                            results.append(f"[PATCH] NOPed potential license check jump at offset 0x{offset:x}")
+                            results.append(
+                                f"[PATCH] NOPed potential license check jump at offset 0x{offset:x}"
+                            )
 
                         offset += 1
 
@@ -624,12 +644,16 @@ class AdvancedDemoPlugin(BasePlugin):
             except Exception as patch_error:
                 results.append(f"[ERROR] Patching failed: {patch_error!s}")
                 # Restore from backup if available
-                backup_files = [f for f in os.listdir(os.path.dirname(binary_path))
-                              if f.startswith(os.path.basename(binary_path) + ".backup_")]
+                backup_files = [
+                    f
+                    for f in os.listdir(os.path.dirname(binary_path))
+                    if f.startswith(os.path.basename(binary_path) + ".backup_")
+                ]
                 if backup_files:
                     latest_backup = max(backup_files)
                     backup_path = os.path.join(os.path.dirname(binary_path), latest_backup)
                     import shutil
+
                     try:
                         shutil.copy2(backup_path, binary_path)
                         results.append(f"[RECOVERY] Restored from backup: {latest_backup}")
@@ -693,6 +717,7 @@ class AdvancedDemoPlugin(BasePlugin):
             "validation",
         ]
 
+
 def register():
     """Required function to register the plugin with Intellicrack.
 
@@ -701,6 +726,7 @@ def register():
 
     """
     return AdvancedDemoPlugin()
+
 
 # Plugin information (can be accessed without instantiating)
 try:

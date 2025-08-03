@@ -34,15 +34,18 @@ if sys.platform == "win32":
     try:
         import ctypes
         import ctypes.wintypes
+
         WINDOWS_AVAILABLE = True
     except ImportError as e:
         logger.error("Import error in windows_common: %s", e)
         WINDOWS_AVAILABLE = False
         ctypes = None
 
+
 def is_windows_available() -> bool:
     """Check if Windows-specific functionality is available."""
     return WINDOWS_AVAILABLE
+
 
 def get_windows_kernel32():
     """Get kernel32 library if available."""
@@ -54,6 +57,7 @@ def get_windows_kernel32():
         logger.error("Failed to load kernel32: %s", e)
         return None
 
+
 def get_windows_ntdll():
     """Get ntdll library if available."""
     if not WINDOWS_AVAILABLE or ctypes is None:
@@ -63,6 +67,7 @@ def get_windows_ntdll():
     except Exception as e:
         logger.error("Failed to load ntdll: %s", e)
         return None
+
 
 # Common Windows constants
 class WindowsConstants:

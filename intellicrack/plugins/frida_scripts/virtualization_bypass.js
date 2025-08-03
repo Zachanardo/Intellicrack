@@ -18,11 +18,11 @@
 
 /**
  * Virtualization Detection Bypass
- * 
+ *
  * Advanced virtualization and sandbox detection countermeasures for modern
  * protection systems. Handles VM detection, hypervisor fingerprinting, and
  * sandbox environment detection bypass.
- * 
+ *
  * Author: Intellicrack Framework
  * Version: 2.0.0
  * License: GPL v3
@@ -32,7 +32,7 @@
     name: "Virtualization Detection Bypass",
     description: "Comprehensive VM and sandbox detection countermeasures",
     version: "2.0.0",
-    
+
     // Configuration for virtualization bypass
     config: {
         // Virtual machine detection bypass
@@ -65,7 +65,7 @@
                 hideQemuDevices: true
             }
         },
-        
+
         // Sandbox detection bypass
         sandboxDetection: {
             enabled: true,
@@ -90,7 +90,7 @@
                 spoofNetworkConfig: true
             }
         },
-        
+
         // Hardware fingerprinting bypass
         hardwareFingerprinting: {
             spoofCpuInfo: true,
@@ -100,7 +100,7 @@
             spoofMemoryInfo: true,
             spoofGpuInfo: true
         },
-        
+
         // Timing-based detection bypass
         timingDetection: {
             enabled: true,
@@ -109,11 +109,11 @@
             preventTimingAnalysis: true
         }
     },
-    
+
     // Hook tracking
     hooksInstalled: {},
     spoofedValues: {},
-    
+
     onAttach: function(pid) {
         send({
             type: "status",
@@ -123,15 +123,15 @@
         });
         this.processId = pid;
     },
-    
+
     run: function() {
         send({
             type: "status",
-            target: "vm_bypass", 
+            target: "vm_bypass",
             action: "installing_virtualization_bypass",
             timestamp: Date.now()
         });
-        
+
         // Initialize bypass components
         this.hookVirtualBoxDetection();
         this.hookVmwareDetection();
@@ -145,10 +145,10 @@
         this.hookFileSystemDetection();
         this.hookProcessDetection();
         this.hookNetworkDetection();
-        
+
         this.installSummary();
     },
-    
+
     // === VIRTUALBOX DETECTION BYPASS ===
     hookVirtualBoxDetection: function() {
         send({
@@ -156,32 +156,32 @@
             target: "vm_bypass",
             action: "installing_virtualbox_bypass"
         });
-        
+
         if (!this.config.vmDetection.virtualBox.enabled) return;
-        
+
         // Hook VirtualBox Guest Additions detection
         this.hookVBoxGuestAdditions();
-        
+
         // Hook VirtualBox PCI device detection
         this.hookVBoxPciDevices();
-        
+
         // Hook VirtualBox BIOS detection
         this.hookVBoxBios();
-        
+
         // Hook VirtualBox registry detection
         this.hookVBoxRegistry();
-        
+
         // Hook VirtualBox service detection
         this.hookVBoxServices();
     },
-    
+
     hookVBoxGuestAdditions: function() {
         send({
             type: "info",
             target: "vm_bypass",
             action: "installing_guest_additions_bypass"
         });
-        
+
         // Hook LoadLibrary to prevent VBox DLL loading
         var loadLibrary = Module.findExportByName("kernel32.dll", "LoadLibraryW");
         if (loadLibrary) {
@@ -189,12 +189,12 @@
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var libraryName = args[0].readUtf16String().toLowerCase();
-                        
+
                         var vboxLibraries = [
                             "vboxdisp", "vboxhook", "vboxmrxnp", "vboxsf",
                             "vboxguest", "vboxmouse", "vboxservice", "vboxtray"
                         ];
-                        
+
                         if (vboxLibraries.some(lib => libraryName.includes(lib))) {
                             send({
                                 type: "bypass",
@@ -206,17 +206,17 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockLoad) {
                         retval.replace(ptr(0)); // NULL - load failed
                     }
                 }
             });
-            
+
             this.hooksInstalled['LoadLibraryW_VBox'] = true;
         }
-        
+
         // Hook GetModuleHandle for VBox modules
         var getModuleHandle = Module.findExportByName("kernel32.dll", "GetModuleHandleW");
         if (getModuleHandle) {
@@ -224,7 +224,7 @@
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var moduleName = args[0].readUtf16String().toLowerCase();
-                        
+
                         if (moduleName.includes("vbox")) {
                             send({
                                 type: "bypass",
@@ -236,18 +236,18 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockQuery) {
                         retval.replace(ptr(0)); // NULL - module not found
                     }
                 }
             });
-            
+
             this.hooksInstalled['GetModuleHandleW_VBox'] = true;
         }
     },
-    
+
     hookVBoxPciDevices: function() {
         // Hook PCI device enumeration to hide VirtualBox devices
         var setupDiGetClassDevs = Module.findExportByName("setupapi.dll", "SetupDiGetClassDevsW");
@@ -265,10 +265,10 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['SetupDiGetClassDevsW_VBox'] = true;
         }
-        
+
         // Hook device property queries
         var setupDiGetDeviceProperty = Module.findExportByName("setupapi.dll", "SetupDiGetDevicePropertyW");
         if (setupDiGetDeviceProperty) {
@@ -281,7 +281,7 @@
                         }
                     }
                 },
-                
+
                 filterVBoxDeviceProperties: function(buffer) {
                     try {
                         var deviceString = buffer.readUtf16String();
@@ -299,11 +299,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['SetupDiGetDevicePropertyW_VBox'] = true;
         }
     },
-    
+
     hookVBoxBios: function() {
         // Hook SMBIOS table access
         var getSystemFirmwareTable = Module.findExportByName("kernel32.dll", "GetSystemFirmwareTable");
@@ -315,14 +315,14 @@
                     this.firmwareTableBuffer = args[2];
                     this.bufferSize = args[3].toInt32();
                 },
-                
+
                 onLeave: function(retval) {
                     var bytesReturned = retval.toInt32();
                     if (bytesReturned > 0 && this.firmwareTableBuffer && !this.firmwareTableBuffer.isNull()) {
                         this.spoofBiosInfo();
                     }
                 },
-                
+
                 spoofBiosInfo: function() {
                     try {
                         var config = this.parent.parent.config;
@@ -330,21 +330,21 @@
                             var biosData = this.firmwareTableBuffer.readByteArray(Math.min(this.bufferSize, 1024));
                             var biosString = Array.from(new Uint8Array(biosData))
                                 .map(b => String.fromCharCode(b)).join('');
-                            
+
                             // Check for VirtualBox BIOS signatures
-                            if (biosString.includes("VBOX") || biosString.includes("VirtualBox") || 
+                            if (biosString.includes("VBOX") || biosString.includes("VirtualBox") ||
                                 biosString.includes("Oracle")) {
-                                
+
                                 // Replace with legitimate BIOS vendor
                                 var spoofedBios = biosString
                                     .replace(/VBOX/g, "DELL")
                                     .replace(/VirtualBox/g, "Dell Inc.")
                                     .replace(/Oracle/g, "Dell Inc.");
-                                
+
                                 for (var i = 0; i < spoofedBios.length && i < this.bufferSize; i++) {
                                     this.firmwareTableBuffer.add(i).writeU8(spoofedBios.charCodeAt(i));
                                 }
-                                
+
                                 send({
                                     type: "bypass",
                                     target: "vm_bypass",
@@ -362,11 +362,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['GetSystemFirmwareTable_VBox'] = true;
         }
     },
-    
+
     hookVBoxRegistry: function() {
         // Hook registry queries for VirtualBox detection
         var regQueryValueEx = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
@@ -375,12 +375,12 @@
                 onEnter: function(args) {
                     if (args[1] && !args[1].isNull()) {
                         var valueName = args[1].readUtf16String().toLowerCase();
-                        
+
                         var vboxValues = [
                             "vboxguest", "vboxmouse", "vboxservice", "vboxsf",
                             "virtualbox", "oracle vm", "vbox"
                         ];
-                        
+
                         if (vboxValues.some(val => valueName.includes(val))) {
                             send({
                                 type: "bypass",
@@ -392,17 +392,17 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockVBoxRegistry) {
                         retval.replace(2); // ERROR_FILE_NOT_FOUND
                     }
                 }
             });
-            
+
             this.hooksInstalled['RegQueryValueExW_VBox'] = true;
         }
-        
+
         // Hook registry key opening
         var regOpenKeyEx = Module.findExportByName("advapi32.dll", "RegOpenKeyExW");
         if (regOpenKeyEx) {
@@ -410,8 +410,8 @@
                 onEnter: function(args) {
                     if (args[1] && !args[1].isNull()) {
                         var keyName = args[1].readUtf16String().toLowerCase();
-                        
-                        if (keyName.includes("vbox") || keyName.includes("virtualbox") || 
+
+                        if (keyName.includes("vbox") || keyName.includes("virtualbox") ||
                             keyName.includes("oracle")) {
                             send({
                                 type: "bypass",
@@ -423,18 +423,18 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockVBoxKey) {
                         retval.replace(2); // ERROR_FILE_NOT_FOUND
                     }
                 }
             });
-            
+
             this.hooksInstalled['RegOpenKeyExW_VBox'] = true;
         }
     },
-    
+
     hookVBoxServices: function() {
         // Hook service enumeration to hide VirtualBox services
         var enumServicesStatus = Module.findExportByName("advapi32.dll", "EnumServicesStatusW");
@@ -451,11 +451,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['EnumServicesStatusW_VBox'] = true;
         }
     },
-    
+
     // === VMWARE DETECTION BYPASS ===
     hookVmwareDetection: function() {
         send({
@@ -463,25 +463,25 @@
             target: "vm_bypass",
             action: "installing_vmware_bypass"
         });
-        
+
         if (!this.config.vmDetection.vmware.enabled) return;
-        
+
         // Hook VMware Tools detection
         this.hookVmwareTools();
-        
+
         // Hook VMware DMI detection
         this.hookVmwareDmi();
-        
+
         // Hook VMware PCI devices
         this.hookVmwarePciDevices();
-        
+
         // Hook VMware MAC address detection
         this.hookVmwareMacAddresses();
-        
+
         // Hook VMware backdoor detection
         this.hookVmwareBackdoor();
     },
-    
+
     hookVmwareTools: function() {
         // Hook VMware Tools process detection
         var createToolhelp32Snapshot = Module.findExportByName("kernel32.dll", "CreateToolhelp32Snapshot");
@@ -494,10 +494,10 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['CreateToolhelp32Snapshot_VMware'] = true;
         }
-        
+
         var process32First = Module.findExportByName("kernel32.dll", "Process32FirstW");
         if (process32First) {
             Interceptor.attach(process32First, {
@@ -509,17 +509,17 @@
                         }
                     }
                 },
-                
+
                 filterVmwareProcesses: function(processEntry) {
                     try {
                         var szExeFile = processEntry.add(44); // PROCESSENTRY32W.szExeFile
                         var exeName = szExeFile.readUtf16String().toLowerCase();
-                        
+
                         var vmwareProcesses = [
                             "vmtoolsd.exe", "vmwaretray.exe", "vmwareuser.exe",
                             "vmacthlp.exe", "vmnat.exe", "vmnetdhcp.exe"
                         ];
-                        
+
                         if (vmwareProcesses.includes(exeName)) {
                             // Replace with legitimate process name
                             szExeFile.writeUtf16String("svchost.exe");
@@ -535,11 +535,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['Process32FirstW_VMware'] = true;
         }
     },
-    
+
     hookVmwareDmi: function() {
         // Hook DMI/SMBIOS queries that reveal VMware
         var getSystemInfo = Module.findExportByName("kernel32.dll", "GetSystemInfo");
@@ -556,11 +556,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['GetSystemInfo_VMware'] = true;
         }
     },
-    
+
     hookVmwarePciDevices: function() {
         // Hook PCI device queries to hide VMware devices
         var setupDiEnumDeviceInfo = Module.findExportByName("setupapi.dll", "SetupDiEnumDeviceInfo");
@@ -576,11 +576,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['SetupDiEnumDeviceInfo_VMware'] = true;
         }
     },
-    
+
     hookVmwareMacAddresses: function() {
         // Hook MAC address queries to hide VMware prefixes
         var getAdaptersInfo = Module.findExportByName("iphlpapi.dll", "GetAdaptersInfo");
@@ -594,41 +594,41 @@
                         }
                     }
                 },
-                
+
                 spoofVmwareMacs: function(adapterInfo) {
                     try {
                         var config = this.parent.parent.config;
                         if (config.vmDetection.vmware.spoofMacAddresses) {
                             // IP_ADAPTER_INFO structure parsing
                             var currentAdapter = adapterInfo;
-                            
+
                             while (currentAdapter && !currentAdapter.isNull()) {
                                 var addressLength = currentAdapter.add(396).readU32(); // AddressLength
                                 var address = currentAdapter.add(400); // Address[MAX_ADAPTER_ADDRESS_LENGTH]
-                                
+
                                 if (addressLength >= 6) {
                                     var mac = [];
                                     for (var i = 0; i < 6; i++) {
                                         mac.push(address.add(i).readU8());
                                     }
-                                    
+
                                     // Check for VMware MAC prefixes
                                     var vmwarePrefixes = [
                                         [0x00, 0x0C, 0x29], // VMware
                                         [0x00, 0x50, 0x56], // VMware
                                         [0x00, 0x1C, 0x14]  // VMware
                                     ];
-                                    
-                                    var isVmwareMac = vmwarePrefixes.some(prefix => 
+
+                                    var isVmwareMac = vmwarePrefixes.some(prefix =>
                                         mac[0] === prefix[0] && mac[1] === prefix[1] && mac[2] === prefix[2]
                                     );
-                                    
+
                                     if (isVmwareMac) {
                                         // Replace with Intel MAC prefix
                                         address.writeU8(0x00); // Intel OUI
                                         address.add(1).writeU8(0x1B);
                                         address.add(2).writeU8(0x21);
-                                        
+
                                         send({
                                             type: "bypass",
                                             target: "vm_bypass",
@@ -636,11 +636,11 @@
                                         });
                                     }
                                 }
-                                
+
                                 // Move to next adapter
                                 var nextPtr = currentAdapter.readPointer();
                                 currentAdapter = nextPtr.isNull() ? null : nextPtr;
-                                
+
                                 // Safety check to prevent infinite loop
                                 if (--safetyCounter <= 0) break;
                             }
@@ -655,11 +655,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['GetAdaptersInfo_VMware'] = true;
         }
     },
-    
+
     hookVmwareBackdoor: function() {
         // Hook VMware backdoor communication detection
         send({
@@ -667,18 +667,18 @@
             target: "vm_bypass",
             action: "installing_vmware_backdoor_bypass"
         });
-        
+
         // VMware backdoor uses specific I/O ports and instructions
         // This is primarily detected through CPUID and IN/OUT instructions
         // which are handled by our hardware spoofer
-        
+
         send({
             type: "info",
             target: "vm_bypass",
             action: "vmware_backdoor_detection_integrated"
         });
     },
-    
+
     // === HYPER-V DETECTION BYPASS ===
     hookHyperVDetection: function() {
         send({
@@ -686,22 +686,22 @@
             target: "vm_bypass",
             action: "installing_hyperv_bypass"
         });
-        
+
         if (!this.config.vmDetection.hyperV.enabled) return;
-        
+
         // Hook Hyper-V feature detection
         this.hookHyperVFeatures();
-        
+
         // Hook Hyper-V CPUID signature
         this.hookHyperVCpuid();
-        
+
         // Hook Hyper-V integration services
         this.hookHyperVIntegrationServices();
-        
+
         // Hook Hyper-V enlightenments
         this.hookHyperVEnlightenments();
     },
-    
+
     hookHyperVFeatures: function() {
         // Hook processor feature detection
         var isProcessorFeaturePresent = Module.findExportByName("kernel32.dll", "IsProcessorFeaturePresent");
@@ -710,7 +710,7 @@
                 onEnter: function(args) {
                     this.feature = args[0].toInt32();
                 },
-                
+
                 onLeave: function(retval) {
                     var config = this.parent.parent.config;
                     if (config.vmDetection.hyperV.hideHyperVFeatures) {
@@ -728,11 +728,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['IsProcessorFeaturePresent_HyperV'] = true;
         }
     },
-    
+
     hookHyperVCpuid: function() {
         // Hyper-V CPUID signature spoofing is handled by enhanced_hardware_spoofer.js
         send({
@@ -741,7 +741,7 @@
             action: "hyperv_cpuid_spoofing_integrated"
         });
     },
-    
+
     hookHyperVIntegrationServices: function() {
         // Hook Hyper-V integration services detection
         var openService = Module.findExportByName("advapi32.dll", "OpenServiceW");
@@ -750,12 +750,12 @@
                 onEnter: function(args) {
                     if (args[1] && !args[1].isNull()) {
                         var serviceName = args[1].readUtf16String().toLowerCase();
-                        
+
                         var hyperVServices = [
                             "vmicheartbeat", "vmickvpexchange", "vmicrdv",
                             "vmicshutdown", "vmictimesync", "vmicvss"
                         ];
-                        
+
                         if (hyperVServices.some(service => serviceName.includes(service))) {
                             send({
                                 type: "bypass",
@@ -767,18 +767,18 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockHyperVService) {
                         retval.replace(ptr(0)); // NULL - service not found
                     }
                 }
             });
-            
+
             this.hooksInstalled['OpenServiceW_HyperV'] = true;
         }
     },
-    
+
     hookHyperVEnlightenments: function() {
         // Hook MSR (Model Specific Register) access used by Hyper-V
         var ntQuerySystemInformation = Module.findExportByName("ntdll.dll", "NtQuerySystemInformation");
@@ -786,13 +786,13 @@
             Interceptor.attach(ntQuerySystemInformation, {
                 onEnter: function(args) {
                     var infoClass = args[0].toInt32();
-                    
+
                     // SystemProcessorInformation = 1
                     if (infoClass === 1) {
                         this.isProcessorQuery = true;
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.isProcessorQuery && retval.toInt32() === 0) {
                         send({
@@ -803,11 +803,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['NtQuerySystemInformation_HyperV'] = true;
         }
     },
-    
+
     // === QEMU DETECTION BYPASS ===
     hookQemuDetection: function() {
         send({
@@ -815,19 +815,19 @@
             target: "vm_bypass",
             action: "installing_qemu_bypass"
         });
-        
+
         if (!this.config.vmDetection.qemu.enabled) return;
-        
+
         // Hook QEMU signature detection
         this.hookQemuSignatures();
-        
+
         // Hook QEMU hardware IDs
         this.hookQemuHardwareIds();
-        
+
         // Hook QEMU device detection
         this.hookQemuDevices();
     },
-    
+
     hookQemuSignatures: function() {
         // Hook string searches for QEMU signatures
         var findFirstFile = Module.findExportByName("kernel32.dll", "FindFirstFileW");
@@ -836,7 +836,7 @@
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var fileName = args[0].readUtf16String().toLowerCase();
-                        
+
                         if (fileName.includes("qemu") || fileName.includes("virtio")) {
                             send({
                                 type: "bypass",
@@ -848,18 +848,18 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockQemuSearch) {
                         retval.replace(ptr(0xFFFFFFFF)); // INVALID_HANDLE_VALUE
                     }
                 }
             });
-            
+
             this.hooksInstalled['FindFirstFileW_QEMU'] = true;
         }
     },
-    
+
     hookQemuHardwareIds: function() {
         // Hook hardware ID queries to hide QEMU devices
         var setupDiGetDeviceRegistryProperty = Module.findExportByName("setupapi.dll", "SetupDiGetDeviceRegistryPropertyW");
@@ -873,7 +873,7 @@
                         }
                     }
                 },
-                
+
                 filterQemuHardwareIds: function(buffer) {
                     try {
                         var hardwareId = buffer.readUtf16String();
@@ -891,11 +891,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['SetupDiGetDeviceRegistryPropertyW_QEMU'] = true;
         }
     },
-    
+
     hookQemuDevices: function() {
         // Hook QEMU virtio device detection
         var deviceIoControl = Module.findExportByName("kernel32.dll", "DeviceIoControl");
@@ -903,7 +903,7 @@
             Interceptor.attach(deviceIoControl, {
                 onEnter: function(args) {
                     var ioControlCode = args[1].toInt32();
-                    
+
                     // Check for virtio-related IOCTL codes
                     if ((ioControlCode & 0xFFFF0000) === 0x00220000) { // Virtio device type
                         send({
@@ -915,18 +915,18 @@
                         this.blockQemuIoctl = true;
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockQemuIoctl) {
                         retval.replace(0); // FALSE - operation failed
                     }
                 }
             });
-            
+
             this.hooksInstalled['DeviceIoControl_QEMU'] = true;
         }
     },
-    
+
     // === SANDBOX DETECTION BYPASS ===
     hookSandboxDetection: function() {
         send({
@@ -934,32 +934,32 @@
             target: "vm_bypass",
             action: "installing_sandbox_bypass"
         });
-        
+
         if (!this.config.sandboxDetection.enabled) return;
-        
+
         // Hook sandbox file system detection
         this.hookSandboxFileSystem();
-        
+
         // Hook sandbox process detection
         this.hookSandboxProcesses();
-        
-        // Hook sandbox registry detection  
+
+        // Hook sandbox registry detection
         this.hookSandboxRegistry();
-        
+
         // Hook sandbox network detection
         this.hookSandboxNetwork();
-        
+
         // Hook sandbox environment detection
         this.hookSandboxEnvironment();
     },
-    
+
     hookSandboxFileSystem: function() {
         send({
             type: "info",
             target: "vm_bypass",
             action: "installing_sandbox_filesystem_bypass"
         });
-        
+
         // Hook file existence checks for sandbox indicators
         var getFileAttributes = Module.findExportByName("kernel32.dll", "GetFileAttributesW");
         if (getFileAttributes) {
@@ -967,13 +967,13 @@
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var fileName = args[0].readUtf16String().toLowerCase();
-                        
+
                         var sandboxFiles = [
                             "c:\\analysis", "c:\\sandbox", "c:\\malware",
                             "c:\\temp\\malware", "c:\\sample", "c:\\virus",
                             "c:\\users\\sandbox", "c:\\cuckoo", "c:\\windows\\temp\\"
                         ];
-                        
+
                         if (sandboxFiles.some(file => fileName.includes(file))) {
                             send({
                                 type: "bypass",
@@ -985,17 +985,17 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockSandboxFile) {
                         retval.replace(0xFFFFFFFF); // INVALID_FILE_ATTRIBUTES
                     }
                 }
             });
-            
+
             this.hooksInstalled['GetFileAttributesW_Sandbox'] = true;
         }
-        
+
         // Create fake legitimate files
         var createFile = Module.findExportByName("kernel32.dll", "CreateFileW");
         if (createFile) {
@@ -1003,13 +1003,13 @@
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var fileName = args[0].readUtf16String().toLowerCase();
-                        
+
                         // Create fake user files to simulate real environment
                         var legitimateFiles = [
                             "c:\\users\\john\\documents", "c:\\users\\admin\\desktop",
                             "c:\\program files\\common files", "c:\\windows\\system32\\drivers"
                         ];
-                        
+
                         if (legitimateFiles.some(file => fileName.includes(file))) {
                             send({
                                 type: "bypass",
@@ -1021,18 +1021,18 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['CreateFileW_Sandbox'] = true;
         }
     },
-    
+
     hookSandboxProcesses: function() {
         send({
             type: "info",
             target: "vm_bypass",
             action: "installing_sandbox_process_bypass"
         });
-        
+
         // Hide sandbox analysis tools from process enumeration
         var process32Next = Module.findExportByName("kernel32.dll", "Process32NextW");
         if (process32Next) {
@@ -1045,12 +1045,12 @@
                         }
                     }
                 },
-                
+
                 filterSandboxProcesses: function(processEntry) {
                     try {
                         var szExeFile = processEntry.add(44); // PROCESSENTRY32W.szExeFile
                         var exeName = szExeFile.readUtf16String().toLowerCase();
-                        
+
                         var sandboxProcesses = [
                             "procmon.exe", "procexp.exe", "wireshark.exe", "tcpview.exe",
                             "autoruns.exe", "autorunsc.exe", "filemon.exe", "regmon.exe",
@@ -1058,7 +1058,7 @@
                             "x32dbg.exe", "x64dbg.exe", "immunity.exe", "vboxservice.exe",
                             "vboxtray.exe", "sandboxie.exe", "sbiesvc.exe", "kasperskyav.exe"
                         ];
-                        
+
                         if (sandboxProcesses.includes(exeName)) {
                             // Skip this process by returning FALSE on next call
                             send({
@@ -1074,18 +1074,18 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['Process32NextW_Sandbox'] = true;
         }
     },
-    
+
     hookSandboxRegistry: function() {
         send({
             type: "info",
             target: "vm_bypass",
             action: "installing_sandbox_registry_bypass"
         });
-        
+
         // Block sandbox-related registry queries
         var regQueryValue = Module.findExportByName("advapi32.dll", "RegQueryValueW");
         if (regQueryValue) {
@@ -1093,12 +1093,12 @@
                 onEnter: function(args) {
                     if (args[1] && !args[1].isNull()) {
                         var valueName = args[1].readUtf16String().toLowerCase();
-                        
+
                         var sandboxValues = [
                             "sandbox", "cuckoo", "anubis", "cwsandbox", "joebox",
                             "threatalyzer", "sandboxie", "wireshark", "vmware"
                         ];
-                        
+
                         if (sandboxValues.some(val => valueName.includes(val))) {
                             send({
                                 type: "bypass",
@@ -1110,25 +1110,25 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockSandboxRegistry) {
                         retval.replace(2); // ERROR_FILE_NOT_FOUND
                     }
                 }
             });
-            
+
             this.hooksInstalled['RegQueryValueW_Sandbox'] = true;
         }
     },
-    
+
     hookSandboxNetwork: function() {
         send({
             type: "info",
             target: "vm_bypass",
             action: "installing_sandbox_network_bypass"
         });
-        
+
         // Spoof network configuration to appear legitimate
         var getAdaptersAddresses = Module.findExportByName("iphlpapi.dll", "GetAdaptersAddresses");
         if (getAdaptersAddresses) {
@@ -1143,11 +1143,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['GetAdaptersAddresses_Sandbox'] = true;
         }
     },
-    
+
     hookSandboxEnvironment: function() {
         // Hook environment variable queries
         var getEnvironmentVariable = Module.findExportByName("kernel32.dll", "GetEnvironmentVariableW");
@@ -1156,8 +1156,8 @@
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var varName = args[0].readUtf16String().toLowerCase();
-                        
-                        if (varName.includes("sandbox") || varName.includes("cuckoo") || 
+
+                        if (varName.includes("sandbox") || varName.includes("cuckoo") ||
                             varName.includes("malware")) {
                             send({
                                 type: "bypass",
@@ -1169,18 +1169,18 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockSandboxEnv) {
                         retval.replace(0); // Variable not found
                     }
                 }
             });
-            
+
             this.hooksInstalled['GetEnvironmentVariableW_Sandbox'] = true;
         }
     },
-    
+
     // === HARDWARE FINGERPRINTING BYPASS ===
     hookHardwareFingerprinting: function() {
         send({
@@ -1188,17 +1188,17 @@
             target: "vm_bypass",
             action: "installing_hardware_fingerprinting_bypass"
         });
-        
+
         // Hook WMI queries for hardware information
         this.hookWmiHardwareQueries();
-        
+
         // Hook registry hardware queries
         this.hookRegistryHardwareQueries();
-        
+
         // Hook system information APIs
         this.hookSystemInformationAPIs();
     },
-    
+
     hookWmiHardwareQueries: function() {
         // WMI queries are handled by enhanced_hardware_spoofer.js
         send({
@@ -1207,7 +1207,7 @@
             action: "wmi_hardware_spoofing_integrated"
         });
     },
-    
+
     hookRegistryHardwareQueries: function() {
         // Hook registry queries for hardware information
         var regEnumKeyEx = Module.findExportByName("advapi32.dll", "RegEnumKeyExW");
@@ -1221,15 +1221,15 @@
                         }
                     }
                 },
-                
+
                 spoofHardwareKeys: function(keyBuffer) {
                     try {
                         var keyName = keyBuffer.readUtf16String().toLowerCase();
-                        
+
                         // Check for VM hardware keys
-                        if (keyName.includes("vbox") || keyName.includes("vmware") || 
+                        if (keyName.includes("vbox") || keyName.includes("vmware") ||
                             keyName.includes("qemu") || keyName.includes("virtual")) {
-                            
+
                             // Replace with legitimate hardware vendor
                             keyBuffer.writeUtf16String("Intel Corporation");
                             send({
@@ -1244,11 +1244,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['RegEnumKeyExW_Hardware'] = true;
         }
     },
-    
+
     hookSystemInformationAPIs: function() {
         // Hook computer name queries
         var getComputerName = Module.findExportByName("kernel32.dll", "GetComputerNameW");
@@ -1262,16 +1262,16 @@
                         }
                     }
                 },
-                
+
                 spoofComputerName: function(nameBuffer) {
                     try {
                         var name = nameBuffer.readUtf16String().toLowerCase();
-                        
+
                         var suspiciousNames = [
                             "sandbox", "malware", "cuckoo", "analysis", "victim",
                             "target", "test", "sample", "virus", "trojan"
                         ];
-                        
+
                         if (suspiciousNames.some(suspicious => name.includes(suspicious))) {
                             nameBuffer.writeUtf16String("DESKTOP-USER01");
                             send({
@@ -1286,10 +1286,10 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['GetComputerNameW'] = true;
         }
-        
+
         // Hook username queries
         var getUserName = Module.findExportByName("advapi32.dll", "GetUserNameW");
         if (getUserName) {
@@ -1302,16 +1302,16 @@
                         }
                     }
                 },
-                
+
                 spoofUserName: function(nameBuffer) {
                     try {
                         var name = nameBuffer.readUtf16String().toLowerCase();
-                        
+
                         var suspiciousUsers = [
                             "sandbox", "malware", "cuckoo", "analysis", "admin",
                             "user", "test", "sample", "virus", "currentuser"
                         ];
-                        
+
                         if (suspiciousUsers.some(suspicious => name.includes(suspicious))) {
                             nameBuffer.writeUtf16String("John");
                             send({
@@ -1326,11 +1326,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['GetUserNameW'] = true;
         }
     },
-    
+
     // === TIMING DETECTION BYPASS ===
     hookTimingDetection: function() {
         send({
@@ -1338,9 +1338,9 @@
             target: "vm_bypass",
             action: "installing_timing_detection_bypass"
         });
-        
+
         if (!this.config.timingDetection.enabled) return;
-        
+
         // Timing detection bypass is integrated with enhanced_anti_debugger.js
         send({
             type: "info",
@@ -1348,7 +1348,7 @@
             action: "timing_detection_bypass_integrated"
         });
     },
-    
+
     // === GENERIC VM DETECTION BYPASS ===
     hookGenericVmDetection: function() {
         send({
@@ -1356,17 +1356,17 @@
             target: "vm_bypass",
             action: "installing_generic_vm_detection_bypass"
         });
-        
+
         // Hook common VM detection APIs
         this.hookVmDetectionAPIs();
-        
+
         // Hook string searches for VM indicators
         this.hookVmStringDetection();
-        
+
         // Hook file system VM detection
         this.hookVmFileDetection();
     },
-    
+
     hookVmDetectionAPIs: function() {
         // Hook DeviceIoControl for VM detection
         var deviceIoControl = Module.findExportByName("kernel32.dll", "DeviceIoControl");
@@ -1375,7 +1375,7 @@
                 onEnter: function(args) {
                     var hDevice = args[0];
                     var ioControlCode = args[1].toInt32();
-                    
+
                     // Common VM detection IOCTL codes
                     var vmIoctls = [
                         0x00564D58, // 'VMX' - VMware
@@ -1383,7 +1383,7 @@
                         0xAA000000, // VirtualBox
                         0xBB000000  // Generic VM
                     ];
-                    
+
                     if (vmIoctls.includes(ioControlCode)) {
                         send({
                             type: "bypass",
@@ -1394,18 +1394,18 @@
                         this.blockVmIoctl = true;
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockVmIoctl) {
                         retval.replace(0); // FALSE - operation failed
                     }
                 }
             });
-            
+
             this.hooksInstalled['DeviceIoControl_VM'] = true;
         }
     },
-    
+
     hookVmStringDetection: function() {
         // Hook string comparison functions for VM detection
         var strcmp = Module.findExportByName("msvcrt.dll", "strcmp");
@@ -1415,17 +1415,17 @@
                     try {
                         var str1 = args[0].readAnsiString();
                         var str2 = args[1].readAnsiString();
-                        
+
                         var vmStrings = [
                             "VBOX", "VMWARE", "QEMU", "XEN", "BOCHS", "VIRTUAL",
                             "SANDBOX", "CUCKOO", "ANALYSIS", "MALWARE"
                         ];
-                        
-                        var isVmComparison = vmStrings.some(vm => 
-                            (str1 && str1.toUpperCase().includes(vm)) || 
+
+                        var isVmComparison = vmStrings.some(vm =>
+                            (str1 && str1.toUpperCase().includes(vm)) ||
                             (str2 && str2.toUpperCase().includes(vm))
                         );
-                        
+
                         if (isVmComparison) {
                             send({
                                 type: "bypass",
@@ -1438,7 +1438,7 @@
                         // String read failed
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.spoofVmComparison) {
                         retval.replace(1); // Strings don't match
@@ -1450,11 +1450,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['strcmp_VM'] = true;
         }
     },
-    
+
     hookVmFileDetection: function() {
         // Hook directory enumeration for VM files
         var findFirstFile = Module.findExportByName("kernel32.dll", "FindFirstFileW");
@@ -1463,13 +1463,13 @@
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var searchPattern = args[0].readUtf16String().toLowerCase();
-                        
+
                         var vmPatterns = [
                             "*vbox*", "*vmware*", "*qemu*", "*virtual*",
                             "*guest*", "*tools*", "*additions*"
                         ];
-                        
-                        if (vmPatterns.some(pattern => 
+
+                        if (vmPatterns.some(pattern =>
                             searchPattern.includes(pattern.replace(/\*/g, "")))) {
                             send({
                                 type: "bypass",
@@ -1481,18 +1481,18 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockVmFileSearch) {
                         retval.replace(ptr(0xFFFFFFFF)); // INVALID_HANDLE_VALUE
                     }
                 }
             });
-            
+
             this.hooksInstalled['FindFirstFileW_VM'] = true;
         }
     },
-    
+
     // === REGISTRY DETECTION BYPASS ===
     hookRegistryDetection: function() {
         send({
@@ -1500,7 +1500,7 @@
             target: "vm_bypass",
             action: "installing_registry_detection_bypass"
         });
-        
+
         // Comprehensive registry key blocking
         var regOpenKey = Module.findExportByName("advapi32.dll", "RegOpenKeyW");
         if (regOpenKey) {
@@ -1508,7 +1508,7 @@
                 onEnter: function(args) {
                     if (args[1] && !args[1].isNull()) {
                         var keyName = args[1].readUtf16String().toLowerCase();
-                        
+
                         var vmRegistryKeys = [
                             "software\\oracle\\virtualbox",
                             "software\\vmware, inc.",
@@ -1517,7 +1517,7 @@
                             "system\\controlset001\\services\\vmware",
                             "hardware\\devicemap\\scsi\\scsi port"
                         ];
-                        
+
                         if (vmRegistryKeys.some(key => keyName.includes(key))) {
                             send({
                                 type: "bypass",
@@ -1529,18 +1529,18 @@
                         }
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (this.blockVmRegistry) {
                         retval.replace(2); // ERROR_FILE_NOT_FOUND
                     }
                 }
             });
-            
+
             this.hooksInstalled['RegOpenKeyW_VM'] = true;
         }
     },
-    
+
     // === FILE SYSTEM DETECTION BYPASS ===
     hookFileSystemDetection: function() {
         send({
@@ -1548,7 +1548,7 @@
             target: "vm_bypass",
             action: "installing_file_system_detection_bypass"
         });
-        
+
         // Hook directory creation for sandbox simulation
         var createDirectory = Module.findExportByName("kernel32.dll", "CreateDirectoryW");
         if (createDirectory) {
@@ -1556,14 +1556,14 @@
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var dirPath = args[0].readUtf16String().toLowerCase();
-                        
+
                         // Create fake user directories to simulate real environment
                         var legitimateDirs = [
                             "c:\\users\\john\\documents",
                             "c:\\users\\john\\desktop",
                             "c:\\program files\\common files"
                         ];
-                        
+
                         if (legitimateDirs.some(dir => dirPath.includes(dir))) {
                             send({
                                 type: "bypass",
@@ -1575,11 +1575,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['CreateDirectoryW_VM'] = true;
         }
     },
-    
+
     // === PROCESS DETECTION BYPASS ===
     hookProcessDetection: function() {
         send({
@@ -1587,14 +1587,14 @@
             target: "vm_bypass",
             action: "installing_process_detection_bypass"
         });
-        
+
         // Hook GetCurrentProcessId to potentially spoof PID
         var getCurrentProcessId = Module.findExportByName("kernel32.dll", "GetCurrentProcessId");
         if (getCurrentProcessId) {
             Interceptor.attach(getCurrentProcessId, {
                 onLeave: function(retval) {
                     var pid = retval.toInt32();
-                    
+
                     // Don't spoof our own PID, just log for awareness
                     send({
                         type: "info",
@@ -1604,11 +1604,11 @@
                     });
                 }
             });
-            
+
             this.hooksInstalled['GetCurrentProcessId'] = true;
         }
     },
-    
+
     // === NETWORK DETECTION BYPASS ===
     hookNetworkDetection: function() {
         send({
@@ -1616,7 +1616,7 @@
             target: "vm_bypass",
             action: "installing_network_detection_bypass"
         });
-        
+
         // Hook hostname queries
         var getComputerNameEx = Module.findExportByName("kernel32.dll", "GetComputerNameExW");
         if (getComputerNameEx) {
@@ -1629,12 +1629,12 @@
                         }
                     }
                 },
-                
+
                 spoofHostname: function(nameBuffer) {
                     try {
                         var hostname = nameBuffer.readUtf16String().toLowerCase();
-                        
-                        if (hostname.includes("sandbox") || hostname.includes("malware") || 
+
+                        if (hostname.includes("sandbox") || hostname.includes("malware") ||
                             hostname.includes("analysis") || hostname.includes("vm")) {
                             nameBuffer.writeUtf16String("DESKTOP-PC01");
                             send({
@@ -1649,11 +1649,11 @@
                     }
                 }
             });
-            
+
             this.hooksInstalled['GetComputerNameExW'] = true;
         }
     },
-    
+
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
@@ -1662,7 +1662,7 @@
                 target: "vm_bypass",
                 action: "installation_summary_start"
             });
-            
+
             var categories = {
                 "VirtualBox Detection": 0,
                 "VMware Detection": 0,
@@ -1676,7 +1676,7 @@
                 "Network Detection": 0,
                 "Generic VM Detection": 0
             };
-            
+
             for (var hook in this.hooksInstalled) {
                 if (hook.includes("VBox")) {
                     categories["VirtualBox Detection"]++;
@@ -1702,7 +1702,7 @@
                     categories["Generic VM Detection"]++;
                 }
             }
-            
+
             for (var category in categories) {
                 if (categories[category] > 0) {
                     send({
@@ -1714,13 +1714,13 @@
                     });
                 }
             }
-            
+
             send({
                 type: "summary",
                 target: "vm_bypass",
                 action: "active_protection_summary_start"
             });
-            
+
             var config = this.config;
             if (config.vmDetection.enabled) {
                 send({
@@ -1757,7 +1757,7 @@
                     });
                 }
             }
-            
+
             if (config.sandboxDetection.enabled) {
                 send({
                     type: "summary",
@@ -1771,7 +1771,7 @@
                     ]
                 });
             }
-            
+
             if (config.hardwareFingerprinting.spoofCpuInfo) {
                 send({
                     type: "summary",
@@ -1779,7 +1779,7 @@
                     action: "hardware_fingerprinting_bypass_active"
                 });
             }
-            
+
             if (config.timingDetection.enabled) {
                 send({
                     type: "summary",
@@ -1787,7 +1787,7 @@
                     action: "timing_detection_countermeasures_active"
                 });
             }
-            
+
             send({
                 type: "summary",
                 target: "vm_bypass",

@@ -56,6 +56,7 @@ try:
         QVBoxLayout,
         QWidget,
     )
+
     HAS_PYQT = True
 
     # Utility functions for unused imports
@@ -75,11 +76,9 @@ try:
     def get_user_input(parent, title, label, default="", password=False):
         """Get user input using QInputDialog"""
         if password:
-            text, ok = QInputDialog.getText(parent, title, label,
-                                           QLineEdit.Password, default)
+            text, ok = QInputDialog.getText(parent, title, label, QLineEdit.Password, default)
         else:
-            text, ok = QInputDialog.getText(parent, title, label,
-                                           QLineEdit.Normal, default)
+            text, ok = QInputDialog.getText(parent, title, label, QLineEdit.Normal, default)
         return text, ok
 
     def create_horizontal_slider(min_val=0, max_val=100, value=50, tick_interval=10):
@@ -100,10 +99,8 @@ except ImportError as e:
     class QDialog:
         """Stub QDialog class for non-PyQt environments."""
 
-
     class QThread:
         """Stub QThread class for non-PyQt environments."""
-
 
     def pyqtSignal(*args, **kwargs):
         """Stub pyqtSignal function for non-PyQt environments."""
@@ -113,6 +110,7 @@ except ImportError as e:
     # Dummy utility functions for non-PyQt environments
     def create_icon(path_or_pixmap):
         """Create icon for exploit dialog UI elements."""
+
         class Icon:
             def __init__(self, source):
                 self.source = source
@@ -125,25 +123,34 @@ except ImportError as e:
                     return self.source
                 if self.is_path:
                     # Create pixmap from path
-                    pixmap = type("Pixmap", (), {
-                        "width": self._size[0],
-                        "height": self._size[1],
-                        "path": self.source,
-                    })()
+                    pixmap = type(
+                        "Pixmap",
+                        (),
+                        {
+                            "width": self._size[0],
+                            "height": self._size[1],
+                            "path": self.source,
+                        },
+                    )()
                     return pixmap
                 return None
 
             def isNull(self):
                 if self.is_path:
                     import os
+
                     return not os.path.exists(self.source)
                 return False
 
             def actualSize(self, size=None):
-                return type("Size", (), {
-                    "width": lambda: self._size[0],
-                    "height": lambda: self._size[1],
-                })()
+                return type(
+                    "Size",
+                    (),
+                    {
+                        "width": lambda: self._size[0],
+                        "height": lambda: self._size[1],
+                    },
+                )()
 
         return Icon(path_or_pixmap)
 
@@ -173,10 +180,14 @@ except ImportError as e:
                 return new_pixmap
 
             def size(self):
-                return type("Size", (), {
-                    "width": lambda: self.width,
-                    "height": lambda: self.height,
-                })()
+                return type(
+                    "Size",
+                    (),
+                    {
+                        "width": lambda: self.width,
+                        "height": lambda: self.height,
+                    },
+                )()
 
             def isNull(self):
                 return not self.valid
@@ -186,11 +197,14 @@ except ImportError as e:
                 return True  # Simulate successful save
 
         return Pixmap(path, size)
+
     def get_user_input(parent, title, label, default="", password=False):
         """Get user input through dialog."""
         return ("", False)
+
     def create_horizontal_slider(min_val=0, max_val=100, value=50, tick_interval=10):
         """Create horizontal slider for exploit parameter control."""
+
         class HorizontalSlider:
             def __init__(self):
                 self.orientation = "horizontal"
@@ -259,24 +273,30 @@ except ImportError as e:
                 class Signal:
                     def __init__(self, slider):
                         self.slider = slider
+
                     def connect(self, callback):
                         self.slider.value_changed_callbacks.append(callback)
+
                 return Signal(self)
 
             def sliderPressed(self):
                 class Signal:
                     def __init__(self, slider):
                         self.slider = slider
+
                     def connect(self, callback):
                         self.slider.slider_pressed_callbacks.append(callback)
+
                 return Signal(self)
 
             def sliderReleased(self):
                 class Signal:
                     def __init__(self, slider):
                         self.slider = slider
+
                     def connect(self, callback):
                         self.slider.slider_released_callbacks.append(callback)
+
                 return Signal(self)
 
         slider = HorizontalSlider()
@@ -286,22 +306,51 @@ except ImportError as e:
         slider.setTickInterval(tick_interval)
         return slider
 
+
 # Export all imports and utilities
 __all__ = [
     # Availability flag
     "HAS_PYQT",
     # Core imports
-    "Qt", "QThread", "QTimer", "pyqtSignal",
+    "Qt",
+    "QThread",
+    "QTimer",
+    "pyqtSignal",
     # GUI imports
-    "QFont", "QIcon", "QPixmap",
+    "QFont",
+    "QIcon",
+    "QPixmap",
     # Widget imports
-    "QCheckBox", "QComboBox", "QDialog", "QFileDialog", "QFormLayout",
-    "QGroupBox", "QHBoxLayout", "QHeaderView", "QInputDialog", "QLabel",
-    "QLineEdit", "QListWidget", "QListWidgetItem", "QMessageBox",
-    "QProgressBar", "QPushButton", "QSlider", "QSpinBox", "QSplitter",
-    "QTableWidget", "QTableWidgetItem", "QTabWidget", "QTextEdit",
-    "QTreeWidget", "QTreeWidgetItem", "QVBoxLayout", "QWidget",
+    "QCheckBox",
+    "QComboBox",
+    "QDialog",
+    "QFileDialog",
+    "QFormLayout",
+    "QGroupBox",
+    "QHBoxLayout",
+    "QHeaderView",
+    "QInputDialog",
+    "QLabel",
+    "QLineEdit",
+    "QListWidget",
+    "QListWidgetItem",
+    "QMessageBox",
+    "QProgressBar",
+    "QPushButton",
+    "QSlider",
+    "QSpinBox",
+    "QSplitter",
+    "QTableWidget",
+    "QTableWidgetItem",
+    "QTabWidget",
+    "QTextEdit",
+    "QTreeWidget",
+    "QTreeWidgetItem",
+    "QVBoxLayout",
+    "QWidget",
     # Utility functions
-    "create_icon", "create_pixmap_from_file", "get_user_input",
+    "create_icon",
+    "create_pixmap_from_file",
+    "get_user_input",
     "create_horizontal_slider",
 ]

@@ -154,7 +154,7 @@ Edit `config.json` to customize:
 1. **Load the executable**:
    ```python
    from intellicrack.core.analysis import CoreAnalyzer
-   
+
    analyzer = CoreAnalyzer()
    result = analyzer.analyze_pe("application.exe")
    ```
@@ -230,4 +230,3 @@ class CustomScanner(PluginBase):
 - **Ghidra**: Share project files
 - **radare2**: Command-line integration
 - **Custom Tools**: Plugin API for extensions
-

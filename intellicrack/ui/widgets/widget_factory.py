@@ -41,7 +41,8 @@ from PyQt6.QtWidgets import (
 
 
 def create_tree_widget(
-    headers: list[str], item_changed_callback: Callable | None = None,
+    headers: list[str],
+    item_changed_callback: Callable | None = None,
 ) -> QTreeWidget:
     """Create a QTreeWidget with standard configuration.
 
@@ -78,7 +79,8 @@ def create_console_text_edit(font_size: int = 9, read_only: bool = True) -> QTex
 
 
 def create_input_field(
-    placeholder_text: str | None = None, default_value: str | None = None,
+    placeholder_text: str | None = None,
+    default_value: str | None = None,
 ) -> QLineEdit:
     """Create a QLineEdit input field with optional placeholder and default value.
 
@@ -99,7 +101,8 @@ def create_input_field(
 
 
 def create_button_layout(
-    button_configs: list[dict[str, Any]], add_stretch: bool = True,
+    button_configs: list[dict[str, Any]],
+    add_stretch: bool = True,
 ) -> QHBoxLayout:
     """Create a horizontal layout with buttons.
 

@@ -23,7 +23,7 @@ def test_minimal_qt():
     except Exception as e:
         print(f"   ✗ Qt import failed: {e}")
         return False
-    
+
     print("2. Creating QApplication...")
     try:
         app = QApplication(sys.argv)
@@ -31,7 +31,7 @@ def test_minimal_qt():
     except Exception as e:
         print(f"   ✗ QApplication creation failed: {e}")
         return False
-    
+
     print("3. Creating simple QMainWindow...")
     try:
         window = QMainWindow()
@@ -41,7 +41,7 @@ def test_minimal_qt():
     except Exception as e:
         print(f"   ✗ QMainWindow creation failed: {e}")
         return False
-    
+
     print("4. Adding simple widget...")
     try:
         label = QLabel("Test Label")
@@ -50,7 +50,7 @@ def test_minimal_qt():
     except Exception as e:
         print(f"   ✗ Widget addition failed: {e}")
         return False
-    
+
     print("5. Showing window briefly...")
     try:
         window.show()
@@ -59,7 +59,7 @@ def test_minimal_qt():
     except Exception as e:
         print(f"   ✗ Window show failed: {e}")
         return False
-    
+
     print("6. Closing application...")
     try:
         window.close()

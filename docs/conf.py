@@ -83,8 +83,8 @@ language = 'en'
 
 # Exclude patterns
 exclude_patterns = [
-    '_build', 
-    'Thumbs.db', 
+    '_build',
+    'Thumbs.db',
     '.DS_Store',
     '**/__pycache__',
     '**/test_*',

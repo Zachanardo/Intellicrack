@@ -250,7 +250,7 @@ module.exports = LicenseChecker;
 {
   "modifications": [
     {
-      "type": "function_modification", 
+      "type": "function_modification",
       "description": "Modify validateLicense to always return true",
       "start_line": 12,
       "end_line": 26,

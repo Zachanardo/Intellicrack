@@ -24,6 +24,7 @@ import struct
 # Create logger after imports
 logger = logging.getLogger(__name__)
 
+
 # Utility functions for logging configuration
 def configure_logging(level=logging.INFO, format_string=None):
     """Configure logging settings"""
@@ -32,9 +33,11 @@ def configure_logging(level=logging.INFO, format_string=None):
     logging.basicConfig(level=level, format=format_string)
     return logging.getLogger()
 
+
 # ML/AI Libraries
 try:
     import numpy as np
+
     HAS_NUMPY = True
 
     # Numpy utility functions
@@ -53,15 +56,19 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     HAS_NUMPY = False
     np = None
+
     def create_numpy_array(data, dtype=None):
         """Create numpy array fallback using lists."""
         return list(data)
+
     def get_numpy_info():
         """Get numpy information fallback."""
         return {"version": "Not installed", "config": {}}
 
+
 try:
     import torch
+
     HAS_TORCH = True
 
     # PyTorch utility functions
@@ -84,23 +91,30 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     HAS_TORCH = False
     torch = None
+
     def create_torch_tensor(data, dtype=None, device=None):
         """Create torch tensor fallback."""
         return data
+
     def get_torch_info():
         """Get torch information fallback."""
         return {"version": "Not installed", "cuda_available": False}
 
+
 try:
     # Configure TensorFlow to prevent GPU initialization issues
     import os
+
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
-    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+    os.environ["CUDA_VISIBLE_DEVICES"] = (
+        "-1"  # Disable GPU for TensorFlow (Intel Arc B580 compatibility)
+    )
 
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
     import tensorflow as tf
+
     # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
     tf.config.set_visible_devices([], "GPU")
     HAS_TENSORFLOW = True
@@ -122,16 +136,20 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     HAS_TENSORFLOW = False
     tf = None
+
     def create_tf_tensor(data, dtype=None):
         """Create tensorflow tensor fallback."""
         return data
+
     def get_tf_info():
         """Get tensorflow information fallback."""
         return {"version": "Not installed", "gpu_available": False}
 
+
 # Binary Analysis Libraries
 try:
     import lief
+
     LIEF_AVAILABLE = True
 
     # LIEF utility functions
@@ -154,6 +172,7 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     LIEF_AVAILABLE = False
     lief = None
+
     def parse_binary_with_lief(file_path):
         """Parse binary file using LIEF for exploit analysis."""
         import os
@@ -177,13 +196,13 @@ except ImportError as e:
                         magic = f.read(4)
 
                     if magic[:2] == b"MZ":
-                        self.architecture = "x86" # Default, would need PE parsing
+                        self.architecture = "x86"  # Default, would need PE parsing
                         return "PE"
                     if magic == b"\x7fELF":
-                        self.architecture = "x86_64" # Default, would need ELF parsing
+                        self.architecture = "x86_64"  # Default, would need ELF parsing
                         return "ELF"
                     if magic == b"\xca\xfe\xba\xbe" or magic == b"\xce\xfa\xed\xfe":
-                        self.architecture = "x86_64" # Default
+                        self.architecture = "x86_64"  # Default
                         return "MachO"
                     return "Unknown"
                 except:
@@ -212,12 +231,15 @@ except ImportError as e:
                 return 0
 
         return BinaryInfo(file_path) if file_path else None
+
     def get_lief_info():
         """Get LIEF library information fallback."""
         return {"version": "Not installed", "formats": []}
 
+
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 
     # psutil utility functions
@@ -247,15 +269,19 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     PSUTIL_AVAILABLE = False
     psutil = None
+
     def get_system_info():
         """Get system information fallback."""
         return {"error": "psutil not installed"}
+
     def get_process_info(pid=None):
         """Get process information fallback."""
         return {"error": "psutil not installed"}
 
+
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 
     # pefile utility functions
@@ -282,6 +308,7 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     PEFILE_AVAILABLE = False
     pefile = None
+
     def parse_pe_file(file_path):
         """Parse PE file for Windows exploit development."""
         import os
@@ -332,11 +359,11 @@ except ImportError as e:
                             logger.warning(f"Unusual section count: {num_sections}")
 
                         # Determine architecture
-                        if machine == 0x014c:
+                        if machine == 0x014C:
                             self.architecture = "x86"
                         elif machine == 0x8664:
                             self.architecture = "x86_64"
-                        elif machine == 0xaa64:
+                        elif machine == 0xAA64:
                             self.architecture = "arm64"
                         else:
                             self.architecture = "unknown"
@@ -346,7 +373,7 @@ except ImportError as e:
                         # Parse security features
                         self.security_features = {
                             "ASLR": True,  # Check DllCharacteristics
-                            "DEP": True,   # Check DllCharacteristics
+                            "DEP": True,  # Check DllCharacteristics
                             "SafeSEH": False,  # Check for SEH table
                             "CFG": False,  # Check for CFG flags
                             "Authenticode": False,  # Check for signature
@@ -364,8 +391,8 @@ except ImportError as e:
 
             def has_import(self, dll_name):
                 """Check if DLL is imported."""
-                return any(imp.get("dll", "").lower() == dll_name.lower()
-                          for imp in self.imports)
+                return any(imp.get("dll", "").lower() == dll_name.lower() for imp in self.imports)
+
             def get_export_by_name(self, name):
                 """Get export by name."""
                 for export in self.exports:
@@ -374,13 +401,16 @@ except ImportError as e:
                 return None
 
         return PEFile(file_path) if file_path else None
+
     def get_pe_info(pe_obj):
         """Get PE file information fallback."""
         return {}
 
+
 try:
     import elftools
     from elftools.elf.elffile import ELFFile
+
     PYELFTOOLS_AVAILABLE = True
 
     # elftools utility functions
@@ -408,6 +438,7 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     PYELFTOOLS_AVAILABLE = False
     elftools = None
+
     def parse_elf_file(file_path):
         """Parse ELF file for Linux exploit development."""
         import os
@@ -441,7 +472,7 @@ except ImportError as e:
 
                         # Parse identification
                         ei_class = elf_header[4]  # 1=32bit, 2=64bit
-                        ei_data = elf_header[5]   # 1=little, 2=big endian
+                        ei_data = elf_header[5]  # 1=little, 2=big endian
 
                         self.bits = 32 if ei_class == 1 else 64
                         self.endianness = "little" if ei_data == 1 else "big"
@@ -455,9 +486,9 @@ except ImportError as e:
                         # Determine architecture
                         arch_map = {
                             0x03: "x86",
-                            0x3e: "x86_64",
+                            0x3E: "x86_64",
                             0x28: "arm",
-                            0xb7: "arm64",
+                            0xB7: "arm64",
                             0x08: "mips",
                             0x14: "powerpc",
                         }
@@ -501,6 +532,7 @@ except ImportError as e:
                 """Check for FORTIFY_SOURCE."""
                 # Would look for _chk functions
                 return True
+
             def get_function_address(self, name):
                 """Get function address by name."""
                 for sym in self.symbols:
@@ -509,12 +541,15 @@ except ImportError as e:
                 return 0
 
         return ELFFile(file_path) if file_path else None
+
     def get_elf_info(elf_obj):
         """Get ELF file information fallback."""
         return {}
 
+
 try:
     import frida
+
     FRIDA_AVAILABLE = True
 
     # Frida utility functions
@@ -525,8 +560,7 @@ try:
     def enumerate_devices():
         """Enumerate Frida devices."""
         try:
-            return [{"id": d.id, "name": d.name, "type": d.type}
-                    for d in frida.enumerate_devices()]
+            return [{"id": d.id, "name": d.name, "type": d.type} for d in frida.enumerate_devices()]
         except Exception as e:
             logger.error(f"Frida device enumeration error: {e}")
             return []
@@ -543,12 +577,15 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     FRIDA_AVAILABLE = False
     frida = None
+
     def get_frida_version():
         """Get Frida version fallback."""
         return "Not installed"
+
     def enumerate_devices():
         """Enumerate devices fallback."""
         return []
+
     def get_local_device():
         """Get local device for exploit deployment and testing."""
         import platform
@@ -586,6 +623,7 @@ except ImportError as e:
             def _check_root_access(self):
                 try:
                     import os
+
                     return os.geteuid() == 0 if hasattr(os, "geteuid") else False
                 except:
                     return False
@@ -603,6 +641,7 @@ except ImportError as e:
             def _check_kernel_module_access(self):
                 try:
                     import os
+
                     return os.path.exists("/proc/modules") and os.access("/proc/modules", os.R_OK)
                 except:
                     return False
@@ -611,6 +650,7 @@ except ImportError as e:
                 try:
                     import ctypes
                     import ctypes.util
+
                     libc = ctypes.CDLL(ctypes.util.find_library("c"))
                     return hasattr(libc, "ptrace")
                 except:
@@ -621,6 +661,7 @@ except ImportError as e:
                 ips = []
                 try:
                     import socket
+
                     hostname = socket.gethostname()
                     ips = socket.gethostbyname_ex(hostname)[2]
                 except:
@@ -632,9 +673,11 @@ except ImportError as e:
 
         return LocalDevice()
 
+
 try:
     import capstone
     from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64
+
     CAPSTONE_AVAILABLE = True
 
     # Capstone utility functions
@@ -647,12 +690,14 @@ try:
         md = create_disassembler(arch, mode)
         instructions = []
         for insn in md.disasm(data, address):
-            instructions.append({
-                "address": insn.address,
-                "mnemonic": insn.mnemonic,
-                "op_str": insn.op_str,
-                "bytes": insn.bytes.hex(),
-            })
+            instructions.append(
+                {
+                    "address": insn.address,
+                    "mnemonic": insn.mnemonic,
+                    "op_str": insn.op_str,
+                    "bytes": insn.bytes.hex(),
+                }
+            )
         return instructions
 
     def disassemble_32bit_bytes(data, address=0):
@@ -665,7 +710,9 @@ try:
         instructions_64 = disassemble_bytes(data, address, CS_ARCH_X86, CS_MODE_64)
 
         # If 64-bit fails or has invalid instructions, try 32-bit
-        if not instructions_64 or any("invalid" in inst.get("mnemonic", "").lower() for inst in instructions_64):
+        if not instructions_64 or any(
+            "invalid" in inst.get("mnemonic", "").lower() for inst in instructions_64
+        ):
             instructions_32 = disassemble_32bit_bytes(data, address)
             if instructions_32:
                 return instructions_32, "32-bit"
@@ -676,6 +723,7 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     capstone = None
     CAPSTONE_AVAILABLE = False
+
     def create_disassembler(arch=None, mode=None):
         """Create a disassembler for exploit development and analysis."""
         # Default to x86-64 for exploitation
@@ -693,11 +741,131 @@ except ImportError as e:
 
                 # Architecture mappings for exploitation
                 self.arch_map = {
-                    "x86": {"bits": 32, "endian": "little", "regs": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"]},
-                    "x86_64": {"bits": 64, "endian": "little", "regs": ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"]},
-                    "arm": {"bits": 32, "endian": "little", "regs": ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "sp", "lr", "pc"]},
-                    "arm64": {"bits": 64, "endian": "little", "regs": ["x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11", "x12", "x13", "x14", "x15", "x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23", "x24", "x25", "x26", "x27", "x28", "x29", "x30", "sp"]},
-                    "mips": {"bits": 32, "endian": "big", "regs": ["zero", "at", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra"]},
+                    "x86": {
+                        "bits": 32,
+                        "endian": "little",
+                        "regs": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"],
+                    },
+                    "x86_64": {
+                        "bits": 64,
+                        "endian": "little",
+                        "regs": [
+                            "rax",
+                            "rbx",
+                            "rcx",
+                            "rdx",
+                            "rsi",
+                            "rdi",
+                            "rbp",
+                            "rsp",
+                            "r8",
+                            "r9",
+                            "r10",
+                            "r11",
+                            "r12",
+                            "r13",
+                            "r14",
+                            "r15",
+                        ],
+                    },
+                    "arm": {
+                        "bits": 32,
+                        "endian": "little",
+                        "regs": [
+                            "r0",
+                            "r1",
+                            "r2",
+                            "r3",
+                            "r4",
+                            "r5",
+                            "r6",
+                            "r7",
+                            "r8",
+                            "r9",
+                            "r10",
+                            "r11",
+                            "r12",
+                            "sp",
+                            "lr",
+                            "pc",
+                        ],
+                    },
+                    "arm64": {
+                        "bits": 64,
+                        "endian": "little",
+                        "regs": [
+                            "x0",
+                            "x1",
+                            "x2",
+                            "x3",
+                            "x4",
+                            "x5",
+                            "x6",
+                            "x7",
+                            "x8",
+                            "x9",
+                            "x10",
+                            "x11",
+                            "x12",
+                            "x13",
+                            "x14",
+                            "x15",
+                            "x16",
+                            "x17",
+                            "x18",
+                            "x19",
+                            "x20",
+                            "x21",
+                            "x22",
+                            "x23",
+                            "x24",
+                            "x25",
+                            "x26",
+                            "x27",
+                            "x28",
+                            "x29",
+                            "x30",
+                            "sp",
+                        ],
+                    },
+                    "mips": {
+                        "bits": 32,
+                        "endian": "big",
+                        "regs": [
+                            "zero",
+                            "at",
+                            "v0",
+                            "v1",
+                            "a0",
+                            "a1",
+                            "a2",
+                            "a3",
+                            "t0",
+                            "t1",
+                            "t2",
+                            "t3",
+                            "t4",
+                            "t5",
+                            "t6",
+                            "t7",
+                            "s0",
+                            "s1",
+                            "s2",
+                            "s3",
+                            "s4",
+                            "s5",
+                            "s6",
+                            "s7",
+                            "t8",
+                            "t9",
+                            "k0",
+                            "k1",
+                            "gp",
+                            "sp",
+                            "fp",
+                            "ra",
+                        ],
+                    },
                 }
 
                 # Common exploit opcodes
@@ -741,7 +909,13 @@ except ImportError as e:
                         offset += insn.size
                     else:
                         # Unknown instruction
-                        insn = Instruction(address + offset, data[offset:offset+1], "db", f"0x{data[offset]:02x}", 1)
+                        insn = Instruction(
+                            address + offset,
+                            data[offset : offset + 1],
+                            "db",
+                            f"0x{data[offset]:02x}",
+                            1,
+                        )
                         instructions.append(insn)
                         offset += 1
 
@@ -759,7 +933,7 @@ except ImportError as e:
                 for name, opcode in opcodes.items():
                     if data.startswith(opcode):
                         mnemonic = name.replace("_", " ")
-                        return Instruction(address, data[:len(opcode)], mnemonic, "", len(opcode))
+                        return Instruction(address, data[: len(opcode)], mnemonic, "", len(opcode))
 
                 # Check for common patterns
                 if self.arch in ["x86", "x86_64"]:
@@ -767,11 +941,15 @@ except ImportError as e:
                     if data[0:1] == b"\xe9":
                         if len(data) >= 5:
                             offset = struct.unpack("<i", data[1:5])[0]
-                            return Instruction(address, data[:5], "jmp", f"0x{address + 5 + offset:x}", 5)
+                            return Instruction(
+                                address, data[:5], "jmp", f"0x{address + 5 + offset:x}", 5
+                            )
                     elif data[0:1] == b"\xe8":
                         if len(data) >= 5:
                             offset = struct.unpack("<i", data[1:5])[0]
-                            return Instruction(address, data[:5], "call", f"0x{address + 5 + offset:x}", 5)
+                            return Instruction(
+                                address, data[:5], "call", f"0x{address + 5 + offset:x}", 5
+                            )
                     # PUSH immediate
                     elif data[0:1] == b"\x68":
                         if len(data) >= 5:
@@ -789,31 +967,41 @@ except ImportError as e:
                     ret_opcodes = [b"\xc3", b"\xc2", b"\xcb", b"\xca"]
                     for i in range(len(data)):
                         for ret in ret_opcodes:
-                            if data[i:i+len(ret)] == ret:
+                            if data[i : i + len(ret)] == ret:
                                 # Look back for gadget start (max 15 bytes)
                                 start = max(0, i - 15)
-                                gadget_bytes = data[start:i+len(ret)]
-                                gadgets.append({
-                                    "address": start,
-                                    "bytes": gadget_bytes,
-                                    "type": "ret",
-                                    "length": len(gadget_bytes),
-                                })
+                                gadget_bytes = data[start : i + len(ret)]
+                                gadgets.append(
+                                    {
+                                        "address": start,
+                                        "bytes": gadget_bytes,
+                                        "type": "ret",
+                                        "length": len(gadget_bytes),
+                                    }
+                                )
 
                 elif gadget_type == "jop":
                     # Find JMP/CALL gadgets
-                    jmp_patterns = [b"\xff\xe0", b"\xff\xd0", b"\xff\xe4", b"\xff\xd4"]  # jmp/call rax/rsp
+                    jmp_patterns = [
+                        b"\xff\xe0",
+                        b"\xff\xd0",
+                        b"\xff\xe4",
+                        b"\xff\xd4",
+                    ]  # jmp/call rax/rsp
                     for i in range(len(data) - 1):
                         for pattern in jmp_patterns:
-                            if data[i:i+len(pattern)] == pattern:
-                                gadgets.append({
-                                    "address": i,
-                                    "bytes": pattern,
-                                    "type": "jmp",
-                                    "length": len(pattern),
-                                })
+                            if data[i : i + len(pattern)] == pattern:
+                                gadgets.append(
+                                    {
+                                        "address": i,
+                                        "bytes": pattern,
+                                        "type": "jmp",
+                                        "length": len(pattern),
+                                    }
+                                )
 
                 return gadgets
+
         class Instruction:
             def __init__(self, address, bytes_data, mnemonic, op_str, size):
                 """Initialize instruction with disassembly information."""
@@ -827,14 +1015,17 @@ except ImportError as e:
                 return f"0x{self.address:x}: {self.mnemonic} {self.op_str}"
 
         return Disassembler(arch, mode)
+
     def disassemble_bytes(data, address=0, arch=None, mode=None):
         """Disassemble bytes fallback."""
         return []
+
 
 # Visualization
 try:
     import matplotlib
     import matplotlib.pyplot as plt
+
     matplotlib.use("Agg")  # Use non-interactive backend
     MATPLOTLIB_AVAILABLE = True
 
@@ -860,6 +1051,7 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     plt = None
     MATPLOTLIB_AVAILABLE = False
+
     def create_figure(figsize=(10, 6)):
         """Create a figure for exploit visualization and analysis."""
 
@@ -888,46 +1080,54 @@ except ImportError as e:
 
             def plot(self, x, y, label="", style="-", color="blue"):
                 """Add data series to plot."""
-                self.data_series.append({
-                    "x": x,
-                    "y": y,
-                    "label": label,
-                    "style": style,
-                    "color": color,
-                })
+                self.data_series.append(
+                    {
+                        "x": x,
+                        "y": y,
+                        "label": label,
+                        "style": style,
+                        "color": color,
+                    }
+                )
 
             def scatter(self, x, y, label="", color="red", size=20):
                 """Add scatter plot for exploit markers."""
-                self.data_series.append({
-                    "x": x,
-                    "y": y,
-                    "label": label,
-                    "type": "scatter",
-                    "color": color,
-                    "size": size,
-                })
+                self.data_series.append(
+                    {
+                        "x": x,
+                        "y": y,
+                        "label": label,
+                        "type": "scatter",
+                        "color": color,
+                        "size": size,
+                    }
+                )
 
             def heatmap(self, data, title="Memory Heatmap"):
                 """Create heatmap for memory visualization."""
-                self.data_series.append({
-                    "data": data,
-                    "type": "heatmap",
-                    "title": title,
-                })
+                self.data_series.append(
+                    {
+                        "data": data,
+                        "type": "heatmap",
+                        "title": title,
+                    }
+                )
 
             def hexdump_visual(self, data, offset=0):
                 """Visualize hexdump for exploit development."""
                 hex_lines = []
                 for i in range(0, len(data), 16):
-                    chunk = data[i:i+16]
+                    chunk = data[i : i + 16]
                     hex_part = " ".join(f"{b:02x}" for b in chunk)
                     ascii_part = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
                     hex_lines.append(f"{offset+i:08x}: {hex_part:<48} {ascii_part}")
 
-                self.data_series.append({
-                    "type": "hexdump",
-                    "lines": hex_lines,
-                })
+                self.data_series.append(
+                    {
+                        "type": "hexdump",
+                        "lines": hex_lines,
+                    }
+                )
 
             def save(self, path):
                 """Save figure to file."""
@@ -941,7 +1141,9 @@ except ImportError as e:
                 width = self.width * 100
                 height = self.height * 100
 
-                svg = f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">\n'
+                svg = (
+                    f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">\n'
+                )
                 svg += f'<rect width="{width}" height="{height}" fill="white" stroke="black"/>\n'
 
                 if self.title:
@@ -994,15 +1196,21 @@ except ImportError as e:
 
                 # Plot axes
                 for i in range(self.width):
-                    canvas[self.height-1][i] = "-"
+                    canvas[self.height - 1][i] = "-"
                 for i in range(self.height):
                     canvas[i][0] = "|"
 
                 # Plot data points
                 for i in range(len(self.x_data)):
                     if max_x > min_x and max_y > min_y:
-                        x_pos = int((self.x_data[i] - min_x) / (max_x - min_x) * (self.width - 2)) + 1
-                        y_pos = self.height - 2 - int((self.y_data[i] - min_y) / (max_y - min_y) * (self.height - 2))
+                        x_pos = (
+                            int((self.x_data[i] - min_x) / (max_x - min_x) * (self.width - 2)) + 1
+                        )
+                        y_pos = (
+                            self.height
+                            - 2
+                            - int((self.y_data[i] - min_y) / (max_y - min_y) * (self.height - 2))
+                        )
 
                         if 0 <= x_pos < self.width and 0 <= y_pos < self.height:
                             canvas[y_pos][x_pos] = "*"
@@ -1035,12 +1243,12 @@ except ImportError as e:
 
                 # Find peaks (potential vulnerabilities)
                 for i in range(1, len(self.y_data) - 1):
-                    if self.y_data[i] > self.y_data[i-1] and self.y_data[i] > self.y_data[i+1]:
+                    if self.y_data[i] > self.y_data[i - 1] and self.y_data[i] > self.y_data[i + 1]:
                         analysis["peaks"].append({"index": i, "value": self.y_data[i]})
 
                 # Find anomalies (large jumps)
                 for i in range(1, len(self.y_data)):
-                    diff = abs(self.y_data[i] - self.y_data[i-1])
+                    diff = abs(self.y_data[i] - self.y_data[i - 1])
                     if diff > analysis["mean"] * 2:
                         analysis["anomalies"].append({"index": i, "diff": diff})
 
@@ -1053,9 +1261,11 @@ except ImportError as e:
 
         return plot
 
+
 # PDF generation
 try:
     import pdfkit
+
     PDFKIT_AVAILABLE = True
 
     # pdfkit utility functions
@@ -1085,16 +1295,20 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     pdfkit = None
     PDFKIT_AVAILABLE = False
+
     def html_to_pdf(html_string, output_path, options=None):
         """HTML to PDF fallback."""
         return False
+
     def url_to_pdf(url, output_path, options=None):
         """URL to PDF fallback."""
         return False
 
+
 # OpenCL for GPU acceleration
 try:
     import pyopencl as cl
+
     HAS_OPENCL = True
 
     # OpenCL utility functions
@@ -1102,8 +1316,7 @@ try:
         """Get OpenCL platforms."""
         try:
             platforms = cl.get_platforms()
-            return [{"name": p.name, "vendor": p.vendor, "version": p.version}
-                    for p in platforms]
+            return [{"name": p.name, "vendor": p.vendor, "version": p.version} for p in platforms]
         except Exception as e:
             logger.error(f"OpenCL platform error: {e}")
             return []
@@ -1114,8 +1327,7 @@ try:
             platforms = cl.get_platforms()
             if platform_index < len(platforms):
                 devices = platforms[platform_index].get_devices()
-                return [{"name": d.name, "type": cl.device_type.to_string(d.type)}
-                        for d in devices]
+                return [{"name": d.name, "type": cl.device_type.to_string(d.type)} for d in devices]
         except Exception as e:
             logger.error(f"OpenCL device error: {e}")
         return []
@@ -1124,12 +1336,15 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     cl = None
     HAS_OPENCL = False
+
     def get_opencl_platforms():
         """Get OpenCL platforms fallback."""
         return []
+
     def get_opencl_devices(platform_index=0):
         """Get OpenCL devices fallback."""
         return []
+
 
 # UI Framework
 try:
@@ -1163,6 +1378,7 @@ try:
         QVBoxLayout,
         QWidget,
     )
+
     HAS_PYQT = True
 
     # PyQt utility functions
@@ -1183,44 +1399,64 @@ try:
         slider.setMinimum(min_val)
         slider.setMaximum(max_val)
         slider.setValue(value)
-        slider.setTickPosition(QSlider.TickPosition.TicksBelow if orientation == Qt.Orientation.Horizontal else QSlider.TickPosition.TicksLeft)
+        slider.setTickPosition(
+            QSlider.TickPosition.TicksBelow
+            if orientation == Qt.Orientation.Horizontal
+            else QSlider.TickPosition.TicksLeft
+        )
         return slider
 
 except ImportError:
     HAS_PYQT = False
+
     # Create dummy classes to prevent import errors
     class _DummyWidget:
         def __init__(self, *args, **kwargs):
             """Initialize dummy widget placeholder with no operation."""
+
         def __call__(self, *args, **kwargs):
             return self
+
         def addWidget(self, *args, **kwargs):
             """Stub method for adding widgets."""
+
         def addLayout(self, *args, **kwargs):
             """Stub method for adding layouts."""
+
         def addItems(self, *args, **kwargs):
             """Stub method for adding items."""
+
         def addStretch(self, *args, **kwargs):
             """Stub method for adding stretch."""
+
         def setObjectName(self, *args, **kwargs):
             """Stub method for setting object name."""
+
         def setMinimum(self, *args, **kwargs):
             """Stub method for setting minimum value."""
+
         def setMaximum(self, *args, **kwargs):
             """Stub method for setting maximum value."""
+
         def setValue(self, *args, **kwargs):
             """Stub method for setting value."""
+
         def setText(self, *args, **kwargs):
             """Stub method for setting text."""
+
         def addTab(self, *args, **kwargs):
             """Stub method for adding tabs."""
+
         def timeout(self):
             """Stub timeout method."""
             return self
+
         def connect(self, *args, **kwargs):
             pass
+
         def start(self, *args, **kwargs):
             """Stub method for starting operations."""
+
         def __getattr__(self, name):
             logger.debug(f"Dummy widget fallback for attribute: {name}")
             return _DummyWidget()
@@ -1237,41 +1473,104 @@ except ImportError:
     def create_dial(min_val=0, max_val=100, value=50):
         """Create dial widget fallback."""
         return _DummyWidget()
+
     def create_slider(orientation=None, min_val=0, max_val=100, value=50):
         """Create slider widget fallback."""
         return _DummyWidget()
 
+
 # Export all utilities and flags
 __all__ = [
     # Logging utilities
-    "logger", "configure_logging",
-
+    "logger",
+    "configure_logging",
     # ML/AI availability flags and utilities
-    "HAS_NUMPY", "np", "create_numpy_array", "get_numpy_info",
-    "HAS_TORCH", "torch", "create_torch_tensor", "get_torch_info",
-    "HAS_TENSORFLOW", "tf", "create_tf_tensor", "get_tf_info",
-
+    "HAS_NUMPY",
+    "np",
+    "create_numpy_array",
+    "get_numpy_info",
+    "HAS_TORCH",
+    "torch",
+    "create_torch_tensor",
+    "get_torch_info",
+    "HAS_TENSORFLOW",
+    "tf",
+    "create_tf_tensor",
+    "get_tf_info",
     # Binary analysis flags and utilities
-    "LIEF_AVAILABLE", "lief", "parse_binary_with_lief", "get_lief_info",
-    "PSUTIL_AVAILABLE", "psutil", "get_system_info", "get_process_info",
-    "PEFILE_AVAILABLE", "pefile", "parse_pe_file", "get_pe_info",
-    "PYELFTOOLS_AVAILABLE", "elftools", "parse_elf_file", "get_elf_info",
-    "FRIDA_AVAILABLE", "frida", "get_frida_version", "enumerate_devices", "get_local_device",
-    "CAPSTONE_AVAILABLE", "capstone", "create_disassembler", "disassemble_bytes",
-
+    "LIEF_AVAILABLE",
+    "lief",
+    "parse_binary_with_lief",
+    "get_lief_info",
+    "PSUTIL_AVAILABLE",
+    "psutil",
+    "get_system_info",
+    "get_process_info",
+    "PEFILE_AVAILABLE",
+    "pefile",
+    "parse_pe_file",
+    "get_pe_info",
+    "PYELFTOOLS_AVAILABLE",
+    "elftools",
+    "parse_elf_file",
+    "get_elf_info",
+    "FRIDA_AVAILABLE",
+    "frida",
+    "get_frida_version",
+    "enumerate_devices",
+    "get_local_device",
+    "CAPSTONE_AVAILABLE",
+    "capstone",
+    "create_disassembler",
+    "disassemble_bytes",
     # Visualization and PDF
-    "MATPLOTLIB_AVAILABLE", "plt", "create_figure", "plot_data",
-    "PDFKIT_AVAILABLE", "pdfkit", "html_to_pdf", "url_to_pdf",
-
+    "MATPLOTLIB_AVAILABLE",
+    "plt",
+    "create_figure",
+    "plot_data",
+    "PDFKIT_AVAILABLE",
+    "pdfkit",
+    "html_to_pdf",
+    "url_to_pdf",
     # GPU acceleration
-    "HAS_OPENCL", "cl", "get_opencl_platforms", "get_opencl_devices",
-
+    "HAS_OPENCL",
+    "cl",
+    "get_opencl_platforms",
+    "get_opencl_devices",
     # UI framework
-    "HAS_PYQT", "Qt", "QThread", "QTimer", "pyqtSignal", "QColor", "QFont",
-    "QApplication", "QWidget", "QCheckBox", "QComboBox", "QDial", "QFileDialog",
-    "QGroupBox", "QHBoxLayout", "QHeaderView", "QLabel", "QLineEdit", "QListWidget",
-    "QListWidgetItem", "QPlainTextEdit", "QProgressBar", "QPushButton", "QSlider",
-    "QSpinBox", "QSplitter", "QTableWidget", "QTableWidgetItem", "QTabWidget",
-    "QTextEdit", "QTreeWidget", "QTreeWidgetItem", "QVBoxLayout",
-    "create_dial", "create_slider",
+    "HAS_PYQT",
+    "Qt",
+    "QThread",
+    "QTimer",
+    "pyqtSignal",
+    "QColor",
+    "QFont",
+    "QApplication",
+    "QWidget",
+    "QCheckBox",
+    "QComboBox",
+    "QDial",
+    "QFileDialog",
+    "QGroupBox",
+    "QHBoxLayout",
+    "QHeaderView",
+    "QLabel",
+    "QLineEdit",
+    "QListWidget",
+    "QListWidgetItem",
+    "QPlainTextEdit",
+    "QProgressBar",
+    "QPushButton",
+    "QSlider",
+    "QSpinBox",
+    "QSplitter",
+    "QTableWidget",
+    "QTableWidgetItem",
+    "QTabWidget",
+    "QTextEdit",
+    "QTreeWidget",
+    "QTreeWidgetItem",
+    "QVBoxLayout",
+    "create_dial",
+    "create_slider",
 ]

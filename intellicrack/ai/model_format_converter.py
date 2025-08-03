@@ -45,12 +45,14 @@ try:
         memory_reserved,
         to_device,
     )
+
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     pass
 
 try:
     import torch
+
     HAS_TORCH = True
 except ImportError:
     torch = None
@@ -62,6 +64,7 @@ logger = get_logger(__name__)
 try:
     import onnx
     import onnxruntime as ort
+
     HAS_ONNX = True
 except ImportError as e:
     logger.error("Import error in model_format_converter: %s", e)
@@ -72,9 +75,11 @@ except ImportError as e:
 try:
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     import os
+
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
     import tensorflow as tf
+
     HAS_TF = True
 except ImportError as e:
     logger.error("Import error in model_format_converter: %s", e)
@@ -88,6 +93,7 @@ try:
         AutoModelForCausalLM,
         AutoTokenizer,
     )
+
     HAS_TRANSFORMERS = True
 except ImportError as e:
     logger.error("Import error in model_format_converter: %s", e)
@@ -100,6 +106,7 @@ except ImportError as e:
 try:
     from safetensors import safe_open
     from safetensors.torch import save_file
+
     HAS_SAFETENSORS = True
 except ImportError as e:
     logger.error("Import error in model_format_converter: %s", e)
@@ -125,8 +132,7 @@ class ModelFormatConverter:
             except Exception as e:
                 logger.debug(f"Could not get GPU info: {e}")
 
-        logger.info(
-            f"Model converter initialized with conversions: {self.supported_conversions}")
+        logger.info(f"Model converter initialized with conversions: {self.supported_conversions}")
 
     def _get_supported_conversions(self) -> dict[str, list[str]]:
         """Get list of supported format conversions.
@@ -188,14 +194,12 @@ class ModelFormatConverter:
 
         # Check if conversion is supported
         if target_format not in self.supported_conversions.get(source_format, []):
-            logger.error(
-                f"Conversion from {source_format} to {target_format} not supported")
+            logger.error(f"Conversion from {source_format} to {target_format} not supported")
             return None
 
         # Generate output path if needed
         if output_path is None:
-            output_path = source_path.parent / \
-                f"{source_path.stem}_{target_format}"
+            output_path = source_path.parent / f"{source_path.stem}_{target_format}"
         else:
             output_path = Path(output_path)
 
@@ -204,7 +208,9 @@ class ModelFormatConverter:
             try:
                 initial_allocated = memory_allocated()
                 initial_reserved = memory_reserved()
-                logger.info(f"GPU memory before conversion - Allocated: {initial_allocated / (1024**2):.1f}MB, Reserved: {initial_reserved / (1024**2):.1f}MB")
+                logger.info(
+                    f"GPU memory before conversion - Allocated: {initial_allocated / (1024**2):.1f}MB, Reserved: {initial_reserved / (1024**2):.1f}MB"
+                )
             except Exception as e:
                 logger.debug(f"Unable to get GPU memory stats: {e}")
 
@@ -227,7 +233,9 @@ class ModelFormatConverter:
                     try:
                         final_allocated = memory_allocated()
                         final_reserved = memory_reserved()
-                        logger.info(f"GPU memory after conversion - Allocated: {final_allocated / (1024**2):.1f}MB, Reserved: {final_reserved / (1024**2):.1f}MB")
+                        logger.info(
+                            f"GPU memory after conversion - Allocated: {final_allocated / (1024**2):.1f}MB, Reserved: {final_reserved / (1024**2):.1f}MB"
+                        )
                     except Exception as e:
                         logger.debug(f"Unable to get final GPU memory stats: {e}")
 
@@ -236,8 +244,7 @@ class ModelFormatConverter:
                 logger.error(f"Conversion failed: {e}")
                 return None
         else:
-            logger.error(
-                f"Converter method {converter_method} not implemented")
+            logger.error(f"Converter method {converter_method} not implemented")
             return None
 
     def _detect_format(self, model_path: Path) -> str | None:
@@ -324,7 +331,8 @@ class ModelFormatConverter:
 
                     # Create dummy input
                     dummy_input = torch.randint(
-                        0, config.vocab_size,
+                        0,
+                        config.vocab_size,
                         (batch_size, sequence_length),
                         dtype=torch.long,
                     )
@@ -345,8 +353,7 @@ class ModelFormatConverter:
                 # Try to infer input shape
                 input_shape = kwargs.get("input_shape")
                 if not input_shape:
-                    logger.error(
-                        "input_shape required for standalone PyTorch models")
+                    logger.error("input_shape required for standalone PyTorch models")
                     return None
 
                 dummy_input = torch.randn(*input_shape)
@@ -367,10 +374,13 @@ class ModelFormatConverter:
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Dynamic axes for variable sequence length
-            dynamic_axes = kwargs.get("dynamic_axes", {
-                "input_ids": {0: "batch_size", 1: "sequence"},
-                "output": {0: "batch_size", 1: "sequence"},
-            })
+            dynamic_axes = kwargs.get(
+                "dynamic_axes",
+                {
+                    "input_ids": {0: "batch_size", 1: "sequence"},
+                    "output": {0: "batch_size", 1: "sequence"},
+                },
+            )
 
             torch.onnx.export(
                 model,
@@ -389,8 +399,7 @@ class ModelFormatConverter:
             onnx_model = onnx.load(str(output_path))
             onnx.checker.check_model(onnx_model)
 
-            logger.info(
-                f"Successfully converted PyTorch model to ONNX: {output_path}")
+            logger.info(f"Successfully converted PyTorch model to ONNX: {output_path}")
             return output_path
 
         except Exception as e:
@@ -422,8 +431,7 @@ class ModelFormatConverter:
             # Load PyTorch model
             if source_path.is_dir():
                 # Load state dict from directory
-                model_files = list(source_path.glob("*.bin")) + \
-                    list(source_path.glob("*.pt"))
+                model_files = list(source_path.glob("*.bin")) + list(source_path.glob("*.pt"))
                 if not model_files:
                     logger.error("No PyTorch model files found")
                     return None
@@ -437,8 +445,7 @@ class ModelFormatConverter:
                     elif HAS_TORCH and torch.cuda.is_available():
                         device = "cuda"
 
-                    state_dict.update(torch.load(
-                        model_file, map_location=device))
+                    state_dict.update(torch.load(model_file, map_location=device))
             else:
                 # Load single file
                 # Use unified GPU system for device selection
@@ -469,7 +476,9 @@ class ModelFormatConverter:
                     for key, tensor in state_dict.items():
                         if hasattr(tensor, "shape"):  # It's a tensor
                             optimized_tensor = gpu_autoloader(tensor)
-                            optimized_dict[key] = optimized_tensor if optimized_tensor is not None else tensor
+                            optimized_dict[key] = (
+                                optimized_tensor if optimized_tensor is not None else tensor
+                            )
                         else:
                             optimized_dict[key] = tensor
                     state_dict = optimized_dict
@@ -481,8 +490,7 @@ class ModelFormatConverter:
             metadata = kwargs.get("metadata", {})
             save_file(state_dict, str(output_path), metadata=metadata)
 
-            logger.info(
-                f"Successfully converted PyTorch model to SafeTensors: {output_path}")
+            logger.info(f"Successfully converted PyTorch model to SafeTensors: {output_path}")
             return output_path
 
         except Exception as e:
@@ -539,8 +547,7 @@ class ModelFormatConverter:
                 save_kwargs["_use_new_zipfile_serialization"] = False
             torch.save(state_dict, str(output_path), **save_kwargs)
 
-            logger.info(
-                f"Successfully converted SafeTensors to PyTorch: {output_path}")
+            logger.info(f"Successfully converted SafeTensors to PyTorch: {output_path}")
             return output_path
 
         except Exception as e:
@@ -579,14 +586,11 @@ class ModelFormatConverter:
                 elif hasattr(tf, "keras"):
                     model = tf.keras.models.load_model(str(source_path))
                 else:
-                    raise ImportError(
-                        "TensorFlow keras module not available")
+                    raise ImportError("TensorFlow keras module not available")
 
                 # Get concrete function
                 if hasattr(model, "signatures"):
-                    concrete_func = model.signatures[
-                        kwargs.get("signature_key", "serving_default")
-                    ]
+                    concrete_func = model.signatures[kwargs.get("signature_key", "serving_default")]
                 else:
                     # For Keras models
                     input_spec = kwargs.get("input_spec")
@@ -598,8 +602,7 @@ class ModelFormatConverter:
                     def inference_func(x):
                         return model(x)
 
-                    concrete_func = inference_func.get_concrete_function(
-                        input_spec)
+                    concrete_func = inference_func.get_concrete_function(input_spec)
 
                 # Convert to ONNX
                 output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -612,19 +615,15 @@ class ModelFormatConverter:
 
                 # Log model info
                 if model_proto:
-                    logger.info(
-                        f"Successfully converted TensorFlow model to ONNX: {output_path}")
-                    logger.debug(
-                        f"ONNX model graph nodes: {len(model_proto.graph.node)}")
+                    logger.info(f"Successfully converted TensorFlow model to ONNX: {output_path}")
+                    logger.debug(f"ONNX model graph nodes: {len(model_proto.graph.node)}")
                 else:
-                    logger.warning(
-                        "Model conversion completed but model_proto is None")
+                    logger.warning("Model conversion completed but model_proto is None")
 
                 return output_path
 
             except ImportError:
-                logger.error(
-                    "tf2onnx required for TensorFlow to ONNX conversion")
+                logger.error("tf2onnx required for TensorFlow to ONNX conversion")
                 return None
 
         except Exception as e:
@@ -668,10 +667,14 @@ class ModelFormatConverter:
 
             # Get outputs from both models
             original_output = self._run_inference(
-                original_path, original_format, test_inputs,
+                original_path,
+                original_format,
+                test_inputs,
             )
             converted_output = self._run_inference(
-                converted_path, converted_format, test_inputs,
+                converted_path,
+                converted_format,
+                test_inputs,
             )
 
             if original_output is None or converted_output is None:
@@ -680,8 +683,7 @@ class ModelFormatConverter:
             # Compare outputs
             for key in original_output:
                 if key not in converted_output:
-                    logger.error(
-                        f"Output key '{key}' missing in converted model")
+                    logger.error(f"Output key '{key}' missing in converted model")
                     return False
 
                 # Numerical comparison
@@ -742,9 +744,7 @@ class ModelFormatConverter:
 
                 with torch.no_grad():
                     # Convert inputs to torch tensors
-                    torch_inputs = {
-                        k: torch.from_numpy(v) for k, v in inputs.items()
-                    }
+                    torch_inputs = {k: torch.from_numpy(v) for k, v in inputs.items()}
 
                     # Move to device if available
                     if GPU_AUTOLOADER_AVAILABLE and to_device:
@@ -806,9 +806,7 @@ class ModelFormatConverter:
         if model_path.is_file():
             info["size_mb"] = model_path.stat().st_size / (1024 * 1024)
         elif model_path.is_dir():
-            total_size = sum(
-                f.stat().st_size for f in model_path.rglob("*") if f.is_file()
-            )
+            total_size = sum(f.stat().st_size for f in model_path.rglob("*") if f.is_file())
             info["size_mb"] = total_size / (1024 * 1024)
 
         # Format-specific info
@@ -835,7 +833,9 @@ class ModelFormatConverter:
 
         return info
 
-    def load_model_for_conversion(self, model_path: str | Path, model_type: str = "auto") -> Any | None:
+    def load_model_for_conversion(
+        self, model_path: str | Path, model_type: str = "auto"
+    ) -> Any | None:
         """Load a model using appropriate AutoModel class based on type.
 
         Args:
@@ -917,7 +917,9 @@ class ModelFormatConverter:
                 "vocab_size": getattr(config, "vocab_size", None),
                 "max_position_embeddings": getattr(config, "max_position_embeddings", None),
                 "num_parameters": sum(p.numel() for p in model.parameters()),
-                "requires_grad_params": sum(p.numel() for p in model.parameters() if p.requires_grad),
+                "requires_grad_params": sum(
+                    p.numel() for p in model.parameters() if p.requires_grad
+                ),
                 "model_class": model.__class__.__name__,
                 "supports_gradient_checkpointing": hasattr(model, "gradient_checkpointing_enable"),
                 "is_quantized": hasattr(model, "quantization_config"),
@@ -937,7 +939,9 @@ class ModelFormatConverter:
             logger.error(f"Failed to analyze model architecture: {e}")
             return None
 
-    def convert_model_with_automodel(self, source_path: str | Path, target_format: str, model_type: str = "auto", **kwargs) -> Path | None:
+    def convert_model_with_automodel(
+        self, source_path: str | Path, target_format: str, model_type: str = "auto", **kwargs
+    ) -> Path | None:
         """Convert a model using AutoModel for flexible model loading.
 
         Args:
@@ -955,7 +959,9 @@ class ModelFormatConverter:
         if model is None:
             return None
 
-        output_path = kwargs.get("output_path", Path(source_path).parent / f"{Path(source_path).stem}_{target_format}")
+        output_path = kwargs.get(
+            "output_path", Path(source_path).parent / f"{Path(source_path).stem}_{target_format}"
+        )
 
         try:
             if target_format == "onnx" and HAS_ONNX and HAS_TORCH:
@@ -984,7 +990,9 @@ class ModelFormatConverter:
                     opset_version=kwargs.get("opset_version", 14),
                     input_names=kwargs.get("input_names", ["input"]),
                     output_names=kwargs.get("output_names", ["output"]),
-                    dynamic_axes=kwargs.get("dynamic_axes", {"input": {0: "batch_size"}, "output": {0: "batch_size"}}),
+                    dynamic_axes=kwargs.get(
+                        "dynamic_axes", {"input": {0: "batch_size"}, "output": {0: "batch_size"}}
+                    ),
                 )
 
                 logger.info(f"Successfully converted model to {target_format} using AutoModel")

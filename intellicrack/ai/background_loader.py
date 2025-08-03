@@ -40,8 +40,10 @@ class ConsoleProgressCallback(ProgressCallback):
 
     def on_progress(self, progress: LoadingProgress):
         """Print progress to console."""
-        print(f"[{progress.model_id}] {progress.state.value}: "
-              f"{progress.progress:.1%} - {progress.message}")
+        print(
+            f"[{progress.model_id}] {progress.state.value}: "
+            f"{progress.progress:.1%} - {progress.message}"
+        )
 
     def on_completed(self, model_id: str, success: bool, error: str | None = None):
         """Print completion status."""
@@ -94,12 +96,14 @@ class QueuedProgressCallback(ProgressCallback):
 class LoadingTask:
     """A single model loading task."""
 
-    def __init__(self,
-                 model_id: str,
-                 backend_class: type,
-                 config: "LLMConfig",
-                 priority: int = 0,
-                 callback: ProgressCallback | None = None):
+    def __init__(
+        self,
+        model_id: str,
+        backend_class: type,
+        config: "LLMConfig",
+        priority: int = 0,
+        callback: ProgressCallback | None = None,
+    ):
         """Initialize a model loading task.
 
         Args:
@@ -147,7 +151,9 @@ class LoadingTask:
             )
             self.callback.on_progress(progress_info)
 
-    def mark_completed(self, success: bool, result: Optional["LLMBackend"] = None, error: str | None = None):
+    def mark_completed(
+        self, success: bool, result: Optional["LLMBackend"] = None, error: str | None = None
+    ):
         """Mark task as completed."""
         self.end_time = time.time()
         self.result = result
@@ -166,8 +172,7 @@ class LoadingTask:
         self.message = "Loading cancelled"
 
         if self.callback:
-            self.callback.on_completed(
-                self.model_id, False, "Cancelled by user")
+            self.callback.on_completed(self.model_id, False, "Cancelled by user")
 
 
 class BackgroundModelLoader:
@@ -196,34 +201,34 @@ class BackgroundModelLoader:
         # Start worker threads
         for i in range(max_concurrent_loads):
             thread = threading.Thread(
-                target=self._worker_thread, name=f"ModelLoader-{i}", daemon=True)
+                target=self._worker_thread, name=f"ModelLoader-{i}", daemon=True
+            )
             thread.start()
             self.worker_threads.append(thread)
 
-        logger.info(
-            f"Background model loader started with {max_concurrent_loads} workers")
+        logger.info(f"Background model loader started with {max_concurrent_loads} workers")
 
-    def submit_loading_task(self,
-                            model_id: str,
-                            backend_class: type,
-                            config: "LLMConfig",
-                            priority: int = 0,
-                            callback: ProgressCallback | None = None) -> LoadingTask:
+    def submit_loading_task(
+        self,
+        model_id: str,
+        backend_class: type,
+        config: "LLMConfig",
+        priority: int = 0,
+        callback: ProgressCallback | None = None,
+    ) -> LoadingTask:
         """Submit a model loading task."""
         with self.lock:
             # Cancel any existing task for this model
             if model_id in self.active_tasks:
                 self.cancel_task(model_id)
 
-            task = LoadingTask(model_id, backend_class,
-                               config, priority, callback)
+            task = LoadingTask(model_id, backend_class, config, priority, callback)
             self.pending_tasks.append(task)
 
             # Add to priority queue (negative priority for max-heap behavior)
             self.task_queue.put((-priority, time.time(), task))
 
-            logger.info(
-                f"Submitted loading task for {model_id} (priority: {priority})")
+            logger.info(f"Submitted loading task for {model_id} (priority: {priority})")
             return task
 
     def cancel_task(self, model_id: str) -> bool:
@@ -288,7 +293,8 @@ class BackgroundModelLoader:
             completed_tasks = list(self.completed_tasks.values())
             if completed_tasks:
                 successful = sum(
-                    1 for task in completed_tasks if task.state == LoadingState.COMPLETED)
+                    1 for task in completed_tasks if task.state == LoadingState.COMPLETED
+                )
                 stats["success_rate"] = successful / len(completed_tasks)
             else:
                 stats["success_rate"] = 0.0
@@ -339,8 +345,7 @@ class BackgroundModelLoader:
                 return
 
             # Stage 1: Initialize backend
-            task.update_progress(
-                0.1, "Initializing backend...", LoadingState.INITIALIZING)
+            task.update_progress(0.1, "Initializing backend...", LoadingState.INITIALIZING)
 
             if task.cancelled:
                 return
@@ -348,8 +353,7 @@ class BackgroundModelLoader:
             backend = task.backend_class(task.config)
 
             # Stage 2: Download/prepare model if needed
-            task.update_progress(0.3, "Preparing model...",
-                                 LoadingState.DOWNLOADING)
+            task.update_progress(0.3, "Preparing model...", LoadingState.DOWNLOADING)
 
             if task.cancelled:
                 return
@@ -367,15 +371,12 @@ class BackgroundModelLoader:
                 return
 
             if success:
-                task.update_progress(
-                    1.0, "Model loaded successfully", LoadingState.COMPLETED)
+                task.update_progress(1.0, "Model loaded successfully", LoadingState.COMPLETED)
                 task.mark_completed(True, backend)
                 logger.info(f"Successfully loaded model {task.model_id}")
             else:
-                task.mark_completed(
-                    False, error="Backend initialization failed")
-                logger.error(
-                    f"Failed to initialize backend for {task.model_id}")
+                task.mark_completed(False, error="Backend initialization failed")
+                logger.error(f"Failed to initialize backend for {task.model_id}")
 
         except Exception as e:
             if not task.cancelled:
@@ -428,11 +429,9 @@ class IntegratedBackgroundLoader:
         if callback in self.progress_callbacks:
             self.progress_callbacks.remove(callback)
 
-    def load_model_in_background(self,
-                                 model_id: str,
-                                 backend_class: type,
-                                 config: "LLMConfig",
-                                 priority: int = 0) -> LoadingTask:
+    def load_model_in_background(
+        self, model_id: str, backend_class: type, config: "LLMConfig", priority: int = 0
+    ) -> LoadingTask:
         """Load a model in the background with integrated callbacks."""
 
         # Create a callback that notifies all registered callbacks
@@ -499,16 +498,19 @@ def get_background_loader(llm_manager=None) -> IntegratedBackgroundLoader:
     if _integrated_loader is None:
         if llm_manager is None:
             from .llm_backends import get_llm_manager
+
             llm_manager = get_llm_manager()
         _integrated_loader = IntegratedBackgroundLoader(llm_manager)
     return _integrated_loader
 
 
-def load_model_with_progress(model_id: str,
-                             backend_class: type,
-                             config: "LLMConfig",
-                             priority: int = 0,
-                             callback: ProgressCallback | None = None) -> LoadingTask:
+def load_model_with_progress(
+    model_id: str,
+    backend_class: type,
+    config: "LLMConfig",
+    priority: int = 0,
+    callback: ProgressCallback | None = None,
+) -> LoadingTask:
     """Convenience function to load a model with progress."""
     loader = get_background_loader()
     if callback:
@@ -522,8 +524,7 @@ if __name__ == "__main__":
     import sys
 
     # Add project root to path
-    sys.path.insert(0, os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..")))
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
     from intellicrack.ai.llm_backends import LLMConfig, LLMProvider, OpenAIBackend
 
@@ -536,10 +537,8 @@ if __name__ == "__main__":
 
     # Create some test configurations
     configs = [
-        LLMConfig(provider=LLMProvider.OPENAI,
-                  model_name="gpt-3.5-turbo", api_key="test1"),
-        LLMConfig(provider=LLMProvider.OPENAI,
-                  model_name="gpt-4", api_key="test2"),
+        LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-3.5-turbo", api_key="test1"),
+        LLMConfig(provider=LLMProvider.OPENAI, model_name="gpt-4", api_key="test2"),
     ]
 
     # Start background loading

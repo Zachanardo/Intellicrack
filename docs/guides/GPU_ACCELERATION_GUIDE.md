@@ -131,7 +131,7 @@ gpu_config = {
    ```bash
    # NVIDIA
    nvidia-smi
-   
+
    # Intel
    xpu-smi discovery
    ```
@@ -163,7 +163,7 @@ Run GPU benchmark from Tools → GPU Benchmark:
 
 ```
 Pattern Matching: 2.5 GB/s
-Hash Calculation: 12.3 GB/s  
+Hash Calculation: 12.3 GB/s
 Entropy Analysis: 8.7 GB/s
 AI Inference: 145 tokens/s
 ```

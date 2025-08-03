@@ -69,87 +69,95 @@ class ClaudeAdapter(AIModelAdapter):
         tools = []
 
         # Analyze binary tool
-        tools.append({
-            "name": "analyze_binary",
-            "description": "Analyze a binary file to understand its structure, protections, and vulnerabilities",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "binary_path": {
-                        "type": "string",
-                        "description": "Path to the binary file to analyze",
+        tools.append(
+            {
+                "name": "analyze_binary",
+                "description": "Analyze a binary file to understand its structure, protections, and vulnerabilities",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "binary_path": {
+                            "type": "string",
+                            "description": "Path to the binary file to analyze",
+                        },
+                        "analyses": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Types of analysis to perform",
+                            "default": ["comprehensive"],
+                        },
                     },
-                    "analyses": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Types of analysis to perform",
-                        "default": ["comprehensive"],
-                    },
+                    "required": ["binary_path"],
                 },
-                "required": ["binary_path"],
-            },
-        })
+            }
+        )
 
         # Suggest patches tool
-        tools.append({
-            "name": "suggest_patches",
-            "description": "Generate patch suggestions for bypassing protections in a binary",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "binary_path": {
-                        "type": "string",
-                        "description": "Path to the binary file",
+        tools.append(
+            {
+                "name": "suggest_patches",
+                "description": "Generate patch suggestions for bypassing protections in a binary",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "binary_path": {
+                            "type": "string",
+                            "description": "Path to the binary file",
+                        },
                     },
+                    "required": ["binary_path"],
                 },
-                "required": ["binary_path"],
-            },
-        })
+            }
+        )
 
         # Apply patch tool
-        tools.append({
-            "name": "apply_patch",
-            "description": "Apply a patch to modify a binary (requires user confirmation)",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "binary_path": {
-                        "type": "string",
-                        "description": "Path to the binary file",
+        tools.append(
+            {
+                "name": "apply_patch",
+                "description": "Apply a patch to modify a binary (requires user confirmation)",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "binary_path": {
+                            "type": "string",
+                            "description": "Path to the binary file",
+                        },
+                        "patch_file": {
+                            "type": "string",
+                            "description": "Path to the patch definition file",
+                        },
                     },
-                    "patch_file": {
-                        "type": "string",
-                        "description": "Path to the patch definition file",
-                    },
+                    "required": ["binary_path", "patch_file"],
                 },
-                "required": ["binary_path", "patch_file"],
-            },
-        })
+            }
+        )
 
         # Generic CLI command tool
-        tools.append({
-            "name": "execute_cli_command",
-            "description": "Execute any Intellicrack CLI command with full control",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "args": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "CLI arguments to pass",
+        tools.append(
+            {
+                "name": "execute_cli_command",
+                "description": "Execute any Intellicrack CLI command with full control",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "args": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "CLI arguments to pass",
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Human-readable description of the action",
+                        },
+                        "reasoning": {
+                            "type": "string",
+                            "description": "Explanation of why this action is needed",
+                        },
                     },
-                    "description": {
-                        "type": "string",
-                        "description": "Human-readable description of the action",
-                    },
-                    "reasoning": {
-                        "type": "string",
-                        "description": "Explanation of why this action is needed",
-                    },
+                    "required": ["args", "description"],
                 },
-                "required": ["args", "description"],
-            },
-        })
+            }
+        )
 
         return tools
 
@@ -199,71 +207,83 @@ class OpenAIAdapter(AIModelAdapter):
         tools = []
 
         # Analyze binary function
-        tools.append({
-            "type": "function",
-            "function": {
-                "name": "analyze_binary",
-                "description": "Analyze a binary file to understand its structure, protections, and vulnerabilities",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "binary_path": {
-                            "type": "string",
-                            "description": "Path to the binary file",
+        tools.append(
+            {
+                "type": "function",
+                "function": {
+                    "name": "analyze_binary",
+                    "description": "Analyze a binary file to understand its structure, protections, and vulnerabilities",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "binary_path": {
+                                "type": "string",
+                                "description": "Path to the binary file",
+                            },
+                            "analyses": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "enum": [
+                                    "comprehensive",
+                                    "vulnerabilities",
+                                    "protections",
+                                    "license",
+                                    "network",
+                                ],
+                                "description": "Types of analysis to perform",
+                            },
                         },
-                        "analyses": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "enum": ["comprehensive", "vulnerabilities", "protections", "license", "network"],
-                            "description": "Types of analysis to perform",
-                        },
+                        "required": ["binary_path"],
                     },
-                    "required": ["binary_path"],
                 },
-            },
-        })
+            }
+        )
 
         # Suggest patches function
-        tools.append({
-            "type": "function",
-            "function": {
-                "name": "suggest_patches",
-                "description": "Generate patch suggestions for bypassing protections",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "binary_path": {
-                            "type": "string",
-                            "description": "Path to the binary file",
+        tools.append(
+            {
+                "type": "function",
+                "function": {
+                    "name": "suggest_patches",
+                    "description": "Generate patch suggestions for bypassing protections",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "binary_path": {
+                                "type": "string",
+                                "description": "Path to the binary file",
+                            },
                         },
+                        "required": ["binary_path"],
                     },
-                    "required": ["binary_path"],
                 },
-            },
-        })
+            }
+        )
 
         # Apply patch function
-        tools.append({
-            "type": "function",
-            "function": {
-                "name": "apply_patch",
-                "description": "Apply a patch to modify a binary (requires confirmation)",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "binary_path": {
-                            "type": "string",
-                            "description": "Path to the binary file",
+        tools.append(
+            {
+                "type": "function",
+                "function": {
+                    "name": "apply_patch",
+                    "description": "Apply a patch to modify a binary (requires confirmation)",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "binary_path": {
+                                "type": "string",
+                                "description": "Path to the binary file",
+                            },
+                            "patch_file": {
+                                "type": "string",
+                                "description": "Path to patch definition",
+                            },
                         },
-                        "patch_file": {
-                            "type": "string",
-                            "description": "Path to patch definition",
-                        },
+                        "required": ["binary_path", "patch_file"],
                     },
-                    "required": ["binary_path", "patch_file"],
                 },
-            },
-        })
+            }
+        )
 
         return tools
 
@@ -288,25 +308,31 @@ class LangChainIntegration:
             tools = []
 
             # Analyze binary tool
-            tools.append(Tool(
-                name="analyze_binary",
-                func=lambda input_str: self._handle_analyze(input_str),
-                description="Analyze a binary file. Input: 'path/to/binary [analysis_types]'",
-            ))
+            tools.append(
+                Tool(
+                    name="analyze_binary",
+                    func=lambda input_str: self._handle_analyze(input_str),
+                    description="Analyze a binary file. Input: 'path/to/binary [analysis_types]'",
+                )
+            )
 
             # Suggest patches tool
-            tools.append(Tool(
-                name="suggest_patches",
-                func=lambda input_str: self._handle_suggest_patches(input_str),
-                description="Suggest patches for a binary. Input: 'path/to/binary'",
-            ))
+            tools.append(
+                Tool(
+                    name="suggest_patches",
+                    func=lambda input_str: self._handle_suggest_patches(input_str),
+                    description="Suggest patches for a binary. Input: 'path/to/binary'",
+                )
+            )
 
             # CLI command tool
-            tools.append(Tool(
-                name="intellicrack_cli",
-                func=lambda input_str: self._handle_cli_command(input_str),
-                description="Run Intellicrack CLI command. Input: 'description | command args'",
-            ))
+            tools.append(
+                Tool(
+                    name="intellicrack_cli",
+                    func=lambda input_str: self._handle_cli_command(input_str),
+                    description="Run Intellicrack CLI command. Input: 'description | command args'",
+                )
+            )
 
             return tools
 

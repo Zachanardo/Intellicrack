@@ -198,21 +198,32 @@ class BinaryAnalyzer:
             # Get PE header offset
             pe_offset = struct.unpack("<I", data[0x3C:0x40])[0]
 
-            if pe_offset >= len(data) or data[pe_offset:pe_offset+4] != b"PE\x00\x00":
+            if pe_offset >= len(data) or data[pe_offset : pe_offset + 4] != b"PE\x00\x00":
                 return {"error": "Invalid PE header"}
 
             # Parse COFF header
-            coff_header = data[pe_offset+4:pe_offset+24]
-            machine, num_sections, timestamp, symbol_table_offset, num_symbols, optional_header_size, characteristics = \
-                struct.unpack("<HHIIIHH", coff_header)
+            coff_header = data[pe_offset + 4 : pe_offset + 24]
+            (
+                machine,
+                num_sections,
+                timestamp,
+                symbol_table_offset,
+                num_symbols,
+                optional_header_size,
+                characteristics,
+            ) = struct.unpack("<HHIIIHH", coff_header)
 
-            pe_info.update({
-                "machine": f"0x{machine:04x}",
-                "num_sections": num_sections,
-                "timestamp": datetime.fromtimestamp(timestamp).isoformat() if timestamp > 0 else "N/A",
-                "characteristics": f"0x{characteristics:04x}",
-                "sections": [],
-            })
+            pe_info.update(
+                {
+                    "machine": f"0x{machine:04x}",
+                    "num_sections": num_sections,
+                    "timestamp": datetime.fromtimestamp(timestamp).isoformat()
+                    if timestamp > 0
+                    else "N/A",
+                    "characteristics": f"0x{characteristics:04x}",
+                    "sections": [],
+                }
+            )
 
             # Parse sections
             section_table_offset = pe_offset + 24 + optional_header_size
@@ -221,17 +232,21 @@ class BinaryAnalyzer:
                 if section_offset + 40 > len(data):
                     break
 
-                section_data = data[section_offset:section_offset+40]
+                section_data = data[section_offset : section_offset + 40]
                 name = section_data[:8].decode("utf-8", errors="ignore").rstrip("\x00")
-                virtual_size, virtual_address, raw_size, raw_address = struct.unpack("<IIII", section_data[8:24])
+                virtual_size, virtual_address, raw_size, raw_address = struct.unpack(
+                    "<IIII", section_data[8:24]
+                )
 
-                pe_info["sections"].append({
-                    "name": name,
-                    "virtual_address": f"0x{virtual_address:08x}",
-                    "virtual_size": virtual_size,
-                    "raw_size": raw_size,
-                    "raw_address": f"0x{raw_address:08x}",
-                })
+                pe_info["sections"].append(
+                    {
+                        "name": name,
+                        "virtual_address": f"0x{virtual_address:08x}",
+                        "virtual_size": virtual_size,
+                        "raw_size": raw_size,
+                        "raw_address": f"0x{raw_address:08x}",
+                    }
+                )
 
             return pe_info
 
@@ -254,27 +269,37 @@ class BinaryAnalyzer:
             ei_data = data[5]
             ei_version = data[6]
 
-            elf_info.update({
-                "class": "64-bit" if ei_class == 2 else "32-bit",
-                "data": "little-endian" if ei_data == 1 else "big-endian",
-                "version": ei_version,
-                "segments": [],
-                "sections": [],
-            })
+            elf_info.update(
+                {
+                    "class": "64-bit" if ei_class == 2 else "32-bit",
+                    "data": "little-endian" if ei_data == 1 else "big-endian",
+                    "version": ei_version,
+                    "segments": [],
+                    "sections": [],
+                }
+            )
 
             # Parse program headers (segments)
             if ei_class == 2:  # 64-bit
-                e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIQQQQ", data[16:48])[:6]
+                e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack(
+                    "<HHIQQQQ", data[16:48]
+                )[:6]
                 e_phentsize, e_phnum = struct.unpack("<HH", data[54:58])
             else:  # 32-bit
-                e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack("<HHIIII", data[16:36])[:6]
+                e_type, e_machine, e_version, e_entry, e_phoff, e_shoff = struct.unpack(
+                    "<HHIIII", data[16:36]
+                )[:6]
                 e_phentsize, e_phnum = struct.unpack("<HH", data[42:46])
 
-            elf_info.update({
-                "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(e_type, f"Unknown({e_type})"),
-                "machine": f"0x{e_machine:04x}",
-                "entry_point": f"0x{e_entry:08x}",
-            })
+            elf_info.update(
+                {
+                    "type": {1: "REL", 2: "EXEC", 3: "DYN", 4: "CORE"}.get(
+                        e_type, f"Unknown({e_type})"
+                    ),
+                    "machine": f"0x{e_machine:04x}",
+                    "entry_point": f"0x{e_entry:08x}",
+                }
+            )
 
             # Parse program headers
             for i in range(min(e_phnum, 20)):  # Limit to prevent excessive parsing
@@ -283,23 +308,35 @@ class BinaryAnalyzer:
                     break
 
                 if ei_class == 2:  # 64-bit
-                    p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align = \
-                        struct.unpack("<IIQQQQQQ", data[ph_offset:ph_offset+56])
+                    p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align = (
+                        struct.unpack("<IIQQQQQQ", data[ph_offset : ph_offset + 56])
+                    )
                 else:  # 32-bit
-                    p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align = \
-                        struct.unpack("<IIIIIIII", data[ph_offset:ph_offset+32])
+                    p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align = (
+                        struct.unpack("<IIIIIIII", data[ph_offset : ph_offset + 32])
+                    )
 
-                segment_types = {0: "NULL", 1: "LOAD", 2: "DYNAMIC", 3: "INTERP", 4: "NOTE",
-                               5: "SHLIB", 6: "PHDR", 7: "TLS"}
+                segment_types = {
+                    0: "NULL",
+                    1: "LOAD",
+                    2: "DYNAMIC",
+                    3: "INTERP",
+                    4: "NOTE",
+                    5: "SHLIB",
+                    6: "PHDR",
+                    7: "TLS",
+                }
 
-                elf_info["segments"].append({
-                    "type": segment_types.get(p_type, f"Unknown({p_type})"),
-                    "offset": f"0x{p_offset:08x}",
-                    "vaddr": f"0x{p_vaddr:08x}",
-                    "filesz": p_filesz,
-                    "memsz": p_memsz,
-                    "flags": self._get_segment_flags(p_flags),
-                })
+                elf_info["segments"].append(
+                    {
+                        "type": segment_types.get(p_type, f"Unknown({p_type})"),
+                        "offset": f"0x{p_offset:08x}",
+                        "vaddr": f"0x{p_vaddr:08x}",
+                        "filesz": p_filesz,
+                        "memsz": p_memsz,
+                        "flags": self._get_segment_flags(p_flags),
+                    }
+                )
 
             return elf_info
 
@@ -331,16 +368,16 @@ class BinaryAnalyzer:
             macho_info = {}
 
             # Determine architecture and endianness
-            if magic == 0xfeedface:  # 32-bit little-endian
+            if magic == 0xFEEDFACE:  # 32-bit little-endian
                 is_64 = False
                 endian = "<"
-            elif magic == 0xfeedfacf:  # 64-bit little-endian
+            elif magic == 0xFEEDFACF:  # 64-bit little-endian
                 is_64 = True
                 endian = "<"
-            elif magic == 0xcefaedfe:  # 32-bit big-endian
+            elif magic == 0xCEFAEDFE:  # 32-bit big-endian
                 is_64 = False
                 endian = ">"
-            elif magic == 0xcffaedfe:  # 64-bit big-endian
+            elif magic == 0xCFFAEDFE:  # 64-bit big-endian
                 is_64 = True
                 endian = ">"
             else:
@@ -348,35 +385,41 @@ class BinaryAnalyzer:
 
             # Parse header
             if is_64:
-                cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = \
-                    struct.unpack(endian + "IIIIII", data[4:28])
+                cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(
+                    endian + "IIIIII", data[4:28]
+                )
                 offset = 32
             else:
-                cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = \
-                    struct.unpack(endian + "IIIIII", data[4:28])
+                cpu_type, cpu_subtype, file_type, ncmds, sizeofcmds, flags = struct.unpack(
+                    endian + "IIIIII", data[4:28]
+                )
                 offset = 28
 
-            macho_info.update({
-                "architecture": "64-bit" if is_64 else "32-bit",
-                "cpu_type": f"0x{cpu_type:08x}",
-                "file_type": file_type,
-                "num_commands": ncmds,
-                "commands_size": sizeofcmds,
-                "flags": f"0x{flags:08x}",
-                "load_commands": [],
-            })
+            macho_info.update(
+                {
+                    "architecture": "64-bit" if is_64 else "32-bit",
+                    "cpu_type": f"0x{cpu_type:08x}",
+                    "file_type": file_type,
+                    "num_commands": ncmds,
+                    "commands_size": sizeofcmds,
+                    "flags": f"0x{flags:08x}",
+                    "load_commands": [],
+                }
+            )
 
             # Parse load commands (limit to prevent excessive parsing)
             for _i in range(min(ncmds, 50)):
                 if offset + 8 > len(data):
                     break
 
-                cmd, cmdsize = struct.unpack(endian + "II", data[offset:offset+8])
+                cmd, cmdsize = struct.unpack(endian + "II", data[offset : offset + 8])
 
-                macho_info["load_commands"].append({
-                    "cmd": f"0x{cmd:08x}",
-                    "cmdsize": cmdsize,
-                })
+                macho_info["load_commands"].append(
+                    {
+                        "cmd": f"0x{cmd:08x}",
+                        "cmdsize": cmdsize,
+                    }
+                )
 
                 offset += cmdsize
 
@@ -407,12 +450,14 @@ class BinaryAnalyzer:
                 file_size = struct.unpack("<I", data[32:36])[0]
                 header_size = struct.unpack("<I", data[36:40])[0]
 
-                dex_info.update({
-                    "checksum": f"0x{checksum:08x}",
-                    "signature": signature,
-                    "declared_size": file_size,
-                    "header_size": header_size,
-                })
+                dex_info.update(
+                    {
+                        "checksum": f"0x{checksum:08x}",
+                        "signature": signature,
+                        "declared_size": file_size,
+                        "header_size": header_size,
+                    }
+                )
 
                 # String IDs
                 string_ids_size = struct.unpack("<I", data[56:60])[0]
@@ -425,7 +470,9 @@ class BinaryAnalyzer:
                     try:
                         str_offset_addr = string_ids_off + (i * 4)
                         if str_offset_addr + 4 <= len(data):
-                            str_offset = struct.unpack("<I", data[str_offset_addr:str_offset_addr+4])[0]
+                            str_offset = struct.unpack(
+                                "<I", data[str_offset_addr : str_offset_addr + 4]
+                            )[0]
                             if str_offset < len(data):
                                 # Simple ULEB128 decoding for string length
                                 length = 0
@@ -434,13 +481,15 @@ class BinaryAnalyzer:
                                 while pos < len(data):
                                     byte = data[pos]
                                     pos += 1
-                                    length |= (byte & 0x7f) << shift
+                                    length |= (byte & 0x7F) << shift
                                     if (byte & 0x80) == 0:
                                         break
                                     shift += 7
 
                                 if pos + length <= len(data):
-                                    string = data[pos:pos+length].decode("utf-8", errors="ignore")
+                                    string = data[pos : pos + length].decode(
+                                        "utf-8", errors="ignore"
+                                    )
                                     dex_info["strings"].append(string)
                     except (UnicodeDecodeError, IndexError, struct.error):
                         continue
@@ -475,20 +524,23 @@ class BinaryAnalyzer:
 
                 # Analyze files (limit to first 20)
                 for _i, file_info in enumerate(zf.filelist[:20]):
-                    archive_info["files"].append({
-                        "filename": file_info.filename,
-                        "compressed_size": file_info.compress_size,
-                        "uncompressed_size": file_info.file_size,
-                        "crc32": f"0x{file_info.CRC:08x}",
-                    })
+                    archive_info["files"].append(
+                        {
+                            "filename": file_info.filename,
+                            "compressed_size": file_info.compress_size,
+                            "uncompressed_size": file_info.file_size,
+                            "crc32": f"0x{file_info.CRC:08x}",
+                        }
+                    )
 
                     archive_info["compressed_size"] += file_info.compress_size
                     archive_info["uncompressed_size"] += file_info.file_size
 
                 # Calculate compression ratio
                 if archive_info["uncompressed_size"] > 0:
-                    archive_info["compression_ratio"] = \
-                        (1 - archive_info["compressed_size"] / archive_info["uncompressed_size"]) * 100
+                    archive_info["compression_ratio"] = (
+                        1 - archive_info["compressed_size"] / archive_info["uncompressed_size"]
+                    ) * 100
 
             return archive_info
 

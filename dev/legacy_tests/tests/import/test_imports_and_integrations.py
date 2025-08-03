@@ -53,7 +53,7 @@ def test_die_integration():
     """Test DIE protection detection integration."""
     global tests_passed, tests_failed
     print("\n=== Testing DIE Integration ===")
-    
+
     try:
         from intellicrack.protection.die_detector import DIEProtectionDetector
         detector = DIEProtectionDetector()
@@ -63,7 +63,7 @@ def test_die_integration():
         else:
             print("✗ DIE detector missing required methods")
         tests_passed += 1
-        
+
         # Test if DIE executable exists
         die_path = Path("/mnt/c/Intellicrack/tools/die/diec.exe")
         if die_path.exists():
@@ -73,7 +73,7 @@ def test_die_integration():
             print(f"✗ DIE executable not found at {die_path}")
             issues.append(f"DIE executable missing at {die_path}")
             tests_failed += 1
-            
+
     except Exception as e:
         error_msg = f"✗ DIE integration test failed: {str(e)}"
         print(error_msg)
@@ -84,7 +84,7 @@ def test_llm_backends():
     """Test LLM backend integrations."""
     global tests_passed, tests_failed
     print("\n=== Testing LLM Backends ===")
-    
+
     try:
         from intellicrack.ai.llm_backends import LLMManager, LLMProvider
 
@@ -96,12 +96,12 @@ def test_llm_backends():
         else:
             print("✗ LLM Manager missing required methods")
         tests_passed += 1
-        
+
         # Test available providers
         providers = [p.value for p in LLMProvider]
         print(f"✓ Available LLM providers: {providers}")
         tests_passed += 1
-        
+
     except Exception as e:
         error_msg = f"✗ LLM backend test failed: {str(e)}"
         print(error_msg)
@@ -112,12 +112,12 @@ def test_ui_components():
     """Test UI components can be imported."""
     global tests_passed, tests_failed
     print("\n=== Testing UI Components ===")
-    
+
     ui_imports = [
         ("intellicrack.ui.widgets.die_protection_widget", "DIEProtectionWidget"),
         ("intellicrack.ui.main_app", "IntellicrackApp"),
     ]
-    
+
     for module, item in ui_imports:
         test_import(module, item)
 
@@ -125,7 +125,7 @@ def check_removed_ml_references():
     """Check for any remaining ML model references."""
     global tests_passed, tests_failed
     print("\n=== Checking for Removed ML References ===")
-    
+
     # Files that should not exist
     removed_files = [
         "intellicrack/models/protection_model.pkl",
@@ -133,7 +133,7 @@ def check_removed_ml_references():
         "scripts/ml/train_protection_model.py",
         "scripts/ml/evaluate_model.py"
     ]
-    
+
     for file_path in removed_files:
         full_path = Path("/mnt/c/Intellicrack") / file_path
         if full_path.exists():
@@ -149,11 +149,11 @@ def test_tools_integration():
     """Test that tools properly use DIE instead of ML."""
     global tests_passed, tests_failed
     print("\n=== Testing Tools Integration ===")
-    
+
     try:
         from intellicrack.tools.protection_analyzer_tool import ProtectionAnalyzerTool
         tool = ProtectionAnalyzerTool()
-        
+
         # Check if it has DIE detector instead of ML predictor
         if hasattr(tool, 'die_detector'):
             print("✓ ProtectionAnalyzerTool correctly uses DIE detector")
@@ -163,7 +163,7 @@ def test_tools_integration():
             print(error_msg)
             issues.append(error_msg)
             tests_failed += 1
-            
+
         if hasattr(tool, 'ml_predictor'):
             error_msg = "✗ ProtectionAnalyzerTool still has ML predictor reference"
             print(error_msg)
@@ -172,7 +172,7 @@ def test_tools_integration():
         else:
             print("✓ ProtectionAnalyzerTool correctly removed ML predictor")
             tests_passed += 1
-            
+
     except Exception as e:
         error_msg = f"✗ Tools integration test failed: {str(e)}"
         print(error_msg)
@@ -183,13 +183,13 @@ def test_secrets_management():
     """Test secrets management system."""
     global tests_passed, tests_failed
     print("\n=== Testing Secrets Management ===")
-    
+
     try:
         from intellicrack.utils.secrets_manager import SecretsManager
         secrets = SecretsManager()
         print("✓ SecretsManager initialized successfully")
         tests_passed += 1
-        
+
         # Test getting a non-existent key with default
         test_val = secrets.get("TEST_KEY_NONEXISTENT", "default_value")
         if test_val == "default_value":
@@ -200,7 +200,7 @@ def test_secrets_management():
             print(error_msg)
             issues.append(error_msg)
             tests_failed += 1
-            
+
     except Exception as e:
         error_msg = f"✗ Secrets management test failed: {str(e)}"
         print(error_msg)
@@ -212,7 +212,7 @@ def main():
     print("=" * 60)
     print("Testing Intellicrack Imports and Integrations")
     print("=" * 60)
-    
+
     # Test core imports
     print("\n=== Testing Core Imports ===")
     core_imports = [
@@ -223,10 +223,10 @@ def main():
         "intellicrack.protection",
         "intellicrack.utils",
     ]
-    
+
     for module in core_imports:
         test_import(module)
-    
+
     # Test specific component imports
     print("\n=== Testing Specific Component Imports ===")
     specific_imports = [
@@ -236,10 +236,10 @@ def main():
         ("intellicrack.protection.die_detector", "DIEProtectionDetector"),
         ("intellicrack.utils.secrets_manager", "SecretsManager"),
     ]
-    
+
     for module, item in specific_imports:
         test_import(module, item)
-    
+
     # Run integration tests
     test_die_integration()
     test_llm_backends()
@@ -247,7 +247,7 @@ def main():
     check_removed_ml_references()
     test_tools_integration()
     test_secrets_management()
-    
+
     # Print summary
     print("\n" + "=" * 60)
     print("TEST SUMMARY")
@@ -255,12 +255,12 @@ def main():
     print(f"Tests Passed: {tests_passed}")
     print(f"Tests Failed: {tests_failed}")
     print(f"Success Rate: {tests_passed / (tests_passed + tests_failed) * 100:.1f}%")
-    
+
     if issues:
         print("\n=== Issues Found ===")
         for issue in issues:
             print(f"  - {issue}")
-    
+
     # Return exit code
     sys.exit(0 if tests_failed == 0 else 1)
 

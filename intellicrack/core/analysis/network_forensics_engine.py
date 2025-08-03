@@ -193,12 +193,15 @@ class NetworkForensicsEngine:
                 connections = psutil.net_connections(kind="inet")
                 active_connections = [c for c in connections if c.status == psutil.CONN_ESTABLISHED]
 
-                results["connection_analysis"] = [{
-                    "local_address": f"{c.laddr.ip}:{c.laddr.port}" if c.laddr else "N/A",
-                    "remote_address": f"{c.raddr.ip}:{c.raddr.port}" if c.raddr else "N/A",
-                    "status": c.status,
-                    "pid": c.pid,
-                } for c in active_connections[:10]]  # Limit to 10 connections
+                results["connection_analysis"] = [
+                    {
+                        "local_address": f"{c.laddr.ip}:{c.laddr.port}" if c.laddr else "N/A",
+                        "remote_address": f"{c.raddr.ip}:{c.raddr.port}" if c.raddr else "N/A",
+                        "status": c.status,
+                        "pid": c.pid,
+                    }
+                    for c in active_connections[:10]
+                ]  # Limit to 10 connections
 
             return results
         except Exception as e:
@@ -235,12 +238,14 @@ class NetworkForensicsEngine:
                 try:
                     url_str = url.decode("utf-8", errors="ignore")
                     if len(url_str) > 10:  # Filter out very short matches
-                        artifacts.append({
-                            "type": "URL",
-                            "value": url_str,
-                            "offset": data.find(url),
-                            "length": len(url),
-                        })
+                        artifacts.append(
+                            {
+                                "type": "URL",
+                                "value": url_str,
+                                "offset": data.find(url),
+                                "length": len(url),
+                            }
+                        )
                 except:
                     pass
 
@@ -250,12 +255,14 @@ class NetworkForensicsEngine:
             for email in emails:
                 try:
                     email_str = email.decode("utf-8", errors="ignore")
-                    artifacts.append({
-                        "type": "Email",
-                        "value": email_str,
-                        "offset": data.find(email),
-                        "length": len(email),
-                    })
+                    artifacts.append(
+                        {
+                            "type": "Email",
+                            "value": email_str,
+                            "offset": data.find(email),
+                            "length": len(email),
+                        }
+                    )
                 except:
                     pass
 
@@ -268,12 +275,14 @@ class NetworkForensicsEngine:
                     # Basic IP validation
                     parts = ip_str.split(".")
                     if all(0 <= int(part) <= 255 for part in parts):
-                        artifacts.append({
-                            "type": "IP_Address",
-                            "value": ip_str,
-                            "offset": data.find(ip),
-                            "length": len(ip),
-                        })
+                        artifacts.append(
+                            {
+                                "type": "IP_Address",
+                                "value": ip_str,
+                                "offset": data.find(ip),
+                                "length": len(ip),
+                            }
+                        )
                 except:
                     pass
 
@@ -284,13 +293,15 @@ class NetworkForensicsEngine:
                 try:
                     b64_str = b64.decode("utf-8", errors="ignore")
                     if len(b64_str) >= 20:  # Minimum meaningful base64
-                        artifacts.append({
-                            "type": "Base64_Data",
-                            "value": b64_str[:100] + "..." if len(b64_str) > 100 else b64_str,
-                            "offset": data.find(b64),
-                            "length": len(b64),
-                            "full_length": len(b64_str),
-                        })
+                        artifacts.append(
+                            {
+                                "type": "Base64_Data",
+                                "value": b64_str[:100] + "..." if len(b64_str) > 100 else b64_str,
+                                "offset": data.find(b64),
+                                "length": len(b64),
+                                "full_length": len(b64_str),
+                            }
+                        )
                 except:
                     pass
 
@@ -308,12 +319,14 @@ class NetworkForensicsEngine:
                     try:
                         value = match.decode("utf-8", errors="ignore")
                         if len(value) > 3 and len(value) < 100:  # Reasonable length
-                            artifacts.append({
-                                "type": cred_type,
-                                "value": value,
-                                "offset": data.find(match),
-                                "length": len(match),
-                            })
+                            artifacts.append(
+                                {
+                                    "type": cred_type,
+                                    "value": value,
+                                    "offset": data.find(match),
+                                    "length": len(match),
+                                }
+                            )
                     except:
                         pass
 
@@ -328,12 +341,14 @@ class NetworkForensicsEngine:
                 for match in matches:
                     try:
                         value = match.decode("utf-8", errors="ignore")
-                        artifacts.append({
-                            "type": file_type,
-                            "value": value,
-                            "offset": data.find(match),
-                            "length": len(match),
-                        })
+                        artifacts.append(
+                            {
+                                "type": file_type,
+                                "value": value,
+                                "offset": data.find(match),
+                                "length": len(match),
+                            }
+                        )
                     except:
                         pass
 
@@ -347,7 +362,9 @@ class NetworkForensicsEngine:
                     unique_artifacts.append(artifact)
 
             # Log artifact extraction progress
-            self.logger.info(f"Extracted {len(unique_artifacts)} unique artifacts from {len(traffic_data)} bytes of traffic data")
+            self.logger.info(
+                f"Extracted {len(unique_artifacts)} unique artifacts from {len(traffic_data)} bytes of traffic data"
+            )
 
             return unique_artifacts
         except Exception as e:
@@ -371,7 +388,11 @@ class NetworkForensicsEngine:
                 return protocols
 
             # Analyze packet data for protocol signatures
-            data = packet_data.lower() if isinstance(packet_data, bytes) else packet_data.encode().lower()
+            data = (
+                packet_data.lower()
+                if isinstance(packet_data, bytes)
+                else packet_data.encode().lower()
+            )
 
             # HTTP/HTTPS detection
             http_patterns = [
@@ -479,7 +500,9 @@ class NetworkForensicsEngine:
             if protocols:
                 self.logger.info(f"Detected protocols in packet data: {', '.join(protocols)}")
             else:
-                self.logger.debug(f"No known protocols detected in {len(packet_data)} bytes of packet data")
+                self.logger.debug(
+                    f"No known protocols detected in {len(packet_data)} bytes of packet data"
+                )
 
             return list(set(protocols))  # Remove duplicates
 

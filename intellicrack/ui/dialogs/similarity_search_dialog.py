@@ -1,4 +1,5 @@
 """Similarity search dialog for finding similar code patterns."""
+
 import json
 import logging
 import os
@@ -47,10 +48,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
 try:
     from ...core.analysis.binary_similarity_search import BinarySimilaritySearch
+
     HAS_SIMILARITY_SEARCH = True
 except ImportError as e:
     logger.error("Import error in similarity_search_dialog: %s", e)
@@ -105,7 +105,9 @@ class BinarySimilaritySearchDialog(QDialog):
 
         # Header with binary info
         header_layout = QHBoxLayout()
-        header_layout.addWidget(QLabel(f"<b>Target Binary:</b> {os.path.basename(self.binary_path)}"))
+        header_layout.addWidget(
+            QLabel(f"<b>Target Binary:</b> {os.path.basename(self.binary_path)}")
+        )
         header_layout.addStretch()
 
         # Database info
@@ -231,7 +233,8 @@ class BinarySimilaritySearchDialog(QDialog):
         """Search for similar binaries."""
         if not self.search_engine:
             QMessageBox.warning(
-                self, "Error",
+                self,
+                "Error",
                 "Binary similarity search engine not available. "
                 "Please ensure all dependencies are installed.",
             )
@@ -256,7 +259,9 @@ class BinarySimilaritySearchDialog(QDialog):
             def run(self):
                 """Execute binary similarity search in a separate thread."""
                 try:
-                    results = self.search_engine.search_similar_binaries(self.binary_path, self.threshold)
+                    results = self.search_engine.search_similar_binaries(
+                        self.binary_path, self.threshold
+                    )
                     self.result_signal.emit(results)
                 except (OSError, ValueError, RuntimeError) as e:
                     logging.exception("Binary similarity search failed: %s", e)
@@ -337,7 +342,8 @@ class BinarySimilaritySearchDialog(QDialog):
         if len(patterns) > 1:
             pattern_items = [f"Pattern {_i+1}" for _i in range(len(patterns))]
             pattern_index, ok = QInputDialog.getItem(
-                self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False)
+                self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False
+            )
 
             if ok and pattern_index:
                 index = pattern_items.index(pattern_index)
@@ -370,7 +376,8 @@ class BinarySimilaritySearchDialog(QDialog):
                     else:
                         # Fallback: display the pattern for manual application
                         QMessageBox.information(
-                            self, "Pattern Information",
+                            self,
+                            "Pattern Information",
                             f"Pattern from similar binary:\n\n{pattern_to_apply}\n\n"
                             "Please apply this pattern manually using the patch editor.",
                         )
@@ -384,7 +391,8 @@ class BinarySimilaritySearchDialog(QDialog):
         """Add the current binary to the similarity database."""
         if not self.search_engine:
             QMessageBox.warning(
-                self, "Error",
+                self,
+                "Error",
                 "Binary similarity search engine not available. "
                 "Please ensure all dependencies are installed.",
             )

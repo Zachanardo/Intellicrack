@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 from enum import Enum, auto
 from typing import Any
@@ -29,13 +28,13 @@ logger = logging.getLogger("Intellicrack.HexView")
 class HighlightType(Enum):
     """Enum for different highlight types."""
 
-    SELECTION = auto()      # User selection
+    SELECTION = auto()  # User selection
     SEARCH_RESULT = auto()  # Search result
-    BOOKMARK = auto()       # User bookmark
-    MODIFICATION = auto()   # Modified data
-    AI_PATTERN = auto()     # AI-identified pattern
-    STRUCTURE = auto()      # Structure highlight
-    CUSTOM = auto()         # Custom user highlight
+    BOOKMARK = auto()  # User bookmark
+    MODIFICATION = auto()  # Modified data
+    AI_PATTERN = auto()  # AI-identified pattern
+    STRUCTURE = auto()  # Structure highlight
+    CUSTOM = auto()  # Custom user highlight
 
 
 class HexHighlight:
@@ -45,8 +44,15 @@ class HexHighlight:
     its position, appearance, and metadata.
     """
 
-    def __init__(self, start: int, end: int, highlight_type: HighlightType,
-             color: str = "#FFFF00", alpha: int = 128, priority: int = 0):
+    def __init__(
+        self,
+        start: int,
+        end: int,
+        highlight_type: HighlightType,
+        color: str = "#FFFF00",
+        alpha: int = 128,
+        priority: int = 0,
+    ):
         """Initialize the HexHighlight with start, end, type, color, alpha, and priority."""
         self.start = start
         self.end = end
@@ -68,7 +74,9 @@ class HexHighlight:
         if start < 0 or end < 0 or start >= end:
             raise ValueError("Invalid range: start must be >= 0 and end must be > start")
 
-        logger.debug(f"Created highlight: 0x{start:X}-0x{end:X} type={highlight_type} color={color}")
+        logger.debug(
+            f"Created highlight: 0x{start:X}-0x{end:X} type={highlight_type} color={color}"
+        )
 
     @property
     def size(self) -> int:
@@ -110,17 +118,19 @@ class HexHighlight:
         # Parse the hex color code
         color = self.color.lstrip("#")
         if len(color) == 3:
-            color = "".join(c+c for c in color)
+            color = "".join(c + c for c in color)
 
-        r, g, b = tuple(int(color[i:i+2], 16) for i in (0, 2, 4))
+        r, g, b = tuple(int(color[i : i + 2], 16) for i in (0, 2, 4))
         a = int(self.alpha * 255)
 
         return (r, g, b, a)
 
     def __repr__(self) -> str:
         """Get a string representation of the highlight."""
-        return (f"HexHighlight(start={self.start}, end={self.end}, "
-                f"type={self.highlight_type.name}, color={self.color})")
+        return (
+            f"HexHighlight(start={self.start}, end={self.end}, "
+            f"type={self.highlight_type.name}, color={self.color})"
+        )
 
 
 class HexHighlighter:
@@ -133,11 +143,18 @@ class HexHighlighter:
     def __init__(self):
         """Initialize the HexHighlighter with default settings."""
         self.highlights: list[HexHighlight] = []
-        self.bookmarks: list[dict[str, Any]] = []   # For generating unique IDs
+        self.bookmarks: list[dict[str, Any]] = []  # For generating unique IDs
 
-    def add_highlight(self, start: int, end: int, highlight_type: HighlightType = HighlightType.CUSTOM,
-                     color: str = "#FFFF00", alpha: float = 0.3, description: str = "",
-                     metadata: dict[str, Any] | None = None) -> int:
+    def add_highlight(
+        self,
+        start: int,
+        end: int,
+        highlight_type: HighlightType = HighlightType.CUSTOM,
+        color: str = "#FFFF00",
+        alpha: float = 0.3,
+        description: str = "",
+        metadata: dict[str, Any] | None = None,
+    ) -> int:
         """Add a new highlight.
 
         Args:
@@ -161,7 +178,9 @@ class HexHighlighter:
         highlight = HexHighlight(start, end, highlight_type, color, alpha, description, metadata)
         self.highlights.append(highlight)
 
-        logger.debug("Added highlight ID %s: %s-%s, type: %s", highlight.id, start, end, highlight_type.name)
+        logger.debug(
+            "Added highlight ID %s: %s-%s, type: %s", highlight.id, start, end, highlight_type.name
+        )
         return highlight.id
 
     def remove_highlight(self, highlight_id: int) -> bool:
@@ -286,8 +305,9 @@ class HexHighlighter:
         logger.debug("Updated highlight ID %s with %s", highlight_id, kwargs)
         return True
 
-    def add_bookmark(self, offset: int, size: int = 1, description: str = "",
-                    color: str = "#0000FF") -> int:
+    def add_bookmark(
+        self, offset: int, size: int = 1, description: str = "", color: str = "#0000FF"
+    ) -> int:
         """Add a bookmark highlight.
 
         Args:
@@ -309,8 +329,9 @@ class HexHighlighter:
             metadata={"bookmark": True},
         )
 
-    def add_search_result(self, start: int, end: int, query: str = "",
-                         color: str = "#00FF00") -> int:
+    def add_search_result(
+        self, start: int, end: int, query: str = "", color: str = "#00FF00"
+    ) -> int:
         """Add a search result highlight.
 
         Args:
@@ -352,8 +373,14 @@ class HexHighlighter:
             metadata={"modified": True},
         )
 
-    def add_ai_pattern_highlight(self, start: int, end: int, pattern_type: str,
-                               confidence: float = 1.0, description: str = "") -> int:
+    def add_ai_pattern_highlight(
+        self,
+        start: int,
+        end: int,
+        pattern_type: str,
+        confidence: float = 1.0,
+        description: str = "",
+    ) -> int:
         """Add an AI-identified pattern highlight.
 
         Args:

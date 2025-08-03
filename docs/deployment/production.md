@@ -242,7 +242,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
+
         proxy_connect_timeout 300s;
         proxy_send_timeout 300s;
         proxy_read_timeout 300s;
@@ -408,7 +408,7 @@ def health_check():
         'disk_space': check_disk_space(),
         'memory': check_memory_usage()
     }
-    
+
     if all(checks.values()):
         return jsonify({'status': 'healthy', 'checks': checks}), 200
     else:

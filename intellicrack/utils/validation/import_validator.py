@@ -256,7 +256,8 @@ class PluginStructureValidator:
                 code = f.read()
 
             is_valid, errors = PluginStructureValidator.validate_structure_from_code(
-                code, required_methods,
+                code,
+                required_methods,
             )
 
             return {"valid": is_valid, "errors": errors}
@@ -288,12 +289,14 @@ class PluginStructureValidator:
                     for arg in node.args.args:
                         args.append(arg.arg)
 
-                    functions.append({
-                        "name": node.name,
-                        "line": node.lineno,
-                        "args": args,
-                        "type": "function",
-                    })
+                    functions.append(
+                        {
+                            "name": node.name,
+                            "line": node.lineno,
+                            "args": args,
+                            "type": "function",
+                        }
+                    )
                 elif isinstance(node, ast.ClassDef):
                     # Get methods from classes
                     for item in node.body:
@@ -302,13 +305,15 @@ class PluginStructureValidator:
                             for arg in item.args.args:
                                 args.append(arg.arg)
 
-                            functions.append({
-                                "name": item.name,
-                                "line": item.lineno,
-                                "args": args,
-                                "type": "method",
-                                "class": node.name,
-                            })
+                            functions.append(
+                                {
+                                    "name": item.name,
+                                    "line": item.lineno,
+                                    "args": args,
+                                    "type": "method",
+                                    "class": node.name,
+                                }
+                            )
 
         except Exception as e:
             logger.error("Exception in import_validator: %s", e)
@@ -335,7 +340,8 @@ class PluginStructureValidator:
 
         # Validate structure
         struct_success, struct_errors = PluginStructureValidator.validate_structure_from_code(
-            code, required_methods,
+            code,
+            required_methods,
         )
 
         return {

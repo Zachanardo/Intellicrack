@@ -1,4 +1,5 @@
 """Plugin creation wizard for developing new Intellicrack plugins."""
+
 import json
 from datetime import datetime
 
@@ -46,8 +47,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-
-
 
 
 class PluginCreationWizard(QWizard):
@@ -421,10 +420,16 @@ class PluginInfoPage(QWizardPage):
 
         # Category
         self.category_combo = QComboBox()
-        self.category_combo.addItems([
-            "Analysis", "Exploitation", "Patching",
-            "Protection Bypass", "Network", "Utility",
-        ])
+        self.category_combo.addItems(
+            [
+                "Analysis",
+                "Exploitation",
+                "Patching",
+                "Protection Bypass",
+                "Network",
+                "Utility",
+            ]
+        )
         layout.addRow("Category:", self.category_combo)
 
         self.setLayout(layout)
@@ -498,7 +503,11 @@ class TemplateSelectionPage(QWizardPage):
                 {
                     "name": "License Bypass Template",
                     "description": "Template for bypassing common license checks",
-                    "features": ["function_hooking", "return_value_modification", "string_replacement"],
+                    "features": [
+                        "function_hooking",
+                        "return_value_modification",
+                        "string_replacement",
+                    ],
                 },
                 {
                     "name": "Anti-Debug Bypass",

@@ -395,7 +395,7 @@ from intellicrack.hexview.hex_commands import HexCommand
 class MyCommand(HexCommand):
     def __init__(self):
         super().__init__("My Custom Command")
-    
+
     def execute(self, hex_editor, selection):
         # Command implementation
         data = hex_editor.read_bytes(

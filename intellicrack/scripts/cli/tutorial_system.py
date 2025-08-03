@@ -36,6 +36,7 @@ try:
     from rich.table import Table
     from rich.text import Text
     from rich.tree import Tree
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -108,35 +109,50 @@ class TutorialSystem:
                     description="Let's start by exploring the help system to understand available commands.",
                     commands=["help"],
                     explanation="The help command shows all available commands in Intellicrack CLI. This is your starting point for any analysis session.",
-                    hints=["Type 'help' and press Enter", "Look for commands related to loading and analyzing binaries"],
+                    hints=[
+                        "Type 'help' and press Enter",
+                        "Look for commands related to loading and analyzing binaries",
+                    ],
                 ),
                 TutorialStep(
                     title="Loading a Binary",
                     description="Learn how to load a binary file for analysis.",
                     commands=["load <binary_path>"],
                     explanation="Before analyzing, you need to load a binary file. Use 'load' followed by the path to your binary.",
-                    hints=["Use 'load /path/to/your/binary.exe'", "If you don't have a binary, you can skip this step"],
+                    hints=[
+                        "Use 'load /path/to/your/binary.exe'",
+                        "If you don't have a binary, you can skip this step",
+                    ],
                 ),
                 TutorialStep(
                     title="Quick Analysis",
                     description="Perform a quick analysis to get an overview of the binary.",
                     commands=["analyze --quick"],
                     explanation="Quick analysis provides basic information about the binary including file type, protections, and strings.",
-                    hints=["Make sure you have loaded a binary first", "This will show basic binary information"],
+                    hints=[
+                        "Make sure you have loaded a binary first",
+                        "This will show basic binary information",
+                    ],
                 ),
                 TutorialStep(
                     title="Viewing Results",
                     description="Learn how to view analysis results in different ways.",
                     commands=["show summary", "show protections", "show imports"],
                     explanation="The 'show' command displays analysis results in various formats. Try different categories to explore the data.",
-                    hints=["Start with 'show summary' for an overview", "Try 'show protections' to see security features"],
+                    hints=[
+                        "Start with 'show summary' for an overview",
+                        "Try 'show protections' to see security features",
+                    ],
                 ),
                 TutorialStep(
                     title="Exporting Results",
                     description="Save your analysis results to a file.",
                     commands=["export json results.json"],
                     explanation="Export functionality allows you to save analysis results in various formats for later use or reporting.",
-                    hints=["Try different formats: json, html, markdown", "The file will be saved in the current directory"],
+                    hints=[
+                        "Try different formats: json, html, markdown",
+                        "The file will be saved in the current directory",
+                    ],
                 ),
             ],
             completion_message="🎉 Congratulations! You've completed the Getting Started tutorial. You now know the basics of loading, analyzing, and exporting binary analysis results.",
@@ -156,28 +172,41 @@ class TutorialSystem:
                     description="Run a full comprehensive analysis with all features enabled.",
                     commands=["analyze --full"],
                     explanation="Comprehensive analysis performs deep inspection including vulnerability scanning, symbolic execution, and advanced pattern matching.",
-                    hints=["This may take longer than quick analysis", "You'll get much more detailed results"],
+                    hints=[
+                        "This may take longer than quick analysis",
+                        "You'll get much more detailed results",
+                    ],
                 ),
                 TutorialStep(
                     title="Vulnerability Scanning",
                     description="Focus specifically on vulnerability detection.",
                     commands=["analyze --vuln"],
                     explanation="Vulnerability scanning looks for common security issues like buffer overflows, format string bugs, and unsafe function usage.",
-                    hints=["This focuses only on security vulnerabilities", "Results will show severity levels"],
+                    hints=[
+                        "This focuses only on security vulnerabilities",
+                        "Results will show severity levels",
+                    ],
                 ),
                 TutorialStep(
                     title="Exploring Vulnerabilities",
                     description="Learn how to examine vulnerability findings in detail.",
                     commands=["show vulnerabilities"],
                     explanation="Understanding vulnerability details helps prioritize security fixes and understand attack vectors.",
-                    hints=["Look for HIGH severity vulnerabilities first", "Each vulnerability includes location and description"],
+                    hints=[
+                        "Look for HIGH severity vulnerabilities first",
+                        "Each vulnerability includes location and description",
+                    ],
                 ),
                 TutorialStep(
                     title="Interactive Hex Viewer",
                     description="Use the built-in hex viewer to examine binary data.",
                     commands=["hex"],
                     explanation="The hex viewer allows you to inspect raw binary data, make modifications, and understand file structure.",
-                    hints=["Press 'q' to exit the hex viewer", "Use arrow keys to navigate", "Press F1 for help inside the viewer"],
+                    hints=[
+                        "Press 'q' to exit the hex viewer",
+                        "Use arrow keys to navigate",
+                        "Press F1 for help inside the viewer",
+                    ],
                     skip_allowed=True,
                 ),
                 TutorialStep(
@@ -185,7 +214,10 @@ class TutorialSystem:
                     description="Use AI to get insights about your analysis results.",
                     commands=["ai What vulnerabilities were found?"],
                     explanation="The AI assistant can help interpret results, suggest remediation steps, and answer questions about your analysis.",
-                    hints=["Try asking specific questions about vulnerabilities", "AI can explain technical details in plain language"],
+                    hints=[
+                        "Try asking specific questions about vulnerabilities",
+                        "AI can explain technical details in plain language",
+                    ],
                 ),
             ],
             completion_message="🎉 Excellent work! You've mastered advanced analysis techniques. You can now perform comprehensive security assessments.",
@@ -204,35 +236,50 @@ class TutorialSystem:
                     description="Organize your analysis work by creating a project.",
                     commands=['project create MyFirstProject "Learning project management"'],
                     explanation="Projects help organize multiple binaries, analysis results, and collaboration. They provide persistence across sessions.",
-                    hints=["Use descriptive project names", "Projects are stored in ~/.intellicrack/projects/"],
+                    hints=[
+                        "Use descriptive project names",
+                        "Projects are stored in ~/.intellicrack/projects/",
+                    ],
                 ),
                 TutorialStep(
                     title="Adding Binaries to Project",
                     description="Add binaries to your project for organized analysis.",
                     commands=["project add-binary"],
                     explanation="Projects can contain multiple binaries. Each binary's analysis results are automatically saved to the project.",
-                    hints=["Load a binary first, then add it to the project", "Or specify a path directly"],
+                    hints=[
+                        "Load a binary first, then add it to the project",
+                        "Or specify a path directly",
+                    ],
                 ),
                 TutorialStep(
                     title="Project Information",
                     description="View detailed information about your project.",
                     commands=["project show"],
                     explanation="Project information shows statistics, contained binaries, analysis results, and project metadata.",
-                    hints=["This shows all project details", "Note the statistics about binaries and analysis results"],
+                    hints=[
+                        "This shows all project details",
+                        "Note the statistics about binaries and analysis results",
+                    ],
                 ),
                 TutorialStep(
                     title="Configuration Management",
                     description="Customize Intellicrack settings for your workflow.",
                     commands=["config list", "config categories"],
                     explanation="Configuration system allows customizing analysis behavior, UI preferences, and performance settings.",
-                    hints=["Try 'config get theme' to see current theme", "Use 'config set' to change settings"],
+                    hints=[
+                        "Try 'config get theme' to see current theme",
+                        "Use 'config set' to change settings",
+                    ],
                 ),
                 TutorialStep(
                     title="Exporting Projects",
                     description="Learn to export projects for sharing or backup.",
                     commands=["project export MyFirstProject myproject_backup.zip"],
                     explanation="Project export creates a complete archive including binaries, results, and metadata for sharing or backup.",
-                    hints=["Exported projects can be imported on other systems", "This includes all project data"],
+                    hints=[
+                        "Exported projects can be imported on other systems",
+                        "This includes all project data",
+                    ],
                 ),
             ],
             completion_message="🎉 Great job! You now know how to manage projects efficiently and customize Intellicrack for your workflow.",
@@ -251,14 +298,21 @@ class TutorialSystem:
                     description="Check current system status and resource usage.",
                     commands=["status"],
                     explanation="The status command provides a quick overview of system health, session statistics, and analysis progress.",
-                    hints=["This shows CPU, memory, and session info", "Great for checking system load"],
+                    hints=[
+                        "This shows CPU, memory, and session info",
+                        "Great for checking system load",
+                    ],
                 ),
                 TutorialStep(
                     title="Interactive Dashboard",
                     description="Launch the full interactive dashboard.",
                     commands=["dashboard 10"],
                     explanation="The dashboard provides real-time monitoring of system metrics, analysis progress, and session activity.",
-                    hints=["Press Ctrl+C to exit the dashboard", "The number specifies display duration in seconds", "Try 'dashboard --basic' for simple mode"],
+                    hints=[
+                        "Press Ctrl+C to exit the dashboard",
+                        "The number specifies display duration in seconds",
+                        "Try 'dashboard --basic' for simple mode",
+                    ],
                     skip_allowed=True,
                 ),
                 TutorialStep(
@@ -266,21 +320,30 @@ class TutorialSystem:
                     description="Monitor specific system metrics in real-time.",
                     commands=["monitor cpu 5"],
                     explanation="Targeted monitoring allows tracking specific metrics like CPU usage, memory consumption, or analysis statistics.",
-                    hints=["Try 'monitor memory 5' for memory usage", "Numbers specify duration in seconds"],
+                    hints=[
+                        "Try 'monitor memory 5' for memory usage",
+                        "Numbers specify duration in seconds",
+                    ],
                 ),
                 TutorialStep(
                     title="Workspace Management",
                     description="Manage your workspace and clean up temporary files.",
                     commands=["workspace info", "workspace clean"],
                     explanation="Workspace commands help maintain your Intellicrack environment and manage storage usage.",
-                    hints=["This shows workspace location and project count", "Clean removes temporary files"],
+                    hints=[
+                        "This shows workspace location and project count",
+                        "Clean removes temporary files",
+                    ],
                 ),
                 TutorialStep(
                     title="Session Statistics",
                     description="View detailed statistics about your analysis session.",
                     commands=["stats"],
                     explanation="Session statistics provide insights into your analysis work including charts and performance metrics.",
-                    hints=["This creates visual charts of your analysis data", "Great for understanding patterns"],
+                    hints=[
+                        "This creates visual charts of your analysis data",
+                        "Great for understanding patterns",
+                    ],
                 ),
             ],
             completion_message="🎉 Perfect! You now have full control over monitoring and can track your analysis work effectively.",
@@ -332,7 +395,9 @@ class TutorialSystem:
 
         # Show recommendations
         if not any(self.tutorial_progress.values()):
-            self.console.print("\n💡 [bold yellow]Recommendation:[/bold yellow] Start with 'getting_started' if you're new to Intellicrack")
+            self.console.print(
+                "\n💡 [bold yellow]Recommendation:[/bold yellow] Start with 'getting_started' if you're new to Intellicrack"
+            )
 
     def _list_tutorials_basic(self):
         """List tutorials in basic text format."""
@@ -376,7 +441,9 @@ class TutorialSystem:
 
             if missing_prereqs:
                 if self.console:
-                    self.console.print(f"[red]Prerequisites not met:[/red] {', '.join(missing_prereqs)}")
+                    self.console.print(
+                        f"[red]Prerequisites not met:[/red] {', '.join(missing_prereqs)}"
+                    )
                 else:
                     print(f"Prerequisites not met: {', '.join(missing_prereqs)}")
                 return False
@@ -477,7 +544,9 @@ class TutorialSystem:
                 for hint in step.hints:
                     print(f"  💡 {hint}")
 
-            print("\nNavigation: 'tutorial next' | 'tutorial prev' | 'tutorial skip' | 'tutorial quit'")
+            print(
+                "\nNavigation: 'tutorial next' | 'tutorial prev' | 'tutorial skip' | 'tutorial quit'"
+            )
 
     def next_step(self):
         """Move to next tutorial step."""
@@ -533,15 +602,19 @@ class TutorialSystem:
         )
 
         # Add to history
-        self.tutorial_history.append({
-            "name": tutorial_name,
-            "completed_steps": self.current_step,
-            "total_steps": len(self.current_tutorial.steps),
-            "quit_time": datetime.now(),
-        })
+        self.tutorial_history.append(
+            {
+                "name": tutorial_name,
+                "completed_steps": self.current_step,
+                "total_steps": len(self.current_tutorial.steps),
+                "quit_time": datetime.now(),
+            }
+        )
 
         if self.console:
-            self.console.print(f"[yellow]Tutorial '{tutorial_name}' paused at step {self.current_step + 1}[/yellow]")
+            self.console.print(
+                f"[yellow]Tutorial '{tutorial_name}' paused at step {self.current_step + 1}[/yellow]"
+            )
             self.console.print("[dim]You can resume later with 'tutorial resume'[/dim]")
         else:
             print(f"Tutorial '{tutorial_name}' paused at step {self.current_step + 1}")
@@ -563,12 +636,14 @@ class TutorialSystem:
         self.tutorial_progress[tutorial_name] = len(tutorial.steps)
 
         # Add to history
-        self.tutorial_history.append({
-            "name": tutorial_name,
-            "completed_steps": len(tutorial.steps),
-            "total_steps": len(tutorial.steps),
-            "completion_time": datetime.now(),
-        })
+        self.tutorial_history.append(
+            {
+                "name": tutorial_name,
+                "completed_steps": len(tutorial.steps),
+                "total_steps": len(tutorial.steps),
+                "completion_time": datetime.now(),
+            }
+        )
 
         # Show completion message
         if self.console:
@@ -592,8 +667,11 @@ class TutorialSystem:
 
     def _show_next_recommendations(self):
         """Show recommended next tutorials."""
-        completed = set(name for name, progress in self.tutorial_progress.items()
-                        if progress >= len(self.tutorials[name].steps))
+        completed = set(
+            name
+            for name, progress in self.tutorial_progress.items()
+            if progress >= len(self.tutorials[name].steps)
+        )
 
         recommendations = []
 
@@ -742,10 +820,16 @@ class TutorialSystem:
             card_content = f"[bold {diff_color}]{tutorial.difficulty.title()}[/bold {diff_color}]\n"
             card_content += f"⏱️ {tutorial.estimated_time} min\n"
             card_content += f"📚 {len(tutorial.steps)} steps\n\n"
-            card_content += f"[dim]{tutorial.description[:50]}...[/dim]" if len(tutorial.description) > 50 else f"[dim]{tutorial.description}[/dim]"
+            card_content += (
+                f"[dim]{tutorial.description[:50]}...[/dim]"
+                if len(tutorial.description) > 50
+                else f"[dim]{tutorial.description}[/dim]"
+            )
 
             # Check completion status
-            completion = self.tutorial_progress.get(tutorial.name, {"completed": False, "progress": 0})
+            completion = self.tutorial_progress.get(
+                tutorial.name, {"completed": False, "progress": 0}
+            )
             if completion["completed"]:
                 border_style = "green"
                 title_prefix = "✅ "
@@ -965,10 +1049,16 @@ class TutorialSystem:
         info_node.add(f"📝 Description: {tutorial.description}")
 
         # Add tutorial steps
-        steps_node = tree.add(f"📋 [bold yellow]Tutorial Steps ({len(tutorial.steps)})[/bold yellow]")
+        steps_node = tree.add(
+            f"📋 [bold yellow]Tutorial Steps ({len(tutorial.steps)})[/bold yellow]"
+        )
 
         for i, step in enumerate(tutorial.steps, 1):
-            step_icon = "✅" if i <= self.tutorial_progress.get(tutorial_name, {}).get("progress", 0) else "📖"
+            step_icon = (
+                "✅"
+                if i <= self.tutorial_progress.get(tutorial_name, {}).get("progress", 0)
+                else "📖"
+            )
             step_node = steps_node.add(f"{step_icon} [cyan]Step {i}: {step.title}[/cyan]")
 
             # Add step details

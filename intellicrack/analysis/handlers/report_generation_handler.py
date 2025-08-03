@@ -49,6 +49,7 @@ except ImportError:
         """
         return logging.getLogger(name)
 
+
 logger = get_logger(__name__)
 
 
@@ -64,8 +65,9 @@ class ReportGeneratorWorkerSignals(QObject):
 class ReportGeneratorWorker(QRunnable):
     """Worker thread for report generation"""
 
-    def __init__(self, result: UnifiedProtectionResult, format_type: str,
-                 output_path: str, options: dict):
+    def __init__(
+        self, result: UnifiedProtectionResult, format_type: str, output_path: str, options: dict
+    ):
         """Initialize the report generator worker.
 
         Args:
@@ -85,8 +87,7 @@ class ReportGeneratorWorker(QRunnable):
     def run(self):
         """Generate the report"""
         try:
-            self.signals.progress.emit(
-                f"Generating {self.format_type.upper()} report...")
+            self.signals.progress.emit(f"Generating {self.format_type.upper()} report...")
 
             # Use the new ICP report generator
             generator = ICPReportGenerator()
@@ -94,30 +95,28 @@ class ReportGeneratorWorker(QRunnable):
             # Convert options to ReportOptions
             report_options = ReportOptions(
                 include_raw_json=self.options.get("include_raw_json", False),
-                include_bypass_methods=self.options.get(
-                    "include_bypass", True),
-                include_entropy_graph=self.options.get(
-                    "include_entropy", True),
-                include_recommendations=self.options.get(
-                    "include_recommendations", True),
-                include_technical_details=self.options.get(
-                    "include_technical", True),
+                include_bypass_methods=self.options.get("include_bypass", True),
+                include_entropy_graph=self.options.get("include_entropy", True),
+                include_recommendations=self.options.get("include_recommendations", True),
+                include_technical_details=self.options.get("include_technical", True),
                 output_format=self.format_type.lower(),
             )
 
             # Generate report (returns path)
-            report_path = generator.generate_report(
-                self.result, report_options)
+            report_path = generator.generate_report(self.result, report_options)
 
-            self.signals.result.emit({
-                "success": True,
-                "path": report_path,
-                "format": self.format_type,
-            })
+            self.signals.result.emit(
+                {
+                    "success": True,
+                    "path": report_path,
+                    "format": self.format_type,
+                }
+            )
 
         except Exception as e:
             logger.error("Exception in report_generation_handler: %s", e)
             import traceback
+
             self.signals.error.emit((type(e), e, traceback.format_exc()))
         finally:
             self.signals.finished.emit()
@@ -250,15 +249,12 @@ class ReportGenerationHandler(QObject):
         self.current_result: UnifiedProtectionResult | None = None
 
     def on_analysis_complete(self, result: UnifiedProtectionResult):
-        """Main slot called when protection analysis completes.
-        """
+        """Main slot called when protection analysis completes."""
         self.current_result = result
-        logger.info(
-            f"Report generation handler received analysis for: {result.file_path}")
+        logger.info(f"Report generation handler received analysis for: {result.file_path}")
 
     def generate_report(self, parent_widget=None):
-        """Show options dialog and generate report based on user selection.
-        """
+        """Show options dialog and generate report based on user selection."""
         if not self.current_result:
             self.report_error.emit("No analysis result available")
             return

@@ -84,7 +84,7 @@ python -m intellicrack --gpu intel
    ```bash
    # Bash
    eval "$(direnv hook bash)"
-   
+
    # PowerShell
    Invoke-Expression (& direnv hook pwsh)
    ```
@@ -114,7 +114,7 @@ function prompt {
 
 ## Project Structure
 - `intellicrack/` - Main package
-- `tests/` - Test files  
+- `tests/` - Test files
 - `requirements/` - Dependencies
 - `environment.yml` - Mamba config
 

@@ -47,8 +47,13 @@ class StringExtractionThread(QThread):
     error_occurred = pyqtSignal(str)
     status_update = pyqtSignal(str)
 
-    def __init__(self, file_path: str, min_length: int = 4,
-                 extract_unicode: bool = True, extract_ascii: bool = True):
+    def __init__(
+        self,
+        file_path: str,
+        min_length: int = 4,
+        extract_unicode: bool = True,
+        extract_ascii: bool = True,
+    ):
         """Initialize string extraction thread with file path and extraction parameters."""
         super().__init__()
         self.file_path = file_path
@@ -133,8 +138,7 @@ class StringExtractionThread(QThread):
 
 
 class StringExtractionWidget(QWidget):
-    """String extraction widget with filtering and analysis
-    """
+    """String extraction widget with filtering and analysis"""
 
     # Signals
     string_selected = pyqtSignal(int, str)  # offset, string
@@ -163,17 +167,23 @@ class StringExtractionWidget(QWidget):
         # String table
         self.string_table = QTableWidget()
         self.string_table.setColumnCount(5)
-        self.string_table.setHorizontalHeaderLabels([
-            "Offset", "String", "Length", "Encoding", "Category",
-        ])
+        self.string_table.setHorizontalHeaderLabels(
+            [
+                "Offset",
+                "String",
+                "Length",
+                "Encoding",
+                "Category",
+            ]
+        )
 
         # Set column widths
         header = self.string_table.horizontalHeader()
         header.setStretchLastSection(False)
         header.setSectionResizeMode(1, QHeaderView.Stretch)  # String column stretches
         self.string_table.setColumnWidth(0, 100)  # Offset
-        self.string_table.setColumnWidth(2, 80)   # Length
-        self.string_table.setColumnWidth(3, 80)   # Encoding
+        self.string_table.setColumnWidth(2, 80)  # Length
+        self.string_table.setColumnWidth(3, 80)  # Encoding
         self.string_table.setColumnWidth(4, 120)  # Category
 
         # Enable sorting
@@ -267,17 +277,19 @@ class StringExtractionWidget(QWidget):
 
         # Category filter
         self.category_filter = QComboBox()
-        self.category_filter.addItems([
-            "All Categories",
-            "License/Serial",
-            "API Calls",
-            "File Paths",
-            "URLs",
-            "Registry Keys",
-            "Error Messages",
-            "Suspicious",
-            "Other",
-        ])
+        self.category_filter.addItems(
+            [
+                "All Categories",
+                "License/Serial",
+                "API Calls",
+                "File Paths",
+                "URLs",
+                "Registry Keys",
+                "Error Messages",
+                "Suspicious",
+                "Other",
+            ]
+        )
         self.category_filter.currentTextChanged.connect(self.apply_filters)
         layout.addWidget(QLabel("Category:"))
         layout.addWidget(self.category_filter)
@@ -385,18 +397,39 @@ class StringExtractionWidget(QWidget):
         string_lower = string.lower()
 
         # License/Serial patterns
-        if any(pattern in string_lower for pattern in [
-            "license", "serial", "key", "activation", "registration",
-            "trial", "expire", "valid", "unlock",
-        ]):
+        if any(
+            pattern in string_lower
+            for pattern in [
+                "license",
+                "serial",
+                "key",
+                "activation",
+                "registration",
+                "trial",
+                "expire",
+                "valid",
+                "unlock",
+            ]
+        ):
             return "License/Serial"
 
         # API calls
-        if any(api in string_lower for api in [
-            "kernel32", "ntdll", "user32", "advapi32", "ws2_32",
-            "createfile", "readfile", "writefile", "virtualprotect",
-            "loadlibrary", "getprocaddress",
-        ]):
+        if any(
+            api in string_lower
+            for api in [
+                "kernel32",
+                "ntdll",
+                "user32",
+                "advapi32",
+                "ws2_32",
+                "createfile",
+                "readfile",
+                "writefile",
+                "virtualprotect",
+                "loadlibrary",
+                "getprocaddress",
+            ]
+        ):
             return "API Calls"
 
         # File paths
@@ -412,17 +445,36 @@ class StringExtractionWidget(QWidget):
             return "Registry Keys"
 
         # Error messages
-        if any(err in string_lower for err in [
-            "error", "failed", "cannot", "unable", "invalid",
-            "exception", "fault", "denied",
-        ]):
+        if any(
+            err in string_lower
+            for err in [
+                "error",
+                "failed",
+                "cannot",
+                "unable",
+                "invalid",
+                "exception",
+                "fault",
+                "denied",
+            ]
+        ):
             return "Error Messages"
 
         # Suspicious strings
-        if any(susp in string_lower for susp in [
-            "debug", "crack", "patch", "bypass", "hack",
-            "ollydbg", "ida", "x64dbg", "processhacker",
-        ]):
+        if any(
+            susp in string_lower
+            for susp in [
+                "debug",
+                "crack",
+                "patch",
+                "bypass",
+                "hack",
+                "ollydbg",
+                "ida",
+                "x64dbg",
+                "processhacker",
+            ]
+        ):
             return "Suspicious"
 
         return "Other"
@@ -543,6 +595,7 @@ class StringExtractionWidget(QWidget):
             if string_item:
                 full_string = string_item.data(Qt.UserRole)
                 from PyQt6.QtWidgets import QApplication
+
                 QApplication.clipboard().setText(full_string)
 
     def _copy_selected_offset(self):
@@ -552,6 +605,7 @@ class StringExtractionWidget(QWidget):
             offset_item = self.string_table.item(row, 0)
             if offset_item:
                 from PyQt6.QtWidgets import QApplication
+
                 QApplication.clipboard().setText(offset_item.text())
 
     def _copy_selected_row(self):
@@ -568,6 +622,7 @@ class StringExtractionWidget(QWidget):
                         row_data.append(item.text())
 
             from PyQt6.QtWidgets import QApplication
+
             QApplication.clipboard().setText("\t".join(row_data))
 
     def _goto_selected_offset(self):
@@ -604,15 +659,24 @@ class StringExtractionWidget(QWidget):
         # Get file path
         if format_type == "Text":
             file_path, _ = QFileDialog.getSaveFileName(
-                self, "Export Strings", "strings.txt", "Text Files (*.txt)",
+                self,
+                "Export Strings",
+                "strings.txt",
+                "Text Files (*.txt)",
             )
         elif format_type == "CSV":
             file_path, _ = QFileDialog.getSaveFileName(
-                self, "Export Strings", "strings.csv", "CSV Files (*.csv)",
+                self,
+                "Export Strings",
+                "strings.csv",
+                "CSV Files (*.csv)",
             )
         else:  # JSON
             file_path, _ = QFileDialog.getSaveFileName(
-                self, "Export Strings", "strings.json", "JSON Files (*.json)",
+                self,
+                "Export Strings",
+                "strings.json",
+                "JSON Files (*.json)",
             )
 
         if not file_path:
@@ -628,14 +692,16 @@ class StringExtractionWidget(QWidget):
 
             self.strings_exported.emit(file_path)
             QMessageBox.information(
-                self, "Export Complete",
+                self,
+                "Export Complete",
                 f"Strings exported to:\n{file_path}",
             )
 
         except Exception as e:
             logger.error("Exception in string_extraction_widget: %s", e)
             QMessageBox.critical(
-                self, "Export Error",
+                self,
+                "Export Error",
                 f"Error exporting strings: {e!s}",
             )
 
@@ -664,13 +730,15 @@ class StringExtractionWidget(QWidget):
             writer.writerow(["Offset", "String", "Length", "Encoding", "Category"])
 
             for offset, string, encoding, category in self.filtered_strings:
-                writer.writerow([
-                    f"0x{offset:08X}",
-                    string,
-                    len(string),
-                    encoding,
-                    category,
-                ])
+                writer.writerow(
+                    [
+                        f"0x{offset:08X}",
+                        string,
+                        len(string),
+                        encoding,
+                        category,
+                    ]
+                )
 
     def _export_as_json(self, file_path: str):
         """Export strings as JSON"""
@@ -683,14 +751,16 @@ class StringExtractionWidget(QWidget):
         }
 
         for offset, string, encoding, category in self.filtered_strings:
-            data["strings"].append({
-                "offset": f"0x{offset:08X}",
-                "offset_decimal": offset,
-                "string": string,
-                "length": len(string),
-                "encoding": encoding,
-                "category": category,
-            })
+            data["strings"].append(
+                {
+                    "offset": f"0x{offset:08X}",
+                    "offset_decimal": offset,
+                    "string": string,
+                    "length": len(string),
+                    "encoding": encoding,
+                    "category": category,
+                }
+            )
 
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)

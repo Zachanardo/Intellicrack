@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import platform
 from typing import Any
@@ -57,7 +56,16 @@ class HardwareDongleEmulator:
 
         """
         if dongle_types is None:
-            dongle_types = ["SafeNet", "HASP", "CodeMeter", "Rainbow", "ROCKEY", "Dinkey", "SuperPro", "eToken"]
+            dongle_types = [
+                "SafeNet",
+                "HASP",
+                "CodeMeter",
+                "Rainbow",
+                "ROCKEY",
+                "Dinkey",
+                "SuperPro",
+                "eToken",
+            ]
 
         results = {
             "success": False,
@@ -104,8 +112,7 @@ class HardwareDongleEmulator:
         return results
 
     def _hook_dongle_apis(self, dongle_types: list[str]) -> None:
-        """Hook Windows dongle APIs to return success values.
-        """
+        """Hook Windows dongle APIs to return success values."""
         if not FRIDA_AVAILABLE:
             self.logger.warning("Frida not available - skipping dongle API hooking")
             return
@@ -259,16 +266,17 @@ class HardwareDongleEmulator:
         console.log("[Dongle Emulator] All dongle API hooks installed successfully!");
         """ % (str(dongle_types), str(dongle_types), str(dongle_types))
 
-        self.hooks.append({
-            "type": "frida",
-            "script": frida_script,
-            "target": f"Dongle APIs: {', '.join(dongle_types)}",
-        })
+        self.hooks.append(
+            {
+                "type": "frida",
+                "script": frida_script,
+                "target": f"Dongle APIs: {', '.join(dongle_types)}",
+            }
+        )
         self.logger.info(f"Dongle API hooks installed for: {', '.join(dongle_types)}")
 
     def _create_virtual_dongles(self, dongle_types: list[str]) -> None:
-        """Create virtual dongle devices that respond to application queries.
-        """
+        """Create virtual dongle devices that respond to application queries."""
         for dongle_type in dongle_types:
             if dongle_type == "SafeNet":
                 self.virtual_dongles["SafeNet"] = {
@@ -304,8 +312,7 @@ class HardwareDongleEmulator:
         self.logger.info(f"Created virtual dongles: {list(self.virtual_dongles.keys())}")
 
     def _patch_dongle_checks(self) -> None:
-        """Patch binary instructions that check for dongle presence.
-        """
+        """Patch binary instructions that check for dongle presence."""
         if not self.app or not hasattr(self.app, "binary_path") or not self.app.binary_path:
             return
 
@@ -316,11 +323,11 @@ class HardwareDongleEmulator:
             # Common dongle check patterns
             dongle_check_patterns = [
                 # Pattern for dongle presence check (JZ to JMP)
-                {"pattern": b"\x85\xC0\x74", "patch": b"\x85\xC0\xEB"},
+                {"pattern": b"\x85\xc0\x74", "patch": b"\x85\xc0\xeb"},
                 # Pattern for dongle validation check
-                {"pattern": b"\x83\xF8\x00\x75", "patch": b"\x83\xF8\x00\xEB"},
+                {"pattern": b"\x83\xf8\x00\x75", "patch": b"\x83\xf8\x00\xeb"},
                 # Pattern for dongle error check
-                {"pattern": b"\x3D\xFF\xFF\xFF\xFF\x74", "patch": b"\x3D\xFF\xFF\xFF\xFF\xEB"},
+                {"pattern": b"\x3d\xff\xff\xff\xff\x74", "patch": b"\x3d\xff\xff\xff\xff\xeb"},
             ]
 
             patches_applied = 0
@@ -330,12 +337,14 @@ class HardwareDongleEmulator:
 
                 offset = binary_data.find(pattern)
                 while offset != -1:
-                    self.patches.append({
-                        "offset": offset,
-                        "original": pattern,
-                        "patch": patch,
-                        "description": "Dongle check bypass",
-                    })
+                    self.patches.append(
+                        {
+                            "offset": offset,
+                            "original": pattern,
+                            "patch": patch,
+                            "description": "Dongle check bypass",
+                        }
+                    )
                     patches_applied += 1
                     offset = binary_data.find(pattern, offset + 1)
 
@@ -345,8 +354,7 @@ class HardwareDongleEmulator:
             self.logger.error(f"Error patching dongle checks: {e!s}")
 
     def _spoof_dongle_registry(self) -> None:
-        """Manipulate Windows registry to simulate dongle presence.
-        """
+        """Manipulate Windows registry to simulate dongle presence."""
         try:
             if platform.system() != "Windows":
                 self.logger.info("Not on Windows - skipping registry spoofing")
@@ -359,17 +367,45 @@ class HardwareDongleEmulator:
             # Dongle registry keys to create/modify
             dongle_registry_entries = [
                 # SafeNet entries
-                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\SafeNet", "InstallDir", r"C:\Program Files\SafeNet"),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\SafeNet",
+                    "InstallDir",
+                    r"C:\Program Files\SafeNet",
+                ),
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\SafeNet\Sentinel", "Version", "8.0.0"),
-                (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\Sentinel", "Start", 2),
-
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SYSTEM\CurrentControlSet\Services\Sentinel",
+                    "Start",
+                    2,
+                ),
                 # HASP entries
-                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Aladdin Knowledge Systems", "HASP", "Installed"),
-                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Aladdin Knowledge Systems\HASP", "Version", "4.0"),
-
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\Aladdin Knowledge Systems",
+                    "HASP",
+                    "Installed",
+                ),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\Aladdin Knowledge Systems\HASP",
+                    "Version",
+                    "4.0",
+                ),
                 # CodeMeter entries
-                (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WIBU-SYSTEMS", "CodeMeter", r"C:\Program Files\CodeMeter"),
-                (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Services\CodeMeter", "Start", 2),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\WIBU-SYSTEMS",
+                    "CodeMeter",
+                    r"C:\Program Files\CodeMeter",
+                ),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SYSTEM\CurrentControlSet\Services\CodeMeter",
+                    "Start",
+                    2,
+                ),
             ]
 
             for hkey, path, name, value in dongle_registry_entries:
@@ -469,8 +505,7 @@ class HardwareDongleEmulator:
         }
 
     def clear_emulation(self) -> None:
-        """Clear all dongle emulation hooks and virtual devices.
-        """
+        """Clear all dongle emulation hooks and virtual devices."""
         self.hooks.clear()
         self.patches.clear()
         self.virtual_dongles.clear()

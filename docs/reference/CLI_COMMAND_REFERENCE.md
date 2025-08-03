@@ -258,11 +258,11 @@ defaults:
   output: ./results
   format: json
   gpu: true
-  
+
 analyze:
   profile: deep
   timeout: 3600
-  
+
 ai:
   provider: openai
   model: gpt-4o

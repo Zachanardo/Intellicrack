@@ -69,10 +69,34 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
         keyword_format.setColor(QColor(255, 165, 0))  # Orange
         keyword_format.setFontWeight(QFont.Bold)
         keywords = [
-            "def", "class", "if", "elif", "else", "for", "while", "try",
-            "except", "finally", "import", "from", "return", "yield",
-            "lambda", "with", "as", "pass", "break", "continue", "and",
-            "or", "not", "in", "is", "None", "True", "False",
+            "def",
+            "class",
+            "if",
+            "elif",
+            "else",
+            "for",
+            "while",
+            "try",
+            "except",
+            "finally",
+            "import",
+            "from",
+            "return",
+            "yield",
+            "lambda",
+            "with",
+            "as",
+            "pass",
+            "break",
+            "continue",
+            "and",
+            "or",
+            "not",
+            "in",
+            "is",
+            "None",
+            "True",
+            "False",
         ]
         for keyword in keywords:
             pattern = f"\\b{keyword}\\b"
@@ -92,7 +116,9 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
         # Functions
         function_format = QTextCharFormat()
         function_format.setColor(QColor(100, 149, 237))  # Cornflower blue
-        self.highlighting_rules.append((re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*(?=\()"), function_format))
+        self.highlighting_rules.append(
+            (re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*(?=\()"), function_format)
+        )
 
         # Numbers
         number_format = QTextCharFormat()
@@ -120,10 +146,33 @@ class JavaScriptSyntaxHighlighter(QSyntaxHighlighter):
         keyword_format.setColor(QColor(255, 165, 0))  # Orange
         keyword_format.setFontWeight(QFont.Bold)
         keywords = [
-            "function", "var", "let", "const", "if", "else", "for", "while",
-            "do", "switch", "case", "default", "break", "continue", "return",
-            "try", "catch", "finally", "throw", "new", "this", "typeof",
-            "instanceof", "true", "false", "null", "undefined",
+            "function",
+            "var",
+            "let",
+            "const",
+            "if",
+            "else",
+            "for",
+            "while",
+            "do",
+            "switch",
+            "case",
+            "default",
+            "break",
+            "continue",
+            "return",
+            "try",
+            "catch",
+            "finally",
+            "throw",
+            "new",
+            "this",
+            "typeof",
+            "instanceof",
+            "true",
+            "false",
+            "null",
+            "undefined",
         ]
         for keyword in keywords:
             pattern = f"\\b{keyword}\\b"
@@ -145,7 +194,9 @@ class JavaScriptSyntaxHighlighter(QSyntaxHighlighter):
         # Functions
         function_format = QTextCharFormat()
         function_format.setColor(QColor(100, 149, 237))  # Cornflower blue
-        self.highlighting_rules.append((re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*(?=\()"), function_format))
+        self.highlighting_rules.append(
+            (re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*(?=\()"), function_format)
+        )
 
         # Numbers
         number_format = QTextCharFormat()
@@ -275,6 +326,7 @@ class FileTreeWidget(QTreeWidget):
 
     def restore_expanded_items(self, expanded_paths: list[str]):
         """Restore expanded state of items."""
+
         def traverse(item):
             path = item.data(0, Qt.UserRole)
             if path in expanded_paths:
@@ -437,10 +489,14 @@ class ChatWidget(QWidget):
         actions_layout = QHBoxLayout()
 
         self.explain_button = QPushButton("Explain Code")
-        self.explain_button.clicked.connect(lambda: self.send_quick_message("Explain the selected code"))
+        self.explain_button.clicked.connect(
+            lambda: self.send_quick_message("Explain the selected code")
+        )
 
         self.optimize_button = QPushButton("Optimize")
-        self.optimize_button.clicked.connect(lambda: self.send_quick_message("Optimize the selected code"))
+        self.optimize_button.clicked.connect(
+            lambda: self.send_quick_message("Optimize the selected code")
+        )
 
         self.debug_button = QPushButton("Debug")
         self.debug_button.clicked.connect(lambda: self.send_quick_message("Help debug this code"))
@@ -697,7 +753,9 @@ class AICodingAssistantDialog(QDialog):
         gen_layout.addWidget(QLabel("Code Generation"))
 
         self.script_type_combo = QComboBox()
-        self.script_type_combo.addItems(["Frida Script", "Ghidra Script", "Python Tool", "General Code"])
+        self.script_type_combo.addItems(
+            ["Frida Script", "Ghidra Script", "Python Tool", "General Code"]
+        )
         gen_layout.addWidget(self.script_type_combo)
 
         generate_btn = QPushButton("Generate Code")
@@ -795,7 +853,8 @@ class AICodingAssistantDialog(QDialog):
         editor = self.editor_tabs.widget(index)
         if editor and hasattr(editor, "is_modified") and editor.is_modified:
             reply = QMessageBox.question(
-                self, "Unsaved Changes",
+                self,
+                "Unsaved Changes",
                 "File has unsaved changes. Save before closing?",
                 QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
             )
@@ -981,7 +1040,9 @@ def example_function():
         current_editor.insert_text_at_cursor(generated_code)
 
         # Add to chat
-        self.chat_widget.add_message("AI", f"Generated {script_type} code and inserted into editor.")
+        self.chat_widget.add_message(
+            "AI", f"Generated {script_type} code and inserted into editor."
+        )
 
     def run_current_script(self):
         """Run the current script with optional QEMU testing."""
@@ -995,6 +1056,7 @@ def example_function():
         # Initialize ScriptExecutionManager if not already done
         if not hasattr(self, "script_execution_manager"):
             from ...core.execution import ScriptExecutionManager
+
             self.script_execution_manager = ScriptExecutionManager(self)
 
         # Determine script type based on file extension
@@ -1004,7 +1066,9 @@ def example_function():
         elif file_path.suffix == ".js":
             script_type = "frida"
         else:
-            QMessageBox.information(self, "Info", f"Don't know how to run {file_path.suffix} files.")
+            QMessageBox.information(
+                self, "Info", f"Don't know how to run {file_path.suffix} files."
+            )
             return
 
         # Read script content
@@ -1046,7 +1110,8 @@ def example_function():
         try:
             result = subprocess.run(
                 ["python", file_path],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=30,
             )
@@ -1066,7 +1131,8 @@ def example_function():
         try:
             result = subprocess.run(
                 ["node", file_path],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=30,
             )
@@ -1076,7 +1142,9 @@ def example_function():
 
         except FileNotFoundError as e:
             logger.error("File not found in ai_coding_assistant_dialog: %s", e)
-            self.chat_widget.add_message("System", "Node.js not found. Cannot run JavaScript files.")
+            self.chat_widget.add_message(
+                "System", "Node.js not found. Cannot run JavaScript files."
+            )
         except subprocess.TimeoutExpired as e:
             logger.error("Subprocess timeout in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", "Script execution timed out.")
@@ -1095,7 +1163,9 @@ def example_function():
         if file_path and file_path.suffix == ".py":
             self.format_python_code(current_editor)
         else:
-            QMessageBox.information(self, "Info", "Code formatting not supported for this file type.")
+            QMessageBox.information(
+                self, "Info", "Code formatting not supported for this file type."
+            )
 
     def format_python_code(self, editor: CodeEditor):
         """Format Python code using black if available."""
@@ -1110,7 +1180,8 @@ def example_function():
             try:
                 result = subprocess.run(
                     ["black", "--quiet", temp_file_path],
-                    check=False, capture_output=True,
+                    check=False,
+                    capture_output=True,
                     text=True,
                     timeout=10,
                 )
@@ -1129,7 +1200,9 @@ def example_function():
 
         except FileNotFoundError as e:
             logger.error("File not found in ai_coding_assistant_dialog: %s", e)
-            self.chat_widget.add_message("System", "Black formatter not found. Please install: pip install black")
+            self.chat_widget.add_message(
+                "System", "Black formatter not found. Please install: pip install black"
+            )
         except Exception as e:
             logger.error("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Formatting error: {e}")
@@ -1196,7 +1269,9 @@ def example_function():
         lines.append(f"**Language:** {analysis_result.get('language', 'Unknown')}")
         lines.append(f"**Lines of Code:** {analysis_result.get('lines_of_code', 0)}")
         lines.append(f"**Complexity:** {analysis_result.get('complexity', 'Unknown')}")
-        lines.append(f"**AI Analysis:** {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}")
+        lines.append(
+            f"**AI Analysis:** {'Enabled' if analysis_result.get('ai_enabled', False) else 'Disabled'}"
+        )
         lines.append("")
 
         # Insights
@@ -1250,7 +1325,10 @@ def example_function():
             logger.warning(f"Security issue detected: {issue}")
 
         # Show a warning dialog if there are critical security issues
-        if any("critical" in issue.lower() or "vulnerability" in issue.lower() for issue in security_issues):
+        if any(
+            "critical" in issue.lower() or "vulnerability" in issue.lower()
+            for issue in security_issues
+        ):
             QMessageBox.warning(
                 self,
                 "Security Issues Detected",
@@ -1267,7 +1345,8 @@ def example_function():
     def create_new_file(self):
         """Create a new file."""
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Create New File",
+            self,
+            "Create New File",
             str(self.current_project) if self.current_project else "",
             "Python Files (*.py);;JavaScript Files (*.js);;All Files (*)",
         )

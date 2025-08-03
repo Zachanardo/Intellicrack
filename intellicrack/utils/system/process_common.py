@@ -27,7 +27,10 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: bool = True) -> subprocess.CompletedProcess:
+
+def run_subprocess_safely(
+    cmd: list[str], timeout: int = 30, capture_output: bool = True
+) -> subprocess.CompletedProcess:
     """Run a subprocess with common safety patterns.
 
     Args:
@@ -55,6 +58,7 @@ def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: boo
         logger.error("Command not found: %s", cmd[0])
         raise
 
+
 def create_popen_safely(cmd: list[str], **kwargs) -> subprocess.Popen:
     """Create a Popen process with common patterns.
 
@@ -76,8 +80,9 @@ def create_popen_safely(cmd: list[str], **kwargs) -> subprocess.Popen:
     return subprocess.Popen(cmd, **defaults)
 
 
-def create_suspended_process_with_context(create_func, get_context_func, target_exe: str,
-                                        logger_instance=None) -> dict[str, Any]:
+def create_suspended_process_with_context(
+    create_func, get_context_func, target_exe: str, logger_instance=None
+) -> dict[str, Any]:
     """Common pattern for creating suspended process and getting thread context.
 
     Args:

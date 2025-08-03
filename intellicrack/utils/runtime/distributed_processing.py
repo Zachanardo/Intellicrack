@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import json
 import logging
 import multiprocessing
@@ -35,6 +34,7 @@ logger = logging.getLogger(__name__)
 # Try to import optional dependencies
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in distributed_processing: %s", e)
@@ -60,12 +60,14 @@ try:
         memory_reserved,
         to_device,
     )
+
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     pass
 
 try:
     import torch
+
     TORCH_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in distributed_processing: %s", e)
@@ -75,9 +77,12 @@ except ImportError as e:
 logger = logging.getLogger(__name__)
 
 
-def process_binary_chunks(binary_path: str, chunk_size: int = 1024 * 1024,
-                         processor_func: Callable | None = None,
-                         num_workers: int | None = None) -> dict[str, Any]:
+def process_binary_chunks(
+    binary_path: str,
+    chunk_size: int = 1024 * 1024,
+    processor_func: Callable | None = None,
+    num_workers: int | None = None,
+) -> dict[str, Any]:
     """Process a binary file in chunks using multiple workers.
 
     Args:
@@ -148,10 +153,12 @@ def process_binary_chunks(binary_path: str, chunk_size: int = 1024 * 1024,
                     results["chunks_processed"] += 1
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error(f"Error processing chunk {chunk['index']}: {e}")
-                    results["chunk_results"].append({
-                        "chunk": chunk,
-                        "error": str(e),
-                    })
+                    results["chunk_results"].append(
+                        {
+                            "chunk": chunk,
+                            "error": str(e),
+                        }
+                    )
 
         results["processing_time"] = time.time() - start_time
 
@@ -166,8 +173,10 @@ def process_binary_chunks(binary_path: str, chunk_size: int = 1024 * 1024,
             # Calculate memory usage delta
             if "initial_gpu_memory" in results:
                 results["gpu_memory_delta"] = {
-                    "allocated_delta_mb": final_gpu_memory["allocated_mb"] - results["initial_gpu_memory"]["allocated_mb"],
-                    "reserved_delta_mb": final_gpu_memory["reserved_mb"] - results["initial_gpu_memory"]["reserved_mb"],
+                    "allocated_delta_mb": final_gpu_memory["allocated_mb"]
+                    - results["initial_gpu_memory"]["allocated_mb"],
+                    "reserved_delta_mb": final_gpu_memory["reserved_mb"]
+                    - results["initial_gpu_memory"]["reserved_mb"],
                 }
 
         # Aggregate results
@@ -184,8 +193,9 @@ def process_binary_chunks(binary_path: str, chunk_size: int = 1024 * 1024,
     return results
 
 
-def process_chunk(binary_path: str, chunk_info: dict[str, Any],
-                 processor_func: Callable) -> dict[str, Any]:
+def process_chunk(
+    binary_path: str, chunk_info: dict[str, Any], processor_func: Callable
+) -> dict[str, Any]:
     """Process a single chunk of a binary file.
 
     Args:
@@ -220,8 +230,9 @@ def process_chunk(binary_path: str, chunk_info: dict[str, Any],
         }
 
 
-def process_distributed_results(results: list[dict[str, Any]],
-                              aggregation_func: Callable | None = None) -> dict[str, Any]:
+def process_distributed_results(
+    results: list[dict[str, Any]], aggregation_func: Callable | None = None
+) -> dict[str, Any]:
     """Process and aggregate results from distributed processing.
 
     Args:
@@ -271,8 +282,9 @@ def process_distributed_results(results: list[dict[str, Any]],
     return aggregated
 
 
-def run_distributed_analysis(binary_path: str, analysis_type: str = "comprehensive",
-                           config: dict[str, Any] | None = None) -> dict[str, Any]:
+def run_distributed_analysis(
+    binary_path: str, analysis_type: str = "comprehensive", config: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Run distributed analysis on a binary.
 
     Args:
@@ -325,10 +337,7 @@ def run_distributed_analysis(binary_path: str, analysis_type: str = "comprehensi
 
         # Run selected analyses
         with ThreadPoolExecutor(max_workers=len(tasks_to_run)) as executor:
-            future_to_task = {
-                executor.submit(analysis_tasks[task]): task
-                for task in tasks_to_run
-            }
+            future_to_task = {executor.submit(analysis_tasks[task]): task for task in tasks_to_run}
 
             for future in as_completed(future_to_task):
                 task = future_to_task[future]
@@ -356,8 +365,9 @@ def run_distributed_analysis(binary_path: str, analysis_type: str = "comprehensi
     return results
 
 
-def run_distributed_entropy_analysis(binary_path: str,
-                                   config: dict[str, Any] | None = None) -> dict[str, Any]:
+def run_distributed_entropy_analysis(
+    binary_path: str, config: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Run distributed entropy analysis on a binary.
 
     Args:
@@ -401,8 +411,11 @@ def run_distributed_entropy_analysis(binary_path: str,
 
     # Calculate overall statistics
     if results.get("aggregated"):
-        entropies = [r["result"]["entropy"] for r in results["chunk_results"]
-                    if r.get("success") and "entropy" in r.get("result", {})]
+        entropies = [
+            r["result"]["entropy"]
+            for r in results["chunk_results"]
+            if r.get("success") and "entropy" in r.get("result", {})
+        ]
 
         if entropies:
             results["statistics"] = {
@@ -419,8 +432,9 @@ def run_distributed_entropy_analysis(binary_path: str,
     return results
 
 
-def run_distributed_pattern_search(binary_path: str, patterns: list[bytes] | None = None,
-                                 config: dict[str, Any] | None = None) -> dict[str, Any]:
+def run_distributed_pattern_search(
+    binary_path: str, patterns: list[bytes] | None = None, config: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Run distributed pattern search on a binary.
 
     Args:
@@ -435,11 +449,23 @@ def run_distributed_pattern_search(binary_path: str, patterns: list[bytes] | Non
     if patterns is None:
         # Default patterns for license/protection detection
         patterns = [
-            b"license", b"LICENSE", b"License",
-            b"trial", b"TRIAL", b"Trial",
-            b"expire", b"EXPIRE", b"Expire",
-            b"crack", b"CRACK", b"patch", b"PATCH",
-            b"keygen", b"KEYGEN", b"serial", b"SERIAL",
+            b"license",
+            b"LICENSE",
+            b"License",
+            b"trial",
+            b"TRIAL",
+            b"Trial",
+            b"expire",
+            b"EXPIRE",
+            b"Expire",
+            b"crack",
+            b"CRACK",
+            b"patch",
+            b"PATCH",
+            b"keygen",
+            b"KEYGEN",
+            b"serial",
+            b"SERIAL",
         ]
 
     if config is None:
@@ -452,15 +478,18 @@ def run_distributed_pattern_search(binary_path: str, patterns: list[bytes] | Non
         for pattern in patterns:
             # Use common utility for pattern searching
             from ..binary.binary_io import find_all_pattern_offsets
+
             offsets = find_all_pattern_offsets(data, pattern)
             for pos in offsets:
-                found_patterns.append({
-                    "pattern": pattern.hex(),
-                    "pattern_text": pattern.decode("utf-8", errors="ignore"),
-                    "offset": chunk_info["offset"] + pos,
-                    "context_before": data[max(0, pos-10):pos].hex(),
-                    "context_after": data[pos+len(pattern):pos+len(pattern)+10].hex(),
-                })
+                found_patterns.append(
+                    {
+                        "pattern": pattern.hex(),
+                        "pattern_text": pattern.decode("utf-8", errors="ignore"),
+                        "offset": chunk_info["offset"] + pos,
+                        "context_before": data[max(0, pos - 10) : pos].hex(),
+                        "context_after": data[pos + len(pattern) : pos + len(pattern) + 10].hex(),
+                    }
+                )
 
         return {
             "patterns_found": len(found_patterns),
@@ -524,6 +553,7 @@ def extract_binary_info(binary_path: str) -> dict[str, Any]:
 
         # Calculate hash
         import hashlib
+
         sha256 = hashlib.sha256()
 
         with open(binary_path, "rb") as f:
@@ -593,8 +623,9 @@ def extract_binary_features(binary_path: str) -> dict[str, Any]:
     return features
 
 
-def run_gpu_accelerator(task_type: str, data: Any,
-                       config: dict[str, Any] | None = None) -> dict[str, Any]:
+def run_gpu_accelerator(
+    task_type: str, data: Any, config: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """Run GPU-accelerated processing for supported tasks.
 
     Args:
@@ -641,8 +672,9 @@ def run_gpu_accelerator(task_type: str, data: Any,
     return results
 
 
-def run_incremental_analysis(binary_path: str, cache_dir: str | None = None,
-                           force_full: bool = False) -> dict[str, Any]:
+def run_incremental_analysis(
+    binary_path: str, cache_dir: str | None = None, force_full: bool = False
+) -> dict[str, Any]:
     """Run incremental analysis using cached results when possible.
 
     Args:
@@ -668,6 +700,7 @@ def run_incremental_analysis(binary_path: str, cache_dir: str | None = None,
 
     # Calculate file hash for cache key
     import hashlib
+
     with open(binary_path, "rb") as f:
         file_hash = hashlib.sha256(f.read()).hexdigest()
 
@@ -773,8 +806,9 @@ def run_memory_optimized_analysis(binary_path: str, max_memory_mb: int = 1024) -
     return results
 
 
-def run_pdf_report_generator(analysis_results: dict[str, Any],
-                           output_path: str | None = None) -> dict[str, Any]:
+def run_pdf_report_generator(
+    analysis_results: dict[str, Any], output_path: str | None = None
+) -> dict[str, Any]:
     """Generate a PDF report from analysis results.
 
     Args:
@@ -801,13 +835,11 @@ def run_pdf_report_generator(analysis_results: dict[str, Any],
 
         # Add sections based on analysis results
         if "binary" in analysis_results:
-            generator.add_section("Binary Information",
-                                str(analysis_results.get("binary", {})))
+            generator.add_section("Binary Information", str(analysis_results.get("binary", {})))
 
         if "analyses" in analysis_results:
             for analysis_type, data in analysis_results["analyses"].items():
-                generator.add_section(f"{analysis_type.title()} Analysis",
-                                    str(data))
+                generator.add_section(f"{analysis_type.title()} Analysis", str(data))
 
         # Generate PDF
         generator.generate_report(output_path=output_path)
@@ -828,6 +860,7 @@ def run_pdf_report_generator(analysis_results: dict[str, Any],
 
 
 # Helper functions
+
 
 def _default_chunk_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[str, Any]:
     """Calculate basic statistics for a data chunk.
@@ -890,8 +923,7 @@ def _aggregate_chunk_results(chunk_results: list[dict[str, Any]]) -> dict[str, A
     return _default_aggregation(successful)
 
 
-def _distributed_string_extraction(binary_path: str,
-                                 config: dict[str, Any]) -> dict[str, Any]:
+def _distributed_string_extraction(binary_path: str, config: dict[str, Any]) -> dict[str, Any]:
     """Extract strings from binary using distributed processing.
 
     Args:
@@ -917,18 +949,22 @@ def _distributed_string_extraction(binary_path: str,
                 current.append(chr(byte))
             else:
                 if len(current) >= min_length:
-                    strings.append({
-                        "text": "".join(current),
-                        "offset": chunk_info["offset"] + current_offset,
-                    })
+                    strings.append(
+                        {
+                            "text": "".join(current),
+                            "offset": chunk_info["offset"] + current_offset,
+                        }
+                    )
                 current = []
 
         # Don't forget last string
         if len(current) >= min_length:
-            strings.append({
-                "text": "".join(current),
-                "offset": chunk_info["offset"] + current_offset,
-            })
+            strings.append(
+                {
+                    "text": "".join(current),
+                    "offset": chunk_info["offset"] + current_offset,
+                }
+            )
 
         return {
             "strings_count": len(strings),
@@ -956,8 +992,7 @@ def _distributed_string_extraction(binary_path: str,
     return results
 
 
-def _distributed_hash_calculation(binary_path: str,
-                                config: dict[str, Any]) -> dict[str, Any]:
+def _distributed_hash_calculation(binary_path: str, config: dict[str, Any]) -> dict[str, Any]:
     """Calculate multiple hash algorithms using distributed processing.
 
     Args:
@@ -990,10 +1025,7 @@ def _distributed_hash_calculation(binary_path: str,
         return algo, h.hexdigest()
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_to_algo = {
-            executor.submit(calculate_hash, algo): algo
-            for algo in algorithms
-        }
+        future_to_algo = {executor.submit(calculate_hash, algo): algo for algo in algorithms}
 
         for future in as_completed(future_to_algo):
             try:
@@ -1035,6 +1067,7 @@ def _check_gpu_backends() -> dict[str, Any]:
     # Check for OpenCL
     try:
         import pyopencl as cl
+
         platforms = cl.get_platforms()
         if platforms:
             backends["available"] = True
@@ -1061,6 +1094,7 @@ def _run_cpu_fallback(task_type: str, data: Any) -> dict[str, Any]:
 
     """
     import time
+
     start_time = time.time()
 
     # Process data based on task type
@@ -1077,6 +1111,7 @@ def _run_cpu_fallback(task_type: str, data: Any) -> dict[str, Any]:
     # Perform basic CPU processing based on task type
     if task_type == "hash_calculation" and isinstance(data, (str, bytes)):
         import hashlib
+
         if isinstance(data, str):
             data = data.encode()
         result["cpu_hash"] = hashlib.sha256(data).hexdigest()
@@ -1160,7 +1195,7 @@ def _gpu_pattern_matching(data: dict[str, Any], config: dict[str, Any]) -> dict[
                         # Use convolution for pattern matching
                         if len(pattern) <= len(search_data):
                             for i in range(len(search_data) - len(pattern) + 1):
-                                if torch.equal(data_tensor[i:i+len(pattern)], pattern_tensor):
+                                if torch.equal(data_tensor[i : i + len(pattern)], pattern_tensor):
                                     patterns_found += 1
                                     break
 
@@ -1338,9 +1373,12 @@ def _gpu_ml_inference(data: dict[str, Any], config: dict[str, Any]) -> dict[str,
 
 
 # Dask distributed processing implementation
-def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
-                                 chunk_size: int = 1024 * 1024,
-                                 n_partitions: int | None = None) -> dict[str, Any]:
+def run_dask_distributed_analysis(
+    binary_path: str,
+    analysis_func: Callable,
+    chunk_size: int = 1024 * 1024,
+    n_partitions: int | None = None,
+) -> dict[str, Any]:
     """Run distributed binary analysis using Dask for large-scale processing.
 
     Args:
@@ -1359,7 +1397,10 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
         import dask.bag as db
         from dask.distributed import Client, as_completed
     except ImportError:
-        return {"error": "Dask not available", "suggestion": "Install with: pip install dask[distributed]"}
+        return {
+            "error": "Dask not available",
+            "suggestion": "Install with: pip install dask[distributed]",
+        }
 
     start_time = time.time()
     results = {
@@ -1376,8 +1417,7 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
         results["file_size"] = len(binary_data)
 
         # Convert to Dask array
-        data_array = da.from_array(np.frombuffer(binary_data, dtype=np.uint8),
-                                  chunks=chunk_size)
+        data_array = da.from_array(np.frombuffer(binary_data, dtype=np.uint8), chunks=chunk_size)
 
         # Perform basic analysis on the Dask array
         results["array_shape"] = data_array.shape
@@ -1389,12 +1429,14 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
         # Create Dask bag from chunks
         chunks = []
         for i in range(0, len(binary_data), chunk_size):
-            chunk = binary_data[i:i+chunk_size]
-            chunks.append({
-                "data": chunk,
-                "offset": i,
-                "size": len(chunk),
-            })
+            chunk = binary_data[i : i + chunk_size]
+            chunks.append(
+                {
+                    "data": chunk,
+                    "offset": i,
+                    "size": len(chunk),
+                }
+            )
 
         bag = db.from_sequence(chunks, npartitions=n_partitions)
 
@@ -1413,11 +1455,14 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
             # Use distributed client with as_completed for progress tracking
             futures = []
             for chunk in chunks:
-                future = client.submit(lambda c: {
-                    "offset": c["offset"],
-                    "size": c["size"],
-                    "result": analysis_func(c["data"]),
-                }, chunk)
+                future = client.submit(
+                    lambda c: {
+                        "offset": c["offset"],
+                        "size": c["size"],
+                        "result": analysis_func(c["data"]),
+                    },
+                    chunk,
+                )
                 futures.append(future)
 
             # Gather results as they complete
@@ -1428,11 +1473,13 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
         else:
             # Use local scheduler
             with dask.config.set(scheduler="threads"):
-                analyzed = bag.map(lambda chunk: {
-                    "offset": chunk["offset"],
-                    "size": chunk["size"],
-                    "result": analysis_func(chunk["data"]),
-                })
+                analyzed = bag.map(
+                    lambda chunk: {
+                        "offset": chunk["offset"],
+                        "size": chunk["size"],
+                        "result": analysis_func(chunk["data"]),
+                    }
+                )
 
                 # Compute results
                 chunk_results = analyzed.compute()
@@ -1463,9 +1510,12 @@ def run_dask_distributed_analysis(binary_path: str, analysis_func: Callable,
 
 
 # Celery distributed processing implementation
-def run_celery_distributed_analysis(binary_path: str, task_name: str = "binary_analysis",
-                                   chunk_size: int = 1024 * 1024,
-                                   queue_name: str = "intellicrack") -> dict[str, Any]:
+def run_celery_distributed_analysis(
+    binary_path: str,
+    task_name: str = "binary_analysis",
+    chunk_size: int = 1024 * 1024,
+    queue_name: str = "intellicrack",
+) -> dict[str, Any]:
     """Run distributed binary analysis using Celery task queue.
 
     Args:
@@ -1526,7 +1576,7 @@ def run_celery_distributed_analysis(binary_path: str, task_name: str = "binary_a
         chunks = []
         for i in range(0, len(binary_data), chunk_size):
             chunk = {
-                "data": binary_data[i:i+chunk_size],
+                "data": binary_data[i : i + chunk_size],
                 "offset": i,
                 "size": min(chunk_size, len(binary_data) - i),
             }
@@ -1569,8 +1619,9 @@ def run_celery_distributed_analysis(binary_path: str, task_name: str = "binary_a
 
 
 # Joblib parallel processing implementation
-def run_joblib_parallel_analysis(binary_path: str, analysis_funcs: list[Callable],
-                               n_jobs: int = -1, backend: str = "threading") -> dict[str, Any]:
+def run_joblib_parallel_analysis(
+    binary_path: str, analysis_funcs: list[Callable], n_jobs: int = -1, backend: str = "threading"
+) -> dict[str, Any]:
     """Run parallel binary analysis using joblib for multi-core processing.
 
     Args:
@@ -1625,8 +1676,7 @@ def run_joblib_parallel_analysis(binary_path: str, analysis_funcs: list[Callable
         # Run analyses in parallel
         with Parallel(n_jobs=n_jobs, backend=backend) as parallel:
             analysis_results = parallel(
-                delayed(run_analysis)(func, binary_data, func.__name__)
-                for func in analysis_funcs
+                delayed(run_analysis)(func, binary_data, func.__name__) for func in analysis_funcs
             )
 
         results["analyses"] = analysis_results
@@ -1653,8 +1703,9 @@ def run_joblib_parallel_analysis(binary_path: str, analysis_funcs: list[Callable
 
 
 # Joblib memory-mapped file processing
-def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096,
-                           step_size: int = 1024, n_jobs: int = -1) -> dict[str, Any]:
+def run_joblib_mmap_analysis(
+    binary_path: str, window_size: int = 4096, step_size: int = 1024, n_jobs: int = -1
+) -> dict[str, Any]:
     """Run memory-mapped parallel analysis using joblib for efficient large file processing.
 
     Args:
@@ -1697,6 +1748,7 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096,
 
                     # Calculate entropy
                     from ..analysis.entropy_utils import calculate_byte_entropy
+
                     entropy = calculate_byte_entropy(window_data)
 
                     # Check for high entropy (possible encryption/packing)
@@ -1710,7 +1762,9 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096,
                             current_string += bytes([byte])
                         else:
                             if len(current_string) >= 4:
-                                ascii_strings.append(current_string.decode("ascii", errors="ignore"))
+                                ascii_strings.append(
+                                    current_string.decode("ascii", errors="ignore")
+                                )
                             current_string = b""
 
                     return {
@@ -1718,7 +1772,11 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096,
                         "entropy": entropy,
                         "is_packed": is_packed,
                         "string_count": len(ascii_strings),
-                        "notable_strings": [s for s in ascii_strings if any(k in s.lower() for k in ["license", "trial", "expire"])],
+                        "notable_strings": [
+                            s
+                            for s in ascii_strings
+                            if any(k in s.lower() for k in ["license", "trial", "expire"])
+                        ],
                     }
 
         # Generate window offsets
@@ -1727,8 +1785,7 @@ def run_joblib_mmap_analysis(binary_path: str, window_size: int = 4096,
         # Run parallel analysis
         with Parallel(n_jobs=n_jobs, backend="threading") as parallel:
             window_results = parallel(
-                delayed(analyze_window)(offset, window_size, binary_path)
-                for offset in offsets
+                delayed(analyze_window)(offset, window_size, binary_path) for offset in offsets
             )
 
         results["window_results"] = window_results

@@ -30,6 +30,7 @@ logger = get_logger(__name__)
 if sys.platform == "win32":
     try:
         import ctypes.wintypes
+
         AVAILABLE = True
     except ImportError as e:
         logger.error("Import error in syscalls: %s", e)
@@ -50,6 +51,7 @@ THREAD_BASIC_INFORMATION = 0
 
 # Windows structures
 if sys.platform == "win32" and AVAILABLE:
+
     class THREAD_BASIC_INFORMATION_32(ctypes.Structure):
         """Thread basic information structure for 32-bit processes."""
 
@@ -63,6 +65,7 @@ if sys.platform == "win32" and AVAILABLE:
         ]
 else:
     THREAD_BASIC_INFORMATION_32 = None
+
 
 class DirectSyscalls:
     """Direct syscall implementation to bypass usermode hooks"""
@@ -175,16 +178,29 @@ class DirectSyscalls:
             if ctypes.sizeof(ctypes.c_void_p) == 8:
                 # 64-bit: TEB is at GS:[0x30]
                 teb_addr = ctypes.c_void_p()
-                asm_code = bytes([
-                    0x65, 0x48, 0x8B, 0x04, 0x25, 0x30, 0x00, 0x00, 0x00,  # mov rax, gs:[0x30]
-                    0xC3,  # ret
-                ])
+                asm_code = bytes(
+                    [
+                        0x65,
+                        0x48,
+                        0x8B,
+                        0x04,
+                        0x25,
+                        0x30,
+                        0x00,
+                        0x00,
+                        0x00,  # mov rax, gs:[0x30]
+                        0xC3,  # ret
+                    ]
+                )
 
                 # Allocate executable memory for shellcode
                 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
                 shellcode_addr = kernel32.VirtualAlloc(
-                    None, len(asm_code), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE,
+                    None,
+                    len(asm_code),
+                    MEM_COMMIT | MEM_RESERVE,
+                    PAGE_EXECUTE_READWRITE,
                 )
 
                 if shellcode_addr:
@@ -247,9 +263,14 @@ class DirectSyscalls:
         except Exception as e:
             logger.debug(f"Failed to find WOW64 transition: {e}")
 
-    def nt_allocate_virtual_memory(self, process_handle: int, base_address: int,
-                                  size: int, allocation_type: int,
-                                  protection: int) -> tuple[int, int]:
+    def nt_allocate_virtual_memory(
+        self,
+        process_handle: int,
+        base_address: int,
+        size: int,
+        allocation_type: int,
+        protection: int,
+    ) -> tuple[int, int]:
         """Direct syscall for NtAllocateVirtualMemory"""
         if not AVAILABLE or "NtAllocateVirtualMemory" not in self.syscall_numbers:
             return -1, 0
@@ -286,8 +307,7 @@ class DirectSyscalls:
         allocated_base = base_addr_ptr.value
         return status, allocated_base
 
-    def nt_write_virtual_memory(self, process_handle: int, base_address: int,
-                               buffer: bytes) -> int:
+    def nt_write_virtual_memory(self, process_handle: int, base_address: int, buffer: bytes) -> int:
         """Direct syscall for NtWriteVirtualMemory"""
         if not AVAILABLE or "NtWriteVirtualMemory" not in self.syscall_numbers:
             return -1
@@ -317,8 +337,9 @@ class DirectSyscalls:
 
         return status
 
-    def nt_create_thread_ex(self, process_handle: int, start_address: int,
-                           parameter: int = 0) -> tuple[int, int]:
+    def nt_create_thread_ex(
+        self, process_handle: int, start_address: int, parameter: int = 0
+    ) -> tuple[int, int]:
         """Direct syscall for NtCreateThreadEx"""
         if not AVAILABLE or "NtCreateThreadEx" not in self.syscall_numbers:
             return -1, 0
@@ -382,32 +403,32 @@ class DirectSyscalls:
             shellcode = bytearray()
 
             # mov rax, syscall_num
-            shellcode.extend(b"\x48\xB8")  # mov rax, imm64
+            shellcode.extend(b"\x48\xb8")  # mov rax, imm64
             shellcode.extend(struct.pack("<Q", syscall_num))
 
             # Setup first 4 arguments if present
             if len(args) >= 1 and args[0] is not None:
                 # mov rcx, arg1
                 if isinstance(args[0], int):
-                    shellcode.extend(b"\x48\xB9")  # mov rcx, imm64
+                    shellcode.extend(b"\x48\xb9")  # mov rcx, imm64
                     shellcode.extend(struct.pack("<Q", args[0]))
 
             if len(args) >= 2 and args[1] is not None:
                 # mov rdx, arg2
                 if isinstance(args[1], int):
-                    shellcode.extend(b"\x48\xBA")  # mov rdx, imm64
+                    shellcode.extend(b"\x48\xba")  # mov rdx, imm64
                     shellcode.extend(struct.pack("<Q", args[1]))
 
             if len(args) >= 3 and args[2] is not None:
                 # mov r8, arg3
                 if isinstance(args[2], int):
-                    shellcode.extend(b"\x49\xB8")  # mov r8, imm64
+                    shellcode.extend(b"\x49\xb8")  # mov r8, imm64
                     shellcode.extend(struct.pack("<Q", args[2]))
 
             if len(args) >= 4 and args[3] is not None:
                 # mov r9, arg4
                 if isinstance(args[3], int):
-                    shellcode.extend(b"\x49\xB9")  # mov r9, imm64
+                    shellcode.extend(b"\x49\xb9")  # mov r9, imm64
                     shellcode.extend(struct.pack("<Q", args[3]))
 
             # For 5+ arguments, we'd need to set up stack, but for now we'll handle up to 4
@@ -416,16 +437,19 @@ class DirectSyscalls:
                 return self._fallback_syscall(syscall_num, *args)
 
             # Add syscall instruction
-            shellcode.extend(b"\x0F\x05")  # syscall
+            shellcode.extend(b"\x0f\x05")  # syscall
 
             # Add return
-            shellcode.extend(b"\xC3")  # ret
+            shellcode.extend(b"\xc3")  # ret
 
             # Allocate executable memory
             kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
             code_addr = kernel32.VirtualAlloc(
-                None, len(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE,
+                None,
+                len(shellcode),
+                MEM_COMMIT | MEM_RESERVE,
+                PAGE_EXECUTE_READWRITE,
             )
 
             if not code_addr:
@@ -482,13 +506,13 @@ class DirectSyscalls:
                 shellcode.extend(struct.pack("<I", syscall_num))
 
                 # call [wow64_transition]
-                shellcode.extend(b"\xFF\x15")  # call dword ptr [addr]
+                shellcode.extend(b"\xff\x15")  # call dword ptr [addr]
                 shellcode.extend(struct.pack("<I", self.wow64_transition))
 
                 # Clean up stack (stdcall convention)
                 if len(args) > 0:
                     # add esp, num_args * 4
-                    shellcode.extend(b"\x83\xC4")  # add esp, imm8
+                    shellcode.extend(b"\x83\xc4")  # add esp, imm8
                     shellcode.append(len(args) * 4)
 
             else:
@@ -506,15 +530,15 @@ class DirectSyscalls:
 
                 # Get stack pointer for arguments
                 # mov edx, esp
-                shellcode.extend(b"\x89\xE2")  # mov edx, esp
+                shellcode.extend(b"\x89\xe2")  # mov edx, esp
 
                 # Perform syscall using int 0x2e (works on most Windows versions)
-                shellcode.extend(b"\xCD\x2E")  # int 0x2e
+                shellcode.extend(b"\xcd\x2e")  # int 0x2e
 
                 # Clean up stack
                 if len(args) > 0:
                     # add esp, num_args * 4
-                    shellcode.extend(b"\x83\xC4")  # add esp, imm8
+                    shellcode.extend(b"\x83\xc4")  # add esp, imm8
                     shellcode.append(len(args) * 4)
 
             # Add return
@@ -524,7 +548,10 @@ class DirectSyscalls:
             kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
             code_addr = kernel32.VirtualAlloc(
-                None, len(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE,
+                None,
+                len(shellcode),
+                MEM_COMMIT | MEM_RESERVE,
+                PAGE_EXECUTE_READWRITE,
             )
 
             if not code_addr:
@@ -563,8 +590,10 @@ class DirectSyscalls:
                     return func(*args)
         return -1
 
+
 # Global instance
 _direct_syscalls = None
+
 
 def get_direct_syscalls() -> DirectSyscalls | None:
     """Get global DirectSyscalls instance"""
@@ -572,6 +601,7 @@ def get_direct_syscalls() -> DirectSyscalls | None:
     if _direct_syscalls is None and AVAILABLE:
         _direct_syscalls = DirectSyscalls()
     return _direct_syscalls
+
 
 def inject_using_syscalls(process_handle: int, dll_path: str) -> bool:
     """Inject DLL using direct syscalls to bypass hooks

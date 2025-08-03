@@ -43,15 +43,15 @@ logger = get_logger(__name__)
 
 class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
     """Test multi-format analyzer with real system files"""
-    
+
     @classmethod
     def setUpClass(cls):
         """Set up test class with real file paths"""
         cls.analyzer = MultiFormatBinaryAnalyzer()
-        
+
         # Find real system files for testing
         cls.real_files = {}
-        
+
         # PE files (Windows executables)
         pe_candidates = [
             "/mnt/c/Windows/System32/notepad.exe",
@@ -63,7 +63,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
             if os.path.exists(pe_file):
                 cls.real_files['PE'] = pe_file
                 break
-        
+
         # ELF files (Linux executables)
         elf_candidates = [
             "/usr/bin/ls",
@@ -75,7 +75,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
             if os.path.exists(elf_file):
                 cls.real_files['ELF'] = elf_file
                 break
-        
+
         # JAR files (Java archives)
         jar_candidates = [
             "/mnt/c/Program Files (x86)/Java/jre1.8.0_451/lib/charsets.jar",
@@ -86,7 +86,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
             if os.path.exists(jar_file):
                 cls.real_files['JAR'] = jar_file
                 break
-        
+
         # MSI files (Windows installers)
         msi_candidates = [
             "/mnt/c/Windows/Installer/1211e.msi",
@@ -96,38 +96,38 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
             if os.path.exists(msi_file):
                 cls.real_files['MSI'] = msi_file
                 break
-        
+
         logger.info(f"Found real test files: {list(cls.real_files.keys())}")
 
     def test_real_pe_file_analysis(self):
         """Test analysis of real PE executable"""
         if 'PE' not in self.real_files:
             self.skipTest("No real PE file available for testing")
-        
+
         pe_file = self.real_files['PE']
-        
+
         # Test format detection
         detected_format = self.analyzer.identify_format(pe_file)
         self.assertIn(detected_format, ['PE', 'DOTNET'],
                      f"PE file should be detected as PE or DOTNET, got {detected_format}")
-        
+
         # Test full analysis
         result = self.analyzer.analyze_binary(pe_file)
-        
+
         # Validate result structure
         self.assertIsInstance(result, dict)
         self.assertIn('format', result)
         self.assertIn(result['format'], ['PE', 'DOTNET'])
-        
+
         # Should not have errors for valid system file
         self.assertNotIn('error', result,
                         f"Real PE file analysis should not have errors: {result.get('error')}")
-        
+
         # PE-specific validations
         if 'machine' in result:
             self.assertIsInstance(result['machine'], str)
             self.assertNotEqual(result['machine'], '')
-        
+
         if 'sections' in result:
             self.assertIsInstance(result['sections'], list)
             # PE files should have at least one section
@@ -140,25 +140,25 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         """Test analysis of real ELF executable"""
         if 'ELF' not in self.real_files:
             self.skipTest("No real ELF file available for testing")
-        
+
         elf_file = self.real_files['ELF']
-        
+
         # Test format detection
         detected_format = self.analyzer.identify_format(elf_file)
         self.assertEqual(detected_format, 'ELF')
-        
+
         # Mock external dependencies if needed
         mock_lief = MagicMock()
         mock_lief.parse.return_value = MagicMock()
-        
+
         # Test full analysis
         result = self.analyzer.analyze_binary(elf_file)
-        
+
         # Validate result structure
         self.assertIsInstance(result, dict)
         self.assertIn('format', result)
         self.assertEqual(result['format'], 'ELF')
-        
+
         # ELF analysis might require optional libraries
         if 'error' in result:
             # Check if it's a dependency error
@@ -167,11 +167,11 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
                 self.skipTest(f"ELF analysis dependencies not available: {result['error']}")
             else:
                 self.fail(f"Unexpected ELF analysis error: {result['error']}")
-        
+
         # ELF-specific validations
         if 'machine' in result:
             self.assertIsInstance(result['machine'], str)
-        
+
         if 'entry_point' in result:
             self.assertIsInstance(result['entry_point'], str)
             self.assertTrue(result['entry_point'].startswith('0x'))
@@ -180,33 +180,33 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         """Test analysis of real JAR file"""
         if 'JAR' not in self.real_files:
             self.skipTest("No real JAR file available for testing")
-        
+
         jar_file = self.real_files['JAR']
-        
+
         # Test format detection
         detected_format = self.analyzer.identify_format(jar_file)
         self.assertEqual(detected_format, 'JAR')
-        
+
         # Test full analysis
         result = self.analyzer.analyze_binary(jar_file)
-        
+
         # Validate result structure
         self.assertIsInstance(result, dict)
         self.assertIn('format', result)
         self.assertEqual(result['format'], 'JAR')
-        
+
         # JAR analysis requires zipfile
         if 'error' in result:
             if 'zipfile' in result['error']:
                 self.skipTest(f"JAR analysis dependencies not available: {result['error']}")
             else:
                 self.fail(f"Unexpected JAR analysis error: {result['error']}")
-        
+
         # JAR-specific validations
         self.assertIn('total_files', result)
         self.assertIsInstance(result['total_files'], int)
         self.assertGreater(result['total_files'], 0)
-        
+
         if 'manifest_info' in result:
             self.assertIsInstance(result['manifest_info'], dict)
 
@@ -214,21 +214,21 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         """Test analysis of real MSI file"""
         if 'MSI' not in self.real_files:
             self.skipTest("No real MSI file available for testing")
-        
+
         msi_file = self.real_files['MSI']
-        
+
         # Test format detection
         detected_format = self.analyzer.identify_format(msi_file)
         self.assertEqual(detected_format, 'MSI')
-        
+
         # Test full analysis
         result = self.analyzer.analyze_binary(msi_file)
-        
+
         # Validate result structure
         self.assertIsInstance(result, dict)
         self.assertIn('format', result)
         self.assertEqual(result['format'], 'MSI')
-        
+
         # MSI analysis is basic and might have errors
         if 'error' not in result:
             # Basic validations for successful analysis
@@ -243,7 +243,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
             ('JAR', 'JAR'),
             ('MSI', 'MSI')
         ]
-        
+
         for file_type, *expected_formats in test_cases:
             if file_type in self.real_files:
                 file_path = self.real_files[file_type]
@@ -255,26 +255,26 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         """Test performance with larger files"""
         if 'PE' not in self.real_files:
             self.skipTest("No large file available for performance testing")
-        
+
         large_file = self.real_files['PE']
         file_size = os.path.getsize(large_file)
-        
+
         # Skip if file is too small for meaningful performance test
         if file_size < 1024 * 1024:  # 1MB
             self.skipTest("File too small for performance testing")
-        
+
         import time
         start_time = time.time()
-        
+
         result = self.analyzer.analyze_binary(large_file)
-        
+
         end_time = time.time()
         analysis_time = end_time - start_time
-        
+
         # Analysis should complete within reasonable time (10 seconds)
         self.assertLess(analysis_time, 10.0,
                        f"Large file analysis took too long: {analysis_time:.2f}s")
-        
+
         # Should still produce valid results
         self.assertIsInstance(result, dict)
         self.assertIn('format', result)
@@ -282,10 +282,10 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
     def test_nonexistent_file_error(self):
         """Test error handling for non-existent files"""
         nonexistent_file = "/path/that/does/not/exist.exe"
-        
+
         detected_format = self.analyzer.identify_format(nonexistent_file)
         self.assertEqual(detected_format, 'UNKNOWN')
-        
+
         result = self.analyzer.analyze_binary(nonexistent_file)
         self.assertIn('error', result)
 
@@ -293,12 +293,12 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         """Test handling of empty files"""
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as temp_file:
             temp_path = temp_file.name
-        
+
         try:
             # File is empty
             detected_format = self.analyzer.identify_format(temp_path)
             self.assertEqual(detected_format, 'UNKNOWN')
-            
+
             result = self.analyzer.analyze_binary(temp_path)
             self.assertIn('error', result)
         finally:
@@ -310,11 +310,11 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
             # Write invalid data
             temp_file.write(b'INVALID_MAGIC_BYTES' + b'\x00' * 100)
             temp_path = temp_file.name
-        
+
         try:
             detected_format = self.analyzer.identify_format(temp_path)
             self.assertEqual(detected_format, 'UNKNOWN')
-            
+
             result = self.analyzer.analyze_binary(temp_path)
             self.assertIn('error', result)
         finally:
@@ -324,10 +324,10 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         """Test handling of permission denied errors"""
         # This test might not work on all systems
         restricted_file = "/etc/shadow"  # Typically permission-restricted file
-        
+
         if not os.path.exists(restricted_file):
             self.skipTest("No permission-restricted file available for testing")
-        
+
         try:
             detected_format = self.analyzer.identify_format(restricted_file)
             # Should handle gracefully
@@ -341,12 +341,12 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         """Test behavior when pefile dependency is missing"""
         analyzer = MultiFormatBinaryAnalyzer()
         self.assertFalse(analyzer.pefile_available)
-        
+
         # Should still identify PE format
         if 'PE' in self.real_files:
             detected = analyzer.identify_format(self.real_files['PE'])
             self.assertIn(detected, ['PE', 'DOTNET'])
-            
+
             # But analysis should return error
             result = analyzer.analyze_pe(self.real_files['PE'])
             self.assertIn('error', result)
@@ -357,7 +357,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         """Test behavior when zipfile dependency is missing"""
         analyzer = MultiFormatBinaryAnalyzer()
         self.assertFalse(analyzer.zipfile_available)
-        
+
         if 'JAR' in self.real_files:
             # Analysis should return error
             result = analyzer.analyze_jar(self.real_files['JAR'])
@@ -371,11 +371,11 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
             # Write 70KB of data
             temp_file.write(b'\x00' * (70 * 1024))
             temp_path = temp_file.name
-        
+
         try:
             detected_format = self.analyzer.identify_format(temp_path)
             self.assertEqual(detected_format, 'UNKNOWN')  # Should fail size check
-            
+
             # Direct COM analysis should report size error
             result = self.analyzer.analyze_com(temp_path)
             self.assertIn('error', result)
@@ -397,25 +397,25 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
             ])
             temp_file.write(com_code)
             temp_path = temp_file.name
-        
+
         try:
             detected_format = self.analyzer.identify_format(temp_path)
             self.assertEqual(detected_format, 'COM')
-            
+
             result = self.analyzer.analyze_com(temp_path)
             self.assertEqual(result['format'], 'COM')
             self.assertNotIn('error', result)
-            
+
             # Validate COM-specific fields
             self.assertIn('file_size', result)
             self.assertIn('load_address', result)
             self.assertEqual(result['load_address'], '0x0100')
-            
+
             # Should detect DOS interrupts
             if 'header_analysis' in result:
                 instructions = result['header_analysis'].get('possible_instructions', [])
                 dos_calls = [inst for inst in instructions if 'INT' in inst]
-                
+
                 # Validate DOS interrupt detection
                 if dos_calls:
                     print(f"Found DOS interrupts: {dos_calls}")
@@ -429,13 +429,13 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         if 'PE' in self.real_files:
             # Test with both Path object and string
             pe_file = self.real_files['PE']
-            
+
             # String path
             result1 = self.analyzer.analyze_binary(pe_file)
-            
+
             # Path object
             result2 = self.analyzer.analyze_binary(Path(pe_file))
-            
+
             # Results should be equivalent
             self.assertEqual(result1['format'], result2['format'])
 
@@ -443,17 +443,17 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         """Test that multiple analyses of the same file are consistent"""
         if 'PE' in self.real_files:
             pe_file = self.real_files['PE']
-            
+
             # Run analysis multiple times
             results = []
             for _ in range(3):
                 result = self.analyzer.analyze_binary(pe_file)
                 results.append(result)
-            
+
             # All results should be identical for deterministic file
             for i in range(1, len(results)):
                 self.assertEqual(results[0]['format'], results[i]['format'])
-                
+
                 # If no errors, basic structure should be same
                 if 'error' not in results[0] and 'error' not in results[i]:
                     for key in ['format']:  # Keys that should always be consistent
@@ -463,7 +463,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
     def test_analyzer_initialization(self):
         """Test analyzer initialization and dependency checking"""
         analyzer = MultiFormatBinaryAnalyzer()
-        
+
         # Should have dependency flags
         self.assertIsInstance(analyzer.lief_available, bool)
         self.assertIsInstance(analyzer.pefile_available, bool)
@@ -471,7 +471,7 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
         self.assertIsInstance(analyzer.macholib_available, bool)
         self.assertIsInstance(analyzer.zipfile_available, bool)
         self.assertIsInstance(analyzer.xml_available, bool)
-        
+
         # Should have logger
         self.assertIsNotNone(analyzer.logger)
 
@@ -481,11 +481,11 @@ class TestRealWorldMultiFormatAnalyzer(unittest.TestCase):
             # Write some random data that doesn't match any known format
             temp_file.write(b'RANDOM_UNKNOWN_FORMAT_DATA' + b'\x00' * 100)
             temp_path = temp_file.name
-        
+
         try:
             detected_format = self.analyzer.identify_format(temp_path)
             self.assertEqual(detected_format, 'UNKNOWN')
-            
+
             result = self.analyzer.analyze_binary(temp_path)
             self.assertEqual(result['format'], 'UNKNOWN')
             self.assertIn('error', result)
@@ -499,6 +499,6 @@ if __name__ == '__main__':
     import logging
     logging.basicConfig(level=logging.INFO,
                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    
+
     # Run the tests
     unittest.main(verbosity=2)

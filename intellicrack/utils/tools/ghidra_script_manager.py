@@ -48,7 +48,7 @@ class GhidraScript:
         self.filename = os.path.basename(path)
         self.name = os.path.splitext(self.filename)[0]
         self.extension = os.path.splitext(self.filename)[1].lower()
-        self.type = 'java' if self.extension == '.java' else 'python'
+        self.type = "java" if self.extension == ".java" else "python"
         self.directory = os.path.dirname(path)
 
         # Metadata from script
@@ -72,51 +72,51 @@ class GhidraScript:
     def _extract_metadata(self):
         """Extract metadata from script comments."""
         try:
-            with open(self.path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(self.path, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
             # Java-style comments
-            if self.type == 'java':
+            if self.type == "java":
                 # Look for @description, @author, @category tags
-                desc_match = re.search(r'@description\s+(.+?)(?:\n|$)', content)
+                desc_match = re.search(r"@description\s+(.+?)(?:\n|$)", content)
                 if desc_match:
                     self.description = desc_match.group(1).strip()
 
-                author_match = re.search(r'@author\s+(.+?)(?:\n|$)', content)
+                author_match = re.search(r"@author\s+(.+?)(?:\n|$)", content)
                 if author_match:
                     self.author = author_match.group(1).strip()
 
-                category_match = re.search(r'@category\s+(.+?)(?:\n|$)', content)
+                category_match = re.search(r"@category\s+(.+?)(?:\n|$)", content)
                 if category_match:
                     self.category = category_match.group(1).strip()
 
                 # Also check for /* */ style description
-                block_match = re.search(r'/\*\s*\n\s*\*\s*(.+?)\n', content)
+                block_match = re.search(r"/\*\s*\n\s*\*\s*(.+?)\n", content)
                 if block_match and self.description == "No description available":
-                    self.description = block_match.group(1).strip('* ')
+                    self.description = block_match.group(1).strip("* ")
 
             # Python-style docstrings
-            elif self.type == 'python':
+            elif self.type == "python":
                 # Triple quotes docstring
                 docstring_match = re.search(r'"""(.+?)"""', content, re.DOTALL)
                 if docstring_match:
-                    lines = docstring_match.group(1).strip().split('\n')
+                    lines = docstring_match.group(1).strip().split("\n")
                     if lines:
                         self.description = lines[0].strip()
 
                 # Look for # @metadata comments
-                for line in content.split('\n'):
-                    if line.strip().startswith('# @author'):
-                        self.author = line.split('@author', 1)[1].strip()
-                    elif line.strip().startswith('# @category'):
-                        self.category = line.split('@category', 1)[1].strip()
-                    elif line.strip().startswith('# @version'):
-                        self.version = line.split('@version', 1)[1].strip()
+                for line in content.split("\n"):
+                    if line.strip().startswith("# @author"):
+                        self.author = line.split("@author", 1)[1].strip()
+                    elif line.strip().startswith("# @category"):
+                        self.category = line.split("@category", 1)[1].strip()
+                    elif line.strip().startswith("# @version"):
+                        self.version = line.split("@version", 1)[1].strip()
 
             # Extract tags from description or special tag line
-            tag_match = re.search(r'@tags?\s+(.+?)(?:\n|$)', content)
+            tag_match = re.search(r"@tags?\s+(.+?)(?:\n|$)", content)
             if tag_match:
-                self.tags = [t.strip() for t in tag_match.group(1).split(',')]
+                self.tags = [t.strip() for t in tag_match.group(1).split(",")]
 
         except Exception as e:
             logger.warning(f"Failed to extract metadata from {self.filename}: {e}")
@@ -126,23 +126,23 @@ class GhidraScript:
         self.validation_errors = []
 
         try:
-            with open(self.path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(self.path, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
-            if self.type == 'java':
+            if self.type == "java":
                 # Check for required imports
-                if 'ghidra.app.script.GhidraScript' not in content:
+                if "ghidra.app.script.GhidraScript" not in content:
                     self.validation_errors.append("Missing GhidraScript import")
 
                 # Check for class extending GhidraScript
-                if not re.search(r'class\s+\w+\s+extends\s+GhidraScript', content):
+                if not re.search(r"class\s+\w+\s+extends\s+GhidraScript", content):
                     self.validation_errors.append("Class must extend GhidraScript")
 
                 # Check for run() method
-                if not re.search(r'public\s+void\s+run\s*\(\s*\)', content):
+                if not re.search(r"public\s+void\s+run\s*\(\s*\)", content):
                     self.validation_errors.append("Missing public void run() method")
 
-            elif self.type == 'python':
+            elif self.type == "python":
                 # Python scripts are more flexible, just check if it's not empty
                 if len(content.strip()) < 10:
                     self.validation_errors.append("Script appears to be empty")
@@ -157,20 +157,20 @@ class GhidraScript:
     def to_dict(self) -> Dict[str, Any]:
         """Convert script info to dictionary."""
         return {
-            'path': self.path,
-            'filename': self.filename,
-            'name': self.name,
-            'type': self.type,
-            'description': self.description,
-            'author': self.author,
-            'category': self.category,
-            'version': self.version,
-            'tags': self.tags,
-            'last_modified': self.last_modified.isoformat(),
-            'size': self.size,
-            'is_valid': self.is_valid,
-            'validation_errors': self.validation_errors,
-            'directory': self.directory
+            "path": self.path,
+            "filename": self.filename,
+            "name": self.name,
+            "type": self.type,
+            "description": self.description,
+            "author": self.author,
+            "category": self.category,
+            "version": self.version,
+            "tags": self.tags,
+            "last_modified": self.last_modified.isoformat(),
+            "size": self.size,
+            "is_valid": self.is_valid,
+            "validation_errors": self.validation_errors,
+            "directory": self.directory,
         }
 
 
@@ -178,9 +178,7 @@ class GhidraScriptManager:
     """Manages Ghidra script discovery, validation, and execution."""
 
     # Centralized script directory
-    DEFAULT_SCRIPT_DIRS = [
-        get_resource_path('plugins/ghidra_scripts')
-    ]
+    DEFAULT_SCRIPT_DIRS = [get_resource_path("plugins/ghidra_scripts")]
 
     # Script metadata cache file
     CACHE_FILE = "ghidra_scripts_cache.json"
@@ -209,7 +207,7 @@ class GhidraScriptManager:
     def _create_default_directories(self):
         """Create default script directories if they don't exist."""
         # Create main directory and subdirectories
-        base_dir = get_resource_path('plugins/ghidra_scripts')
+        base_dir = get_resource_path("plugins/ghidra_scripts")
         subdirs = ["default", "user", "examples", "community"]
 
         # Create base directory
@@ -257,12 +255,12 @@ class GhidraScriptManager:
             # Walk directory tree
             for root, dirs, files in os.walk(script_dir):
                 # Skip hidden directories
-                dirs[:] = [d for d in dirs if not d.startswith('.')]
+                dirs[:] = [d for d in dirs if not d.startswith(".")]
 
                 for file in files:
-                    if file.endswith(('.java', '.py')):
+                    if file.endswith((".java", ".py")):
                         # Skip backup files
-                        if file.endswith(('.bak', '.tmp', '~')):
+                        if file.endswith((".bak", ".tmp", "~")):
                             continue
 
                         script_path = os.path.join(root, file)
@@ -281,7 +279,9 @@ class GhidraScriptManager:
                             logger.warning(f"Failed to load script {file}: {e}")
 
         self.last_scan = datetime.now()
-        logger.info(f"Found {len(self.scripts)} Ghidra scripts in {len(self.categories)} categories")
+        logger.info(
+            f"Found {len(self.scripts)} Ghidra scripts in {len(self.categories)} categories"
+        )
 
         # Save cache
         self._save_cache()
@@ -358,7 +358,7 @@ class GhidraScriptManager:
         shutil.copy2(script.path, dest_path)
 
         # If Java script, check for accompanying class files
-        if script.type == 'java':
+        if script.type == "java":
             class_file = script.name + ".class"
             class_path = os.path.join(script.directory, class_file)
             if os.path.exists(class_path):
@@ -384,18 +384,23 @@ class GhidraScriptManager:
 
         for script in self.scripts.values():
             # Search in various fields
-            if any(query_lower in field.lower() for field in [
-                script.name,
-                script.description,
-                script.author,
-                script.category,
-                ' '.join(script.tags)
-            ]):
+            if any(
+                query_lower in field.lower()
+                for field in [
+                    script.name,
+                    script.description,
+                    script.author,
+                    script.category,
+                    " ".join(script.tags),
+                ]
+            ):
                 results.append(script)
 
         return results
 
-    def add_user_script(self, source_path: str, category: str = "User Scripts") -> Optional[GhidraScript]:
+    def add_user_script(
+        self, source_path: str, category: str = "User Scripts"
+    ) -> Optional[GhidraScript]:
         """
         Add a user script to the user scripts directory.
 
@@ -406,7 +411,7 @@ class GhidraScriptManager:
         Returns:
             GhidraScript object if successful
         """
-        base_dir = get_resource_path('plugins/ghidra_scripts')
+        base_dir = get_resource_path("plugins/ghidra_scripts")
         user_dir = os.path.join(base_dir, "user")
         os.makedirs(user_dir, exist_ok=True)
 
@@ -457,35 +462,37 @@ class GhidraScriptManager:
             return
 
         try:
-            with open(cache_path, 'r') as f:
+            with open(cache_path, "r") as f:
                 data = json.load(f)
 
             # Check cache version
-            if data.get('version', 1) != 2:
+            if data.get("version", 1) != 2:
                 return
 
             # Load scripts
-            for script_data in data.get('scripts', []):
-                path = script_data['path']
+            for script_data in data.get("scripts", []):
+                path = script_data["path"]
                 if os.path.exists(path):
                     # Check if file hasn't changed
                     mtime = os.path.getmtime(path)
-                    cached_mtime = datetime.fromisoformat(script_data['last_modified']).timestamp()
+                    cached_mtime = datetime.fromisoformat(script_data["last_modified"]).timestamp()
 
                     if abs(mtime - cached_mtime) < 1:  # Within 1 second
                         # Use cached data
                         script = GhidraScript(path)
-                        script.description = script_data.get('description', script.description)
-                        script.author = script_data.get('author', script.author)
-                        script.category = script_data.get('category', script.category)
-                        script.tags = script_data.get('tags', script.tags)
+                        script.description = script_data.get("description", script.description)
+                        script.author = script_data.get("author", script.author)
+                        script.category = script_data.get("category", script.category)
+                        script.tags = script_data.get("tags", script.tags)
 
                         self.scripts[path] = script
                         if script.category not in self.categories:
                             self.categories[script.category] = []
                         self.categories[script.category].append(path)
 
-            self.last_scan = datetime.fromisoformat(data.get('last_scan', datetime.now().isoformat()))
+            self.last_scan = datetime.fromisoformat(
+                data.get("last_scan", datetime.now().isoformat())
+            )
             logger.info(f"Loaded {len(self.scripts)} scripts from cache")
 
         except Exception as e:
@@ -499,12 +506,12 @@ class GhidraScriptManager:
 
         try:
             data = {
-                'version': 2,
-                'last_scan': self.last_scan.isoformat() if self.last_scan else None,
-                'scripts': [script.to_dict() for script in self.scripts.values()]
+                "version": 2,
+                "last_scan": self.last_scan.isoformat() if self.last_scan else None,
+                "scripts": [script.to_dict() for script in self.scripts.values()],
             }
 
-            with open(cache_path, 'w') as f:
+            with open(cache_path, "w") as f:
                 json.dump(data, f, indent=2)
 
         except Exception as e:

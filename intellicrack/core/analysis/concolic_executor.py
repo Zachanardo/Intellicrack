@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import re
 import traceback
@@ -30,6 +29,7 @@ from intellicrack.logger import logger
 try:
     from manticore.core.plugin import Plugin
     from manticore.native import Manticore
+
     MANTICORE_AVAILABLE = True
     MANTICORE_TYPE = "native"
 except ImportError:
@@ -38,8 +38,11 @@ except ImportError:
 
     # Only show warning on Linux/Unix systems where manticore is expected
     import platform
+
     if platform.system() != "Windows":
-        logger.warning("Manticore not available on Linux/Unix - install with: pip install manticore")
+        logger.warning(
+            "Manticore not available on Linux/Unix - install with: pip install manticore"
+        )
 
     # Try to use simconcolic as a fallback
     try:
@@ -48,6 +51,7 @@ except ImportError:
 
         # Add scripts directory to path
         import intellicrack
+
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
         scripts_dir = os.path.join(base_dir, "intellicrack", "scripts")
         if os.path.exists(scripts_dir):
@@ -55,11 +59,13 @@ except ImportError:
 
         from simconcolic import BinaryAnalyzer as Manticore
         from simconcolic import Plugin
+
         MANTICORE_AVAILABLE = True
         MANTICORE_TYPE = "simconcolic"
         logging.getLogger(__name__).info("Using simconcolic as Manticore replacement")
     except ImportError:
         MANTICORE_AVAILABLE = False
+
         # Define functional fallback classes to prevent import errors
         class NativeConcolicState:
             """Native concolic execution state implementation.
@@ -73,9 +79,15 @@ except ImportError:
                 self.pc = pc  # Program counter
                 self.memory = memory or {}  # Memory state
                 self.registers = registers or {
-                    "eax": 0, "ebx": 0, "ecx": 0, "edx": 0,
-                    "esp": 0x7fff0000, "ebp": 0x7fff0000,
-                    "esi": 0, "edi": 0, "eflags": 0,
+                    "eax": 0,
+                    "ebx": 0,
+                    "ecx": 0,
+                    "edx": 0,
+                    "esp": 0x7FFF0000,
+                    "ebp": 0x7FFF0000,
+                    "esi": 0,
+                    "edi": 0,
+                    "eflags": 0,
                 }
                 self.symbolic_memory = {}  # Symbolic memory locations
                 self.symbolic_registers = {}  # Symbolic register values
@@ -200,7 +212,10 @@ except ImportError:
                             opt_header_offset = pe_offset + 24
                             if opt_header_offset + 16 < len(self.binary_data):
                                 entry_point = int.from_bytes(
-                                    self.binary_data[opt_header_offset + 16:opt_header_offset + 20], "little",
+                                    self.binary_data[
+                                        opt_header_offset + 16 : opt_header_offset + 20
+                                    ],
+                                    "little",
                                 )
                                 return entry_point + 0x400000  # Add image base
                 except Exception as e:
@@ -239,6 +254,7 @@ except ImportError:
             def run(self, procs: int = 1) -> None:
                 """Run concolic execution."""
                 import time
+
                 self.logger.info(f"Starting concolic execution with {procs} processes")
                 start_time = time.time()
 
@@ -306,8 +322,11 @@ except ImportError:
                     self.logger.error("Execution error: %s", e)
 
                 self.execution_complete = True
-                self.logger.info("Concolic execution completed. States: %d terminated, %d active",
-                               len(self.terminated_states), len(self.ready_states))
+                self.logger.info(
+                    "Concolic execution completed. States: %d terminated, %d active",
+                    len(self.terminated_states),
+                    len(self.ready_states),
+                )
 
             def _execute_instruction(self, state: NativeConcolicState):
                 """Execute a single instruction in the given state."""
@@ -325,17 +344,19 @@ except ImportError:
                         return
 
                     # Read instruction bytes (simplified)
-                    instruction_bytes = self.binary_data[pc_offset:pc_offset + 8]
+                    instruction_bytes = self.binary_data[pc_offset : pc_offset + 8]
                     if not instruction_bytes:
                         state.terminate("end_of_code")
                         return
 
                     # Add to execution trace
-                    state.execution_trace.append({
-                        "pc": state.pc,
-                        "instruction": instruction_bytes[:4].hex(),
-                        "registers": state.registers.copy(),
-                    })
+                    state.execution_trace.append(
+                        {
+                            "pc": state.pc,
+                            "instruction": instruction_bytes[:4].hex(),
+                            "registers": state.registers.copy(),
+                        }
+                    )
 
                     # Simple instruction emulation
                     self._emulate_instruction(state, instruction_bytes)
@@ -358,12 +379,12 @@ except ImportError:
                 # Simple instruction patterns
                 if opcode == 0x90:  # NOP
                     state.pc += 1
-                elif opcode == 0xc3:  # RET
+                elif opcode == 0xC3:  # RET
                     if state.stack:
                         state.pc = state.stack.pop()
                     else:
                         state.terminate("return_without_call")
-                elif opcode == 0xe8:  # CALL (simplified)
+                elif opcode == 0xE8:  # CALL (simplified)
                     if len(instruction_bytes) >= 5:
                         # Extract 32-bit displacement
                         displacement = int.from_bytes(instruction_bytes[1:5], "little", signed=True)
@@ -371,7 +392,7 @@ except ImportError:
                         state.pc = state.pc + 5 + displacement
                     else:
                         state.pc += len(instruction_bytes)
-                elif opcode == 0xeb:  # JMP short
+                elif opcode == 0xEB:  # JMP short
                     if len(instruction_bytes) >= 2:
                         displacement = int.from_bytes([instruction_bytes[1]], "little", signed=True)
                         state.pc = state.pc + 2 + displacement
@@ -434,27 +455,38 @@ except ImportError:
 
             def will_run_callback(self, executor, *args, **kwargs):
                 """Callback before execution starts."""
-                self.logger.debug(f"Execution starting on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
+                self.logger.debug(
+                    f"Execution starting on executor {type(executor).__name__} with args={args}, kwargs={kwargs}"
+                )
 
             def did_finish_run_callback(self, executor, *args, **kwargs):
                 """Callback after execution completes."""
-                self.logger.debug(f"Execution finished on executor {type(executor).__name__} with args={args}, kwargs={kwargs}")
+                self.logger.debug(
+                    f"Execution finished on executor {type(executor).__name__} with args={args}, kwargs={kwargs}"
+                )
 
             def will_fork_state_callback(self, state, new_state, *args, **kwargs):
                 """Callback before state fork."""
-                self.logger.debug(f"State fork: PC 0x{state.pc:x} -> 0x{new_state.pc:x} with args={args}, kwargs={kwargs}")
+                self.logger.debug(
+                    f"State fork: PC 0x{state.pc:x} -> 0x{new_state.pc:x} with args={args}, kwargs={kwargs}"
+                )
 
             def will_execute_instruction_callback(self, state, pc, insn):
                 """Callback before instruction execution."""
                 self.logger.debug(f"Executing instruction at 0x{pc:x}, state={state}, insn={insn}")
+
         import platform
+
         if platform.system() == "Windows":
-            logging.getLogger(__name__).info("Using angr for symbolic execution on Windows (manticore is Linux-only)")
+            logging.getLogger(__name__).info(
+                "Using angr for symbolic execution on Windows (manticore is Linux-only)"
+            )
         else:
             logging.getLogger(__name__).warning("Neither Manticore nor simconcolic available")
 
 try:
     import lief
+
     LIEF_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in concolic_executor: %s", e)
@@ -496,7 +528,9 @@ class ConcolicExecutionEngine:
 
         self.logger.info(f"Concolic execution engine initialized for {binary_path}")
 
-    def explore_paths(self, target_address: int | None = None, avoid_addresses: list[int] | None = None) -> dict[str, Any]:
+    def explore_paths(
+        self, target_address: int | None = None, avoid_addresses: list[int] | None = None
+    ) -> dict[str, Any]:
         """Perform concolic execution to explore program paths.
 
         Args:
@@ -509,8 +543,11 @@ class ConcolicExecutionEngine:
         """
         if not self.manticore_available:
             import platform
+
             if platform.system() == "Windows":
-                return {"error": "Concolic execution via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."}
+                return {
+                    "error": "Concolic execution via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."
+                }
             return {"error": "Required dependencies not available. Please install manticore."}
 
         try:
@@ -541,15 +578,21 @@ class ConcolicExecutionEngine:
 
                 def will_run_callback(self, *args, **kwargs):
                     """Called when path exploration is about to start."""
-                    self.logger.info(f"Starting path exploration with {len(args)} args and {len(kwargs)} kwargs")
+                    self.logger.info(
+                        f"Starting path exploration with {len(args)} args and {len(kwargs)} kwargs"
+                    )
                     if args:
-                        self.logger.debug(f"Exploration args: {[type(arg).__name__ for arg in args]}")
+                        self.logger.debug(
+                            f"Exploration args: {[type(arg).__name__ for arg in args]}"
+                        )
                     if kwargs:
                         self.logger.debug(f"Exploration kwargs: {list(kwargs.keys())}")
 
                 def did_finish_run_callback(self, *args, **kwargs):
                     """Called when path exploration has finished execution."""
-                    self.logger.info(f"Finished path exploration with {len(args)} args and {len(kwargs)} kwargs")
+                    self.logger.info(
+                        f"Finished path exploration with {len(args)} args and {len(kwargs)} kwargs"
+                    )
                     if args:
                         self.logger.debug(f"Finish args: {[type(arg).__name__ for arg in args]}")
                     if kwargs:
@@ -562,7 +605,9 @@ class ConcolicExecutionEngine:
                         state: The state that will be forked
 
                     """
-                    self.logger.debug(f"Forking state at PC: {state.cpu.PC} with {len(args)} args and {len(kwargs)} kwargs")
+                    self.logger.debug(
+                        f"Forking state at PC: {state.cpu.PC} with {len(args)} args and {len(kwargs)} kwargs"
+                    )
                     if args:
                         self.logger.debug(f"Fork args: {[type(arg).__name__ for arg in args]}")
                     if kwargs:
@@ -591,14 +636,23 @@ class ConcolicExecutionEngine:
                     stdin_data = state.input_symbols.get("stdin", b"")
                     argv_data = state.input_symbols.get("argv", [])
 
-                    results["inputs"].append({
-                        "id": state_id,
-                        "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
-                        "argv": [_arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data],
-                        "termination_reason": state.termination_reason,
-                    })
+                    results["inputs"].append(
+                        {
+                            "id": state_id,
+                            "stdin": stdin_data.hex()
+                            if isinstance(stdin_data, bytes)
+                            else str(stdin_data),
+                            "argv": [
+                                _arg.hex() if isinstance(_arg, bytes) else str(_arg)
+                                for _arg in argv_data
+                            ],
+                            "termination_reason": state.termination_reason,
+                        }
+                    )
 
-            self.logger.info("Concolic execution completed. Explored %d paths.", results["paths_explored"])
+            self.logger.info(
+                "Concolic execution completed. Explored %d paths.", results["paths_explored"]
+            )
             return results
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -638,8 +692,11 @@ class ConcolicExecutionEngine:
         """
         if not self.manticore_available:
             import platform
+
             if platform.system() == "Windows":
-                return {"error": "License bypass via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."}
+                return {
+                    "error": "License bypass via manticore is not available on Windows. Please use Symbolic Execution (angr) instead."
+                }
             return {"error": "Required dependencies not available"}
 
         try:
@@ -707,7 +764,13 @@ class ConcolicExecutionEngine:
                         self.logger.info("Reached license check at %s", hex(pc))
 
                     # Check for successful license validation (typically a conditional jump)
-                    if hasattr(state, "record_trace") and state.record_trace and hasattr(insn, "mnemonic") and insn.mnemonic.startswith("j") and not insn.mnemonic == "jmp":
+                    if (
+                        hasattr(state, "record_trace")
+                        and state.record_trace
+                        and hasattr(insn, "mnemonic")
+                        and insn.mnemonic.startswith("j")
+                        and not insn.mnemonic == "jmp"
+                    ):
                         # Try to force the branch to take the "success" path
                         # This is a simplified approach - in reality, we'd need to analyze
                         # which branch leads to success
@@ -738,9 +801,13 @@ class ConcolicExecutionEngine:
                 return {
                     "success": True,
                     "bypass_found": True,
-                    "license_check_address": hex(license_check_address) if isinstance(license_check_address, int) else license_check_address,
+                    "license_check_address": hex(license_check_address)
+                    if isinstance(license_check_address, int)
+                    else license_check_address,
                     "stdin": stdin_data.hex() if isinstance(stdin_data, bytes) else str(stdin_data),
-                    "argv": [_arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data],
+                    "argv": [
+                        _arg.hex() if isinstance(_arg, bytes) else str(_arg) for _arg in argv_data
+                    ],
                     "description": "Found input that bypasses license check",
                 }
             return {
@@ -790,11 +857,17 @@ class ConcolicExecutionEngine:
                         # Found license-related string - estimate function address
                         string_offset = matches[0].start()
                         # Heuristic: look for potential function boundaries before the string
-                        potential_func_start = max(0, string_offset - 0x1000) # Look back 4KB
-                        potential_func_start = (potential_func_start // 0x10) * 0x10  # Align to 16 bytes
+                        potential_func_start = max(0, string_offset - 0x1000)  # Look back 4KB
+                        potential_func_start = (
+                            potential_func_start // 0x10
+                        ) * 0x10  # Align to 16 bytes
 
-                        self.logger.info("Found potential license string at offset 0x%x, "
-                                       "estimated function at 0x%x", string_offset, potential_func_start)
+                        self.logger.info(
+                            "Found potential license string at offset 0x%x, "
+                            "estimated function at 0x%x",
+                            string_offset,
+                            potential_func_start,
+                        )
                         return potential_func_start
 
                 # No license patterns found
@@ -842,6 +915,7 @@ class ConcolicExecutionEngine:
 
         """
         import time
+
         start_time = time.time()
 
         # Update binary path if provided
@@ -930,7 +1004,13 @@ class ConcolicExecutionEngine:
 
                     try:
                         # Use state information for vulnerability detection
-                        stack_ptr = state.cpu.RSP if hasattr(state.cpu, "RSP") else state.cpu.ESP if hasattr(state.cpu, "ESP") else None
+                        stack_ptr = (
+                            state.cpu.RSP
+                            if hasattr(state.cpu, "RSP")
+                            else state.cpu.ESP
+                            if hasattr(state.cpu, "ESP")
+                            else None
+                        )
 
                         # Check for dangerous function calls
                         if hasattr(insn, "mnemonic") and insn.mnemonic == "call":
@@ -951,7 +1031,11 @@ class ConcolicExecutionEngine:
                             }
 
                         # Check for potential buffer overflows using state
-                        elif hasattr(insn, "mnemonic") and insn.mnemonic in ["mov", "rep movsb", "strcpy"]:
+                        elif hasattr(insn, "mnemonic") and insn.mnemonic in [
+                            "mov",
+                            "rep movsb",
+                            "strcpy",
+                        ]:
                             if stack_ptr:
                                 # Check if writing near stack boundaries
                                 vuln = {
@@ -1007,7 +1091,9 @@ class ConcolicExecutionEngine:
 
                 def did_run_callback(self):
                     """Finalize analysis after execution."""
-                    self.logger.info(f"Analysis complete. Covered {len(self.analysis_data['covered_blocks'])} blocks")
+                    self.logger.info(
+                        f"Analysis complete. Covered {len(self.analysis_data['covered_blocks'])} blocks"
+                    )
 
             # Register analysis plugin
             m.register_plugin(ComprehensiveAnalysisPlugin(analysis_data))
@@ -1018,7 +1104,9 @@ class ConcolicExecutionEngine:
                     m.add_hook(target, lambda s: self._target_reached(s, analysis_data))
                 else:
                     # Try to resolve function name to address
-                    self.logger.debug(f"Target function {target} specified but name resolution not implemented")
+                    self.logger.debug(
+                        f"Target function {target} specified but name resolution not implemented"
+                    )
 
             for avoid in avoid_functions:
                 if isinstance(avoid, int):
@@ -1042,7 +1130,9 @@ class ConcolicExecutionEngine:
             m.run(procs=4)
 
             # Process results
-            all_states = list(m.all_states.values()) if hasattr(m.all_states, "values") else m.all_states
+            all_states = (
+                list(m.all_states.values()) if hasattr(m.all_states, "values") else m.all_states
+            )
             results["paths_explored"] = len(all_states)
 
             # Generate test cases from terminated states
@@ -1071,7 +1161,9 @@ class ConcolicExecutionEngine:
             if analysis_data["covered_blocks"]:
                 # Estimate total blocks (simplified)
                 total_blocks_estimate = 1000  # Real implementation would parse binary
-                results["coverage"] = (len(analysis_data["covered_blocks"]) / total_blocks_estimate) * 100
+                results["coverage"] = (
+                    len(analysis_data["covered_blocks"]) / total_blocks_estimate
+                ) * 100
 
             # Add vulnerabilities found
             results["vulnerabilities"] = analysis_data["vulnerabilities"]
@@ -1080,7 +1172,9 @@ class ConcolicExecutionEngine:
             results["constraints"] = list(analysis_data["constraints"].values())
 
             # Add interesting addresses
-            results["interesting_addresses"] = [hex(addr) for addr in analysis_data["interesting_addresses"]]
+            results["interesting_addresses"] = [
+                hex(addr) for addr in analysis_data["interesting_addresses"]
+            ]
 
             # Search for license checks if requested
             if find_license_checks:
@@ -1090,9 +1184,11 @@ class ConcolicExecutionEngine:
             # Calculate execution time
             results["execution_time"] = time.time() - start_time
 
-            self.logger.info(f"Concolic analysis completed: {results['paths_explored']} paths explored, "
-                           f"{len(results['test_cases'])} test cases generated, "
-                           f"{results['coverage']:.2f}% coverage achieved")
+            self.logger.info(
+                f"Concolic analysis completed: {results['paths_explored']} paths explored, "
+                f"{len(results['test_cases'])} test cases generated, "
+                f"{results['coverage']:.2f}% coverage achieved"
+            )
 
             return results
 
@@ -1106,6 +1202,7 @@ class ConcolicExecutionEngine:
     def _native_analyze(self, binary_path: str, **kwargs) -> dict[str, Any]:
         """Native implementation of analyze without Manticore."""
         import time
+
         start_time = time.time()
 
         self.logger.info(f"Starting native concolic analysis on {binary_path}")
@@ -1141,30 +1238,40 @@ class ConcolicExecutionEngine:
             for i, state in enumerate(terminated_states[:10]):
                 test_case = {
                     "id": i,
-                    "input": state.input_symbols.get("stdin", b"").hex() if hasattr(state, "input_symbols") else "",
+                    "input": state.input_symbols.get("stdin", b"").hex()
+                    if hasattr(state, "input_symbols")
+                    else "",
                     "triggers": [],
-                    "path_length": len(state.execution_trace) if hasattr(state, "execution_trace") else 0,
-                    "termination_reason": state.termination_reason if hasattr(state, "termination_reason") else "unknown",
+                    "path_length": len(state.execution_trace)
+                    if hasattr(state, "execution_trace")
+                    else 0,
+                    "termination_reason": state.termination_reason
+                    if hasattr(state, "termination_reason")
+                    else "unknown",
                 }
                 results["test_cases"].append(test_case)
 
             # Extract constraints
             for state in all_states[:20]:  # Limit to first 20 states
                 if hasattr(state, "constraints") and state.constraints:
-                    results["constraints"].append({
-                        "state_id": id(state),
-                        "pc": hex(state.pc),
-                        "constraints": state.constraints[:5],  # Limit constraints per state
-                    })
+                    results["constraints"].append(
+                        {
+                            "state_id": id(state),
+                            "pc": hex(state.pc),
+                            "constraints": state.constraints[:5],  # Limit constraints per state
+                        }
+                    )
 
             # Basic vulnerability detection
             for state in terminated_states:
                 if state.termination_reason == "segfault":
-                    results["vulnerabilities"].append({
-                        "type": "crash",
-                        "address": hex(state.pc),
-                        "description": "Program crashed (potential vulnerability)",
-                    })
+                    results["vulnerabilities"].append(
+                        {
+                            "type": "crash",
+                            "address": hex(state.pc),
+                            "description": "Program crashed (potential vulnerability)",
+                        }
+                    )
 
             # Calculate coverage (simplified)
             unique_pcs = set()

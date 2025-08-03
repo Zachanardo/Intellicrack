@@ -43,8 +43,7 @@ class ProtectionAwareScriptGenerator:
         FlexLM, WinLicense, Steam CEG, VMProtect, Denuvo, and Microsoft
         activation systems.
         """
-        self.logger = logging.getLogger(
-            __name__ + ".ProtectionAwareScriptGenerator")
+        self.logger = logging.getLogger(__name__ + ".ProtectionAwareScriptGenerator")
         self.unified_engine = get_unified_engine()
         self.kb = get_protection_knowledge_base()
 
@@ -59,8 +58,9 @@ class ProtectionAwareScriptGenerator:
             "microsoft_activation": self._get_ms_activation_scripts(),
         }
 
-    def generate_bypass_script(self, binary_path: str,
-                               script_type: str = "frida") -> dict[str, Any]:
+    def generate_bypass_script(
+        self, binary_path: str, script_type: str = "frida"
+    ) -> dict[str, Any]:
         """Generate a bypass script tailored to the detected protection.
 
         Args:
@@ -73,11 +73,9 @@ class ProtectionAwareScriptGenerator:
         """
         # Use unified engine for comprehensive analysis
         try:
-            result = self.unified_engine.analyze_file(
-                binary_path, deep_scan=True)
+            result = self.unified_engine.analyze_file(binary_path, deep_scan=True)
         except Exception as e:
-            self.logger.error(
-                "Exception in protection_aware_script_gen: %s", e)
+            self.logger.error("Exception in protection_aware_script_gen: %s", e)
             return {
                 "success": False,
                 "error": f"Failed to analyze protection: {e!s}",
@@ -140,8 +138,9 @@ class ProtectionAwareScriptGenerator:
             highest_confidence = protections_to_process[primary_protection]["confidence"]
 
         # Get protection info from knowledge base
-        protection_info = self.kb.get_protection_info(
-            primary_protection) if primary_protection else None
+        protection_info = (
+            self.kb.get_protection_info(primary_protection) if primary_protection else None
+        )
 
         # Generate script sections for each protection
         script_sections = []
@@ -154,9 +153,11 @@ class ProtectionAwareScriptGenerator:
             if protection_key in self.script_templates:
                 scripts = self.script_templates[protection_key]
                 script_section = scripts.get(
-                    script_type, self._get_generic_bypass_script(script_type))
+                    script_type, self._get_generic_bypass_script(script_type)
+                )
                 script_sections.append(
-                    f"// Bypass for {protection_name} (Source: {details['source']})\n{script_section}")
+                    f"// Bypass for {protection_name} (Source: {details['source']})\n{script_section}"
+                )
 
                 # Get bypass techniques from knowledge base
                 techniques = self.kb.get_bypass_techniques(protection_name)
@@ -165,8 +166,7 @@ class ProtectionAwareScriptGenerator:
             else:
                 # Generic bypass for unknown protections
                 generic_script = self._get_generic_bypass_script(script_type)
-                script_sections.append(
-                    f"// Generic bypass for {protection_name}\n{generic_script}")
+                script_sections.append(f"// Generic bypass for {protection_name}\n{generic_script}")
 
         # Combine all script sections
         combined_script = "\n\n".join(script_sections)
@@ -185,7 +185,8 @@ class ProtectionAwareScriptGenerator:
 
         # Add AI-enhanced instructions
         ai_prompt = self._generate_ai_prompt(
-            result, primary_protection, highest_confidence, protection_info)
+            result, primary_protection, highest_confidence, protection_info
+        )
 
         # Generate approach description
         approach = f"Multi-layered analysis detected {len(protections_to_process)} protection(s). "
@@ -201,13 +202,18 @@ class ProtectionAwareScriptGenerator:
             "approach": approach,
             "ai_prompt": ai_prompt,
             "bypass_techniques": self._get_recommended_techniques(protection_info),
-            "estimated_time": self.kb.estimate_bypass_time(primary_protection, "intermediate") if primary_protection else "Variable",
-            "tools_needed": self.kb.get_tools_for_protection(primary_protection) if primary_protection else [],
+            "estimated_time": self.kb.estimate_bypass_time(primary_protection, "intermediate")
+            if primary_protection
+            else "Variable",
+            "tools_needed": self.kb.get_tools_for_protection(primary_protection)
+            if primary_protection
+            else [],
             "die_analysis": result.icp_analysis,
         }
 
-    def _generate_ai_prompt(self, result, protection_type: str,
-                            confidence: float, protection_info: Any) -> str:
+    def _generate_ai_prompt(
+        self, result, protection_type: str, confidence: float, protection_info: Any
+    ) -> str:
         """Generate AI prompt for script enhancement"""
         prompt = f"""Generate a bypass script for {protection_type} protection.
 
@@ -270,11 +276,9 @@ Focus on the most effective approach for this specific protection type.
             if lines:
                 lines.append("\nUnified Analysis:")
             for protection in result.protections:
-                ver_str = f" v{protection.get('version', '')}" if protection.get(
-                    "version") else ""
+                ver_str = f" v{protection.get('version', '')}" if protection.get("version") else ""
                 source = protection.get("source", "Unknown")
-                lines.append(
-                    f"- {protection['name']}{ver_str} ({protection['type']}) [{source}]")
+                lines.append(f"- {protection['name']}{ver_str} ({protection['type']}) [{source}]")
 
         if not lines:
             return "- None detected"
@@ -288,14 +292,16 @@ Focus on the most effective approach for this specific protection type.
 
         techniques = []
         for technique in protection_info.bypass_techniques:
-            techniques.append({
-                "name": technique.name,
-                "description": technique.description,
-                "difficulty": technique.difficulty.value,
-                "success_rate": technique.success_rate,
-                "time_estimate": technique.time_estimate,
-                "tools": technique.tools_required,
-            })
+            techniques.append(
+                {
+                    "name": technique.name,
+                    "description": technique.description,
+                    "difficulty": technique.difficulty.value,
+                    "success_rate": technique.success_rate,
+                    "time_estimate": technique.time_estimate,
+                    "tools": technique.tools_required,
+                }
+            )
 
         return techniques
 

@@ -1,5 +1,4 @@
-"""Simple learning engine to replace the complex one temporarily.
-"""
+"""Simple learning engine to replace the complex one temporarily."""
 
 import logging
 from dataclasses import dataclass, field
@@ -99,6 +98,7 @@ class AILearningEngine:
 
 # Lazy initialization
 _learning_engine = None
+
 
 def get_learning_engine():
     """Get the global learning engine instance."""

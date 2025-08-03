@@ -1,4 +1,5 @@
 """Entropy visualization widget for binary analysis."""
+
 import math
 from collections import Counter
 
@@ -89,7 +90,7 @@ class EntropyVisualizer(QWidget):
         positions = []
 
         for i in range(0, len(data), block_size):
-            block = data[i:i + block_size]
+            block = data[i : i + block_size]
             if len(block) < 64:  # Skip very small blocks
                 continue
 
@@ -154,28 +155,34 @@ class EntropyVisualizer(QWidget):
 
         # Look for sudden entropy changes
         for i in range(1, len(self.entropy_data)):
-            diff = abs(self.entropy_data[i] - self.entropy_data[i-1])
+            diff = abs(self.entropy_data[i] - self.entropy_data[i - 1])
             if diff > 3.0:  # Significant entropy change
-                suspicious.append((
-                    self.block_positions[i],
-                    "Sudden entropy change",
-                    f"Δ = {diff:.2f}",
-                ))
+                suspicious.append(
+                    (
+                        self.block_positions[i],
+                        "Sudden entropy change",
+                        f"Δ = {diff:.2f}",
+                    )
+                )
 
         # Look for packed/encrypted sections
         for i, entropy in enumerate(self.entropy_data):
             if entropy > 7.8:
-                suspicious.append((
-                    self.block_positions[i],
-                    "Possible encryption/compression",
-                    f"Entropy = {entropy:.2f}",
-                ))
+                suspicious.append(
+                    (
+                        self.block_positions[i],
+                        "Possible encryption/compression",
+                        f"Entropy = {entropy:.2f}",
+                    )
+                )
             elif entropy < 0.5:
-                suspicious.append((
-                    self.block_positions[i],
-                    "Possible padding/null bytes",
-                    f"Entropy = {entropy:.2f}",
-                ))
+                suspicious.append(
+                    (
+                        self.block_positions[i],
+                        "Possible padding/null bytes",
+                        f"Entropy = {entropy:.2f}",
+                    )
+                )
 
         return suspicious
 

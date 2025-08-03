@@ -1,4 +1,5 @@
 """Pcapy compatibility layer for packet capture functionality."""
+
 from intellicrack.logger import logger
 
 """
@@ -25,6 +26,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 try:
     import scapy.all as scapy
+
     SCAPY_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in pcapy_compat: %s", e)
@@ -79,7 +81,7 @@ class ScapyPacketReader:
             if not self._running:
                 return
             # Convert scapy packet to raw bytes for compatibility
-            timestamp = packet.time if hasattr(packet, 'time') else 0
+            timestamp = packet.time if hasattr(packet, "time") else 0
             raw_packet = bytes(packet)
             callback(timestamp, raw_packet)
 
@@ -90,7 +92,7 @@ class ScapyPacketReader:
                 prn=packet_handler,
                 count=count,
                 timeout=self.timeout if count == 0 else None,
-                stop_filter=lambda x: not self._running
+                stop_filter=lambda x: not self._running,
             )
         except Exception as e:
             logger.error("Exception in pcapy_compat: %s", e)
@@ -110,11 +112,11 @@ class ScapyPacketReader:
                 iface=self.interface,
                 filter=self.filter,
                 stop_filter=lambda x: not self._running,
-                timeout=1  # Short timeout for responsiveness
+                timeout=1,  # Short timeout for responsiveness
             ):
                 if not self._running:
                     break
-                timestamp = packet.time if hasattr(packet, 'time') else 0
+                timestamp = packet.time if hasattr(packet, "time") else 0
                 raw_packet = bytes(packet)
                 yield timestamp, raw_packet
         except Exception as e:
@@ -139,6 +141,7 @@ def get_packet_capture_interface():
         return scapy
     return None
 
+
 def create_pcap_reader(interface="any"):
     """
     Create a packet capture reader using Scapy with pcapy-compatible interface.
@@ -160,8 +163,16 @@ def create_pcap_reader(interface="any"):
         print(f"Warning: Failed to create packet capture reader: {e}")
         return None
 
+
 # Compatibility aliases for existing pcapy code
 pcapy = get_packet_capture_interface()
 PCAP_AVAILABLE = SCAPY_AVAILABLE  # For backward compatibility
 
-__all__ = ['get_packet_capture_interface', 'create_pcap_reader', 'pcapy', 'PCAP_AVAILABLE', 'ScapyPacketReader', 'SCAPY_AVAILABLE']
+__all__ = [
+    "get_packet_capture_interface",
+    "create_pcap_reader",
+    "pcapy",
+    "PCAP_AVAILABLE",
+    "ScapyPacketReader",
+    "SCAPY_AVAILABLE",
+]

@@ -3,6 +3,7 @@
 This module provides the project workspace interface for file management,
 project organization, and workspace-specific operations.
 """
+
 import os
 
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -208,7 +209,10 @@ class DashboardTab(BaseTab):
         """Open an existing project"""
         file_dialog = QFileDialog()
         project_file, _ = file_dialog.getOpenFileName(
-            self, "Open Project", "", "Intellicrack Projects (*.icp);;All Files (*)",
+            self,
+            "Open Project",
+            "",
+            "Intellicrack Projects (*.icp);;All Files (*)",
         )
         if project_file:
             self.log_activity(f"Opening project: {project_file}")
@@ -222,7 +226,10 @@ class DashboardTab(BaseTab):
 
         file_dialog = QFileDialog()
         project_file, _ = file_dialog.getSaveFileName(
-            self, "Save Project", "", "Intellicrack Projects (*.icp);;All Files (*)",
+            self,
+            "Save Project",
+            "",
+            "Intellicrack Projects (*.icp);;All Files (*)",
         )
         if project_file:
             self.log_activity(f"Saving project: {project_file}")
@@ -232,7 +239,10 @@ class DashboardTab(BaseTab):
         """Select a binary file for analysis"""
         file_dialog = QFileDialog()
         binary_file, _ = file_dialog.getOpenFileName(
-            self, "Select Binary", "", "All Files (*)",
+            self,
+            "Select Binary",
+            "",
+            "All Files (*)",
         )
         if binary_file:
             self.load_binary(binary_file)
@@ -244,6 +254,7 @@ class DashboardTab(BaseTab):
 
         # Update binary information
         import os
+
         file_name = os.path.basename(file_path)
         file_size = os.path.getsize(file_path)
 
@@ -282,6 +293,7 @@ class DashboardTab(BaseTab):
         self.recent_files_menu.clear()
         for file_path in self.recent_files:
             import os
+
             file_name = os.path.basename(file_path)
             action = self.recent_files_menu.addAction(file_name)
             action.triggered.connect(lambda checked, path=file_path: self.load_binary(path))
@@ -294,7 +306,10 @@ class DashboardTab(BaseTab):
 
         file_dialog = QFileDialog()
         results_file, _ = file_dialog.getSaveFileName(
-            self, "Save Analysis Results", "", "JSON Files (*.json);;All Files (*)",
+            self,
+            "Save Analysis Results",
+            "",
+            "JSON Files (*.json);;All Files (*)",
         )
         if results_file:
             self.log_activity(f"Saving analysis results: {results_file}")
@@ -308,7 +323,8 @@ class DashboardTab(BaseTab):
     def clear_analysis(self):
         """Clear current analysis results"""
         reply = QMessageBox.question(
-            self, "Clear Analysis",
+            self,
+            "Clear Analysis",
             "Are you sure you want to clear all analysis results?",
             QMessageBox.Yes | QMessageBox.No,
         )
@@ -323,6 +339,7 @@ class DashboardTab(BaseTab):
     def log_activity(self, message):
         """Log activity to the activity log"""
         from datetime import datetime
+
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.activity_log.append(f"[{timestamp}] {message}")
 
@@ -335,6 +352,7 @@ class DashboardTab(BaseTab):
             return "0 B"
         size_names = ["B", "KB", "MB", "GB"]
         import math
+
         i = int(math.floor(math.log(size_bytes, 1024)))
         p = math.pow(1024, i)
         s = round(size_bytes / p, 2)

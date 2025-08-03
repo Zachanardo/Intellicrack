@@ -2,7 +2,7 @@
 
 ## Vulnerabilities Fixed (8 of 12)
 1. ✅ Flask: Updated to 3.1.0 (from 2.3.0)
-2. ✅ Requests: Updated to 2.32.3+ (from 2.32.4)  
+2. ✅ Requests: Updated to 2.32.3+ (from 2.32.4)
 3. ✅ GitPython: Updated to 3.1.41+ (from 3.1.43)
 4. ✅ Pillow: Updated to 10.4.0 (from 11.3.0)
 5. ✅ aiohttp: Updated to 3.12.13 (from 3.10.0)

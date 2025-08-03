@@ -37,6 +37,7 @@ except ImportError as e:
 try:
     from flask import Flask, jsonify, request
     from flask_cors import CORS
+
     HAS_FLASK = True
 except ImportError as e:
     logger.error("Import error in local_gguf_server: %s", e)
@@ -46,6 +47,7 @@ except ImportError as e:
 try:
     import llama_cpp
     from llama_cpp import Llama
+
     HAS_LLAMA_CPP = True
 except ImportError as e:
     logger.error("Import error in local_gguf_server: %s", e)
@@ -55,6 +57,7 @@ except ImportError as e:
 # Try to import Intel GPU libraries
 try:
     import intel_extension_for_pytorch as ipex
+
     HAS_INTEL_GPU = True
 except ImportError as e:
     logger.error("Import error in local_gguf_server: %s", e)
@@ -64,6 +67,7 @@ except ImportError as e:
 # Check for Intel GPU support via OpenVINO
 try:
     from openvino.runtime import Core
+
     HAS_OPENVINO = True
 except ImportError:
     logger.debug("OpenVINO not available - Intel CPU optimization disabled (optional)")
@@ -73,6 +77,7 @@ except ImportError:
 # Check for Intel GPU via SYCL/DPC++
 try:
     import dpctl
+
     HAS_DPCTL = True
 except ImportError:
     logger.debug("dpctl not available - Intel SYCL support disabled (optional)")
@@ -104,12 +109,10 @@ class LocalGGUFServer:
         self.gpu_devices = []
 
         if not HAS_FLASK:
-            logger.warning(
-                "Flask not available. Local GGUF server will be disabled.")
+            logger.warning("Flask not available. Local GGUF server will be disabled.")
 
         if not HAS_LLAMA_CPP:
-            logger.warning(
-                "llama-cpp-python not available. Local GGUF server will be disabled.")
+            logger.warning("llama-cpp-python not available. Local GGUF server will be disabled.")
 
         # Detect Intel GPU capabilities
         self._detect_intel_gpu()
@@ -129,23 +132,20 @@ class LocalGGUFServer:
                         self.gpu_devices.append(device)
                         if not self.gpu_backend:
                             self.gpu_backend = "openvino"
-                        logger.info(
-                            f"Found Intel GPU device via OpenVINO: {device}")
+                        logger.info(f"Found Intel GPU device via OpenVINO: {device}")
             except Exception as e:
                 logger.debug(f"OpenVINO GPU detection failed: {e}")
 
         # Check for Intel GPU via SYCL/DPC++
         if HAS_DPCTL:
             try:
-                gpu_devices = dpctl.get_devices(
-                    backend="opencl", device_type="gpu")
+                gpu_devices = dpctl.get_devices(backend="opencl", device_type="gpu")
                 for device in gpu_devices:
                     if "Intel" in device.name:
                         self.gpu_devices.append(f"dpctl:{device.name}")
                         if not self.gpu_backend:
                             self.gpu_backend = "dpctl"
-                        logger.info(
-                            f"Found Intel GPU device via DPCTL: {device.name}")
+                        logger.info(f"Found Intel GPU device via DPCTL: {device.name}")
             except Exception as e:
                 logger.debug(f"DPCTL GPU detection failed: {e}")
 
@@ -153,6 +153,7 @@ class LocalGGUFServer:
         if HAS_INTEL_GPU:
             try:
                 import torch  # pylint: disable=import-outside-toplevel
+
                 if not torch:
                     raise ImportError("Torch not available")
 
@@ -166,8 +167,7 @@ class LocalGGUFServer:
                             self.gpu_devices.append(f"xpu:{i}:{device_name}")
                             if not self.gpu_backend:
                                 self.gpu_backend = "ipex"
-                            logger.info(
-                                f"Found Intel GPU device via IPEX: {device_name}")
+                            logger.info(f"Found Intel GPU device via IPEX: {device_name}")
 
                             # Get device properties via IPEX
                             device_props = ipex.xpu.get_device_properties(i)
@@ -228,7 +228,8 @@ class LocalGGUFServer:
                 self.logger.error("Value error in local_gguf_server: %s", e)
 
         logger.debug(
-            f"Using {optimal} threads (CPU count: {cpu_count}, GPU: {bool(self.gpu_backend)})")
+            f"Using {optimal} threads (CPU count: {cpu_count}, GPU: {bool(self.gpu_backend)})"
+        )
         return optimal
 
     def can_run(self) -> bool:
@@ -251,10 +252,10 @@ class LocalGGUFServer:
             auto_gpu_layers = 0
             if self.gpu_backend and kwargs.get("auto_gpu", True):
                 # Try to offload all layers to GPU by default
-                auto_gpu_layers = kwargs.get(
-                    "gpu_layers", -1)  # -1 means all layers
+                auto_gpu_layers = kwargs.get("gpu_layers", -1)  # -1 means all layers
                 logger.info(
-                    f"Auto-detected Intel GPU, will attempt to offload {auto_gpu_layers} layers")
+                    f"Auto-detected Intel GPU, will attempt to offload {auto_gpu_layers} layers"
+                )
 
             # Default parameters for model loading
             default_params = {
@@ -274,25 +275,28 @@ class LocalGGUFServer:
 
             # Add Intel GPU specific parameters if available
             if self.gpu_backend == "llama_cpp_gpu":
-                default_params.update({
-                    "main_gpu": kwargs.get("main_gpu", 0),
-                    "tensor_split": kwargs.get("tensor_split"),
-                    "mul_mat_q": kwargs.get("mul_mat_q", True),
-                })
+                default_params.update(
+                    {
+                        "main_gpu": kwargs.get("main_gpu", 0),
+                        "tensor_split": kwargs.get("tensor_split"),
+                        "mul_mat_q": kwargs.get("mul_mat_q", True),
+                    }
+                )
             elif self.gpu_backend == "ipex" and HAS_INTEL_GPU:
                 # Apply IPEX optimizations if using Intel GPU
                 logger.info("Applying Intel GPU optimizations via IPEX")
                 # These are hypothetical IPEX-specific parameters for llama.cpp
                 # In reality, llama.cpp might need to be built with Intel GPU support
-                default_params.update({
-                    "gpu_backend": "intel",
-                    "use_fp16": True,
-                    "optimize_for_intel": True,
-                })
+                default_params.update(
+                    {
+                        "gpu_backend": "intel",
+                        "use_fp16": True,
+                        "optimize_for_intel": True,
+                    }
+                )
 
             # Filter out None values
-            model_params = {k: v for k,
-                            v in default_params.items() if v is not None}
+            model_params = {k: v for k, v in default_params.items() if v is not None}
 
             logger.info(f"Loading GGUF model: {model_path}")
             logger.info(f"Model parameters: {model_params}")
@@ -359,8 +363,7 @@ class LocalGGUFServer:
             # Test server
             if self._test_server():
                 self.is_running = True
-                logger.info(
-                    f"Local GGUF server started at http://{self.host}:{self.port}")
+                logger.info(f"Local GGUF server started at http://{self.host}:{self.port}")
                 return True
             logger.error("Server failed to start properly")
             return False
@@ -375,8 +378,7 @@ class LocalGGUFServer:
         if self.server_thread:
             # Flask doesn't have a clean shutdown method when run this way
             # In production, you'd use a proper WSGI server
-            logger.info(
-                "Server stop requested (thread will continue until process ends)")
+            logger.info("Server stop requested (thread will continue until process ends)")
 
     def _setup_routes(self):
         """Setup Flask routes for the server."""
@@ -384,23 +386,27 @@ class LocalGGUFServer:
         @self.app.route("/health", methods=["GET"])
         def health():
             """Health check endpoint."""
-            return jsonify({
-                "status": "healthy",
-                "model_loaded": self.model is not None,
-                "model_path": self.model_path,
-                "gpu_backend": self.gpu_backend,
-                "gpu_devices": self.gpu_devices,
-                "gpu_enabled": bool(self.gpu_backend),
-                "gpu_layers": self.model_config.get("n_gpu_layers", 0) if self.model else 0,
-            })
+            return jsonify(
+                {
+                    "status": "healthy",
+                    "model_loaded": self.model is not None,
+                    "model_path": self.model_path,
+                    "gpu_backend": self.gpu_backend,
+                    "gpu_devices": self.gpu_devices,
+                    "gpu_enabled": bool(self.gpu_backend),
+                    "gpu_layers": self.model_config.get("n_gpu_layers", 0) if self.model else 0,
+                }
+            )
 
         @self.app.route("/models", methods=["GET"])
         def list_models():
             """List available models."""
-            return jsonify({
-                "models": [self.model_config] if self.model else [],
-                "current_model": self.model_config.get("model_name", None),
-            })
+            return jsonify(
+                {
+                    "models": [self.model_config] if self.model else [],
+                    "current_model": self.model_config.get("model_name", None),
+                }
+            )
 
         @self.app.route("/gpu_info", methods=["GET"])
         def gpu_info():
@@ -502,10 +508,12 @@ class LocalGGUFServer:
                 success = self.load_model(model_path, **data)
 
                 if success:
-                    return jsonify({
-                        "status": "success",
-                        "model": self.model_config,
-                    })
+                    return jsonify(
+                        {
+                            "status": "success",
+                            "model": self.model_config,
+                        }
+                    )
                 return jsonify({"error": "Failed to load model"}), 500
 
             except Exception as e:
@@ -540,8 +548,9 @@ class LocalGGUFServer:
         prompt_parts.append("Assistant:")
         return "\n\n".join(prompt_parts)
 
-    def _complete_response(self, prompt: str, max_tokens: int, temperature: float,
-                           top_p: float, stop: list[str]) -> dict[str, Any]:
+    def _complete_response(
+        self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]
+    ) -> dict[str, Any]:
         """Generate a complete response."""
         try:
             # Generate completion
@@ -557,34 +566,40 @@ class LocalGGUFServer:
             content = response["choices"][0]["text"]
 
             # Format as OpenAI-compatible response
-            return jsonify({
-                "id": f"chatcmpl-{int(time.time())}",
-                "object": "chat.completion",
-                "created": int(time.time()),
-                "model": self.model_config.get("model_name", "local-gguf"),
-                "choices": [{
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": content,
+            return jsonify(
+                {
+                    "id": f"chatcmpl-{int(time.time())}",
+                    "object": "chat.completion",
+                    "created": int(time.time()),
+                    "model": self.model_config.get("model_name", "local-gguf"),
+                    "choices": [
+                        {
+                            "index": 0,
+                            "message": {
+                                "role": "assistant",
+                                "content": content,
+                            },
+                            "finish_reason": response["choices"][0]["finish_reason"],
+                        }
+                    ],
+                    "usage": {
+                        "prompt_tokens": response.get("usage", {}).get("prompt_tokens", 0),
+                        "completion_tokens": response.get("usage", {}).get("completion_tokens", 0),
+                        "total_tokens": response.get("usage", {}).get("total_tokens", 0),
                     },
-                    "finish_reason": response["choices"][0]["finish_reason"],
-                }],
-                "usage": {
-                    "prompt_tokens": response.get("usage", {}).get("prompt_tokens", 0),
-                    "completion_tokens": response.get("usage", {}).get("completion_tokens", 0),
-                    "total_tokens": response.get("usage", {}).get("total_tokens", 0),
-                },
-            })
+                }
+            )
 
         except Exception as e:
             logger.error(f"Response generation error: {e}")
             raise
 
-    def _stream_response(self, prompt: str, max_tokens: int, temperature: float,
-                         top_p: float, stop: list[str]):
+    def _stream_response(
+        self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]
+    ):
         """Generate a streaming response."""
         try:
+
             def generate():
                 response_iter = self.model(
                     prompt,
@@ -604,11 +619,13 @@ class LocalGGUFServer:
                         "object": "chat.completion.chunk",
                         "created": int(time.time()),
                         "model": self.model_config.get("model_name", "local-gguf"),
-                        "choices": [{
-                            "index": 0,
-                            "delta": delta,
-                            "finish_reason": chunk["choices"][0].get("finish_reason"),
-                        }],
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": delta,
+                                "finish_reason": chunk["choices"][0].get("finish_reason"),
+                            }
+                        ],
                     }
 
                     yield f"data: {json.dumps(response_chunk)}\n\n"
@@ -691,8 +708,9 @@ class GGUFModelManager:
                             Defaults to ~/.intellicrack/models if not provided.
 
         """
-        self.models_directory = Path(
-            models_directory) if models_directory else Path.home() / ".intellicrack" / "models"
+        self.models_directory = (
+            Path(models_directory) if models_directory else Path.home() / ".intellicrack" / "models"
+        )
         self.models_directory.mkdir(parents=True, exist_ok=True)
 
         self.server = LocalGGUFServer()
@@ -838,10 +856,12 @@ gguf_manager = GGUFModelManager()
 
 
 # Convenience function to create and start server with Intel GPU auto-detection
-def create_gguf_server_with_intel_gpu(model_path: str | None = None,
-                                      host: str = "127.0.0.1",
-                                      port: int = 8000,
-                                      auto_start: bool = True) -> LocalGGUFServer | None:
+def create_gguf_server_with_intel_gpu(
+    model_path: str | None = None,
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    auto_start: bool = True,
+) -> LocalGGUFServer | None:
     """Create a GGUF server with automatic Intel GPU detection and configuration.
 
     Args:
@@ -855,8 +875,7 @@ def create_gguf_server_with_intel_gpu(model_path: str | None = None,
 
     """
     if not HAS_FLASK or not HAS_LLAMA_CPP:
-        logger.error(
-            "Cannot create GGUF server: Missing Flask or llama-cpp-python")
+        logger.error("Cannot create GGUF server: Missing Flask or llama-cpp-python")
         return None
 
     server = LocalGGUFServer(host=host, port=port)
@@ -880,8 +899,7 @@ def create_gguf_server_with_intel_gpu(model_path: str | None = None,
     if auto_start:
         if server.start_server():
             logger.info(f"GGUF server started at http://{host}:{port}")
-            logger.info(
-                f"GPU acceleration: {'Enabled' if server.gpu_backend else 'Disabled'}")
+            logger.info(f"GPU acceleration: {'Enabled' if server.gpu_backend else 'Disabled'}")
         else:
             logger.error("Failed to start GGUF server")
             return None

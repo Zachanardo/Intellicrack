@@ -48,6 +48,7 @@ from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 # Utility functions for QHeaderView and QAbstractItemView
 def create_custom_header_view(orientation, parent=None):
     """Create a custom header view with enhanced functionality"""
@@ -57,6 +58,7 @@ def create_custom_header_view(orientation, parent=None):
     header.setSectionsClickable(True)
     header.setSortIndicatorShown(True)
     return header
+
 
 def configure_table_selection(table, behavior=None, mode=None):
     """Configure table selection behavior using QAbstractItemView"""
@@ -73,6 +75,7 @@ def configure_table_selection(table, behavior=None, mode=None):
     table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
     return table
+
 
 def create_enhanced_item_view(parent=None):
     """Create an enhanced item view with custom behavior"""
@@ -241,9 +244,15 @@ class ModelManagerDialog(QDialog):
         # Models table
         self.models_table = QTableWidget()
         self.models_table.setColumnCount(5)
-        self.models_table.setHorizontalHeaderLabels([
-            "Model Name", "Size (MB)", "Status", "Path", "Actions",
-        ])
+        self.models_table.setHorizontalHeaderLabels(
+            [
+                "Model Name",
+                "Size (MB)",
+                "Status",
+                "Path",
+                "Actions",
+            ]
+        )
 
         # Configure table
         header = self.models_table.horizontalHeader()
@@ -283,9 +292,14 @@ class ModelManagerDialog(QDialog):
 
         self.recommended_table = QTableWidget()
         self.recommended_table.setColumnCount(4)
-        self.recommended_table.setHorizontalHeaderLabels([
-            "Model Name", "Description", "Size", "Actions",
-        ])
+        self.recommended_table.setHorizontalHeaderLabels(
+            [
+                "Model Name",
+                "Description",
+                "Size",
+                "Actions",
+            ]
+        )
 
         # Configure table
         header = self.recommended_table.horizontalHeader()
@@ -453,8 +467,9 @@ class ModelManagerDialog(QDialog):
             # Download button
             download_btn = QPushButton("Download")
             download_btn.clicked.connect(
-                lambda checked, url=model["url"], name=model["name"]:
-                self.download_model(url, name),
+                lambda checked, url=model["url"], name=model["name"]: self.download_model(
+                    url, name
+                ),
             )
             self.recommended_table.setCellWidget(row, 3, download_btn)
 
@@ -523,7 +538,9 @@ Server URL: {gguf_manager.get_server_url()}"""
             )
 
             if success:
-                QMessageBox.information(self, "Success", f"Model '{model_name}' loaded successfully!")
+                QMessageBox.information(
+                    self, "Success", f"Model '{model_name}' loaded successfully!"
+                )
                 self.refresh_models()
             else:
                 QMessageBox.warning(self, "Error", f"Failed to load model '{model_name}'")
@@ -557,7 +574,8 @@ Server URL: {gguf_manager.get_server_url()}"""
             model_name = self.models_table.item(current_row, 0).text()
 
             reply = QMessageBox.question(
-                self, "Confirm Delete",
+                self,
+                "Confirm Delete",
                 f"Are you sure you want to delete model '{model_name}'?",
                 QMessageBox.Yes | QMessageBox.No,
             )
@@ -575,7 +593,9 @@ Server URL: {gguf_manager.get_server_url()}"""
                         # Delete file
                         model_path.unlink()
 
-                        QMessageBox.information(self, "Success", f"Model '{model_name}' deleted successfully!")
+                        QMessageBox.information(
+                            self, "Success", f"Model '{model_name}' deleted successfully!"
+                        )
                         self.refresh_models()
                     else:
                         QMessageBox.warning(self, "Error", "Model not found in list.")
@@ -589,7 +609,10 @@ Server URL: {gguf_manager.get_server_url()}"""
     def add_local_model(self):
         """Add a local model file."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select GGUF Model File", "", "GGUF Files (*.gguf);;All Files (*)",
+            self,
+            "Select GGUF Model File",
+            "",
+            "GGUF Files (*.gguf);;All Files (*)",
         )
 
         if file_path:
@@ -599,9 +622,12 @@ Server URL: {gguf_manager.get_server_url()}"""
 
                 # Copy file to models directory
                 import shutil
+
                 shutil.copy2(source_path, dest_path)
 
-                QMessageBox.information(self, "Success", f"Model '{source_path.name}' added successfully!")
+                QMessageBox.information(
+                    self, "Success", f"Model '{source_path.name}' added successfully!"
+                )
                 self.refresh_models()
 
             except Exception as e:
@@ -611,7 +637,9 @@ Server URL: {gguf_manager.get_server_url()}"""
     def download_model(self, model_url: str, model_name: str):
         """Download a model."""
         if model_name in self.download_threads:
-            QMessageBox.information(self, "Info", f"Model '{model_name}' is already being downloaded.")
+            QMessageBox.information(
+                self, "Info", f"Model '{model_name}' is already being downloaded."
+            )
             return
 
         # Create progress bar
@@ -633,7 +661,9 @@ Server URL: {gguf_manager.get_server_url()}"""
         # Create download thread
         download_thread = ModelDownloadThread(model_url, model_name)
         download_thread.progress_updated.connect(
-            lambda name, progress: progress_bar.setValue(int(progress)) if name == model_name else None,
+            lambda name, progress: progress_bar.setValue(int(progress))
+            if name == model_name
+            else None,
         )
         download_thread.download_finished.connect(
             lambda name, success: self.on_download_finished(name, success, progress_widget),
@@ -664,26 +694,33 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         try:
             from urllib.parse import urlparse
+
             parsed = urlparse(url)
 
             # Check if URL is using HTTPS
             if parsed.scheme != "https":
-                QMessageBox.warning(self, "Security Warning",
-                    "Only HTTPS URLs are allowed for security reasons.")
+                QMessageBox.warning(
+                    self, "Security Warning", "Only HTTPS URLs are allowed for security reasons."
+                )
                 return
 
             # Check if domain is in allowed list
             domain_allowed = False
             for allowed_domain in allowed_domains:
-                if parsed.hostname and (parsed.hostname == allowed_domain or
-                                      parsed.hostname.endswith("." + allowed_domain)):
+                if parsed.hostname and (
+                    parsed.hostname == allowed_domain
+                    or parsed.hostname.endswith("." + allowed_domain)
+                ):
                     domain_allowed = True
                     break
 
             if not domain_allowed:
-                QMessageBox.warning(self, "Security Warning",
+                QMessageBox.warning(
+                    self,
+                    "Security Warning",
                     f"Domain {parsed.hostname} is not in the allowed list.\n"
-                    f"Allowed domains: {', '.join(allowed_domains)}")
+                    f"Allowed domains: {', '.join(allowed_domains)}",
+                )
                 return
 
         except Exception as e:
@@ -723,7 +760,9 @@ Server URL: {gguf_manager.get_server_url()}"""
             if gguf_manager.start_server():
                 QMessageBox.information(self, "Success", "GGUF server started successfully!")
             else:
-                QMessageBox.warning(self, "Error", "Failed to start GGUF server. Check dependencies.")
+                QMessageBox.warning(
+                    self, "Error", "Failed to start GGUF server. Check dependencies."
+                )
         except Exception as e:
             logger.error("Exception in model_manager_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Error starting server: {e}")
@@ -765,6 +804,7 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         try:
             import flask
+
             flask_version = getattr(flask, "__version__", "unknown")
             deps_status.append(f"✓ Flask available (v{flask_version})")
         except ImportError as e:
@@ -773,6 +813,7 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         try:
             import llama_cpp
+
             llama_version = getattr(llama_cpp, "__version__", "unknown")
             deps_status.append(f"✓ llama-cpp-python available (v{llama_version})")
         except ImportError as e:
@@ -781,6 +822,7 @@ Server URL: {gguf_manager.get_server_url()}"""
 
         try:
             import requests
+
             requests_version = getattr(requests, "__version__", "unknown")
             deps_status.append(f"✓ requests available (v{requests_version})")
         except ImportError as e:

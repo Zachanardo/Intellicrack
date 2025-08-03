@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import datetime
 import json
 import logging
@@ -76,8 +75,11 @@ class ReportGenerator:
         return len(self.sections) - 1
 
 
-def generate_report(analysis_results: dict[str, Any], output_format: str = "text",
-                   output_path: str | Path | None = None) -> str:
+def generate_report(
+    analysis_results: dict[str, Any],
+    output_format: str = "text",
+    output_path: str | Path | None = None,
+) -> str:
     """Generate an analysis report in the specified format.
 
     Args:
@@ -146,7 +148,9 @@ def generate_text_report(results: dict[str, Any]) -> str:
         lines.append("VULNERABILITIES")
         lines.append("-" * 40)
         for vulnerability in results["vulnerabilities"]:
-            lines.append(f"  [{vulnerability.get('severity', 'UNKNOWN')}] {vulnerability.get('name', 'Unknown')}")
+            lines.append(
+                f"  [{vulnerability.get('severity', 'UNKNOWN')}] {vulnerability.get('name', 'Unknown')}"
+            )
             if "description" in vulnerability:
                 lines.append(f"    {vulnerability['description']}")
         lines.append("")
@@ -183,7 +187,8 @@ def generate_html_report(results: dict[str, Any]) -> str:
         str: HTML report content
 
     """
-    html_parts = ["""
+    html_parts = [
+        """
 <!DOCTYPE html>
 <html>
 <head>
@@ -207,8 +212,11 @@ def generate_html_report(results: dict[str, Any]) -> str:
 </head>
 <body>
     <h1>Intellicrack Analysis Report</h1>
-    <p class="timestamp">Generated: """ + str(datetime.datetime.now()) + """</p>
-"""]
+    <p class="timestamp">Generated: """
+        + str(datetime.datetime.now())
+        + """</p>
+"""
+    ]
 
     # Binary information section
     if "binary_info" in results:
@@ -218,7 +226,9 @@ def generate_html_report(results: dict[str, Any]) -> str:
         <table class="info-table">
 """)
         for key, value in results["binary_info"].items():
-            html_parts.append(f"            <tr><td><strong>{key}</strong></td><td>{value}</td></tr>")
+            html_parts.append(
+                f"            <tr><td><strong>{key}</strong></td><td>{value}</td></tr>"
+            )
         html_parts.append("        </table>\n    </div>")
 
     # Vulnerabilities section
@@ -230,7 +240,9 @@ def generate_html_report(results: dict[str, Any]) -> str:
         for vulnerability in results["vulnerabilities"]:
             severity = vulnerability.get("severity", "info").lower()
             html_parts.append(f'        <div class="vulnerability {severity}">')
-            html_parts.append(f'            <strong>[{vulnerability.get("severity", "UNKNOWN")}]</strong> {vulnerability.get("name", "Unknown")}')
+            html_parts.append(
+                f'            <strong>[{vulnerability.get("severity", "UNKNOWN")}]</strong> {vulnerability.get("name", "Unknown")}'
+            )
             if "description" in vulnerability:
                 html_parts.append(f'            <p>{vulnerability["description"]}</p>')
             html_parts.append("        </div>")
@@ -264,6 +276,7 @@ def export_report(report_data: dict[str, Any], format: str = "pdf") -> str | Non
         # Generate timestamp for unique filename
         from datetime import datetime
         from pathlib import Path
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Validate report_data structure
@@ -281,7 +294,9 @@ def export_report(report_data: dict[str, Any], format: str = "pdf") -> str | Non
 
         # Generate filename based on report content
         report_title = report_data.get("title", "intellicrack_report")
-        safe_title = "".join(c for c in report_title if c.isalnum() or c in (" ", "-", "_")).rstrip()
+        safe_title = "".join(
+            c for c in report_title if c.isalnum() or c in (" ", "-", "_")
+        ).rstrip()
         filename = f"{safe_title}_{timestamp}"
 
         if format.lower() == "pdf":
@@ -343,8 +358,12 @@ def _generate_html_report(report_data: dict[str, Any]) -> str:
         metadata = report_data["metadata"]
         html_parts.append("<h2>Report Metadata</h2>")
         html_parts.append(f"<p><strong>Target:</strong> {metadata.get('target', 'Unknown')}</p>")
-        html_parts.append(f"<p><strong>Timestamp:</strong> {metadata.get('timestamp', 'Unknown')}</p>")
-        html_parts.append(f"<p><strong>Analysis Type:</strong> {metadata.get('analysis_type', 'Unknown')}</p>")
+        html_parts.append(
+            f"<p><strong>Timestamp:</strong> {metadata.get('timestamp', 'Unknown')}</p>"
+        )
+        html_parts.append(
+            f"<p><strong>Analysis Type:</strong> {metadata.get('analysis_type', 'Unknown')}</p>"
+        )
 
     # Executive Summary
     if "summary" in report_data:
@@ -358,10 +377,14 @@ def _generate_html_report(report_data: dict[str, Any]) -> str:
             severity = finding.get("severity", "low").lower()
             html_parts.append(f"<div class='finding {severity}'>")
             html_parts.append(f"<h3>{finding.get('title', 'Finding')}</h3>")
-            html_parts.append(f"<p><strong>Severity:</strong> {finding.get('severity', 'Unknown')}</p>")
+            html_parts.append(
+                f"<p><strong>Severity:</strong> {finding.get('severity', 'Unknown')}</p>"
+            )
             html_parts.append(f"<p>{finding.get('description', 'No description')}</p>")
             if "recommendation" in finding:
-                html_parts.append(f"<p><strong>Recommendation:</strong> {finding['recommendation']}</p>")
+                html_parts.append(
+                    f"<p><strong>Recommendation:</strong> {finding['recommendation']}</p>"
+                )
             html_parts.append("</div>")
 
     html_parts.append("</body></html>")
@@ -380,37 +403,45 @@ def _generate_text_report(report_data: dict[str, Any]) -> str:
     # Metadata
     if "metadata" in report_data:
         metadata = report_data["metadata"]
-        text_parts.extend([
-            "REPORT METADATA",
-            "-" * 40,
-            f"Target: {metadata.get('target', 'Unknown')}",
-            f"Timestamp: {metadata.get('timestamp', 'Unknown')}",
-            f"Analysis Type: {metadata.get('analysis_type', 'Unknown')}",
-            "",
-        ])
+        text_parts.extend(
+            [
+                "REPORT METADATA",
+                "-" * 40,
+                f"Target: {metadata.get('target', 'Unknown')}",
+                f"Timestamp: {metadata.get('timestamp', 'Unknown')}",
+                f"Analysis Type: {metadata.get('analysis_type', 'Unknown')}",
+                "",
+            ]
+        )
 
     # Summary
     if "summary" in report_data:
-        text_parts.extend([
-            "EXECUTIVE SUMMARY",
-            "-" * 40,
-            report_data["summary"],
-            "",
-        ])
+        text_parts.extend(
+            [
+                "EXECUTIVE SUMMARY",
+                "-" * 40,
+                report_data["summary"],
+                "",
+            ]
+        )
 
     # Findings
     if "findings" in report_data:
-        text_parts.extend([
-            "FINDINGS",
-            "-" * 40,
-        ])
+        text_parts.extend(
+            [
+                "FINDINGS",
+                "-" * 40,
+            ]
+        )
 
         for i, finding in enumerate(report_data["findings"], 1):
-            text_parts.extend([
-                f"{i}. {finding.get('title', 'Finding')}",
-                f"   Severity: {finding.get('severity', 'Unknown')}",
-                f"   Description: {finding.get('description', 'No description')}",
-            ])
+            text_parts.extend(
+                [
+                    f"{i}. {finding.get('title', 'Finding')}",
+                    f"   Severity: {finding.get('severity', 'Unknown')}",
+                    f"   Description: {finding.get('description', 'No description')}",
+                ]
+            )
 
             if "recommendation" in finding:
                 text_parts.append(f"   Recommendation: {finding['recommendation']}")

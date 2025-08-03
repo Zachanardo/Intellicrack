@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import os
 from typing import Any
@@ -38,6 +37,7 @@ logger = logging.getLogger("Intellicrack.HexView")
 
 
 # File operations
+
 
 def open_hex_file(file_path: str, read_only: bool = True) -> VirtualFileAccess | None:
     """Open a file for hex viewing/editing.
@@ -116,8 +116,10 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
 
 # Analysis operations
 
-def analyze_binary_data(data: bytes, query: str | None = None,
-                      model_manager=None) -> dict[str, Any]:
+
+def analyze_binary_data(
+    data: bytes, query: str | None = None, model_manager=None
+) -> dict[str, Any]:
     """Analyze binary data using AI assistance.
 
     Args:
@@ -138,8 +140,9 @@ def analyze_binary_data(data: bytes, query: str | None = None,
         return {"error": str(e)}
 
 
-def search_binary_pattern(data: bytes, pattern_desc: str,
-                        model_manager=None) -> list[dict[str, Any]]:
+def search_binary_pattern(
+    data: bytes, pattern_desc: str, model_manager=None
+) -> list[dict[str, Any]]:
     """Search for a pattern in binary data using AI assistance.
 
     Args:
@@ -160,8 +163,7 @@ def search_binary_pattern(data: bytes, pattern_desc: str,
         return []
 
 
-def suggest_binary_edits(data: bytes, edit_intent: str,
-                       model_manager=None) -> dict[str, Any]:
+def suggest_binary_edits(data: bytes, edit_intent: str, model_manager=None) -> dict[str, Any]:
     """Suggest edits to binary data using AI assistance.
 
     Args:
@@ -184,6 +186,7 @@ def suggest_binary_edits(data: bytes, edit_intent: str,
 
 # UI operations
 
+
 def create_hex_viewer_widget(parent=None) -> HexViewerWidget:
     """Create a new hex viewer widget.
 
@@ -197,8 +200,9 @@ def create_hex_viewer_widget(parent=None) -> HexViewerWidget:
     return HexViewerWidget(parent)
 
 
-def create_hex_viewer_dialog(parent=None, file_path: str | None = None,
-                           read_only: bool = True) -> HexViewerDialog:
+def create_hex_viewer_dialog(
+    parent=None, file_path: str | None = None, read_only: bool = True
+) -> HexViewerDialog:
     """Create a new hex viewer dialog.
 
     Args:
@@ -233,6 +237,7 @@ def launch_hex_viewer(file_path: str, read_only: bool = True) -> QDialog:
 
 
 # Integration operations
+
 
 def integrate_with_intellicrack(app_instance) -> bool:
     """Integrate the enhanced hex viewer with Intellicrack.
@@ -293,6 +298,7 @@ def register_ai_tools(app_instance) -> bool:
 
 # Utility operations
 
+
 def bytes_to_hex_string(data: bytes, bytes_per_line: int = 16) -> str:
     """Convert binary data to a formatted hex string.
 
@@ -310,7 +316,7 @@ def bytes_to_hex_string(data: bytes, bytes_per_line: int = 16) -> str:
     result = []
 
     for i in range(0, len(data), bytes_per_line):
-        line = data[i:i + bytes_per_line]
+        line = data[i : i + bytes_per_line]
         hex_part = " ".join(f"{b:02X}" for b in line)
         ascii_part = "".join(chr(b) if 32 <= b <= 126 else "." for b in line)
 
@@ -374,7 +380,9 @@ def create_binary_context(data: bytes) -> dict[str, Any]:
     """
     context_builder = BinaryContextBuilder()
     context = context_builder.build_context(
-        data, 0, len(data),
+        data,
+        0,
+        len(data),
         include_entropy=True,
         include_strings=True,
         include_structure_hints=True,

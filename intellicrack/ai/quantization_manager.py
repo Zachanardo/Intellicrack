@@ -27,6 +27,7 @@ from .model_sharding import get_sharding_manager
 
 try:
     import torch
+
     HAS_TORCH = True
 
     # Import unified GPU system
@@ -38,6 +39,7 @@ try:
             optimize_for_gpu,
             to_device,
         )
+
         GPU_AUTOLOADER_AVAILABLE = True
     except ImportError:
         GPU_AUTOLOADER_AVAILABLE = False
@@ -53,6 +55,7 @@ logger = get_logger(__name__)
 # Try to import quantization libraries
 try:
     import bitsandbytes as bnb
+
     HAS_BITSANDBYTES = True
 except ImportError as e:
     logger.error("Import error in quantization_manager: %s", e)
@@ -61,6 +64,7 @@ except ImportError as e:
 
 try:
     from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
+
     HAS_AUTO_GPTQ = True
 except ImportError as e:
     logger.error("Import error in quantization_manager: %s", e)
@@ -79,6 +83,7 @@ try:
         BitsAndBytesConfig,
         GPTQConfig,
     )
+
     HAS_TRANSFORMERS = True
 except ImportError as e:
     logger.error("Import error in quantization_manager: %s", e)
@@ -90,6 +95,7 @@ except ImportError as e:
 
 try:
     from peft import LoraConfig, PeftModel, get_peft_model, prepare_model_for_kbit_training
+
     HAS_PEFT = True
 except ImportError as e:
     logger.error("Import error in quantization_manager: %s", e)
@@ -117,8 +123,7 @@ class QuantizationManager:
             "peft": HAS_PEFT,
         }
 
-        logger.info(
-            f"Quantization backends available: {self.available_backends}")
+        logger.info(f"Quantization backends available: {self.available_backends}")
 
         # Initialize sharding manager if multi-GPU available
         if GPU_AUTOLOADER_AVAILABLE:
@@ -126,11 +131,11 @@ class QuantizationManager:
             if gpu_info["available"] and gpu_info["info"].get("device_count", 1) > 1:
                 self.sharding_manager = get_sharding_manager()
                 logger.info(
-                    f"Multi-GPU sharding enabled with {gpu_info['info']['device_count']} devices")
+                    f"Multi-GPU sharding enabled with {gpu_info['info']['device_count']} devices"
+                )
         elif HAS_TORCH and torch.cuda.device_count() > 1:
             self.sharding_manager = get_sharding_manager()
-            logger.info(
-                f"Multi-GPU sharding enabled with {torch.cuda.device_count()} devices")
+            logger.info(f"Multi-GPU sharding enabled with {torch.cuda.device_count()} devices")
 
     def load_quantized_model(
         self,
@@ -161,8 +166,7 @@ class QuantizationManager:
         if quantization_type == "auto":
             quantization_type = self._detect_quantization_type(model_path)
 
-        logger.info(
-            f"Loading model with {quantization_type} quantization on {device}")
+        logger.info(f"Loading model with {quantization_type} quantization on {device}")
 
         try:
             if quantization_type == "8bit":
@@ -172,8 +176,7 @@ class QuantizationManager:
             if quantization_type == "gptq":
                 return self._load_gptq_model(model_path, device, **kwargs)
             if quantization_type == "awq":
-                logger.warning(
-                    "AWQ support has been removed due to dependency issues")
+                logger.warning("AWQ support has been removed due to dependency issues")
                 return None
             # Load without quantization
             return self._load_standard_model(model_path, device, **kwargs)
@@ -196,8 +199,7 @@ class QuantizationManager:
         """Detect quantization type from model files."""
         # Check for GPTQ files
         if model_path.is_dir():
-            files = list(model_path.glob("*.safetensors")) + \
-                list(model_path.glob("*.bin"))
+            files = list(model_path.glob("*.safetensors")) + list(model_path.glob("*.bin"))
             for file in files:
                 if "gptq" in file.name.lower():
                     return "gptq"
@@ -206,6 +208,7 @@ class QuantizationManager:
         config_path = model_path / "config.json" if model_path.is_dir() else None
         if config_path and config_path.exists():
             import json
+
             with open(config_path) as f:
                 config = json.load(f)
                 if "quantization_config" in config:
@@ -220,8 +223,7 @@ class QuantizationManager:
     def _load_8bit_model(self, model_path: Path, device: str, **kwargs) -> Any | None:
         """Load model with 8-bit quantization using bitsandbytes."""
         if not HAS_BITSANDBYTES or not HAS_TRANSFORMERS:
-            logger.error(
-                "bitsandbytes and transformers required for 8-bit quantization")
+            logger.error("bitsandbytes and transformers required for 8-bit quantization")
             return None
 
         if device == "cpu":
@@ -243,8 +245,7 @@ class QuantizationManager:
                 device_map = self.sharding_manager.create_device_map(
                     model_path,
                     max_memory=kwargs.get("max_memory"),
-                    no_split_module_classes=kwargs.get(
-                        "no_split_module_classes"),
+                    no_split_module_classes=kwargs.get("no_split_module_classes"),
                 )
 
             # Load model
@@ -266,8 +267,7 @@ class QuantizationManager:
     def _load_4bit_model(self, model_path: Path, device: str, **kwargs) -> Any | None:
         """Load model with 4-bit quantization using bitsandbytes."""
         if not HAS_BITSANDBYTES or not HAS_TRANSFORMERS:
-            logger.error(
-                "bitsandbytes and transformers required for 4-bit quantization")
+            logger.error("bitsandbytes and transformers required for 4-bit quantization")
             return None
 
         if device == "cpu":
@@ -289,8 +289,7 @@ class QuantizationManager:
                 device_map = self.sharding_manager.create_device_map(
                     model_path,
                     max_memory=kwargs.get("max_memory"),
-                    no_split_module_classes=kwargs.get(
-                        "no_split_module_classes"),
+                    no_split_module_classes=kwargs.get("no_split_module_classes"),
                 )
 
             # Load model
@@ -432,8 +431,7 @@ class QuantizationManager:
             if kwargs.get("merge_adapter", False):
                 model = model.merge_and_unload()
 
-            logger.info(
-                f"Successfully loaded LoRA adapter from {adapter_path}")
+            logger.info(f"Successfully loaded LoRA adapter from {adapter_path}")
             return model
 
         except Exception as e:
@@ -503,7 +501,7 @@ class QuantizationManager:
         else:
             total_size = model_path.stat().st_size
 
-        size_gb = total_size / (1024 ** 3)
+        size_gb = total_size / (1024**3)
 
         # Estimate based on quantization
         estimates = {
@@ -552,8 +550,15 @@ class QuantizationManager:
 
         # Default target modules for common architectures
         if target_modules is None:
-            target_modules = ["q_proj", "v_proj", "k_proj",
-                              "o_proj", "gate_proj", "down_proj", "up_proj"]
+            target_modules = [
+                "q_proj",
+                "v_proj",
+                "k_proj",
+                "o_proj",
+                "gate_proj",
+                "down_proj",
+                "up_proj",
+            ]
 
         config = LoraConfig(
             r=r,
@@ -578,11 +583,15 @@ class QuantizationManager:
             return self.sharding_manager.get_device_info()
         gpu_info = get_gpu_info() if GPU_AUTOLOADER_AVAILABLE else {}
         return {
-                "cuda_available": gpu_info.get("available", False) if GPU_AUTOLOADER_AVAILABLE else torch.cuda.is_available(),
-                "device_count": gpu_info.get("info", {}).get("device_count", 0) if GPU_AUTOLOADER_AVAILABLE else (torch.cuda.device_count() if torch.cuda.is_available() else 0),
-                "sharding_available": False,
-                "reason": "Single GPU or no GPU available",
-            }
+            "cuda_available": gpu_info.get("available", False)
+            if GPU_AUTOLOADER_AVAILABLE
+            else torch.cuda.is_available(),
+            "device_count": gpu_info.get("info", {}).get("device_count", 0)
+            if GPU_AUTOLOADER_AVAILABLE
+            else (torch.cuda.device_count() if torch.cuda.is_available() else 0),
+            "sharding_available": False,
+            "reason": "Single GPU or no GPU available",
+        }
 
     def get_supported_quantization_types(self) -> list:
         """Get list of supported quantization types."""
@@ -602,7 +611,9 @@ class QuantizationManager:
 
         return supported_types
 
-    def quantize_model_with_bnb(self, model: Any, quantization_bits: int = 8, **kwargs) -> Any | None:
+    def quantize_model_with_bnb(
+        self, model: Any, quantization_bits: int = 8, **kwargs
+    ) -> Any | None:
         """Quantize a model using bitsandbytes (bnb) library.
 
         Args:
@@ -732,7 +743,9 @@ class QuantizationManager:
             logger.error(f"Failed to create GPTQ config: {e}")
             return None
 
-    def prepare_model_for_gptq_quantization(self, model_path: str | Path, config: Any = None, **kwargs) -> Any | None:
+    def prepare_model_for_gptq_quantization(
+        self, model_path: str | Path, config: Any = None, **kwargs
+    ) -> Any | None:
         """Prepare a model for GPTQ quantization using GPTQConfig.
 
         Args:
@@ -798,8 +811,7 @@ class QuantizationManager:
                     "llm_int8_has_fp16_weight": False,
                     "llm_int8_enable_fp32_cpu_offload": True,
                 }
-            logger.warning(
-                "8-bit quantization requires bitsandbytes and transformers")
+            logger.warning("8-bit quantization requires bitsandbytes and transformers")
             return {"quantization_type": "8bit", "available": False}
 
         if quantization_type == "4bit":
@@ -810,8 +822,7 @@ class QuantizationManager:
                     "bnb_4bit_use_double_quant": True,
                     "bnb_4bit_quant_type": "nf4",
                 }
-            logger.warning(
-                "4-bit quantization requires bitsandbytes and transformers")
+            logger.warning("4-bit quantization requires bitsandbytes and transformers")
             return {"quantization_type": "4bit", "available": False}
 
         if quantization_type == "gptq":
@@ -855,8 +866,7 @@ class QuantizationManager:
                 "description": "No quantization applied",
             }
 
-        raise ValueError(
-            f"Unsupported quantization type: {quantization_type}")
+        raise ValueError(f"Unsupported quantization type: {quantization_type}")
 
     def cleanup_memory(self):
         """Clean up GPU memory after model operations."""

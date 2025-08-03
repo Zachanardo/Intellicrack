@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import re
 import shutil
@@ -89,11 +88,13 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
                 )
                 continue
 
-            instructions.append({
-                "address": address,
-                "new_bytes": new_bytes,
-                "description": description,
-            })
+            instructions.append(
+                {
+                    "address": address,
+                    "new_bytes": new_bytes,
+                    "description": description,
+                }
+            )
             logger.info(
                 f"Parsed instruction: Address=0x{address:X}, "
                 f"Bytes='{new_bytes.hex().upper()}', Desc='{description}'",
@@ -119,8 +120,9 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
     return instructions
 
 
-def create_patch(original_data: bytes, modified_data: bytes,
-                 base_address: int = 0) -> list[dict[str, Any]]:
+def create_patch(
+    original_data: bytes, modified_data: bytes, base_address: int = 0
+) -> list[dict[str, Any]]:
     """Create patch instructions by comparing original and modified data.
 
     Args:
@@ -144,16 +146,20 @@ def create_patch(original_data: bytes, modified_data: bytes,
             start = i
             changed_bytes = bytearray()
 
-            while i < min(len(original_data), len(modified_data)) and \
-                  original_data[i] != modified_data[i]:
+            while (
+                i < min(len(original_data), len(modified_data))
+                and original_data[i] != modified_data[i]
+            ):
                 changed_bytes.append(modified_data[i])
                 i += 1
 
-            patches.append({
-                "address": base_address + start,
-                "new_bytes": bytes(changed_bytes),
-                "description": f"Patch at offset 0x{start:X}",
-            })
+            patches.append(
+                {
+                    "address": base_address + start,
+                    "new_bytes": bytes(changed_bytes),
+                    "description": f"Patch at offset 0x{start:X}",
+                }
+            )
         else:
             i += 1
 
@@ -161,8 +167,9 @@ def create_patch(original_data: bytes, modified_data: bytes,
     return patches
 
 
-def apply_patch(file_path: str | Path, patches: list[dict[str, Any]],
-                create_backup: bool = True) -> tuple[bool, str | None]:
+def apply_patch(
+    file_path: str | Path, patches: list[dict[str, Any]], create_backup: bool = True
+) -> tuple[bool, str | None]:
     """Apply patches to a binary file.
 
     Args:
@@ -359,10 +366,10 @@ def create_nop_patch(address: int, length: int, arch: str = "x86") -> dict[str, 
 
     """
     nop_bytes = {
-        "x86": b"\x90",      # NOP
-        "x64": b"\x90",      # NOP (same as x86)
-        "arm": b"\x00\xBF",  # NOP (Thumb)
-        "arm64": b"\x1F\x20\x03\xD5",  # NOP
+        "x86": b"\x90",  # NOP
+        "x64": b"\x90",  # NOP (same as x86)
+        "arm": b"\x00\xbf",  # NOP (Thumb)
+        "arm64": b"\x1f\x20\x03\xd5",  # NOP
     }
 
     nop = nop_bytes.get(arch.lower(), b"\x90")

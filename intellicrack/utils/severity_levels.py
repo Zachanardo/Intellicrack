@@ -45,10 +45,10 @@ class ConfidenceLevel(Enum):
 # Severity level mappings and utilities
 SEVERITY_COLORS = {
     SeverityLevel.CRITICAL: "#FF0000",  # Red
-    SeverityLevel.HIGH: "#FF6600",      # Orange
-    SeverityLevel.MEDIUM: "#FFAA00",    # Yellow-orange
-    SeverityLevel.LOW: "#FFFF00",       # Yellow
-    SeverityLevel.INFO: "#00AA00",       # Green
+    SeverityLevel.HIGH: "#FF6600",  # Orange
+    SeverityLevel.MEDIUM: "#FFAA00",  # Yellow-orange
+    SeverityLevel.LOW: "#FFFF00",  # Yellow
+    SeverityLevel.INFO: "#00AA00",  # Green
 }
 
 SEVERITY_SCORES = {
@@ -102,8 +102,9 @@ def get_threat_from_score(score: float) -> ThreatLevel:
     return ThreatLevel.NONE
 
 
-def calculate_risk_score(severity: SeverityLevel, threat: ThreatLevel,
-                        confidence: ConfidenceLevel) -> float:
+def calculate_risk_score(
+    severity: SeverityLevel, threat: ThreatLevel, confidence: ConfidenceLevel
+) -> float:
     """Calculate overall risk score from severity, threat, and confidence."""
     severity_score = SEVERITY_SCORES.get(severity, 1.0)
     threat_score = THREAT_SCORES.get(threat, 0.0)
@@ -133,8 +134,13 @@ def format_severity_report(findings: list[dict]) -> str:
         severity_groups[severity].append(finding)
 
     # Sort by severity (critical first)
-    severity_order = [SeverityLevel.CRITICAL, SeverityLevel.HIGH,
-                     SeverityLevel.MEDIUM, SeverityLevel.LOW, SeverityLevel.INFO]
+    severity_order = [
+        SeverityLevel.CRITICAL,
+        SeverityLevel.HIGH,
+        SeverityLevel.MEDIUM,
+        SeverityLevel.LOW,
+        SeverityLevel.INFO,
+    ]
 
     report_lines = ["Severity Report", "=" * 40]
 
@@ -200,6 +206,7 @@ def aggregate_severity_stats(findings: list[dict]) -> dict:
 
 def prioritize_findings(findings: list[dict]) -> list[dict]:
     """Sort findings by priority (risk score)."""
+
     def get_priority_score(finding):
         severity = finding.get("severity", SeverityLevel.INFO)
         threat = finding.get("threat", ThreatLevel.UNLIKELY)

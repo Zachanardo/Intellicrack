@@ -521,7 +521,7 @@ wget https://huggingface.co/TheBloke/CodeLlama-7B-Instruct-GGUF/resolve/main/cod
       "weight": 0.5
     },
     {
-      "name": "model_b", 
+      "name": "model_b",
       "provider": "anthropic",
       "model_name": "claude-3-haiku-20240307",
       "weight": 0.5
@@ -578,7 +578,7 @@ Save these as `.json` files in your Intellicrack config directory:
 {
   "name": "Deep Research",
   "description": "Comprehensive vulnerability analysis",
-  "provider": "anthropic", 
+  "provider": "anthropic",
   "model_name": "claude-3-opus-20240229",
   "context_length": 200000,
   "temperature": 0.7,

@@ -29,7 +29,7 @@ The ICP testing framework provides multi-level validation of the die-python inte
 ### Test Categories
 
 1. **Isolated Tests**: Core ICP functionality without dependencies
-2. **Unit Tests**: Individual component validation  
+2. **Unit Tests**: Individual component validation
 3. **Integration Tests**: Component interaction validation
 4. **End-to-End Tests**: Complete workflow validation
 5. **Performance Tests**: Speed and resource usage validation
@@ -43,7 +43,7 @@ The ICP testing framework provides multi-level validation of the die-python inte
 - **Coverage**: die-python integration, text parsing, async analysis
 - **Dependencies**: None (self-contained test environment)
 
-**Secondary Test Suite**: `icp_integration_tester_focused.py`  
+**Secondary Test Suite**: `icp_integration_tester_focused.py`
 - **Purpose**: Focused integration testing without full GUI
 - **Coverage**: Backend integration, UI components, error handling
 - **Dependencies**: Minimal PyQt5 and die-python
@@ -89,15 +89,15 @@ testing/
 def test_die_python_integration():
     """Validate basic die-python functionality"""
     import die
-    
+
     # Version validation
     assert hasattr(die, '__version__')
     assert hasattr(die, 'die_version')
-    
+
     # Scan flags validation
     assert hasattr(die.ScanFlags, 'DEEP_SCAN')
     assert hasattr(die.ScanFlags, 'HEURISTIC_SCAN')
-    
+
     # Basic scan functionality
     result = die.scan_file(test_file, die.ScanFlags.DEEP_SCAN)
     assert isinstance(result, str)
@@ -133,17 +133,17 @@ assert result.error is None
 async def test_async_analysis():
     """Validate asynchronous analysis capability"""
     backend = ICPBackend()
-    
+
     # Test successful analysis
     result = await backend.analyze_file(test_file, ScanMode.DEEP)
     assert result is not None
     assert result.error is None
-    
+
     # Test timeout handling
     result = await backend.analyze_file(test_file, timeout=0.001)
     assert result.error is not None
     assert "timeout" in result.error.lower()
-    
+
     # Test invalid file handling
     result = await backend.analyze_file("nonexistent.exe")
     assert result.error is not None
@@ -166,31 +166,31 @@ async def test_async_analysis():
 class TestICPBackend(unittest.TestCase):
     def setUp(self):
         self.backend = ICPBackend()
-    
+
     def test_scan_mode_mapping(self):
         """Test scan mode to flag conversion"""
         normal_flag = self.backend._get_die_scan_flags(ScanMode.NORMAL)
         deep_flag = self.backend._get_die_scan_flags(ScanMode.DEEP)
-        
+
         assert normal_flag == 0
         assert deep_flag == self.backend.die.ScanFlags.DEEP_SCAN
-    
+
     def test_engine_version(self):
         """Test version string format"""
         version = self.backend.get_engine_version()
         assert "die-python" in version
         assert "DIE" in version
-    
+
     @patch('die.scan_file')
     def test_error_handling(self, mock_scan):
         """Test error propagation"""
         mock_scan.side_effect = Exception("Mock error")
-        
+
         loop = asyncio.new_event_loop()
         result = loop.run_until_complete(
             self.backend.analyze_file("test.exe")
         )
-        
+
         assert result.error is not None
         assert "Mock error" in result.error
 ```
@@ -205,7 +205,7 @@ def test_result_properties():
     detection = ICPDetection(name="UPX", type="Packer")
     file_info = ICPFileInfo(filetype="PE64", detections=[detection])
     result = ICPScanResult(file_path="test.exe", file_infos=[file_info])
-    
+
     # Validate properties
     assert result.is_packed == True
     assert result.is_protected == False
@@ -224,25 +224,25 @@ class TestICPWidget(QTestCase):
     def setUp(self):
         self.app = QApplication([])
         self.widget = ICPAnalysisWidget()
-    
+
     def test_analysis_trigger(self):
         """Test analysis initiation"""
         with patch.object(self.widget.backend, 'analyze_file') as mock_analyze:
             mock_analyze.return_value = create_mock_result()
-            
+
             # Trigger analysis
             self.widget.analyze_file("test.exe")
-            
+
             # Verify backend called
             mock_analyze.assert_called_once_with("test.exe", ScanMode.DEEP)
-    
+
     def test_result_display(self):
         """Test result presentation"""
         mock_result = create_mock_result_with_detections()
-        
+
         # Simulate result received
         self.widget._on_analysis_complete(mock_result)
-        
+
         # Verify UI updates
         assert self.widget.results_table.rowCount() > 0
         assert self.widget.status_label.text() == "Analysis complete"
@@ -256,19 +256,19 @@ class TestICPWidget(QTestCase):
 def test_orchestrator_distribution():
     """Test result distribution to handlers"""
     orchestrator = AnalysisResultOrchestrator()
-    
+
     # Create mock handlers
     handler1 = MockHandler()
     handler2 = MockHandler()
-    
+
     # Register handlers
     orchestrator.register_handler(handler1)
     orchestrator.register_handler(handler2)
-    
+
     # Send result
     mock_result = create_mock_result()
     orchestrator.on_icp_analysis_complete(mock_result)
-    
+
     # Verify distribution
     assert handler1.received_result == mock_result
     assert handler2.received_result == mock_result
@@ -282,14 +282,14 @@ def test_orchestrator_distribution():
 def test_auto_trigger_workflow():
     """Test complete auto-trigger workflow"""
     main_window = IntellicrackMainWindow()
-    
+
     with patch.object(main_window.icp_widget, 'analyze_file') as mock_analyze:
         # Simulate file open
         main_window._on_file_opened("test.exe")
-        
+
         # Verify auto-trigger
         mock_analyze.assert_called_once_with("test.exe")
-        
+
         # Verify tab switch
         assert main_window.tab_widget.currentIndex() == 3
 ```
@@ -305,26 +305,26 @@ def benchmark_analysis_speed():
     """Benchmark analysis performance"""
     backend = ICPBackend()
     test_files = collect_benchmark_files()
-    
+
     results = {}
     for file_path in test_files:
         start_time = time.time()
-        
+
         loop = asyncio.new_event_loop()
         result = loop.run_until_complete(
             backend.analyze_file(file_path, ScanMode.DEEP)
         )
         loop.close()
-        
+
         analysis_time = time.time() - start_time
         file_size = os.path.getsize(file_path)
-        
+
         results[file_path] = {
             'time': analysis_time,
             'size': file_size,
             'detections': len(result.all_detections) if result else 0
         }
-    
+
     return analyze_performance_results(results)
 ```
 
@@ -343,22 +343,22 @@ def test_memory_usage():
     """Monitor memory usage during analysis"""
     import psutil
     import gc
-    
+
     process = psutil.Process()
     initial_memory = process.memory_info().rss
-    
+
     backend = ICPBackend()
-    
+
     # Perform multiple analyses
     for i in range(10):
         result = await backend.analyze_file(f"test{i}.exe")
-        
+
         # Force garbage collection
         gc.collect()
-        
+
         current_memory = process.memory_info().rss
         memory_growth = current_memory - initial_memory
-        
+
         # Verify memory doesn't grow excessively
         assert memory_growth < 100 * 1024 * 1024  # 100MB limit
 ```
@@ -372,21 +372,21 @@ async def test_concurrent_analysis():
     """Test concurrent analysis capability"""
     backend = ICPBackend()
     test_files = ["test1.exe", "test2.dll", "test3.sys", "test4.bin"]
-    
+
     # Start concurrent analyses
     tasks = [
         backend.analyze_file(file_path, ScanMode.NORMAL)
         for file_path in test_files
     ]
-    
+
     start_time = time.time()
     results = await asyncio.gather(*tasks)
     total_time = time.time() - start_time
-    
+
     # Verify all completed successfully
     assert len(results) == 4
     assert all(r.error is None for r in results)
-    
+
     # Verify concurrent execution (should be faster than sequential)
     assert total_time < 0.5  # Reasonable concurrent execution time
 ```
@@ -429,13 +429,13 @@ test_binaries/
 def create_mock_die_output(file_type="PE64", detections=None):
     """Generate mock die-python output"""
     output_lines = [file_type]
-    
+
     if detections:
         for detection_type, detection_name in detections:
             output_lines.append(f"    {detection_type}: {detection_name}")
     else:
         output_lines.append("    Unknown: Unknown")
-    
+
     return "\n".join(output_lines)
 
 # Usage examples
@@ -458,10 +458,10 @@ def pytest_configure():
     """Configure test environment"""
     # Set up virtual environment
     setup_test_venv()
-    
+
     # Install test dependencies
     install_test_requirements()
-    
+
     # Prepare test data
     prepare_test_binaries()
 
@@ -469,7 +469,7 @@ def pytest_runtest_setup(item):
     """Pre-test setup"""
     # Initialize die-python
     ensure_die_python_available()
-    
+
     # Set test timeouts
     configure_test_timeouts()
 ```
@@ -479,7 +479,7 @@ def pytest_runtest_setup(item):
 # Run isolated tests
 python -m pytest testing/isolated/ -v
 
-# Run unit tests  
+# Run unit tests
 python -m pytest testing/unit/ -v
 
 # Run integration tests
@@ -506,29 +506,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           pip install -r testing/requirements.txt
           pip install die-python
-      
+
       - name: Run isolated tests
         run: python testing/isolated/icp_isolated_test.py
-      
+
       - name: Run unit tests
         run: pytest testing/unit/ -v
-      
+
       - name: Run integration tests
         run: pytest testing/integration/ -v
-      
+
       - name: Generate coverage report
         run: pytest --cov=intellicrack.protection.icp_backend --cov-report=xml
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v1
 ```
@@ -626,14 +626,14 @@ def validate_test_environment():
     """Validate test environment setup"""
     # Check Python version
     assert sys.version_info >= (3, 11)
-    
+
     # Check die-python availability
     import die
     assert die.__version__ >= "0.4.0"
-    
+
     # Check test data availability
     assert os.path.exists("testing/fixtures/sample_binaries/")
-    
+
     # Check virtual environment
     assert "test_venv" in sys.executable
 ```

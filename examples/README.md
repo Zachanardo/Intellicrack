@@ -92,17 +92,17 @@ def analyze_binary(binary_path):
     print(f"File: {file_info['name']}")
     print(f"Size: {file_info['size']} bytes")
     print(f"Type: {file_info['type']}")
-    
+
     # Perform analysis
     analyzer = CoreAnalyzer()
     results = analyzer.analyze_binary(binary_path)
-    
+
     # Display results
     print(f"\nAnalysis Results:")
     print(f"Architecture: {results.get('architecture', 'Unknown')}")
     print(f"Entry Point: {results.get('entry_point', 'Unknown')}")
     print(f"Sections: {len(results.get('sections', []))}")
-    
+
     # Check for protections
     protections = results.get('protections', [])
     if protections:
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python basic_analysis.py <binary_path>")
         sys.exit(1)
-    
+
     analyze_binary(sys.argv[1])
 ```
 
@@ -135,7 +135,7 @@ def generate_and_run_script(binary_path, target_type="license_bypass"):
     """Generate AI script and execute it"""
     # Initialize AI generator
     generator = AIScriptGenerator()
-    
+
     # Generate Frida script
     print(f"Generating {target_type} script for {binary_path}...")
     script = generator.generate_frida_script(
@@ -143,16 +143,16 @@ def generate_and_run_script(binary_path, target_type="license_bypass"):
         analysis_type=target_type,
         complexity_level="intermediate"
     )
-    
+
     if script:
         print("Script generated successfully!")
         print(f"Script preview (first 500 chars):")
         print(script[:500] + "..." if len(script) > 500 else script)
-        
+
         # Execute script
         manager = FridaManager()
         result = manager.execute_script(script, binary_path)
-        
+
         if result['success']:
             print("Script executed successfully!")
             print(f"Results: {result.get('output', 'No output')}")
@@ -166,10 +166,10 @@ if __name__ == "__main__":
         print("Usage: python ai_script_generation.py <binary_path> [target_type]")
         print("Target types: license_bypass, api_hooking, crypto_analysis")
         sys.exit(1)
-    
+
     binary_path = sys.argv[1]
     target_type = sys.argv[2] if len(sys.argv) > 2 else "license_bypass"
-    
+
     generate_and_run_script(binary_path, target_type)
 ```
 
@@ -188,39 +188,39 @@ def scan_for_vulnerabilities(binary_path):
     """Scan binary for vulnerabilities"""
     # Initialize vulnerability analyzer
     analyzer = VulnerabilityAnalyzer()
-    
+
     print(f"Scanning {binary_path} for vulnerabilities...")
-    
+
     # Perform vulnerability scan
     vulnerabilities = analyzer.scan_binary(binary_path)
-    
+
     if vulnerabilities:
         print(f"\nFound {len(vulnerabilities)} potential vulnerabilities:")
-        
+
         for i, vuln in enumerate(vulnerabilities, 1):
             print(f"\n{i}. {vuln.type.upper()}")
             print(f"   Severity: {vuln.severity}")
             print(f"   Location: {vuln.location}")
             print(f"   Description: {vuln.description}")
-            
+
             if hasattr(vuln, 'recommendation'):
                 print(f"   Recommendation: {vuln.recommendation}")
     else:
         print("No vulnerabilities detected")
-    
+
     # Generate detailed report
     report = analyzer.generate_report(vulnerabilities)
     with open(f"{binary_path}_vulnerability_report.json", "w") as f:
         import json
         json.dump(report, f, indent=2)
-    
+
     print(f"\nDetailed report saved to: {binary_path}_vulnerability_report.json")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python vulnerability_scan.py <binary_path>")
         sys.exit(1)
-    
+
     scan_for_vulnerabilities(sys.argv[1])
 ```
 
@@ -241,37 +241,37 @@ def analyze_network_traffic(duration=60):
     # Initialize analyzers
     traffic_analyzer = NetworkTrafficAnalyzer()
     ssl_interceptor = SSLInterceptor()
-    
+
     print(f"Starting network analysis for {duration} seconds...")
-    
+
     # Start traffic capture
     traffic_analyzer.start_capture()
     ssl_interceptor.start_interception()
-    
+
     try:
         # Monitor for specified duration
         time.sleep(duration)
     except KeyboardInterrupt:
         print("\nStopping analysis...")
-    
+
     # Stop capture and analyze
     packets = traffic_analyzer.stop_capture()
     ssl_data = ssl_interceptor.stop_interception()
-    
+
     # Analyze captured data
     analysis = traffic_analyzer.analyze_packets(packets)
-    
+
     print(f"\nAnalysis Results:")
     print(f"Total packets captured: {len(packets)}")
     print(f"Protocols detected: {', '.join(analysis.get('protocols', []))}")
     print(f"Unique hosts: {len(analysis.get('hosts', []))}")
-    
+
     # SSL/TLS analysis
     if ssl_data:
         print(f"SSL/TLS connections: {len(ssl_data)}")
         for conn in ssl_data[:5]:  # Show first 5
             print(f"  - {conn['host']}:{conn['port']} (TLS {conn.get('version', 'unknown')})")
-    
+
     # Export results
     traffic_analyzer.export_results("network_analysis.json")
     print(f"\nResults exported to: network_analysis.json")
@@ -300,17 +300,17 @@ class ExamplePlugin(PluginBase):
         self.version = "1.0.0"
         self.description = "Example plugin demonstrating basic functionality"
         self.author = "Intellicrack Team"
-    
+
     def validate_input(self, binary_path):
         """Validate plugin input"""
         if not os.path.exists(binary_path):
             return False, "File does not exist"
-        
+
         if not os.path.isfile(binary_path):
             return False, "Path is not a file"
-        
+
         return True, "Valid input"
-    
+
     def run(self, binary_path, **kwargs):
         """Main plugin execution"""
         try:
@@ -321,10 +321,10 @@ class ExamplePlugin(PluginBase):
                     'success': False,
                     'error': message
                 }
-            
+
             # Plugin logic here
             results = self.analyze_binary(binary_path)
-            
+
             return {
                 'success': True,
                 'results': results,
@@ -333,24 +333,24 @@ class ExamplePlugin(PluginBase):
                     'version': self.version
                 }
             }
-        
+
         except Exception as e:
             return {
                 'success': False,
                 'error': str(e)
             }
-    
+
     def analyze_binary(self, binary_path):
         """Perform custom analysis"""
         # Example analysis
         file_size = os.path.getsize(binary_path)
-        
+
         return {
             'file_path': binary_path,
             'file_size': file_size,
             'analysis_type': 'basic_info'
         }
-    
+
     def get_config_schema(self):
         """Return configuration schema"""
         return {
@@ -386,7 +386,7 @@ import json
 class IntellicracAPI:
     def __init__(self, base_url="http://localhost:8080"):
         self.base_url = base_url
-    
+
     def analyze_binary(self, binary_path):
         """Submit binary for analysis via API"""
         with open(binary_path, 'rb') as f:
@@ -395,16 +395,16 @@ class IntellicracAPI:
                 f"{self.base_url}/api/analyze",
                 files=files
             )
-        
+
         return response.json()
-    
+
     def get_analysis_status(self, analysis_id):
         """Check analysis status"""
         response = requests.get(
             f"{self.base_url}/api/analysis/{analysis_id}/status"
         )
         return response.json()
-    
+
     def get_analysis_results(self, analysis_id):
         """Get analysis results"""
         response = requests.get(
@@ -415,13 +415,13 @@ class IntellicracAPI:
 # Usage example
 if __name__ == "__main__":
     api = IntellicracAPI()
-    
+
     # Submit analysis
     result = api.analyze_binary("sample.exe")
     analysis_id = result['analysis_id']
-    
+
     print(f"Analysis submitted with ID: {analysis_id}")
-    
+
     # Wait for completion
     import time
     while True:
@@ -431,9 +431,9 @@ if __name__ == "__main__":
         elif status['status'] == 'failed':
             print("Analysis failed")
             exit(1)
-        
+
         time.sleep(5)
-    
+
     # Get results
     results = api.get_analysis_results(analysis_id)
     print(json.dumps(results, indent=2))
@@ -458,32 +458,32 @@ def batch_analyze_directory(directory_path, output_dir="results"):
     """Analyze all binaries in a directory"""
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
-    
+
     # Initialize analyzers
     core_analyzer = CoreAnalyzer()
     vuln_analyzer = VulnerabilityAnalyzer()
-    
+
     # Find binary files
     binary_extensions = ['.exe', '.dll', '.so', '.dylib']
     binary_files = []
-    
+
     for ext in binary_extensions:
         binary_files.extend(Path(directory_path).glob(f"**/*{ext}"))
-    
+
     print(f"Found {len(binary_files)} binary files to analyze")
-    
+
     results = []
-    
+
     for i, binary_path in enumerate(binary_files, 1):
         print(f"Analyzing {i}/{len(binary_files)}: {binary_path.name}")
-        
+
         try:
             # Core analysis
             core_results = core_analyzer.analyze_binary(str(binary_path))
-            
+
             # Vulnerability analysis
             vulnerabilities = vuln_analyzer.scan_binary(str(binary_path))
-            
+
             # Combine results
             analysis_result = {
                 'file_path': str(binary_path),
@@ -498,18 +498,18 @@ def batch_analyze_directory(directory_path, output_dir="results"):
                 ],
                 'analysis_timestamp': time.time()
             }
-            
+
             results.append(analysis_result)
-            
+
             # Save individual result
             result_file = os.path.join(output_dir, f"{binary_path.stem}_analysis.json")
             with open(result_file, 'w') as f:
                 json.dump(analysis_result, f, indent=2)
-        
+
         except Exception as e:
             print(f"Error analyzing {binary_path}: {e}")
             continue
-    
+
     # Save combined results
     combined_file = os.path.join(output_dir, "batch_analysis_results.json")
     with open(combined_file, 'w') as f:
@@ -518,17 +518,17 @@ def batch_analyze_directory(directory_path, output_dir="results"):
             'successful_analyses': len(results),
             'results': results
         }, f, indent=2)
-    
+
     print(f"Batch analysis completed. Results saved to {output_dir}")
 
 if __name__ == "__main__":
     import sys
     import time
-    
+
     if len(sys.argv) != 2:
         print("Usage: python batch_analysis.py <directory_path>")
         sys.exit(1)
-    
+
     batch_analyze_directory(sys.argv[1])
 ```
 

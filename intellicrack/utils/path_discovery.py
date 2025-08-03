@@ -66,123 +66,155 @@ def _get_tool_search_paths(tool_name: str) -> list[str]:
 
     if tool_name.lower() == "ghidra":
         if system == "windows":
-            paths.extend([
-                r"C:\ghidra\ghidraRun.bat",
-                r"C:\Program Files\ghidra\ghidraRun.bat",
-                r"C:\Program Files (x86)\ghidra\ghidraRun.bat",
-                r"C:\Tools\ghidra\ghidraRun.bat",
-                r"D:\ghidra\ghidraRun.bat",
-                r"E:\ghidra\ghidraRun.bat",
-            ])
+            paths.extend(
+                [
+                    r"C:\ghidra\ghidraRun.bat",
+                    r"C:\Program Files\ghidra\ghidraRun.bat",
+                    r"C:\Program Files (x86)\ghidra\ghidraRun.bat",
+                    r"C:\Tools\ghidra\ghidraRun.bat",
+                    r"D:\ghidra\ghidraRun.bat",
+                    r"E:\ghidra\ghidraRun.bat",
+                ]
+            )
             # Add version-specific paths
             for version in ["10.4", "10.3", "10.2", "10.1", "10.0", "9.2"]:
-                paths.extend([
-                    rf"C:\ghidra_{version}_PUBLIC\ghidraRun.bat",
-                    rf"C:\Program Files\ghidra_{version}_PUBLIC\ghidraRun.bat",
-                ])
+                paths.extend(
+                    [
+                        rf"C:\ghidra_{version}_PUBLIC\ghidraRun.bat",
+                        rf"C:\Program Files\ghidra_{version}_PUBLIC\ghidraRun.bat",
+                    ]
+                )
         else:
-            paths.extend([
-                "/opt/ghidra/ghidraRun",
-                "/usr/local/ghidra/ghidraRun",
-                "/home/ghidra/ghidraRun",
-                "~/ghidra/ghidraRun",
-                "/Applications/ghidra/ghidraRun",
-            ])
+            paths.extend(
+                [
+                    "/opt/ghidra/ghidraRun",
+                    "/usr/local/ghidra/ghidraRun",
+                    "/home/ghidra/ghidraRun",
+                    "~/ghidra/ghidraRun",
+                    "/Applications/ghidra/ghidraRun",
+                ]
+            )
 
     elif tool_name.lower() == "radare2" or tool_name.lower() == "r2":
         if system == "windows":
-            paths.extend([
-                r"C:\radare2\bin\radare2.exe",
-                r"C:\Program Files\radare2\bin\radare2.exe",
-                r"C:\Program Files (x86)\radare2\bin\radare2.exe",
-                r"C:\Tools\radare2\bin\radare2.exe",
-            ])
+            paths.extend(
+                [
+                    r"C:\radare2\bin\radare2.exe",
+                    r"C:\Program Files\radare2\bin\radare2.exe",
+                    r"C:\Program Files (x86)\radare2\bin\radare2.exe",
+                    r"C:\Tools\radare2\bin\radare2.exe",
+                ]
+            )
         else:
-            paths.extend([
-                "/usr/bin/radare2",
-                "/usr/local/bin/radare2",
-                "/opt/radare2/bin/radare2",
-            ])
+            paths.extend(
+                [
+                    "/usr/bin/radare2",
+                    "/usr/local/bin/radare2",
+                    "/opt/radare2/bin/radare2",
+                ]
+            )
 
     elif tool_name.lower() == "ida" or tool_name.lower() == "ida64":
         if system == "windows":
-            paths.extend([
-                r"C:\Program Files\IDA Pro 7.7\ida64.exe",
-                r"C:\Program Files\IDA Pro 7.6\ida64.exe",
-                r"C:\Program Files\IDA Pro 7.5\ida64.exe",
-                r"C:\Program Files (x86)\IDA Pro 7.7\ida64.exe",
-                r"C:\IDA Pro\ida64.exe",
-            ])
+            paths.extend(
+                [
+                    r"C:\Program Files\IDA Pro 7.7\ida64.exe",
+                    r"C:\Program Files\IDA Pro 7.6\ida64.exe",
+                    r"C:\Program Files\IDA Pro 7.5\ida64.exe",
+                    r"C:\Program Files (x86)\IDA Pro 7.7\ida64.exe",
+                    r"C:\IDA Pro\ida64.exe",
+                ]
+            )
         else:
-            paths.extend([
-                "/opt/ida/ida64",
-                "/usr/local/ida/ida64",
-            ])
+            paths.extend(
+                [
+                    "/opt/ida/ida64",
+                    "/usr/local/ida/ida64",
+                ]
+            )
 
     elif tool_name.lower() == "x64dbg":
         if system == "windows":
-            paths.extend([
-                r"C:\x64dbg\x64dbg.exe",
-                r"C:\Program Files\x64dbg\x64dbg.exe",
-                r"C:\Program Files (x86)\x64dbg\x64dbg.exe",
-                r"C:\Tools\x64dbg\x64dbg.exe",
-            ])
+            paths.extend(
+                [
+                    r"C:\x64dbg\x64dbg.exe",
+                    r"C:\Program Files\x64dbg\x64dbg.exe",
+                    r"C:\Program Files (x86)\x64dbg\x64dbg.exe",
+                    r"C:\Tools\x64dbg\x64dbg.exe",
+                ]
+            )
 
     elif tool_name.lower() == "ollydbg":
         if system == "windows":
-            paths.extend([
-                r"C:\OllyDbg\OllyDbg.exe",
-                r"C:\Program Files\OllyDbg\OllyDbg.exe",
-                r"C:\Program Files (x86)\OllyDbg\OllyDbg.exe",
-            ])
+            paths.extend(
+                [
+                    r"C:\OllyDbg\OllyDbg.exe",
+                    r"C:\Program Files\OllyDbg\OllyDbg.exe",
+                    r"C:\Program Files (x86)\OllyDbg\OllyDbg.exe",
+                ]
+            )
 
     elif tool_name.lower() == "windbg":
         if system == "windows":
-            paths.extend([
-                r"C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\windbg.exe",
-                r"C:\Program Files\Windows Kits\10\Debuggers\x64\windbg.exe",
-                r"C:\WinDbg\windbg.exe",
-            ])
+            paths.extend(
+                [
+                    r"C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\windbg.exe",
+                    r"C:\Program Files\Windows Kits\10\Debuggers\x64\windbg.exe",
+                    r"C:\WinDbg\windbg.exe",
+                ]
+            )
 
     elif tool_name.lower() == "gdb":
         if system != "windows":
-            paths.extend([
-                "/usr/bin/gdb",
-                "/usr/local/bin/gdb",
-            ])
+            paths.extend(
+                [
+                    "/usr/bin/gdb",
+                    "/usr/local/bin/gdb",
+                ]
+            )
 
     elif tool_name.lower() == "objdump":
         if system == "windows":
-            paths.extend([
-                r"C:\mingw64\bin\objdump.exe",
-                r"C:\msys64\mingw64\bin\objdump.exe",
-            ])
+            paths.extend(
+                [
+                    r"C:\mingw64\bin\objdump.exe",
+                    r"C:\msys64\mingw64\bin\objdump.exe",
+                ]
+            )
         else:
-            paths.extend([
-                "/usr/bin/objdump",
-                "/usr/local/bin/objdump",
-            ])
+            paths.extend(
+                [
+                    "/usr/bin/objdump",
+                    "/usr/local/bin/objdump",
+                ]
+            )
 
     elif tool_name.lower() == "strings":
         if system == "windows":
-            paths.extend([
-                r"C:\SysinternalsSuite\strings.exe",
-                r"C:\Program Files\SysinternalsSuite\strings.exe",
-            ])
+            paths.extend(
+                [
+                    r"C:\SysinternalsSuite\strings.exe",
+                    r"C:\Program Files\SysinternalsSuite\strings.exe",
+                ]
+            )
         else:
-            paths.extend([
-                "/usr/bin/strings",
-                "/usr/local/bin/strings",
-            ])
+            paths.extend(
+                [
+                    "/usr/bin/strings",
+                    "/usr/local/bin/strings",
+                ]
+            )
 
     elif tool_name.lower() == "hexdump" or tool_name.lower() == "xxd":
         if system != "windows":
-            paths.extend([
-                "/usr/bin/hexdump",
-                "/usr/bin/xxd",
-                "/usr/local/bin/hexdump",
-                "/usr/local/bin/xxd",
-            ])
+            paths.extend(
+                [
+                    "/usr/bin/hexdump",
+                    "/usr/bin/xxd",
+                    "/usr/local/bin/hexdump",
+                    "/usr/local/bin/xxd",
+                ]
+            )
 
     return paths
 
@@ -195,8 +227,18 @@ def find_all_tools() -> dict[str, str | None]:
 
     """
     tools = [
-        "ghidra", "radare2", "ida", "ida64", "x64dbg", "ollydbg", "windbg",
-        "gdb", "objdump", "strings", "hexdump", "xxd",
+        "ghidra",
+        "radare2",
+        "ida",
+        "ida64",
+        "x64dbg",
+        "ollydbg",
+        "windbg",
+        "gdb",
+        "objdump",
+        "strings",
+        "hexdump",
+        "xxd",
     ]
 
     results = {}
@@ -217,46 +259,52 @@ def get_common_installation_paths() -> dict[str, list[str]]:
     paths = {}
 
     if system == "windows":
-        paths.update({
-            "program_files": [
-                r"C:\Program Files",
-                r"C:\Program Files (x86)",
-            ],
-            "tools": [
-                r"C:\Tools",
-                r"C:\Utils",
-                r"C:\Software",
-            ],
-            "dev_tools": [
-                r"C:\msys64",
-                r"C:\mingw64",
-                r"C:\cygwin64",
-            ],
-            "portable": [
-                r"C:\PortableApps",
-                r"D:\PortableApps",
-            ],
-        })
+        paths.update(
+            {
+                "program_files": [
+                    r"C:\Program Files",
+                    r"C:\Program Files (x86)",
+                ],
+                "tools": [
+                    r"C:\Tools",
+                    r"C:\Utils",
+                    r"C:\Software",
+                ],
+                "dev_tools": [
+                    r"C:\msys64",
+                    r"C:\mingw64",
+                    r"C:\cygwin64",
+                ],
+                "portable": [
+                    r"C:\PortableApps",
+                    r"D:\PortableApps",
+                ],
+            }
+        )
     else:
-        paths.update({
-            "bin": [
-                "/usr/bin",
-                "/usr/local/bin",
-                "/opt/bin",
-            ],
-            "opt": [
-                "/opt",
-                "/usr/local/opt",
-            ],
-            "applications": [
-                "/Applications" if system == "darwin" else "/usr/share/applications",
-            ],
-            "home": [
-                os.path.expanduser("~/bin"),
-                os.path.expanduser("~/tools"),
-                os.path.expanduser("~/Applications") if system == "darwin" else os.path.expanduser("~/.local/bin"),
-            ],
-        })
+        paths.update(
+            {
+                "bin": [
+                    "/usr/bin",
+                    "/usr/local/bin",
+                    "/opt/bin",
+                ],
+                "opt": [
+                    "/opt",
+                    "/usr/local/opt",
+                ],
+                "applications": [
+                    "/Applications" if system == "darwin" else "/usr/share/applications",
+                ],
+                "home": [
+                    os.path.expanduser("~/bin"),
+                    os.path.expanduser("~/tools"),
+                    os.path.expanduser("~/Applications")
+                    if system == "darwin"
+                    else os.path.expanduser("~/.local/bin"),
+                ],
+            }
+        )
 
     return paths
 
@@ -283,21 +331,26 @@ def find_python_installations() -> list[dict[str, str]]:
     search_paths = []
 
     if system == "windows":
-        search_paths.extend([
-            r"C:\Python*\python.exe",
-            r"C:\Program Files\Python*\python.exe",
-            r"C:\Program Files (x86)\Python*\python.exe",
-            r"%LOCALAPPDATA%\Programs\Python\Python*\python.exe",
-        ])
+        search_paths.extend(
+            [
+                r"C:\Python*\python.exe",
+                r"C:\Program Files\Python*\python.exe",
+                r"C:\Program Files (x86)\Python*\python.exe",
+                r"%LOCALAPPDATA%\Programs\Python\Python*\python.exe",
+            ]
+        )
     else:
-        search_paths.extend([
-            "/usr/bin/python*",
-            "/usr/local/bin/python*",
-            "/opt/python*/bin/python*",
-        ])
+        search_paths.extend(
+            [
+                "/usr/bin/python*",
+                "/usr/local/bin/python*",
+                "/opt/python*/bin/python*",
+            ]
+        )
 
     # Use glob to find Python installations
     import glob
+
     for pattern in search_paths:
         expanded_pattern = os.path.expandvars(pattern)
         for path in glob.glob(expanded_pattern):
@@ -305,9 +358,13 @@ def find_python_installations() -> list[dict[str, str]]:
                 try:
                     # Get version
                     import subprocess
-                    result = subprocess.run([path, "--version"],
-                                          check=False, capture_output=True, text=True, timeout=5)
-                    version = result.stdout.strip().split()[-1] if result.returncode == 0 else "unknown"
+
+                    result = subprocess.run(
+                        [path, "--version"], check=False, capture_output=True, text=True, timeout=5
+                    )
+                    version = (
+                        result.stdout.strip().split()[-1] if result.returncode == 0 else "unknown"
+                    )
 
                     installation = {
                         "path": os.path.abspath(path),
@@ -340,41 +397,52 @@ def find_java_installations() -> list[dict[str, str]]:
     if java_home and os.path.exists(java_home):
         java_exe = os.path.join(java_home, "bin", "java.exe" if system == "windows" else "java")
         if os.path.exists(java_exe):
-            installations.append({
-                "path": java_exe,
-                "java_home": java_home,
-                "type": "JAVA_HOME",
-            })
+            installations.append(
+                {
+                    "path": java_exe,
+                    "java_home": java_home,
+                    "type": "JAVA_HOME",
+                }
+            )
 
     # Check PATH
     java_path = shutil.which("java")
     if java_path:
-        installations.append({
-            "path": java_path,
-            "java_home": os.path.dirname(os.path.dirname(java_path)),
-            "type": "PATH",
-        })
+        installations.append(
+            {
+                "path": java_path,
+                "java_home": os.path.dirname(os.path.dirname(java_path)),
+                "type": "PATH",
+            }
+        )
 
     # Common Java installation paths
     search_paths = []
     if system == "windows":
-        search_paths.extend([
-            r"C:\Program Files\Java\*\bin\java.exe",
-            r"C:\Program Files (x86)\Java\*\bin\java.exe",
-            r"C:\Program Files\Eclipse Adoptium\*\bin\java.exe",
-        ])
+        search_paths.extend(
+            [
+                r"C:\Program Files\Java\*\bin\java.exe",
+                r"C:\Program Files (x86)\Java\*\bin\java.exe",
+                r"C:\Program Files\Eclipse Adoptium\*\bin\java.exe",
+            ]
+        )
     elif system == "darwin":
-        search_paths.extend([
-            "/Library/Java/JavaVirtualMachines/*/Contents/Home/bin/java",
-            "/System/Library/Java/JavaVirtualMachines/*/Contents/Home/bin/java",
-        ])
+        search_paths.extend(
+            [
+                "/Library/Java/JavaVirtualMachines/*/Contents/Home/bin/java",
+                "/System/Library/Java/JavaVirtualMachines/*/Contents/Home/bin/java",
+            ]
+        )
     else:
-        search_paths.extend([
-            "/usr/lib/jvm/*/bin/java",
-            "/opt/java/*/bin/java",
-        ])
+        search_paths.extend(
+            [
+                "/usr/lib/jvm/*/bin/java",
+                "/opt/java/*/bin/java",
+            ]
+        )
 
     import glob
+
     for pattern in search_paths:
         for path in glob.glob(pattern):
             if os.path.isfile(path) and os.access(path, os.X_OK):
@@ -430,8 +498,10 @@ def get_tool_version(tool_path: str, version_arg: str = "--version") -> str | No
     """
     try:
         import subprocess
-        result = subprocess.run([tool_path, version_arg],
-                              check=False, capture_output=True, text=True, timeout=10)
+
+        result = subprocess.run(
+            [tool_path, version_arg], check=False, capture_output=True, text=True, timeout=10
+        )
 
         if result.returncode == 0:
             # Extract version from output (first line usually contains version)

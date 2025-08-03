@@ -3,6 +3,7 @@
 This package contains the core analysis components including binary analysis,
 symbolic execution, memory forensics, and multi-format analysis capabilities.
 """
+
 from intellicrack.logger import logger
 
 """

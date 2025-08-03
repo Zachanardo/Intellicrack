@@ -45,52 +45,58 @@ class MemoryForensicsTool:
                 "properties": {
                     "dump_path": {
                         "type": "string",
-                        "description": "Path to the memory dump file to analyze"
+                        "description": "Path to the memory dump file to analyze",
                     },
                     "analysis_profile": {
                         "type": "string",
-                        "enum": ["auto", "Win10x64_19041", "Win11x64_22000", "Win7SP1x64", "LinuxGeneric"],
+                        "enum": [
+                            "auto",
+                            "Win10x64_19041",
+                            "Win11x64_22000",
+                            "Win7SP1x64",
+                            "LinuxGeneric",
+                        ],
                         "description": "Memory analysis profile to use (default: auto)",
-                        "default": "auto"
+                        "default": "auto",
                     },
                     "deep_analysis": {
                         "type": "boolean",
                         "description": "Perform deep analysis including registry and file handles",
-                        "default": True
+                        "default": True,
                     },
                     "analyze_processes": {
                         "type": "boolean",
                         "description": "Extract and analyze process information",
-                        "default": True
+                        "default": True,
                     },
                     "analyze_network": {
                         "type": "boolean",
                         "description": "Extract network connection artifacts",
-                        "default": True
+                        "default": True,
                     },
                     "analyze_modules": {
                         "type": "boolean",
                         "description": "Extract loaded module information",
-                        "default": True
+                        "default": True,
                     },
                     "security_focus": {
                         "type": "boolean",
                         "description": "Focus on security-related artifacts and indicators",
-                        "default": True
+                        "default": True,
                     },
                     "extract_strings": {
                         "type": "boolean",
                         "description": "Extract strings from memory dump",
-                        "default": False
+                        "default": False,
                     },
                     "detailed_output": {
                         "type": "boolean",
                         "description": "Include detailed analysis and metadata",
-                        "default": True
-                    }
+                        "default": True,
+                    },
                 },
-                "required": ["dump_path"]
-            }
+                "required": ["dump_path"],
+            },
         }
 
     def execute(self, **kwargs) -> Dict[str, Any]:
@@ -105,22 +111,13 @@ class MemoryForensicsTool:
         """
         dump_path = kwargs.get("dump_path")
         if not dump_path or not os.path.exists(dump_path):
-            return {
-                "success": False,
-                "error": f"Memory dump not found: {dump_path}"
-            }
+            return {"success": False, "error": f"Memory dump not found: {dump_path}"}
 
         if not is_volatility3_available():
-            return {
-                "success": False,
-                "error": "Volatility3 not available"
-            }
+            return {"success": False, "error": "Volatility3 not available"}
 
         if not self.engine:
-            return {
-                "success": False,
-                "error": "Memory forensics engine not initialized"
-            }
+            return {"success": False, "error": "Memory forensics engine not initialized"}
 
         # Get parameters
         analysis_profile = kwargs.get("analysis_profile", "auto")
@@ -143,6 +140,7 @@ class MemoryForensicsTool:
 
             # Convert profile string to enum
             from ...core.analysis.memory_forensics_engine import AnalysisProfile
+
             if analysis_profile == "auto":
                 profile = AnalysisProfile.AUTO_DETECT
             elif analysis_profile == "Win10x64_19041":
@@ -158,16 +156,11 @@ class MemoryForensicsTool:
 
             # Run memory forensics analysis
             analysis_result = self.engine.analyze_memory_dump(
-                dump_path=dump_path,
-                profile=profile,
-                deep_analysis=deep_analysis
+                dump_path=dump_path, profile=profile, deep_analysis=deep_analysis
             )
 
             if analysis_result.error:
-                return {
-                    "success": False,
-                    "error": analysis_result.error
-                }
+                return {"success": False, "error": analysis_result.error}
 
             # Build result for LLM consumption
             result = {
@@ -178,16 +171,20 @@ class MemoryForensicsTool:
                 "total_artifacts": sum(analysis_result.artifacts_found.values()),
                 "artifacts_summary": analysis_result.artifacts_found,
                 "has_suspicious_activity": analysis_result.has_suspicious_activity,
-                "from_cache": False
+                "from_cache": False,
             }
 
             # Add process analysis if requested
             if analyze_processes and analysis_result.processes:
-                result["processes"] = self._format_processes(analysis_result.processes, security_focus)
+                result["processes"] = self._format_processes(
+                    analysis_result.processes, security_focus
+                )
                 result["process_summary"] = {
                     "total_processes": len(analysis_result.processes),
                     "hidden_processes": analysis_result.hidden_process_count,
-                    "suspicious_processes": sum(1 for p in analysis_result.processes if p.suspicious_indicators)
+                    "suspicious_processes": sum(
+                        1 for p in analysis_result.processes if p.suspicious_indicators
+                    ),
                 }
 
             # Add network analysis if requested
@@ -197,10 +194,13 @@ class MemoryForensicsTool:
                 )
                 result["network_summary"] = {
                     "total_connections": len(analysis_result.network_connections),
-                    "external_connections": len([
-                        c for c in analysis_result.network_connections
-                        if not c.remote_addr.startswith(('127.', '192.168.', '10.'))
-                    ])
+                    "external_connections": len(
+                        [
+                            c
+                            for c in analysis_result.network_connections
+                            if not c.remote_addr.startswith(("127.", "192.168.", "10."))
+                        ]
+                    ),
                 }
 
             # Add module analysis if requested
@@ -208,12 +208,16 @@ class MemoryForensicsTool:
                 result["modules"] = self._format_modules(analysis_result.modules, security_focus)
                 result["module_summary"] = {
                     "total_modules": len(analysis_result.modules),
-                    "suspicious_modules": sum(1 for m in analysis_result.modules if m.is_suspicious)
+                    "suspicious_modules": sum(
+                        1 for m in analysis_result.modules if m.is_suspicious
+                    ),
                 }
 
             # Add security findings
             if security_focus and analysis_result.security_findings:
-                result["security_findings"] = self._format_security_findings(analysis_result.security_findings)
+                result["security_findings"] = self._format_security_findings(
+                    analysis_result.security_findings
+                )
                 result["security_assessment"] = self._assess_security_posture(analysis_result)
 
             # Add detailed analysis if requested
@@ -222,7 +226,7 @@ class MemoryForensicsTool:
                     "registry_artifacts": len(analysis_result.registry_artifacts),
                     "file_handles": len(analysis_result.file_handles),
                     "memory_strings": len(analysis_result.memory_strings) if extract_strings else 0,
-                    "analysis_summary": self.engine.get_analysis_summary(analysis_result)
+                    "analysis_summary": self.engine.get_analysis_summary(analysis_result),
                 }
 
                 # Include strings if requested
@@ -232,7 +236,7 @@ class MemoryForensicsTool:
                             "offset": s.offset,
                             "value": s.value[:100] if len(s.value) > 100 else s.value,
                             "encoding": s.encoding,
-                            "confidence": s.confidence
+                            "confidence": s.confidence,
                         }
                         for s in analysis_result.memory_strings[:50]  # Limit to first 50
                     ]
@@ -248,10 +252,7 @@ class MemoryForensicsTool:
 
         except Exception as e:
             logger.error(f"Memory forensics analysis error: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     def _format_processes(self, processes: List[Any], security_focus: bool) -> List[Dict[str, Any]]:
         """Format process information for LLM consumption"""
@@ -267,14 +268,16 @@ class MemoryForensicsTool:
                 "handle_count": process.handle_count,
                 "thread_count": process.thread_count,
                 "is_hidden": process.is_hidden,
-                "wow64": process.wow64
+                "wow64": process.wow64,
             }
 
-            command_line: Optional[str] = getattr(process, 'command_line', None)
+            command_line: Optional[str] = getattr(process, "command_line", None)
             if command_line:
                 process_data["command_line"] = command_line
 
-            suspicious_indicators: Optional[List[str]] = getattr(process, 'suspicious_indicators', None)
+            suspicious_indicators: Optional[List[str]] = getattr(
+                process, "suspicious_indicators", None
+            )
             if suspicious_indicators:
                 process_data["suspicious_indicators"] = suspicious_indicators
 
@@ -284,7 +287,9 @@ class MemoryForensicsTool:
 
         return formatted_processes
 
-    def _format_network_connections(self, connections: List[Any], security_focus: bool) -> List[Dict[str, Any]]:
+    def _format_network_connections(
+        self, connections: List[Any], security_focus: bool
+    ) -> List[Dict[str, Any]]:
         """Format network connection information for LLM consumption"""
         formatted_connections = []
 
@@ -296,19 +301,19 @@ class MemoryForensicsTool:
                 "remote_port": conn.remote_port,
                 "protocol": conn.protocol,
                 "state": conn.state,
-                "pid": conn.pid
+                "pid": conn.pid,
             }
 
-            process_name: Optional[str] = getattr(conn, 'process_name', None)
+            process_name: Optional[str] = getattr(conn, "process_name", None)
             if process_name:
                 conn_data["process_name"] = process_name
 
-            create_time: Optional[str] = getattr(conn, 'create_time', None)
+            create_time: Optional[str] = getattr(conn, "create_time", None)
             if create_time:
                 conn_data["create_time"] = create_time
 
             # Include external connections or all if not security focused
-            if not security_focus or not conn.remote_addr.startswith(('127.', '192.168.', '10.')):
+            if not security_focus or not conn.remote_addr.startswith(("127.", "192.168.", "10.")):
                 formatted_connections.append(conn_data)
 
         return formatted_connections
@@ -323,18 +328,18 @@ class MemoryForensicsTool:
                 "size": module.size,
                 "name": module.name,
                 "path": module.path,
-                "is_suspicious": module.is_suspicious
+                "is_suspicious": module.is_suspicious,
             }
 
-            version: Optional[str] = getattr(module, 'version', None)
+            version: Optional[str] = getattr(module, "version", None)
             if version:
                 module_data["version"] = version
 
-            company: Optional[str] = getattr(module, 'company', None)
+            company: Optional[str] = getattr(module, "company", None)
             if company:
                 module_data["company"] = company
 
-            is_signed: Optional[bool] = getattr(module, 'is_signed', None)
+            is_signed: Optional[bool] = getattr(module, "is_signed", None)
             if is_signed is not None:
                 module_data["is_signed"] = is_signed
 
@@ -352,7 +357,7 @@ class MemoryForensicsTool:
                 "severity": finding.get("severity", "low"),
                 "description": finding.get("description", ""),
                 "count": finding.get("count", 1),
-                "evidence": finding.get("modules", finding.get("evidence", []))
+                "evidence": finding.get("modules", finding.get("evidence", [])),
             }
             for finding in findings
         ]
@@ -365,19 +370,23 @@ class MemoryForensicsTool:
             "hidden_processes": analysis_result.hidden_process_count,
             "suspicious_modules": sum(1 for m in analysis_result.modules if m.is_suspicious),
             "risk_factors": [],
-            "recommendations": []
+            "recommendations": [],
         }
 
         risk_score = 0
 
         # Assess risk factors
         if analysis_result.hidden_process_count > 0:
-            assessment["risk_factors"].append(f"{analysis_result.hidden_process_count} hidden processes detected")
+            assessment["risk_factors"].append(
+                f"{analysis_result.hidden_process_count} hidden processes detected"
+            )
             risk_score += 3
 
         suspicious_processes = sum(1 for p in analysis_result.processes if p.suspicious_indicators)
         if suspicious_processes > 0:
-            assessment["risk_factors"].append(f"{suspicious_processes} suspicious processes detected")
+            assessment["risk_factors"].append(
+                f"{suspicious_processes} suspicious processes detected"
+            )
             risk_score += 2
 
         suspicious_modules = sum(1 for m in analysis_result.modules if m.is_suspicious)
@@ -385,12 +394,17 @@ class MemoryForensicsTool:
             assessment["risk_factors"].append(f"{suspicious_modules} suspicious modules detected")
             risk_score += 2
 
-        external_connections = len([
-            c for c in analysis_result.network_connections
-            if not c.remote_addr.startswith(('127.', '192.168.', '10.'))
-        ])
+        external_connections = len(
+            [
+                c
+                for c in analysis_result.network_connections
+                if not c.remote_addr.startswith(("127.", "192.168.", "10."))
+            ]
+        )
         if external_connections > 10:
-            assessment["risk_factors"].append(f"{external_connections} external network connections")
+            assessment["risk_factors"].append(
+                f"{external_connections} external network connections"
+            )
             risk_score += 1
 
         # Determine overall risk
@@ -403,13 +417,19 @@ class MemoryForensicsTool:
 
         # Generate recommendations
         if analysis_result.hidden_process_count > 0:
-            assessment["recommendations"].append("Investigate hidden processes for potential rootkit activity")
+            assessment["recommendations"].append(
+                "Investigate hidden processes for potential rootkit activity"
+            )
 
         if suspicious_processes > 0:
-            assessment["recommendations"].append("Analyze suspicious processes for malware indicators")
+            assessment["recommendations"].append(
+                "Analyze suspicious processes for malware indicators"
+            )
 
         if external_connections > 5:
-            assessment["recommendations"].append("Review external network connections for data exfiltration")
+            assessment["recommendations"].append(
+                "Review external network connections for data exfiltration"
+            )
 
         return assessment
 
@@ -426,32 +446,25 @@ class MemoryForensicsTool:
         """
         try:
             if not is_volatility3_available() or not self.engine:
-                return {
-                    "success": False,
-                    "error": "Memory forensics engine not available"
-                }
+                return {"success": False, "error": "Memory forensics engine not available"}
 
-            process_analysis: Optional[Dict[str, Any]] = self.engine.analyze_process_memory(process_id, dump_path)
+            process_analysis: Optional[Dict[str, Any]] = self.engine.analyze_process_memory(
+                process_id, dump_path
+            )
 
             if process_analysis is None:
-                return {
-                    "success": False,
-                    "error": f"Failed to analyze process {process_id}"
-                }
+                return {"success": False, "error": f"Failed to analyze process {process_id}"}
 
             return {
                 "success": True,
                 "process_id": process_id,
                 "dump_path": dump_path,
-                "analysis_result": process_analysis
+                "analysis_result": process_analysis,
             }
 
         except Exception as e:
             logger.error(f"Process-specific analysis error: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
 
 def create_memory_forensics_tool() -> MemoryForensicsTool:

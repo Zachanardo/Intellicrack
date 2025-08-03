@@ -18,7 +18,7 @@ Successfully implemented a comprehensive dynamic path discovery system to replac
 ### 2. Supported Tools
 The system can dynamically discover:
 - **Ghidra** - Binary analysis framework
-- **Radare2** - Reverse engineering framework  
+- **Radare2** - Reverse engineering framework
 - **Frida** - Dynamic instrumentation toolkit
 - **Python** - Python interpreter (multiple versions)
 - **Docker** - Container platform

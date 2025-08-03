@@ -36,6 +36,7 @@ try:
     import pycuda.autoinit  # noqa: F401 - Required for CUDA initialization
     import pycuda.driver as cuda
     from pycuda import compiler, gpuarray
+
     PYCUDA_AVAILABLE = True
     logger.info("PyCUDA initialized successfully")
 except ImportError:
@@ -43,6 +44,7 @@ except ImportError:
 
 try:
     import cupy as cp
+
     CUPY_AVAILABLE = True
     logger.info("CuPy initialized successfully")
 except ImportError:
@@ -51,6 +53,7 @@ except ImportError:
 try:
     import numba
     from numba import cuda as numba_cuda
+
     NUMBA_CUDA_AVAILABLE = True
     logger.info("Numba CUDA initialized successfully")
 except ImportError:
@@ -188,13 +191,15 @@ class GPUAccelerator:
             # Launch kernel
             threads_per_block = 256
             blocks = (len(data_gpu) + threads_per_block - 1) // threads_per_block
-            kernel((blocks,), (threads_per_block,),
-                  (data_gpu, len(data_gpu), pattern_gpu, len(pattern_gpu),
-                   matches, match_positions))
+            kernel(
+                (blocks,),
+                (threads_per_block,),
+                (data_gpu, len(data_gpu), pattern_gpu, len(pattern_gpu), matches, match_positions),
+            )
 
             # Get results
             match_count = int(matches.get())
-            positions = match_positions[:min(match_count, 1000)].get().tolist()
+            positions = match_positions[: min(match_count, 1000)].get().tolist()
 
             return {
                 "match_count": match_count,
@@ -239,12 +244,15 @@ class GPUAccelerator:
 
             # Launch kernel
             pattern_match_kernel[blocks, threads_per_block](
-                d_data, d_pattern, d_matches, d_positions,
+                d_data,
+                d_pattern,
+                d_matches,
+                d_positions,
             )
 
             # Get results
             match_count = int(d_matches.copy_to_host()[0])
-            positions = d_positions.copy_to_host()[:min(match_count, 1000)].tolist()
+            positions = d_positions.copy_to_host()[: min(match_count, 1000)].tolist()
 
             return {
                 "match_count": match_count,
@@ -302,16 +310,19 @@ class GPUAccelerator:
             blocks = (len(data_np) + threads_per_block - 1) // threads_per_block
 
             pattern_match(
-                data_gpu, np.int32(len(data_np)),
-                pattern_gpu, np.int32(len(pattern_np)),
-                matches_gpu, positions_gpu,
+                data_gpu,
+                np.int32(len(data_np)),
+                pattern_gpu,
+                np.int32(len(pattern_np)),
+                matches_gpu,
+                positions_gpu,
                 block=(threads_per_block, 1, 1),
                 grid=(blocks, 1),
             )
 
             # Get results
             match_count = int(matches_gpu.get()[0])
-            positions = positions_gpu.get()[:min(match_count, 1000)].tolist()
+            positions = positions_gpu.get()[: min(match_count, 1000)].tolist()
 
             return {
                 "match_count": match_count,
@@ -374,7 +385,7 @@ class GPUAccelerator:
             entropies = []
 
             for i in range(num_blocks):
-                block = data_np[i * block_size:(i + 1) * block_size]
+                block = data_np[i * block_size : (i + 1) * block_size]
                 block_gpu = cp.asarray(block)
 
                 # Calculate histogram
@@ -401,6 +412,7 @@ class GPUAccelerator:
     def _numba_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
         """Numba CUDA implementation of entropy calculation"""
         try:
+
             @numba_cuda.jit
             def entropy_kernel(data, block_size, entropies):
                 block_idx = numba_cuda.grid(1)
@@ -459,7 +471,7 @@ class GPUAccelerator:
         entropies = []
 
         for i in range(num_blocks):
-            block = data_np[i * block_size:(i + 1) * block_size]
+            block = data_np[i * block_size : (i + 1) * block_size]
 
             # Calculate histogram
             hist, _ = np.histogram(block, bins=256, range=(0, 255))
@@ -501,10 +513,11 @@ class GPUAccelerator:
             else:
                 # CPU fallback for now
                 import zlib
+
                 if algo == "crc32":
-                    results[algo] = format(zlib.crc32(data) & 0xffffffff, "08x")
+                    results[algo] = format(zlib.crc32(data) & 0xFFFFFFFF, "08x")
                 elif algo == "adler32":
-                    results[algo] = format(zlib.adler32(data) & 0xffffffff, "08x")
+                    results[algo] = format(zlib.adler32(data) & 0xFFFFFFFF, "08x")
 
         return {
             "hashes": results,
@@ -538,16 +551,18 @@ class GPUAccelerator:
                 crc = crc_table[(crc ^ byte) & 0xFF] ^ (crc >> 8)
 
             result = int((crc ^ 0xFFFFFFFF).get())
-            return format(result & 0xffffffff, "08x")
+            return format(result & 0xFFFFFFFF, "08x")
 
         except Exception as e:
             logger.error(f"CuPy CRC32 failed: {e}")
             import zlib
-            return format(zlib.crc32(data) & 0xffffffff, "08x")
+
+            return format(zlib.crc32(data) & 0xFFFFFFFF, "08x")
 
 
 # Global accelerator instance
 gpu_accelerator = None
+
 
 def get_gpu_accelerator() -> GPUAccelerator:
     """Get or create GPU accelerator instance"""

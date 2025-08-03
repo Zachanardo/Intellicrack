@@ -121,7 +121,7 @@ class CustomAgent(BaseAgent):
             expertise=["custom_protocols", "proprietary_formats"],
             model="gpt-4o"
         )
-    
+
     def analyze(self, data):
         # Custom analysis logic
         return self.llm.generate(

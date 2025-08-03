@@ -28,6 +28,7 @@ from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 @dataclass
 class FlexLMRequest:
     """FlexLM request structure"""
@@ -45,6 +46,7 @@ class FlexLMRequest:
     checkout_time: int
     additional_data: dict[str, Any]
 
+
 @dataclass
 class FlexLMResponse:
     """FlexLM response structure"""
@@ -57,6 +59,7 @@ class FlexLMResponse:
     license_key: str
     server_id: str
     additional_data: dict[str, Any]
+
 
 class FlexLMProtocolParser:
     """Real FlexLM protocol parser and response generator"""
@@ -103,7 +106,7 @@ class FlexLMProtocolParser:
         """Initialize the FlexLM protocol parser with license tracking and server features."""
         self.logger = get_logger(__name__)
         self.active_checkouts = {}  # Track active license checkouts
-        self.server_features = {}   # Available features on server
+        self.server_features = {}  # Available features on server
         self.encryption_seed = self._generate_encryption_seed()
         self._load_default_features()
 
@@ -132,7 +135,6 @@ class FlexLMProtocolParser:
                 "vendor": "ADSKFLEX",
                 "signature": "C3D4E5F6789012345678901234567890ABCDEF12",
             },
-
             # MATLAB Products
             "MATLAB": {
                 "version": "R2024a",
@@ -148,7 +150,6 @@ class FlexLMProtocolParser:
                 "vendor": "MLM",
                 "signature": "E5F6789012345678901234567890ABCDEF123456",
             },
-
             # SolidWorks
             "SOLIDWORKS": {
                 "version": "2024",
@@ -157,7 +158,6 @@ class FlexLMProtocolParser:
                 "vendor": "SW_D",
                 "signature": "F6789012345678901234567890ABCDEF12345678",
             },
-
             # ANSYS Products
             "ANSYS": {
                 "version": "2024.1",
@@ -166,7 +166,6 @@ class FlexLMProtocolParser:
                 "vendor": "ANSYS",
                 "signature": "6789012345678901234567890ABCDEF1234567890",
             },
-
             # Generic features for testing
             "GENERIC_CAD": {
                 "version": "1.0",
@@ -200,7 +199,7 @@ class FlexLMProtocolParser:
             offset = 0
 
             # Check for FlexLM magic number (varies by version)
-            magic = struct.unpack(">I", data[offset:offset+4])[0]
+            magic = struct.unpack(">I", data[offset : offset + 4])[0]
             offset += 4
 
             if magic not in [0x464C4558, 0x4C4D5F56, 0x46584C4D]:  # "FLEX", "LM_V", "FXLM"
@@ -208,16 +207,16 @@ class FlexLMProtocolParser:
                 return None
 
             # Parse header fields
-            command = struct.unpack(">H", data[offset:offset+2])[0]
+            command = struct.unpack(">H", data[offset : offset + 2])[0]
             offset += 2
 
-            version = struct.unpack(">H", data[offset:offset+2])[0]
+            version = struct.unpack(">H", data[offset : offset + 2])[0]
             offset += 2
 
-            sequence = struct.unpack(">I", data[offset:offset+4])[0]
+            sequence = struct.unpack(">I", data[offset : offset + 4])[0]
             offset += 4
 
-            length = struct.unpack(">I", data[offset:offset+4])[0]
+            length = struct.unpack(">I", data[offset : offset + 4])[0]
             offset += 4
 
             if len(data) < length:
@@ -245,10 +244,10 @@ class FlexLMProtocolParser:
 
             # Parse remaining numeric fields
             if offset + 8 <= len(data):
-                pid = struct.unpack(">I", data[offset:offset+4])[0]
+                pid = struct.unpack(">I", data[offset : offset + 4])[0]
                 offset += 4
 
-                checkout_time = struct.unpack(">I", data[offset:offset+4])[0]
+                checkout_time = struct.unpack(">I", data[offset : offset + 4])[0]
                 offset += 4
             else:
                 pid = 0
@@ -274,7 +273,9 @@ class FlexLMProtocolParser:
                 additional_data=additional_data,
             )
 
-            self.logger.info(f"Parsed FlexLM {self.FLEXLM_COMMANDS.get(command, 'UNKNOWN')} request for feature '{feature}'")
+            self.logger.info(
+                f"Parsed FlexLM {self.FLEXLM_COMMANDS.get(command, 'UNKNOWN')} request for feature '{feature}'"
+            )
             return request
 
         except Exception as e:
@@ -298,14 +299,14 @@ class FlexLMProtocolParser:
         try:
             offset = 0
             while offset < len(data) - 4:
-                field_type = struct.unpack(">H", data[offset:offset+2])[0]
-                field_length = struct.unpack(">H", data[offset+2:offset+4])[0]
+                field_type = struct.unpack(">H", data[offset : offset + 2])[0]
+                field_length = struct.unpack(">H", data[offset + 2 : offset + 4])[0]
                 offset += 4
 
                 if offset + field_length > len(data):
                     break
 
-                field_data = data[offset:offset+field_length]
+                field_data = data[offset : offset + field_length]
                 offset += field_length
 
                 # Parse common field types
@@ -566,9 +567,11 @@ class FlexLMProtocolParser:
         vendor_string = feature_info.get("vendor_string", "INTELLICRACK")
 
         # Create comprehensive key data incorporating feature details
-        data = (f"{request.hostname}:{request.username}:{request.feature}:"
-                f"{feature_version}:{feature_type}:{feature_limit}:"
-                f"{vendor_string}:{time.time()}")
+        data = (
+            f"{request.hostname}:{request.username}:{request.feature}:"
+            f"{feature_version}:{feature_type}:{feature_limit}:"
+            f"{vendor_string}:{time.time()}"
+        )
 
         # Generate feature-specific key with enhanced entropy
         key = hashlib.sha256(data.encode()).hexdigest()[:32].upper()

@@ -1,4 +1,5 @@
 """Radare2 string analysis module for extracting and analyzing string data."""
+
 import logging
 import re
 from typing import Any
@@ -27,8 +28,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
-
-
 
 
 class R2StringAnalyzer:
@@ -120,7 +119,9 @@ class R2StringAnalyzer:
 
         return result
 
-    def _get_comprehensive_strings(self, r2: R2Session, min_length: int, encoding: str) -> list[dict[str, Any]]:
+    def _get_comprehensive_strings(
+        self, r2: R2Session, min_length: int, encoding: str
+    ) -> list[dict[str, Any]]:
         """Get strings using multiple radare2 commands for comprehensive coverage."""
         all_strings = []
 
@@ -224,7 +225,9 @@ class R2StringAnalyzer:
 
         return normalized
 
-    def _analyze_strings_by_section(self, r2: R2Session, strings: list[dict[str, Any]]) -> dict[str, Any]:
+    def _analyze_strings_by_section(
+        self, r2: R2Session, strings: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Analyze string distribution by binary sections."""
         sections = {}
 
@@ -254,8 +257,8 @@ class R2StringAnalyzer:
             section_strings = section_data["strings"]
             section_data["string_count"] = len(section_strings)
             section_data["total_string_length"] = sum(s.get("length", 0) for s in section_strings)
-            section_data["average_string_length"] = (
-                section_data["total_string_length"] / max(1, section_data["string_count"])
+            section_data["average_string_length"] = section_data["total_string_length"] / max(
+                1, section_data["string_count"]
             )
 
         return sections
@@ -376,9 +379,9 @@ class R2StringAnalyzer:
             r"^(Socket|Connect|Send|Recv|Http)\w+$",
             r"^(Crypt|Hash|Sign|Verify)\w+$",
             r"^\w+(A|W)$",  # ANSI/Wide API variants
-            r"^\w+Ex$",     # Extended API variants
-            r"^_\w+$",      # C runtime functions
-            r"^__\w+$",      # Compiler intrinsics
+            r"^\w+Ex$",  # Extended API variants
+            r"^_\w+$",  # C runtime functions
+            r"^__\w+$",  # Compiler intrinsics
         ]
 
         # Check length (API names are typically not too long)
@@ -405,11 +408,11 @@ class R2StringAnalyzer:
         """Check if string is a file path."""
         path_patterns = [
             r"^[A-Z]:\\",  # Windows absolute path
-            r"^\\\\",      # UNC path
-            r"^/",         # Unix absolute path
-            r"\.\w{1,4}$", # File extension
-            r"\\[^\\]+\\", # Windows path separators
-            r"/[^/]+/",    # Unix path separators
+            r"^\\\\",  # UNC path
+            r"^/",  # Unix absolute path
+            r"\.\w{1,4}$",  # File extension
+            r"\\[^\\]+\\",  # Windows path separators
+            r"/[^/]+/",  # Unix path separators
             r"\.(exe|dll|sys|bat|cmd|ini|cfg|log|txt|xml|json)$",
         ]
 
@@ -526,13 +529,19 @@ class R2StringAnalyzer:
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in network_patterns)
 
-    def _get_string_cross_references(self, r2: R2Session, strings: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    def _get_string_cross_references(
+        self, r2: R2Session, strings: list[dict[str, Any]]
+    ) -> dict[str, list[dict[str, Any]]]:
         """Get cross-references for important strings."""
         xrefs = {}
 
         # Focus on license and crypto strings for cross-reference analysis
-        important_strings = [s for s in strings if self._is_license_string(s.get("content", "")) or
-                           self._is_crypto_string(s.get("content", ""))]
+        important_strings = [
+            s
+            for s in strings
+            if self._is_license_string(s.get("content", ""))
+            or self._is_crypto_string(s.get("content", ""))
+        ]
 
         for string_data in important_strings[:20]:  # Limit to avoid performance issues
             addr = string_data.get("address", 0)
@@ -593,35 +602,45 @@ class R2StringAnalyzer:
 
             # Base64-like patterns
             if re.match(r"^[A-Za-z0-9+/]{20,}={0,2}$", content):
-                suspicious.append({
-                    "string": string_data,
-                    "pattern_type": "base64_like",
-                    "description": "Possible Base64 encoded data",
-                })
+                suspicious.append(
+                    {
+                        "string": string_data,
+                        "pattern_type": "base64_like",
+                        "description": "Possible Base64 encoded data",
+                    }
+                )
 
             # Hex-like patterns
             if re.match(r"^[0-9A-Fa-f]{32,}$", content):
-                suspicious.append({
-                    "string": string_data,
-                    "pattern_type": "hex_data",
-                    "description": "Long hexadecimal string (possible hash/key)",
-                })
+                suspicious.append(
+                    {
+                        "string": string_data,
+                        "pattern_type": "hex_data",
+                        "description": "Long hexadecimal string (possible hash/key)",
+                    }
+                )
 
             # High entropy short strings (possible keys)
             if string_data.get("entropy", 0) > 3.8 and len(content) < 50:
-                suspicious.append({
-                    "string": string_data,
-                    "pattern_type": "high_entropy",
-                    "description": "High entropy string (possible encrypted data/key)",
-                })
+                suspicious.append(
+                    {
+                        "string": string_data,
+                        "pattern_type": "high_entropy",
+                        "description": "High entropy string (possible encrypted data/key)",
+                    }
+                )
 
             # Suspicious license keywords
-            if any(keyword in content.lower() for keyword in ["crack", "keygen", "serial", "patch"]):
-                suspicious.append({
-                    "string": string_data,
-                    "pattern_type": "crack_related",
-                    "description": "Contains crack/keygen related keywords",
-                })
+            if any(
+                keyword in content.lower() for keyword in ["crack", "keygen", "serial", "patch"]
+            ):
+                suspicious.append(
+                    {
+                        "string": string_data,
+                        "pattern_type": "crack_related",
+                        "description": "Contains crack/keygen related keywords",
+                    }
+                )
 
         return suspicious
 
@@ -650,18 +669,28 @@ class R2StringAnalyzer:
         stats = {}
 
         categories = [
-            "license_strings", "crypto_strings", "api_strings", "url_strings",
-            "file_path_strings", "registry_strings", "error_message_strings",
-            "version_strings", "compiler_strings", "debug_strings",
-            "user_interface_strings", "network_strings",
+            "license_strings",
+            "crypto_strings",
+            "api_strings",
+            "url_strings",
+            "file_path_strings",
+            "registry_strings",
+            "error_message_strings",
+            "version_strings",
+            "compiler_strings",
+            "debug_strings",
+            "user_interface_strings",
+            "network_strings",
         ]
 
         for category in categories:
             category_strings = result.get(category, [])
             stats[category] = {
                 "count": len(category_strings),
-                "percentage": (len(category_strings) / max(1, result.get("total_strings", 1))) * 100,
-                "average_length": sum(len(s.get("content", "")) for s in category_strings) / max(1, len(category_strings)),
+                "percentage": (len(category_strings) / max(1, result.get("total_strings", 1)))
+                * 100,
+                "average_length": sum(len(s.get("content", "")) for s in category_strings)
+                / max(1, len(category_strings)),
             }
 
         return stats
@@ -674,9 +703,22 @@ class R2StringAnalyzer:
 
                 # Search for specific license validation patterns
                 license_search_terms = [
-                    "license", "registration", "activation", "serial", "key",
-                    "trial", "demo", "expire", "valid", "authentic", "genuine",
-                    "pirat", "crack", "illegal", "stolen", "tamper",
+                    "license",
+                    "registration",
+                    "activation",
+                    "serial",
+                    "key",
+                    "trial",
+                    "demo",
+                    "expire",
+                    "valid",
+                    "authentic",
+                    "genuine",
+                    "pirat",
+                    "crack",
+                    "illegal",
+                    "stolen",
+                    "tamper",
                 ]
 
                 for term in license_search_terms:
@@ -690,13 +732,18 @@ class R2StringAnalyzer:
                                 if addr:
                                     try:
                                         string_content = r2._execute_command(f"ps @ {hex(addr)}")
-                                        if string_content and term.lower() in string_content.lower():
-                                            validation_strings.append({
-                                                "content": string_content.strip(),
-                                                "address": hex(addr),
-                                                "search_term": term,
-                                                "context": "license_validation",
-                                            })
+                                        if (
+                                            string_content
+                                            and term.lower() in string_content.lower()
+                                        ):
+                                            validation_strings.append(
+                                                {
+                                                    "content": string_content.strip(),
+                                                    "address": hex(addr),
+                                                    "search_term": term,
+                                                    "context": "license_validation",
+                                                }
+                                            )
                                     except R2Exception as e:
                                         logger.error("R2Exception in radare2_strings: %s", e)
                                         continue
@@ -715,8 +762,9 @@ class R2StringAnalyzer:
             return {"error": str(e)}
 
 
-def analyze_binary_strings(binary_path: str, radare2_path: str | None = None,
-                          min_length: int = 4) -> dict[str, Any]:
+def analyze_binary_strings(
+    binary_path: str, radare2_path: str | None = None, min_length: int = 4
+) -> dict[str, Any]:
     """Perform comprehensive string analysis on a binary.
 
     Args:

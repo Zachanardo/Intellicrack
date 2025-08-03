@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import os
 import subprocess
 import tempfile
@@ -30,6 +29,7 @@ from ...utils.system.system_utils import is_admin
 
 logger = get_logger(__name__)
 
+
 class ActivationMethod(Enum):
     """Windows activation methods"""
 
@@ -37,6 +37,7 @@ class ActivationMethod(Enum):
     KMS38 = "kms38"
     ONLINE_KMS = "ohook"
     CHECK_ONLY = "check"
+
 
 class ActivationStatus(Enum):
     """Activation status values"""
@@ -47,6 +48,7 @@ class ActivationStatus(Enum):
     UNKNOWN = "unknown"
     ERROR = "error"
 
+
 class WindowsActivator:
     """Windows Activation Manager
 
@@ -56,7 +58,9 @@ class WindowsActivator:
 
     def __init__(self):
         """Initialize the Windows activator with script path and temporary directory setup."""
-        self.script_path = Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
+        self.script_path = (
+            Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
+        )
         self.temp_dir = Path(tempfile.gettempdir()) / "intellicrack_activation"
         self.logger = get_logger(__name__)
         self.last_validation_time = None
@@ -99,8 +103,9 @@ class WindowsActivator:
                 ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/xpr"],
                 capture_output=True,
                 text=True,
-                timeout=30
-            , check=False)
+                timeout=30,
+                check=False,
+            )
 
             status_info = {
                 "status": ActivationStatus.UNKNOWN.value,
@@ -168,8 +173,9 @@ class WindowsActivator:
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5 minutes timeout
-                cwd=self.script_path.parent
-            , check=False)
+                cwd=self.script_path.parent,
+                check=False,
+            )
 
             success = result.returncode == 0
 
@@ -216,8 +222,9 @@ class WindowsActivator:
                 ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/rearm"],
                 capture_output=True,
                 text=True,
-                timeout=60
-            , check=False)
+                timeout=60,
+                check=False,
+            )
 
             return {
                 "success": result.returncode == 0,
@@ -245,8 +252,9 @@ class WindowsActivator:
                 ["cscript", "//nologo", "C:\\Windows\\System32\\slmgr.vbs", "/dli"],
                 capture_output=True,
                 text=True,
-                timeout=30
-            , check=False)
+                timeout=30,
+                check=False,
+            )
 
             return {
                 "success": result.returncode == 0,
@@ -354,8 +362,10 @@ class WindowsActivator:
                             item_path = os.path.join(base_path, item)
                             if os.path.isdir(item_path):
                                 # Check for Office executables
-                                if any(os.path.exists(os.path.join(item_path, exe))
-                                      for exe in ["WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE"]):
+                                if any(
+                                    os.path.exists(os.path.join(item_path, exe))
+                                    for exe in ["WINWORD.EXE", "EXCEL.EXE", "POWERPNT.EXE"]
+                                ):
                                     if "Office16" in item or "16.0" in item:
                                         detected_versions.append("2016")
                                     elif "Office15" in item or "15.0" in item:
@@ -369,6 +379,7 @@ class WindowsActivator:
             # Also check registry for C2R installations
             try:
                 import winreg
+
                 registry_paths = [
                     r"SOFTWARE\Microsoft\Office\ClickToRun\Configuration",
                     r"SOFTWARE\WOW6432Node\Microsoft\Office\ClickToRun\Configuration",
@@ -439,8 +450,9 @@ class WindowsActivator:
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5 minutes timeout
-                cwd=self.script_path.parent
-            , check=False)
+                cwd=self.script_path.parent,
+                check=False,
+            )
 
             success = result.returncode == 0
 
@@ -505,19 +517,23 @@ class WindowsActivator:
                 "2019": "NMMKJ-6RK4F-KMJVX-8D9MJ-6MWKP",  # Office Pro Plus 2019
                 "2016": "XQNVK-8JYDB-WJ9W3-YJ8YR-WFG99",  # Office Pro Plus 2016
                 "2013": "YC7DK-G2NP3-2QQC3-J6H88-GVGXT",  # Office Pro Plus 2013
-                "2021": "FXYTK-NJJ8C-GB6DW-3DYQT-6F7TH",   # Office Pro Plus 2021
+                "2021": "FXYTK-NJJ8C-GB6DW-3DYQT-6F7TH",  # Office Pro Plus 2021
             }
 
             key = volume_keys.get(office_version, volume_keys.get("2016"))  # Default to 2016 key
 
             # Install the product key
             install_cmd = [
-                "cscript", "//nologo", ospp_script, f"/inpkey:{key}",
+                "cscript",
+                "//nologo",
+                ospp_script,
+                f"/inpkey:{key}",
             ]
 
             logger.info("Installing Office product key for version %s", office_version)
 
             from ...utils.system.subprocess_utils import run_subprocess_check
+
             result = run_subprocess_check(install_cmd, timeout=60)
 
             if result.returncode != 0:
@@ -529,17 +545,17 @@ class WindowsActivator:
 
             # Activate the installed key
             activate_cmd = [
-                "cscript", "//nologo", ospp_script, "/act",
+                "cscript",
+                "//nologo",
+                ospp_script,
+                "/act",
             ]
 
             logger.info("Activating Office using MSI method")
 
             result = subprocess.run(
-                activate_cmd,
-                capture_output=True,
-                text=True,
-                timeout=120
-            , check=False)
+                activate_cmd, capture_output=True, text=True, timeout=120, check=False
+            )
 
             success = result.returncode == 0
 
@@ -601,8 +617,9 @@ class WindowsActivator:
                 ["cscript", "//nologo", ospp_script, "/dstatus"],
                 capture_output=True,
                 text=True,
-                timeout=60
-            , check=False)
+                timeout=60,
+                check=False,
+            )
 
             status_info = {
                 "raw_output": result.stdout.strip(),

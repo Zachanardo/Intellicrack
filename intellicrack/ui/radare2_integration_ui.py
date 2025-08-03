@@ -1,4 +1,3 @@
-
 """Comprehensive Radare2 UI Integration for Intellicrack
 
 Copyright (C) 2025 Zachary Flint
@@ -454,16 +453,24 @@ class R2ResultsViewer(QWidget):
         vulnerabilities = []
 
         # Collect vulnerabilities from different categories
-        for category in ["buffer_overflows", "format_string_bugs", "integer_overflows",
-                        "use_after_free", "double_free", "code_injection"]:
+        for category in [
+            "buffer_overflows",
+            "format_string_bugs",
+            "integer_overflows",
+            "use_after_free",
+            "double_free",
+            "code_injection",
+        ]:
             if category in data:
                 for vuln in data[category]:
-                    vulnerabilities.append({
-                        "type": category.replace("_", " ").title(),
-                        "function": vuln.get("function", "Unknown"),
-                        "address": vuln.get("address", "Unknown"),
-                        "severity": vuln.get("severity", "Medium"),
-                    })
+                    vulnerabilities.append(
+                        {
+                            "type": category.replace("_", " ").title(),
+                            "function": vuln.get("function", "Unknown"),
+                            "address": vuln.get("address", "Unknown"),
+                            "severity": vuln.get("severity", "Medium"),
+                        }
+                    )
 
         table.setRowCount(len(vulnerabilities))
 
@@ -481,8 +488,13 @@ class R2ResultsViewer(QWidget):
         # String categories tabs
         strings_tabs = QTabWidget()
 
-        categories = ["license_strings", "crypto_strings", "error_message_strings",
-                     "debug_strings", "suspicious_patterns"]
+        categories = [
+            "license_strings",
+            "crypto_strings",
+            "error_message_strings",
+            "debug_strings",
+            "suspicious_patterns",
+        ]
 
         for category in categories:
             if category in data:
@@ -508,11 +520,13 @@ class R2ResultsViewer(QWidget):
 
         if "imports" in data:
             for imp in data["imports"]:
-                item = QTreeWidgetItem([
-                    imp.get("name", "Unknown"),
-                    imp.get("library", "Unknown"),
-                    imp.get("category", "Unknown"),
-                ])
+                item = QTreeWidgetItem(
+                    [
+                        imp.get("name", "Unknown"),
+                        imp.get("library", "Unknown"),
+                        imp.get("category", "Unknown"),
+                    ]
+                )
                 imports_widget.addTopLevelItem(item)
 
         # API categories
@@ -542,7 +556,9 @@ class R2ResultsViewer(QWidget):
             complexity = data["complexity_metrics"]
             metrics_info.append(f"Nodes: {complexity.get('nodes', 0)}")
             metrics_info.append(f"Edges: {complexity.get('edges', 0)}")
-            metrics_info.append(f"Cyclomatic complexity: {complexity.get('cyclomatic_complexity', 0)}")
+            metrics_info.append(
+                f"Cyclomatic complexity: {complexity.get('cyclomatic_complexity', 0)}"
+            )
 
         metrics_text.setPlainText("\n".join(metrics_info))
         layout.addWidget(metrics_text)
@@ -558,7 +574,9 @@ class R2ResultsViewer(QWidget):
 
             for i, pattern in enumerate(patterns):
                 patterns_widget.setItem(i, 0, QTableWidgetItem(pattern.get("type", "Unknown")))
-                patterns_widget.setItem(i, 1, QTableWidgetItem(str(pattern.get("op_addr", "Unknown"))))
+                patterns_widget.setItem(
+                    i, 1, QTableWidgetItem(str(pattern.get("op_addr", "Unknown")))
+                )
                 patterns_widget.setItem(i, 2, QTableWidgetItem(pattern.get("disasm", "Unknown")))
 
             layout.addWidget(patterns_widget)
@@ -590,11 +608,13 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
             vuln_data = data["ai_vulnerability_prediction"]
             if "vulnerability_predictions" in vuln_data:
                 for vuln_type, prediction in vuln_data["vulnerability_predictions"].items():
-                    item = QTreeWidgetItem([
-                        vuln_type.replace("_", " ").title(),
-                        f"{prediction.get('probability', 0):.3f}",
-                        str(prediction.get("predicted", False)),
-                    ])
+                    item = QTreeWidgetItem(
+                        [
+                            vuln_type.replace("_", " ").title(),
+                            f"{prediction.get('probability', 0):.3f}",
+                            str(prediction.get("predicted", False)),
+                        ]
+                    )
                     vuln_widget.addTopLevelItem(item)
 
             ai_tabs.addTab(vuln_widget, "Vulnerability Prediction")
@@ -631,7 +651,10 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
             return
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Results", "radare2_analysis_results.json", "JSON Files (*.json)",
+            self,
+            "Export Results",
+            "radare2_analysis_results.json",
+            "JSON Files (*.json)",
         )
 
         if file_path:
@@ -751,7 +774,10 @@ class R2IntegrationWidget(QWidget):
     def _browse_file(self):
         """Browse for binary file"""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Binary File", "", "All Files (*)",
+            self,
+            "Select Binary File",
+            "",
+            "All Files (*)",
         )
 
         if file_path:
@@ -784,7 +810,9 @@ class R2IntegrationWidget(QWidget):
         self.status_label.setText(f"Starting {analysis_type} analysis...")
 
         # Start worker thread
-        self.current_worker = R2AnalysisWorker(self.binary_path, analysis_type, self.analysis_config)
+        self.current_worker = R2AnalysisWorker(
+            self.binary_path, analysis_type, self.analysis_config
+        )
         self.current_worker.progress_updated.connect(self.progress_bar.setValue)
         self.current_worker.status_updated.connect(self.status_label.setText)
         self.current_worker.analysis_completed.connect(self._on_analysis_completed)

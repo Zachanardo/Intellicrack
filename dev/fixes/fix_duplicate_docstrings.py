@@ -9,28 +9,28 @@ def fix_duplicate_docstrings(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
-        
+
         original_content = content
-        
+
         # Fix pattern: """Initialize the object.""" followed by proper docstring
         pattern1 = r'(\s+)def __init__\([^)]*\):\s*\n(\s+)"""Initialize the object\."""\s*\n(\s+)("""[^"]+""")'
-        
+
         def fix_duplicate(match):
             indent1 = match.group(1)
             indent2 = match.group(2)
             proper_docstring = match.group(4)
             return f'{indent1}def __init__({match.group(0).split("(", 1)[1].split("):", 1)[0]}):\n{indent2}{proper_docstring}'
-        
+
         content = re.sub(pattern1, fix_duplicate, content, flags=re.DOTALL)
-        
+
         # Fix wrong indentation pattern
         pattern2 = r'(\s+)def __init__\([^)]*\):\s*\n(\s+)"""Initialize the object\."""\s*\n(\s+)("""[^"]*""")'
         content = re.sub(pattern2, fix_duplicate, content, flags=re.DOTALL)
-        
+
         # Fix simple case where there's wrong indentation
         pattern3 = r'(\s+)def __init__\([^)]*\):\s*\n(\s+)"""Initialize the object\."""\s*\n(\s+)("""[^"]*""")'
         content = re.sub(pattern3, fix_duplicate, content, flags=re.DOTALL)
-        
+
         # Remove lines that are just """Initialize the object.""" with wrong indentation
         lines = content.split('\n')
         new_lines = []
@@ -47,19 +47,19 @@ def fix_duplicate_docstrings(file_path):
                         continue
             new_lines.append(line)
             i += 1
-        
+
         content = '\n'.join(new_lines)
-        
+
         if content != original_content:
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
             print(f"Fixed duplicate docstrings in {file_path.relative_to(Path('C:/Intellicrack'))}")
             return True
-            
+
     except Exception as e:
         print(f"Error processing {file_path}: {e}")
         return False
-    
+
     return False
 
 # Get all Python files that might have issues

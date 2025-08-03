@@ -72,7 +72,8 @@ class ToolValidator:
             try:
                 result = subprocess.run(
                     [tool_path, "--version"],
-                    check=False, capture_output=True,
+                    check=False,
+                    capture_output=True,
                     text=True,
                     timeout=15,
                 )
@@ -88,11 +89,13 @@ class ToolValidator:
                 validation["issues"].append(f"Version check failed: {e}")
 
             # Check capabilities
-            validation["capabilities"].extend([
-                "decompilation",
-                "static_analysis",
-                "script_execution",
-            ])
+            validation["capabilities"].extend(
+                [
+                    "decompilation",
+                    "static_analysis",
+                    "script_execution",
+                ]
+            )
 
             validation["valid"] = True
 
@@ -116,7 +119,8 @@ class ToolValidator:
             # Test basic functionality
             result = subprocess.run(
                 [tool_path, "-v"],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=10,
             )
@@ -131,11 +135,13 @@ class ToolValidator:
                 if "r2pm" in version_text:
                     validation["capabilities"].append("package_manager")
 
-                validation["capabilities"].extend([
-                    "disassembly",
-                    "debugging",
-                    "binary_analysis",
-                ])
+                validation["capabilities"].extend(
+                    [
+                        "disassembly",
+                        "debugging",
+                        "binary_analysis",
+                    ]
+                )
 
                 validation["valid"] = True
             else:
@@ -163,7 +169,8 @@ class ToolValidator:
         try:
             result = subprocess.run(
                 [tool_path, "--version"],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=5,
             )
@@ -180,7 +187,9 @@ class ToolValidator:
                     if major >= 3 and minor >= 8:
                         validation["capabilities"].append("compatible")
                     else:
-                        validation["issues"].append(f"Python {version} may not be compatible (need 3.8+)")
+                        validation["issues"].append(
+                            f"Python {version} may not be compatible (need 3.8+)"
+                        )
 
                 validation["valid"] = True
             else:
@@ -205,7 +214,8 @@ class ToolValidator:
         try:
             result = subprocess.run(
                 [tool_path, "--version"],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=10,
             )
@@ -216,11 +226,13 @@ class ToolValidator:
                 if version_match:
                     validation["version"] = version_match.group(1)
 
-                validation["capabilities"].extend([
-                    "dynamic_instrumentation",
-                    "javascript_injection",
-                    "process_hooking",
-                ])
+                validation["capabilities"].extend(
+                    [
+                        "dynamic_instrumentation",
+                        "javascript_injection",
+                        "process_hooking",
+                    ]
+                )
 
                 validation["valid"] = True
             else:
@@ -245,7 +257,8 @@ class ToolValidator:
         try:
             result = subprocess.run(
                 [tool_path, "--version"],
-                check=False, capture_output=True,
+                check=False,
+                capture_output=True,
                 text=True,
                 timeout=10,
             )
@@ -262,10 +275,12 @@ class ToolValidator:
                 if "i386" in tool_path:
                     validation["capabilities"].append("i386")
 
-                validation["capabilities"].extend([
-                    "emulation",
-                    "sandboxing",
-                ])
+                validation["capabilities"].extend(
+                    [
+                        "emulation",
+                        "sandboxing",
+                    ]
+                )
 
                 validation["valid"] = True
             else:
@@ -444,29 +459,35 @@ class AdvancedToolDiscovery:
 
     def _search_common_locations(self, tool_name: str, executables: list[str]) -> str | None:
         """Search in common installation locations."""
-        logger.debug(f"Searching common locations for tool: {tool_name} with executables: {executables}")
+        logger.debug(
+            f"Searching common locations for tool: {tool_name} with executables: {executables}"
+        )
         common_paths = []
 
         if sys.platform == "win32":
-            common_paths.extend([
-                os.environ.get("PROGRAMFILES", ""),
-                os.environ.get("PROGRAMFILES(X86)", ""),
-                os.environ.get("LOCALAPPDATA", ""),
-                "C:\\Tools",
-                "C:\\",
-                os.path.expanduser("~\\AppData\\Local"),
-                os.path.expanduser("~\\Documents"),
-            ])
+            common_paths.extend(
+                [
+                    os.environ.get("PROGRAMFILES", ""),
+                    os.environ.get("PROGRAMFILES(X86)", ""),
+                    os.environ.get("LOCALAPPDATA", ""),
+                    "C:\\Tools",
+                    "C:\\",
+                    os.path.expanduser("~\\AppData\\Local"),
+                    os.path.expanduser("~\\Documents"),
+                ]
+            )
         else:
-            common_paths.extend([
-                "/usr/bin",
-                "/usr/local/bin",
-                "/opt",
-                "/usr/share",
-                os.path.expanduser("~/bin"),
-                os.path.expanduser("~/.local/bin"),
-                os.path.expanduser("~/Tools"),
-            ])
+            common_paths.extend(
+                [
+                    "/usr/bin",
+                    "/usr/local/bin",
+                    "/opt",
+                    "/usr/share",
+                    os.path.expanduser("~/bin"),
+                    os.path.expanduser("~/.local/bin"),
+                    os.path.expanduser("~/Tools"),
+                ]
+            )
 
         for base_path in common_paths:
             if not base_path or not os.path.exists(base_path):
@@ -502,8 +523,12 @@ class AdvancedToolDiscovery:
                                     try:
                                         display_name = winreg.QueryValueEx(subkey, "DisplayName")[0]
                                         if tool_name.lower() in display_name.lower():
-                                            install_location = winreg.QueryValueEx(subkey, "InstallLocation")[0]
-                                            if install_location and os.path.exists(install_location):
+                                            install_location = winreg.QueryValueEx(
+                                                subkey, "InstallLocation"
+                                            )[0]
+                                            if install_location and os.path.exists(
+                                                install_location
+                                            ):
                                                 return install_location
                                     except FileNotFoundError as e:
                                         logger.error("File not found in tool_discovery: %s", e)
@@ -529,33 +554,41 @@ class AdvancedToolDiscovery:
 
         if tool_name == "ghidra":
             if sys.platform == "win32":
-                paths.extend([
-                    "C:\\Program Files\\Ghidra",
-                    "C:\\ghidra",
-                    "C:\\Tools\\ghidra",
-                    os.path.expanduser("~\\ghidra"),
-                ])
+                paths.extend(
+                    [
+                        "C:\\Program Files\\Ghidra",
+                        "C:\\ghidra",
+                        "C:\\Tools\\ghidra",
+                        os.path.expanduser("~\\ghidra"),
+                    ]
+                )
             else:
-                paths.extend([
-                    "/opt/ghidra",
-                    "/usr/local/ghidra",
-                    "/usr/share/ghidra",
-                    os.path.expanduser("~/ghidra"),
-                    "/Applications/ghidra",
-                ])
+                paths.extend(
+                    [
+                        "/opt/ghidra",
+                        "/usr/local/ghidra",
+                        "/usr/share/ghidra",
+                        os.path.expanduser("~/ghidra"),
+                        "/Applications/ghidra",
+                    ]
+                )
 
         elif tool_name == "qemu":
             if sys.platform == "win32":
-                paths.extend([
-                    "C:\\Program Files\\qemu",
-                    "C:\\qemu",
-                ])
+                paths.extend(
+                    [
+                        "C:\\Program Files\\qemu",
+                        "C:\\qemu",
+                    ]
+                )
             else:
-                paths.extend([
-                    "/usr/bin",
-                    "/usr/local/bin",
-                    "/opt/qemu",
-                ])
+                paths.extend(
+                    [
+                        "/usr/bin",
+                        "/usr/local/bin",
+                        "/opt/qemu",
+                    ]
+                )
 
         return paths
 

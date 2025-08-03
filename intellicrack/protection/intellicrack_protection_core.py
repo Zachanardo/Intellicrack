@@ -116,7 +116,6 @@ class IntellicrackProtectionCore:
             "Breakpoint on VirtualProtect calls",
             "Dump when code is decompressed",
         ],
-
         # Protectors
         "Themida": [
             "Use Themida unpacker scripts",
@@ -140,7 +139,6 @@ class IntellicrackProtectionCore:
             "Set hardware breakpoints",
             "Dump after decompression routine",
         ],
-
         # Licensing Systems
         "HASP": [
             "Monitor HASP API calls",
@@ -172,7 +170,6 @@ class IntellicrackProtectionCore:
             "Analyze license validation",
             "Use CrypKey tools",
         ],
-
         # DRM Systems
         "Denuvo": [
             "Extremely difficult protection",
@@ -204,7 +201,6 @@ class IntellicrackProtectionCore:
         self.engine_path = engine_path  # Keep for compatibility
         self.icp_backend = ICPBackend()
         self._validate_engine_installation()
-
 
     def _validate_engine_installation(self):
         """Validate that native die-python integration is working"""
@@ -331,12 +327,18 @@ class IntellicrackProtectionCore:
 
             # Set compiler info
             if det_type == ProtectionType.COMPILER and not analysis.compiler:
-                analysis.compiler = f"{detection.name} {detection.version}" if detection.version else detection.name
+                analysis.compiler = (
+                    f"{detection.name} {detection.version}" if detection.version else detection.name
+                )
 
             # Set analysis flags
             if det_type == ProtectionType.PACKER:
                 analysis.is_packed = True
-            elif det_type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR] or det_type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
+            elif det_type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR] or det_type in [
+                ProtectionType.LICENSE,
+                ProtectionType.DONGLE,
+                ProtectionType.DRM,
+            ]:
                 analysis.is_protected = True
 
             analysis.detections.append(det_result)
@@ -360,7 +362,9 @@ class IntellicrackProtectionCore:
 
     def _parse_json_output(self, file_path: str, engine_data: dict) -> ProtectionAnalysis:
         """Parse legacy JSON output into structured results (kept for compatibility)"""
-        analysis = ProtectionAnalysis(file_path=file_path, file_type="Unknown", architecture="Unknown")
+        analysis = ProtectionAnalysis(
+            file_path=file_path, file_type="Unknown", architecture="Unknown"
+        )
 
         # Extract detections from the new format
         detects = engine_data.get("detects", [])
@@ -415,7 +419,11 @@ class IntellicrackProtectionCore:
                 # Add to appropriate flags
                 if det_type == ProtectionType.PACKER:
                     analysis.is_packed = True
-                elif det_type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR] or det_type in [ProtectionType.LICENSE, ProtectionType.DONGLE, ProtectionType.DRM]:
+                elif det_type in [ProtectionType.PROTECTOR, ProtectionType.CRYPTOR] or det_type in [
+                    ProtectionType.LICENSE,
+                    ProtectionType.DONGLE,
+                    ProtectionType.DRM,
+                ]:
                     analysis.is_protected = True
 
                 analysis.detections.append(det_result)
@@ -462,8 +470,8 @@ class IntellicrackProtectionCore:
 
                     # Extract name and version
                     if "(" in det_info and ")" in det_info:
-                        name = det_info[:det_info.index("(")].strip()
-                        version = det_info[det_info.index("(")+1:det_info.index(")")].strip()
+                        name = det_info[: det_info.index("(")].strip()
+                        version = det_info[det_info.index("(") + 1 : det_info.index(")")].strip()
                     else:
                         name = det_info
                         version = None
@@ -645,7 +653,9 @@ class IntellicrackProtectionCore:
         if output_format == "csv":
             lines = ["File,Type,Architecture,Protection,Version,Category"]
             for det in analysis.detections:
-                lines.append(f"{analysis.file_path},{analysis.file_type},{analysis.architecture},{det.name},{det.version or 'N/A'},{det.type.value}")
+                lines.append(
+                    f"{analysis.file_path},{analysis.file_type},{analysis.architecture},{det.name},{det.version or 'N/A'},{det.type.value}"
+                )
             return "\n".join(lines)
 
         raise ValueError(f"Unknown output format: {output_format}")

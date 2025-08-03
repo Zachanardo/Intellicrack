@@ -35,6 +35,7 @@ try:
     from rich.table import Table
     from rich.text import Text
     from rich.tree import Tree
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -120,7 +121,6 @@ class ConfigManager:
                 validator=lambda x: 10 <= x <= 10000,
                 category="general",
             ),
-
             # Analysis Settings
             "analysis_timeout": ConfigOption(
                 name="analysis_timeout",
@@ -157,7 +157,6 @@ class ConfigManager:
                 category="analysis",
                 advanced=True,
             ),
-
             # Progress and Display
             "show_progress": ConfigOption(
                 name="show_progress",
@@ -194,7 +193,6 @@ class ConfigManager:
                 validator=lambda x: 5 <= x <= 100,
                 category="display",
             ),
-
             # Export Settings
             "default_export_format": ConfigOption(
                 name="default_export_format",
@@ -222,7 +220,6 @@ class ConfigManager:
                 category="export",
                 advanced=True,
             ),
-
             # Security Settings
             "sandbox_analysis": ConfigOption(
                 name="sandbox_analysis",
@@ -251,7 +248,6 @@ class ConfigManager:
                 default=True,
                 category="security",
             ),
-
             # AI Settings
             "ai_backend": ConfigOption(
                 name="ai_backend",
@@ -290,7 +286,6 @@ class ConfigManager:
                 category="ai",
                 advanced=True,
             ),
-
             # Performance Settings
             "memory_limit": ConfigOption(
                 name="memory_limit",
@@ -321,7 +316,6 @@ class ConfigManager:
                 validator=lambda x: 100 <= x <= 10240,
                 category="performance",
             ),
-
             # Developer Settings
             "debug_mode": ConfigOption(
                 name="debug_mode",
@@ -509,7 +503,9 @@ You can modify core analysis, AI backend, and export preferences.
         console.print(category_panel)
 
         for option in category_options:
-            if option.advanced and not Confirm.ask(f"Show advanced option '{option.name}'?", default=False):
+            if option.advanced and not Confirm.ask(
+                f"Show advanced option '{option.name}'?", default=False
+            ):
                 continue
 
             # Display current value and description
@@ -570,7 +566,9 @@ You can modify core analysis, AI backend, and export preferences.
                 # Create option display text
                 option_text = Text()
                 option_text.append(f"⚙️  {option.name}: ", style="white")
-                option_text.append(str(option.value), style="green" if option.value == option.default else "yellow")
+                option_text.append(
+                    str(option.value), style="green" if option.value == option.default else "yellow"
+                )
                 if option.advanced:
                     option_text.append(" [ADVANCED]", style="red")
 
@@ -658,7 +656,9 @@ You can modify core analysis, AI backend, and export preferences.
         categories = set(option.category for option in self.options.values())
         return sorted(list(categories))
 
-    def get_category_options(self, category: str, include_advanced: bool = True) -> list[ConfigOption]:
+    def get_category_options(
+        self, category: str, include_advanced: bool = True
+    ) -> list[ConfigOption]:
         """Get configuration options for a specific category.
 
         Args:
@@ -670,11 +670,14 @@ You can modify core analysis, AI backend, and export preferences.
 
         """
         return [
-            option for option in self.options.values()
+            option
+            for option in self.options.values()
             if option.category == category and (include_advanced or not option.advanced)
         ]
 
-    def get_options_by_category(self, category: str, include_advanced: bool = False) -> dict[str, ConfigOption]:
+    def get_options_by_category(
+        self, category: str, include_advanced: bool = False
+    ) -> dict[str, ConfigOption]:
         """Get configuration options by category.
 
         Args:
@@ -686,7 +689,8 @@ You can modify core analysis, AI backend, and export preferences.
 
         """
         return {
-            name: option for name, option in self.options.items()
+            name: option
+            for name, option in self.options.items()
             if option.category == category and (include_advanced or not option.advanced)
         }
 
@@ -731,13 +735,17 @@ You can modify core analysis, AI backend, and export preferences.
             backup_file = os.path.join(self.backup_dir, f"config_backup_{timestamp}.json")
 
             import shutil
+
             shutil.copy2(self.config_file, backup_file)
 
             # Keep only last 10 backups
-            backups = sorted([
-                f for f in os.listdir(self.backup_dir)
-                if f.startswith("config_backup_") and f.endswith(".json")
-            ])
+            backups = sorted(
+                [
+                    f
+                    for f in os.listdir(self.backup_dir)
+                    if f.startswith("config_backup_") and f.endswith(".json")
+                ]
+            )
 
             while len(backups) > 10:
                 old_backup = backups.pop(0)
@@ -786,6 +794,7 @@ You can modify core analysis, AI backend, and export preferences.
             elif format_type.lower() == "yaml":
                 try:
                     import yaml
+
                     export_data = {
                         "configuration": self.config,
                         "metadata": {
@@ -822,6 +831,7 @@ You can modify core analysis, AI backend, and export preferences.
             with open(import_path, encoding="utf-8") as f:
                 if import_path.endswith(".yaml") or import_path.endswith(".yml"):
                     import yaml
+
                     data = yaml.safe_load(f)
                 else:
                     data = json.load(f)

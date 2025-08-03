@@ -38,6 +38,7 @@ try:
     from rich.prompt import Confirm, Prompt
     from rich.table import Table
     from rich.tree import Tree
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -105,8 +106,12 @@ class IntellicrackProject:
             data.get("description", ""),
         )
 
-        project.created_time = datetime.fromisoformat(data.get("created_time", datetime.now().isoformat()))
-        project.modified_time = datetime.fromisoformat(data.get("modified_time", datetime.now().isoformat()))
+        project.created_time = datetime.fromisoformat(
+            data.get("created_time", datetime.now().isoformat())
+        )
+        project.modified_time = datetime.fromisoformat(
+            data.get("modified_time", datetime.now().isoformat())
+        )
         project.binaries = data.get("binaries", [])
         project.analysis_results = data.get("analysis_results", {})
         project.scripts = data.get("scripts", [])
@@ -231,8 +236,9 @@ class ProjectManager:
         except Exception as e:
             logger.debug(f"Non-critical operation failed: {e}")
 
-    def create_project(self, name: str, description: str = "",
-                      template: str | None = None) -> IntellicrackProject | None:
+    def create_project(
+        self, name: str, description: str = "", template: str | None = None
+    ) -> IntellicrackProject | None:
         """Create new project.
 
         Args:
@@ -477,15 +483,17 @@ class ProjectManager:
                         # Calculate project size
                         size = self._get_directory_size(project_path)
 
-                        projects.append({
-                            "name": data["name"],
-                            "description": data.get("description", ""),
-                            "created_time": data.get("created_time", ""),
-                            "modified_time": data.get("modified_time", ""),
-                            "size": size,
-                            "binary_count": len(data.get("binaries", [])),
-                            "analysis_count": len(data.get("analysis_results", {})),
-                        })
+                        projects.append(
+                            {
+                                "name": data["name"],
+                                "description": data.get("description", ""),
+                                "created_time": data.get("created_time", ""),
+                                "modified_time": data.get("modified_time", ""),
+                                "size": size,
+                                "binary_count": len(data.get("binaries", [])),
+                                "analysis_count": len(data.get("analysis_results", {})),
+                            }
+                        )
 
                     except Exception:
                         continue
@@ -495,8 +503,9 @@ class ProjectManager:
 
         return sorted(projects, key=lambda x: x["modified_time"], reverse=True)
 
-    def import_binary(self, project: IntellicrackProject, binary_path: str,
-                     copy_file: bool = True) -> bool:
+    def import_binary(
+        self, project: IntellicrackProject, binary_path: str, copy_file: bool = True
+    ) -> bool:
         """Import binary into project.
 
         Args:
@@ -535,8 +544,9 @@ class ProjectManager:
         except Exception:
             return False
 
-    def export_project(self, project: IntellicrackProject, export_path: str,
-                      include_binaries: bool = True) -> bool:
+    def export_project(
+        self, project: IntellicrackProject, export_path: str, include_binaries: bool = True
+    ) -> bool:
         """Export project to archive.
 
         Args:
@@ -571,7 +581,9 @@ class ProjectManager:
                     TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
                     console=console,
                 ) as progress:
-                    export_task = progress.add_task(f"Exporting {project.name}...", total=total_files)
+                    export_task = progress.add_task(
+                        f"Exporting {project.name}...", total=total_files
+                    )
 
                     with zipfile.ZipFile(export_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                         # Add project metadata
@@ -621,7 +633,9 @@ class ProjectManager:
         except Exception:
             return False
 
-    def import_project(self, archive_path: str, project_name: str | None = None) -> IntellicrackProject | None:
+    def import_project(
+        self, archive_path: str, project_name: str | None = None
+    ) -> IntellicrackProject | None:
         """Import project from archive.
 
         Args:
@@ -757,7 +771,9 @@ class ProjectManager:
 
                 table.add_row(
                     project["name"],
-                    project["description"][:30] + "..." if len(project["description"]) > 30 else project["description"],
+                    project["description"][:30] + "..."
+                    if len(project["description"]) > 30
+                    else project["description"],
                     str(project["binary_count"]),
                     str(project["analysis_count"]),
                     size_str,
@@ -782,8 +798,10 @@ class ProjectManager:
                 modified_time = datetime.fromisoformat(project["modified_time"])
                 modified_str = modified_time.strftime("%m-%d %H:%M")
 
-                print(f"{project['name']:<15} {project['binary_count']:<8} {project['analysis_count']:<8} "
-                      f"{size_str:<10} {modified_str:<16}")
+                print(
+                    f"{project['name']:<15} {project['binary_count']:<8} {project['analysis_count']:<8} "
+                    f"{size_str:<10} {modified_str:<16}"
+                )
             print()
 
     def display_project_tree(self, project: IntellicrackProject) -> None:
@@ -854,7 +872,9 @@ class ProjectManager:
                 tags_node.add(f"🔖 {tag}")
 
         self.console.print()
-        self.console.print(Panel(tree, title=f"Project Structure: {project.name}", border_style="green"))
+        self.console.print(
+            Panel(tree, title=f"Project Structure: {project.name}", border_style="green")
+        )
         self.console.print()
 
     def cleanup_workspace(self) -> int:

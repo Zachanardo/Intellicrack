@@ -42,41 +42,49 @@ class YARAPatternAnalysisTool:
                 "properties": {
                     "file_path": {
                         "type": "string",
-                        "description": "Path to the binary file to analyze"
+                        "description": "Path to the binary file to analyze",
                     },
                     "rule_categories": {
                         "type": "array",
                         "items": {
                             "type": "string",
-                            "enum": ["PROTECTION", "PACKER", "LICENSING", "ANTI_DEBUG", "ANTI_VM", "CRYPTOR", "ALL"]
+                            "enum": [
+                                "PROTECTION",
+                                "PACKER",
+                                "LICENSING",
+                                "ANTI_DEBUG",
+                                "ANTI_VM",
+                                "CRYPTOR",
+                                "ALL",
+                            ],
                         },
                         "description": "Categories of YARA rules to run (default: ALL)",
-                        "default": ["ALL"]
+                        "default": ["ALL"],
                     },
                     "custom_rules": {
                         "type": "array",
                         "items": {"type": "string"},
                         "description": "Optional custom YARA rules to include",
-                        "default": []
+                        "default": [],
                     },
                     "timeout": {
                         "type": "integer",
                         "description": "Analysis timeout in seconds",
-                        "default": 60
+                        "default": 60,
                     },
                     "include_strings": {
                         "type": "boolean",
                         "description": "Include matched string data in results",
-                        "default": True
+                        "default": True,
                     },
                     "detailed_output": {
                         "type": "boolean",
                         "description": "Include detailed pattern analysis and metadata",
-                        "default": True
-                    }
+                        "default": True,
+                    },
                 },
-                "required": ["file_path"]
-            }
+                "required": ["file_path"],
+            },
         }
 
     def execute(self, **kwargs) -> Dict[str, Any]:
@@ -91,16 +99,10 @@ class YARAPatternAnalysisTool:
         """
         file_path = kwargs.get("file_path")
         if not file_path or not os.path.exists(file_path):
-            return {
-                "success": False,
-                "error": f"File not found: {file_path}"
-            }
+            return {"success": False, "error": f"File not found: {file_path}"}
 
         if not is_yara_available():
-            return {
-                "success": False,
-                "error": "YARA engine not available"
-            }
+            return {"success": False, "error": "YARA engine not available"}
 
         # Get parameters
         rule_categories = kwargs.get("rule_categories", ["ALL"])
@@ -121,12 +123,26 @@ class YARAPatternAnalysisTool:
             # Determine which rule categories to use
             categories_to_scan = []
             if "ALL" in rule_categories:
-                categories_to_scan = ["PROTECTION", "PACKER", "LICENSING", "ANTI_DEBUG", "ANTI_VM", "CRYPTOR"]
+                categories_to_scan = [
+                    "PROTECTION",
+                    "PACKER",
+                    "LICENSING",
+                    "ANTI_DEBUG",
+                    "ANTI_VM",
+                    "CRYPTOR",
+                ]
             else:
                 categories_to_scan = rule_categories
 
             # Validate categories and log scanning scope
-            valid_categories = ["PROTECTION", "PACKER", "LICENSING", "ANTI_DEBUG", "ANTI_VM", "CRYPTOR"]
+            valid_categories = [
+                "PROTECTION",
+                "PACKER",
+                "LICENSING",
+                "ANTI_DEBUG",
+                "ANTI_VM",
+                "CRYPTOR",
+            ]
             filtered_categories = [cat for cat in categories_to_scan if cat in valid_categories]
 
             if len(filtered_categories) != len(categories_to_scan):
@@ -136,16 +152,10 @@ class YARAPatternAnalysisTool:
             logger.info(f"Scanning {file_path} with YARA categories: {filtered_categories}")
 
             # Run YARA analysis
-            analysis_result = self.engine.scan_file(
-                file_path=file_path,
-                timeout=timeout
-            )
+            analysis_result = self.engine.scan_file(file_path=file_path, timeout=timeout)
 
             if analysis_result.error:
-                return {
-                    "success": False,
-                    "error": analysis_result.error
-                }
+                return {"success": False, "error": analysis_result.error}
 
             # Build result for LLM consumption
             result = {
@@ -154,10 +164,14 @@ class YARAPatternAnalysisTool:
                 "scan_time": analysis_result.scan_time,
                 "total_matches": len(analysis_result.matches),
                 "total_rules": analysis_result.total_rules,
-                "pattern_matches": self._format_pattern_matches(analysis_result.matches, include_strings),
+                "pattern_matches": self._format_pattern_matches(
+                    analysis_result.matches, include_strings
+                ),
                 "security_assessment": self._assess_security_findings(analysis_result.matches),
-                "bypass_recommendations": self._generate_bypass_recommendations(analysis_result.matches),
-                "from_cache": False
+                "bypass_recommendations": self._generate_bypass_recommendations(
+                    analysis_result.matches
+                ),
+                "from_cache": False,
             }
 
             # Add detailed analysis if requested
@@ -166,7 +180,7 @@ class YARAPatternAnalysisTool:
                     "pattern_categories": self._categorize_patterns(analysis_result.matches),
                     "confidence_analysis": self._analyze_confidence_levels(analysis_result.matches),
                     "threat_indicators": self._extract_threat_indicators(analysis_result.matches),
-                    "protection_layers": self._analyze_protection_layers(analysis_result.matches)
+                    "protection_layers": self._analyze_protection_layers(analysis_result.matches),
                 }
 
             # Generate ICP supplemental data
@@ -181,38 +195,41 @@ class YARAPatternAnalysisTool:
 
         except Exception as e:
             logger.error(f"YARA pattern analysis error: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
-    def _format_pattern_matches(self, matches: List[Any], include_strings: bool) -> List[Dict[str, Any]]:
+    def _format_pattern_matches(
+        self, matches: List[Any], include_strings: bool
+    ) -> List[Dict[str, Any]]:
         """Format pattern matches for LLM consumption"""
         formatted_matches = []
 
         for match in matches:
             match_data = {
                 "rule_name": match.rule_name,
-                "category": match.category.value if hasattr(match.category, 'value') else str(match.category),
+                "category": match.category.value
+                if hasattr(match.category, "value")
+                else str(match.category),
                 "confidence": match.confidence,
                 "description": match.description,
                 "severity": match.severity,
                 "tags": match.tags,
-                "offset": match.offset
+                "offset": match.offset,
             }
 
             if include_strings and match.matched_strings:
                 match_data["matched_strings"] = [
                     {
                         "identifier": s.identifier,
-                        "value": s.value[:100] if len(s.value) > 100 else s.value,  # Limit string length
+                        "value": s.value[:100]
+                        if len(s.value) > 100
+                        else s.value,  # Limit string length
                         "offset": s.offset,
-                        "length": s.length
+                        "length": s.length,
                     }
                     for s in match.matched_strings[:10]  # Limit to first 10 strings
                 ]
 
-            if hasattr(match, 'metadata') and match.metadata:
+            if hasattr(match, "metadata") and match.metadata:
                 match_data["metadata"] = match.metadata
 
             formatted_matches.append(match_data)
@@ -229,7 +246,7 @@ class YARAPatternAnalysisTool:
             "packing_indicators": False,
             "licensing_indicators": False,
             "security_score": 0.0,
-            "findings_summary": []
+            "findings_summary": [],
         }
 
         if not matches:
@@ -245,7 +262,7 @@ class YARAPatternAnalysisTool:
             "PACKER": 0,
             "CRYPTOR": 0,
             "LICENSING": 0,
-            "PROTECTION": 0
+            "PROTECTION": 0,
         }
 
         for match in matches:
@@ -259,7 +276,9 @@ class YARAPatternAnalysisTool:
                 total_score += 1.0
 
             # Categorize findings
-            category = match.category.value if hasattr(match.category, 'value') else str(match.category)
+            category = (
+                match.category.value if hasattr(match.category, "value") else str(match.category)
+            )
             if category in protection_categories:
                 protection_categories[category] += 1
 
@@ -294,7 +313,9 @@ class YARAPatternAnalysisTool:
         # Generate findings summary
         for category, count in protection_categories.items():
             if count > 0:
-                assessment["findings_summary"].append(f"{count} {category.lower()} patterns detected")
+                assessment["findings_summary"].append(
+                    f"{count} {category.lower()} patterns detected"
+                )
 
         return assessment
 
@@ -304,7 +325,9 @@ class YARAPatternAnalysisTool:
         processed_categories = set()
 
         for match in matches:
-            category = match.category.value if hasattr(match.category, 'value') else str(match.category)
+            category = (
+                match.category.value if hasattr(match.category, "value") else str(match.category)
+            )
 
             # Avoid duplicate recommendations for same category
             if category in processed_categories:
@@ -312,54 +335,64 @@ class YARAPatternAnalysisTool:
             processed_categories.add(category)
 
             if category == "ANTI_DEBUG":
-                recommendations.append({
-                    "target": "Anti-Debug Protection",
-                    "method": "Debug Environment Hiding",
-                    "tools": ["ScyllaHide", "TitanHide", "Phantom"],
-                    "difficulty": "medium",
-                    "description": "Use debugger hiding tools to bypass anti-debug checks",
-                    "technical_details": f"Pattern detected: {match.rule_name}"
-                })
+                recommendations.append(
+                    {
+                        "target": "Anti-Debug Protection",
+                        "method": "Debug Environment Hiding",
+                        "tools": ["ScyllaHide", "TitanHide", "Phantom"],
+                        "difficulty": "medium",
+                        "description": "Use debugger hiding tools to bypass anti-debug checks",
+                        "technical_details": f"Pattern detected: {match.rule_name}",
+                    }
+                )
 
             elif category == "ANTI_VM":
-                recommendations.append({
-                    "target": "Anti-VM Protection",
-                    "method": "VM Environment Masking",
-                    "tools": ["Pafish", "VMware stealth", "Hardware ID spoofing"],
-                    "difficulty": "high",
-                    "description": "Modify VM characteristics to appear as physical machine",
-                    "technical_details": f"Pattern detected: {match.rule_name}"
-                })
+                recommendations.append(
+                    {
+                        "target": "Anti-VM Protection",
+                        "method": "VM Environment Masking",
+                        "tools": ["Pafish", "VMware stealth", "Hardware ID spoofing"],
+                        "difficulty": "high",
+                        "description": "Modify VM characteristics to appear as physical machine",
+                        "technical_details": f"Pattern detected: {match.rule_name}",
+                    }
+                )
 
             elif category == "PACKER":
-                recommendations.append({
-                    "target": "Packer Protection",
-                    "method": "Unpacking",
-                    "tools": ["UPX", "PEiD", "Detect It Easy", "OllyDump"],
-                    "difficulty": "medium",
-                    "description": "Identify and unpack the binary to access original code",
-                    "technical_details": f"Packer pattern: {match.rule_name}"
-                })
+                recommendations.append(
+                    {
+                        "target": "Packer Protection",
+                        "method": "Unpacking",
+                        "tools": ["UPX", "PEiD", "Detect It Easy", "OllyDump"],
+                        "difficulty": "medium",
+                        "description": "Identify and unpack the binary to access original code",
+                        "technical_details": f"Packer pattern: {match.rule_name}",
+                    }
+                )
 
             elif category == "CRYPTOR":
-                recommendations.append({
-                    "target": "Encryption/Cryptor",
-                    "method": "Cryptographic Analysis",
-                    "tools": ["Cryptool", "Key extraction", "Memory dumping"],
-                    "difficulty": "high",
-                    "description": "Analyze encryption algorithms and extract keys",
-                    "technical_details": f"Crypto pattern: {match.rule_name}"
-                })
+                recommendations.append(
+                    {
+                        "target": "Encryption/Cryptor",
+                        "method": "Cryptographic Analysis",
+                        "tools": ["Cryptool", "Key extraction", "Memory dumping"],
+                        "difficulty": "high",
+                        "description": "Analyze encryption algorithms and extract keys",
+                        "technical_details": f"Crypto pattern: {match.rule_name}",
+                    }
+                )
 
             elif category == "LICENSING":
-                recommendations.append({
-                    "target": "License Protection",
-                    "method": "License Bypass",
-                    "tools": ["Keygen", "Patch tools", "License emulation"],
-                    "difficulty": "medium",
-                    "description": "Bypass or emulate license checking mechanisms",
-                    "technical_details": f"License pattern: {match.rule_name}"
-                })
+                recommendations.append(
+                    {
+                        "target": "License Protection",
+                        "method": "License Bypass",
+                        "tools": ["Keygen", "Patch tools", "License emulation"],
+                        "difficulty": "medium",
+                        "description": "Bypass or emulate license checking mechanisms",
+                        "technical_details": f"License pattern: {match.rule_name}",
+                    }
+                )
 
         return recommendations
 
@@ -368,7 +401,9 @@ class YARAPatternAnalysisTool:
         categories = {}
 
         for match in matches:
-            category = match.category.value if hasattr(match.category, 'value') else str(match.category)
+            category = (
+                match.category.value if hasattr(match.category, "value") else str(match.category)
+            )
             if category not in categories:
                 categories[category] = []
             categories[category].append(match.rule_name)
@@ -388,7 +423,7 @@ class YARAPatternAnalysisTool:
             "average": round(sum(confidences) / len(confidences), 3),
             "high_confidence_count": high_conf,
             "low_confidence_count": low_conf,
-            "total_matches": len(matches)
+            "total_matches": len(matches),
         }
 
     def _extract_threat_indicators(self, matches: List[Any]) -> List[Dict[str, Any]]:
@@ -398,11 +433,13 @@ class YARAPatternAnalysisTool:
         for match in matches:
             if match.confidence >= 0.7:  # Only high-confidence threats
                 indicator = {
-                    "type": match.category.value if hasattr(match.category, 'value') else str(match.category),
+                    "type": match.category.value
+                    if hasattr(match.category, "value")
+                    else str(match.category),
                     "name": match.rule_name,
                     "severity": match.severity,
                     "confidence": match.confidence,
-                    "description": match.description
+                    "description": match.description,
                 }
 
                 # Add specific threat classification
@@ -427,11 +464,13 @@ class YARAPatternAnalysisTool:
             "anti_analysis_layer": False,
             "licensing_layer": False,
             "total_layers": 0,
-            "complexity_assessment": "simple"
+            "complexity_assessment": "simple",
         }
 
         for match in matches:
-            category = match.category.value if hasattr(match.category, 'value') else str(match.category)
+            category = (
+                match.category.value if hasattr(match.category, "value") else str(match.category)
+            )
 
             if category == "PACKER" and not layers["packing_layer"]:
                 layers["packing_layer"] = True
@@ -467,17 +506,11 @@ class YARAPatternAnalysisTool:
         """
         try:
             if not is_yara_available():
-                return {
-                    "success": False,
-                    "error": "YARA engine not available"
-                }
+                return {"success": False, "error": "YARA engine not available"}
 
             # Parse and validate custom rules
             if not custom_rules_text.strip():
-                return {
-                    "success": False,
-                    "error": "No custom rules provided"
-                }
+                return {"success": False, "error": "No custom rules provided"}
 
             # Create custom rule and scan
             # Note: This creates a temporary rule - for production use consider proper rule management
@@ -493,15 +526,12 @@ class YARAPatternAnalysisTool:
                 "custom_rules_used": True,
                 "matches": self._format_pattern_matches(custom_result.matches, True),
                 "total_matches": len(custom_result.matches),
-                "scan_time": custom_result.scan_time
+                "scan_time": custom_result.scan_time,
             }
 
         except Exception as e:
             logger.error(f"Custom YARA analysis error: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
 
 def create_yara_pattern_tool() -> YARAPatternAnalysisTool:

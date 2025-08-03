@@ -19,10 +19,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
-
-def run_process_with_output(cmd: list[str], encoding: str = "utf-8",
-                          timeout: int | None = None) -> tuple[int, str, str]:
+def run_process_with_output(
+    cmd: list[str], encoding: str = "utf-8", timeout: int | None = None
+) -> tuple[int, str, str]:
     """Run a process and capture stdout/stderr.
 
     Args:
@@ -35,7 +34,9 @@ def run_process_with_output(cmd: list[str], encoding: str = "utf-8",
 
     """
     from .subprocess_utils import create_popen_with_encoding
+
     return create_popen_with_encoding(cmd, encoding, timeout)
+
 
 def run_ghidra_process(cmd: list[str]) -> tuple[int, str, str]:
     """Run Ghidra subprocess with standard configuration.

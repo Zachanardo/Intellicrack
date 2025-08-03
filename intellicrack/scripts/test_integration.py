@@ -1,5 +1,5 @@
 """
-Integration Test for Intellicrack Modular Architecture 
+Integration Test for Intellicrack Modular Architecture
 
 Copyright (C) 2025 Zachary Flint
 

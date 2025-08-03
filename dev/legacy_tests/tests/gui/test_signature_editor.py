@@ -38,11 +38,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 def main():
     """Test the signature editor dialog"""
     app = QApplication(sys.argv)
-    
+
     # Create and show the signature editor
     editor = SignatureEditorDialog()
     editor.show()
-    
+
     # Run the application
     sys.exit(app.exec())
 

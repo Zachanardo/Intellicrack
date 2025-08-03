@@ -57,8 +57,7 @@ class ModelConfig:
 
 
 class AIModelManager(QObject):
-    """Manages AI models for intelligent code generation and analysis
-    """
+    """Manages AI models for intelligent code generation and analysis"""
 
     # Signals
     model_loaded = pyqtSignal(str)  # model_name
@@ -84,6 +83,7 @@ class AIModelManager(QObject):
         # Try to import available providers
         try:
             import openai
+
             self.providers[ModelProvider.OPENAI] = openai
             logger.info("OpenAI provider initialized")
         except ImportError:
@@ -91,6 +91,7 @@ class AIModelManager(QObject):
 
         try:
             import anthropic
+
             self.providers[ModelProvider.ANTHROPIC] = anthropic
             logger.info("Anthropic provider initialized")
         except ImportError:
@@ -98,6 +99,7 @@ class AIModelManager(QObject):
 
         try:
             import groq
+
             self.providers[ModelProvider.GROQ] = groq
             logger.info("Groq provider initialized")
         except ImportError:
@@ -158,6 +160,7 @@ class AIModelManager(QObject):
             logger.error(f"Failed to load model {model_name}: {e}")
             self.error_occurred.emit(model_name, str(e))
             return False
+
     def _load_openai_model(self, config: ModelConfig):
         """Load OpenAI model"""
         if ModelProvider.OPENAI not in self.providers:
@@ -201,6 +204,7 @@ class AIModelManager(QObject):
         api_key = config.api_key or os.getenv("GROQ_API_KEY")
         if not api_key:
             raise ValueError("Groq API key not provided")
+
     def _load_local_model(self, config: ModelConfig):
         """Load local model with comprehensive support for various frameworks"""
         logger.info(f"Loading local model: {config.model_id}")
@@ -255,7 +259,9 @@ class AIModelManager(QObject):
             return True
 
         except ImportError:
-            logger.error("llama-cpp-python not installed. Install with: pip install llama-cpp-python")
+            logger.error(
+                "llama-cpp-python not installed. Install with: pip install llama-cpp-python"
+            )
             return False
         except Exception as e:
             logger.error(f"Error loading GGUF model: {e}")
@@ -458,7 +464,7 @@ class AIModelManager(QObject):
 
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
         # Remove the input prompt from response
-        response = response[len(prompt):].strip()
+        response = response[len(prompt) :].strip()
         return response
 
     def _generate_gpt4all(self, model, prompt: str, **kwargs):
@@ -471,8 +477,9 @@ class AIModelManager(QObject):
         )
         return response
 
-    def generate_script(self, model_name: str, script_type: str,
-                       target: str, requirements: str) -> str | None:
+    def generate_script(
+        self, model_name: str, script_type: str, target: str, requirements: str
+    ) -> str | None:
         """Generate a script using the specified model
 
         Args:
@@ -528,7 +535,6 @@ The script should:
 5. Include comments explaining the hooks
 
 Generate production-ready Frida JavaScript code.""",
-
             "ghidra": f"""Generate a Ghidra analysis script for:
 Target: {target}
 Requirements: {requirements}
@@ -541,7 +547,6 @@ The script should:
 5. Export analysis results
 
 Generate production-ready Ghidra Python script.""",
-
             "license_bypass": f"""Generate a license bypass script for:
 Target: {target}
 Requirements: {requirements}
@@ -554,7 +559,6 @@ The script should:
 5. Be stealthy and undetectable
 
 Generate working bypass code with explanations.""",
-
             "api_hook": f"""Generate an API hooking script for:
 Target: {target}
 Requirements: {requirements}
@@ -569,11 +573,14 @@ The script should:
 Generate complete hooking implementation.""",
         }
 
-        return prompts.get(script_type.lower(), f"""Generate a {script_type} script for:
+        return prompts.get(
+            script_type.lower(),
+            f"""Generate a {script_type} script for:
 Target: {target}
 Requirements: {requirements}
 
-Generate complete, working code with proper error handling and documentation.""")
+Generate complete, working code with proper error handling and documentation.""",
+        )
 
     def _generate_openai(self, config: ModelConfig, prompt: str) -> str:
         """Generate using OpenAI API"""
@@ -582,7 +589,10 @@ Generate complete, working code with proper error handling and documentation."""
 
         openai = self.providers[ModelProvider.OPENAI]
 
-        system_prompt = config.system_prompt or "You are an expert reverse engineer and exploit developer. Generate working, production-ready code."
+        system_prompt = (
+            config.system_prompt
+            or "You are an expert reverse engineer and exploit developer. Generate working, production-ready code."
+        )
 
         try:
             response = openai.ChatCompletion.create(
@@ -609,7 +619,10 @@ Generate complete, working code with proper error handling and documentation."""
 
         client = anthropic.Anthropic(api_key=api_key)
 
-        system_prompt = config.system_prompt or "You are an expert reverse engineer and exploit developer. Generate working, production-ready code."
+        system_prompt = (
+            config.system_prompt
+            or "You are an expert reverse engineer and exploit developer. Generate working, production-ready code."
+        )
 
         try:
             response = client.messages.create(
@@ -642,7 +655,6 @@ Java.perform(function() {{
 
     console.log("[+] Hooks installed");
 }});""",
-
             "ghidra": f"""# Ghidra Analysis Script for {target}
 # Requirements: {requirements}
 
@@ -657,8 +669,9 @@ if __name__ == "__main__":
     analyze()""",
         }
 
-        return templates.get(script_type.lower(), f"// Generated script for {target}\n// {requirements}")
-
+        return templates.get(
+            script_type.lower(), f"// Generated script for {target}\n// {requirements}"
+        )
 
     def get_available_models(self) -> list[str]:
         """Get list of registered models"""
@@ -775,7 +788,9 @@ if __name__ == "__main__":
                 analysis_result = self._analyze_binary_heuristic(features)
 
             structured_analysis = self._structure_analysis_results(
-                features, analysis_result, binary_path,
+                features,
+                analysis_result,
+                binary_path,
             )
 
             self.response_received.emit(model_name, str(structured_analysis))
@@ -886,14 +901,16 @@ if __name__ == "__main__":
         segment_entropies = []
 
         for i in range(0, len(data), segment_size):
-            segment = data[i:i + segment_size]
+            segment = data[i : i + segment_size]
             if segment:
                 segment_entropies.append(shannon_entropy(segment))
 
         return {
             "total": total_entropy,
             "segments": segment_entropies,
-            "average_segment": sum(segment_entropies) / len(segment_entropies) if segment_entropies else 0,
+            "average_segment": sum(segment_entropies) / len(segment_entropies)
+            if segment_entropies
+            else 0,
             "max_segment": max(segment_entropies) if segment_entropies else 0,
         }
 
@@ -906,13 +923,13 @@ if __name__ == "__main__":
         pe_offset = struct.unpack("<I", data[60:64])[0]
         if pe_offset >= len(data) - 4:
             return False
-        return data[pe_offset:pe_offset + 4] == b"PE\x00\x00"
+        return data[pe_offset : pe_offset + 4] == b"PE\x00\x00"
 
     def _analyze_pe_structure(self, data: bytes) -> dict[str, Any]:
         """Analyze PE structure and extract metadata"""
         try:
             pe_offset = struct.unpack("<I", data[60:64])[0]
-            coff_header = data[pe_offset + 4:pe_offset + 24]
+            coff_header = data[pe_offset + 4 : pe_offset + 24]
             machine = struct.unpack("<H", coff_header[0:2])[0]
             num_sections = struct.unpack("<H", coff_header[2:4])[0]
             timestamp = struct.unpack("<I", coff_header[4:8])[0]
@@ -929,11 +946,13 @@ if __name__ == "__main__":
             }
 
             if opt_header_size > 0:
-                magic = struct.unpack("<H", data[opt_header_start:opt_header_start + 2])[0]
+                magic = struct.unpack("<H", data[opt_header_start : opt_header_start + 2])[0]
                 pe_info["magic"] = magic
-                pe_info["is_64bit"] = magic == 0x20b
-                if magic in [0x10b, 0x20b]:
-                    entry_point = struct.unpack("<I", data[opt_header_start + 16:opt_header_start + 20])[0]
+                pe_info["is_64bit"] = magic == 0x20B
+                if magic in [0x10B, 0x20B]:
+                    entry_point = struct.unpack(
+                        "<I", data[opt_header_start + 16 : opt_header_start + 20]
+                    )[0]
                     pe_info["entry_point"] = entry_point
             return pe_info
         except Exception as e:
@@ -945,15 +964,15 @@ if __name__ == "__main__":
         sections = []
         try:
             pe_offset = struct.unpack("<I", data[60:64])[0]
-            num_sections = struct.unpack("<H", data[pe_offset + 6:pe_offset + 8])[0]
-            opt_header_size = struct.unpack("<H", data[pe_offset + 20:pe_offset + 22])[0]
+            num_sections = struct.unpack("<H", data[pe_offset + 6 : pe_offset + 8])[0]
+            opt_header_size = struct.unpack("<H", data[pe_offset + 20 : pe_offset + 22])[0]
             section_start = pe_offset + 24 + opt_header_size
 
             for i in range(num_sections):
                 section_offset = section_start + (i * 40)
                 if section_offset + 40 > len(data):
                     break
-                section_data = data[section_offset:section_offset + 40]
+                section_data = data[section_offset : section_offset + 40]
                 name = section_data[:8].rstrip(b"\x00").decode("ascii", errors="ignore")
                 virtual_size = struct.unpack("<I", section_data[8:12])[0]
                 virtual_address = struct.unpack("<I", section_data[12:16])[0]
@@ -961,14 +980,16 @@ if __name__ == "__main__":
                 raw_address = struct.unpack("<I", section_data[20:24])[0]
                 characteristics = struct.unpack("<I", section_data[36:40])[0]
 
-                sections.append({
-                    "name": name,
-                    "virtual_size": virtual_size,
-                    "virtual_address": virtual_address,
-                    "raw_size": raw_size,
-                    "raw_address": raw_address,
-                    "characteristics": characteristics,
-                })
+                sections.append(
+                    {
+                        "name": name,
+                        "virtual_size": virtual_size,
+                        "virtual_address": virtual_address,
+                        "raw_size": raw_size,
+                        "raw_address": raw_address,
+                        "characteristics": characteristics,
+                    }
+                )
         except Exception as e:
             logger.error(f"Section extraction failed: {e}")
         return sections
@@ -978,8 +999,14 @@ if __name__ == "__main__":
         imports = []
         try:
             common_dlls = [
-                "kernel32.dll", "user32.dll", "advapi32.dll", "ntdll.dll",
-                "msvcrt.dll", "shell32.dll", "ws2_32.dll", "wininet.dll",
+                "kernel32.dll",
+                "user32.dll",
+                "advapi32.dll",
+                "ntdll.dll",
+                "msvcrt.dll",
+                "shell32.dll",
+                "ws2_32.dll",
+                "wininet.dll",
             ]
             data_str = data.lower()
             for dll in common_dlls:
@@ -995,9 +1022,11 @@ if __name__ == "__main__":
         try:
             strings = self._extract_strings(data)
             for string in strings:
-                if (len(string) > 3 and
-                    any(c.isupper() for c in string) and
-                    not any(c in string for c in [" ", ".", "\\", "/", ":"])):
+                if (
+                    len(string) > 3
+                    and any(c.isupper() for c in string)
+                    and not any(c in string for c in [" ", ".", "\\", "/", ":"])
+                ):
                     exports.append(string)
             exports = exports[:50]
         except Exception as e:
@@ -1042,8 +1071,13 @@ if __name__ == "__main__":
                 metadata["file_type"] = "Unknown"
 
             packing_indicators = [
-                b"UPX", b"VMProtect", b"Themida", b"Armadillo",
-                b"ASProtect", b"PECompact", b"FSG",
+                b"UPX",
+                b"VMProtect",
+                b"Themida",
+                b"Armadillo",
+                b"ASProtect",
+                b"PECompact",
+                b"FSG",
             ]
             detected_packers = []
             for packer in packing_indicators:
@@ -1053,8 +1087,10 @@ if __name__ == "__main__":
 
             anti_analysis = []
             anti_patterns = [
-                b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent",
-                b"NtQueryInformationProcess", b"GetTickCount",
+                b"IsDebuggerPresent",
+                b"CheckRemoteDebuggerPresent",
+                b"NtQueryInformationProcess",
+                b"GetTickCount",
             ]
             for pattern in anti_patterns:
                 if pattern in data:
@@ -1062,9 +1098,16 @@ if __name__ == "__main__":
             metadata["anti_analysis_indicators"] = anti_analysis
 
             suspicious_patterns = [
-                "cmd.exe", "powershell", "reg.exe", "netsh",
-                "http://", "https://", "ftp://",
-                "CreateProcess", "WriteProcessMemory", "VirtualAlloc",
+                "cmd.exe",
+                "powershell",
+                "reg.exe",
+                "netsh",
+                "http://",
+                "https://",
+                "ftp://",
+                "CreateProcess",
+                "WriteProcessMemory",
+                "VirtualAlloc",
             ]
             found_suspicious = []
             data_str = data.decode("ascii", errors="ignore").lower()
@@ -1151,8 +1194,9 @@ Please provide:
 
         return "\n".join(analysis) if analysis else "Basic binary - no obvious threats detected"
 
-    def _structure_analysis_results(self, features: dict[str, Any],
-                                   ai_analysis: str, binary_path: str) -> dict[str, Any]:
+    def _structure_analysis_results(
+        self, features: dict[str, Any], ai_analysis: str, binary_path: str
+    ) -> dict[str, Any]:
         """Structure the analysis results into a comprehensive report"""
         return {
             "binary_path": binary_path,
@@ -1204,10 +1248,12 @@ Please provide:
         if any(dll in imports for dll in ["wininet.dll", "ws2_32.dll"]):
             recommendations.append("Monitor network traffic during analysis")
             recommendations.append("Check for C2 communication patterns")
-        recommendations.extend([
-            "Verify file signature and certificates",
-            "Check against threat intelligence databases",
-            "Perform static analysis with disassembler",
-            "Run in isolated analysis environment",
-        ])
+        recommendations.extend(
+            [
+                "Verify file signature and certificates",
+                "Check against threat intelligence databases",
+                "Perform static analysis with disassembler",
+                "Run in isolated analysis environment",
+            ]
+        )
         return recommendations

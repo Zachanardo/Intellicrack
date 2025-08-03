@@ -3,6 +3,7 @@
 This module provides the settings interface for application configuration,
 preferences, and system settings management.
 """
+
 import json
 import logging
 import os
@@ -132,7 +133,9 @@ class SettingsTab(BaseTab):
         color_layout.addWidget(QLabel("Accent Color:"))
         self.accent_color_btn = QPushButton("Select Color")
         self.accent_color_btn.clicked.connect(self.select_accent_color)
-        self.accent_color_btn.setStyleSheet(f"background-color: {self.settings.get('accent_color', '#0078d4')};")
+        self.accent_color_btn.setStyleSheet(
+            f"background-color: {self.settings.get('accent_color', '#0078d4')};"
+        )
         color_layout.addWidget(self.accent_color_btn)
         color_layout.addStretch()
 
@@ -419,7 +422,9 @@ class SettingsTab(BaseTab):
         self.ghidra_path = QLineEdit()
         self.ghidra_path.setText(self.settings.get("ghidra_path", ""))
         browse_ghidra_btn = QPushButton("Browse")
-        browse_ghidra_btn.clicked.connect(lambda: self.browse_path(self.ghidra_path, "Select Ghidra Directory"))
+        browse_ghidra_btn.clicked.connect(
+            lambda: self.browse_path(self.ghidra_path, "Select Ghidra Directory")
+        )
         ghidra_layout.addWidget(self.ghidra_path)
         ghidra_layout.addWidget(browse_ghidra_btn)
 
@@ -429,7 +434,9 @@ class SettingsTab(BaseTab):
         self.radare2_path = QLineEdit()
         self.radare2_path.setText(self.settings.get("radare2_path", ""))
         browse_radare2_btn = QPushButton("Browse")
-        browse_radare2_btn.clicked.connect(lambda: self.browse_path(self.radare2_path, "Select Radare2 Executable"))
+        browse_radare2_btn.clicked.connect(
+            lambda: self.browse_path(self.radare2_path, "Select Radare2 Executable")
+        )
         radare2_layout.addWidget(self.radare2_path)
         radare2_layout.addWidget(browse_radare2_btn)
 
@@ -439,7 +446,9 @@ class SettingsTab(BaseTab):
         self.ida_path = QLineEdit()
         self.ida_path.setText(self.settings.get("ida_path", ""))
         browse_ida_btn = QPushButton("Browse")
-        browse_ida_btn.clicked.connect(lambda: self.browse_path(self.ida_path, "Select IDA Pro Executable"))
+        browse_ida_btn.clicked.connect(
+            lambda: self.browse_path(self.ida_path, "Select IDA Pro Executable")
+        )
         ida_layout.addWidget(self.ida_path)
         ida_layout.addWidget(browse_ida_btn)
 
@@ -449,7 +458,9 @@ class SettingsTab(BaseTab):
         self.x64dbg_path = QLineEdit()
         self.x64dbg_path.setText(self.settings.get("x64dbg_path", ""))
         browse_x64dbg_btn = QPushButton("Browse")
-        browse_x64dbg_btn.clicked.connect(lambda: self.browse_path(self.x64dbg_path, "Select x64dbg Executable"))
+        browse_x64dbg_btn.clicked.connect(
+            lambda: self.browse_path(self.x64dbg_path, "Select x64dbg Executable")
+        )
         x64dbg_layout.addWidget(self.x64dbg_path)
         x64dbg_layout.addWidget(browse_x64dbg_btn)
 
@@ -468,7 +479,9 @@ class SettingsTab(BaseTab):
         self.output_directory = QLineEdit()
         self.output_directory.setText(self.settings.get("output_directory", ""))
         browse_output_btn = QPushButton("Browse")
-        browse_output_btn.clicked.connect(lambda: self.browse_directory(self.output_directory, "Select Output Directory"))
+        browse_output_btn.clicked.connect(
+            lambda: self.browse_directory(self.output_directory, "Select Output Directory")
+        )
         output_dir_layout.addWidget(self.output_directory)
         output_dir_layout.addWidget(browse_output_btn)
 
@@ -478,7 +491,9 @@ class SettingsTab(BaseTab):
         self.reports_directory = QLineEdit()
         self.reports_directory.setText(self.settings.get("reports_directory", ""))
         browse_reports_btn = QPushButton("Browse")
-        browse_reports_btn.clicked.connect(lambda: self.browse_directory(self.reports_directory, "Select Reports Directory"))
+        browse_reports_btn.clicked.connect(
+            lambda: self.browse_directory(self.reports_directory, "Select Reports Directory")
+        )
         reports_dir_layout.addWidget(self.reports_directory)
         reports_dir_layout.addWidget(browse_reports_btn)
 
@@ -488,7 +503,9 @@ class SettingsTab(BaseTab):
         self.scripts_directory = QLineEdit()
         self.scripts_directory.setText(self.settings.get("scripts_directory", ""))
         browse_scripts_btn = QPushButton("Browse")
-        browse_scripts_btn.clicked.connect(lambda: self.browse_directory(self.scripts_directory, "Select Scripts Directory"))
+        browse_scripts_btn.clicked.connect(
+            lambda: self.browse_directory(self.scripts_directory, "Select Scripts Directory")
+        )
         scripts_dir_layout.addWidget(self.scripts_directory)
         scripts_dir_layout.addWidget(browse_scripts_btn)
 
@@ -530,7 +547,9 @@ class SettingsTab(BaseTab):
         self.log_file_path = QLineEdit()
         self.log_file_path.setText(self.settings.get("log_file_path", "intellicrack.log"))
         browse_log_btn = QPushButton("Browse")
-        browse_log_btn.clicked.connect(lambda: self.browse_file(self.log_file_path, "Select Log File"))
+        browse_log_btn.clicked.connect(
+            lambda: self.browse_file(self.log_file_path, "Select Log File")
+        )
         log_file_layout.addWidget(self.log_file_path)
         log_file_layout.addWidget(browse_log_btn)
 
@@ -668,7 +687,9 @@ class SettingsTab(BaseTab):
 
     def load_settings(self):
         """Load settings from file"""
-        settings_file = os.path.join(os.path.dirname(__file__), "..", "..", "config", "settings.json")
+        settings_file = os.path.join(
+            os.path.dirname(__file__), "..", "..", "config", "settings.json"
+        )
 
         try:
             if os.path.exists(settings_file):
@@ -694,7 +715,6 @@ class SettingsTab(BaseTab):
             "icon_size": 24,
             "show_tooltips": True,
             "enable_animations": True,
-
             # Analysis
             "auto_analysis": True,
             "analysis_depth": "Standard",
@@ -705,7 +725,6 @@ class SettingsTab(BaseTab):
             "include_comments": True,
             "include_error_handling": True,
             "optimize_code": False,
-
             # Performance
             "cache_size": 512,
             "memory_limit": 2048,
@@ -715,7 +734,6 @@ class SettingsTab(BaseTab):
             "background_tasks": True,
             "enable_gpu": False,
             "gpu_device": "Auto",
-
             # Paths
             "ghidra_path": "",
             "radare2_path": "",
@@ -724,7 +742,6 @@ class SettingsTab(BaseTab):
             "output_directory": "",
             "reports_directory": "",
             "scripts_directory": "",
-
             # Advanced
             "log_level": "INFO",
             "log_to_file": True,
@@ -745,7 +762,9 @@ class SettingsTab(BaseTab):
         self.collect_settings_from_ui()
 
         # Save to file
-        settings_file = os.path.join(os.path.dirname(__file__), "..", "..", "config", "settings.json")
+        settings_file = os.path.join(
+            os.path.dirname(__file__), "..", "..", "config", "settings.json"
+        )
         os.makedirs(os.path.dirname(settings_file), exist_ok=True)
 
         try:

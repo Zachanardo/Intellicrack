@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import logging
 import os
 import shutil
@@ -211,7 +210,10 @@ class ReportManagerDialog(BaseTemplateDialog):
 
         # Create main tabbed dialog layout
         layout, self.tab_widget = UILayoutHelpers.create_tabbed_dialog_layout(
-            self, "Report Manager", (1000, 700), is_modal=True,
+            self,
+            "Report Manager",
+            (1000, 700),
+            is_modal=True,
         )
 
         # Create and add tabs
@@ -270,9 +272,16 @@ class ReportManagerDialog(BaseTemplateDialog):
         # Reports table
         self.reports_table = QTableWidget()
         self.reports_table.setColumnCount(6)
-        self.reports_table.setHorizontalHeaderLabels([
-            "Name", "Type", "Created", "Size", "Status", "Actions",
-        ])
+        self.reports_table.setHorizontalHeaderLabels(
+            [
+                "Name",
+                "Type",
+                "Created",
+                "Size",
+                "Status",
+                "Actions",
+            ]
+        )
         self.reports_table.horizontalHeader().setStretchLastSection(True)
         self.reports_table.itemSelectionChanged.connect(self.on_report_selected)
         layout.addWidget(self.reports_table)
@@ -329,7 +338,9 @@ class ReportManagerDialog(BaseTemplateDialog):
 
         self.report_name_edit = QLineEdit()
         self.report_type_combo = QComboBox()
-        self.report_type_combo.addItems(["Vulnerability Analysis", "License Analysis", "Performance Analysis", "Custom"])
+        self.report_type_combo.addItems(
+            ["Vulnerability Analysis", "License Analysis", "Performance Analysis", "Custom"]
+        )
 
         self.binary_path_edit = QLineEdit()
         self.browse_binary_btn = QPushButton("Browse...")
@@ -404,6 +415,7 @@ class ReportManagerDialog(BaseTemplateDialog):
         layout.addWidget(self.status_label)
 
         from ..shared_ui_layouts import UILayoutHelpers
+
         return UILayoutHelpers.finalize_widget_layout(widget, layout)
 
     def create_templates_tab(self):
@@ -634,7 +646,9 @@ class ReportManagerDialog(BaseTemplateDialog):
     def edit_report(self):
         """Edit the selected report."""
         if HAS_PYQT:
-            QMessageBox.information(self, "Edit Report", "Report editing functionality would be implemented here")
+            QMessageBox.information(
+                self, "Edit Report", "Report editing functionality would be implemented here"
+            )
 
     def duplicate_report(self):
         """Duplicate the selected report."""
@@ -799,7 +813,9 @@ class ReportManagerDialog(BaseTemplateDialog):
     def preview_report(self):
         """Preview the report before generation."""
         if HAS_PYQT:
-            QMessageBox.information(self, "Preview", "Report preview functionality would be implemented here")
+            QMessageBox.information(
+                self, "Preview", "Report preview functionality would be implemented here"
+            )
 
     def export_report(self):
         """Export the selected report."""
@@ -877,12 +893,16 @@ class ReportManagerDialog(BaseTemplateDialog):
     def edit_template(self):
         """Edit the selected template."""
         if HAS_PYQT:
-            QMessageBox.information(self, "Edit Template", "Template editing functionality would be implemented here")
+            QMessageBox.information(
+                self, "Edit Template", "Template editing functionality would be implemented here"
+            )
 
     def create_template(self):
         """Create a new report template."""
         if HAS_PYQT:
-            QMessageBox.information(self, "Create Template", "Template creation functionality would be implemented here")
+            QMessageBox.information(
+                self, "Create Template", "Template creation functionality would be implemented here"
+            )
 
 
 # Export for external use

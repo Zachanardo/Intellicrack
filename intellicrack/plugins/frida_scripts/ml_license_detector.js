@@ -18,10 +18,10 @@
 
 /**
  * ML-Based License Function Detection System
- * 
+ *
  * Intelligent license function detection using machine learning patterns
  * and behavioral analysis for automatic hook placement and protection bypass.
- * 
+ *
  * Author: Intellicrack Framework
  * Version: 2.0.0
  * License: GPL v3
@@ -31,7 +31,7 @@
     name: "ML License Function Detector",
     description: "Intelligent license function detection and automatic hook placement",
     version: "2.0.0",
-    
+
     // Configuration for ML-based detection
     config: {
         // Machine learning features
@@ -67,7 +67,7 @@
                     "payment": 0.7,
                     "purchase": 0.75
                 },
-                
+
                 // API call patterns
                 api_patterns: {
                     "CreateFile": 0.6,
@@ -92,7 +92,7 @@
                     "SetEvent": 0.5,
                     "WaitForSingleObject": 0.6
                 },
-                
+
                 // String patterns in functions
                 string_patterns: {
                     "Invalid license": 0.95,
@@ -118,7 +118,7 @@
                     "system32": 0.3,
                     "program files": 0.3
                 },
-                
+
                 // Behavioral patterns
                 behavioral_patterns: {
                     // Function call frequency
@@ -132,14 +132,14 @@
                     "process_creation": 0.5,
                     "memory_allocation": 0.4,
                     "exception_handling": 0.6,
-                    
+
                     // Control flow patterns
                     "multiple_return_paths": 0.6,
                     "conditional_branches": 0.7,
                     "loop_structures": 0.4,
                     "function_calls": 0.5,
                     "error_handling": 0.7,
-                    
+
                     // Data flow patterns
                     "string_operations": 0.6,
                     "buffer_operations": 0.5,
@@ -149,7 +149,7 @@
                 }
             }
         },
-        
+
         // Detection thresholds
         thresholds: {
             high_confidence: 0.9,    // Definitely license-related
@@ -157,7 +157,7 @@
             low_confidence: 0.5,     // Possibly license-related
             minimum_confidence: 0.3  // Consider for monitoring
         },
-        
+
         // Learning configuration
         learning: {
             enabled: true,
@@ -167,7 +167,7 @@
             auto_learning: true,    // Learn from successful bypasses
             save_model: true        // Persist learned patterns
         },
-        
+
         // Hook placement strategy
         hook_strategy: {
             aggressive: false,      // Hook all detected functions
@@ -177,7 +177,7 @@
             delay_ms: 100          // Delay between batch processing
         }
     },
-    
+
     // ML model state
     model: {
         weights: {},
@@ -191,13 +191,13 @@
             false_negatives: 0
         }
     },
-    
+
     // Detection state
     detected_functions: {},
     monitored_functions: {},
     hooked_functions: {},
     bypass_results: {},
-    
+
     onAttach: function(pid) {
         send({
             type: "info",
@@ -208,29 +208,29 @@
         this.processId = pid;
         this.initializeModel();
     },
-    
+
     run: function() {
         send({
             type: "status",
             target: "ml_license_detector",
             action: "starting_ml_detection"
         });
-        
+
         // Initialize ML detection system
         this.initializeMLDetection();
-        
+
         // Start function enumeration and analysis
         this.enumerateAndAnalyzeFunctions();
-        
+
         // Set up behavioral monitoring
         this.setupBehavioralMonitoring();
-        
+
         // Start learning loop
         this.startLearningLoop();
-        
+
         this.installSummary();
     },
-    
+
     // === ML MODEL INITIALIZATION ===
     initializeModel: function() {
         send({
@@ -238,24 +238,24 @@
             target: "ml_license_detector",
             action: "initializing_ml_model"
         });
-        
+
         // Initialize feature weights based on configuration
         var config = this.config.ml.features;
-        
+
         // Combine all feature types into unified weight system
-        this.model.weights = Object.assign({}, 
+        this.model.weights = Object.assign({},
             config.name_patterns,
-            config.api_patterns, 
+            config.api_patterns,
             config.string_patterns,
             config.behavioral_patterns
         );
-        
+
         // Initialize bias
         this.model.bias = 0.0;
-        
+
         // Load any previously saved model
         this.loadSavedModel();
-        
+
         send({
             type: "info",
             target: "ml_license_detector",
@@ -263,24 +263,24 @@
             feature_count: Object.keys(this.model.weights).length
         });
     },
-    
+
     initializeMLDetection: function() {
         send({
             type: "status",
             target: "ml_license_detector",
             action: "setting_up_ml_detection_pipeline"
         });
-        
+
         // Set up function discovery hooks
         this.hookFunctionDiscovery();
-        
+
         // Set up pattern matching
         this.setupPatternMatching();
-        
+
         // Initialize feature extraction
         this.initializeFeatureExtraction();
     },
-    
+
     // === FUNCTION ENUMERATION AND ANALYSIS ===
     enumerateAndAnalyzeFunctions: function() {
         send({
@@ -288,19 +288,19 @@
             target: "ml_license_detector",
             action: "enumerating_analyzing_functions"
         });
-        
+
         try {
             var modules = Process.enumerateModules();
             var totalFunctions = 0;
-            
+
             for (var i = 0; i < modules.length; i++) {
                 var module = modules[i];
-                
+
                 // Skip system modules for now
                 if (this.isSystemModule(module.name)) {
                     continue;
                 }
-                
+
                 send({
                     type: "info",
                     target: "ml_license_detector",
@@ -309,43 +309,43 @@
                 });
                 var functionCount = this.analyzeModuleFunctions(module);
                 totalFunctions += functionCount;
-                
+
                 // Process in batches to avoid overwhelming the system
                 if (totalFunctions > this.config.hook_strategy.batch_size) {
                     this.processBatch();
                     totalFunctions = 0;
                 }
             }
-            
+
             // Process remaining functions
             if (totalFunctions > 0) {
                 this.processBatch();
             }
-            
+
         } catch(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
-                action: "function_enumeration_error", 
+                action: "function_enumeration_error",
                 error: String(e)
             });
         }
     },
-    
+
     analyzeModuleFunctions: function(module) {
         try {
             var exports = Module.enumerateExports(module.name);
             var functionCount = 0;
-            
+
             for (var i = 0; i < exports.length; i++) {
                 var exportInfo = exports[i];
-                
+
                 if (exportInfo.type === 'function') {
                     this.analyzeFunction(module.name, exportInfo);
                     functionCount++;
                 }
             }
-            
+
             return functionCount;
         } catch(e) {
             send({
@@ -358,18 +358,18 @@
             return 0;
         }
     },
-    
+
     analyzeFunction: function(moduleName, exportInfo) {
         try {
             var functionName = exportInfo.name;
             var functionAddress = exportInfo.address;
-            
+
             // Extract features for ML prediction
             var features = this.extractFunctionFeatures(moduleName, functionName, functionAddress);
-            
+
             // Make ML prediction
             var prediction = this.predict(features);
-            
+
             // Store detection result
             var detectionResult = {
                 module: moduleName,
@@ -380,12 +380,12 @@
                 is_license_function: prediction.is_license_function,
                 timestamp: Date.now()
             };
-            
+
             this.detected_functions[moduleName + "!" + functionName] = detectionResult;
-            
+
             // Decide on hook placement based on confidence
             this.evaluateHookPlacement(detectionResult);
-            
+
         } catch(e) {
             send({
                 type: "error",
@@ -395,7 +395,7 @@
             });
         }
     },
-    
+
     // === FEATURE EXTRACTION ===
     extractFunctionFeatures: function(moduleName, functionName, functionAddress) {
         var features = {
@@ -405,23 +405,23 @@
             behavioral_score: 0.0,
             combined_score: 0.0
         };
-        
+
         try {
             // Extract name-based features
             features.name_score = this.extractNameFeatures(functionName);
-            
+
             // Extract API call patterns (simplified)
             features.api_score = this.extractApiFeatures(functionName);
-            
+
             // Extract string-based features (simplified)
             features.string_score = this.extractStringFeatures(functionName);
-            
+
             // Extract behavioral features (simplified)
             features.behavioral_score = this.extractBehavioralFeatures(functionName);
-            
+
             // Combine features
             features.combined_score = this.combineFeatures(features);
-            
+
         } catch(e) {
             send({
                 type: "error",
@@ -430,80 +430,80 @@
                 error: String(e)
             });
         }
-        
+
         return features;
     },
-    
+
     extractNameFeatures: function(functionName) {
         var score = 0.0;
         var namePatterns = this.config.ml.features.name_patterns;
         var nameLower = functionName.toLowerCase();
-        
+
         for (var pattern in namePatterns) {
             if (nameLower.includes(pattern)) {
                 score += namePatterns[pattern];
             }
         }
-        
+
         // Normalize score
         return Math.min(score, 1.0);
     },
-    
+
     extractApiFeatures: function(functionName) {
         // Simplified API feature extraction based on function name patterns
         var score = 0.0;
         var apiPatterns = this.config.ml.features.api_patterns;
-        
+
         for (var pattern in apiPatterns) {
             if (functionName.includes(pattern)) {
                 score += apiPatterns[pattern] * 0.5; // Lower weight for name-only API detection
             }
         }
-        
+
         return Math.min(score, 1.0);
     },
-    
+
     extractStringFeatures: function(functionName) {
         // Simplified string feature extraction
         var score = 0.0;
         var stringPatterns = this.config.ml.features.string_patterns;
-        
+
         // This would ideally analyze function disassembly for string references
         // For now, we use simplified heuristics based on function names
         var nameLower = functionName.toLowerCase();
-        
+
         for (var pattern in stringPatterns) {
             if (nameLower.includes(pattern.toLowerCase())) {
                 score += stringPatterns[pattern] * 0.3; // Lower weight for simplified detection
             }
         }
-        
+
         return Math.min(score, 1.0);
     },
-    
+
     extractBehavioralFeatures: function(functionName) {
         // Simplified behavioral feature extraction
         var score = 0.0;
         var behavioralPatterns = this.config.ml.features.behavioral_patterns;
-        
+
         // Simple heuristics based on function naming patterns
         var nameLower = functionName.toLowerCase();
-        
+
         if (nameLower.includes("check") || nameLower.includes("validate")) {
             score += behavioralPatterns.conditional_branches || 0.0;
         }
-        
+
         if (nameLower.includes("register") || nameLower.includes("license")) {
             score += behavioralPatterns.registry_access || 0.0;
         }
-        
+
         if (nameLower.includes("network") || nameLower.includes("http")) {
             score += behavioralPatterns.network_access || 0.0;
         }
-        
+
         return Math.min(score, 1.0);
     },
-    
+
     combineFeatures: function(features) {
         // Weighted combination of feature scores
         var weights = {
@@ -512,25 +512,25 @@
             string: 0.2,
             behavioral: 0.15
         };
-        
+
         return (features.name_score * weights.name +
                 features.api_score * weights.api +
                 features.string_score * weights.string +
                 features.behavioral_score * weights.behavioral);
     },
-    
+
     // === ML PREDICTION ===
     predict: function(features) {
         try {
             // Simple linear model prediction
             var score = features.combined_score + this.model.bias;
-            
+
             // Apply sigmoid activation
             var confidence = 1.0 / (1.0 + Math.exp(-score));
-            
+
             // Determine classification
             var is_license_function = confidence >= this.config.thresholds.minimum_confidence;
-            
+
             // Store prediction for learning
             this.model.prediction_history.push({
                 features: features,
@@ -538,12 +538,12 @@
                 prediction: is_license_function,
                 timestamp: Date.now()
             });
-            
+
             return {
                 confidence: confidence,
                 is_license_function: is_license_function
             };
-            
+
         } catch(e) {
             send({
                 type: "error",
@@ -557,13 +557,13 @@
             };
         }
     },
-    
+
     // === HOOK PLACEMENT EVALUATION ===
     evaluateHookPlacement: function(detectionResult) {
         var confidence = detectionResult.confidence;
         var thresholds = this.config.thresholds;
         var strategy = this.config.hook_strategy;
-        
+
         try {
             if (strategy.aggressive) {
                 // Hook all detected functions above minimum threshold
@@ -585,7 +585,7 @@
                     this.scheduleMonitoring(detectionResult);
                 }
             }
-            
+
         } catch(e) {
             send({
                 type: "error",
@@ -595,55 +595,55 @@
             });
         }
     },
-    
+
     scheduleHookPlacement: function(detectionResult, priority) {
         var key = detectionResult.module + "!" + detectionResult.name;
-        
+
         this.hooked_functions[key] = {
             detection: detectionResult,
             priority: priority,
             hook_status: "scheduled",
             scheduled_time: Date.now()
         };
-        
+
         send({
             type: "status",
             target: "ml_license_detector",
             action: "scheduled_hook",
             function_name: detectionResult.name,
-            confidence: detectionResult.confidence 
+            confidence: detectionResult.confidence
                   " (confidence: " + detectionResult.confidence.toFixed(3) + ", priority: " + priority + ")");
-        
+
         // Actually place the hook
         this.placeHook(detectionResult);
     },
-    
+
     scheduleMonitoring: function(detectionResult) {
         var key = detectionResult.module + "!" + detectionResult.name;
-        
+
         this.monitored_functions[key] = {
             detection: detectionResult,
             monitor_status: "active",
             start_time: Date.now(),
             call_count: 0
         };
-        
+
         send({
-            type: "status", 
+            type: "status",
             target: "ml_license_detector",
             action: "scheduled_monitoring",
             function_name: detectionResult.name,
-            confidence: detectionResult.confidence 
+            confidence: detectionResult.confidence
                   " (confidence: " + detectionResult.confidence.toFixed(3) + ")");
     },
-    
+
     // === HOOK PLACEMENT ===
     placeHook: function(detectionResult) {
         try {
             var funcAddr = detectionResult.address;
             var funcName = detectionResult.name;
             var moduleName = detectionResult.module;
-            
+
             if (!funcAddr || funcAddr.isNull()) {
                 send({
                     type: "error",
@@ -653,7 +653,7 @@
                 });
                 return;
             }
-            
+
             Interceptor.attach(funcAddr, {
                 onEnter: function(args) {
                     send({
@@ -661,32 +661,32 @@
                         target: "ml_license_detector",
                         action: "license_function_called",
                         function_name: funcName,
-                        timestamp: new Date().toISOString() 
+                        timestamp: new Date().toISOString()
                               " in " + moduleName);
-                    
+
                     this.functionName = funcName;
                     this.moduleName = moduleName;
                     this.enterTime = Date.now();
-                    
+
                     // Record function call for learning
                     this.parent.parent.recordFunctionCall(funcName, moduleName, args);
                 },
-                
+
                 onLeave: function(retval) {
                     var exitTime = Date.now();
                     var duration = exitTime - this.enterTime;
-                    
+
                     send({
                         type: "info",
                         target: "ml_license_detector",
                         action: "license_function_returned",
                         function_name: this.functionName,
-                        return_value: retval 
+                        return_value: retval
                               " (duration: " + duration + "ms, result: " + retval + ")");
-                    
+
                     // Apply bypass if needed
                     var bypassResult = this.parent.parent.applyBypass(this.functionName, this.moduleName, retval);
-                    
+
                     if (bypassResult.applied) {
                         retval.replace(bypassResult.new_value);
                         send({
@@ -695,22 +695,22 @@
                             action: "bypass_applied",
                             function_name: this.functionName,
                             original_value: original,
-                            bypassed_value: retval 
+                            bypassed_value: retval
                                   ": " + bypassResult.old_value + " -> " + bypassResult.new_value);
                     }
-                    
+
                     // Record bypass result for learning
                     this.parent.parent.recordBypassResult(this.functionName, this.moduleName, bypassResult);
                 }
             });
-            
+
             // Update hook status
             var key = moduleName + "!" + funcName;
             if (this.hooked_functions[key]) {
                 this.hooked_functions[key].hook_status = "active";
                 this.hooked_functions[key].hook_time = Date.now();
             }
-            
+
             send({
                 type: "success",
                 target: "ml_license_detector",
@@ -718,7 +718,7 @@
                 function_name: funcName,
                 module_name: moduleName
             });
-            
+
         } catch(e) {
             send({
                 type: "error",
@@ -729,7 +729,7 @@
             });
         }
     },
-    
+
     // === BYPASS APPLICATION ===
     applyBypass: function(functionName, moduleName, originalResult) {
         var result = {
@@ -738,17 +738,17 @@
             new_value: originalResult.toInt32(),
             bypass_type: "none"
         };
-        
+
         try {
             var nameLower = functionName.toLowerCase();
-            
+
             // Apply common license bypass patterns
             if (this.isLicenseValidationFunction(nameLower)) {
                 result.new_value = 1; // TRUE
                 result.applied = true;
                 result.bypass_type = "validation_bypass";
             } else if (this.isLicenseCheckFunction(nameLower)) {
-                result.new_value = 1; // TRUE  
+                result.new_value = 1; // TRUE
                 result.applied = true;
                 result.bypass_type = "check_bypass";
             } else if (this.isTrialFunction(nameLower)) {
@@ -764,7 +764,7 @@
                 result.applied = true;
                 result.bypass_type = "activation_bypass";
             }
-            
+
         } catch(e) {
             send({
                 type: "error",
@@ -773,35 +773,35 @@
                 error: String(e)
             });
         }
-        
+
         return result;
     },
-    
+
     isLicenseValidationFunction: function(name) {
         var patterns = ["validate", "verify", "check", "islicense", "isvalid", "licensevalid"];
         return patterns.some(pattern => name.includes(pattern));
     },
-    
+
     isLicenseCheckFunction: function(name) {
         var patterns = ["checklic", "licensecheck", "checklicense", "verifylicense"];
         return patterns.some(pattern => name.includes(pattern));
     },
-    
+
     isTrialFunction: function(name) {
         var patterns = ["trial", "demo", "eval", "istrial", "isdemo"];
         return patterns.some(pattern => name.includes(pattern));
     },
-    
+
     isExpirationFunction: function(name) {
         var patterns = ["expire", "expired", "timeout", "isexpired", "hasexpired"];
         return patterns.some(pattern => name.includes(pattern));
     },
-    
+
     isActivationFunction: function(name) {
         var patterns = ["activate", "activation", "isactivated", "activated"];
         return patterns.some(pattern => name.includes(pattern));
     },
-    
+
     // === BEHAVIORAL MONITORING ===
     setupBehavioralMonitoring: function() {
         send({
@@ -809,14 +809,14 @@
             target: "ml_license_detector",
             action: "setting_up_behavioral_monitoring"
         });
-        
+
         // Monitor API calls that are commonly used by license functions
         this.monitorRegistryAccess();
         this.monitorNetworkAccess();
         this.monitorFileAccess();
         this.monitorTimeAccess();
     },
-    
+
     monitorRegistryAccess: function() {
         var regOpenKey = Module.findExportByName("advapi32.dll", "RegOpenKeyExW");
         if (regOpenKey) {
@@ -829,7 +829,7 @@
                 }
             });
         }
-        
+
         var regQueryValue = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
         if (regQueryValue) {
             Interceptor.attach(regQueryValue, {
@@ -842,7 +842,7 @@
             });
         }
     },
-    
+
     monitorNetworkAccess: function() {
         var winHttpConnect = Module.findExportByName("winhttp.dll", "WinHttpConnect");
         if (winHttpConnect) {
@@ -856,7 +856,7 @@
             });
         }
     },
-    
+
     monitorFileAccess: function() {
         var createFile = Module.findExportByName("kernel32.dll", "CreateFileW");
         if (createFile) {
@@ -864,7 +864,7 @@
                 onEnter: function(args) {
                     if (args[0] && !args[0].isNull()) {
                         var fileName = args[0].readUtf16String();
-                        if (fileName.toLowerCase().includes("license") || 
+                        if (fileName.toLowerCase().includes("license") ||
                             fileName.toLowerCase().includes("key") ||
                             fileName.toLowerCase().includes("activation")) {
                             this.parent.parent.recordApiCall("CreateFileW", {file: fileName});
@@ -874,7 +874,7 @@
             });
         }
     },
-    
+
     monitorTimeAccess: function() {
         var getSystemTime = Module.findExportByName("kernel32.dll", "GetSystemTime");
         if (getSystemTime) {
@@ -885,7 +885,7 @@
             });
         }
     },
-    
+
     // === LEARNING SYSTEM ===
     startLearningLoop: function() {
         if (!this.config.learning.enabled) {
@@ -896,20 +896,20 @@
             });
             return;
         }
-        
+
         send({
             type: "status",
             target: "ml_license_detector",
             action: "starting_learning_loop"
         });
-        
+
         // Set up periodic model updates
         setTimeout(() => {
             this.updateModel();
             this.startLearningLoop(); // Continue learning
         }, this.config.learning.update_frequency * 1000);
     },
-    
+
     updateModel: function() {
         try {
             send({
@@ -917,10 +917,10 @@
                 target: "ml_license_detector",
                 action: "updating_ml_model"
             });
-            
+
             // Collect training data from recent predictions and bypass results
             var trainingData = this.collectTrainingData();
-            
+
             if (trainingData.length === 0) {
                 send({
                     type: "warning",
@@ -929,25 +929,25 @@
                 });
                 return;
             }
-            
+
             // Update model weights using simple gradient descent
             this.performGradientDescent(trainingData);
-            
+
             // Calculate and update accuracy metrics
             this.updateAccuracyMetrics();
-            
+
             // Save model if configured
             if (this.config.learning.save_model) {
                 this.saveModel();
             }
-            
+
             send({
                 type: "success",
                 target: "ml_license_detector",
                 action: "model_updated",
                 samples_count: trainingData.length
             });
-            
+
         } catch(e) {
             send({
                 type: "error",
@@ -957,17 +957,17 @@
             });
         }
     },
-    
+
     collectTrainingData: function() {
         var trainingData = [];
-        
+
         // Use bypass results as ground truth
         for (var key in this.bypass_results) {
             var result = this.bypass_results[key];
-            
+
             if (result.detection && result.bypass) {
                 var label = result.bypass.applied ? 1.0 : 0.0; // License function if bypass was applied
-                
+
                 trainingData.push({
                     features: result.detection.features,
                     label: label,
@@ -975,52 +975,52 @@
                 });
             }
         }
-        
+
         return trainingData;
     },
-    
+
     performGradientDescent: function(trainingData) {
         var learningRate = this.config.ml.learning_rate;
-        
+
         for (var i = 0; i < trainingData.length; i++) {
             var sample = trainingData[i];
             var features = sample.features;
             var label = sample.label;
-            
+
             // Forward pass
             var prediction = features.combined_score + this.model.bias;
             var sigmoid = 1.0 / (1.0 + Math.exp(-prediction));
-            
+
             // Calculate error
             var error = sigmoid - label;
-            
+
             // Update bias
             this.model.bias -= learningRate * error;
-            
+
             // Update feature weights (simplified)
             var featureWeight = this.model.weights["combined"] || 0.0;
             this.model.weights["combined"] = featureWeight - (learningRate * error * features.combined_score);
         }
     },
-    
+
     updateAccuracyMetrics: function() {
         // Calculate accuracy based on recent predictions and actual bypass results
         var metrics = this.model.accuracy_metrics;
         var correct = 0;
         var total = 0;
-        
+
         for (var key in this.bypass_results) {
             var result = this.bypass_results[key];
-            
+
             if (result.detection && result.bypass) {
                 total++;
-                
+
                 var predicted = result.detection.confidence >= this.config.thresholds.medium_confidence;
                 var actual = result.bypass.applied;
-                
+
                 if (predicted === actual) {
                     correct++;
-                    
+
                     if (actual) {
                         metrics.true_positives++;
                     } else {
@@ -1035,7 +1035,7 @@
                 }
             }
         }
-        
+
         var accuracy = total > 0 ? correct / total : 0.0;
         send({
             type: "info",
@@ -1043,21 +1043,21 @@
             action: "model_accuracy_report",
             accuracy_percent: (accuracy * 100).toFixed(1),
             correct_predictions: correctPredictions,
-            total_predictions: totalPredictions 
+            total_predictions: totalPredictions
                   correct + "/" + total + ")");
     },
-    
+
     // === DATA RECORDING ===
     recordFunctionCall: function(functionName, moduleName, args) {
         var key = moduleName + "!" + functionName;
         var timestamp = Date.now();
-        
+
         // Update call count for monitored functions
         if (this.monitored_functions[key]) {
             this.monitored_functions[key].call_count++;
             this.monitored_functions[key].last_call = timestamp;
         }
-        
+
         // Record API call patterns for learning
         this.recordApiCall("FUNCTION_CALL", {
             function: functionName,
@@ -1065,26 +1065,26 @@
             arg_count: args ? Object.keys(args).length : 0
         });
     },
-    
+
     recordBypassResult: function(functionName, moduleName, bypassResult) {
         var key = moduleName + "!" + functionName;
-        
+
         this.bypass_results[key] = {
             detection: this.detected_functions[key],
             bypass: bypassResult,
             timestamp: Date.now()
         };
-        
+
         // Use for immediate learning if auto-learning is enabled
         if (this.config.learning.auto_learning && bypassResult.applied) {
             this.updateModelWithResult(key, bypassResult);
         }
     },
-    
+
     recordApiCall: function(apiName, params) {
         // Record API call for behavioral analysis
         var timestamp = Date.now();
-        
+
         // This could be used to build behavioral profiles
         send({
             type: "info",
@@ -1093,23 +1093,23 @@
             api_name: apiName
         });
     },
-    
+
     updateModelWithResult: function(functionKey, bypassResult) {
         // Immediate model update based on successful bypass
         if (bypassResult.applied && this.detected_functions[functionKey]) {
             var detection = this.detected_functions[functionKey];
-            
+
             // Increase confidence in patterns that led to successful bypass
             var features = detection.features;
             var adjustmentFactor = 0.01; // Small adjustment
-            
+
             // This is a simplified immediate learning update
             if (this.model.weights["combined"]) {
                 this.model.weights["combined"] += adjustmentFactor;
             }
         }
     },
-    
+
     // === UTILITY FUNCTIONS ===
     processBatch: function() {
         // Process pending hook placements
@@ -1121,17 +1121,17 @@
             });
         }, this.config.hook_strategy.delay_ms);
     },
-    
+
     isSystemModule: function(moduleName) {
         var systemModules = [
-            "ntdll.dll", "kernel32.dll", "kernelbase.dll", "user32.dll", 
+            "ntdll.dll", "kernel32.dll", "kernelbase.dll", "user32.dll",
             "gdi32.dll", "advapi32.dll", "msvcrt.dll", "shell32.dll",
             "ole32.dll", "oleaut32.dll", "wininet.dll", "winhttp.dll"
         ];
-        
+
         return systemModules.includes(moduleName.toLowerCase());
     },
-    
+
     loadSavedModel: function() {
         // In a real implementation, this would load from persistent storage
         send({
@@ -1140,7 +1140,7 @@
             action: "no_saved_model_found_using_default"
         });
     },
-    
+
     saveModel: function() {
         // In a real implementation, this would save to persistent storage
         send({
@@ -1149,7 +1149,7 @@
             action: "model_state_saved"
         });
     },
-    
+
     // === FUNCTION DISCOVERY HOOKS ===
     hookFunctionDiscovery: function() {
         send({
@@ -1157,7 +1157,7 @@
             target: "ml_license_detector",
             action: "setting_up_function_discovery_hooks"
         });
-        
+
         // Hook LoadLibrary to detect new modules
         var loadLibrary = Module.findExportByName("kernel32.dll", "LoadLibraryW");
         if (loadLibrary) {
@@ -1173,7 +1173,7 @@
                         });
                     }
                 },
-                
+
                 onLeave: function(retval) {
                     if (!retval.isNull()) {
                         // Analyze newly loaded module
@@ -1184,7 +1184,7 @@
                 }
             });
         }
-        
+
         // Hook GetProcAddress to detect function lookups
         var getProcAddress = Module.findExportByName("kernel32.dll", "GetProcAddress");
         if (getProcAddress) {
@@ -1198,7 +1198,7 @@
             });
         }
     },
-    
+
     analyzeNewModule: function(moduleHandle) {
         try {
             // Get module information
@@ -1221,7 +1221,7 @@
             });
         }
     },
-    
+
     setupPatternMatching: function() {
         send({
             type: "success",
@@ -1229,7 +1229,7 @@
             action: "pattern_matching_system_ready"
         });
     },
-    
+
     initializeFeatureExtraction: function() {
         send({
             type: "success",
@@ -1237,7 +1237,7 @@
             action: "feature_extraction_system_initialized"
         });
     },
-    
+
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
@@ -1256,11 +1256,11 @@
                 target: "ml_license_detector",
                 action: "summary_separator"
             });
-            
+
             var totalDetected = Object.keys(this.detected_functions).length;
             var totalHooked = Object.keys(this.hooked_functions).length;
             var totalMonitored = Object.keys(this.monitored_functions).length;
-            
+
             send({
                 type: "info",
                 target: "ml_license_detector",
@@ -1279,7 +1279,7 @@
                 action: "summary_functions_monitored",
                 count: totalMonitored
             });
-            
+
             // Show confidence distribution
             var highConf = 0, medConf = 0, lowConf = 0;
             for (var key in this.detected_functions) {
@@ -1288,7 +1288,7 @@
                 else if (conf >= this.config.thresholds.medium_confidence) medConf++;
                 else lowConf++;
             }
-            
+
             send({
                 type: "info",
                 target: "ml_license_detector",
@@ -1317,7 +1317,7 @@
                 action: "confidence_low",
                 count: lowConf
             });
-            
+
             send({
                 type: "info",
                 target: "ml_license_detector",
@@ -1344,10 +1344,10 @@
                 type: "info",
                 target: "ml_license_detector",
                 action: "detection_strategy",
-                strategy: this.config.strategy 
-                      (this.config.hook_strategy.aggressive ? "Aggressive" : 
+                strategy: this.config.strategy
+                      (this.config.hook_strategy.aggressive ? "Aggressive" :
                        this.config.hook_strategy.conservative ? "Conservative" : "Adaptive"));
-            
+
             send({
                 type: "info",
                 target: "ml_license_detector",

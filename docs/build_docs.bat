@@ -51,7 +51,7 @@ if %errorlevel% equ 0 (
     echo.
     echo View at: file:///%cd:\=/%/%DOCS_DIR%/_build/html/index.html
     echo.
-    set /p OPEN_BROWSER=Open in browser? (y/n): 
+    set /p OPEN_BROWSER=Open in browser? (y/n):
     if /i "%OPEN_BROWSER%"=="y" (
         start "" "%cd%\%DOCS_DIR%\_build\html\index.html"
     )

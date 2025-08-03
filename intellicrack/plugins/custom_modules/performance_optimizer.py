@@ -56,12 +56,14 @@ import psutil
 try:
     import torch
     import torch.cuda
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
 
 try:
     import cupy
+
     CUPY_AVAILABLE = True
 except ImportError:
     CUPY_AVAILABLE = False
@@ -283,8 +285,9 @@ class CacheManager:
             value_size = self._calculate_size(value)
 
             # Check if we need to evict items
-            while (len(self.cache) >= self.max_size or
-                   self.memory_usage + value_size > self.max_memory):
+            while (
+                len(self.cache) >= self.max_size or self.memory_usage + value_size > self.max_memory
+            ):
                 if not self._evict_least_valuable():
                     return False  # Cannot evict more items
 
@@ -362,7 +365,9 @@ class ThreadPoolOptimizer:
     def submit(self, fn: Callable, *args, **kwargs):
         """Submit task and collect metrics"""
         start_time = time.time()
-        queue_depth = len(self.executor._threads) - len([t for t in self.executor._threads if not t._tstate_lock.acquire(False)])
+        queue_depth = len(self.executor._threads) - len(
+            [t for t in self.executor._threads if not t._tstate_lock.acquire(False)]
+        )
 
         with self.lock:
             self.queue_depths.append(queue_depth)
@@ -398,7 +403,9 @@ class ThreadPoolOptimizer:
         # Where L = average number in system, λ = arrival rate, W = average response time
         # Use queue depth to adjust for system utilization
         utilization_factor = min(avg_queue_depth / 10.0, 1.0)  # Scale based on queue depth
-        optimal_workers = int(arrival_rate * avg_response_time * (1.2 + utilization_factor))  # Dynamic buffer based on queue depth
+        optimal_workers = int(
+            arrival_rate * avg_response_time * (1.2 + utilization_factor)
+        )  # Dynamic buffer based on queue depth
 
         # Apply constraints
         optimal_workers = max(self.min_workers, min(self.max_workers, optimal_workers))
@@ -419,7 +426,9 @@ class ThreadPoolOptimizer:
             return {
                 "current_workers": self.executor._max_workers,
                 "avg_queue_depth": np.mean(list(self.queue_depths)) if self.queue_depths else 0,
-                "avg_response_time": np.mean(list(self.response_times)) if self.response_times else 0,
+                "avg_response_time": np.mean(list(self.response_times))
+                if self.response_times
+                else 0,
                 "min_workers": self.min_workers,
                 "max_workers": self.max_workers,
             }
@@ -516,11 +525,13 @@ class IOOptimizer:
         file_size = path_obj.stat().st_size
 
         # Record access pattern
-        self.file_access_patterns[file_path].append({
-            "timestamp": time.time(),
-            "size": file_size,
-            "chunk_size": chunk_size,
-        })
+        self.file_access_patterns[file_path].append(
+            {
+                "timestamp": time.time(),
+                "size": file_size,
+                "chunk_size": chunk_size,
+            }
+        )
 
         # Optimize read strategy based on file size
         if file_size < 1024 * 1024:  # < 1MB: read entire file
@@ -591,7 +602,9 @@ class IOOptimizer:
 
         # Analyze access patterns
         recent_patterns = patterns[-10:]
-        avg_chunk_size = np.mean([p.get("chunk_size", 0) for p in recent_patterns if p.get("chunk_size")])
+        avg_chunk_size = np.mean(
+            [p.get("chunk_size", 0) for p in recent_patterns if p.get("chunk_size")]
+        )
 
         if avg_chunk_size > 0:
             # Set read-ahead to 2x average chunk size
@@ -674,11 +687,13 @@ class DatabaseOptimizer:
         execution_time = time.time() - start_time
 
         # Record statistics
-        self.query_stats[query].append({
-            "execution_time": execution_time,
-            "timestamp": time.time(),
-            "result_count": len(result),
-        })
+        self.query_stats[query].append(
+            {
+                "execution_time": execution_time,
+                "timestamp": time.time(),
+                "result_count": len(result),
+            }
+        )
 
         # Cache SELECT results
         if query.strip().upper().startswith("SELECT"):
@@ -705,18 +720,22 @@ class DatabaseOptimizer:
                 for query in table_queries:
                     # Simple WHERE clause extraction (basic implementation)
                     if "WHERE" in query.upper():
-                        where_part = query.upper().split("WHERE")[1].split("ORDER")[0].split("GROUP")[0]
+                        where_part = (
+                            query.upper().split("WHERE")[1].split("ORDER")[0].split("GROUP")[0]
+                        )
                         # Extract column names (simplified)
                         words = where_part.split()
                         for i, word in enumerate(words):
-                            if i > 0 and words[i-1] not in ["AND", "OR", "=", "<", ">", "!="]:
+                            if i > 0 and words[i - 1] not in ["AND", "OR", "=", "<", ">", "!="]:
                                 where_columns.add(word.strip("(),"))
 
                 # Create indices for frequently queried columns
                 for column in where_columns:
                     index_name = f"idx_{table}_{column}"
                     try:
-                        cursor.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON {table}({column})")
+                        cursor.execute(
+                            f"CREATE INDEX IF NOT EXISTS {index_name} ON {table}({column})"
+                        )
                     except sqlite3.Error:
                         pass  # Index might already exist or column might not exist
 
@@ -736,8 +755,14 @@ class DatabaseOptimizer:
             "avg_execution_time": avg_execution_time,
             "cache_size": len(self.query_cache),
             "connection_pool_size": len(self.connection_pool),
-            "slow_queries": len([s for stats in self.query_stats.values()
-                               for s in stats if s["execution_time"] > 1.0]),
+            "slow_queries": len(
+                [
+                    s
+                    for stats in self.query_stats.values()
+                    for s in stats
+                    if s["execution_time"] > 1.0
+                ]
+            ),
         }
 
 
@@ -774,11 +799,13 @@ class PerformanceProfiler:
 
         memory_stats = []
         for stat in top_stats[:10]:
-            memory_stats.append({
-                "file": stat.traceback.format()[-1],
-                "size_mb": stat.size / (1024 * 1024),
-                "count": stat.count,
-            })
+            memory_stats.append(
+                {
+                    "file": stat.traceback.format()[-1],
+                    "size_mb": stat.size / (1024 * 1024),
+                    "count": stat.count,
+                }
+            )
 
         return {
             "memory_top_consumers": memory_stats,
@@ -817,17 +844,29 @@ class PerformanceProfiler:
                 gpu_stats = {}
                 if TORCH_AVAILABLE and torch.cuda.is_available():
                     for device_id in range(torch.cuda.device_count()):
-                        gpu_stats[f"gpu_{device_id}_memory"] = torch.cuda.memory_allocated(device_id)
+                        gpu_stats[f"gpu_{device_id}_memory"] = torch.cuda.memory_allocated(
+                            device_id
+                        )
 
                 timestamp = time.time()
 
                 with self.lock:
                     self.metrics_history[ResourceType.CPU_USAGE].append(
-                        PerformanceMetric(timestamp, ResourceType.CPU_USAGE, cpu_percent, f"system_total_time:{cpu_total_time:.2f}"),
+                        PerformanceMetric(
+                            timestamp,
+                            ResourceType.CPU_USAGE,
+                            cpu_percent,
+                            f"system_total_time:{cpu_total_time:.2f}",
+                        ),
                     )
 
                     self.metrics_history[ResourceType.MEMORY_USAGE].append(
-                        PerformanceMetric(timestamp, ResourceType.MEMORY_USAGE, memory_percent, f"rss:{memory_rss},vms:{memory_vms},io_r:{io_read_bytes},io_w:{io_write_bytes}"),
+                        PerformanceMetric(
+                            timestamp,
+                            ResourceType.MEMORY_USAGE,
+                            memory_percent,
+                            f"rss:{memory_rss},vms:{memory_vms},io_r:{io_read_bytes},io_w:{io_write_bytes}",
+                        ),
                     )
 
                     # Keep only recent metrics (last 1000 points)
@@ -962,26 +1001,32 @@ class AdaptiveOptimizer:
 
         # Analyze recent performance
         if avg_score < 0.7:  # Poor performance
-            recommendations.append({
-                "type": "memory",
-                "action": "increase_cache",
-                "description": "Consider increasing cache size for better performance",
-            })
+            recommendations.append(
+                {
+                    "type": "memory",
+                    "action": "increase_cache",
+                    "description": "Consider increasing cache size for better performance",
+                }
+            )
 
-            recommendations.append({
-                "type": "cpu",
-                "action": "optimize_threads",
-                "description": "Optimize thread pool configuration",
-            })
+            recommendations.append(
+                {
+                    "type": "cpu",
+                    "action": "optimize_threads",
+                    "description": "Optimize thread pool configuration",
+                }
+            )
 
         # Check for memory pressure
         recent_memory = np.mean([h["metrics"].get("memory_percent", 0) for h in recent_metrics])
         if recent_memory > 80:
-            recommendations.append({
-                "type": "memory",
-                "action": "reduce_memory_usage",
-                "description": "High memory usage detected, consider optimization",
-            })
+            recommendations.append(
+                {
+                    "type": "memory",
+                    "action": "reduce_memory_usage",
+                    "description": "High memory usage detected, consider optimization",
+                }
+            )
 
         return {
             "current_config": self.current_config,
@@ -1070,7 +1115,7 @@ class PerformanceOptimizer:
         memory_score = max(0, 1 - metrics.get("memory_percent", 0) / 100)
 
         # Weight different metrics
-        score = (cpu_score * 0.4 + memory_score * 0.4 + 0.2)  # Base 0.2 for running
+        score = cpu_score * 0.4 + memory_score * 0.4 + 0.2  # Base 0.2 for running
 
         return min(1.0, max(0.0, score))
 
@@ -1253,7 +1298,9 @@ class PerformanceOptimizer:
             memory_delta = end_metrics.get("memory_usage", 0) - start_metrics.get("memory_usage", 0)
 
             # Log comprehensive performance data
-            logging.info(f"Performance tracking for {component_name}: {duration:.3f}s, CPU Δ: {cpu_delta:.2f}%, Memory Δ: {memory_delta:.2f}%")
+            logging.info(
+                f"Performance tracking for {component_name}: {duration:.3f}s, CPU Δ: {cpu_delta:.2f}%, Memory Δ: {memory_delta:.2f}%"
+            )
 
 
 # Global performance optimizer instance
@@ -1272,6 +1319,7 @@ def get_performance_optimizer(config: dict[str, Any] = None) -> PerformanceOptim
 
 def performance_monitor(component_name: str = "default"):
     """Decorator for automatic performance monitoring"""
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -1281,6 +1329,7 @@ def performance_monitor(component_name: str = "default"):
                 return func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 

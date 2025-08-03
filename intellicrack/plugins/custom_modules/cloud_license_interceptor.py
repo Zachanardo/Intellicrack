@@ -75,6 +75,7 @@ class CloudProvider(Enum):
     GENERIC_SAAS = "generic_saas"
     UNKNOWN = "unknown"
 
+
 class AuthenticationType(Enum):
     """Authentication types"""
 
@@ -85,6 +86,7 @@ class AuthenticationType(Enum):
     BEARER_TOKEN = "bearer_token"
     BASIC_AUTH = "basic_auth"
     CUSTOM = "custom"
+
 
 class RequestType(Enum):
     """Request classification types"""
@@ -97,6 +99,7 @@ class RequestType(Enum):
     REGULAR_API = "regular_api"
     UNKNOWN = "unknown"
 
+
 class BypassResult(Enum):
     """Bypass operation results"""
 
@@ -105,6 +108,7 @@ class BypassResult(Enum):
     PARTIAL = "partial"
     CACHED = "cached"
     FALLBACK = "fallback"
+
 
 @dataclass
 class InterceptorConfig:
@@ -123,11 +127,14 @@ class InterceptorConfig:
     max_cache_size: int = 10000
     request_delay_min: float = 0.1
     request_delay_max: float = 0.5
-    user_agents: list[str] = field(default_factory=lambda: [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-    ])
+    user_agents: list[str] = field(
+        default_factory=lambda: [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+        ]
+    )
+
 
 @dataclass
 class RequestInfo:
@@ -143,6 +150,8 @@ class RequestInfo:
     auth_type: AuthenticationType = AuthenticationType.CUSTOM
     request_type: RequestType = RequestType.UNKNOWN
     confidence: float = 0.0
+
+
 @dataclass
 class ResponseInfo:
     """Information about modified response"""
@@ -155,6 +164,7 @@ class ResponseInfo:
     bypass_applied: bool = False
     cache_hit: bool = False
     source: str = "upstream"
+
 
 @dataclass
 class BypassOperation:
@@ -171,6 +181,7 @@ class BypassOperation:
     processing_time: float
     error_message: str | None = None
 
+
 class CertificateManager:
     """Manages SSL certificates for HTTPS interception"""
 
@@ -185,7 +196,7 @@ class CertificateManager:
 
     def initialize_ca(self) -> bool:
         """Initialize the certificate authority for SSL interception."""
-        try:            # Try to load existing CA
+        try:  # Try to load existing CA
             try:
                 with open(self.config.ca_cert_path, "rb") as f:
                     ca_cert_pem = f.read()
@@ -215,58 +226,76 @@ class CertificateManager:
             )
 
             # Create CA certificate
-            subject = issuer = x509.Name([
-                x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-                x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack CA"),
-                x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Root CA"),
-            ])
-            self.ca_cert = x509.CertificateBuilder().subject_name(
-                subject,
-            ).issuer_name(
-                issuer,
-            ).public_key(
-                self.ca_key.public_key(),
-            ).serial_number(
-                x509.random_serial_number(),
-            ).not_valid_before(
-                datetime.datetime.utcnow(),
-            ).not_valid_after(
-                datetime.datetime.utcnow() + datetime.timedelta(days=3650),
-            ).add_extension(
-                x509.SubjectAlternativeName([
-                    x509.DNSName("localhost"),
-                    x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
-                ]),
-                critical=False,
-            ).add_extension(
-                x509.BasicConstraints(ca=True, path_length=None),
-                critical=True,
-            ).add_extension(
-                x509.KeyUsage(
-                    digital_signature=True,
-                    key_cert_sign=True,
-                    crl_sign=True,
-                    content_commitment=False,
-                    data_encipherment=False,
-                    key_agreement=False,
-                    key_encipherment=False,
-                    encipher_only=False,
-                    decipher_only=False,
-                ),
-                critical=True,
-            ).sign(self.ca_key, hashes.SHA256())
+            subject = issuer = x509.Name(
+                [
+                    x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+                    x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack CA"),
+                    x509.NameAttribute(NameOID.COMMON_NAME, "Intellicrack Root CA"),
+                ]
+            )
+            self.ca_cert = (
+                x509.CertificateBuilder()
+                .subject_name(
+                    subject,
+                )
+                .issuer_name(
+                    issuer,
+                )
+                .public_key(
+                    self.ca_key.public_key(),
+                )
+                .serial_number(
+                    x509.random_serial_number(),
+                )
+                .not_valid_before(
+                    datetime.datetime.utcnow(),
+                )
+                .not_valid_after(
+                    datetime.datetime.utcnow() + datetime.timedelta(days=3650),
+                )
+                .add_extension(
+                    x509.SubjectAlternativeName(
+                        [
+                            x509.DNSName("localhost"),
+                            x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
+                        ]
+                    ),
+                    critical=False,
+                )
+                .add_extension(
+                    x509.BasicConstraints(ca=True, path_length=None),
+                    critical=True,
+                )
+                .add_extension(
+                    x509.KeyUsage(
+                        digital_signature=True,
+                        key_cert_sign=True,
+                        crl_sign=True,
+                        content_commitment=False,
+                        data_encipherment=False,
+                        key_agreement=False,
+                        key_encipherment=False,
+                        encipher_only=False,
+                        decipher_only=False,
+                    ),
+                    critical=True,
+                )
+                .sign(self.ca_key, hashes.SHA256())
+            )
 
             # Save CA certificate and key
             with open(self.config.ca_cert_path, "wb") as f:
                 f.write(self.ca_cert.public_bytes(serialization.Encoding.PEM))
             with open(self.config.ca_key_path, "wb") as f:
-                f.write(self.ca_key.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.PKCS8,
-                    encryption_algorithm=serialization.NoEncryption(),
-                ))
+                f.write(
+                    self.ca_key.private_bytes(
+                        encoding=serialization.Encoding.PEM,
+                        format=serialization.PrivateFormat.PKCS8,
+                        encryption_algorithm=serialization.NoEncryption(),
+                    )
+                )
 
             self.logger.info("Generated new CA certificate")
             return True
@@ -289,48 +318,64 @@ class CertificateManager:
                 )
 
                 # Create server certificate
-                subject = x509.Name([
-                    x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                    x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
-                    x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
-                    x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-                ])
-                server_cert = x509.CertificateBuilder().subject_name(
-                    subject,
-                ).issuer_name(
-                    self.ca_cert.subject,
-                ).public_key(
-                    server_key.public_key(),
-                ).serial_number(
-                    x509.random_serial_number(),
-                ).not_valid_before(
-                    datetime.datetime.utcnow(),
-                ).not_valid_after(
-                    datetime.datetime.utcnow() + datetime.timedelta(days=365),
-                ).add_extension(
-                    x509.SubjectAlternativeName([
-                        x509.DNSName(hostname),
-                        x509.DNSName(f"*.{hostname}"),
-                    ]),
-                    critical=False,
-                ).add_extension(
-                    x509.BasicConstraints(ca=False, path_length=None),
-                    critical=True,
-                ).add_extension(
-                    x509.KeyUsage(
-                        digital_signature=True,
-                        key_encipherment=True,
-                        content_commitment=False,
-                        data_encipherment=False,
-                        key_agreement=False,
-                        key_cert_sign=False,
-                        crl_sign=False,
-                        encipher_only=False,
-                        decipher_only=False,
-                    ),
-                    critical=True,
-                ).sign(self.ca_key, hashes.SHA256())
+                subject = x509.Name(
+                    [
+                        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+                        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "CA"),
+                        x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+                        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Intellicrack"),
+                        x509.NameAttribute(NameOID.COMMON_NAME, hostname),
+                    ]
+                )
+                server_cert = (
+                    x509.CertificateBuilder()
+                    .subject_name(
+                        subject,
+                    )
+                    .issuer_name(
+                        self.ca_cert.subject,
+                    )
+                    .public_key(
+                        server_key.public_key(),
+                    )
+                    .serial_number(
+                        x509.random_serial_number(),
+                    )
+                    .not_valid_before(
+                        datetime.datetime.utcnow(),
+                    )
+                    .not_valid_after(
+                        datetime.datetime.utcnow() + datetime.timedelta(days=365),
+                    )
+                    .add_extension(
+                        x509.SubjectAlternativeName(
+                            [
+                                x509.DNSName(hostname),
+                                x509.DNSName(f"*.{hostname}"),
+                            ]
+                        ),
+                        critical=False,
+                    )
+                    .add_extension(
+                        x509.BasicConstraints(ca=False, path_length=None),
+                        critical=True,
+                    )
+                    .add_extension(
+                        x509.KeyUsage(
+                            digital_signature=True,
+                            key_encipherment=True,
+                            content_commitment=False,
+                            data_encipherment=False,
+                            key_agreement=False,
+                            key_cert_sign=False,
+                            crl_sign=False,
+                            encipher_only=False,
+                            decipher_only=False,
+                        ),
+                        critical=True,
+                    )
+                    .sign(self.ca_key, hashes.SHA256())
+                )
                 # Create SSL context
                 context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
                 context.load_cert_chain(
@@ -353,6 +398,7 @@ class CertificateManager:
                 self.logger.error(f"Server certificate generation failed for {hostname}: {e}")
                 raise
 
+
 class RequestClassifier:
     """Classifies and analyzes intercepted requests"""
 
@@ -367,7 +413,8 @@ class RequestClassifier:
                 r"aws\.amazon\.com",
                 r"license-manager",
                 r"marketplace\.aws",
-            ],            CloudProvider.AZURE: [
+            ],
+            CloudProvider.AZURE: [
                 r"azure\.com",
                 r"microsoft\.com/azure",
                 r"marketplace\.azure",
@@ -409,7 +456,8 @@ class RequestClassifier:
                 r"bearer\s+ey[A-Za-z0-9\-_]+",
                 r"jwt",
                 r"token",
-            ],            AuthenticationType.API_KEY: [
+            ],
+            AuthenticationType.API_KEY: [
                 r"api[_-]?key",
                 r"x-api-key",
                 r"apikey",
@@ -421,7 +469,9 @@ class RequestClassifier:
             ],
         }
 
-    def classify_request(self, request: RequestInfo) -> tuple[CloudProvider, AuthenticationType, RequestType, float]:
+    def classify_request(
+        self, request: RequestInfo
+    ) -> tuple[CloudProvider, AuthenticationType, RequestType, float]:
         """Classify request and return provider, auth type, request type, and confidence"""
         # Detect cloud provider
         provider = self._detect_provider(request.url, request.headers)
@@ -456,6 +506,7 @@ class RequestClassifier:
             return CloudProvider.GCP
 
         return CloudProvider.GENERIC_SAAS
+
     def _detect_auth_type(self, headers: dict[str, str], body: bytes) -> AuthenticationType:
         """Detect authentication type from headers and body"""
         # Check Authorization header
@@ -535,7 +586,9 @@ class RequestClassifier:
             return RequestType.TOKEN_REFRESH
 
         # Check for heartbeat patterns (enhanced with body hints)
-        if ("heartbeat" in url_lower or "ping" in url_lower or "health" in url_lower) or "heartbeat" in body_hints:
+        if (
+            "heartbeat" in url_lower or "ping" in url_lower or "health" in url_lower
+        ) or "heartbeat" in body_hints:
             return RequestType.HEARTBEAT
 
         # Check Content-Type for licensing data
@@ -558,8 +611,13 @@ class RequestClassifier:
 
         return RequestType.REGULAR_API
 
-    def _calculate_confidence(self, provider: CloudProvider, auth_type: AuthenticationType,
-                            request_type: RequestType, request: RequestInfo) -> float:
+    def _calculate_confidence(
+        self,
+        provider: CloudProvider,
+        auth_type: AuthenticationType,
+        request_type: RequestType,
+        request: RequestInfo,
+    ) -> float:
         """Calculate confidence score for classification"""
         confidence = 0.0
 
@@ -586,6 +644,7 @@ class RequestClassifier:
                 break
 
         return min(confidence, 1.0)
+
 
 class AuthenticationManager:
     """Manages authentication tokens and credentials"""
@@ -629,7 +688,7 @@ class AuthenticationManager:
 
     def modify_jwt_token(self, token: str, modifications: dict[str, Any]) -> str:
         """Modify JWT token claims and re-sign with appropriate key."""
-        try:            # Parse existing token
+        try:  # Parse existing token
             parsed = self.parse_jwt_token(token)
             if not parsed["valid"]:
                 return token
@@ -697,7 +756,6 @@ class AuthenticationManager:
             "exp": current_time + (10 * 365 * 24 * 3600),  # 10 years
             "nbf": current_time - 3600,
             "jti": str(uuid.uuid4()),
-
             # License claims
             "licensed": True,
             "license_valid": True,
@@ -711,7 +769,6 @@ class AuthenticationManager:
             "usage_limit": 999999,
             "features": ["all", "premium", "enterprise"],
             "permissions": ["read", "write", "admin", "full_access"],
-
             # Auth type specific claims
             "auth_method": auth_type.value,
             "auth_provider": provider.value,
@@ -719,48 +776,63 @@ class AuthenticationManager:
 
         # Add auth_type-specific fields
         if auth_type == AuthenticationType.BEARER:
-            payload.update({
-                "token_type": "bearer",
-                "scope": "license:read license:validate features:all",
-                "bearer_format": "JWT",
-            })
+            payload.update(
+                {
+                    "token_type": "bearer",
+                    "scope": "license:read license:validate features:all",
+                    "bearer_format": "JWT",
+                }
+            )
         elif auth_type == AuthenticationType.API_KEY:
-            payload.update({
-                "token_type": "api_key",
-                "api_key_id": str(uuid.uuid4()),
-                "key_permissions": ["validate", "check_features", "usage_report"],
-            })
+            payload.update(
+                {
+                    "token_type": "api_key",
+                    "api_key_id": str(uuid.uuid4()),
+                    "key_permissions": ["validate", "check_features", "usage_report"],
+                }
+            )
         elif auth_type == AuthenticationType.OAUTH:
-            payload.update({
-                "token_type": "oauth",
-                "oauth_scope": "license.validate",
-                "client_id": f"client-{secrets.token_hex(8)}",
-                "grant_type": "client_credentials",
-            })
+            payload.update(
+                {
+                    "token_type": "oauth",
+                    "oauth_scope": "license.validate",
+                    "client_id": f"client-{secrets.token_hex(8)}",
+                    "grant_type": "client_credentials",
+                }
+            )
         elif auth_type == AuthenticationType.CUSTOM:
-            payload.update({
-                "token_type": "custom",
-                "custom_auth_method": "proprietary",
-                "auth_level": "enterprise",
-            })
+            payload.update(
+                {
+                    "token_type": "custom",
+                    "custom_auth_method": "proprietary",
+                    "auth_level": "enterprise",
+                }
+            )
 
         # Provider-specific claims
         if provider == CloudProvider.AWS:
-            payload.update({
-                "aws:userid": str(uuid.uuid4()),
-                "aws:marketplace_token": secrets.token_hex(32),
-                "aws:entitlements": ["full_access"]            })
+            payload.update(
+                {
+                    "aws:userid": str(uuid.uuid4()),
+                    "aws:marketplace_token": secrets.token_hex(32),
+                    "aws:entitlements": ["full_access"],
+                }
+            )
         elif provider == CloudProvider.AZURE:
-            payload.update({
-                "azure:tenant_id": str(uuid.uuid4()),
-                "azure:subscription_id": str(uuid.uuid4()),
-                "azure:marketplace_token": secrets.token_hex(32),
-            })
+            payload.update(
+                {
+                    "azure:tenant_id": str(uuid.uuid4()),
+                    "azure:subscription_id": str(uuid.uuid4()),
+                    "azure:marketplace_token": secrets.token_hex(32),
+                }
+            )
         elif provider == CloudProvider.GCP:
-            payload.update({
-                "gcp:project_id": f"project-{secrets.token_hex(8)}",
-                "gcp:service_account": f"sa-{secrets.token_hex(8)}@project.iam.gserviceaccount.com",
-            })
+            payload.update(
+                {
+                    "gcp:project_id": f"project-{secrets.token_hex(8)}",
+                    "gcp:service_account": f"sa-{secrets.token_hex(8)}@project.iam.gserviceaccount.com",
+                }
+            )
 
         # Generate token
         algorithm = "HS256"
@@ -785,6 +857,7 @@ class AuthenticationManager:
         self.logger.debug("Generated bypass API key")
         return new_key
 
+
 class ResponseModifier:
     """Modifies responses to bypass license validation"""
 
@@ -793,8 +866,9 @@ class ResponseModifier:
         self.auth_manager = auth_manager
         self.logger = logging.getLogger(f"{__name__}.ResponseModifier")
 
-    def modify_response(self, request: RequestInfo, original_response: aiohttp.ClientResponse,
-                       response_body: bytes) -> tuple[int, dict[str, str], bytes]:
+    def modify_response(
+        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes
+    ) -> tuple[int, dict[str, str], bytes]:
         """Modify response based on request type"""
         if request.request_type == RequestType.LICENSE_VALIDATION:
             return self._modify_license_response(request, original_response, response_body)
@@ -808,8 +882,9 @@ class ResponseModifier:
         headers = dict(original_response.headers)
         return original_response.status, headers, response_body
 
-    def _modify_license_response(self, request: RequestInfo, original_response: aiohttp.ClientResponse,
-                                response_body: bytes) -> tuple[int, dict[str, str], bytes]:
+    def _modify_license_response(
+        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes
+    ) -> tuple[int, dict[str, str], bytes]:
         try:
             # Try to parse as JSON
             response_data = json.loads(response_body.decode("utf-8"))
@@ -828,28 +903,35 @@ class ResponseModifier:
                 "max_users": 999999,
                 "current_users": 1,
                 "usage_limit": 999999,
-                "current_usage": 0            }
+                "current_usage": 0,
+            }
 
             # Provider-specific modifications
             if request.provider == CloudProvider.AWS:
-                license_data.update({
-                    "entitlements": [{"name": "FullAccess", "enabled": True}],
-                    "marketplace_token": secrets.token_hex(32),
-                    "customer_identifier": str(uuid.uuid4()),
-                })
+                license_data.update(
+                    {
+                        "entitlements": [{"name": "FullAccess", "enabled": True}],
+                        "marketplace_token": secrets.token_hex(32),
+                        "customer_identifier": str(uuid.uuid4()),
+                    }
+                )
             elif request.provider == CloudProvider.AZURE:
-                license_data.update({
-                    "subscription_id": str(uuid.uuid4()),
-                    "tenant_id": str(uuid.uuid4()),
-                    "plan_id": "enterprise",
-                    "offer_id": "premium",
-                })
+                license_data.update(
+                    {
+                        "subscription_id": str(uuid.uuid4()),
+                        "tenant_id": str(uuid.uuid4()),
+                        "plan_id": "enterprise",
+                        "offer_id": "premium",
+                    }
+                )
             elif request.provider == CloudProvider.GCP:
-                license_data.update({
-                    "project_id": f"project-{secrets.token_hex(8)}",
-                    "billing_account": f"billing-{secrets.token_hex(8)}",
-                    "service_level": "premium",
-                })
+                license_data.update(
+                    {
+                        "project_id": f"project-{secrets.token_hex(8)}",
+                        "billing_account": f"billing-{secrets.token_hex(8)}",
+                        "service_level": "premium",
+                    }
+                )
 
             # Merge with original response if it's a dict
             if isinstance(response_data, dict):
@@ -884,8 +966,9 @@ class ResponseModifier:
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
-    def _modify_feature_response(self, request: RequestInfo, original_response: aiohttp.ClientResponse,
-                                response_body: bytes) -> tuple[int, dict[str, str], bytes]:
+    def _modify_feature_response(
+        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes
+    ) -> tuple[int, dict[str, str], bytes]:
         try:
             response_data = json.loads(response_body.decode("utf-8"))
 
@@ -917,23 +1000,29 @@ class ResponseModifier:
 
             # Customize features based on request provider
             if request.provider == CloudProvider.AWS:
-                feature_data["features"].update({
-                    "aws_integration": True,
-                    "marketplace_billing": True,
-                    "ec2_scaling": True,
-                })
+                feature_data["features"].update(
+                    {
+                        "aws_integration": True,
+                        "marketplace_billing": True,
+                        "ec2_scaling": True,
+                    }
+                )
             elif request.provider == CloudProvider.AZURE:
-                feature_data["features"].update({
-                    "azure_ad_sso": True,
-                    "resource_management": True,
-                    "cost_optimization": True,
-                })
+                feature_data["features"].update(
+                    {
+                        "azure_ad_sso": True,
+                        "resource_management": True,
+                        "cost_optimization": True,
+                    }
+                )
             elif request.provider == CloudProvider.GCP:
-                feature_data["features"].update({
-                    "gcp_apis": True,
-                    "big_query": True,
-                    "cloud_functions": True,
-                })
+                feature_data["features"].update(
+                    {
+                        "gcp_apis": True,
+                        "big_query": True,
+                        "cloud_functions": True,
+                    }
+                )
 
             # Customize based on auth type
             if request.auth_type == AuthenticationType.OAUTH:
@@ -957,13 +1046,16 @@ class ResponseModifier:
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
-    def _modify_token_response(self, request: RequestInfo, original_response: aiohttp.ClientResponse,
-                              response_body: bytes) -> tuple[int, dict[str, str], bytes]:
+    def _modify_token_response(
+        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes
+    ) -> tuple[int, dict[str, str], bytes]:
         try:
             response_data = json.loads(response_body.decode("utf-8"))
 
             # Generate new tokens
-            access_token = self.auth_manager.generate_license_token(request.provider, request.auth_type)
+            access_token = self.auth_manager.generate_license_token(
+                request.provider, request.auth_type
+            )
             refresh_token = secrets.token_urlsafe(32)
 
             token_data = {
@@ -990,8 +1082,9 @@ class ResponseModifier:
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
-    def _modify_usage_response(self, request: RequestInfo, original_response: aiohttp.ClientResponse,
-                              response_body: bytes) -> tuple[int, dict[str, str], bytes]:
+    def _modify_usage_response(
+        self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes
+    ) -> tuple[int, dict[str, str], bytes]:
         try:
             # Always report successful usage submission with request context
             current_time = int(time.time())
@@ -1047,6 +1140,7 @@ class ResponseModifier:
             headers = dict(original_response.headers)
             return original_response.status, headers, response_body
 
+
 class CacheManager:
     """Manages response caching with TTL"""
 
@@ -1061,6 +1155,7 @@ class CacheManager:
         # Start cleanup thread
         self.cleanup_thread = threading.Thread(target=self._cleanup_loop, daemon=True)
         self.cleanup_thread.start()
+
     def _generate_cache_key(self, request: RequestInfo) -> str:
         """Generate cache key for request"""
         # Include method, URL, and relevant headers
@@ -1116,7 +1211,10 @@ class CacheManager:
                 encoded_data = base64.b64encode(serialized_data).decode("utf-8")
 
                 # Store in SQLite for persistence (if configured)
-                if hasattr(self.config, "enable_persistent_cache") and self.config.enable_persistent_cache:
+                if (
+                    hasattr(self.config, "enable_persistent_cache")
+                    and self.config.enable_persistent_cache
+                ):
                     self._store_in_sqlite(cache_key, encoded_data)
 
             except Exception as e:
@@ -1131,8 +1229,10 @@ class CacheManager:
             cursor = conn.cursor()
             cursor.execute("""CREATE TABLE IF NOT EXISTS cache
                              (key TEXT PRIMARY KEY, data TEXT, timestamp REAL)""")
-            cursor.execute("INSERT OR REPLACE INTO cache VALUES (?, ?, ?)",
-                          (cache_key, encoded_data, time.time()))
+            cursor.execute(
+                "INSERT OR REPLACE INTO cache VALUES (?, ?, ?)",
+                (cache_key, encoded_data, time.time()),
+            )
             conn.commit()
             conn.close()
         except Exception as e:
@@ -1150,12 +1250,16 @@ class CacheManager:
 
             # Log query parameters for network analysis
             if query_params:
-                self.logger.debug(f"Network connectivity test for {hostname}:{port} with query params: {list(query_params.keys())}")
+                self.logger.debug(
+                    f"Network connectivity test for {hostname}:{port} with query params: {list(query_params.keys())}"
+                )
 
                 # Validate common cloud service parameters
                 for param in ["key", "token", "auth", "license"]:
                     if param in query_params:
-                        self.logger.info(f"Detected authentication parameter '{param}' in URL - potential license validation endpoint")
+                        self.logger.info(
+                            f"Detected authentication parameter '{param}' in URL - potential license validation endpoint"
+                        )
 
             # Use socket to test connectivity
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1167,13 +1271,17 @@ class CacheManager:
             ping_data = struct.pack("!I", int(time.time()))
 
             # Log network diagnostics data
-            self.logger.debug(f"Network diagnostic timestamp: {int(time.time())}, raw ping data: {ping_data.hex()}")
+            self.logger.debug(
+                f"Network diagnostic timestamp: {int(time.time())}, raw ping data: {ping_data.hex()}"
+            )
 
             # Validate network connectivity result
             if result == 0:
                 self.logger.info(f"Successfully connected to {hostname}:{port}")
             else:
-                self.logger.warning(f"Failed to connect to {hostname}:{port} (error code: {result})")
+                self.logger.warning(
+                    f"Failed to connect to {hostname}:{port} (error code: {result})"
+                )
 
             return result == 0
         except Exception as e:
@@ -1208,6 +1316,7 @@ class CacheManager:
             # Extract domains from response if it contains URLs
             response_text = response_body.decode("utf-8", errors="ignore")
             import re
+
             urls = re.findall(r"https?://([a-zA-Z0-9.-]+)", response_text)
             unique_domains.update(urls)  # Update Set with found URLs
             analysis["unique_domains"] = unique_domains
@@ -1271,6 +1380,8 @@ class CacheManager:
             self.cache.clear()
             self.access_times.clear()
         self.logger.info("Cache cleared")
+
+
 class LocalLicenseServer:
     """Local license server for fallback scenarios"""
 
@@ -1321,7 +1432,8 @@ class LocalLicenseServer:
         # Generate response based on request type
         if request.request_type == RequestType.LICENSE_VALIDATION:
             response_data = self._generate_validation_response(license_data)
-        elif request.request_type == RequestType.FEATURE_CHECK:            response_data = self._generate_feature_response(license_data)
+        elif request.request_type == RequestType.FEATURE_CHECK:
+            response_data = self._generate_feature_response(license_data)
         elif request.request_type == RequestType.TOKEN_REFRESH:
             response_data = self._generate_token_response(request, license_data)
         else:
@@ -1373,6 +1485,7 @@ class LocalLicenseServer:
             return "user"
 
         return "default"
+
     def _generate_validation_response(self, license_data: dict[str, Any]) -> dict[str, Any]:
         """Generate license validation response"""
         return {
@@ -1400,7 +1513,9 @@ class LocalLicenseServer:
             },
         }
 
-    def _generate_token_response(self, request: RequestInfo, license_data: dict[str, Any]) -> dict[str, Any]:
+    def _generate_token_response(
+        self, request: RequestInfo, license_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate token refresh response"""
         # Generate new tokens
         access_token = self.auth_manager.generate_license_token(request.provider, request.auth_type)
@@ -1423,6 +1538,8 @@ class LocalLicenseServer:
             "licensed": True,
             "data": license_data,
         }
+
+
 class CloudLicenseInterceptor:
     """Main cloud license interceptor service"""
 
@@ -1491,12 +1608,15 @@ class CloudLicenseInterceptor:
             )
 
             self.running = True
-            self.logger.info(f"Interceptor started on {self.config.listen_host}:{self.config.listen_port}")
+            self.logger.info(
+                f"Interceptor started on {self.config.listen_host}:{self.config.listen_port}"
+            )
             return True
 
         except Exception as e:
             self.logger.error(f"Failed to start interceptor: {e}")
             return False
+
     async def stop(self):
         """Stop the interceptor service"""
         self.running = False
@@ -1523,7 +1643,9 @@ class CloudLicenseInterceptor:
 
         return app
 
-    async def _stealth_middleware(self, request: aiohttp.web.Request, handler: Callable) -> aiohttp.web.Response:
+    async def _stealth_middleware(
+        self, request: aiohttp.web.Request, handler: Callable
+    ) -> aiohttp.web.Response:
         """Middleware for stealth operation"""
         if self.config.stealth_mode:
             # Add realistic delay
@@ -1539,7 +1661,9 @@ class CloudLicenseInterceptor:
 
         return response
 
-    async def _logging_middleware(self, request: aiohttp.web.Request, handler: Callable) -> aiohttp.web.Response:
+    async def _logging_middleware(
+        self, request: aiohttp.web.Request, handler: Callable
+    ) -> aiohttp.web.Response:
         """Middleware for request logging"""
         start_time = time.time()
         response = await handler(request)
@@ -1547,11 +1671,11 @@ class CloudLicenseInterceptor:
 
         # Log request
         self.logger.debug(
-            f"{request.method} {request.url} -> {response.status} "
-            f"({processing_time:.3f}s)",
+            f"{request.method} {request.url} -> {response.status} " f"({processing_time:.3f}s)",
         )
 
         return response
+
     async def _handle_request(self, request: aiohttp.web.Request) -> aiohttp.web.Response:
         try:
             # Read request body
@@ -1568,7 +1692,9 @@ class CloudLicenseInterceptor:
             )
 
             # Classify request
-            provider, auth_type, request_type, confidence = self.request_classifier.classify_request(request_info)
+            provider, auth_type, request_type, confidence = (
+                self.request_classifier.classify_request(request_info)
+            )
             request_info.provider = provider
             request_info.auth_type = auth_type
             request_info.request_type = request_type
@@ -1611,7 +1737,9 @@ class CloudLicenseInterceptor:
                     # Forward to upstream and modify response
                     upstream_response = await self._forward_request_upstream(request)
                     if upstream_response:
-                        modified_response = self._modify_upstream_response(request, upstream_response)
+                        modified_response = self._modify_upstream_response(
+                            request, upstream_response
+                        )
 
                         # Cache the response
                         self.cache_manager.store_response(request, modified_response)
@@ -1658,6 +1786,7 @@ class CloudLicenseInterceptor:
                 text="Bad Gateway",
                 headers={"Content-Type": "text/plain"},
             )
+
     async def _forward_request_upstream(self, request: RequestInfo) -> ResponseInfo | None:
         try:
             # Modify headers for stealth
@@ -1679,7 +1808,6 @@ class CloudLicenseInterceptor:
                 allow_redirects=True,
                 ssl=False,  # Accept any SSL cert for bypass
             ) as response:
-
                 response_body = await response.read()
                 response_headers = dict(response.headers)
 
@@ -1698,15 +1826,21 @@ class CloudLicenseInterceptor:
             self.logger.warning(f"Upstream request error: {e}")
             return None
 
-    def _modify_upstream_response(self, request: RequestInfo, upstream_response: ResponseInfo) -> ResponseInfo:
+    def _modify_upstream_response(
+        self, request: RequestInfo, upstream_response: ResponseInfo
+    ) -> ResponseInfo:
         """Modify upstream response for bypass"""
         # Use response modifier
         status, headers, body = self.response_modifier.modify_response(
             request,
-            type("MockResponse", (), {
-                "status": upstream_response.status,
-                "headers": upstream_response.headers,
-            })(),
+            type(
+                "MockResponse",
+                (),
+                {
+                    "status": upstream_response.status,
+                    "headers": upstream_response.headers,
+                },
+            )(),
             upstream_response.body,
         )
 
@@ -1722,6 +1856,7 @@ class CloudLicenseInterceptor:
         )
 
         return modified_response
+
     def _generate_fallback_response(self, request: RequestInfo) -> ResponseInfo:
         """Generate emergency fallback response"""
         # Simple success response
@@ -1763,7 +1898,8 @@ class CloudLicenseInterceptor:
         """Get interceptor statistics"""
         return {
             "running": self.running,
-            "uptime": time.time() - (self.request_log[0].timestamp if self.request_log else time.time()),
+            "uptime": time.time()
+            - (self.request_log[0].timestamp if self.request_log else time.time()),
             "total_requests": len(self.request_log),
             "bypass_stats": dict(self.bypass_stats),
             "cache_stats": {
@@ -1781,6 +1917,8 @@ class CloudLicenseInterceptor:
                 for req in list(self.request_log)[-10:]
             ],
         }
+
+
 async def main():
     """Main function for CLI usage"""
     import argparse
@@ -1837,8 +1975,10 @@ Fallback Mode: {'Enabled' if config.fallback_mode else 'Disabled'}
                 # Print stats every 60 seconds
                 if int(time.time()) % 60 == 0:
                     stats = interceptor.get_statistics()
-                    print(f"Stats: {stats['total_requests']} requests, "
-                          f"{stats['bypass_stats']} bypasses")
+                    print(
+                        f"Stats: {stats['total_requests']} requests, "
+                        f"{stats['bypass_stats']} bypasses"
+                    )
 
         else:
             print("Failed to start interceptor!")
@@ -1854,6 +1994,8 @@ Fallback Mode: {'Enabled' if config.fallback_mode else 'Disabled'}
 
     return 0
 
+
 if __name__ == "__main__":
     import sys
+
     sys.exit(asyncio.run(main()))

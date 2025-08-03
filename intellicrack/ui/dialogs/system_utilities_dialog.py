@@ -1,4 +1,5 @@
 """System utilities dialog for system-level analysis tools."""
+
 import json
 import os
 import time
@@ -27,7 +28,6 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-
 try:
     from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
     from PyQt6.QtGui import QColor, QFont, QPixmap
@@ -54,6 +54,7 @@ try:
     )
 except ImportError as e:
     logger.error("Import error in system_utilities_dialog: %s", e)
+
     # Fallback for environments without PyQt6
     class QDialog:
         """Stub class for QDialog when PyQt6 is not available.
@@ -74,6 +75,7 @@ except ImportError as e:
         """
         _ = args, kwargs
         return lambda: None
+
     Qt = None
 
 
@@ -312,7 +314,9 @@ class SystemUtilitiesDialog(QDialog):
         # Size options
         output_layout.addWidget(QLabel("Size:"), 2, 0)
         self.icon_size_combo = QComboBox()
-        self.icon_size_combo.addItems(["Original", "16x16", "32x32", "48x48", "64x64", "128x128", "256x256"])
+        self.icon_size_combo.addItems(
+            ["Original", "16x16", "32x32", "48x48", "64x64", "128x128", "256x256"]
+        )
         output_layout.addWidget(self.icon_size_combo, 2, 1)
 
         layout.addWidget(output_group)
@@ -320,7 +324,9 @@ class SystemUtilitiesDialog(QDialog):
         # Extract button
         self.extract_icon_btn = QPushButton("Extract Icon")
         self.extract_icon_btn.clicked.connect(self.extract_icon)
-        self.extract_icon_btn.setStyleSheet("QPushButton { background-color: #4CAF50; color: white; font-weight: bold; }")
+        self.extract_icon_btn.setStyleSheet(
+            "QPushButton { background-color: #4CAF50; color: white; font-weight: bold; }"
+        )
         layout.addWidget(self.extract_icon_btn)
 
         # Preview area
@@ -330,7 +336,9 @@ class SystemUtilitiesDialog(QDialog):
         self.icon_preview = QLabel()
         self.icon_preview.setMinimumHeight(150)
         self.icon_preview.setAlignment(Qt.AlignCenter)
-        self.icon_preview.setStyleSheet("QLabel { border: 1px solid gray; background-color: white; }")
+        self.icon_preview.setStyleSheet(
+            "QLabel { border: 1px solid gray; background-color: white; }"
+        )
         self.icon_preview.setText("Icon preview will appear here")
 
         preview_layout.addWidget(self.icon_preview)
@@ -395,9 +403,14 @@ class SystemUtilitiesDialog(QDialog):
         # Dependencies table
         self.deps_table = QTableWidget()
         self.deps_table.setColumnCount(4)
-        self.deps_table.setHorizontalHeaderLabels([
-            "Dependency", "Required", "Installed", "Status",
-        ])
+        self.deps_table.setHorizontalHeaderLabels(
+            [
+                "Dependency",
+                "Required",
+                "Installed",
+                "Status",
+            ]
+        )
 
         header = self.deps_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Stretch)
@@ -436,9 +449,15 @@ class SystemUtilitiesDialog(QDialog):
         # Process table
         self.process_table = QTableWidget()
         self.process_table.setColumnCount(5)
-        self.process_table.setHorizontalHeaderLabels([
-            "PID", "Name", "CPU %", "Memory", "Status",
-        ])
+        self.process_table.setHorizontalHeaderLabels(
+            [
+                "PID",
+                "Name",
+                "CPU %",
+                "Memory",
+                "Status",
+            ]
+        )
         self.process_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.process_table.itemSelectionChanged.connect(self.on_process_selection_changed)
 
@@ -495,7 +514,9 @@ class SystemUtilitiesDialog(QDialog):
         # Optimize button
         self.optimize_memory_btn = QPushButton("Optimize Memory")
         self.optimize_memory_btn.clicked.connect(self.optimize_memory)
-        self.optimize_memory_btn.setStyleSheet("QPushButton { background-color: #2196F3; color: white; font-weight: bold; }")
+        self.optimize_memory_btn.setStyleSheet(
+            "QPushButton { background-color: #2196F3; color: white; font-weight: bold; }"
+        )
         layout.addWidget(self.optimize_memory_btn)
 
         # Results
@@ -597,7 +618,9 @@ class SystemUtilitiesDialog(QDialog):
     def browse_icon_file(self):
         """Browse for executable file."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Select Executable File", "",
+            self,
+            "Select Executable File",
+            "",
             "Executable Files (*.exe *.dll *.so *.dylib);;All Files (*)",
         )
         if file_path:
@@ -606,7 +629,8 @@ class SystemUtilitiesDialog(QDialog):
     def browse_icon_output(self):
         """Browse for output directory."""
         dir_path = QFileDialog.getExistingDirectory(
-            self, "Select Output Directory",
+            self,
+            "Select Output Directory",
         )
         if dir_path:
             self.icon_output_edit.setText(dir_path)
@@ -649,7 +673,9 @@ class SystemUtilitiesDialog(QDialog):
                 pixmap = QPixmap(result["output_path"])
                 if not pixmap.isNull():
                     # Scale to preview size
-                    scaled_pixmap = pixmap.scaled(128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    scaled_pixmap = pixmap.scaled(
+                        128, 128, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                    )
                     self.icon_preview.setPixmap(scaled_pixmap)
                 else:
                     self.icon_preview.setText("Could not load extracted icon")
@@ -733,7 +759,8 @@ class SystemUtilitiesDialog(QDialog):
             return
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export System Information",
+            self,
+            "Export System Information",
             f"system_info_{int(time.time())}.json",
             "JSON Files (*.json);;Text Files (*.txt)",
         )
@@ -801,7 +828,8 @@ class SystemUtilitiesDialog(QDialog):
     def install_dependencies(self):
         """Install missing dependencies."""
         QMessageBox.information(
-            self, "Install Dependencies",
+            self,
+            "Install Dependencies",
             "Dependency installation would be implemented here.\n\n"
             "This would automatically install missing packages using:\n"
             "• pip for Python packages\n"
@@ -873,7 +901,8 @@ class SystemUtilitiesDialog(QDialog):
             name = name_item.text()
 
             reply = QMessageBox.question(
-                self, "Kill Process",
+                self,
+                "Kill Process",
                 f"Are you sure you want to kill process '{name}' (PID: {pid})?",
                 QMessageBox.Yes | QMessageBox.No,
             )
@@ -881,10 +910,13 @@ class SystemUtilitiesDialog(QDialog):
             if reply == QMessageBox.Yes:
                 try:
                     from ...utils.system.system_utils import kill_process
+
                     result = kill_process(int(pid))
 
                     if result:
-                        QMessageBox.information(self, "Success", f"Process {name} killed successfully.")
+                        QMessageBox.information(
+                            self, "Success", f"Process {name} killed successfully."
+                        )
                         # Refresh process list
                         self.get_process_list()
                     else:

@@ -38,10 +38,10 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
         return hashlib.sha512(data).hexdigest()
     raise ValueError(f"Unsupported algorithm: {algorithm}")
 
-def secure_subprocess(command: str | list[str],
-                     shell: bool = False,
-                     timeout: int | None = 30,
-                     **kwargs) -> subprocess.CompletedProcess:
+
+def secure_subprocess(
+    command: str | list[str], shell: bool = False, timeout: int | None = 30, **kwargs
+) -> subprocess.CompletedProcess:
     """Execute a subprocess command securely
 
     Args:
@@ -59,8 +59,7 @@ def secure_subprocess(command: str | list[str],
     """
     if shell:
         raise SecurityError(
-            "shell=True is not allowed for security reasons. "
-            "Use a list of arguments instead.",
+            "shell=True is not allowed for security reasons. " "Use a list of arguments instead.",
         )
 
     if isinstance(command, str):
@@ -76,6 +75,7 @@ def secure_subprocess(command: str | list[str],
         **kwargs,
     )
 
+
 def secure_yaml_load(data: str) -> Any:
     """Safely load YAML data
 
@@ -88,6 +88,7 @@ def secure_yaml_load(data: str) -> Any:
     """
     return yaml.safe_load(data)
 
+
 def secure_json_load(data: str) -> Any:
     """Safely load JSON data
 
@@ -99,6 +100,7 @@ def secure_json_load(data: str) -> Any:
 
     """
     return json.loads(data)
+
 
 def validate_file_path(path: str, allowed_extensions: list[str] | None = None) -> bool:
     """Validate a file path for security
@@ -128,6 +130,7 @@ def validate_file_path(path: str, allowed_extensions: list[str] | None = None) -
 
     return True
 
+
 def sanitize_input(text: str, max_length: int = 1024) -> str:
     """Sanitize user input
 
@@ -147,6 +150,7 @@ def sanitize_input(text: str, max_length: int = 1024) -> str:
 
     # Remove control characters
     import re
+
     text = re.sub(r"[\x00-\x1F\x7F-\x9F]", "", text)
 
     return text.strip()

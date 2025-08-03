@@ -29,13 +29,15 @@ from typing import List, Optional
 logger = logging.getLogger(__name__)
 
 
-def build_ghidra_command(ghidra_headless_path: str,
-                        temp_dir: str,
-                        project_name: str,
-                        binary_path: str,
-                        script_path: str,
-                        script_name: str,
-                        overwrite: bool = True) -> List[str]:
+def build_ghidra_command(
+    ghidra_headless_path: str,
+    temp_dir: str,
+    project_name: str,
+    binary_path: str,
+    script_path: str,
+    script_name: str,
+    overwrite: bool = True,
+) -> List[str]:
     """
     Build a standard Ghidra headless command.
 
@@ -55,9 +57,12 @@ def build_ghidra_command(ghidra_headless_path: str,
         ghidra_headless_path,
         temp_dir,
         project_name,
-        "-import", binary_path,
-        "-scriptPath", script_path,
-        "-postScript", script_name
+        "-import",
+        binary_path,
+        "-scriptPath",
+        script_path,
+        "-postScript",
+        script_name,
     ]
 
     if overwrite:
@@ -76,6 +81,7 @@ def get_ghidra_headless_path() -> Optional[str]:
     # First, try to get from config
     try:
         from intellicrack.config import get_config
+
         config = get_config()
         ghidra_path = config.get_ghidra_path()
         if ghidra_path and os.path.exists(ghidra_path):
@@ -96,6 +102,7 @@ def get_ghidra_headless_path() -> Optional[str]:
 
     try:
         from .core.path_discovery import find_tool
+
         return find_tool("analyzeHeadless")
     except ImportError:
         # Intentionally silent - fall back to manual path checking
@@ -107,7 +114,7 @@ def get_ghidra_headless_path() -> Optional[str]:
         "/opt/ghidra/support/analyzeHeadless",
         "/usr/share/ghidra/support/analyzeHeadless",
         "C:\\ghidra\\support\\analyzeHeadless.bat",
-        "C:\\Program Files\\ghidra\\support\\analyzeHeadless.bat"
+        "C:\\Program Files\\ghidra\\support\\analyzeHeadless.bat",
     ]
 
     for path in common_paths:

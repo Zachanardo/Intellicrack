@@ -25,6 +25,7 @@ import sys
 
 try:
     import mmap
+
     MMAP_AVAILABLE = True
 except ImportError:
     MMAP_AVAILABLE = False
@@ -172,8 +173,10 @@ class TerminalHexViewer:
 
     def _draw_hex_area(self):
         """Draw the main hex viewing area."""
-        lines_to_show = min(self.hex_area_height,
-                           (self.file_size - self.current_offset + self.bytes_per_line - 1) // self.bytes_per_line)
+        lines_to_show = min(
+            self.hex_area_height,
+            (self.file_size - self.current_offset + self.bytes_per_line - 1) // self.bytes_per_line,
+        )
 
         for line_idx in range(lines_to_show):
             offset = self.current_offset + (line_idx * self.bytes_per_line)
@@ -235,7 +238,7 @@ class TerminalHexViewer:
 
         # Draw ASCII representation
         if ascii_x < self.screen_width:
-            ascii_display = ascii_line[:self.screen_width - ascii_x]
+            ascii_display = ascii_line[: self.screen_width - ascii_x]
             self.stdscr.addstr(y, ascii_x, ascii_display, curses.color_pair(self.colors["ascii"]))
 
     def _draw_status_line(self):
@@ -249,18 +252,24 @@ class TerminalHexViewer:
         modified_str = "*" if self.modified else ""
 
         status = f" {mode_str}({edit_type}) | Offset: 0x{self.cursor_offset:08X} | "
-        status += f"Size: {self.file_size} bytes | File: {os.path.basename(self.filepath)}{modified_str}"
+        status += (
+            f"Size: {self.file_size} bytes | File: {os.path.basename(self.filepath)}{modified_str}"
+        )
 
         # Truncate if too long
         if len(status) > self.screen_width:
-            status = status[:self.screen_width-3] + "..."
+            status = status[: self.screen_width - 3] + "..."
 
         # Pad to full width
         status = status.ljust(self.screen_width)
 
         try:
-            self.stdscr.addstr(self.status_line, 0, status,
-                             curses.color_pair(self.colors["status"]) | curses.A_BOLD)
+            self.stdscr.addstr(
+                self.status_line,
+                0,
+                status,
+                curses.color_pair(self.colors["status"]) | curses.A_BOLD,
+            )
         except curses.error:
             pass
 
@@ -472,8 +481,9 @@ class TerminalHexViewer:
 
         # Check if cursor is below visible area
         elif self.cursor_offset >= self.current_offset + bytes_per_screen:
-            self.current_offset = ((self.cursor_offset - bytes_per_screen + self.bytes_per_line)
-                                 // self.bytes_per_line) * self.bytes_per_line
+            self.current_offset = (
+                (self.cursor_offset - bytes_per_screen + self.bytes_per_line) // self.bytes_per_line
+            ) * self.bytes_per_line
             self.current_offset = max(0, self.current_offset)
 
     def _start_search(self):
@@ -670,12 +680,17 @@ class TerminalHexViewer:
         dialog.box()
 
         # Draw dialog content
-        dialog.addstr(1, 2, "Error", curses.A_BOLD | curses.color_pair(1) if hasattr(self, "color_pairs") else curses.A_BOLD)
+        dialog.addstr(
+            1,
+            2,
+            "Error",
+            curses.A_BOLD | curses.color_pair(1) if hasattr(self, "color_pairs") else curses.A_BOLD,
+        )
         dialog.addstr(2, 2, "-" * (dialog_width - 4))
 
         # Display wrapped error message
         for i, line in enumerate(wrapped_lines):
-            dialog.addstr(3 + i, 2, line[:dialog_width - 4])
+            dialog.addstr(3 + i, 2, line[: dialog_width - 4])
 
         # Show OK button
         ok_text = "[ OK ]"

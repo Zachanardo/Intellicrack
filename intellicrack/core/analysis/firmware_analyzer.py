@@ -28,6 +28,7 @@ logger = get_logger(__name__)
 
 try:
     import binwalk
+
     BINWALK_AVAILABLE = True
 except ImportError:
     BINWALK_AVAILABLE = False
@@ -304,8 +305,10 @@ class FirmwareAnalyzer:
                 result.security_findings = self._analyze_security(file_path, result.extractions)
 
             result.analysis_time = time.time() - start_time
-            logger.info(f"Firmware analysis complete: {len(result.signatures)} signatures, "
-                       f"{len(result.security_findings)} security findings")
+            logger.info(
+                f"Firmware analysis complete: {len(result.signatures)} signatures, "
+                f"{len(result.security_findings)} security findings"
+            )
 
             return result
 
@@ -337,12 +340,14 @@ class FirmwareAnalyzer:
         except Exception as e:
             logger.error(f"Signature scanning failed: {e}")
             # Fallback to basic file type detection
-            signatures.append(FirmwareSignature(
-                offset=0,
-                signature_name="Unknown Binary",
-                description="Binary file (signature scan failed)",
-                file_type="binary",
-            ))
+            signatures.append(
+                FirmwareSignature(
+                    offset=0,
+                    signature_name="Unknown Binary",
+                    description="Binary file (signature scan failed)",
+                    file_type="binary",
+                )
+            )
 
         return signatures
 
@@ -372,7 +377,9 @@ class FirmwareAnalyzer:
 
         return "binary"
 
-    def _determine_firmware_type(self, file_path: str, signatures: list[FirmwareSignature]) -> FirmwareType:
+    def _determine_firmware_type(
+        self, file_path: str, signatures: list[FirmwareSignature]
+    ) -> FirmwareType:
         """Determine the type of firmware based on signatures and filename"""
         filename = os.path.basename(file_path).lower()
 
@@ -430,17 +437,21 @@ class FirmwareAnalyzer:
                     # Classify high entropy regions
                     entropy_val = getattr(result, "entropy", 0.0)
                     if entropy_val > 7.5:
-                        entropy_analysis["encrypted_regions"].append({
-                            "offset": result.offset,
-                            "entropy": entropy_val,
-                            "likely_type": "encrypted",
-                        })
+                        entropy_analysis["encrypted_regions"].append(
+                            {
+                                "offset": result.offset,
+                                "entropy": entropy_val,
+                                "likely_type": "encrypted",
+                            }
+                        )
                     elif entropy_val > 6.5:
-                        entropy_analysis["compressed_regions"].append({
-                            "offset": result.offset,
-                            "entropy": entropy_val,
-                            "likely_type": "compressed",
-                        })
+                        entropy_analysis["compressed_regions"].append(
+                            {
+                                "offset": result.offset,
+                                "entropy": entropy_val,
+                                "likely_type": "compressed",
+                            }
+                        )
 
             # Calculate overall file entropy
             if entropy_analysis["analysis_blocks"]:
@@ -496,10 +507,9 @@ class FirmwareAnalyzer:
 
         try:
             # Use binwalk for extraction
-            for _module in binwalk.scan(file_path,
-                                     extract=True,
-                                     directory=extraction_dir,
-                                     quiet=True):
+            for _module in binwalk.scan(
+                file_path, extract=True, directory=extraction_dir, quiet=True
+            ):
                 extraction.success = True
 
                 # Process extracted files
@@ -530,10 +540,14 @@ class FirmwareAnalyzer:
                                 extraction_depth=max_depth - 1,
                             )
                             if sub_result.has_extractions:
-                                extraction.extracted_files.extend(sub_result.extractions.extracted_files)
+                                extraction.extracted_files.extend(
+                                    sub_result.extractions.extracted_files
+                                )
                                 extraction.total_extracted += sub_result.extractions.total_extracted
                         except Exception as e:
-                            logger.debug(f"Recursive extraction failed for {extracted_file.file_path}: {e}")
+                            logger.debug(
+                                f"Recursive extraction failed for {extracted_file.file_path}: {e}"
+                            )
 
         except Exception as e:
             logger.error(f"File extraction failed: {e}")
@@ -615,7 +629,9 @@ class FirmwareAnalyzer:
 
         return security_info
 
-    def _analyze_security(self, file_path: str, extractions: FirmwareExtraction | None) -> list[SecurityFinding]:
+    def _analyze_security(
+        self, file_path: str, extractions: FirmwareExtraction | None
+    ) -> list[SecurityFinding]:
         """Perform comprehensive security analysis"""
         findings = []
 
@@ -630,26 +646,34 @@ class FirmwareAnalyzer:
                 try:
                     # Check for security issues in extracted files
                     if extracted_file.security_analysis.get("has_credentials"):
-                        findings.append(SecurityFinding(
-                            finding_type=SecurityFindingType.HARDCODED_CREDENTIALS,
-                            description="Hardcoded credentials found in extracted file",
-                            file_path=extracted_file.file_path,
-                            offset=0,
-                            severity="high",
-                            confidence=0.8,
-                            evidence=str(extracted_file.security_analysis.get("suspicious_strings", [])[:3]),
-                        ))
+                        findings.append(
+                            SecurityFinding(
+                                finding_type=SecurityFindingType.HARDCODED_CREDENTIALS,
+                                description="Hardcoded credentials found in extracted file",
+                                file_path=extracted_file.file_path,
+                                offset=0,
+                                severity="high",
+                                confidence=0.8,
+                                evidence=str(
+                                    extracted_file.security_analysis.get("suspicious_strings", [])[
+                                        :3
+                                    ]
+                                ),
+                            )
+                        )
 
                     if extracted_file.security_analysis.get("is_setuid"):
-                        findings.append(SecurityFinding(
-                            finding_type=SecurityFindingType.VULNERABLE_COMPONENT,
-                            description="SetUID binary found - potential privilege escalation",
-                            file_path=extracted_file.file_path,
-                            offset=0,
-                            severity="medium",
-                            confidence=0.9,
-                            evidence=f"Permissions: {extracted_file.security_analysis.get('file_permissions')}",
-                        ))
+                        findings.append(
+                            SecurityFinding(
+                                finding_type=SecurityFindingType.VULNERABLE_COMPONENT,
+                                description="SetUID binary found - potential privilege escalation",
+                                file_path=extracted_file.file_path,
+                                offset=0,
+                                severity="medium",
+                                confidence=0.9,
+                                evidence=f"Permissions: {extracted_file.security_analysis.get('file_permissions')}",
+                            )
+                        )
 
                 except Exception as e:
                     logger.debug(f"Security analysis failed for {extracted_file.file_path}: {e}")
@@ -676,16 +700,20 @@ class FirmwareAnalyzer:
                 for pattern, cred_type in credential_patterns:
                     matches = re.finditer(pattern, string, re.IGNORECASE)
                     for match in matches:
-                        findings.append(SecurityFinding(
-                            finding_type=SecurityFindingType.HARDCODED_CREDENTIALS,
-                            description=f"Hardcoded {cred_type} detected",
-                            file_path=file_path,
-                            offset=0,  # String offset not available
-                            severity="critical" if cred_type.endswith("password") else "high",
-                            confidence=0.7,
-                            evidence=match.group(0)[:50] + "..." if len(match.group(0)) > 50 else match.group(0),
-                            remediation=f"Remove hardcoded {cred_type} and use secure configuration",
-                        ))
+                        findings.append(
+                            SecurityFinding(
+                                finding_type=SecurityFindingType.HARDCODED_CREDENTIALS,
+                                description=f"Hardcoded {cred_type} detected",
+                                file_path=file_path,
+                                offset=0,  # String offset not available
+                                severity="critical" if cred_type.endswith("password") else "high",
+                                confidence=0.7,
+                                evidence=match.group(0)[:50] + "..."
+                                if len(match.group(0)) > 50
+                                else match.group(0),
+                                remediation=f"Remove hardcoded {cred_type} and use secure configuration",
+                            )
+                        )
 
         except Exception as e:
             logger.debug(f"Credential scanning failed: {e}")
@@ -713,16 +741,20 @@ class FirmwareAnalyzer:
                 offset = content.find(pattern)
                 if offset != -1:
                     key_type = pattern.decode().replace("-----BEGIN ", "").replace("-----", "")
-                    findings.append(SecurityFinding(
-                        finding_type=SecurityFindingType.PRIVATE_KEY if "PRIVATE" in key_type else SecurityFindingType.CERTIFICATE,
-                        description=f"{key_type} found in firmware",
-                        file_path=file_path,
-                        offset=offset,
-                        severity="critical" if "PRIVATE" in key_type else "medium",
-                        confidence=0.95,
-                        evidence=pattern.decode(),
-                        remediation="Remove embedded cryptographic material",
-                    ))
+                    findings.append(
+                        SecurityFinding(
+                            finding_type=SecurityFindingType.PRIVATE_KEY
+                            if "PRIVATE" in key_type
+                            else SecurityFindingType.CERTIFICATE,
+                            description=f"{key_type} found in firmware",
+                            file_path=file_path,
+                            offset=offset,
+                            severity="critical" if "PRIVATE" in key_type else "medium",
+                            confidence=0.95,
+                            evidence=pattern.decode(),
+                            remediation="Remove embedded cryptographic material",
+                        )
+                    )
 
         except Exception as e:
             logger.debug(f"Crypto key scanning failed: {e}")
@@ -738,18 +770,22 @@ class FirmwareAnalyzer:
 
             # Use subprocess to check for additional system tools
             try:
-                result = subprocess.run(["file", file_path], check=False, capture_output=True, text=True, timeout=5)
+                result = subprocess.run(
+                    ["file", file_path], check=False, capture_output=True, text=True, timeout=5
+                )
                 if result.returncode == 0 and "executable" in result.stdout.lower():
-                    findings.append(SecurityFinding(
-                        finding_type=SecurityFindingType.BACKDOOR_BINARY,
-                        description="Executable file detected via system file command",
-                        file_path=file_path,
-                        offset=0,
-                        severity="medium",
-                        confidence=0.8,
-                        evidence=result.stdout.strip()[:100],
-                        remediation="Verify executable legitimacy",
-                    ))
+                    findings.append(
+                        SecurityFinding(
+                            finding_type=SecurityFindingType.BACKDOOR_BINARY,
+                            description="Executable file detected via system file command",
+                            file_path=file_path,
+                            offset=0,
+                            severity="medium",
+                            confidence=0.8,
+                            evidence=result.stdout.strip()[:100],
+                            remediation="Verify executable legitimacy",
+                        )
+                    )
             except (subprocess.TimeoutExpired, FileNotFoundError):
                 pass
 
@@ -766,16 +802,18 @@ class FirmwareAnalyzer:
             for string in strings:
                 for pattern, description in backdoor_patterns:
                     if re.search(pattern, string, re.IGNORECASE):
-                        findings.append(SecurityFinding(
-                            finding_type=SecurityFindingType.BACKDOOR_BINARY,
-                            description=description + " detected",
-                            file_path=file_path,
-                            offset=0,
-                            severity="high",
-                            confidence=0.6,
-                            evidence=string[:100],
-                            remediation="Review and remove suspicious functionality",
-                        ))
+                        findings.append(
+                            SecurityFinding(
+                                finding_type=SecurityFindingType.BACKDOOR_BINARY,
+                                description=description + " detected",
+                                file_path=file_path,
+                                offset=0,
+                                severity="high",
+                                confidence=0.6,
+                                evidence=string[:100],
+                                remediation="Review and remove suspicious functionality",
+                            )
+                        )
 
         except Exception as e:
             logger.debug(f"Backdoor scanning failed: {e}")
@@ -785,8 +823,19 @@ class FirmwareAnalyzer:
     def _is_suspicious_string(self, string: str) -> bool:
         """Check if a string looks suspicious"""
         suspicious_keywords = [
-            "password", "passwd", "secret", "key", "token", "admin", "root",
-            "debug", "test", "backdoor", "shell", "cmd", "execute",
+            "password",
+            "passwd",
+            "secret",
+            "key",
+            "token",
+            "admin",
+            "root",
+            "debug",
+            "test",
+            "backdoor",
+            "shell",
+            "cmd",
+            "execute",
         ]
 
         string_lower = string.lower()
@@ -799,8 +848,13 @@ class FirmwareAnalyzer:
             return False
 
         credential_indicators = [
-            ("password", 6), ("passwd", 5), ("admin", 4), ("root", 4),
-            ("user", 4), ("login", 5), ("auth", 4),
+            ("password", 6),
+            ("passwd", 5),
+            ("admin", 4),
+            ("root", 4),
+            ("user", 4),
+            ("login", 5),
+            ("auth", 4),
         ]
 
         string_lower = string.lower()
@@ -829,7 +883,9 @@ class FirmwareAnalyzer:
 
         return False
 
-    def generate_icp_supplemental_data(self, analysis_result: FirmwareAnalysisResult) -> dict[str, Any]:
+    def generate_icp_supplemental_data(
+        self, analysis_result: FirmwareAnalysisResult
+    ) -> dict[str, Any]:
         """Generate supplemental data for ICP backend integration
 
         Args:
@@ -846,7 +902,9 @@ class FirmwareAnalyzer:
             "firmware_analysis": {
                 "firmware_type": analysis_result.firmware_type.value,
                 "signatures_found": len(analysis_result.signatures),
-                "files_extracted": analysis_result.extractions.total_extracted if analysis_result.has_extractions else 0,
+                "files_extracted": analysis_result.extractions.total_extracted
+                if analysis_result.has_extractions
+                else 0,
                 "security_findings": len(analysis_result.security_findings),
                 "analysis_time": analysis_result.analysis_time,
             },
@@ -858,49 +916,61 @@ class FirmwareAnalyzer:
 
         # Process signatures
         for sig in analysis_result.signatures:
-            supplemental_data["embedded_components"].append({
-                "type": sig.file_type,
-                "name": sig.signature_name,
-                "offset": sig.offset,
-                "size": sig.size,
-                "confidence": sig.confidence,
-                "is_executable": sig.is_executable,
-                "is_filesystem": sig.is_filesystem,
-            })
+            supplemental_data["embedded_components"].append(
+                {
+                    "type": sig.file_type,
+                    "name": sig.signature_name,
+                    "offset": sig.offset,
+                    "size": sig.size,
+                    "confidence": sig.confidence,
+                    "is_executable": sig.is_executable,
+                    "is_filesystem": sig.is_filesystem,
+                }
+            )
 
         # Process security findings
         for finding in analysis_result.security_findings:
-            supplemental_data["security_indicators"].append({
-                "type": finding.finding_type.value,
-                "severity": finding.severity,
-                "confidence": finding.confidence,
-                "description": finding.description,
-                "file": finding.file_path,
-                "remediation": finding.remediation,
-            })
+            supplemental_data["security_indicators"].append(
+                {
+                    "type": finding.finding_type.value,
+                    "severity": finding.severity,
+                    "confidence": finding.confidence,
+                    "description": finding.description,
+                    "file": finding.file_path,
+                    "remediation": finding.remediation,
+                }
+            )
 
         # Process entropy analysis
         if analysis_result.entropy_analysis:
             supplemental_data["entropy_indicators"] = {
                 "file_entropy": analysis_result.entropy_analysis.get("file_entropy", 0.0),
-                "encrypted_regions": len(analysis_result.entropy_analysis.get("encrypted_regions", [])),
-                "compressed_regions": len(analysis_result.entropy_analysis.get("compressed_regions", [])),
+                "encrypted_regions": len(
+                    analysis_result.entropy_analysis.get("encrypted_regions", [])
+                ),
+                "compressed_regions": len(
+                    analysis_result.entropy_analysis.get("compressed_regions", [])
+                ),
             }
 
         # Process extracted executables
         if analysis_result.has_extractions:
             for exe_file in analysis_result.embedded_executables:
-                supplemental_data["extracted_executables"].append({
-                    "file_path": exe_file.file_path,
-                    "size": exe_file.size,
-                    "hash": exe_file.hash,
-                    "permissions": exe_file.permissions,
-                    "security_analysis": exe_file.security_analysis,
-                })
+                supplemental_data["extracted_executables"].append(
+                    {
+                        "file_path": exe_file.file_path,
+                        "size": exe_file.size,
+                        "hash": exe_file.hash,
+                        "permissions": exe_file.permissions,
+                        "security_analysis": exe_file.security_analysis,
+                    }
+                )
 
         return supplemental_data
 
-    def export_analysis_report(self, analysis_result: FirmwareAnalysisResult, output_path: str) -> tuple[bool, str]:
+    def export_analysis_report(
+        self, analysis_result: FirmwareAnalysisResult, output_path: str
+    ) -> tuple[bool, str]:
         """Export firmware analysis results to JSON report
 
         Args:

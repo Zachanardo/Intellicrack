@@ -1,4 +1,5 @@
 """Main entry point for the Intellicrack binary analysis platform."""
+
 import logging
 import os
 import sys
@@ -114,6 +115,7 @@ def main() -> int:
 
         # Perform startup checks and auto-configuration
         from intellicrack.core.startup_checks import perform_startup_checks
+
         print("Initializing Intellicrack...")
         perform_startup_checks()
         print("Startup checks completed.")
@@ -122,6 +124,7 @@ def main() -> int:
         # Always use absolute import to avoid issues
         print("Importing launch function...")
         from intellicrack.ui.main_app import launch
+
         print("Launch function imported successfully.")
 
         print("Calling launch()...")
@@ -137,6 +140,7 @@ def main() -> int:
         print("\nPlease ensure all dependencies are installed:")
         print("  pip install -r requirements.txt")
         import traceback
+
         traceback.print_exc()
         return 1
 
@@ -144,6 +148,7 @@ def main() -> int:
         logger.error("Error launching Intellicrack: %s", e)
         print(f"Error launching Intellicrack: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

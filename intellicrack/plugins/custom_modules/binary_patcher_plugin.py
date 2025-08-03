@@ -104,10 +104,10 @@ class BinaryPatcherPlugin:
                         break
 
                     # Validate this looks like a license check area
-                    context = data[max(0, offset-10):offset+20]
+                    context = data[max(0, offset - 10) : offset + 20]
                     if b"license" in context.lower() or b"trial" in context.lower():
                         # NOP out the conditional jump (defensive research technique)
-                        data[offset:offset+len(pattern)] = b"\x90" * len(pattern)
+                        data[offset : offset + len(pattern)] = b"\x90" * len(pattern)
                         patches_applied += 1
                         results.append(f"Patched potential license check at offset 0x{offset:x}")
 
@@ -139,7 +139,7 @@ class BinaryPatcherPlugin:
                     # If it looks like a trial message, neutralize it
                     if any(c == 0 or (32 <= c <= 126) for c in context):
                         # Replace with spaces to maintain string structure
-                        data[offset:offset+len(pattern)] = b" " * len(pattern)
+                        data[offset : offset + len(pattern)] = b" " * len(pattern)
                         patches_applied += 1
                         results.append(f"Neutralized trial text at offset 0x{offset:x}")
 
@@ -174,6 +174,7 @@ class BinaryPatcherPlugin:
                 results.append("Failed to restore backup - manual restoration required")
 
         return results
+
 
 def register():
     """Register and return an instance of the binary patcher plugin."""

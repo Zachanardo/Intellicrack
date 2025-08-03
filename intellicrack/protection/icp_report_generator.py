@@ -244,7 +244,13 @@ class ICPReportGenerator:
 
     def _generate_summary_section(self, result: UnifiedProtectionResult) -> str:
         """Generate summary section HTML"""
-        confidence_class = "high" if result.confidence_score >= 80 else "medium" if result.confidence_score >= 50 else "low"
+        confidence_class = (
+            "high"
+            if result.confidence_score >= 80
+            else "medium"
+            if result.confidence_score >= 50
+            else "low"
+        )
 
         return f"""
         <div class="summary">
@@ -293,7 +299,9 @@ class ICPReportGenerator:
         html += "</table>"
         return html
 
-    def _generate_protections_section(self, result: UnifiedProtectionResult, options: ReportOptions) -> str:
+    def _generate_protections_section(
+        self, result: UnifiedProtectionResult, options: ReportOptions
+    ) -> str:
         """Generate detected protections section"""
         if not result.protections:
             return "<h2>Detected Protections</h2><p>No protections detected.</p>"
@@ -342,7 +350,9 @@ class ICPReportGenerator:
             html += f"<h3>File: {file_info.filetype}</h3>"
 
             if file_info.detections:
-                html += "<table><tr><th>Detection</th><th>Type</th><th>Version</th><th>Info</th></tr>"
+                html += (
+                    "<table><tr><th>Detection</th><th>Type</th><th>Version</th><th>Info</th></tr>"
+                )
 
                 for detection in file_info.detections:
                     html += f"""
@@ -367,25 +377,31 @@ class ICPReportGenerator:
         recommendations = []
 
         if result.is_packed:
-            recommendations.append({
-                "title": "Unpacking Required",
-                "desc": "The file is packed. Use dynamic analysis tools to unpack before further analysis.",
-                "tools": ["x64dbg", "Process Dump", "Scylla"],
-            })
+            recommendations.append(
+                {
+                    "title": "Unpacking Required",
+                    "desc": "The file is packed. Use dynamic analysis tools to unpack before further analysis.",
+                    "tools": ["x64dbg", "Process Dump", "Scylla"],
+                }
+            )
 
         if result.has_anti_debug:
-            recommendations.append({
-                "title": "Anti-Debug Bypass Needed",
-                "desc": "Anti-debugging mechanisms detected. Use kernel-mode debuggers or anti-anti-debug plugins.",
-                "tools": ["ScyllaHide", "TitanHide", "VirtualKD"],
-            })
+            recommendations.append(
+                {
+                    "title": "Anti-Debug Bypass Needed",
+                    "desc": "Anti-debugging mechanisms detected. Use kernel-mode debuggers or anti-anti-debug plugins.",
+                    "tools": ["ScyllaHide", "TitanHide", "VirtualKD"],
+                }
+            )
 
         if result.has_licensing:
-            recommendations.append({
-                "title": "License Analysis",
-                "desc": "Licensing system detected. Analyze license validation routines and key algorithms.",
-                "tools": ["IDA Pro", "API Monitor", "WinAPIOverride"],
-            })
+            recommendations.append(
+                {
+                    "title": "License Analysis",
+                    "desc": "Licensing system detected. Analyze license validation routines and key algorithms.",
+                    "tools": ["IDA Pro", "API Monitor", "WinAPIOverride"],
+                }
+            )
 
         if not recommendations:
             html += "<p>Standard analysis approach recommended.</p>"
@@ -638,6 +654,7 @@ class ICPReportGenerator:
         """Get Intellicrack version"""
         try:
             import intellicrack
+
             return getattr(intellicrack, "__version__", "1.0.0")
         except:
             return "1.0.0"

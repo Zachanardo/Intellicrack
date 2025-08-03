@@ -19,7 +19,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import json
 import logging
 import os
@@ -57,7 +56,7 @@ def wrapper_find_file(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any
         logger.info("Searching for file: %s", filename)
 
         # Start search from current directory
-        for root, _, files in os.walk('.'):
+        for root, _, files in os.walk("."):
             for file in files:
                 if filename in file:
                     file_path = os.path.join(root, file)
@@ -65,7 +64,7 @@ def wrapper_find_file(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any
                     return {
                         "status": "success",
                         "path": file_path,
-                        "message": f"Found file at: {file_path}"
+                        "message": f"Found file at: {file_path}",
                     }
 
         logger.warning(f"File '{filename}' not found")
@@ -103,11 +102,11 @@ def wrapper_load_binary(app_instance, parameters: Dict[str, Any]) -> Dict[str, A
         app_instance.binary_path = path
         app_instance.load_binary()
 
-        if hasattr(app_instance, 'binary_info') and app_instance.binary_info:
+        if hasattr(app_instance, "binary_info") and app_instance.binary_info:
             return {
                 "status": "success",
                 "binary_info": app_instance.binary_info,
-                "message": f"Successfully loaded binary: {path}"
+                "message": f"Successfully loaded binary: {path}",
             }
         else:
             return {"status": "error", "message": "Failed to extract binary information"}
@@ -130,29 +129,31 @@ def wrapper_list_relevant_files(app_instance, parameters: Dict[str, Any]) -> Dic
         app_instance.update_output.emit(log_message("[Tool] Listing relevant files"))
         logger.info("Listing relevant files")
 
-        binary_path = getattr(app_instance, 'binary_path', None)
+        binary_path = getattr(app_instance, "binary_path", None)
         if not binary_path:
             return {"status": "error", "message": "No binary loaded"}
 
         binary_dir = os.path.dirname(binary_path)
-        relevant_extensions = ['.dll', '.exe', '.so', '.dylib', '.config', '.xml', '.txt', '.log']
+        relevant_extensions = [".dll", ".exe", ".so", ".dylib", ".config", ".xml", ".txt", ".log"]
         relevant_files = []
 
         for root, _, files in os.walk(binary_dir):
             for file in files:
                 if any(file.lower().endswith(ext) for ext in relevant_extensions):
                     file_path = os.path.join(root, file)
-                    relevant_files.append({
-                        "path": file_path,
-                        "name": file,
-                        "size": os.path.getsize(file_path) if os.path.exists(file_path) else 0
-                    })
+                    relevant_files.append(
+                        {
+                            "path": file_path,
+                            "name": file,
+                            "size": os.path.getsize(file_path) if os.path.exists(file_path) else 0,
+                        }
+                    )
 
         return {
             "status": "success",
             "files": relevant_files,
             "count": len(relevant_files),
-            "message": f"Found {len(relevant_files)} relevant files"
+            "message": f"Found {len(relevant_files)} relevant files",
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -188,7 +189,7 @@ def wrapper_read_file_chunk(app_instance, parameters: Dict[str, Any]) -> Dict[st
         if not os.path.exists(path):
             return {"status": "error", "message": f"File not found: {path}"}
 
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             f.seek(offset)
             data = f.read(size)
 
@@ -197,7 +198,7 @@ def wrapper_read_file_chunk(app_instance, parameters: Dict[str, Any]) -> Dict[st
                 "data": data.hex(),
                 "size": len(data),
                 "offset": offset,
-                "message": f"Read {len(data)} bytes from {path}"
+                "message": f"Read {len(data)} bytes from {path}",
             }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -239,13 +240,13 @@ def wrapper_get_file_metadata(app_instance, parameters: Dict[str, Any]) -> Dict[
             "accessed": stat.st_atime,
             "is_file": os.path.isfile(path),
             "is_directory": os.path.isdir(path),
-            "extension": os.path.splitext(path)[1].lower()
+            "extension": os.path.splitext(path)[1].lower(),
         }
 
         return {
             "status": "success",
             "metadata": metadata,
-            "message": f"Retrieved metadata for {path}"
+            "message": f"Retrieved metadata for {path}",
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -266,7 +267,7 @@ def wrapper_run_static_analysis(app_instance, parameters: Dict[str, Any]) -> Dic
         app_instance.update_output.emit(log_message("[Tool] Running static analysis"))
         logger.info("Running static analysis")
 
-        if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+        if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
 
         # Use the app's existing analysis methods
@@ -275,7 +276,7 @@ def wrapper_run_static_analysis(app_instance, parameters: Dict[str, Any]) -> Dic
         return {
             "status": "success",
             "message": "Static analysis completed",
-            "results": getattr(app_instance, 'analyze_results', [])
+            "results": getattr(app_instance, "analyze_results", []),
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -296,16 +297,13 @@ def wrapper_deep_license_analysis(app_instance, parameters: Dict[str, Any]) -> D
         app_instance.update_output.emit(log_message("[Tool] Running deep license analysis"))
         logger.info("Running deep license analysis")
 
-        if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+        if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
 
         # Use the app's existing deep license analysis
         app_instance.run_deep_license_analysis()
 
-        return {
-            "status": "success",
-            "message": "Deep license analysis completed"
-        }
+        return {"status": "success", "message": "Deep license analysis completed"}
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error running deep license analysis")
@@ -325,19 +323,19 @@ def wrapper_detect_protections(app_instance, parameters: Dict[str, Any]) -> Dict
         app_instance.update_output.emit(log_message("[Tool] Detecting protections"))
         logger.info("Detecting protections")
 
-        if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+        if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
 
         # Use existing protection detection methods
         protections = []
-        if hasattr(app_instance, 'binary_info') and app_instance.binary_info:
-            protections = app_instance.binary_info.get('protections', [])
+        if hasattr(app_instance, "binary_info") and app_instance.binary_info:
+            protections = app_instance.binary_info.get("protections", [])
 
         return {
             "status": "success",
             "protections": protections,
             "count": len(protections),
-            "message": f"Detected {len(protections)} protections"
+            "message": f"Detected {len(protections)} protections",
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -362,16 +360,23 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
     num_instructions = parameters.get("num_instructions", 10)
 
     if address is None:
-        return {"status": "error", "message": "Missing 'address' parameter for tool_disassemble_address"}
+        return {
+            "status": "error",
+            "message": "Missing 'address' parameter for tool_disassemble_address",
+        }
 
     try:
         address = int(address) if isinstance(address, str) else address
         num_instructions = int(num_instructions)
 
         logger.info("Disassembling address: 0x%d, %s instructions", address, num_instructions)
-        app_instance.update_output.emit(log_message(f"[Tool] Disassembling address: 0x{address:x}, {num_instructions} instructions"))
+        app_instance.update_output.emit(
+            log_message(
+                f"[Tool] Disassembling address: 0x{address:x}, {num_instructions} instructions"
+            )
+        )
 
-        if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+        if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             logger.warning("Disassemble attempt failed: No binary loaded.")
             return {"status": "error", "message": "No binary loaded. Load a binary first."}
 
@@ -380,7 +385,9 @@ def wrapper_disassemble_address(app_instance, parameters: Dict[str, Any]) -> Dic
             "status": "success",
             "address": f"0x{address:x}",
             "num_instructions": num_instructions,
-            "disassembly": [f"0x{address + i:x}: <instruction {i}>" for i in range(num_instructions)]
+            "disassembly": [
+                f"0x{address + i:x}: <instruction {i}>" for i in range(num_instructions)
+            ],
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -406,17 +413,17 @@ def wrapper_get_cfg(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
         app_instance.update_output.emit(log_message("[Tool] Generating control flow graph"))
         logger.info("Generating control flow graph")
 
-        if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+        if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
 
         # Use existing CFG explorer if available
-        if hasattr(app_instance, 'cfg_explorer') and app_instance.cfg_explorer:
+        if hasattr(app_instance, "cfg_explorer") and app_instance.cfg_explorer:
             try:
                 graph_data = app_instance.cfg_explorer.get_graph_data()
                 return {
                     "status": "success",
                     "cfg_data": graph_data,
-                    "message": "Control flow graph generated"
+                    "message": "Control flow graph generated",
                 }
             except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("CFG explorer failed: %s", e)
@@ -425,7 +432,7 @@ def wrapper_get_cfg(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "status": "success",
             "cfg_data": {"nodes": [], "edges": []},
-            "message": "CFG generation completed (simplified)"
+            "message": "CFG generation completed (simplified)",
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -446,14 +453,14 @@ def wrapper_launch_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
         app_instance.update_output.emit(log_message("[Tool] Launching target process"))
         logger.info("Launching target process")
 
-        if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+        if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
 
         # Simplified launch - would need actual process launching
         return {
             "status": "success",
             "process_id": 12345,  # Mock PID
-            "message": f"Target process launched: {app_instance.binary_path}"
+            "message": f"Target process launched: {app_instance.binary_path}",
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -487,7 +494,7 @@ def wrapper_attach_target(app_instance, parameters: Dict[str, Any]) -> Dict[str,
         return {
             "status": "success",
             "process_id": process_id,
-            "message": f"Successfully attached to process {process_id}"
+            "message": f"Successfully attached to process {process_id}",
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -527,7 +534,7 @@ def wrapper_run_frida_script(app_instance, parameters: Dict[str, Any]) -> Dict[s
             "script_path": script_path,
             "process_id": process_id,
             "output": "Script executed successfully",
-            "message": f"Frida script executed: {script_path}"
+            "message": f"Frida script executed: {script_path}",
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -549,10 +556,7 @@ def wrapper_detach(app_instance, parameters: Dict[str, Any]) -> Dict[str, Any]:
         logger.info("Detaching from target process")
 
         # Simplified detach - would clean up actual process connections
-        return {
-            "status": "success",
-            "message": "Successfully detached from target process"
-        }
+        return {"status": "success", "message": "Successfully detached from target process"}
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error detaching from target")
@@ -575,7 +579,7 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
         app_instance.update_output.emit(log_message("[Tool] Proposing patches"))
         logger.info("Proposing patches")
 
-        if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+        if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
 
         # Comprehensive patch proposal generation using multiple analysis techniques
@@ -586,22 +590,22 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
             # Method 1: Static analysis for common patterns
             static_patches = _analyze_static_patterns(app_instance.binary_path)
             patches.extend(static_patches)
-            analysis_methods.append('static_pattern_analysis')
+            analysis_methods.append("static_pattern_analysis")
 
             # Method 2: String analysis for license-related functions
             string_patches = _analyze_license_strings(app_instance.binary_path)
             patches.extend(string_patches)
-            analysis_methods.append('string_analysis')
+            analysis_methods.append("string_analysis")
 
             # Method 3: Import table analysis
             import_patches = _analyze_imports(app_instance.binary_path)
             patches.extend(import_patches)
-            analysis_methods.append('import_analysis')
+            analysis_methods.append("import_analysis")
 
             # Method 4: Disassembly-based analysis
             disasm_patches = _analyze_disassembly(app_instance.binary_path)
             patches.extend(disasm_patches)
-            analysis_methods.append('disassembly_analysis')
+            analysis_methods.append("disassembly_analysis")
 
             # Method 5: Machine learning predictions (if available)
             # try:
@@ -619,13 +623,13 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
 
             # Add confidence scores and risk assessments
             for i, patch in enumerate(unique_patches):
-                patch['id'] = i + 1
-                patch['confidence'] = _calculate_patch_confidence(patch)
-                patch['risk_level'] = _assess_patch_risk(patch)
-                patch['compatibility'] = _assess_compatibility(patch, app_instance.binary_path)
+                patch["id"] = i + 1
+                patch["confidence"] = _calculate_patch_confidence(patch)
+                patch["risk_level"] = _assess_patch_risk(patch)
+                patch["compatibility"] = _assess_compatibility(patch, app_instance.binary_path)
 
             # Sort by confidence and risk
-            unique_patches.sort(key=lambda p: (p['confidence'], -p['risk_level']), reverse=True)
+            unique_patches.sort(key=lambda p: (p["confidence"], -p["risk_level"]), reverse=True)
 
             return {
                 "status": "success",
@@ -634,7 +638,7 @@ def wrapper_propose_patch(app_instance, parameters: Dict[str, Any]) -> Dict[str,
                 "analysis_methods": analysis_methods,
                 "binary_info": _get_binary_info(app_instance.binary_path),
                 "generation_time": time.time(),
-                "message": f"Generated {len(unique_patches)} patch proposals using {len(analysis_methods)} analysis methods"
+                "message": f"Generated {len(unique_patches)} patch proposals using {len(analysis_methods)} analysis methods",
             }
 
         except Exception as e:
@@ -652,57 +656,63 @@ def _analyze_static_patterns(binary_path: str) -> List[Dict[str, Any]]:
     patches = []
 
     try:
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             data = f.read()
 
         import re
 
         # Pattern 1: Conditional jumps after comparisons (license checks)
-        je_jne_pattern = b'\x74.'  # je followed by any byte
+        je_jne_pattern = b"\x74."  # je followed by any byte
         for i, match in enumerate(re.finditer(je_jne_pattern, data)):
             if i >= 10:  # Limit matches
                 break
             offset = match.start()
-            patches.append({
-                'type': 'conditional_bypass',
-                'description': 'Convert conditional jump to unconditional (je -> jmp)',
-                'address': hex(0x400000 + offset),
-                'file_offset': offset,
-                'original_bytes': data[offset:offset+2].hex(),
-                'new_bytes': 'eb' + data[offset+1:offset+2].hex(),  # je -> jmp
-                'pattern': 'je_to_jmp',
-                'analysis_method': 'static_pattern'
-            })
+            patches.append(
+                {
+                    "type": "conditional_bypass",
+                    "description": "Convert conditional jump to unconditional (je -> jmp)",
+                    "address": hex(0x400000 + offset),
+                    "file_offset": offset,
+                    "original_bytes": data[offset : offset + 2].hex(),
+                    "new_bytes": "eb" + data[offset + 1 : offset + 2].hex(),  # je -> jmp
+                    "pattern": "je_to_jmp",
+                    "analysis_method": "static_pattern",
+                }
+            )
 
         # Pattern 2: Test and jump patterns
-        test_pattern = b'\x85\xc0\x74'  # test eax, eax; je
+        test_pattern = b"\x85\xc0\x74"  # test eax, eax; je
         for match in re.finditer(test_pattern, data):
             offset = match.start() + 2  # Point to the je instruction
-            patches.append({
-                'type': 'test_bypass',
-                'description': 'Bypass test result check',
-                'address': hex(0x400000 + offset),
-                'file_offset': offset,
-                'original_bytes': '74',
-                'new_bytes': 'eb',  # je -> jmp
-                'pattern': 'test_bypass',
-                'analysis_method': 'static_pattern'
-            })
+            patches.append(
+                {
+                    "type": "test_bypass",
+                    "description": "Bypass test result check",
+                    "address": hex(0x400000 + offset),
+                    "file_offset": offset,
+                    "original_bytes": "74",
+                    "new_bytes": "eb",  # je -> jmp
+                    "pattern": "test_bypass",
+                    "analysis_method": "static_pattern",
+                }
+            )
 
         # Pattern 3: Return value modification
-        xor_ret_pattern = b'\x31\xc0\xc3'  # xor eax, eax; ret (return 0)
+        xor_ret_pattern = b"\x31\xc0\xc3"  # xor eax, eax; ret (return 0)
         for match in re.finditer(xor_ret_pattern, data):
             offset = match.start()
-            patches.append({
-                'type': 'return_modification',
-                'description': 'Change return value from 0 to 1',
-                'address': hex(0x400000 + offset),
-                'file_offset': offset,
-                'original_bytes': '31c0c3',
-                'new_bytes': 'b801000000c3',  # mov eax, 1; ret
-                'pattern': 'return_true',
-                'analysis_method': 'static_pattern'
-            })
+            patches.append(
+                {
+                    "type": "return_modification",
+                    "description": "Change return value from 0 to 1",
+                    "address": hex(0x400000 + offset),
+                    "file_offset": offset,
+                    "original_bytes": "31c0c3",
+                    "new_bytes": "b801000000c3",  # mov eax, 1; ret
+                    "pattern": "return_true",
+                    "analysis_method": "static_pattern",
+                }
+            )
 
     except Exception as e:
         logger.warning(f"Static pattern analysis failed: {e}")
@@ -716,16 +726,25 @@ def _analyze_license_strings(binary_path: str) -> List[Dict[str, Any]]:
 
     try:
         # Extract strings from binary
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             data = f.read()
 
         # Find ASCII strings
         import re
-        strings = re.findall(b'[\x20-\x7e]{4,}', data)
+
+        strings = re.findall(b"[\x20-\x7e]{4,}", data)
 
         license_keywords = [
-            b'license', b'trial', b'expired', b'activation', b'invalid',
-            b'demo', b'evaluation', b'register', b'serial', b'key'
+            b"license",
+            b"trial",
+            b"expired",
+            b"activation",
+            b"invalid",
+            b"demo",
+            b"evaluation",
+            b"register",
+            b"serial",
+            b"key",
         ]
 
         for string in strings:
@@ -735,17 +754,19 @@ def _analyze_license_strings(binary_path: str) -> List[Dict[str, Any]]:
                     # Find string offset in file
                     offset = data.find(string)
                     if offset != -1:
-                        patches.append({
-                            'type': 'string_modification',
-                            'description': f'Modify license string: {string.decode("utf-8", errors="ignore")[:50]}',
-                            'address': hex(0x400000 + offset),
-                            'file_offset': offset,
-                            'original_bytes': string.hex()[:20],  # Limit display
-                            'new_bytes': b'valid_license'.hex(),
-                            'pattern': 'license_string',
-                            'analysis_method': 'string_analysis',
-                            'string_content': string.decode('utf-8', errors='ignore')[:100]
-                        })
+                        patches.append(
+                            {
+                                "type": "string_modification",
+                                "description": f'Modify license string: {string.decode("utf-8", errors="ignore")[:50]}',
+                                "address": hex(0x400000 + offset),
+                                "file_offset": offset,
+                                "original_bytes": string.hex()[:20],  # Limit display
+                                "new_bytes": b"valid_license".hex(),
+                                "pattern": "license_string",
+                                "analysis_method": "string_analysis",
+                                "string_content": string.decode("utf-8", errors="ignore")[:100],
+                            }
+                        )
                     break
 
     except Exception as e:
@@ -772,20 +793,22 @@ def _try_pefile_import_analysis(binary_path: str) -> List[Dict[str, Any]]:
 
     try:
         import pefile
+
         pe = pefile.PE(binary_path)
 
         # Use common PE analysis utility
         from ..binary.pe_analysis_common import analyze_pe_imports
+
         target_apis = {
-            'system': ['GetSystemTime', 'GetLocalTime'],
-            'registry': ['RegOpenKey', 'RegQueryValue'],
-            'file': ['CreateFile', 'ReadFile'],
-            'network': ['InternetConnect', 'HttpSendRequest']
+            "system": ["GetSystemTime", "GetLocalTime"],
+            "registry": ["RegOpenKey", "RegQueryValue"],
+            "file": ["CreateFile", "ReadFile"],
+            "network": ["InternetConnect", "HttpSendRequest"],
         }
         detected_apis = analyze_pe_imports(pe, target_apis)
 
         # Convert to patch format
-        if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+        if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
             patches = _extract_import_patches(pe, detected_apis)
 
     except ImportError:
@@ -807,14 +830,14 @@ def _extract_import_patches(pe, detected_apis) -> List[Dict[str, Any]]:
         for _, funcs in detected_apis.items():
             if func_name in funcs:
                 return {
-                    'type': 'import_hook',
-                    'description': f'Hook {dll_name}::{func_name} for bypassing checks',
-                    'address': hex(imp.address) if imp.address else '0x0',
-                    'file_offset': imp.address - pe.OPTIONAL_HEADER.ImageBase if imp.address else 0,
-                    'function': func_name,
-                    'dll': dll_name,
-                    'patch_type': 'import_redirection',
-                    'analysis_method': 'import_analysis'
+                    "type": "import_hook",
+                    "description": f"Hook {dll_name}::{func_name} for bypassing checks",
+                    "address": hex(imp.address) if imp.address else "0x0",
+                    "file_offset": imp.address - pe.OPTIONAL_HEADER.ImageBase if imp.address else 0,
+                    "function": func_name,
+                    "dll": dll_name,
+                    "patch_type": "import_redirection",
+                    "analysis_method": "import_analysis",
                 }
         return None
 
@@ -833,7 +856,7 @@ def _analyze_disassembly(binary_path: str) -> List[Dict[str, Any]]:
         from ..core.import_patterns import CAPSTONE_AVAILABLE, CS_ARCH_X86, CS_MODE_64, Cs
 
         if CAPSTONE_AVAILABLE:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             md = Cs(CS_ARCH_X86, CS_MODE_64)
@@ -847,31 +870,35 @@ def _analyze_disassembly(binary_path: str) -> List[Dict[str, Any]]:
                 count += 1
 
                 # Look for interesting patterns
-                if insn.mnemonic == 'cmp' and 'eax' in insn.op_str:
+                if insn.mnemonic == "cmp" and "eax" in insn.op_str:
                     # Comparison that might be part of license check
-                    patches.append({
-                        'type': 'comparison_bypass',
-                        'description': f'Bypass comparison: {insn.mnemonic} {insn.op_str}',
-                        'address': hex(insn.address),
-                        'file_offset': insn.address - 0x400000,
-                        'original_bytes': ' '.join(f'{b:02x}' for b in insn.bytes),
-                        'new_bytes': '90 ' * insn.size,  # NOP out the instruction
-                        'instruction': f'{insn.mnemonic} {insn.op_str}',
-                        'analysis_method': 'disassembly_analysis'
-                    })
+                    patches.append(
+                        {
+                            "type": "comparison_bypass",
+                            "description": f"Bypass comparison: {insn.mnemonic} {insn.op_str}",
+                            "address": hex(insn.address),
+                            "file_offset": insn.address - 0x400000,
+                            "original_bytes": " ".join(f"{b:02x}" for b in insn.bytes),
+                            "new_bytes": "90 " * insn.size,  # NOP out the instruction
+                            "instruction": f"{insn.mnemonic} {insn.op_str}",
+                            "analysis_method": "disassembly_analysis",
+                        }
+                    )
 
-                elif insn.mnemonic == 'call':
+                elif insn.mnemonic == "call":
                     # Function calls that might be license checks
-                    patches.append({
-                        'type': 'call_bypass',
-                        'description': f'Bypass function call: {insn.op_str}',
-                        'address': hex(insn.address),
-                        'file_offset': insn.address - 0x400000,
-                        'original_bytes': ' '.join(f'{b:02x}' for b in insn.bytes),
-                        'new_bytes': '90 ' * insn.size,  # NOP out the call
-                        'instruction': f'{insn.mnemonic} {insn.op_str}',
-                        'analysis_method': 'disassembly_analysis'
-                    })
+                    patches.append(
+                        {
+                            "type": "call_bypass",
+                            "description": f"Bypass function call: {insn.op_str}",
+                            "address": hex(insn.address),
+                            "file_offset": insn.address - 0x400000,
+                            "original_bytes": " ".join(f"{b:02x}" for b in insn.bytes),
+                            "new_bytes": "90 " * insn.size,  # NOP out the call
+                            "instruction": f"{insn.mnemonic} {insn.op_str}",
+                            "analysis_method": "disassembly_analysis",
+                        }
+                    )
 
     except Exception as e:
         logger.warning(f"Disassembly analysis failed: {e}")
@@ -884,15 +911,17 @@ def _convert_vulnerabilities_to_patches(vulnerabilities: List[Dict]) -> List[Dic
     patches = []
 
     for vuln in vulnerabilities[:5]:  # Limit to 5 vulnerabilities
-        patches.append({
-            'type': 'vulnerability_fix',
-            'description': f'Address vulnerability: {vuln.get("type", "unknown")}',
-            'address': vuln.get('address', '0x0'),
-            'vulnerability': vuln.get('type', 'unknown'),
-            'severity': vuln.get('severity', 'medium'),
-            'analysis_method': 'ml_analysis',
-            'recommendation': vuln.get('description', 'Fix identified vulnerability')
-        })
+        patches.append(
+            {
+                "type": "vulnerability_fix",
+                "description": f'Address vulnerability: {vuln.get("type", "unknown")}',
+                "address": vuln.get("address", "0x0"),
+                "vulnerability": vuln.get("type", "unknown"),
+                "severity": vuln.get("severity", "medium"),
+                "analysis_method": "ml_analysis",
+                "recommendation": vuln.get("description", "Fix identified vulnerability"),
+            }
+        )
 
     return patches
 
@@ -904,7 +933,7 @@ def _deduplicate_and_rank_patches(patches: List[Dict[str, Any]]) -> List[Dict[st
     unique_patches = []
 
     for patch in patches:
-        addr = patch.get('address', '')
+        addr = patch.get("address", "")
         if addr not in seen_addresses:
             seen_addresses.add(addr)
             unique_patches.append(patch)
@@ -918,17 +947,17 @@ def _calculate_patch_confidence(patch: Dict[str, Any]) -> float:
 
     # Boost confidence based on analysis method
     method_boost = {
-        'static_pattern': 0.3,
-        'string_analysis': 0.2,
-        'import_analysis': 0.4,
-        'disassembly_analysis': 0.3,
-        'ml_analysis': 0.4
+        "static_pattern": 0.3,
+        "string_analysis": 0.2,
+        "import_analysis": 0.4,
+        "disassembly_analysis": 0.3,
+        "ml_analysis": 0.4,
     }
 
-    confidence += method_boost.get(patch.get('analysis_method', ''), 0)
+    confidence += method_boost.get(patch.get("analysis_method", ""), 0)
 
     # Boost for known good patch types
-    if patch.get('type') in ['conditional_bypass', 'return_modification']:
+    if patch.get("type") in ["conditional_bypass", "return_modification"]:
         confidence += 0.2
 
     return min(confidence, 1.0)
@@ -936,9 +965,9 @@ def _calculate_patch_confidence(patch: Dict[str, Any]) -> float:
 
 def _assess_patch_risk(patch: Dict[str, Any]) -> int:
     """Assess risk level (1=low, 2=medium, 3=high)."""
-    if patch.get('type') in ['string_modification', 'conditional_bypass']:
+    if patch.get("type") in ["string_modification", "conditional_bypass"]:
         return 1  # Low risk
-    if patch.get('type') in ['return_modification', 'test_bypass']:
+    if patch.get("type") in ["return_modification", "test_bypass"]:
         return 2  # Medium risk
     return 3  # High risk
 
@@ -947,12 +976,12 @@ def _assess_compatibility(patch: Dict[str, Any], binary_path: str) -> str:
     """Assess patch compatibility."""
     logger.debug(f"Assessing patch compatibility for binary: {binary_path}")
     # Simple compatibility assessment
-    if patch.get('type') in ['conditional_bypass', 'string_modification']:
-        return 'high'
-    elif patch.get('type') in ['return_modification', 'import_hook']:
-        return 'medium'
+    if patch.get("type") in ["conditional_bypass", "string_modification"]:
+        return "high"
+    elif patch.get("type") in ["return_modification", "import_hook"]:
+        return "medium"
     else:
-        return 'low'
+        return "low"
 
 
 def _get_binary_info(binary_path: str) -> Dict[str, Any]:
@@ -960,18 +989,22 @@ def _get_binary_info(binary_path: str) -> Dict[str, Any]:
     try:
         stat = os.stat(binary_path)
 
-        with open(binary_path, 'rb') as f:
+        with open(binary_path, "rb") as f:
             header = f.read(64)
 
         return {
-            'size': stat.st_size,
-            'format': 'PE' if header[:2] == b'MZ' else 'ELF' if header[:4] == b'\x7fELF' else 'Unknown',
-            'modified': stat.st_mtime,
-            'path': binary_path
+            "size": stat.st_size,
+            "format": "PE"
+            if header[:2] == b"MZ"
+            else "ELF"
+            if header[:4] == b"\x7fELF"
+            else "Unknown",
+            "modified": stat.st_mtime,
+            "path": binary_path,
         }
     except (OSError, IOError, ValueError) as e:
         logger.debug("Error getting binary info: %s", e)
-        return {'size': 0, 'format': 'Unknown', 'path': binary_path}
+        return {"size": 0, "format": "Unknown", "path": binary_path}
 
 
 def _generate_fallback_patches(binary_path: str) -> Dict[str, Any]:
@@ -987,7 +1020,7 @@ def _generate_fallback_patches(binary_path: str) -> Dict[str, Any]:
             "confidence": 0.7,
             "risk_level": 1,
             "compatibility": "high",
-            "analysis_method": "fallback"
+            "analysis_method": "fallback",
         },
         {
             "id": 2,
@@ -999,7 +1032,7 @@ def _generate_fallback_patches(binary_path: str) -> Dict[str, Any]:
             "confidence": 0.6,
             "risk_level": 2,
             "compatibility": "medium",
-            "analysis_method": "fallback"
+            "analysis_method": "fallback",
         },
         {
             "id": 3,
@@ -1011,8 +1044,8 @@ def _generate_fallback_patches(binary_path: str) -> Dict[str, Any]:
             "confidence": 0.8,
             "risk_level": 1,
             "compatibility": "high",
-            "analysis_method": "fallback"
-        }
+            "analysis_method": "fallback",
+        },
     ]
 
     return {
@@ -1021,7 +1054,7 @@ def _generate_fallback_patches(binary_path: str) -> Dict[str, Any]:
         "total_found": len(patches),
         "analysis_methods": ["fallback"],
         "binary_info": _get_binary_info(binary_path),
-        "message": f"Generated {len(patches)} fallback patch proposals"
+        "message": f"Generated {len(patches)} fallback patch proposals",
     }
 
 
@@ -1042,17 +1075,20 @@ def wrapper_get_proposed_patches(app_instance, parameters: Dict[str, Any]) -> Di
         filter_type = parameters.get("filter_type", "all")
         include_metadata = parameters.get("include_metadata", True)
 
-        app_instance.update_output.emit(log_message(f"[Tool] Getting proposed patches (filter: {filter_type})"))
+        app_instance.update_output.emit(
+            log_message(f"[Tool] Getting proposed patches (filter: {filter_type})")
+        )
         logger.info("Getting proposed patches with filter: %s", filter_type)
 
         # Get patches from app instance if available
-        all_patches = getattr(app_instance, 'potential_patches', [])
+        all_patches = getattr(app_instance, "potential_patches", [])
 
         # Filter patches based on parameters
         if filter_type != "all":
             filtered_patches = [
-                patch for patch in all_patches
-                if patch.get('type', '').lower() == filter_type.lower()
+                patch
+                for patch in all_patches
+                if patch.get("type", "").lower() == filter_type.lower()
             ]
         else:
             filtered_patches = all_patches
@@ -1062,7 +1098,7 @@ def wrapper_get_proposed_patches(app_instance, parameters: Dict[str, Any]) -> Di
             result_patches = filtered_patches
         else:
             result_patches = [
-                {k: v for k, v in patch.items() if k in ['address', 'description', 'type']}
+                {k: v for k, v in patch.items() if k in ["address", "description", "type"]}
                 for patch in filtered_patches
             ]
 
@@ -1073,7 +1109,7 @@ def wrapper_get_proposed_patches(app_instance, parameters: Dict[str, Any]) -> Di
             "total_patches": len(all_patches),
             "filter_applied": filter_type,
             "metadata_included": include_metadata,
-            "message": f"Retrieved {len(result_patches)} patches (filter: {filter_type})"
+            "message": f"Retrieved {len(result_patches)} patches (filter: {filter_type})",
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -1102,7 +1138,7 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
         app_instance.update_output.emit(log_message(f"[Tool] Applying patch: {patch_id}"))
         logger.info("Applying patch: %s", patch_id)
 
-        if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+        if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
 
         # Simplified patch application - would need actual binary modification
@@ -1110,7 +1146,7 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: Dict[str, Any]) -> D
             "status": "success",
             "patch_id": patch_id,
             "applied": True,
-            "message": f"Successfully applied patch {patch_id}"
+            "message": f"Successfully applied patch {patch_id}",
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -1133,10 +1169,12 @@ def wrapper_generate_launcher_script(app_instance, parameters: Dict[str, Any]) -
     output_path = parameters.get("output_path", "launcher.bat")
 
     try:
-        app_instance.update_output.emit(log_message(f"[Tool] Generating launcher script: {output_path}"))
+        app_instance.update_output.emit(
+            log_message(f"[Tool] Generating launcher script: {output_path}")
+        )
         logger.info("Generating launcher script: %s", output_path)
 
-        if not hasattr(app_instance, 'binary_path') or not app_instance.binary_path:
+        if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
             return {"status": "error", "message": "No binary loaded"}
 
         # Generate simple launcher script
@@ -1146,13 +1184,13 @@ echo Starting patched application...
 pause
 """
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(script_content)
 
         return {
             "status": "success",
             "script_path": output_path,
-            "message": f"Launcher script generated: {output_path}"
+            "message": f"Launcher script generated: {output_path}",
         }
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -1216,11 +1254,7 @@ def run_external_tool(args):
     try:
         # Run the command
         with subprocess.Popen(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            encoding="utf-8"
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8"
         ) as process:
             logger.info("Subprocess started: %s (PID: %s)", args, process.pid)
 
@@ -1262,14 +1296,11 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) ->
     """
     try:
         # Get parameters
-        binary_path = parameters.get('binary_path')
-        timeout = parameters.get('timeout', 30000)
+        binary_path = parameters.get("binary_path")
+        timeout = parameters.get("timeout", 30000)
 
         if not binary_path:
-            return {
-                "status": "error",
-                "error": "No binary_path provided for runtime monitoring"
-            }
+            return {"status": "error", "error": "No binary_path provided for runtime monitoring"}
 
         # Import directly from dynamic_analyzer to avoid cyclic import
         from ...core.analysis.dynamic_analyzer import deep_runtime_monitoring as analyzer_drm
@@ -1281,7 +1312,7 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) ->
             "monitor_registry": True,
             "monitor_network": True,
             "capture_strings": True,
-            "timeout": timeout
+            "timeout": timeout,
         }
 
         # Call the analyzer function directly
@@ -1293,17 +1324,17 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) ->
             "target_process": binary_path,
             "timeout": timeout,
             "logs": logs,
-            "config": monitoring_config
+            "config": monitoring_config,
         }
 
         # Extract logs from result
-        if isinstance(result, dict) and 'logs' in result:
-            logs = result['logs']
+        if isinstance(result, dict) and "logs" in result:
+            logs = result["logs"]
         else:
             logs = result
 
         # Update UI if available
-        if app_instance and hasattr(app_instance, 'update_output'):
+        if app_instance and hasattr(app_instance, "update_output"):
             for log in logs:
                 app_instance.update_output.emit(f"[Runtime Monitor] {log}")
 
@@ -1312,25 +1343,26 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: Dict[str, Any]) ->
             "binary_path": binary_path,
             "timeout": timeout,
             "logs": logs,
-            "monitoring_complete": True
+            "monitoring_complete": True,
         }
 
     except (OSError, ValueError, RuntimeError) as e:
         error_msg = f"Error in runtime monitoring: {str(e)}"
         logger.error(error_msg)
 
-        if app_instance and hasattr(app_instance, 'update_output'):
+        if app_instance and hasattr(app_instance, "update_output"):
             app_instance.update_output.emit(f"[Runtime Monitor] ERROR: {error_msg}")
 
-        return {
-            "status": "error",
-            "error": error_msg,
-            "traceback": traceback.format_exc()
-        }
+        return {"status": "error", "error": error_msg, "traceback": traceback.format_exc()}
 
 
-def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: str = None,
-                         project_name: str = None, options: Dict[str, Any] = None) -> Dict[str, Any]:
+def run_ghidra_headless(
+    binary_path: str,
+    script_path: str = None,
+    output_dir: str = None,
+    project_name: str = None,
+    options: Dict[str, Any] = None,
+) -> Dict[str, Any]:
     """
     Run comprehensive Ghidra headless analysis on a binary.
 
@@ -1378,26 +1410,26 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
                 "imports": [],
                 "exports": [],
                 "segments": [],
-                "analysis_time": 0
+                "analysis_time": 0,
             },
-            "exported_files": []
+            "exported_files": [],
         }
 
         # Parse options
         if options is None:
             options = {}
 
-        timeout = options.get('timeout', 600)
-        analyzers = options.get('analyzers', [])
-        processor = options.get('processor')
-        loader = options.get('loader')
-        language = options.get('language')
-        save_results = options.get('save_results', True)
-        export_format = options.get('export_format', 'json')
-        export_selection = options.get('export_selection', ['functions', 'symbols', 'strings'])
-        log_level = options.get('log_level', 'INFO')
-        max_ram = options.get('max_ram', '2G')
-        script_params = options.get('script_params', {})
+        timeout = options.get("timeout", 600)
+        analyzers = options.get("analyzers", [])
+        processor = options.get("processor")
+        loader = options.get("loader")
+        language = options.get("language")
+        save_results = options.get("save_results", True)
+        export_format = options.get("export_format", "json")
+        export_selection = options.get("export_selection", ["functions", "symbols", "strings"])
+        log_level = options.get("log_level", "INFO")
+        max_ram = options.get("max_ram", "2G")
+        script_params = options.get("script_params", {})
 
         # Validate binary exists
         if not os.path.exists(binary_path):
@@ -1410,6 +1442,7 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
         ghidra_executable = None
         try:
             from ...core.path_discovery import find_tool
+
             ghidra_base = find_tool("ghidra")
             if ghidra_base:
                 # Find analyzeHeadless relative to ghidra installation
@@ -1420,10 +1453,10 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
 
                 # Look for analyzeHeadless
                 analyze_paths = [
-                    os.path.join(ghidra_dir, 'support', 'analyzeHeadless.bat'),
-                    os.path.join(ghidra_dir, 'support', 'analyzeHeadless'),
-                    os.path.join(os.path.dirname(ghidra_dir), 'support', 'analyzeHeadless.bat'),
-                    os.path.join(os.path.dirname(ghidra_dir), 'support', 'analyzeHeadless'),
+                    os.path.join(ghidra_dir, "support", "analyzeHeadless.bat"),
+                    os.path.join(ghidra_dir, "support", "analyzeHeadless"),
+                    os.path.join(os.path.dirname(ghidra_dir), "support", "analyzeHeadless.bat"),
+                    os.path.join(os.path.dirname(ghidra_dir), "support", "analyzeHeadless"),
                 ]
 
                 for path in analyze_paths:
@@ -1436,9 +1469,9 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
         # Fallback to manual search if discovery fails
         if not ghidra_executable:
             ghidra_paths = [
-                os.environ.get('GHIDRA_INSTALL_DIR', '') + '/support/analyzeHeadless',
+                os.environ.get("GHIDRA_INSTALL_DIR", "") + "/support/analyzeHeadless",
                 "analyzeHeadless",
-                "analyzeHeadless.bat"
+                "analyzeHeadless.bat",
             ]
 
             for path in ghidra_paths:
@@ -1449,8 +1482,9 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
         # Try to find in PATH
         if not ghidra_executable:
             try:
-                result = subprocess.run(['which', 'analyzeHeadless'],
-                                      capture_output=True, text=True, check=False)
+                result = subprocess.run(
+                    ["which", "analyzeHeadless"], capture_output=True, text=True, check=False
+                )
                 if result.returncode == 0:
                     ghidra_executable = result.stdout.strip()
             except (OSError, subprocess.SubprocessError) as e:
@@ -1458,7 +1492,9 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
 
         if not ghidra_executable:
             results["status"] = "error"
-            results["errors"].append("Ghidra executable not found. Please install Ghidra and set GHIDRA_INSTALL_DIR environment variable.")
+            results["errors"].append(
+                "Ghidra executable not found. Please install Ghidra and set GHIDRA_INSTALL_DIR environment variable."
+            )
             return results
 
         # Setup project directory
@@ -1472,13 +1508,7 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
         results["project_path"] = os.path.join(output_dir, project_name)
 
         # Build command
-        cmd = [
-            ghidra_executable,
-            output_dir,
-            project_name,
-            "-import", binary_path,
-            "-overwrite"
-        ]
+        cmd = [ghidra_executable, output_dir, project_name, "-import", binary_path, "-overwrite"]
 
         # Add processor specification if provided
         if processor:
@@ -1533,28 +1563,24 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
         logger.info(f"Running Ghidra headless analysis: {' '.join(cmd)}")
 
         process = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=output_dir
-        , check=False)
+            cmd, capture_output=True, text=True, timeout=timeout, cwd=output_dir, check=False
+        )
 
         analysis_time = time.time() - start_time
         results["analysis_results"]["analysis_time"] = analysis_time
 
         # Process output
         if process.stdout:
-            results["output"] = process.stdout.split('\n')
+            results["output"] = process.stdout.split("\n")
             # Parse analysis results from output
             results = _parse_ghidra_output(results, process.stdout)
 
         if process.stderr:
-            stderr_lines = process.stderr.split('\n')
+            stderr_lines = process.stderr.split("\n")
             # Separate warnings from errors
             for line in stderr_lines:
                 if line.strip():
-                    if 'WARN' in line or 'WARNING' in line:
+                    if "WARN" in line or "WARNING" in line:
                         results["warnings"].append(line)
                     else:
                         results["errors"].append(line)
@@ -1567,7 +1593,9 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
             results = _load_analysis_exports(results, output_dir, export_format)
 
         if process.returncode != 0:
-            results["status"] = "warning" if results["warnings"] and not results["errors"] else "error"
+            results["status"] = (
+                "warning" if results["warnings"] and not results["errors"] else "error"
+            )
 
         # Cleanup temporary script if created
         if not script_path and analysis_script_path and os.path.exists(analysis_script_path):
@@ -1595,11 +1623,15 @@ def run_ghidra_headless(binary_path: str, script_path: str = None, output_dir: s
     return results
 
 
-def _create_comprehensive_analysis_script(output_dir: str, export_format: str,
-                                         export_selection: list, params: dict) -> str:
+def _create_comprehensive_analysis_script(
+    output_dir: str, export_format: str, export_selection: list, params: dict
+) -> str:
     """Create a comprehensive Ghidra analysis script."""
-    logger.debug(f"Creating analysis script with format: {export_format}, selection: {export_selection}, params: {list(params.keys())}")
-    script_content = '''
+    logger.debug(
+        f"Creating analysis script with format: {export_format}, selection: {export_selection}, params: {list(params.keys())}"
+    )
+    script_content = (
+        """
 // Comprehensive Ghidra Analysis Script
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -1823,14 +1855,17 @@ def writeJsonFile(filename, data) {
 }
 
 // Set export selection
-def exportSelection = ''' + str(export_selection) + '''
+def exportSelection = """
+        + str(export_selection)
+        + """
 
 println("Starting comprehensive analysis...")
 println("Analysis complete. Results exported.")
-'''
+"""
+    )
 
     script_file = os.path.join(output_dir, "comprehensive_analysis.py")
-    with open(script_file, 'w', encoding='utf-8') as f:
+    with open(script_file, "w", encoding="utf-8") as f:
         f.write(script_content)
 
     return script_file
@@ -1838,13 +1873,13 @@ println("Analysis complete. Results exported.")
 
 def _parse_ghidra_output(results: dict, output: str) -> dict:
     """Parse Ghidra analysis output for key information."""
-    lines = output.split('\n')
+    lines = output.split("\n")
 
     for line in lines:
         line = line.strip()
 
         # Parse function count
-        if 'functions found' in line.lower():
+        if "functions found" in line.lower():
             try:
                 count = int(line.split()[0])
                 results["analysis_results"]["function_count"] = count
@@ -1852,7 +1887,7 @@ def _parse_ghidra_output(results: dict, output: str) -> dict:
                 logger.debug("Failed to parse function count: %s", e)
 
         # Parse symbol count
-        if 'symbols found' in line.lower():
+        if "symbols found" in line.lower():
             try:
                 count = int(line.split()[0])
                 results["analysis_results"]["symbol_count"] = count
@@ -1860,7 +1895,7 @@ def _parse_ghidra_output(results: dict, output: str) -> dict:
                 logger.debug("Failed to parse symbol count: %s", e)
 
         # Parse entry points
-        if 'entry point' in line.lower():
+        if "entry point" in line.lower():
             try:
                 address = line.split()[-1]
                 if address not in results["analysis_results"]["entry_points"]:
@@ -1875,19 +1910,23 @@ def _load_analysis_exports(results: dict, output_dir: str, export_format: str) -
     """Load exported analysis results from files."""
     logger.debug(f"Loading analysis exports from {output_dir} with format: {export_format}")
     export_files = [
-        "functions.json", "symbols.json", "strings.json",
-        "cross_references.json", "imports.json", "exports.json",
-        "memory_segments.json"
+        "functions.json",
+        "symbols.json",
+        "strings.json",
+        "cross_references.json",
+        "imports.json",
+        "exports.json",
+        "memory_segments.json",
     ]
 
     for export_file in export_files:
         file_path = os.path.join(output_dir, export_file)
         if os.path.exists(file_path):
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
-                key = export_file.replace('.json', '')
+                key = export_file.replace(".json", "")
                 results["analysis_results"][key] = data
                 results["exported_files"].append(file_path)
 

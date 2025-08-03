@@ -16,11 +16,11 @@ def test_monitoring_widgets():
         print("1. Importing Qt...")
         from PyQt6.QtWidgets import QApplication, QMainWindow
         print("   ✓ Qt imported")
-        
+
         print("2. Creating QApplication...")
         app = QApplication(sys.argv)
         print("   ✓ QApplication created")
-        
+
         # Try to import and create each widget
         try:
             print("3. Testing SystemMonitorWidget...")
@@ -32,7 +32,7 @@ def test_monitoring_widgets():
             print(f"   ✗ SystemMonitorWidget error: {e}")
             import traceback
             traceback.print_exc()
-            
+
         try:
             print("4. Testing GPUStatusWidget...")
             from intellicrack.ui.widgets.gpu_status_widget import GPUStatusWidget
@@ -43,7 +43,7 @@ def test_monitoring_widgets():
             print(f"   ✗ GPUStatusWidget error: {e}")
             import traceback
             traceback.print_exc()
-            
+
         try:
             print("5. Testing CPUStatusWidget...")
             from intellicrack.ui.widgets.cpu_status_widget import CPUStatusWidget
@@ -54,9 +54,9 @@ def test_monitoring_widgets():
             print(f"   ✗ CPUStatusWidget error: {e}")
             import traceback
             traceback.print_exc()
-            
+
         return 0
-        
+
     except Exception as e:
         print(f"   ✗ Error: {e}")
         import traceback

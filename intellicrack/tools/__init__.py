@@ -76,31 +76,27 @@ except ImportError as e:
 __all__ = []
 
 if PluginTestGenerator is not None:
-    __all__.extend([
-        "PluginTestGenerator",
-        "TestCoverageAnalyzer",
-        "MockDataGenerator",
-        "PluginTestRunner"
-    ])
+    __all__.extend(
+        ["PluginTestGenerator", "TestCoverageAnalyzer", "MockDataGenerator", "PluginTestRunner"]
+    )
 
 if CICDPipeline is not None:
     __all__.extend(["CICDPipeline", "GitHubActionsGenerator"])
 
 if PluginDebugger is not None:
-    __all__.extend([
-        "PluginDebugger",
-        "DebuggerThread",
-        "BreakpointType",
-        "DebuggerState",
-        "Breakpoint",
-        "StackFrame"
-    ])
+    __all__.extend(
+        [
+            "PluginDebugger",
+            "DebuggerThread",
+            "BreakpointType",
+            "DebuggerState",
+            "Breakpoint",
+            "StackFrame",
+        ]
+    )
 
 if ProtectionAnalyzerTool is not None:
-    __all__.extend([
-        "ProtectionAnalyzerTool",
-        "register_protection_analyzer_tool"
-    ])
+    __all__.extend(["ProtectionAnalyzerTool", "register_protection_analyzer_tool"])
 
 # Package metadata
 __version__ = "0.1.0"

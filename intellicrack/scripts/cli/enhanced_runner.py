@@ -47,8 +47,6 @@ from intellicrack.utils.protection_detection import detect_all_protections
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
-
-
 class EnhancedCLIRunner:
     """Enhanced CLI runner with progress visualization"""
 
@@ -230,7 +228,10 @@ class EnhancedCLIRunner:
             # Return analysis results (simulated)
             return {
                 "protocols": ["HTTP", "HTTPS"],
-                "endpoints": [os.environ.get("API_SERVER_URL", "api.internal"), os.environ.get("LICENSE_SERVER_URL", "license.internal")],
+                "endpoints": [
+                    os.environ.get("API_SERVER_URL", "api.internal"),
+                    os.environ.get("LICENSE_SERVER_URL", "license.internal"),
+                ],
                 "suspicious": False,
                 "analyzer_info": f"Analysis by {type(analyzer).__name__}",
             }
@@ -369,6 +370,7 @@ def main():
         output_path = Prompt.ask("Output file path", default="analysis_results.json")
 
         import json
+
         with open(output_path, "w") as f:
             json.dump(results, f, indent=2, default=str)
 

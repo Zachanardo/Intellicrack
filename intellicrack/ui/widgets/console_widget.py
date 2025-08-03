@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 """
 Console Widget for displaying logs and output
 
@@ -50,7 +49,9 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         # Timestamps
         timestamp_format = QTextCharFormat()
         timestamp_format.setForeground(QColor("#666666"))
-        self.rules.append((QRegularExpression(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"), timestamp_format))
+        self.rules.append(
+            (QRegularExpression(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"), timestamp_format)
+        )
         self.rules.append((QRegularExpression(r"\d{2}:\d{2}:\d{2}"), timestamp_format))
 
         # Log levels
@@ -63,7 +64,9 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         # WARNING
         warning_format = QTextCharFormat()
         warning_format.setForeground(QColor("#ffa500"))
-        self.rules.append((QRegularExpression(r"\[WARNING\]|\[WARN\]|WARNING:|WARN:"), warning_format))
+        self.rules.append(
+            (QRegularExpression(r"\[WARNING\]|\[WARN\]|WARNING:|WARN:"), warning_format)
+        )
 
         # SUCCESS
         success_format = QTextCharFormat()
@@ -101,7 +104,9 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         # IP addresses
         ip_format = QTextCharFormat()
         ip_format.setForeground(QColor("#06b6d4"))
-        self.rules.append((QRegularExpression(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"), ip_format))
+        self.rules.append(
+            (QRegularExpression(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"), ip_format)
+        )
 
         # Hex values
         hex_format = QTextCharFormat()
@@ -157,9 +162,16 @@ class ConsoleWidget(QWidget):
 
         # Filter controls
         self.filter_combo = QComboBox()
-        self.filter_combo.addItems([
-            "All", "Errors", "Warnings", "Success", "Info", "Debug",
-        ])
+        self.filter_combo.addItems(
+            [
+                "All",
+                "Errors",
+                "Warnings",
+                "Success",
+                "Info",
+                "Debug",
+            ]
+        )
         self.filter_combo.currentTextChanged.connect(self.apply_filter)
         toolbar_layout.addWidget(self.filter_combo)
 
@@ -296,7 +308,8 @@ class ConsoleWidget(QWidget):
         found = False
         while True:
             cursor = self.output.document().find(
-                search_term, cursor,
+                search_term,
+                cursor,
                 QTextCursor.FindFlags(),
             )
 
@@ -327,7 +340,8 @@ class ConsoleWidget(QWidget):
         from PyQt6.QtWidgets import QFileDialog
 
         filename, _ = QFileDialog.getSaveFileName(
-            self, "Export Console Log",
+            self,
+            "Export Console Log",
             f"console_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
             "Text Files (*.txt);;All Files (*.*)",
         )
