@@ -388,17 +388,17 @@ class DashboardTab(BaseTab):
 
         if project_file:
             project_name = os.path.splitext(os.path.basename(project_file))[0]
-            
+
             # Load project data
             if self._load_project_data(project_name):
                 self.current_project = project_name
                 self.current_project_label.setText(f"Project: {project_name}")
                 self.current_project_label.setStyleSheet("color: #0078d4; padding: 5px; font-weight: bold;")
                 self.log_activity(f"Opened project: {project_name}")
-                
+
                 # Refresh file tree to show project files
                 self.refresh_file_tree()
-                
+
                 self.project_opened.emit(project_file)
             else:
                 # Create new project data if file doesn't exist
@@ -431,7 +431,7 @@ class DashboardTab(BaseTab):
 
         # Save the project data
         self._save_project_data()
-        
+
         # Also allow user to export project to a different location
         project_file, _ = QFileDialog.getSaveFileName(
             self,
@@ -727,13 +727,13 @@ class DashboardTab(BaseTab):
                     size_str = f"{size / (1024 * 1024):.1f} MB"
                 else:
                     size_str = f"{size / (1024 * 1024 * 1024):.1f} GB"
-                
+
                 # Format date for display
                 try:
                     modified_date = datetime.fromisoformat(file_info["modified"]).strftime("%Y-%m-%d %H:%M")
                 except:
                     modified_date = file_info.get("modified", "Unknown")
-                
+
                 # Create tree item
                 item = QTreeWidgetItem([
                     file_info["name"],
@@ -741,10 +741,10 @@ class DashboardTab(BaseTab):
                     size_str,
                     modified_date
                 ])
-                
+
                 # Store full path as user data for later access
                 item.setData(0, Qt.ItemDataRole.UserRole, file_path)
-                
+
                 self.file_tree.addTopLevelItem(item)
 
     def refresh_file_tree(self):
@@ -760,7 +760,7 @@ class DashboardTab(BaseTab):
             if file_path and os.path.exists(file_path):
                 file_name = current_item.text(0)
                 self.log_activity(f"Opening file: {file_name}")
-                
+
                 # Open file with default system application
                 try:
                     if os.name == "nt":  # Windows
@@ -783,7 +783,7 @@ class DashboardTab(BaseTab):
         if current_item:
             file_name = current_item.text(0)
             file_path = current_item.data(0, Qt.ItemDataRole.UserRole)
-            
+
             reply = QMessageBox.question(
                 self,
                 "Remove File from Project",
@@ -797,10 +797,10 @@ class DashboardTab(BaseTab):
                 if hasattr(self, "project_data") and "files" in self.project_data and file_path in self.project_data["files"]:
                     del self.project_data["files"][file_path]
                     self.project_data["modified"] = datetime.now().isoformat()
-                    
+
                     # Save updated project data
                     self._save_project_data()
-                    
+
                     # Remove from tree
                     self.file_tree.takeTopLevelItem(self.file_tree.indexOfTopLevelItem(current_item))
                     self.log_activity(f"Removed from project: {file_name}")
@@ -919,7 +919,7 @@ class DashboardTab(BaseTab):
                 "created": datetime.now().isoformat(),
                 "modified": datetime.now().isoformat()
             }
-        
+
         added_count = 0
         for file_path in file_paths:
             if os.path.exists(file_path):
@@ -933,19 +933,19 @@ class DashboardTab(BaseTab):
                     "type": self._get_file_type_from_path(file_path),
                     "added": datetime.now().isoformat()
                 }
-                
+
                 # Add to project data using file path as key
                 self.project_data["files"][file_path] = file_info
                 added_count += 1
-                
+
                 self.log_activity(f"Added to project: {os.path.basename(file_path)}")
-        
+
         # Update project modified time
         self.project_data["modified"] = datetime.now().isoformat()
-        
+
         # Save project data to file
         self._save_project_data()
-        
+
         self.refresh_file_tree()
         QMessageBox.information(
             self,
@@ -956,18 +956,18 @@ class DashboardTab(BaseTab):
     def _get_file_type_from_path(self, file_path):
         """Get file type from path for project file management"""
         return self.get_file_type(file_path)
-    
+
     def _save_project_data(self):
         """Save project data to file"""
         if not self.current_project or not hasattr(self, "project_data"):
             return
-        
+
         # Determine project file path
         project_dir = os.path.join(os.path.expanduser("~"), ".intellicrack", "projects")
         os.makedirs(project_dir, exist_ok=True)
-        
+
         project_file = os.path.join(project_dir, f"{self.current_project}.icp")
-        
+
         try:
             import json
             with open(project_file, "w") as f:
@@ -975,12 +975,12 @@ class DashboardTab(BaseTab):
             self.logger.debug(f"Saved project data to {project_file}")
         except Exception as e:
             self.logger.error(f"Failed to save project data: {e}")
-    
+
     def _load_project_data(self, project_name):
         """Load project data from file"""
         project_dir = os.path.join(os.path.expanduser("~"), ".intellicrack", "projects")
         project_file = os.path.join(project_dir, f"{project_name}.icp")
-        
+
         if os.path.exists(project_file):
             try:
                 import json

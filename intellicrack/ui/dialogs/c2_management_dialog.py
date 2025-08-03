@@ -1203,17 +1203,17 @@ class C2ManagementDialog(QDialog):
         current_text = self.log_display.toPlainText()
         if not current_text:
             return
-            
+
         # Split into lines
         lines = current_text.split("\n")
         filtered_lines = []
-        
+
         # Apply filter based on type
         filter_type_lower = filter_type.lower()
-        
+
         for line in lines:
             line_lower = line.lower()
-            
+
             # Filter by log level/type
             if filter_type_lower == "all":
                 filtered_lines.append(line)
@@ -1237,14 +1237,14 @@ class C2ManagementDialog(QDialog):
             elif filter_type_lower not in ["all", "error", "warning", "info", "success", "connection", "command", "upload", "client"]:
                 if filter_type_lower in line_lower:
                     filtered_lines.append(line)
-        
+
         # Update display with filtered content
         self.log_display.setPlainText("\n".join(filtered_lines))
-        
+
         # Store original text for reset
         if not hasattr(self, "_original_log_text"):
             self._original_log_text = current_text
-        
+
         # Update status
         if hasattr(self, "filter_status_label"):
             self.filter_status_label.setText(f"Filter: {filter_type} ({len(filtered_lines)} lines)")

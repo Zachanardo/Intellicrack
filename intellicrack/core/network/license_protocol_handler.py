@@ -296,7 +296,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         self.session_data = {}
         self.client_connections = {}
         self.vendor_daemon_port = self.config.get("vendor_daemon_port", 27001)
-        
+
         # Configure FlexLM response parameters
         self.flexlm_version = self.config.get("flexlm_version", "11.16.2")
         self.license_count = self.config.get("license_count", 9999)
@@ -478,7 +478,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         self.client_connections = {}
         self._hasp_aes_key = None
         self._hasp_nonce = None
-        
+
         # Configure HASP response parameters
         self.hasp_memory_size = self.config.get("hasp_memory_size", 0x20000)  # 128KB default
         self.hasp_version = self.config.get("hasp_version", "7.50")

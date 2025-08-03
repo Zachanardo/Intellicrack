@@ -545,13 +545,13 @@ class AIScriptGenerator:
         """Identify protection types from analysis results using comprehensive pattern detection."""
         protections = set()  # Use set to avoid duplicates
         confidence_scores = {}
-        
+
         # Extract all available data
         strings = analysis_results.get("strings", [])
         functions = analysis_results.get("functions", [])
         imports = analysis_results.get("imports", [])
         sections = analysis_results.get("sections", [])
-        
+
         # License check patterns with weighted detection
         license_patterns = {
             "strong_indicators": {
@@ -572,7 +572,7 @@ class AIScriptGenerator:
                 "weight": 0.4
             }
         }
-        
+
         # Time bomb patterns
         time_patterns = {
             "strong_indicators": {
@@ -587,7 +587,7 @@ class AIScriptGenerator:
                 "weight": 0.6
             }
         }
-        
+
         # Network validation patterns
         network_patterns = {
             "strong_indicators": {
@@ -602,7 +602,7 @@ class AIScriptGenerator:
                 "weight": 0.65
             }
         }
-        
+
         # Hardware lock patterns
         hardware_patterns = {
             "strong_indicators": {
@@ -612,11 +612,11 @@ class AIScriptGenerator:
                 "weight": 0.92
             }
         }
-        
+
         # Anti-debug patterns
         antidebug_patterns = {
             "strong_indicators": {
-                "imports": ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess", 
+                "imports": ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "NtQueryInformationProcess",
                           "OutputDebugString", "SetUnhandledExceptionFilter"],
                 "functions": ["anti_debug", "detect_debugger", "check_debugger"],
                 "keywords": ["debugger", "breakpoint", "int3", "debug_detect"],
@@ -628,7 +628,7 @@ class AIScriptGenerator:
                 "weight": 0.7
             }
         }
-        
+
         # VM detection patterns
         vm_patterns = {
             "strong_indicators": {
@@ -638,7 +638,7 @@ class AIScriptGenerator:
                 "weight": 0.9
             }
         }
-        
+
         # Anti-tamper patterns
         antitamper_patterns = {
             "strong_indicators": {
@@ -648,7 +648,7 @@ class AIScriptGenerator:
                 "weight": 0.88
             }
         }
-        
+
         # Obfuscation patterns
         obfuscation_patterns = {
             "indicators": {
@@ -658,19 +658,19 @@ class AIScriptGenerator:
                 "weight": 0.85
             }
         }
-        
+
         # Pattern detection engine
         def detect_pattern(pattern_dict, data_type="strings"):
             score = 0.0
             matches = []
-            
+
             for severity, indicators in pattern_dict.items():
                 if severity == "indicators":  # For single-level patterns
                     indicators = {"default": indicators}
                     severity = "default"
-                
+
                 weight = indicators.get("weight", 0.5)
-                
+
                 if data_type == "strings" and "keywords" in indicators:
                     for string in strings:
                         string_lower = string.lower()
@@ -678,7 +678,7 @@ class AIScriptGenerator:
                             if keyword.lower() in string_lower:
                                 score += weight
                                 matches.append(f"String match: '{keyword}' in '{string}'")
-                
+
                 elif data_type == "functions" and "functions" in indicators:
                     for func in functions:
                         func_name = func.get("name", "").lower()
@@ -686,7 +686,7 @@ class AIScriptGenerator:
                             if pattern.lower() in func_name:
                                 score += weight
                                 matches.append(f"Function match: '{pattern}' in '{func_name}'")
-                
+
                 elif data_type == "imports" and "imports" in indicators:
                     for imp in imports:
                         imp_name = imp.get("name", "").lower()
@@ -694,7 +694,7 @@ class AIScriptGenerator:
                             if pattern.lower() in imp_name:
                                 score += weight * 1.2  # Imports are strong indicators
                                 matches.append(f"Import match: '{pattern}'")
-                
+
                 elif data_type == "sections" and "section_names" in indicators:
                     for section in sections:
                         section_name = section.get("name", "").lower()
@@ -702,63 +702,63 @@ class AIScriptGenerator:
                             if pattern.lower() in section_name:
                                 score += weight * 1.5  # Section names are very strong indicators
                                 matches.append(f"Section match: '{pattern}'")
-            
+
             return score, matches
-        
+
         # Run detection for each protection type
         protection_detections = []
-        
+
         # License checks
         for data_type in ["strings", "functions", "imports"]:
             score, matches = detect_pattern(license_patterns, data_type)
             if score > 0:
                 protection_detections.append(("LICENSE_CHECK", score, matches))
-        
+
         # Time bombs
         for data_type in ["strings", "functions", "imports"]:
             score, matches = detect_pattern(time_patterns, data_type)
             if score > 0:
                 protection_detections.append(("TIME_BOMB", score, matches))
-        
+
         # Network validation
         for data_type in ["strings", "functions", "imports"]:
             score, matches = detect_pattern(network_patterns, data_type)
             if score > 0:
                 protection_detections.append(("NETWORK_VALIDATION", score, matches))
-        
+
         # Hardware lock
         for data_type in ["strings", "functions", "imports"]:
             score, matches = detect_pattern(hardware_patterns, data_type)
             if score > 0:
                 protection_detections.append(("HARDWARE_LOCK", score, matches))
-        
+
         # Anti-debugging
         for data_type in ["strings", "functions", "imports"]:
             score, matches = detect_pattern(antidebug_patterns, data_type)
             if score > 0:
                 protection_detections.append(("ANTI_DEBUG", score, matches))
-        
+
         # VM detection
         for data_type in ["strings", "functions", "imports"]:
             score, matches = detect_pattern(vm_patterns, data_type)
             if score > 0:
                 protection_detections.append(("VM_DETECTION", score, matches))
-        
+
         # Anti-tamper
         for data_type in ["strings", "functions", "imports"]:
             score, matches = detect_pattern(antitamper_patterns, data_type)
             if score > 0:
                 protection_detections.append(("ANTI_TAMPER", score, matches))
-        
+
         # Obfuscation
         score, matches = detect_pattern(obfuscation_patterns, "sections")
         if score > 0:
             protection_detections.append(("OBFUSCATION", score, matches))
-        
+
         # Additional network activity check
         if analysis_results.get("network_activity"):
             protection_detections.append(("NETWORK_VALIDATION", 0.7, ["Direct network activity detected"]))
-        
+
         # Process detections and determine protections
         protection_scores = {}
         for prot_type, score, matches in protection_detections:
@@ -766,7 +766,7 @@ class AIScriptGenerator:
                 protection_scores[prot_type] = {"score": 0, "matches": []}
             protection_scores[prot_type]["score"] += score
             protection_scores[prot_type]["matches"].extend(matches)
-        
+
         # Add protections based on confidence threshold
         confidence_threshold = 0.5
         for prot_type, data in protection_scores.items():
@@ -775,12 +775,12 @@ class AIScriptGenerator:
                 if hasattr(ProtectionType, prot_type):
                     protections.add(getattr(ProtectionType, prot_type))
                     confidence_scores[prot_type] = min(data["score"], 1.0)  # Cap at 1.0
-                    
+
                     # Log detection details
                     self.logger.info(f"Detected {prot_type} with confidence {data['score']:.2f}")
                     for match in data["matches"][:5]:  # Log first 5 matches
                         self.logger.debug(f"  - {match}")
-        
+
         # If no protections detected, check for generic protection indicators
         if not protections:
             # Look for generic protection indicators
@@ -789,11 +789,11 @@ class AIScriptGenerator:
                 if any(indicator in string.lower() for indicator in generic_indicators):
                     protections.add(ProtectionType.UNKNOWN)
                     break
-        
+
         # Store confidence scores for later use
         if hasattr(self, "protection_confidence"):
             self.protection_confidence = confidence_scores
-        
+
         return list(protections)
 
     def _generate_hooks(self, analysis_results: Dict[str, Any], protection_types: List[ProtectionType]) -> str:
@@ -3646,7 +3646,7 @@ if (Process.platform === 'windows') {{
                             const machineId = Process.arch + "-" + Process.platform;
                             const hashPart = Math.random().toString(36).substring(2, 6).toUpperCase();
                             const licenseKey = timestamp + "-" + hashPart + "-PRO1-ENT5";
-                            
+
                             this.lpData.writeUtf8String(licenseKey);
                             this.lpcbData.writeU32(licenseKey.length + 1);
                             console.log("[+] Injected license data: " + licenseKey);

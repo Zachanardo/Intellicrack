@@ -662,7 +662,7 @@ if (p{api_name}) {{
                     "crc32": self._crc32_hash(api_name),
                     "custom": self._custom_hash(api_name)
                 }
-                
+
                 for hash_type, hash_value in hashes.items():
                     key = f"{hash_type}_{hash_value}"
                     self.api_hash_db[key] = (dll_name, api_name)

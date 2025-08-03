@@ -560,18 +560,18 @@ class ReportManagerDialog(BaseTemplateDialog):
         selected_type = self.filter_combo.currentText()
         from_date = self.from_date.date().toPyDate()
         to_date = self.to_date.date().toPyDate()
-        
+
         # Clear current display
         self.report_list.clear()
-        
+
         # Filter reports based on criteria
         filtered_reports = []
-        
+
         for report in self.reports:
             # Check type filter
             if selected_type != "All Types" and report.get("type", "") != selected_type:
                 continue
-                
+
             # Check date range
             report_date = report.get("date")
             if report_date:
@@ -581,31 +581,31 @@ class ReportManagerDialog(BaseTemplateDialog):
                         report_date_obj = datetime.strptime(report_date, "%Y-%m-%d").date()
                     else:
                         report_date_obj = report_date
-                        
+
                     if report_date_obj < from_date or report_date_obj > to_date:
                         continue
                 except:
                     # Skip reports with invalid dates
                     continue
-                    
+
             # Check search text in title and description
             if search_text:
                 title_match = search_text in report.get("title", "").lower()
                 desc_match = search_text in report.get("description", "").lower()
                 target_match = search_text in report.get("target", "").lower()
-                
+
                 if not (title_match or desc_match or target_match):
                     continue
-                    
+
             # Report passed all filters
             filtered_reports.append(report)
-        
+
         # Update report list with filtered results
         for report in filtered_reports:
             item = QListWidgetItem(report["title"])
             item.setData(Qt.ItemDataRole.UserRole, report)
             self.report_list.addItem(item)
-            
+
         # Update status
         total = len(self.reports)
         filtered = len(filtered_reports)

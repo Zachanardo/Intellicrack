@@ -412,13 +412,13 @@ class GPUStatusWidget(QWidget):
             if hasattr(self, "monitor_worker") and self.monitor_worker:
                 # Stop current monitoring
                 self.monitor_worker.stop_monitoring()
-                
+
             if hasattr(self, "monitor_thread") and self.monitor_thread:
                 self.monitor_thread.quit()
                 self.monitor_thread.wait(1000)  # Wait up to 1 second
-                
+
             # Restart monitoring to refresh GPU data
             self._start_monitoring()
-            
+
         except Exception as e:
             self.error_occurred.emit(f"Failed to refresh GPUs: {str(e)}")

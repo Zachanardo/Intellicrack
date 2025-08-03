@@ -137,23 +137,23 @@ class QEMUTestManager:
             try:
                 # Check if we have a test binary available
                 test_binaries = []
-                
+
                 # Add project test binary if exists
                 project_test_binary = os.path.join(self.working_dir, "test.exe")
                 if os.path.exists(project_test_binary):
                     test_binaries.append(project_test_binary)
-                
+
                 # Find real system binaries based on platform
                 import platform
                 import shutil
-                
+
                 if platform.system() == "Windows":
                     # Windows system binaries
                     windows_binaries = [
-                        "C:\Windows\System32\notepad.exe",
-                        "C:\Windows\System32\calc.exe",
-                        "C:\Windows\System32\ping.exe",
-                        "C:\Windows\System32\hostname.exe"
+                        "C:\\Windows\\System32\notepad.exe",
+                        r"C:\Windows\System32\calc.exe",
+                        r"C:\Windows\System32\ping.exe",
+                        r"C:\Windows\System32\hostname.exe"
                     ]
                     for binary in windows_binaries:
                         if os.path.exists(binary):
@@ -163,7 +163,7 @@ class QEMUTestManager:
                     # Unix-like system binaries
                     unix_binaries = [
                         "/bin/echo",
-                        "/bin/cat", 
+                        "/bin/cat",
                         "/usr/bin/id",
                         "/usr/bin/whoami",
                         "/bin/hostname"
@@ -172,7 +172,7 @@ class QEMUTestManager:
                         if os.path.exists(binary):
                             test_binaries.append(binary)
                             break
-                    
+
                     # Also check using which command
                     if not test_binaries:
                         for cmd in ["echo", "cat", "id", "whoami", "hostname"]:
@@ -251,26 +251,26 @@ class QEMUTestManager:
             logger.warning("Failed to access secrets manager, generating recovery key")
             self.master_ssh_key = RSAKey.generate(2048)
             self.ssh_public_key = f"ssh-rsa {self.master_ssh_key.get_base64()} intellicrack@qemu"
-            
+
             # Try to save recovery key to local secure storage
             try:
                 recovery_key_path = self.working_dir / ".ssh" / "qemu_recovery_key"
                 recovery_key_path.parent.mkdir(parents=True, exist_ok=True)
-                
+
                 # Save private key
                 with open(recovery_key_path, "w", encoding="utf-8") as f:
                     self.master_ssh_key.write_private_key(f)
-                
+
                 # Set secure permissions (Unix only)
                 if platform.system() != "Windows":
                     os.chmod(recovery_key_path, 0o600)
-                
+
                 # Save public key
                 with open(recovery_key_path.with_suffix(".pub"), "w", encoding="utf-8") as f:
                     f.write(self.ssh_public_key)
-                
+
                 logger.info(f"Recovery SSH key saved to {recovery_key_path}")
-                
+
                 # Attempt to update secrets manager with recovery key
                 try:
                     private_key_str = StringIO()
@@ -280,7 +280,7 @@ class QEMUTestManager:
                     logger.info("Recovery key successfully saved to secrets manager")
                 except:
                     pass  # Continue with local recovery key
-                    
+
             except Exception as recovery_e:
                 logger.error(f"Failed to save recovery key: {recovery_e}")
                 # Key is still in memory and usable for this session
@@ -937,13 +937,13 @@ class QEMUTestManager:
         # If no base image found, create a minimal test image
         test_image_path = project_root / "data" / "qemu_images" / "windows_test_minimal.qcow2"
         test_image_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         if not test_image_path.exists():
             self.logger.warning("No Windows base image found. Creating minimal test image.")
             try:
                 # Create a minimal qcow2 image (1GB)
                 subprocess.run([
-                    "qemu-img", "create", "-f", "qcow2", 
+                    "qemu-img", "create", "-f", "qcow2",
                     str(test_image_path), "1G"
                 ], check=True, capture_output=True)
                 self.logger.info(f"Created minimal test image at: {test_image_path}")
@@ -958,7 +958,7 @@ class QEMUTestManager:
                 raise RuntimeError(
                     "QEMU tools not installed. Cannot create test image."
                 )
-        
+
         return test_image_path
 
     def _get_linux_base_image(self) -> str:
@@ -971,11 +971,11 @@ class QEMUTestManager:
             os.path.expanduser("~/vms/ubuntu.qcow2"),
             os.path.expanduser("~/vms/debian.qcow2")
         ]
-        
+
         for image_path in image_locations:
             if os.path.exists(image_path):
                 return image_path
-        
+
         # Create minimal test image if none found
         test_image_path = self.working_dir / "linux_test.qcow2"
         if not test_image_path.exists():
@@ -986,31 +986,31 @@ class QEMUTestManager:
                     "qemu-img", "create", "-f", "qcow2",
                     str(test_image_path), "1G"
                 ], check=True)
-                
+
                 # Create minimal bootable image with busybox
                 # This creates a basic Linux environment for testing
                 initrd_path = self.working_dir / "initrd.img"
                 kernel_path = self.working_dir / "vmlinuz"
-                
+
                 # Download minimal kernel and initrd if not present
                 if not kernel_path.exists():
                     # Use Alpine Linux kernel for minimal footprint
                     kernel_url = "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/netboot/vmlinuz-lts"
                     subprocess.run(["curl", "-L", "-o", str(kernel_path), kernel_url], check=True)
-                
+
                 if not initrd_path.exists():
                     initrd_url = "https://dl-cdn.alpinelinux.org/alpine/v3.18/releases/x86_64/netboot/initramfs-lts"
                     subprocess.run(["curl", "-L", "-o", str(initrd_path), initrd_url], check=True)
-                
+
                 # Store kernel/initrd paths for boot configuration
                 self._linux_kernel = str(kernel_path)
                 self._linux_initrd = str(initrd_path)
-                
+
             except subprocess.CalledProcessError as e:
                 logger.error(f"Failed to create test image: {e}")
                 # Create empty image as last resort
                 test_image_path.touch()
-        
+
         return str(test_image_path)
 
     def _detect_os_type(self, binary_path: str) -> str:

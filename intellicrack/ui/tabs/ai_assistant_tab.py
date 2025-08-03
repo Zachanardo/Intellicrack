@@ -786,7 +786,7 @@ class AIAssistantTab(BaseTab):
             # Enhanced PE analysis with advanced features
             try:
                 import pefile
-                
+
                 pe = pefile.PE(binary_path)
 
                 analysis_text += "[+] Enhanced PE Analysis:\n"
@@ -2507,16 +2507,16 @@ main();
             if hasattr(self, "ai_model_manager"):
                 # Create training thread to avoid blocking UI
                 from PyQt6.QtCore import QThread, pyqtSignal
-                
+
                 class TrainingThread(QThread):
                     progress_update = pyqtSignal(dict)
                     finished_training = pyqtSignal(bool, str)
-                    
+
                     def __init__(self, model_manager, params):
                         super().__init__()
                         self.model_manager = model_manager
                         self.params = params
-                        
+
                     def run(self):
                         try:
                             self.model_manager.train_model(
@@ -2529,7 +2529,7 @@ main();
                             self.finished_training.emit(True, "Training completed successfully")
                         except Exception as e:
                             self.finished_training.emit(False, str(e))
-                
+
                 # Create and start training thread
                 self.training_thread = TrainingThread(
                     self.ai_model_manager,
@@ -2540,15 +2540,15 @@ main();
                         "learning_rate": float(learning_rate)
                     }
                 )
-                
+
                 # Connect signals
                 self.training_thread.progress_update.connect(self._update_training_progress)
                 self.training_thread.finished_training.connect(self._on_training_finished)
-                
+
                 # Start training
                 self.training_thread.start()
                 self.training_status_label.setText("Initializing training...")
-                
+
             else:
                 self.log_message("Error: AI Model Manager not initialized", "error")
         except Exception as e:
@@ -2562,12 +2562,12 @@ main();
             loss = progress_data.get("loss", 0.0)
             accuracy = progress_data.get("accuracy", 0.0)
             progress_pct = progress_data.get("progress", 0)
-            
+
             self.training_progress.setValue(int(progress_pct))
             self.training_status_label.setText(
                 f"Epoch {epoch} - Loss: {loss:.4f}, Accuracy: {accuracy:.2%}"
             )
-            
+
             if progress_pct >= 100:
                 self.log_message("Training completed successfully", "success")
                 self.training_status_label.setText("Training complete")
@@ -2580,12 +2580,12 @@ main();
         else:
             self.log_message(f"Training failed: {message}", "error")
             self.training_status_label.setText("Training failed")
-        
+
         # Clean up thread
         if hasattr(self, "training_thread"):
             self.training_thread.deleteLater()
             self.training_thread = None
-    
+
     def stop_model_training(self):
         """Stop ongoing model training"""
         try:
@@ -2595,7 +2595,7 @@ main();
                 self.training_thread.wait()
                 self.training_thread.deleteLater()
                 self.training_thread = None
-            
+
             # Stop model training
             if hasattr(self, "ai_model_manager"):
                 self.ai_model_manager.stop_training()

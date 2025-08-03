@@ -410,7 +410,7 @@ def _monkey_patch_subprocess():
             if _security._bypass_security:
                 super().__init__(*args, **kwargs)
                 return
-                
+
             shell = kwargs.get("shell", False)
             if shell and not _security.security_config.get("subprocess", {}).get("allow_shell_true", False):
                 logger.warning(f"Blocked subprocess.Popen with shell=True: {args}")
@@ -426,7 +426,7 @@ def _monkey_patch_subprocess():
                 if whitelist and not any(allowed in cmd_str for allowed in whitelist):
                     logger.warning(f"Command not in whitelist: {cmd_str}")
                     raise SecurityError(f"Command not in shell whitelist: {cmd_str}")
-                    
+
             super().__init__(*args, **kwargs)
 
     subprocess.run = _secure_subprocess_run

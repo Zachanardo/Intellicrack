@@ -341,7 +341,7 @@ class AIAssistant:
                 # Use comprehensive analysis engine for real AI responses
                 from ..core.analysis.vulnerability_engine import VulnerabilityEngine
                 from ..utils.analysis.binary_analysis import analyze_binary
-                
+
                 try:
                     # Try to get context from current binary analysis
                     binary_path = getattr(self, "_current_binary", None)
@@ -350,10 +350,10 @@ class AIAssistant:
                         context = f"Binary analysis context: {analysis_results.get('summary', 'No analysis available')}\n"
                     else:
                         context = ""
-                    
+
                     # Use vulnerability engine for domain-specific analysis
                     vuln_engine = VulnerabilityEngine()
-                    
+
                     question_lower = question.lower()
                     if "license" in question_lower or "activation" in question_lower:
                         response = vuln_engine.analyze_license_patterns(question, context)

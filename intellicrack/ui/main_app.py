@@ -320,24 +320,24 @@ except ImportError as e:
         def __init__(self, parent=None):
             """Initialize fallback QMainWindow."""
             pass
-            
+
     class DummySignal:
         """Fallback signal class for environments without PyQt6."""
         def __init__(self):
             """Initialize dummy signal."""
             self.callbacks = []
-            
+
         def connect(self, callback):
             """Connect a callback to the signal."""
             self.callbacks.append(callback)
-            
+
         def disconnect(self, callback=None):
             """Disconnect a callback from the signal."""
             if callback:
                 self.callbacks.remove(callback)
             else:
                 self.callbacks.clear()
-                
+
         def emit(self, *args, **kwargs):
             """Emit the signal to all connected callbacks."""
             for callback in self.callbacks:
@@ -345,11 +345,11 @@ except ImportError as e:
                     callback(*args, **kwargs)
                 except Exception as err:
                     logger.error("Error in signal callback: %s", err)
-                    
+
     def pyqtSignal(*args, **kwargs):  # pylint: disable=unused-argument
         """Fallback pyqtSignal function for environments without PyQt6."""
         return DummySignal()
-    
+
     Qt = None
     QMetaObject = None
     QtCore = None
@@ -13296,7 +13296,7 @@ class Plugin:
         # Dynamic key format templates
         key_formats = [
             "####-####-####-####",  # 16 char format
-            "###-#######-###",      # 13 char format  
+            "###-#######-###",      # 13 char format
             "#####-#####-#####",    # 15 char format
             "Custom"
         ]

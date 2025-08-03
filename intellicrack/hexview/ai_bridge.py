@@ -1155,29 +1155,29 @@ class AIBinaryBridge:
     def _real_ai_analysis(self, context: Dict[str, Any], query: Optional[str]) -> str:
         """
         Generate real AI analysis using vulnerability engine and pattern detection.
-        
+
         This method performs actual binary analysis instead of using mock data.
         """
         patterns = []
         anomalies = []
         recommendations = []
-        
+
         # Import real analysis modules
         try:
             from intellicrack.core.vulnerability_research import VulnerabilityEngine
             from intellicrack.ai.binary_analysis import BinaryAnalyzer
             from intellicrack.utils.exploitation import ExploitationUtils
-            
+
             # Initialize real analysis engines
             vuln_engine = VulnerabilityEngine()
             binary_analyzer = BinaryAnalyzer()
             exploit_utils = ExploitationUtils()
-            
+
             # Extract binary data from context
             binary_data = context.get("binary_data", b"")
             offset = context.get("offset", 0)
             size = context.get("size", len(binary_data))
-            
+
             if binary_data:
                 # Real vulnerability analysis
                 try:
@@ -1193,7 +1193,7 @@ class AIBinaryBridge:
                         })
                 except Exception:
                     pass
-                
+
                 # Real binary pattern analysis
                 try:
                     pattern_results = binary_analyzer.detect_patterns(binary_data[offset:offset+size])
@@ -1208,7 +1208,7 @@ class AIBinaryBridge:
                         })
                 except Exception:
                     pass
-                
+
                 # Real structure analysis
                 try:
                     structure_results = binary_analyzer.analyze_structure(binary_data[offset:offset+size])
@@ -1222,16 +1222,16 @@ class AIBinaryBridge:
                     }
                 except Exception:
                     structure_analysis = {"format": "unknown", "architecture": "unknown"}
-                
+
                 # Real string analysis with security assessment
                 try:
                     string_results = binary_analyzer.extract_strings(binary_data[offset:offset+size])
                     suspicious_strings = []
-                    
+
                     for string_info in string_results.get("strings", []):
                         string_val = string_info.get("value", "")
                         string_offset = string_info.get("offset", 0)
-                        
+
                         # Security pattern matching
                         security_flag = None
                         if exploit_utils.is_credential_string(string_val):
@@ -1243,7 +1243,7 @@ class AIBinaryBridge:
                         elif exploit_utils.is_network_string(string_val):
                             security_flag = "network_related"
                             suspicious_strings.append(string_val)
-                        
+
                         pattern_entry = {
                             "start_offset": offset + string_offset,
                             "end_offset": offset + string_offset + len(string_val),
@@ -1251,15 +1251,15 @@ class AIBinaryBridge:
                             "description": f"{string_info.get('encoding', 'ascii')} string: '{string_val}'",
                             "encoding": string_info.get("encoding", "ascii")
                         }
-                        
+
                         if security_flag:
                             pattern_entry["security_flag"] = security_flag
-                            
+
                         patterns.append(pattern_entry)
-                        
+
                 except Exception:
                     suspicious_strings = []
-                
+
                 # Generate real recommendations based on analysis
                 if suspicious_strings:
                     recommendations.append({
@@ -1267,7 +1267,7 @@ class AIBinaryBridge:
                         "priority": "high",
                         "action": f"Investigate {len(suspicious_strings)} suspicious strings that may indicate malicious functionality"
                     })
-                
+
                 if len(anomalies) > 0:
                     high_severity = sum(1 for a in anomalies if a.get("severity") == "high")
                     if high_severity > 0:
@@ -1276,17 +1276,17 @@ class AIBinaryBridge:
                             "priority": "critical",
                             "action": f"Address {high_severity} high-severity vulnerabilities found in binary"
                         })
-                
+
                 # Determine data meaning from real analysis
                 data_meaning = structure_analysis.get("format", "Unknown binary data")
                 if data_meaning == "unknown":
                     data_meaning = "Unknown binary data"
-                    
+
                 data_type = "executable" if "executable" in data_meaning.lower() else "binary"
-                
+
                 # Calculate real confidence based on analysis results
                 confidence = 0.9 if len(patterns) > 5 else 0.7 if len(patterns) > 2 else 0.5
-                
+
                 # Create real analysis response
                 real_response = {
                     "analysis_type": "vulnerability_engine_analysis",
@@ -1297,8 +1297,8 @@ class AIBinaryBridge:
                     "anomalies": anomalies,
                     "structure": structure_analysis,
                     "security_assessment": {
-                        "risk_level": "critical" if any(a.get("severity") == "high" for a in anomalies) else 
-                                    "high" if suspicious_strings else 
+                        "risk_level": "critical" if any(a.get("severity") == "high" for a in anomalies) else
+                                    "high" if suspicious_strings else
                                     "medium" if anomalies else "low",
                         "suspicious_indicators": len(suspicious_strings),
                         "anomaly_count": len(anomalies),
@@ -1308,13 +1308,13 @@ class AIBinaryBridge:
                     "summary": f"Vulnerability analysis of {size} bytes identified {len(patterns)} patterns, {len(anomalies)} potential issues, and {len(suspicious_strings)} security indicators.",
                     "confidence": confidence
                 }
-                
+
                 return json.dumps(real_response, indent=2)
-                
+
         except ImportError:
             # Fallback to enhanced heuristic analysis if vulnerability engine unavailable
             pass
-        
+
         # Enhanced fallback analysis (better than mock)
         query_lower = query.lower() if query else ""
         is_security_focused = any(word in query_lower for word in ["security", "vulnerability", "exploit", "malware"])
@@ -1462,16 +1462,16 @@ class AIBinaryBridge:
         try:
             from intellicrack.core.vulnerability_research import VulnerabilityEngine
             from intellicrack.utils.exploitation import ExploitationUtils
-            
+
             # Initialize real analysis engines
             vuln_engine = VulnerabilityEngine()
             exploit_utils = ExploitationUtils()
-            
+
             # Extract binary data from context
             binary_data = context.get("binary_data", b"")
             offset = context.get("offset", 0)
             size = context.get("size", len(binary_data))
-            
+
             if binary_data and len(binary_data) > offset:
                 # Real edit analysis based on intent
                 try:
@@ -1489,7 +1489,7 @@ class AIBinaryBridge:
                         })
                 except Exception:
                     pass
-                    
+
                 # If no specific edits found, use vulnerability-based suggestions
                 if not edit_suggestions:
                     try:
@@ -1508,11 +1508,11 @@ class AIBinaryBridge:
                                 })
                     except Exception:
                         pass
-                        
+
         except ImportError:
             # Fallback to enhanced heuristic edit analysis
             pass
-        
+
         # Enhanced fallback analysis if no real analysis available
         if not edit_suggestions:
             # Parse intent for common edit operations using heuristics
@@ -2125,7 +2125,7 @@ class AIBinaryBridge:
     def _calculate_analysis_confidence(self, patterns: List[Dict], anomalies: List[Dict], suspicious_strings: List[str]) -> float:
         """Calculate confidence score for analysis results."""
         confidence = 0.5  # Base confidence
-        
+
         # Increase confidence based on patterns found
         if patterns:
             confidence += min(0.2, len(patterns) * 0.05)
@@ -2133,11 +2133,11 @@ class AIBinaryBridge:
             protection_patterns = [p for p in patterns if p.get("pattern_type") in ["license_check", "anti_debug", "encryption"]]
             if protection_patterns:
                 confidence += min(0.2, len(protection_patterns) * 0.1)
-        
+
         # Increase confidence based on anomalies
         if anomalies:
             confidence += min(0.15, len(anomalies) * 0.05)
-        
+
         # Increase confidence based on suspicious strings
         if suspicious_strings:
             confidence += min(0.15, len(suspicious_strings) * 0.03)
@@ -2146,79 +2146,79 @@ class AIBinaryBridge:
             critical_found = sum(1 for s in suspicious_strings if any(k in s.lower() for k in critical_keywords))
             if critical_found:
                 confidence += min(0.1, critical_found * 0.05)
-        
+
         return min(1.0, confidence)
-    
+
     def _calculate_edit_confidence(self, edit_suggestions: List[Dict], context: Dict) -> float:
         """Calculate confidence score for edit suggestions."""
         if not edit_suggestions:
             return 0.1
-        
+
         # Average confidence of individual suggestions
         avg_confidence = sum(s.get("confidence", 0.5) for s in edit_suggestions) / len(edit_suggestions)
-        
+
         # Adjust based on context
         confidence = avg_confidence
-        
+
         # Higher confidence if we have good pattern matches in context
         if context.get("patterns"):
             relevant_patterns = [p for p in context["patterns"] if p.get("pattern_type") in ["license_check", "anti_debug"]]
             if relevant_patterns:
                 confidence = min(1.0, confidence + 0.1)
-        
+
         # Higher confidence for specific edit types
         high_confidence_types = ["nop_instruction", "string_replace", "jump_patch"]
         if any(s.get("edit_type") in high_confidence_types for s in edit_suggestions):
             confidence = min(1.0, confidence + 0.1)
-        
+
         return confidence
-    
+
     def _calculate_pattern_confidence(self, patterns: List[Dict], context: Dict) -> float:
         """Calculate confidence score for pattern identification."""
         if not patterns:
             return 0.2
-        
+
         # Base confidence on number and quality of patterns
         confidence = min(0.5, len(patterns) * 0.1)
-        
+
         # Higher confidence for file signatures
         file_sig_patterns = [p for p in patterns if p.get("pattern_type") == "file_signature"]
         if file_sig_patterns:
             confidence += 0.2
-        
+
         # Higher confidence for high-confidence individual patterns
         high_conf_patterns = [p for p in patterns if p.get("confidence", 0) > 0.8]
         if high_conf_patterns:
             confidence += min(0.2, len(high_conf_patterns) * 0.05)
-        
+
         # Adjust based on context hints
         if context.get("structure_hints"):
             confidence += 0.1
-        
+
         return min(1.0, confidence)
-    
+
     def _calculate_search_confidence(self, matches: List[Dict], query: str) -> float:
         """Calculate confidence score for search results."""
         if not matches:
             return 0.1
-        
+
         # Base confidence on number of matches
         confidence = min(0.5, len(matches) * 0.05)
-        
+
         # Higher confidence for high-relevance matches
         high_relevance = [m for m in matches if m.get("relevance_score", 0) > 0.8]
         if high_relevance:
             confidence += min(0.3, len(high_relevance) * 0.1)
-        
+
         # Higher confidence for exact matches
         exact_matches = [m for m in matches if m.get("match_type") == "exact"]
         if exact_matches:
             confidence += 0.2
-        
+
         # Adjust based on query specificity
         if len(query.split()) > 2:  # Multi-word query
             confidence += 0.1
-        
+
         return min(1.0, confidence)
 
     def analyze_binary_patterns(self, binary_path: str) -> Dict[str, Any]:
