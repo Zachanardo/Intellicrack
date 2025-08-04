@@ -260,19 +260,27 @@ class ContainerResource(ManagedResource):
         try:
             # Stop container
             subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                ["docker", "stop", self.container_id], check=False, capture_output=True, timeout=30  # noqa: S607
+                ["docker", "stop", self.container_id],
+                check=False,
+                capture_output=True,
+                timeout=30,  # noqa: S607
             )
 
             # Remove container
             subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                ["docker", "rm", self.container_id], check=False, capture_output=True, timeout=10  # noqa: S607
+                ["docker", "rm", self.container_id],
+                check=False,
+                capture_output=True,
+                timeout=10,  # noqa: S607
             )
 
             logger.info(f"Cleaned up container {self.container_name}")
         except subprocess.TimeoutExpired:
             # Force remove
             subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                ["docker", "rm", "-f", self.container_id], check=False, capture_output=True  # noqa: S607
+                ["docker", "rm", "-f", self.container_id],
+                check=False,
+                capture_output=True,  # noqa: S607
             )
         except Exception as e:
             logger.error(f"Failed to cleanup container {self.container_id}: {e}")

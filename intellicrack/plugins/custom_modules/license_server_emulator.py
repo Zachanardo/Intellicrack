@@ -1326,7 +1326,10 @@ class HardwareFingerprintGenerator:
                 elif platform.system() == "Darwin":
                     # macOS - use diskutil
                     result = subprocess.run(
-                        ["diskutil", "info", "disk0"], check=False, capture_output=True, text=True  # noqa: S607
+                        ["diskutil", "info", "disk0"],
+                        check=False,
+                        capture_output=True,
+                        text=True,  # noqa: S607
                     )
                     lines = result.stdout.split("\n")
                     for line in lines:

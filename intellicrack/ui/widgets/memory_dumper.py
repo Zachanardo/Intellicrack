@@ -198,7 +198,10 @@ class MemoryDumperWidget(QWidget):
                 import subprocess
 
                 result = subprocess.run(
-                    ["tasklist", "/fo", "csv"], check=False, capture_output=True, text=True  # noqa: S607
+                    ["tasklist", "/fo", "csv"],
+                    check=False,
+                    capture_output=True,
+                    text=True,  # noqa: S607
                 )
                 lines = result.stdout.strip().split("\n")[1:]  # Skip header
                 for line in lines:

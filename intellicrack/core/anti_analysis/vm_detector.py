@@ -400,7 +400,10 @@ class VMDetector(BaseDetector):
             # Get network interfaces
             if platform.system() == "Windows":
                 result = subprocess.run(
-                    ["ipconfig", "/all"], check=False, capture_output=True, text=True  # noqa: S607
+                    ["ipconfig", "/all"],
+                    check=False,
+                    capture_output=True,
+                    text=True,  # noqa: S607
                 )
                 output = result.stdout
             else:
@@ -475,7 +478,10 @@ class VMDetector(BaseDetector):
             if platform.system() == "Windows":
                 # Check loaded drivers
                 result = subprocess.run(
-                    ["driverquery"], check=False, capture_output=True, text=True  # noqa: S607
+                    ["driverquery"],
+                    check=False,
+                    capture_output=True,
+                    text=True,  # noqa: S607
                 )
                 drivers = result.stdout.lower()
 

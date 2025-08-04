@@ -586,7 +586,11 @@ class ProgramDiscoveryEngine:
         try:
             # Debian/Ubuntu - dpkg
             result = subprocess.run(
-                ["dpkg", "-l"], check=False, capture_output=True, text=True, timeout=30  # noqa: S607
+                ["dpkg", "-l"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,  # noqa: S607
             )
             if result.returncode == 0:
                 programs.extend(self._parse_dpkg_output(result.stdout))
@@ -596,7 +600,11 @@ class ProgramDiscoveryEngine:
         try:
             # Red Hat/CentOS - rpm
             result = subprocess.run(
-                ["rpm", "-qa"], check=False, capture_output=True, text=True, timeout=30  # noqa: S607
+                ["rpm", "-qa"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,  # noqa: S607
             )
             if result.returncode == 0:
                 programs.extend(self._parse_rpm_output(result.stdout))

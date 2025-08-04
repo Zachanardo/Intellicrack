@@ -5,16 +5,16 @@ This security research tool uses subprocess for legitimate binary analysis purpo
 """
 
 import json
-import re
 from pathlib import Path
+
 
 def fix_subprocess_security_warnings():
     """Add nosec comments to legitimate subprocess usage."""
-    
+
     # Read the subprocess issues JSON
     with open("subprocess_issues.json", "r") as f:
         issues = json.load(f)
-    
+
     # Group issues by file
     files_to_fix = {}
     for issue in issues:
@@ -22,7 +22,7 @@ def fix_subprocess_security_warnings():
         if filename not in files_to_fix:
             files_to_fix[filename] = []
         files_to_fix[filename].append(issue)
-    
+
     # Security research tool categories and appropriate nosec comments
     security_comments = {
         "strings": "Using validated binary analysis tool 'strings' for legitimate security research",
@@ -43,44 +43,44 @@ def fix_subprocess_security_warnings():
         "file": "Using file command for file type detection",
         "wireshark": "Using Wireshark/tshark for network analysis",
         "tcpdump": "Using tcpdump for network packet capture",
-        "default": "Legitimate subprocess usage for security research and binary analysis"
+        "default": "Legitimate subprocess usage for security research and binary analysis",
     }
-    
+
     files_processed = 0
-    
+
     for filename, file_issues in files_to_fix.items():
         if not Path(filename).exists():
             print(f"Skipping {filename} - file not found")
             continue
-            
+
         try:
             # Read file content
-            with open(filename, 'r', encoding='utf-8') as f:
+            with open(filename, "r", encoding="utf-8") as f:
                 content = f.read()
-            
-            lines = content.split('\n')
+
+            lines = content.split("\n")
             modified = False
-            
+
             # Process each issue in this file
             for issue in file_issues:
                 line_num = issue["location"]["row"] - 1  # Convert to 0-based
-                
+
                 if line_num >= len(lines):
                     continue
-                    
+
                 line = lines[line_num]
-                
+
                 # Skip if already has nosec comment
                 if "nosec" in line:
                     continue
-                
+
                 # Determine appropriate comment based on line content
                 comment = security_comments["default"]
                 for tool, tool_comment in security_comments.items():
                     if tool in line.lower():
                         comment = tool_comment
                         break
-                
+
                 # Add nosec comment based on issue code
                 issue_code = issue["code"]
                 if issue_code == "S603":
@@ -89,29 +89,39 @@ def fix_subprocess_security_warnings():
                     nosec_comment = f"  # nosec S607 - {comment}"
                 else:
                     nosec_comment = f"  # nosec {issue_code} - {comment}"
-                
+
                 # Check if this is a subprocess.run call
-                if "subprocess.run(" in line or "subprocess.Popen(" in line or "subprocess.call(" in line:
+                if (
+                    "subprocess.run(" in line
+                    or "subprocess.Popen(" in line
+                    or "subprocess.call(" in line
+                ):
                     # Add comment at the end of the subprocess call line
-                    if not line.rstrip().endswith(','):
+                    if not line.rstrip().endswith(","):
                         lines[line_num] = line.rstrip() + nosec_comment
                     else:
                         # For multiline subprocess calls, add to the opening line
-                        lines[line_num] = line.replace("subprocess.run(", f"subprocess.run({nosec_comment}\n")
-                        lines[line_num] = lines[line_num].replace(f"subprocess.run({nosec_comment}\n", f"subprocess.run(  {nosec_comment}\n")
+                        lines[line_num] = line.replace(
+                            "subprocess.run(", f"subprocess.run({nosec_comment}\n"
+                        )
+                        lines[line_num] = lines[line_num].replace(
+                            f"subprocess.run({nosec_comment}\n",
+                            f"subprocess.run(  {nosec_comment}\n",
+                        )
                     modified = True
-                    
+
             if modified:
                 # Write back to file
-                with open(filename, 'w', encoding='utf-8') as f:
-                    f.write('\n'.join(lines))
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write("\n".join(lines))
                 print(f"Fixed {filename}")
                 files_processed += 1
-                
+
         except Exception as e:
             print(f"Error processing {filename}: {e}")
-    
+
     print(f"Processed {files_processed} files")
+
 
 if __name__ == "__main__":
     fix_subprocess_security_warnings()

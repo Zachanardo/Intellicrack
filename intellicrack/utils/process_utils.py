@@ -541,7 +541,11 @@ def detect_hardware_dongles() -> list[dict[str, Any]]:
             try:
                 # Use lsusb to list USB devices
                 result = subprocess.run(
-                    ["lsusb"], check=False, capture_output=True, text=True, timeout=10  # noqa: S607
+                    ["lsusb"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,  # noqa: S607
                 )
 
                 if result.returncode == 0:
@@ -648,7 +652,11 @@ def detect_tpm_protection() -> dict[str, Any]:
 
                 # Check dmesg for TPM messages
                 result = subprocess.run(
-                    ["dmesg"], check=False, capture_output=True, text=True, timeout=5  # noqa: S607
+                    ["dmesg"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,  # noqa: S607
                 )
                 if result.returncode == 0:
                     tpm_lines = [

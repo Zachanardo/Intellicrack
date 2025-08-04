@@ -771,7 +771,10 @@ class VMDetector:
 
             if platform.system() == "Windows":
                 result = subprocess.run(
-                    ["wmic", "cpu", "get", "name"], capture_output=True, text=True, check=False  # noqa: S607
+                    ["wmic", "cpu", "get", "name"],
+                    capture_output=True,
+                    text=True,
+                    check=False,  # noqa: S607
                 )
                 if "virtual" in result.stdout.lower():
                     indicators.append("CPU name contains 'virtual'")

@@ -53,6 +53,12 @@ except ImportError:
                 **_kwargs: Ignored keyword arguments
 
             """
+            import tempfile
+            from pathlib import Path
+            
+            self.working_dir = Path(tempfile.gettempdir()) / "intellicrack_qemu_fallback"
+            self.working_dir.mkdir(exist_ok=True)
+            self.snapshots = {}
             logger.warning("QEMUTestManager fallback initialized")
 
         def test_script_in_vm(self, script, target_binary, vm_config=None):

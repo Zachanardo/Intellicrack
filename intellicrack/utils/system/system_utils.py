@@ -392,7 +392,10 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
                 f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
             )
             result = subprocess.run(  # nosec B603 B607 - controlled elevated execution for admin tasks  # noqa: S603
-                ["powershell", "-Command", ps_command], capture_output=True, text=True, check=False  # noqa: S607
+                ["powershell", "-Command", ps_command],
+                capture_output=True,
+                text=True,
+                check=False,  # noqa: S607
             )
             return result.returncode == 0
         # On Unix-like systems, use sudo

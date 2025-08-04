@@ -342,7 +342,10 @@ class SandboxDetector(BaseDetector):
             # Check network connections
             if platform.system() == "Windows":
                 result = subprocess.run(
-                    ["netstat", "-an"], check=False, capture_output=True, text=True  # noqa: S607
+                    ["netstat", "-an"],
+                    check=False,
+                    capture_output=True,
+                    text=True,  # noqa: S607
                 )
             else:
                 result = subprocess.run(["ss", "-an"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
