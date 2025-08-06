@@ -318,7 +318,7 @@ torchaudio==2.7.1
 torchvision==0.22.1
 tornado==6.5
 tqdm==4.66.4
-transformers==4.52.1
+transformers==4.53.0
 typer==0.16.0
 typing-inspection==0.4.1
 typing_extensions==4.12.2
