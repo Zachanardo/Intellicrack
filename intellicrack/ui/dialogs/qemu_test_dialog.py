@@ -15,8 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""QEMU test confirmation dialog."""
-
 import os
 
 from PyQt6.QtCore import Qt
@@ -32,6 +30,8 @@ from PyQt6.QtWidgets import (
     QTextEdit,
     QVBoxLayout,
 )
+
+"""QEMU test confirmation dialog."""
 
 
 class QEMUTestDialog(QDialog):

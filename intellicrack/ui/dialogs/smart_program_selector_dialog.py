@@ -15,11 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Smart program selector dialog for choosing target applications."""
 import os
 import sys
 
 from intellicrack.logger import logger
+
+"""Smart program selector dialog for choosing target applications."""
 
 """
 Smart Program Selector Dialog

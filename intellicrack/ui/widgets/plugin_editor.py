@@ -1,8 +1,5 @@
-"""Plugin editor widget for editing and managing plugin code."""
+"""Plugin editor widget for editing and managing plugin code.
 
-from intellicrack.logger import logger
-
-"""
 Enhanced Plugin Editor with syntax highlighting and validation.
 
 Copyright (C) 2025 Zachary Flint
@@ -48,6 +45,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from intellicrack.logger import logger
 from .syntax_highlighters import JavaScriptHighlighter, PythonHighlighter
 
 

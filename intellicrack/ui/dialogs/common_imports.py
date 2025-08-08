@@ -15,13 +15,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from intellicrack.logger import logger
+
 """
 Common imports for dialog modules.
 
 This module centralizes common PyQt6 imports to avoid duplication.
 """
-
-from intellicrack.logger import logger
 
 # Common PyQt6 imports
 try:

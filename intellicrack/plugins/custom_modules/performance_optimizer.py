@@ -16,18 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Performance Optimizer for Intellicrack Framework
-
-Comprehensive performance optimization system providing real-time monitoring,
-adaptive optimization, and resource management for all Intellicrack components
-including binary analysis, ML operations, and concurrent processing.
-
-Author: Intellicrack Framework
-Version: 2.0.0
-License: GPL v3
-"""
-
 import functools
 import gc
 import hashlib
@@ -51,6 +39,18 @@ from typing import Any
 
 import numpy as np
 import psutil
+
+"""
+Performance Optimizer for Intellicrack Framework
+
+Comprehensive performance optimization system providing real-time monitoring,
+adaptive optimization, and resource management for all Intellicrack components
+including binary analysis, ML operations, and concurrent processing.
+
+Author: Intellicrack Framework
+Version: 2.0.0
+License: GPL v3
+"""
 
 # GPU acceleration support
 try:

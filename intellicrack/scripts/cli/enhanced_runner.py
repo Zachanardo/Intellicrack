@@ -19,11 +19,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 #!/usr/bin/env python3
-"""
-Enhanced CLI Runner for Intellicrack
-Integrates progress visualization and improved user experience
-"""
 
+# Standard library imports
 import logging
 import os
 import sys
@@ -32,19 +29,26 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+# Third-party imports
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 
+# Local imports
 from intellicrack.core.analysis.vulnerability_engine import VulnerabilityEngine
 from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
 from intellicrack.scripts.cli.progress_manager import ProgressManager
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
 from intellicrack.utils.protection_detection import detect_all_protections
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+"""
+Enhanced CLI Runner for Intellicrack
+Integrates progress visualization and improved user experience
+"""
 
 
 class EnhancedCLIRunner:

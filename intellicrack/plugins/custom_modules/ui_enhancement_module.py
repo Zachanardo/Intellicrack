@@ -16,18 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-UI Enhancement Module
-
-Advanced UI enhancement system for Intellicrack's three-panel interface
-providing real-time visualization, interactive analysis tools, and
-comprehensive reporting capabilities for all protection analysis modules.
-
-Author: Intellicrack Framework
-Version: 2.0.0
-License: GPL v3
-"""
-
+# Standard library imports
 import json
 import logging
 import os
@@ -44,8 +33,21 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext, ttk
 from typing import Any
 
+# Third-party imports
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+
+"""
+UI Enhancement Module
+
+Advanced UI enhancement system for Intellicrack's three-panel interface
+providing real-time visualization, interactive analysis tools, and
+comprehensive reporting capabilities for all protection analysis modules.
+
+Author: Intellicrack Framework
+Version: 2.0.0
+License: GPL v3
+"""
 
 
 class UITheme(Enum):

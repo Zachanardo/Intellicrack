@@ -16,17 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-VM Protection Unwrapper
-
-Advanced unwrapper for virtualization-based protection systems including
-VMProtect, Themida, Code Virtualizer, and other VM-based obfuscators.
-
-Author: Intellicrack Framework
-Version: 2.0.0
-License: GPL v3
-"""
-
+# Standard library imports
 import hashlib
 import json
 import logging
@@ -37,9 +27,21 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+# Third-party imports
 import keystone
 import numpy as np
 from unicorn import x86_const
+
+"""
+VM Protection Unwrapper
+
+Advanced unwrapper for virtualization-based protection systems including
+VMProtect, Themida, Code Virtualizer, and other VM-based obfuscators.
+
+Author: Intellicrack Framework
+Version: 2.0.0
+License: GPL v3
+"""
 
 
 class ProtectionType(Enum):

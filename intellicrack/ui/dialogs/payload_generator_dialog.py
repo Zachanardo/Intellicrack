@@ -15,13 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Payload Generator Dialog
-
-Advanced UI for creating custom payloads with various encoding,
-obfuscation, and evasion techniques.
-"""
-
 import asyncio
 import logging
 from typing import Any
@@ -54,6 +47,13 @@ from ...core.exploitation import (
 )
 from ...utils.analysis.entropy_utils import calculate_byte_entropy
 from .base_dialog import BaseTemplateDialog
+
+"""
+Payload Generator Dialog
+
+Advanced UI for creating custom payloads with various encoding,
+obfuscation, and evasion techniques.
+"""
 
 logger = logging.getLogger(__name__)
 

@@ -16,6 +16,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+# Standard library imports
+import json
+import struct
+import sys
+from collections import defaultdict
+from dataclasses import dataclass, field
+from enum import Enum
+
+# Third-party imports
+import networkx as nx
+import r2pipe
+
 """
 Radare2 License Analyzer Module
 
@@ -27,16 +39,6 @@ Author: Intellicrack Framework
 Version: 2.0.0
 License: GPL v3
 """
-
-import json
-import struct
-import sys
-from collections import defaultdict
-from dataclasses import dataclass, field
-from enum import Enum
-
-import networkx as nx
-import r2pipe
 
 
 class LicenseType(Enum):

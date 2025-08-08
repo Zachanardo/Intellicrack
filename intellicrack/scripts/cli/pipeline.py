@@ -19,11 +19,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 #!/usr/bin/env python3
-"""
-Pipeline Support for Intellicrack CLI
-Enables Unix-style command chaining and data flow between operations
-"""
 
+# Standard library imports
 import argparse
 import json
 import os
@@ -33,13 +30,19 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+# Third-party imports
 from rich import box
 from rich.console import Console
 from rich.syntax import Syntax
 from rich.table import Table
 
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+"""
+Pipeline Support for Intellicrack CLI
+Enables Unix-style command chaining and data flow between operations
+"""
 
 
 @dataclass

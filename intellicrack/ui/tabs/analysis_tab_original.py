@@ -1,11 +1,11 @@
-"""Analysis Tab Original implementation for Intellicrack UI."""
+"""Analysis Tab Original implementation for Intellicrack UI.
 
-import os
-
-"""UI module for Analysis Tab Original.
+UI module for Analysis Tab Original.
 
 This module provides UI components and dialogs for analysis tab original functionality.
 """
+
+import os
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont

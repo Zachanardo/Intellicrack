@@ -16,17 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Hardware Dongle Emulator
-
-Comprehensive USB and parallel port dongle emulation system supporting
-HASP, Sentinel, Rainbow, CodeMeter, and custom protection dongles.
-
-Author: Intellicrack Framework
-Version: 2.0.0
-License: GPL v3
-"""
-
 import hashlib
 import json
 import logging
@@ -40,6 +29,17 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+"""
+Hardware Dongle Emulator
+
+Comprehensive USB and parallel port dongle emulation system supporting
+HASP, Sentinel, Rainbow, CodeMeter, and custom protection dongles.
+
+Author: Intellicrack Framework
+Version: 2.0.0
+License: GPL v3
+"""
 
 
 class DongleType(Enum):

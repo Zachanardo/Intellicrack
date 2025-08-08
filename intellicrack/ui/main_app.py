@@ -1,8 +1,5 @@
-"""Main application window for the Intellicrack UI."""
+"""Main application window for the Intellicrack UI.
 
-from intellicrack.logger import logger
-
-"""
 Main application window for Intellicrack - Complete extraction of IntellicrackApp class.
 
 Copyright (C) 2025 Zachary Flint
@@ -23,15 +20,17 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
+# Standard library imports
 import base64
 import binascii
 import datetime
 import getpass
 import hashlib
+import hmac
 import json
 import logging
 import os
+import pickle
 import random
 import re
 import shutil
@@ -45,24 +44,273 @@ import webbrowser
 import xml.etree.ElementTree as ET
 from functools import partial
 
-# Import AI file tools for directory analysis
-from ..ai.ai_file_tools import get_ai_file_tools
+# Third-party imports (conditional)
+try:
+    import numpy as np
+except ImportError:
+    np = None
 
-# Import core components for state management and background tasks
+try:
+    import psutil
+except ImportError:
+    psutil = None
+
+try:
+    import joblib
+except ImportError:
+    joblib = None
+
+try:
+    import pythoncom
+    import win32com
+except ImportError:
+    pythoncom = win32com = None
+
+# Windows ctypes imports (conditional)
+if os.name == "nt":
+    try:
+        from ctypes import byref, c_int, sizeof, windll
+        HAS_CTYPES = True
+    except ImportError:
+        byref = c_int = sizeof = windll = None
+        HAS_CTYPES = False
+else:
+    byref = c_int = sizeof = windll = None
+    HAS_CTYPES = False
+
+# PyQt6 imports (conditional)
+try:
+    from PyQt6.QtWidgets import (
+        QApplication,
+        QButtonGroup,
+        QCheckBox,
+        QComboBox,
+        QDialog,
+        QDialogButtonBox,
+        QDoubleSpinBox,
+        QFileDialog,
+        QFileIconProvider,
+        QFormLayout,
+        QFrame,
+        QGridLayout,
+        QGroupBox,
+        QHBoxLayout,
+        QHeaderView,
+        QInputDialog,
+        QLabel,
+        QLineEdit,
+        QListWidget,
+        QListWidgetItem,
+        QMainWindow,
+        QMenu,
+        QMessageBox,
+        QPlainTextEdit,
+        QProgressBar,
+        QProgressDialog,
+        QPushButton,
+        QRadioButton,
+        QScrollArea,
+        QSizePolicy,
+        QSlider,
+        QSpacerItem,
+        QSpinBox,
+        QSplitter,
+        QStyle,
+        QTableView,
+        QTableWidget,
+        QTableWidgetItem,
+        QTabWidget,
+        QTextBrowser,
+        QTextEdit,
+        QToolBar,
+        QTreeWidget,
+        QTreeWidgetItem,
+        QVBoxLayout,
+        QWidget,
+        QWizard,
+        QWizardPage,
+    )
+    from PyQt6 import QtCore
+    from PyQt6.QtCore import (
+        QDateTime,
+        QFileInfo,
+        QMetaObject,
+        QSettings,
+        QSize,
+        Qt,
+        QThread,
+        QTimer,
+        QUrl,
+        pyqtSignal,
+    )
+    from PyQt6.QtGui import (
+        QAction,
+        QColor,
+        QDesktopServices,
+        QFont,
+        QIcon,
+        QPainter,
+        QPalette,
+        QPen,
+        QPixmap,
+    )
+
+    # Optional PyQt components
+    try:
+        from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
+    except ImportError:
+        QPrintDialog = QPrinter = None
+
+    try:
+        from PyQt6.QtWebEngineWidgets import QWebEngineView
+    except ImportError:
+        QWebEngineView = None
+
+    try:
+        from PyQt6.QtPdf import QPdfDocument
+        from PyQt6.QtPdfWidgets import QPdfView
+        HAS_PDF_SUPPORT = True
+    except ImportError:
+        QPdfDocument = QPdfView = None
+        HAS_PDF_SUPPORT = False
+
+except ImportError:
+    # Fallback classes for environments without PyQt6
+    class QMainWindow:
+        def __init__(self, parent=None):
+            pass
+
+    class DummySignal:
+        def __init__(self):
+            self.callbacks = []
+
+        def connect(self, callback):
+            self.callbacks.append(callback)
+
+        def disconnect(self, callback=None):
+            if callback:
+                self.callbacks.remove(callback)
+            else:
+                self.callbacks.clear()
+
+        def emit(self, *args, **kwargs):
+            for callback in self.callbacks:
+                try:
+                    callback(*args, **kwargs)
+                except Exception as err:
+                    pass  # logger defined later
+
+    def pyqtSignal(*args, **kwargs):
+        return DummySignal()
+
+    Qt = QMetaObject = QtCore = None
+
+# Local imports
+from intellicrack.logger import logger
+from ..ai.ai_file_tools import get_ai_file_tools
 from ..core.app_context import get_app_context
 from ..core.task_manager import get_task_manager
+from ..utils.core.import_patterns import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs, ELFFile, pefile
+from ..utils.resource_helper import get_resource_path
 
-# Import analysis components
+# Analysis components (conditional)
 try:
     from ..core.analysis.dynamic_analyzer import AdvancedDynamicAnalyzer
 except ImportError:
     AdvancedDynamicAnalyzer = None
 
-# Import common patterns from centralized module
-from ..utils.core.import_patterns import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs, ELFFile, pefile
+# UI components (conditional)
+try:
+    from .dialogs.ai_coding_assistant_dialog import AICodingAssistantDialog
+    from .dialogs.code_modification_dialog import CodeModificationDialog
+    from .dialogs.distributed_config_dialog import DistributedProcessingConfigDialog
+    from .dialogs.model_finetuning_dialog import (
+        ModelFinetuningDialog as ComprehensiveModelFinetuningDialog,
+        TrainingStatus,
+    )
+    from .dialogs.model_manager_dialog import ModelManagerDialog
+    from .dialogs.splash_screen import SplashScreen
+    from .emulator_ui_enhancements import (
+        EmulatorRequiredDecorator,
+        EmulatorStatusWidget,
+        add_emulator_tooltips,
+    )
+    from .tabs.ai_assistant_tab import AIAssistantTab
+    from .tabs.analysis_tab import AnalysisTab
+    from .tabs.dashboard_tab import DashboardTab
+    from .tabs.exploitation_tab import ExploitationTab
+    from .tabs.settings_tab import SettingsTab
+    from .tabs.tools_tab import ToolsTab
+    from .theme_manager import get_theme_manager
+    from .tooltip_helper import (
+        apply_tooltips_to_buttons,
+        get_tooltip_definitions,
+    )
+except ImportError:
+    # Fallback classes
+    class SplashScreen:
+        def show(self):
+            pass
+        def close(self):
+            pass
 
-# Import resource helper
-from ..utils.resource_helper import get_resource_path
+    (DistributedProcessingConfigDialog, EmulatorStatusWidget, add_emulator_tooltips, 
+     EmulatorRequiredDecorator, get_tooltip_definitions, apply_tooltips_to_buttons,
+     DashboardTab, AnalysisTab, ExploitationTab, AIAssistantTab, ToolsTab, SettingsTab) = (None,) * 12
+
+# Core imports (conditional)
+try:
+    from intellicrack.ai.ai_tools import (
+        analyze_with_ai,
+        explain_code,
+        get_ai_suggestions,
+        retrieve_few_shot_examples,
+    )
+    from intellicrack.ai.llm_backends import LLMMessage, get_llm_manager
+    from intellicrack.ai.model_manager_module import ModelManager
+    from intellicrack.config import CONFIG, get_config
+    from intellicrack.core.analysis.concolic_executor import ConcolicExecutionEngine
+    from intellicrack.core.analysis.rop_generator import ROPChainGenerator
+    from intellicrack.core.analysis.symbolic_executor import SymbolicExecutionEngine
+    from intellicrack.core.analysis.taint_analyzer import (
+        TaintAnalysisEngine,
+        run_taint_analysis as run_standalone_taint_analysis,
+    )
+    from intellicrack.core.processing.distributed_manager import DistributedProcessingManager
+    from intellicrack.core.processing.gpu_accelerator import GPUAccelerator
+    from intellicrack.core.processing.memory_loader import MemoryOptimizedBinaryLoader
+    from intellicrack.core.reporting.pdf_generator import PDFReportGenerator, run_report_generation
+    from intellicrack.hexview.integration import TOOL_REGISTRY
+    from intellicrack.ui.dashboard_manager import DashboardManager
+except ImportError:
+    # Graceful fallback for missing dependencies
+    (SymbolicExecutionEngine, TaintAnalysisEngine, run_standalone_taint_analysis,
+     ConcolicExecutionEngine, ROPChainGenerator, DistributedProcessingManager,
+     GPUAccelerator, MemoryOptimizedBinaryLoader, PDFReportGenerator, 
+     run_report_generation, ModelManager, DashboardManager) = (None,) * 12
+    TOOL_REGISTRY = {}
+    CONFIG = {}
+
+# Protection utilities (conditional)
+try:
+    from ..utils.protection_utils import inject_comprehensive_api_hooks
+except ImportError:
+    def inject_comprehensive_api_hooks(app, *args, **kwargs):
+        pass
+
+# Hex viewer integration (conditional)
+try:
+    from ..hexview.api import integrate_with_intellicrack
+    from ..hexview.integration import register_hex_viewer_ai_tools
+except ImportError:
+    integrate_with_intellicrack = None
+    register_hex_viewer_ai_tools = None
+
+# Memory patching (conditional)
+try:
+    from ..core.patching.memory_patcher import setup_memory_patching
+except ImportError:
+    setup_memory_patching = None
 
 
 def log_message(message: str) -> str:
@@ -111,14 +359,7 @@ except ImportError as e:
 # - _eval_ml_model() for model evaluation
 # This reduces module import time and makes dependencies clearer
 
-try:
-    import joblib
-except ImportError as e:
-    logger.error("Import error in main_app.py: %s", e)
-    joblib = None
 
-import hmac
-import pickle
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
@@ -222,258 +463,15 @@ if not HAS_CTYPES:
     c_int = mock_c_int
     sizeof = mock_sizeof
 
-try:  # pylint: disable=unused-argument
-    from PyQt6.QtWidgets import (
-        QApplication,
-        QButtonGroup,
-        QCheckBox,
-        QComboBox,
-        QDialog,
-        QDialogButtonBox,
-        QDoubleSpinBox,
-        QFileDialog,
-        QFileIconProvider,
-        QFormLayout,
-        QFrame,
-        QGridLayout,
-        QGroupBox,
-        QHBoxLayout,
-        QHeaderView,
-        QInputDialog,
-        QLabel,
-        QLineEdit,
-        QListWidget,
-        QListWidgetItem,
-        QMainWindow,
-        QMenu,
-        QMessageBox,
-        QPlainTextEdit,
-        QProgressBar,
-        QProgressDialog,
-        QPushButton,
-        QRadioButton,
-        QScrollArea,
-        QSizePolicy,
-        QSlider,
-        QSpacerItem,
-        QSpinBox,
-        QSplitter,
-        QStyle,
-        QTableView,
-        QTableWidget,
-        QTableWidgetItem,
-        QTabWidget,
-        QTextBrowser,
-        QTextEdit,
-        QToolBar,
-        QTreeWidget,
-        QTreeWidgetItem,
-        QVBoxLayout,
-        QWidget,
-        QWizard,
-        QWizardPage,
-    )
+# PyQt fallback classes and Qt constants (already defined above in imports section)
 
-    QtWidgets = __import__("PyQt6.QtWidgets", fromlist=[""])
+# UI components already imported above
 
-    # Optional PyQt imports
-    try:
-        from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
-    except ImportError as e:
-        logger.error("Import error in main_app.py: %s", e)
-        QPrinter = QPrintDialog = None
+# Core components already imported above
 
-    try:
-        from PyQt6.QtWebEngineWidgets import QWebEngineView
-    except ImportError as e:
-        logger.error("Import error in main_app.py: %s", e)
-        QWebEngineView = None
-
-    try:
-        from PyQt6.QtPdf import QPdfDocument
-        from PyQt6.QtPdfWidgets import QPdfView
-
-        HAS_PDF_SUPPORT = True
-    except ImportError as e:
-        if "QtPdf" in str(e):
-            logger.info("PyQt6.QtPdf not available - PDF features disabled (optional)")
-        else:
-            logger.error("Import error in main_app.py: %s", e)
-        QPdfDocument = QPdfView = None
-        HAS_PDF_SUPPORT = False
-    from PyQt6 import QtCore
-    from PyQt6.QtCore import (
-        QDateTime,
-        QFileInfo,
-        QMetaObject,
-        QSettings,
-        QSize,
-        Qt,
-        QThread,
-        QTimer,
-        QUrl,
-        pyqtSignal,
-    )
-    from PyQt6.QtGui import (
-        QAction,
-        QColor,
-        QDesktopServices,
-        QFont,
-        QIcon,
-        QPainter,
-        QPalette,
-        QPen,
-        QPixmap,
-    )
-except ImportError as e:
-    logger.error("Import error in main_app.py: %s", e)
-
-    # Fallback for environments without PyQt6
-    class QMainWindow:
-        """Fallback QMainWindow class for environments without PyQt6."""
-
-        def __init__(self, parent=None):
-            """Initialize fallback QMainWindow."""
-            pass
-
-    class DummySignal:
-        """Fallback signal class for environments without PyQt6."""
-
-        def __init__(self):
-            """Initialize dummy signal."""
-            self.callbacks = []
-
-        def connect(self, callback):
-            """Connect a callback to the signal."""
-            self.callbacks.append(callback)
-
-        def disconnect(self, callback=None):
-            """Disconnect a callback from the signal."""
-            if callback:
-                self.callbacks.remove(callback)
-            else:
-                self.callbacks.clear()
-
-        def emit(self, *args, **kwargs):
-            """Emit the signal to all connected callbacks."""
-            for callback in self.callbacks:
-                try:
-                    callback(*args, **kwargs)
-                except Exception as err:
-                    logger.error("Error in signal callback: %s", err)
-
-    def pyqtSignal(*args, **kwargs):  # pylint: disable=unused-argument
-        """Fallback pyqtSignal function for environments without PyQt6."""
-        return DummySignal()
-
-    Qt = None
-    QMetaObject = None
-    QtCore = None
-
-# Import UI components
-try:
-    from .dialogs.ai_coding_assistant_dialog import AICodingAssistantDialog
-    from .dialogs.code_modification_dialog import CodeModificationDialog
-    from .dialogs.distributed_config_dialog import DistributedProcessingConfigDialog
-    from .dialogs.model_finetuning_dialog import (
-        ModelFinetuningDialog as ComprehensiveModelFinetuningDialog,
-    )
-    from .dialogs.model_finetuning_dialog import TrainingStatus
-    from .dialogs.model_manager_dialog import ModelManagerDialog
-    from .dialogs.splash_screen import SplashScreen
-    from .emulator_ui_enhancements import (
-        EmulatorRequiredDecorator,
-        EmulatorStatusWidget,
-        add_emulator_tooltips,
-    )
-    from .tabs.ai_assistant_tab import AIAssistantTab
-    from .tabs.analysis_tab import AnalysisTab
-
-    # Import new modular tab architecture
-    from .tabs.dashboard_tab import DashboardTab
-    from .tabs.exploitation_tab import ExploitationTab
-    from .tabs.settings_tab import SettingsTab
-    from .tabs.tools_tab import ToolsTab
-    from .theme_manager import get_theme_manager
-    from .tooltip_helper import (
-        apply_tooltips_to_buttons,
-        get_tooltip_definitions,
-    )
-except ImportError as e:
-    logger.error("Import error in main_app.py: %s", e)
-
-    # Define a dummy SplashScreen for environments without PyQt5
-    class SplashScreen:
-        """Fallback SplashScreen class for environments without PyQt6."""
-
-        def show(self):
-            """Show splash screen (no-op in fallback)."""
-
-        def close(self):
-            """Close splash screen (no-op in fallback)."""
-
-    DistributedProcessingConfigDialog = None
-    EmulatorStatusWidget = None
-    add_emulator_tooltips = None
-    EmulatorRequiredDecorator = None
-    get_tooltip_definitions = None
-    apply_tooltips_to_buttons = None
-
-    # Fallback tab classes
-    DashboardTab = None
-    AnalysisTab = None
-    ExploitationTab = None
-    AIAssistantTab = None
-    ToolsTab = None
-    SettingsTab = None
-
-# Import all the extracted components
-try:
-    from intellicrack.ai.ai_tools import (
-        analyze_with_ai,
-        explain_code,
-        get_ai_suggestions,
-        retrieve_few_shot_examples,
-    )
-    from intellicrack.ai.llm_backends import LLMMessage, get_llm_manager
-    from intellicrack.ai.model_manager_module import ModelManager
-    from intellicrack.config import CONFIG, get_config
-    from intellicrack.core.analysis.concolic_executor import ConcolicExecutionEngine
-    from intellicrack.core.analysis.rop_generator import ROPChainGenerator
-    from intellicrack.core.analysis.symbolic_executor import SymbolicExecutionEngine
-    from intellicrack.core.analysis.taint_analyzer import TaintAnalysisEngine
-    from intellicrack.core.analysis.taint_analyzer import (
-        run_taint_analysis as run_standalone_taint_analysis,
-    )
-    from intellicrack.core.processing.distributed_manager import DistributedProcessingManager
-    from intellicrack.core.processing.gpu_accelerator import GPUAccelerator
-    from intellicrack.core.processing.memory_loader import MemoryOptimizedBinaryLoader
-    from intellicrack.core.reporting.pdf_generator import PDFReportGenerator, run_report_generation
-    from intellicrack.hexview.integration import TOOL_REGISTRY
-    from intellicrack.ui.dashboard_manager import DashboardManager
-except ImportError as e:
-    logger.error("Import error in main_app.py: %s", e)
-    # Graceful fallback for missing dependencies
-    print(f"Warning: Some imports failed in main_app.py: {e}")
-    print("The application will run with reduced functionality.")
-    SymbolicExecutionEngine = None
-    TaintAnalysisEngine = None
-    run_standalone_taint_analysis = None
-    ConcolicExecutionEngine = None
-    ROPChainGenerator = None
-    DistributedProcessingManager = None
-    GPUAccelerator = None
-    MemoryOptimizedBinaryLoader = None
-    PDFReportGenerator = None
-    run_report_generation = None
-    ModelManager = None
-    DashboardManager = None
-    TOOL_REGISTRY = {}
-    CONFIG = {}
-    # DO NOT set IntellicrackApp to None! The class definition comes later!
-
-# Set up logger early
-logger = logging.getLogger(__name__)
+# Constants
+DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
 # Import logging utilities - DISABLED to prevent GUI issues
 # Comprehensive logging can interfere with Qt's event loop

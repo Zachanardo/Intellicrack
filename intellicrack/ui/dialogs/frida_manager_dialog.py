@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Frida script manager dialog for managing dynamic instrumentation scripts."""
 import json
 import os
 import sys
@@ -61,6 +60,8 @@ from intellicrack.logger import logger
 from ...core.frida_constants import HookCategory, ProtectionType
 from ..widgets.console_widget import ConsoleWidget
 from ..widgets.syntax_highlighters import JavaScriptHighlighter
+
+"""Frida script manager dialog for managing dynamic instrumentation scripts."""
 
 """
 Frida Manager Dialog - Advanced GUI Controls for Frida Operations

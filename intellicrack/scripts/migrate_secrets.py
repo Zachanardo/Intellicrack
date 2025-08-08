@@ -35,7 +35,6 @@ from intellicrack.utils.secrets_manager import get_secrets_manager
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-
 logger = get_logger(__name__)
 
 

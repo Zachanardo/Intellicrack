@@ -13,9 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
 
-"""
 Entropy Calculation Utilities
 
 Shared entropy calculation functions to eliminate code duplication.

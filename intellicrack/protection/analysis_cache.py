@@ -7,6 +7,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import hashlib
+import hmac
 import json
 import logging
 import os
@@ -20,8 +21,6 @@ from typing import Any
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)
-
-import hmac
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()

@@ -19,17 +19,20 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 #!/usr/bin/env python3
-"""
-Progress Manager for Intellicrack CLI
-Provides beautiful progress visualization for long-running operations
-"""
 
+# Standard library imports
+import hashlib
+import re
+import subprocess
+import sys
 import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
+# Third-party imports
+import psutil
 from rich import box
 from rich.console import Console
 from rich.layout import Layout
@@ -48,6 +51,11 @@ from rich.progress import (
 )
 from rich.table import Table
 from rich.text import Text
+
+"""
+Progress Manager for Intellicrack CLI
+Provides beautiful progress visualization for long-running operations
+"""
 
 
 @dataclass
@@ -336,8 +344,6 @@ def demo_progress():
     pm = ProgressManager()
 
     # Use a real binary for demonstration
-    import sys
-
     binary_path = sys.executable  # Use Python executable as demo binary
 
     analysis_types = [
@@ -351,9 +357,6 @@ def demo_progress():
     pm.start_analysis(binary_path, analysis_types)
 
     # Real progress tracking
-    import hashlib
-    import subprocess
-
     for analysis_type in analysis_types:
         try:
             if analysis_type == "Static Analysis":
@@ -403,8 +406,6 @@ def demo_progress():
 
             elif analysis_type == "Dynamic Analysis":
                 # Real dynamic analysis monitoring
-                import psutil
-
                 steps = [
                     ("Starting process monitor", 15),
                     ("Hooking API calls", 25),
@@ -492,8 +493,6 @@ def demo_progress():
                 for check_name, weight in network_checks:
                     if check_name == "Extracting URLs/IPs":
                         # Real URL/IP extraction from binary
-                        import re
-
                         try:
                             with open(binary_path, "rb") as f:
                                 data = f.read(1024 * 1024)

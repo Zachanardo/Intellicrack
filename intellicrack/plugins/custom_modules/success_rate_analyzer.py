@@ -16,18 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Success Rate Analyzer for Intellicrack Framework
-
-Comprehensive statistical analysis system for tracking, analyzing, and predicting
-success rates of all protection bypass techniques and detection methods in the
-Intellicrack framework using advanced statistical and machine learning methods.
-
-Author: Intellicrack Framework
-Version: 2.0.0
-License: GPL v3
-"""
-
 import hashlib
 import json
 import logging
@@ -52,6 +40,18 @@ from sklearn.linear_model import BayesianRidge
 from sklearn.preprocessing import StandardScaler
 
 warnings.filterwarnings("ignore")
+
+"""
+Success Rate Analyzer for Intellicrack Framework
+
+Comprehensive statistical analysis system for tracking, analyzing, and predicting
+success rates of all protection bypass techniques and detection methods in the
+Intellicrack framework using advanced statistical and machine learning methods.
+
+Author: Intellicrack Framework
+Version: 2.0.0
+License: GPL v3
+"""
 
 
 class EventType(Enum):

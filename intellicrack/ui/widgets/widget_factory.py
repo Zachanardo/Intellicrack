@@ -13,9 +13,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
 
-"""
 Widget Factory for Common UI Patterns
 
 This module provides utility functions for creating common widget patterns

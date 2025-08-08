@@ -15,13 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Protection Detection Module
-
-This module provides comprehensive protection detection capabilities through
-a unified engine that seamlessly combines multiple detection methods.
-"""
-
+# Local imports
 from .intellicrack_protection_core import (
     DetectionResult,
     DIEProtectionDetector,  # Backward compatibility alias
@@ -40,6 +34,13 @@ from .unified_protection_engine import (
     UnifiedProtectionResult,
     get_unified_engine,
 )
+
+"""
+Protection Detection Module
+
+This module provides comprehensive protection detection capabilities through
+a unified engine that seamlessly combines multiple detection methods.
+"""
 
 __all__ = [
     "DIEProtectionDetector",  # Backward compatibility

@@ -16,18 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-License Server Emulator
-
-Comprehensive local license server emulator supporting multiple licensing
-protocols including FlexLM, HASP, Microsoft KMS, Adobe, and custom vendor
-systems. Provides offline license validation and fallback capabilities.
-
-Author: Intellicrack Framework
-Version: 2.0.0
-License: GPL v3
-"""
-
 import hashlib
 import json
 import logging
@@ -55,6 +43,18 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, T
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship, sessionmaker
 from sqlalchemy.pool import StaticPool
+
+"""
+License Server Emulator
+
+Comprehensive local license server emulator supporting multiple licensing
+protocols including FlexLM, HASP, Microsoft KMS, Adobe, and custom vendor
+systems. Provides offline license validation and fallback capabilities.
+
+Author: Intellicrack Framework
+Version: 2.0.0
+License: GPL v3
+"""
 
 
 class LicenseType(Enum):

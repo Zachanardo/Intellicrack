@@ -19,13 +19,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 #!/usr/bin/env python3
-"""
-AI Integration Module for Intellicrack.
 
-This module provides integration points for various AI models (OpenAI, Anthropic, etc.)
-to use Intellicrack capabilities safely.
-"""
-
+# Standard library imports
 import json
 import logging
 import os
@@ -33,12 +28,20 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Any
 
+# Local imports
 from .ai_wrapper import ConfirmationManager, IntellicrackAIInterface
 
 # Add parent directories to path
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
 sys.path.insert(0, project_root)
+
+"""
+AI Integration Module for Intellicrack.
+
+This module provides integration points for various AI models (OpenAI, Anthropic, etc.)
+to use Intellicrack capabilities safely.
+"""
 
 
 logger = logging.getLogger(__name__)

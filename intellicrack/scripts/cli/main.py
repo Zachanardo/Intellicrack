@@ -19,6 +19,15 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 #!/usr/bin/env python3
+
+# Standard library imports
+import argparse
+import json
+import logging
+import os
+import sys
+import time
+
 """
 Comprehensive Command-Line Interface for Intellicrack.
 
@@ -26,13 +35,6 @@ This enhanced CLI provides access to ALL feasible Intellicrack features,
 enabling complete functionality without the GUI for testing, automation,
 and server deployments.
 """
-
-import argparse
-import json
-import logging
-import os
-import sys
-import time
 
 # Import optional performance/debugging modules
 try:

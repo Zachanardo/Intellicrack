@@ -16,15 +16,15 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import os
+
+from PyQt6.QtWidgets import QFileDialog
+
 """
 Plugin Browser Utility Functions
 
 Shared utilities for plugin browsing functionality to eliminate code duplication.
 """
-
-import os
-
-from PyQt6.QtWidgets import QFileDialog
 
 
 def browse_for_plugin(parent_widget, title="Select Plugin") -> str:

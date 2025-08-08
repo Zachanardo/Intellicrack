@@ -15,8 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Preferences dialog for Intellicrack settings."""
-
 import logging
 
 from PyQt6.QtCore import QSettings, pyqtSignal
@@ -34,6 +32,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+"""Preferences dialog for Intellicrack settings."""
 
 logger = logging.getLogger(__name__)
 

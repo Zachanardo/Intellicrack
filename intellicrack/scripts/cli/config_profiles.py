@@ -19,21 +19,24 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 #!/usr/bin/env python3
-"""
-Configuration Profile System for Intellicrack CLI
-Allows saving and loading of analysis configurations
-"""
 
+# Standard library imports
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+# Third-party imports
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
+
+"""
+Configuration Profile System for Intellicrack CLI
+Allows saving and loading of analysis configurations
+"""
 
 
 class ConfigProfile:

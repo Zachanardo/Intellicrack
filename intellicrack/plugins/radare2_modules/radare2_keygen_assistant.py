@@ -16,6 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+# Standard library imports
+import json
+import os
+import re
+import struct
+import sys
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
+
+# Third-party imports
+import capstone
+import keystone
+import r2pipe
+
 """
 Radare2 Keygen Assistant Module
 
@@ -26,19 +41,6 @@ Author: Intellicrack Framework
 Version: 2.0.0
 License: GPL v3
 """
-
-import json
-import os
-import re
-import struct
-import sys
-from dataclasses import dataclass, field
-from enum import Enum
-from typing import Any
-
-import capstone
-import keystone
-import r2pipe
 
 
 class CryptoAlgorithm(Enum):

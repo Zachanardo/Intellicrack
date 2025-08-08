@@ -19,13 +19,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 #!/usr/bin/env python3
-"""
-AI-Controllable CLI Wrapper for Intellicrack.
 
-This wrapper provides a safe interface for AI models to control the Intellicrack CLI
-with user confirmation safeguards.
-"""
-
+# Standard library imports
 import json
 import logging
 import os
@@ -41,6 +36,13 @@ from typing import Any
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
 sys.path.insert(0, project_root)
+
+"""
+AI-Controllable CLI Wrapper for Intellicrack.
+
+This wrapper provides a safe interface for AI models to control the Intellicrack CLI
+with user confirmation safeguards.
+"""
 
 # Configure logging
 logging.basicConfig(

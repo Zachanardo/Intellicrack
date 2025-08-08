@@ -1,13 +1,13 @@
-"""Dashboard Tab Original implementation for Intellicrack UI."""
+"""Dashboard Tab Original implementation for Intellicrack UI.
+
+UI module for Dashboard Tab Original.
+
+This module provides UI components and dialogs for dashboard tab original functionality.
+"""
 
 import os
 import sys
 from datetime import datetime
-
-"""UI module for Dashboard Tab Original.
-
-This module provides UI components and dialogs for dashboard tab original functionality.
-"""
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QFont

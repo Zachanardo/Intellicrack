@@ -19,27 +19,28 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 #!/usr/bin/env python3
-"""
-Interactive REPL Mode for Intellicrack CLI
 
-This module implements an interactive shell for Intellicrack, making it easier
-to perform multiple analyses on the same binary without re-running commands.
-"""
-
+# Standard library imports
 import cmd
 import json
 import logging
 import os
+import sys
+import time
+from pathlib import Path
+from typing import Any
 
+# Platform-dependent imports
 try:
     import readline
 except ImportError:
     # readline is not available on all platforms
     readline = None
-import sys
-import time
-from pathlib import Path
-from typing import Any
+
+# Add parent directory to path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
+sys.path.insert(0, project_root)
 
 # Rich imports for beautiful terminal UI
 try:
@@ -70,10 +71,12 @@ except ImportError:
     RICH_AVAILABLE = False
     print("Warning: 'rich' library not available. Install with: pip install rich")
 
-# Add parent directory to path
-script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(script_dir, "..", ".."))
-sys.path.insert(0, project_root)
+"""
+Interactive REPL Mode for Intellicrack CLI
+
+This module implements an interactive shell for Intellicrack, making it easier
+to perform multiple analyses on the same binary without re-running commands.
+"""
 
 # Import Intellicrack modules
 try:
