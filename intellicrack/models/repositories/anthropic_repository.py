@@ -15,19 +15,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Anthropic Repository Implementation
-
-This module provides an implementation of the model repository interface for
-accessing models via Anthropic's API.
-"""
-
 import logging
 import os
 from typing import Any
 
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
+
+"""
+Anthropic Repository Implementation
+
+This module provides an implementation of the model repository interface for
+accessing models via Anthropic's API.
+"""
 
 # Set up logging
 logger = logging.getLogger(__name__)

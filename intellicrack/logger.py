@@ -15,6 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
+
 """
 Re-export logger from utils.logger for backward compatibility
 
@@ -22,8 +24,6 @@ This module provides a simple re-export of the logger utilities from
 intellicrack.utils.logger to maintain backward compatibility with code
 that imports from intellicrack.logger.
 """
-
-import logging
 
 # Create a default logger to avoid circular imports
 logger = logging.getLogger("IntellicrackLogger")

@@ -23,15 +23,15 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+from ...utils.constants import C2_DEFAULTS
+from .base_c2 import BaseC2
+
 """
 Command and Control Server
 
 Main C2 server implementation with multi-protocol support,
 encryption, and session management.
 """
-
-from ...utils.constants import C2_DEFAULTS
-from .base_c2 import BaseC2
 
 logger = logging.getLogger(__name__)
 

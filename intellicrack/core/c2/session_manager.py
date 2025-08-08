@@ -15,13 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Session Manager for C2 Infrastructure
-
-Manages C2 sessions, task queuing, file transfers,
-and session persistence for command and control operations.
-"""
-
 import json
 import logging
 import os
@@ -32,6 +25,13 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any
+
+"""
+Session Manager for C2 Infrastructure
+
+Manages C2 sessions, task queuing, file transfers,
+and session persistence for command and control operations.
+"""
 
 logger = logging.getLogger(__name__)
 

@@ -15,8 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Central script execution manager with QEMU testing options."""
-
 import datetime
 import hashlib
 import logging
@@ -28,6 +26,8 @@ from PyQt6.QtCore import QObject, QSettings, pyqtSignal
 from PyQt6.QtWidgets import QDialog, QMessageBox
 
 from ...utils.logger import get_logger
+
+"""Central script execution manager with QEMU testing options."""
 
 logger = logging.getLogger(__name__)
 

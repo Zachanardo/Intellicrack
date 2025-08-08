@@ -15,7 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Base plugin interface for Intellicrack plugin system."""
 import os
 from abc import ABC, abstractmethod
 from typing import Any
@@ -23,6 +22,8 @@ from typing import Any
 from intellicrack.logger import logger
 
 from ..utils.analysis.entropy_utils import calculate_byte_entropy
+
+"""Base plugin interface for Intellicrack plugin system."""
 
 """
 Base Plugin Framework for Intellicrack

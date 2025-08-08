@@ -15,13 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Model Manager Module
-
-This module provides the central ModelManager class that coordinates
-model repositories and handles model import, loading, and verification.
-"""
-
 import hashlib
 import os
 from collections.abc import Callable
@@ -30,6 +23,13 @@ from threading import Thread
 from typing import Any
 
 from intellicrack.logger import logger
+
+"""
+Model Manager Module
+
+This module provides the central ModelManager class that coordinates
+model repositories and handles model import, loading, and verification.
+"""
 
 try:
     from .repositories.factory import RepositoryFactory

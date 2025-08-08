@@ -16,18 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Cloud License Interceptor
-
-Comprehensive cloud-based license validation bypass system that intercepts,
-analyzes, and modifies license validation requests to cloud services including
-AWS, Azure, GCP, and custom SaaS platforms.
-
-Author: Intellicrack Framework
-Version: 2.0.0
-License: GPL v3
-"""
-
 import asyncio
 import asyncio.subprocess
 import base64
@@ -64,6 +52,18 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.x509.oid import NameOID
+
+"""
+Cloud License Interceptor
+
+Comprehensive cloud-based license validation bypass system that intercepts,
+analyzes, and modifies license validation requests to cloud services including
+AWS, Azure, GCP, and custom SaaS platforms.
+
+Author: Intellicrack Framework
+Version: 2.0.0
+License: GPL v3
+"""
 
 
 class CloudProvider(Enum):

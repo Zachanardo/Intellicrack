@@ -15,16 +15,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
+from abc import ABC, abstractmethod
+from typing import Any
+
 """
 Base Snapshot Handler
 
 Shared functionality for snapshot operations across different emulation/container platforms.
 Eliminates duplicate code between Docker and QEMU snapshot handling.
 """
-
-import logging
-from abc import ABC, abstractmethod
-from typing import Any
 
 
 class BaseSnapshotHandler(ABC):

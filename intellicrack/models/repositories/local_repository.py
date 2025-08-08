@@ -15,14 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Local File Repository Implementation
-
-This module provides an implementation of the model repository interface for
-locally stored model files. It adapts the existing file-based model system
-to the repository interface.
-"""
-
 import glob
 import hashlib
 import json
@@ -30,6 +22,14 @@ import logging
 import os
 
 from .interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
+
+"""
+Local File Repository Implementation
+
+This module provides an implementation of the model repository interface for
+locally stored model files. It adapts the existing file-based model system
+to the repository interface.
+"""
 
 # Set up logging
 logger = logging.getLogger(__name__)

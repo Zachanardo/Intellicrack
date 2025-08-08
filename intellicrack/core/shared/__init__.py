@@ -15,13 +15,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from .bypass_config import BypassConfig
+
 """
 Shared Core Components
 
 Common utilities and configurations used across multiple core modules.
 """
-
-from .bypass_config import BypassConfig
 
 __all__ = [
     "BypassConfig",

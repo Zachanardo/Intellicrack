@@ -15,13 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from ..exploitation.bypass_engine import BypassEngine
+
 """
 Bypass Engine for Mitigation Bypass
 
 This module provides a compatibility import from the main bypass engine.
 """
-
-# Import the shared bypass engine to avoid code duplication
-from ..exploitation.bypass_engine import BypassEngine
 
 __all__ = ["BypassEngine"]

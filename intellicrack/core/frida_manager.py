@@ -15,17 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Comprehensive Frida Manager for Intellicrack
-
-This module provides a production-ready Frida management system with:
-- Comprehensive operation logging
-- Real-time protection adaptation
-- Protection technique classification
-- Performance optimization
-- GUI integration support
-"""
-
 import json
 import logging
 import queue
@@ -37,9 +26,19 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-# Import availability checks from shared utility
 from ..utils.core.import_checks import FRIDA_AVAILABLE, frida, psutil
 from .frida_constants import HookCategory, ProtectionType
+
+"""
+Comprehensive Frida Manager for Intellicrack
+
+This module provides a production-ready Frida management system with:
+- Comprehensive operation logging
+- Real-time protection adaptation
+- Protection technique classification
+- Performance optimization
+- GUI integration support
+"""
 
 logger = logging.getLogger(__name__)
 

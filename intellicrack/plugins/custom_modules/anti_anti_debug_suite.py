@@ -16,17 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Anti-Anti-Debug Suite
-
-Comprehensive anti-debugging detection and bypass system for defeating all
-common anti-debugging techniques used by modern software protection systems.
-
-Author: Intellicrack Framework
-Version: 2.0.0
-License: GPL v3
-"""
-
 import ctypes
 import ctypes.util
 import json
@@ -40,6 +29,17 @@ from enum import Enum
 from typing import Any
 
 import psutil
+
+"""
+Anti-Anti-Debug Suite
+
+Comprehensive anti-debugging detection and bypass system for defeating all
+common anti-debugging techniques used by modern software protection systems.
+
+Author: Intellicrack Framework
+Version: 2.0.0
+License: GPL v3
+"""
 
 
 class AntiDebugTechnique(Enum):

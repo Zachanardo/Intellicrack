@@ -15,13 +15,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from typing import Any
+
 """
 Shared Bypass Configuration
 
 Common bypass definitions and helper functions used across mitigation bypass modules.
 """
-
-from typing import Any
 
 
 class BypassConfig:

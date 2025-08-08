@@ -15,17 +15,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Base Patcher Module
-
-Provides common functionality for Windows patching operations.
-"""
-
 import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
 from ...utils.system.windows_common import WindowsConstants, get_windows_kernel32, get_windows_ntdll
+
+"""
+Base Patcher Module
+
+Provides common functionality for Windows patching operations.
+"""
 
 
 class BaseWindowsPatcher(ABC):

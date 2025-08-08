@@ -15,16 +15,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
+
+from .model_manager import ModelManager
+
 """
 Intellicrack Models Package
 
 This package contains data models and knowledge bases for Intellicrack.
 ML models have been replaced with ICP Engine for protection detection.
 """
-
-import logging
-
-from .model_manager import ModelManager
 
 # Create module logger
 logger = logging.getLogger(__name__)

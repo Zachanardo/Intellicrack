@@ -15,14 +15,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
+import shutil
+from dataclasses import dataclass
+
 """
 Binary Patcher Plugin Template
 Specialized template for binary patching operations
 """
-
-import logging
-import shutil
-from dataclasses import dataclass
 
 
 @dataclass

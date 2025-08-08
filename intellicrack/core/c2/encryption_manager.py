@@ -15,13 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Encryption Manager for C2 Infrastructure
-
-Provides AES-256 encryption with secure key exchange,
-perfect forward secrecy, and anti-analysis capabilities.
-"""
-
 import base64
 import hashlib
 import hmac
@@ -30,6 +23,13 @@ import logging
 import os
 import time
 from typing import Any
+
+"""
+Encryption Manager for C2 Infrastructure
+
+Provides AES-256 encryption with secure key exchange,
+perfect forward secrecy, and anti-analysis capabilities.
+"""
 
 # Create module logger
 logger = logging.getLogger(__name__)

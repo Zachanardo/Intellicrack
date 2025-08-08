@@ -15,17 +15,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Network Analysis Plugin Template
-Specialized template for network traffic analysis
-"""
-
 import logging
 import queue
 import socket
 import threading
 import time
 from typing import Any
+
+"""
+Network Analysis Plugin Template
+Specialized template for network traffic analysis
+"""
 
 logger = logging.getLogger(__name__)
 

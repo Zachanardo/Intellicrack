@@ -15,13 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Repository Factory Module
-
-This module provides a factory for creating model repositories based on
-their type and configuration.
-"""
-
 import logging
 import os
 from typing import Any
@@ -29,6 +22,13 @@ from typing import Any
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelRepositoryInterface
 from .local_repository import LocalFileRepository
+
+"""
+Repository Factory Module
+
+This module provides a factory for creating model repositories based on
+their type and configuration.
+"""
 
 # Set up logging
 logger = logging.getLogger(__name__)

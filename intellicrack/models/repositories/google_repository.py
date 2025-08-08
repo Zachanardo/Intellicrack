@@ -15,19 +15,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Google Repository Implementation
-
-This module provides an implementation of the model repository interface for
-accessing Google's Gemini models via their GenerativeAI API.
-"""
-
 import logging
 import os
 from typing import Any
 
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
+
+"""
+Google Repository Implementation
+
+This module provides an implementation of the model repository interface for
+accessing Google's Gemini models via their GenerativeAI API.
+"""
 
 # Set up logging
 logger = logging.getLogger(__name__)

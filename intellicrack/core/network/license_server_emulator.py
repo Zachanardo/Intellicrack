@@ -1,7 +1,3 @@
-"""License server emulator for creating real license validation servers with production-ready protocol emulation."""
-
-from intellicrack.logger import logger
-
 """
 Network License Server Emulator
 
@@ -23,7 +19,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 import hashlib
 import json
 import logging
@@ -37,7 +32,8 @@ import time
 import traceback
 from typing import Any
 
-# Import new components
+from intellicrack.logger import logger
+
 try:
     from .dynamic_response_generator import (
         DynamicResponseGenerator,

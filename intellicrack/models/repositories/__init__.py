@@ -15,12 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Model Repositories Package
-
-This package provides access to various model repositories for Intellicrack.
-"""
-
 from .anthropic_repository import AnthropicRepository
 from .base import APIRepositoryBase, CacheManager, RateLimitConfig, RateLimiter
 from .factory import RepositoryFactory
@@ -30,6 +24,12 @@ from .lmstudio_repository import LMStudioRepository
 from .local_repository import LocalFileRepository
 from .openai_repository import OpenAIRepository
 from .openrouter_repository import OpenRouterRepository
+
+"""
+Model Repositories Package
+
+This package provides access to various model repositories for Intellicrack.
+"""
 
 # Register repository implementations with the factory
 RepositoryFactory.register_repository_type("local", LocalFileRepository)

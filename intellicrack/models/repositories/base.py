@@ -15,14 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Base Implementation for API Model Repositories
-
-This module provides the base implementation for API-based model repositories,
-including common functionality for rate limiting, caching, error handling,
-and proxy support.
-"""
-
 import hashlib
 import json
 import logging
@@ -35,6 +27,14 @@ from typing import Any
 import requests
 
 from .interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
+
+"""
+Base Implementation for API Model Repositories
+
+This module provides the base implementation for API-based model repositories,
+including common functionality for rate limiting, caching, error handling,
+and proxy support.
+"""
 
 # Set up logging
 logger = logging.getLogger(__name__)

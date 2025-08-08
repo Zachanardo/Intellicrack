@@ -15,19 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Enhanced Demo Plugin for Intellicrack.
-
-This module demonstrates comprehensive integration with Intellicrack platform,
-showcasing modern Python practices with type hints, error handling, progress
-reporting, file validation, multiple analysis techniques, configuration
-management, and metadata handling.
-
-Author: Intellicrack Development Team
-Version: 2.0.0
-License: GPL v3
-Compatibility: Intellicrack 1.0+
-"""
-
 import hashlib
 import logging
 import os
@@ -40,6 +27,19 @@ from intellicrack.logger import logger
 from ...utils.analysis.entropy_utils import calculate_byte_entropy
 from ...utils.core.string_utils import extract_ascii_strings
 from ..plugin_base import BasePlugin, PluginMetadata, create_plugin_info
+
+"""Enhanced Demo Plugin for Intellicrack.
+
+This module demonstrates comprehensive integration with Intellicrack platform,
+showcasing modern Python practices with type hints, error handling, progress
+reporting, file validation, multiple analysis techniques, configuration
+management, and metadata handling.
+
+Author: Intellicrack Development Team
+Version: 2.0.0
+License: GPL v3
+Compatibility: Intellicrack 1.0+
+"""
 
 # Plugin metadata
 PLUGIN_NAME = "Enhanced Demo Plugin"

@@ -16,16 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import json
+from dataclasses import dataclass, field
+from enum import Enum
+
 """
 Protection Knowledge Base
 
 Comprehensive database of software protection schemes, bypass techniques,
 and analysis strategies for the ML system.
 """
-
-import json
-from dataclasses import dataclass, field
-from enum import Enum
 
 
 class BypassDifficulty(Enum):

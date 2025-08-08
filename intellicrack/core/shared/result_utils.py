@@ -15,13 +15,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from typing import Any
+
 """
 Result Dictionary Utilities
 
 Common functionality for result dictionary operations to eliminate code duplication.
 """
-
-from typing import Any
 
 
 class ResultMixin:

@@ -15,10 +15,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from ..exploitation.cfi_bypass import CFIBypass
+
 """
 CFI Bypass Module - Compatibility Alias
 """
-
-from ..exploitation.cfi_bypass import CFIBypass
 
 __all__ = ["CFIBypass"]

@@ -15,16 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Automated Bypass Wizard for Frida Operations
-
-This module implements an intelligent wizard system that automatically:
-- Detects protection mechanisms
-- Selects appropriate bypass strategies
-- Applies bypasses in optimal order
-- Monitors success and adapts as needed
-"""
-
 import asyncio
 import logging
 import time
@@ -35,6 +25,16 @@ from typing import Any
 
 from .frida_constants import ProtectionType
 from .frida_presets import WIZARD_CONFIGS, get_preset_by_software, get_scripts_for_protection
+
+"""
+Automated Bypass Wizard for Frida Operations
+
+This module implements an intelligent wizard system that automatically:
+- Detects protection mechanisms
+- Selects appropriate bypass strategies
+- Applies bypasses in optimal order
+- Monitors success and adapts as needed
+"""
 
 logger = logging.getLogger(__name__)
 

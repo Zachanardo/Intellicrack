@@ -15,14 +15,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from enum import Enum
+
 """
 Frida Constants Module
 
 This module contains enums and constants used by Frida components
 to avoid cyclic imports between core and UI modules.
 """
-
-from enum import Enum
 
 
 class ProtectionType(Enum):

@@ -16,17 +16,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-Pattern Evolution Tracker with Adaptive Learning
-
-Advanced pattern evolution system using genetic algorithms and reinforcement learning
-to adaptively discover and optimize license protection detection patterns.
-
-Author: Intellicrack Framework
-Version: 2.0.0
-License: GPL v3
-"""
-
 import hashlib
 import hmac
 import json
@@ -47,6 +36,17 @@ from typing import Any
 
 import numpy as np
 from sklearn.cluster import DBSCAN
+
+"""
+Pattern Evolution Tracker with Adaptive Learning
+
+Advanced pattern evolution system using genetic algorithms and reinforcement learning
+to adaptively discover and optimize license protection detection patterns.
+
+Author: Intellicrack Framework
+Version: 2.0.0
+License: GPL v3
+"""
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()

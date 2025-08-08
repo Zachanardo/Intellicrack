@@ -15,15 +15,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import logging
+from collections.abc import Callable
+from typing import Any
+
 """
 Base Network Analyzer Module
 
 Provides common functionality for network analysis components.
 """
-
-import logging
-from collections.abc import Callable
-from typing import Any
 
 
 class BaseNetworkAnalyzer:
