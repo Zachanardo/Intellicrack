@@ -25,7 +25,7 @@ import os
 import pickle
 import random
 import re
-import sqlite3
+from ..handlers.sqlite3_handler import sqlite3
 import threading
 import time
 from collections import defaultdict, deque

@@ -1901,7 +1901,7 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
         if db_type == "sqlite":
             # SQLite database storage
             try:
-                import sqlite3
+                from ...handlers.sqlite3_handler import sqlite3
 
                 db_path = config.get("path", "intellicrack_reports.db")
                 conn = sqlite3.connect(db_path)

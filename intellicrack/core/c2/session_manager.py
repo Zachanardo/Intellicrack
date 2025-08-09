@@ -19,7 +19,7 @@ import json
 import logging
 import os
 import shutil
-import sqlite3
+from ...handlers.sqlite3_handler import sqlite3
 import threading
 import time
 import uuid

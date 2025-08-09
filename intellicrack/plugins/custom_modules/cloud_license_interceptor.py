@@ -30,7 +30,7 @@ import random
 import re
 import secrets
 import socket
-import sqlite3
+from ...handlers.sqlite3_handler import sqlite3
 import ssl
 import struct
 import threading
