@@ -8334,7 +8334,7 @@ def _check_intercepted_traffic(proxy_server):
 
                 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-                import tensorflow as tf
+                from ...handlers.tensorflow_handler import tensorflow as tf
 
                 if tf.config.list_physical_devices("GPU"):
                     gpu_frameworks["tensorflow_gpu"] = True
@@ -12933,7 +12933,7 @@ def load_ai_model(model_path):
 
                 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-                import tensorflow as tf
+                from ...handlers.tensorflow_handler import tensorflow as tf
 
                 if hasattr(tf, "keras"):
                     model = tf.keras.models.load_model(model_path)

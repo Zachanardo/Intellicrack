@@ -68,8 +68,8 @@ try:
 
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    import tensorflow as tf
-    from tensorflow import keras
+    from ...handlers.tensorflow_handler import tensorflow as tf
+    keras = tf.keras
 
     HAS_TENSORFLOW = True
 except ImportError as e:
@@ -1982,8 +1982,8 @@ Interceptor.attach(IsDebuggerPresent, {
             elif model_type.lower() == "tensorflow":
                 # TensorFlow/Keras training implementation
                 try:
-                    import tensorflow as tf
-                    from tensorflow import keras
+                    from ...handlers.tensorflow_handler import tensorflow as tf
+                    keras = tf.keras
                     from tensorflow.keras import layers
 
                     logger.info("Starting TensorFlow model training")

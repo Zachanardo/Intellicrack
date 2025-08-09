@@ -83,7 +83,7 @@ if HAS_TENSORFLOW:
 
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    import tensorflow as tf  # pylint: disable=import-error
+    from ...handlers.tensorflow_handler import tensorflow as tf  # pylint: disable=import-error
 else:
     tf = None
 
