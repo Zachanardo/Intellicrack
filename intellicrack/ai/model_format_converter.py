@@ -78,7 +78,7 @@ try:
 
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    import tensorflow as tf
+    from ...handlers.tensorflow_handler import tensorflow as tf
 
     HAS_TF = True
 except ImportError as e:
