@@ -1,0 +1,983 @@
+"""This file is part of Intellicrack.
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+import io
+import struct
+from typing import Dict, List, Optional, Tuple, Union
+
+from intellicrack.logger import logger
+
+"""
+PyElfTools Import Handler with Production-Ready Fallbacks
+
+This module provides a centralized abstraction layer for pyelftools imports.
+When pyelftools is not available, it provides REAL, functional ELF parsing
+implementations for essential operations used in Intellicrack.
+"""
+
+# PyElfTools availability detection and import handling
+try:
+    from elftools.common.exceptions import DWARFError, ELFError, ELFParseError
+    from elftools.common.py3compat import bytes2str, str2bytes
+    from elftools.construct import Container, Struct
+    from elftools.dwarf.constants import DW_TAG_compile_unit
+    from elftools.dwarf.die import DIE
+    from elftools.dwarf.dwarfinfo import DWARFInfo
+    from elftools.elf.constants import E_FLAGS, P_FLAGS, SH_FLAGS, SHN_INDICES
+    from elftools.elf.descriptions import describe_e_type, describe_p_type, describe_sh_type
+    from elftools.elf.dynamic import Dynamic, DynamicSection, DynamicSegment
+    from elftools.elf.elffile import ELFFile
+    from elftools.elf.enums import ENUM_D_TAG, ENUM_E_TYPE, ENUM_SH_TYPE
+    from elftools.elf.relocation import Relocation, RelocationSection
+    from elftools.elf.sections import NoteSection, Section, StringTableSection, Symbol, SymbolTableSection
+    from elftools.elf.segments import InterpSegment, NoteSegment, Segment
+    
+    HAS_PYELFTOOLS = True
+    import elftools
+    PYELFTOOLS_VERSION = getattr(elftools, '__version__', 'unknown')
+    
+except ImportError as e:
+    logger.error("PyElfTools not available, using fallback implementations: %s", e)
+    HAS_PYELFTOOLS = False
+    PYELFTOOLS_VERSION = None
+    
+    # Production-ready fallback ELF parsing implementations
+    
+    # ELF constants
+    class E_FLAGS:
+        """ELF header flags."""
+        pass
+    
+    class P_FLAGS:
+        """Program header flags."""
+        PF_X = 0x1  # Execute
+        PF_W = 0x2  # Write
+        PF_R = 0x4  # Read
+    
+    class SH_FLAGS:
+        """Section header flags."""
+        SHF_WRITE = 0x1
+        SHF_ALLOC = 0x2
+        SHF_EXECINSTR = 0x4
+        SHF_MERGE = 0x10
+        SHF_STRINGS = 0x20
+        SHF_INFO_LINK = 0x40
+        SHF_LINK_ORDER = 0x80
+        SHF_OS_NONCONFORMING = 0x100
+        SHF_GROUP = 0x200
+        SHF_TLS = 0x400
+    
+    class SHN_INDICES:
+        """Special section indices."""
+        SHN_UNDEF = 0
+        SHN_ABS = 0xFFF1
+        SHN_COMMON = 0xFFF2
+        SHN_XINDEX = 0xFFFF
+    
+    class ENUM_E_TYPE:
+        """ELF file types."""
+        ET_NONE = 0
+        ET_REL = 1
+        ET_EXEC = 2
+        ET_DYN = 3
+        ET_CORE = 4
+    
+    class ENUM_SH_TYPE:
+        """Section types."""
+        SHT_NULL = 0
+        SHT_PROGBITS = 1
+        SHT_SYMTAB = 2
+        SHT_STRTAB = 3
+        SHT_RELA = 4
+        SHT_HASH = 5
+        SHT_DYNAMIC = 6
+        SHT_NOTE = 7
+        SHT_NOBITS = 8
+        SHT_REL = 9
+        SHT_SHLIB = 10
+        SHT_DYNSYM = 11
+    
+    class ENUM_D_TAG:
+        """Dynamic section tags."""
+        DT_NULL = 0
+        DT_NEEDED = 1
+        DT_PLTRELSZ = 2
+        DT_PLTGOT = 3
+        DT_HASH = 4
+        DT_STRTAB = 5
+        DT_SYMTAB = 6
+        DT_RELA = 7
+        DT_RELASZ = 8
+        DT_RELAENT = 9
+        DT_STRSZ = 10
+        DT_SYMENT = 11
+        DT_INIT = 12
+        DT_FINI = 13
+        DT_SONAME = 14
+        DT_RPATH = 15
+        DT_SYMBOLIC = 16
+        DT_REL = 17
+        DT_RELSZ = 18
+        DT_RELENT = 19
+        DT_PLTREL = 20
+        DT_DEBUG = 21
+        DT_TEXTREL = 22
+        DT_JMPREL = 23
+    
+    # Exception classes
+    class ELFError(Exception):
+        """Base ELF error."""
+        pass
+    
+    class ELFParseError(ELFError):
+        """ELF parsing error."""
+        pass
+    
+    class DWARFError(Exception):
+        """DWARF error."""
+        pass
+    
+    # Utility functions
+    def bytes2str(data):
+        """Convert bytes to string."""
+        if isinstance(data, bytes):
+            return data.decode('latin-1')
+        return data
+    
+    def str2bytes(data):
+        """Convert string to bytes."""
+        if isinstance(data, str):
+            return data.encode('latin-1')
+        return data
+    
+    # Container class for construct compatibility
+    class Container(dict):
+        """Container for parsed structures."""
+        
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self.__dict__.update(kwargs)
+    
+    class Struct:
+        """Structure parser."""
+        
+        def __init__(self, name, *fields):
+            self.name = name
+            self.fields = fields
+    
+    # ELF file parser
+    class FallbackELFFile:
+        """Functional ELF file parser implementation."""
+        
+        def __init__(self, stream):
+            """Initialize ELF file parser."""
+            self.stream = stream
+            self.little_endian = True
+            self.elfclass = 64  # Default to 64-bit
+            self.header = None
+            self._section_headers = []
+            self._program_headers = []
+            self._sections = []
+            self._segments = []
+            self._string_table = None
+            self._parse_elf_header()
+            self._parse_program_headers()
+            self._parse_section_headers()
+            
+        def _parse_elf_header(self):
+            """Parse ELF header."""
+            self.stream.seek(0)
+            
+            # Read ELF magic and class
+            e_ident = self.stream.read(16)
+            if len(e_ident) < 16:
+                raise ELFParseError("Invalid ELF file: too short")
+                
+            if e_ident[:4] != b'\x7fELF':
+                raise ELFParseError("Invalid ELF magic")
+                
+            # Parse EI_CLASS (32 or 64 bit)
+            if e_ident[4] == 1:
+                self.elfclass = 32
+            elif e_ident[4] == 2:
+                self.elfclass = 64
+            else:
+                raise ELFParseError(f"Invalid EI_CLASS: {e_ident[4]}")
+                
+            # Parse EI_DATA (endianness)
+            if e_ident[5] == 1:
+                self.little_endian = True
+                endian = '<'
+            elif e_ident[5] == 2:
+                self.little_endian = False
+                endian = '>'
+            else:
+                raise ELFParseError(f"Invalid EI_DATA: {e_ident[5]}")
+                
+            # Parse rest of header based on class
+            if self.elfclass == 32:
+                # 32-bit ELF header
+                header_data = self.stream.read(36)  # e_ident already read
+                if len(header_data) < 36:
+                    raise ELFParseError("Incomplete ELF header")
+                    
+                (e_type, e_machine, e_version, e_entry, e_phoff, e_shoff,
+                 e_flags, e_ehsize, e_phentsize, e_phnum, e_shentsize,
+                 e_shnum, e_shstrndx) = struct.unpack(
+                    f'{endian}HHIIIIIHHHHHH', header_data)
+            else:
+                # 64-bit ELF header
+                header_data = self.stream.read(48)  # e_ident already read
+                if len(header_data) < 48:
+                    raise ELFParseError("Incomplete ELF header")
+                    
+                (e_type, e_machine, e_version, e_entry, e_phoff, e_shoff,
+                 e_flags, e_ehsize, e_phentsize, e_phnum, e_shentsize,
+                 e_shnum, e_shstrndx) = struct.unpack(
+                    f'{endian}HHIQQQIHHHHHH', header_data)
+                    
+            self.header = Container(
+                e_ident=e_ident,
+                e_type=e_type,
+                e_machine=e_machine,
+                e_version=e_version,
+                e_entry=e_entry,
+                e_phoff=e_phoff,
+                e_shoff=e_shoff,
+                e_flags=e_flags,
+                e_ehsize=e_ehsize,
+                e_phentsize=e_phentsize,
+                e_phnum=e_phnum,
+                e_shentsize=e_shentsize,
+                e_shnum=e_shnum,
+                e_shstrndx=e_shstrndx
+            )
+            
+        def _parse_program_headers(self):
+            """Parse program headers."""
+            if not self.header or self.header.e_phoff == 0:
+                return
+                
+            self.stream.seek(self.header.e_phoff)
+            endian = '<' if self.little_endian else '>'
+            
+            for i in range(self.header.e_phnum):
+                if self.elfclass == 32:
+                    # 32-bit program header
+                    ph_data = self.stream.read(32)
+                    if len(ph_data) < 32:
+                        break
+                        
+                    (p_type, p_offset, p_vaddr, p_paddr, p_filesz,
+                     p_memsz, p_flags, p_align) = struct.unpack(
+                        f'{endian}IIIIIIII', ph_data)
+                else:
+                    # 64-bit program header
+                    ph_data = self.stream.read(56)
+                    if len(ph_data) < 56:
+                        break
+                        
+                    (p_type, p_flags, p_offset, p_vaddr, p_paddr,
+                     p_filesz, p_memsz, p_align) = struct.unpack(
+                        f'{endian}IIQQQQQQ', ph_data)
+                        
+                ph = Container(
+                    p_type=p_type,
+                    p_offset=p_offset,
+                    p_vaddr=p_vaddr,
+                    p_paddr=p_paddr,
+                    p_filesz=p_filesz,
+                    p_memsz=p_memsz,
+                    p_flags=p_flags,
+                    p_align=p_align
+                )
+                self._program_headers.append(ph)
+                
+                # Create segment object
+                segment = FallbackSegment(ph, self.stream)
+                self._segments.append(segment)
+                
+        def _parse_section_headers(self):
+            """Parse section headers."""
+            if not self.header or self.header.e_shoff == 0:
+                return
+                
+            self.stream.seek(self.header.e_shoff)
+            endian = '<' if self.little_endian else '>'
+            
+            for i in range(self.header.e_shnum):
+                if self.elfclass == 32:
+                    # 32-bit section header
+                    sh_data = self.stream.read(40)
+                    if len(sh_data) < 40:
+                        break
+                        
+                    (sh_name, sh_type, sh_flags, sh_addr, sh_offset,
+                     sh_size, sh_link, sh_info, sh_addralign,
+                     sh_entsize) = struct.unpack(f'{endian}IIIIIIIIII', sh_data)
+                else:
+                    # 64-bit section header
+                    sh_data = self.stream.read(64)
+                    if len(sh_data) < 64:
+                        break
+                        
+                    (sh_name, sh_type, sh_flags, sh_addr, sh_offset,
+                     sh_size, sh_link, sh_info, sh_addralign,
+                     sh_entsize) = struct.unpack(f'{endian}IIQQQQIIQQ', sh_data)
+                        
+                sh = Container(
+                    sh_name=sh_name,
+                    sh_type=sh_type,
+                    sh_flags=sh_flags,
+                    sh_addr=sh_addr,
+                    sh_offset=sh_offset,
+                    sh_size=sh_size,
+                    sh_link=sh_link,
+                    sh_info=sh_info,
+                    sh_addralign=sh_addralign,
+                    sh_entsize=sh_entsize
+                )
+                self._section_headers.append(sh)
+                
+            # Load string table for section names
+            if self.header.e_shstrndx < len(self._section_headers):
+                strtab_sh = self._section_headers[self.header.e_shstrndx]
+                self.stream.seek(strtab_sh.sh_offset)
+                self._string_table = self.stream.read(strtab_sh.sh_size)
+                
+            # Create section objects
+            for i, sh in enumerate(self._section_headers):
+                name = self._get_string(sh.sh_name) if self._string_table else f".section{i}"
+                
+                if sh.sh_type == ENUM_SH_TYPE.SHT_STRTAB:
+                    section = FallbackStringTableSection(sh, name, self.stream)
+                elif sh.sh_type == ENUM_SH_TYPE.SHT_SYMTAB or sh.sh_type == ENUM_SH_TYPE.SHT_DYNSYM:
+                    section = FallbackSymbolTableSection(sh, name, self.stream, self)
+                elif sh.sh_type == ENUM_SH_TYPE.SHT_REL or sh.sh_type == ENUM_SH_TYPE.SHT_RELA:
+                    section = FallbackRelocationSection(sh, name, self.stream, self)
+                elif sh.sh_type == ENUM_SH_TYPE.SHT_DYNAMIC:
+                    section = FallbackDynamicSection(sh, name, self.stream, self)
+                elif sh.sh_type == ENUM_SH_TYPE.SHT_NOTE:
+                    section = FallbackNoteSection(sh, name, self.stream)
+                else:
+                    section = FallbackSection(sh, name, self.stream)
+                    
+                self._sections.append(section)
+                
+        def _get_string(self, offset):
+            """Get string from string table."""
+            if not self._string_table or offset >= len(self._string_table):
+                return ""
+                
+            end = self._string_table.find(b'\x00', offset)
+            if end == -1:
+                end = len(self._string_table)
+                
+            return self._string_table[offset:end].decode('latin-1', errors='ignore')
+            
+        def num_sections(self):
+            """Get number of sections."""
+            return len(self._sections)
+            
+        def num_segments(self):
+            """Get number of segments."""
+            return len(self._segments)
+            
+        def get_section(self, n):
+            """Get section by index."""
+            if 0 <= n < len(self._sections):
+                return self._sections[n]
+            return None
+            
+        def get_section_by_name(self, name):
+            """Get section by name."""
+            for section in self._sections:
+                if section.name == name:
+                    return section
+            return None
+            
+        def get_segment(self, n):
+            """Get segment by index."""
+            if 0 <= n < len(self._segments):
+                return self._segments[n]
+            return None
+            
+        def iter_sections(self):
+            """Iterate over sections."""
+            return iter(self._sections)
+            
+        def iter_segments(self):
+            """Iterate over segments."""
+            return iter(self._segments)
+            
+        def has_dwarf_info(self):
+            """Check if file has DWARF debug info."""
+            for section in self._sections:
+                if section.name.startswith('.debug_'):
+                    return True
+            return False
+            
+        def get_dwarf_info(self):
+            """Get DWARF info (basic fallback)."""
+            if not self.has_dwarf_info():
+                return None
+            return FallbackDWARFInfo(self)
+            
+        def get_machine_arch(self):
+            """Get machine architecture."""
+            if not self.header:
+                return "unknown"
+                
+            arch_map = {
+                0x03: "x86",
+                0x3E: "x64",
+                0x28: "ARM",
+                0xB7: "AArch64",
+                0x08: "MIPS",
+                0x14: "PowerPC",
+                0x02: "SPARC"
+            }
+            return arch_map.get(self.header.e_machine, f"Unknown({self.header.e_machine})")
+    
+    class FallbackSection:
+        """Functional ELF section implementation."""
+        
+        def __init__(self, header, name, stream):
+            """Initialize section."""
+            self.header = header
+            self.name = name
+            self.stream = stream
+            self._data = None
+            
+        def data(self):
+            """Get section data."""
+            if self._data is None and self.header.sh_type != ENUM_SH_TYPE.SHT_NOBITS:
+                self.stream.seek(self.header.sh_offset)
+                self._data = self.stream.read(self.header.sh_size)
+            return self._data or b''
+            
+        def is_null(self):
+            """Check if section is null."""
+            return self.header.sh_type == ENUM_SH_TYPE.SHT_NULL
+            
+        @property
+        def data_size(self):
+            """Get data size."""
+            return self.header.sh_size
+            
+        @property
+        def data_alignment(self):
+            """Get data alignment."""
+            return self.header.sh_addralign
+    
+    class FallbackStringTableSection(FallbackSection):
+        """String table section."""
+        
+        def get_string(self, offset):
+            """Get string at offset."""
+            data = self.data()
+            if offset >= len(data):
+                return ""
+                
+            end = data.find(b'\x00', offset)
+            if end == -1:
+                end = len(data)
+                
+            return data[offset:end].decode('latin-1', errors='ignore')
+    
+    class FallbackSymbol:
+        """Symbol representation."""
+        
+        def __init__(self, st_name, st_value, st_size, st_info, st_other, st_shndx, name=""):
+            """Initialize symbol."""
+            self.st_name = st_name
+            self.st_value = st_value
+            self.st_size = st_size
+            self.st_info = st_info
+            self.st_other = st_other
+            self.st_shndx = st_shndx
+            self.name = name
+            
+            # Parse symbol type and binding
+            self.st_bind = (st_info >> 4) & 0x0F
+            self.st_type = st_info & 0x0F
+            
+        @property
+        def entry(self):
+            """Get symbol entry."""
+            return Container(
+                st_name=self.st_name,
+                st_value=self.st_value,
+                st_size=self.st_size,
+                st_info=self.st_info,
+                st_other=self.st_other,
+                st_shndx=self.st_shndx
+            )
+    
+    class FallbackSymbolTableSection(FallbackSection):
+        """Symbol table section."""
+        
+        def __init__(self, header, name, stream, elffile):
+            """Initialize symbol table."""
+            super().__init__(header, name, stream)
+            self.elffile = elffile
+            self._symbols = []
+            self._parse_symbols()
+            
+        def _parse_symbols(self):
+            """Parse symbol table."""
+            data = self.data()
+            if not data:
+                return
+                
+            # Get string table for symbol names
+            strtab = None
+            if self.header.sh_link < len(self.elffile._sections):
+                strtab = self.elffile._sections[self.header.sh_link]
+                
+            endian = '<' if self.elffile.little_endian else '>'
+            
+            if self.elffile.elfclass == 32:
+                # 32-bit symbol entry
+                entry_size = 16
+                entry_format = f'{endian}IIIBBH'
+            else:
+                # 64-bit symbol entry
+                entry_size = 24
+                entry_format = f'{endian}IBBHQQ'
+                
+            offset = 0
+            while offset + entry_size <= len(data):
+                if self.elffile.elfclass == 32:
+                    (st_name, st_value, st_size, st_info,
+                     st_other, st_shndx) = struct.unpack(entry_format, data[offset:offset+entry_size])
+                else:
+                    (st_name, st_info, st_other, st_shndx,
+                     st_value, st_size) = struct.unpack(entry_format, data[offset:offset+entry_size])
+                        
+                # Get symbol name
+                name = ""
+                if strtab and isinstance(strtab, FallbackStringTableSection):
+                    name = strtab.get_string(st_name)
+                        
+                symbol = FallbackSymbol(st_name, st_value, st_size, st_info, st_other, st_shndx, name)
+                self._symbols.append(symbol)
+                offset += entry_size
+                
+        def get_symbol(self, index):
+            """Get symbol by index."""
+            if 0 <= index < len(self._symbols):
+                return self._symbols[index]
+            return None
+            
+        def num_symbols(self):
+            """Get number of symbols."""
+            return len(self._symbols)
+            
+        def iter_symbols(self):
+            """Iterate over symbols."""
+            return iter(self._symbols)
+    
+    class FallbackRelocation:
+        """Relocation entry."""
+        
+        def __init__(self, r_offset, r_info, r_addend=0):
+            """Initialize relocation."""
+            self.r_offset = r_offset
+            self.r_info = r_info
+            self.r_addend = r_addend
+            
+            # Parse symbol and type
+            if self.r_info:
+                self.r_sym = r_info >> 32 if r_info > 0xFFFFFFFF else r_info >> 8
+                self.r_type = r_info & 0xFFFFFFFF if r_info > 0xFFFFFFFF else r_info & 0xFF
+            else:
+                self.r_sym = 0
+                self.r_type = 0
+                
+        @property
+        def entry(self):
+            """Get relocation entry."""
+            return Container(
+                r_offset=self.r_offset,
+                r_info=self.r_info,
+                r_addend=self.r_addend
+            )
+    
+    class FallbackRelocationSection(FallbackSection):
+        """Relocation section."""
+        
+        def __init__(self, header, name, stream, elffile):
+            """Initialize relocation section."""
+            super().__init__(header, name, stream)
+            self.elffile = elffile
+            self._relocations = []
+            self._parse_relocations()
+            
+        def _parse_relocations(self):
+            """Parse relocations."""
+            data = self.data()
+            if not data:
+                return
+                
+            endian = '<' if self.elffile.little_endian else '>'
+            is_rela = self.header.sh_type == ENUM_SH_TYPE.SHT_RELA
+            
+            if self.elffile.elfclass == 32:
+                # 32-bit relocation entry
+                entry_size = 12 if is_rela else 8
+                entry_format = f'{endian}II' + ('i' if is_rela else '')
+            else:
+                # 64-bit relocation entry
+                entry_size = 24 if is_rela else 16
+                entry_format = f'{endian}QQ' + ('q' if is_rela else '')
+                
+            offset = 0
+            while offset + entry_size <= len(data):
+                if is_rela:
+                    r_offset, r_info, r_addend = struct.unpack(entry_format, data[offset:offset+entry_size])
+                else:
+                    r_offset, r_info = struct.unpack(entry_format, data[offset:offset+entry_size])
+                    r_addend = 0
+                        
+                reloc = FallbackRelocation(r_offset, r_info, r_addend)
+                self._relocations.append(reloc)
+                offset += entry_size
+                
+        def num_relocations(self):
+            """Get number of relocations."""
+            return len(self._relocations)
+            
+        def get_relocation(self, index):
+            """Get relocation by index."""
+            if 0 <= index < len(self._relocations):
+                return self._relocations[index]
+            return None
+            
+        def iter_relocations(self):
+            """Iterate over relocations."""
+            return iter(self._relocations)
+    
+    class FallbackDynamic:
+        """Dynamic entry."""
+        
+        def __init__(self, d_tag, d_val):
+            """Initialize dynamic entry."""
+            self.d_tag = d_tag
+            self.d_val = d_val
+            
+        @property
+        def entry(self):
+            """Get dynamic entry."""
+            return Container(d_tag=self.d_tag, d_val=self.d_val)
+    
+    class FallbackDynamicSection(FallbackSection):
+        """Dynamic section."""
+        
+        def __init__(self, header, name, stream, elffile):
+            """Initialize dynamic section."""
+            super().__init__(header, name, stream)
+            self.elffile = elffile
+            self._dynamics = []
+            self._parse_dynamics()
+            
+        def _parse_dynamics(self):
+            """Parse dynamic entries."""
+            data = self.data()
+            if not data:
+                return
+                
+            endian = '<' if self.elffile.little_endian else '>'
+            
+            if self.elffile.elfclass == 32:
+                # 32-bit dynamic entry
+                entry_size = 8
+                entry_format = f'{endian}II'
+            else:
+                # 64-bit dynamic entry
+                entry_size = 16
+                entry_format = f'{endian}QQ'
+                
+            offset = 0
+            while offset + entry_size <= len(data):
+                d_tag, d_val = struct.unpack(entry_format, data[offset:offset+entry_size])
+                
+                if d_tag == ENUM_D_TAG.DT_NULL:
+                    break
+                        
+                dyn = FallbackDynamic(d_tag, d_val)
+                self._dynamics.append(dyn)
+                offset += entry_size
+                
+        def iter_tags(self):
+            """Iterate over dynamic tags."""
+            return iter(self._dynamics)
+            
+        def get_tag(self, tag):
+            """Get dynamic entry by tag."""
+            for dyn in self._dynamics:
+                if dyn.d_tag == tag:
+                    return dyn
+            return None
+    
+    class FallbackNoteSection(FallbackSection):
+        """Note section."""
+        
+        def iter_notes(self):
+            """Iterate over notes."""
+            data = self.data()
+            offset = 0
+            
+            while offset < len(data):
+                if offset + 12 > len(data):
+                    break
+                    
+                # Parse note header
+                n_namesz, n_descsz, n_type = struct.unpack('<III', data[offset:offset+12])
+                offset += 12
+                
+                # Read name
+                if n_namesz:
+                    name = data[offset:offset+n_namesz].rstrip(b'\x00')
+                    offset += (n_namesz + 3) & ~3  # Align to 4 bytes
+                else:
+                    name = b''
+                    
+                # Read descriptor
+                if n_descsz:
+                    desc = data[offset:offset+n_descsz]
+                    offset += (n_descsz + 3) & ~3  # Align to 4 bytes
+                else:
+                    desc = b''
+                    
+                yield Container(n_type=n_type, n_name=name, n_desc=desc)
+    
+    class FallbackSegment:
+        """Functional ELF segment implementation."""
+        
+        def __init__(self, header, stream):
+            """Initialize segment."""
+            self.header = header
+            self.stream = stream
+            self._data = None
+            
+        def data(self):
+            """Get segment data."""
+            if self._data is None and self.header.p_filesz > 0:
+                self.stream.seek(self.header.p_offset)
+                self._data = self.stream.read(self.header.p_filesz)
+            return self._data or b''
+            
+        @property
+        def p_type(self):
+            """Get segment type."""
+            return self.header.p_type
+            
+        @property
+        def p_flags(self):
+            """Get segment flags."""
+            return self.header.p_flags
+            
+        @property
+        def p_offset(self):
+            """Get file offset."""
+            return self.header.p_offset
+            
+        @property
+        def p_vaddr(self):
+            """Get virtual address."""
+            return self.header.p_vaddr
+            
+        @property
+        def p_paddr(self):
+            """Get physical address."""
+            return self.header.p_paddr
+            
+        @property
+        def p_filesz(self):
+            """Get file size."""
+            return self.header.p_filesz
+            
+        @property
+        def p_memsz(self):
+            """Get memory size."""
+            return self.header.p_memsz
+            
+        @property
+        def p_align(self):
+            """Get alignment."""
+            return self.header.p_align
+    
+    class FallbackInterpSegment(FallbackSegment):
+        """Interpreter segment."""
+        
+        def get_interp_name(self):
+            """Get interpreter name."""
+            data = self.data()
+            if data:
+                return data.rstrip(b'\x00').decode('latin-1', errors='ignore')
+            return ""
+    
+    class FallbackNoteSegment(FallbackSegment):
+        """Note segment."""
+        
+        def iter_notes(self):
+            """Iterate over notes."""
+            data = self.data()
+            offset = 0
+            
+            while offset < len(data):
+                if offset + 12 > len(data):
+                    break
+                    
+                # Parse note header
+                n_namesz, n_descsz, n_type = struct.unpack('<III', data[offset:offset+12])
+                offset += 12
+                
+                # Read name
+                if n_namesz:
+                    name = data[offset:offset+n_namesz].rstrip(b'\x00')
+                    offset += (n_namesz + 3) & ~3  # Align to 4 bytes
+                else:
+                    name = b''
+                    
+                # Read descriptor
+                if n_descsz:
+                    desc = data[offset:offset+n_descsz]
+                    offset += (n_descsz + 3) & ~3  # Align to 4 bytes
+                else:
+                    desc = b''
+                    
+                yield Container(n_type=n_type, n_name=name, n_desc=desc)
+    
+    class FallbackDWARFInfo:
+        """Basic DWARF info fallback."""
+        
+        def __init__(self, elffile):
+            """Initialize DWARF info."""
+            self.elffile = elffile
+            
+        def iter_CUs(self):
+            """Iterate over compilation units (empty for fallback)."""
+            return iter([])
+            
+        def get_DIE_from_refaddr(self, refaddr):
+            """Get DIE from reference address."""
+            return None
+    
+    class FallbackDIE:
+        """Debug Information Entry."""
+        
+        def __init__(self, tag, attributes=None):
+            """Initialize DIE."""
+            self.tag = tag
+            self.attributes = attributes or {}
+            
+        def get_parent(self):
+            """Get parent DIE."""
+            return None
+            
+        def iter_children(self):
+            """Iterate over children."""
+            return iter([])
+    
+    # Description functions
+    def describe_e_type(e_type):
+        """Describe ELF type."""
+        types = {
+            ENUM_E_TYPE.ET_NONE: "NONE (No file type)",
+            ENUM_E_TYPE.ET_REL: "REL (Relocatable file)",
+            ENUM_E_TYPE.ET_EXEC: "EXEC (Executable file)",
+            ENUM_E_TYPE.ET_DYN: "DYN (Shared object file)",
+            ENUM_E_TYPE.ET_CORE: "CORE (Core file)"
+        }
+        return types.get(e_type, f"Unknown type {e_type}")
+    
+    def describe_p_type(p_type):
+        """Describe program header type."""
+        types = {
+            0: "PT_NULL",
+            1: "PT_LOAD",
+            2: "PT_DYNAMIC",
+            3: "PT_INTERP",
+            4: "PT_NOTE",
+            5: "PT_SHLIB",
+            6: "PT_PHDR",
+            7: "PT_TLS"
+        }
+        return types.get(p_type, f"Unknown type {p_type}")
+    
+    def describe_sh_type(sh_type):
+        """Describe section type."""
+        types = {
+            ENUM_SH_TYPE.SHT_NULL: "NULL",
+            ENUM_SH_TYPE.SHT_PROGBITS: "PROGBITS",
+            ENUM_SH_TYPE.SHT_SYMTAB: "SYMTAB",
+            ENUM_SH_TYPE.SHT_STRTAB: "STRTAB",
+            ENUM_SH_TYPE.SHT_RELA: "RELA",
+            ENUM_SH_TYPE.SHT_HASH: "HASH",
+            ENUM_SH_TYPE.SHT_DYNAMIC: "DYNAMIC",
+            ENUM_SH_TYPE.SHT_NOTE: "NOTE",
+            ENUM_SH_TYPE.SHT_NOBITS: "NOBITS",
+            ENUM_SH_TYPE.SHT_REL: "REL",
+            ENUM_SH_TYPE.SHT_SHLIB: "SHLIB",
+            ENUM_SH_TYPE.SHT_DYNSYM: "DYNSYM"
+        }
+        return types.get(sh_type, f"Unknown type {sh_type}")
+    
+    # DWARF constants
+    DW_TAG_compile_unit = 0x11
+    
+    # Assign classes
+    ELFFile = FallbackELFFile
+    Section = FallbackSection
+    StringTableSection = FallbackStringTableSection
+    SymbolTableSection = FallbackSymbolTableSection
+    Symbol = FallbackSymbol
+    RelocationSection = FallbackRelocationSection
+    Relocation = FallbackRelocation
+    DynamicSection = FallbackDynamicSection
+    Dynamic = FallbackDynamic
+    NoteSection = FallbackNoteSection
+    Segment = FallbackSegment
+    InterpSegment = FallbackInterpSegment
+    NoteSegment = FallbackNoteSegment
+    DynamicSegment = FallbackSegment  # Alias
+    DWARFInfo = FallbackDWARFInfo
+    DIE = FallbackDIE
+
+
+# Export all pyelftools objects and availability flag
+__all__ = [
+    # Availability flags
+    "HAS_PYELFTOOLS", "PYELFTOOLS_VERSION",
+    # Main classes
+    "ELFFile", "Section", "StringTableSection", "SymbolTableSection",
+    "Symbol", "RelocationSection", "Relocation", "DynamicSection",
+    "Dynamic", "NoteSection", "Segment", "InterpSegment", "NoteSegment",
+    "DynamicSegment", "DWARFInfo", "DIE",
+    # Constants
+    "E_FLAGS", "P_FLAGS", "SH_FLAGS", "SHN_INDICES",
+    "ENUM_E_TYPE", "ENUM_SH_TYPE", "ENUM_D_TAG",
+    "DW_TAG_compile_unit",
+    # Exceptions
+    "ELFError", "ELFParseError", "DWARFError",
+    # Utilities
+    "bytes2str", "str2bytes", "Container", "Struct",
+    # Description functions
+    "describe_e_type", "describe_p_type", "describe_sh_type",
+]
