@@ -15,12 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-QEMU Test Results Dialog
-
-Shows real execution results from QEMU sandbox testing.
-"""
-
 import json
 import re
 import time
@@ -46,6 +40,12 @@ from PyQt6.QtWidgets import (
 
 from ...ai.qemu_test_manager import ExecutionResult, QEMUTestManager
 from ...utils.logger import get_logger
+
+"""
+QEMU Test Results Dialog
+
+Shows real execution results from QEMU sandbox testing.
+"""
 
 logger = get_logger(__name__)
 

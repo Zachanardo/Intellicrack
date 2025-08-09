@@ -13,20 +13,16 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
 
-"""Import checking utilities for validating module availability."""
-import platform
-
-from intellicrack.logger import logger
-
-"""
-Common import availability checks for Intellicrack.
+Import checking utilities for validating module availability.
 
 This module consolidates repeated import checking patterns
 to avoid code duplication across modules.
 """
 
+import platform
+
+from intellicrack.logger import logger
 
 # Binary analysis libraries
 try:

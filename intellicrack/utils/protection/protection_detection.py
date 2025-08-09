@@ -914,7 +914,7 @@ def detect_tpm_protection(binary_path: str) -> dict[str, Any]:
 
 
 def detect_anti_debugging(binary_path: str) -> dict[str, Any]:
-    """Alias for detect_anti_debugging_techniques."""
+    """Alias for ``detect_anti_debugging_techniques``."""
     return detect_anti_debugging_techniques(binary_path)
 
 
@@ -924,7 +924,7 @@ def detect_vm_detection(binary_path: str) -> dict[str, Any]:
 
 
 def detect_self_healing(binary_path: str) -> dict[str, Any]:
-    """Alias for detect_self_healing_code."""
+    """Alias for ``detect_self_healing_code``."""
     return detect_self_healing_code(binary_path)
 
 

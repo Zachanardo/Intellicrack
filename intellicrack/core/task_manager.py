@@ -1,6 +1,21 @@
 """Task management system for Intellicrack.
 
 This module provides task scheduling, execution, and monitoring capabilities
+
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 for asynchronous operations and distributed processing.
 """
 
@@ -33,15 +48,22 @@ class TaskStatus(Enum):
 class TaskSignals(QObject):
     """Signals for task communication."""
 
-    started = pyqtSignal(str)  # task_id
-    progress = pyqtSignal(str, int, str)  # task_id, percentage, message
-    result = pyqtSignal(str, object)  # task_id, result
-    error = pyqtSignal(str, str, str)  # task_id, error_type, error_message
-    finished = pyqtSignal(str)  # task_id
+    #: Signal emitted when task starts (type: task_id: str)
+    started = pyqtSignal(str)
+    #: Signal emitted when task progress updates (type: task_id: str, percentage: int, message: str)
+    progress = pyqtSignal(str, int, str)
+    #: Signal emitted when task returns result (type: task_id: str, result: object)
+    result = pyqtSignal(str, object)
+    #: Signal emitted when task error occurs (type: task_id: str, error_type: str, error_message: str)
+    error = pyqtSignal(str, str, str)
+    #: Signal emitted when task finishes (type: task_id: str)
+    finished = pyqtSignal(str)
 
 
 # Create a metaclass that resolves the conflict between QRunnable and ABC
 class TaskMeta(type(QRunnable), type(ABC)):
+    """Metaclass to resolve conflicts between QRunnable and ABC."""
+
     pass
 
 
@@ -159,8 +181,11 @@ class TaskManager(QObject):
     """Manages background tasks using QThreadPool."""
 
     # Signals for task manager events
-    task_submitted = pyqtSignal(str, str)  # task_id, description
+    #: Signal emitted when a task is submitted (type: task_id: str, description: str)
+    task_submitted = pyqtSignal(str, str)
+    #: Signal emitted when all tasks complete (type: no parameters)
     all_tasks_completed = pyqtSignal()
+    #: Signal emitted when active task count changes (type: count: int)
     active_task_count_changed = pyqtSignal(int)
 
     def __init__(self, max_thread_count: int | None = None):

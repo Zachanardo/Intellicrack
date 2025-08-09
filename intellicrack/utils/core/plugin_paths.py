@@ -1,8 +1,5 @@
-"""Plugin path management utilities for locating and managing plugin directories."""
+"""Plugin path management utilities for locating and managing plugin directories.
 
-from intellicrack.logger import logger
-
-"""
 Plugin Path Discovery Utility
 Provides centralized path management for Intellicrack components
 
@@ -26,8 +23,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
-
 from pathlib import Path
+
+from intellicrack.logger import logger
 
 from ..resource_helper import get_resource_path
 

@@ -34,8 +34,12 @@ except ImportError:
             torch.device: CPU device instance.
 
         """
-        import torch
-
+        from ..utils.torch_gil_safety import safe_torch_import
+        
+        torch = safe_torch_import()
+        if torch is None:
+            # Return string representation if torch not available
+            return "cpu"
         return torch.device("cpu")
 
     def get_gpu_info():
@@ -94,7 +98,10 @@ class GPUIntegration:
         # Add additional runtime info if available
         if GPU_AUTOLOADER_AVAILABLE:
             try:
-                import torch
+                from ..utils.torch_gil_safety import safe_torch_import
+                torch = safe_torch_import()
+                if torch is None:
+                    raise ImportError("PyTorch not available")
 
                 if self.gpu_info["type"] == "intel_xpu" and hasattr(torch, "xpu"):
                     info["runtime"] = {

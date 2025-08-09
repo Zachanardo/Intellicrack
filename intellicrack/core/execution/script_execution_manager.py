@@ -36,10 +36,14 @@ class ScriptExecutionManager(QObject):
     """Central manager for all script executions with optional QEMU testing."""
 
     # Signals
-    execution_started = pyqtSignal(str, str)  # script_type, target_binary
-    execution_completed = pyqtSignal(str, bool, dict)  # script_type, success, results
-    qemu_test_started = pyqtSignal(str, str)  # script_type, target_binary
-    qemu_test_completed = pyqtSignal(str, bool, dict)  # script_type, success, results
+    #: Signal emitted when script execution starts (type: script_type: str, target_binary: str)
+    execution_started = pyqtSignal(str, str)
+    #: Signal emitted when script execution completes (type: script_type: str, success: bool, results: dict)
+    execution_completed = pyqtSignal(str, bool, dict)
+    #: Signal emitted when QEMU test starts (type: script_type: str, target_binary: str)
+    qemu_test_started = pyqtSignal(str, str)
+    #: Signal emitted when QEMU test completes (type: script_type: str, success: bool, results: dict)
+    qemu_test_completed = pyqtSignal(str, bool, dict)
 
     def __init__(self):
         """Initialize the script execution manager with task queues and monitoring."""

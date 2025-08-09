@@ -61,9 +61,11 @@ logger = get_logger(__name__)
 class AdvancedAnalysisThread(QThread):
     """Thread for running advanced protection analysis"""
 
-    analysis_complete = pyqtSignal(object)  # AdvancedProtectionAnalysis
+    #: AdvancedProtectionAnalysis (type: object)
+    analysis_complete = pyqtSignal(object)
     analysis_error = pyqtSignal(str)
-    analysis_progress = pyqtSignal(str, int)  # message, percentage
+    #: message, percentage (type: str, int)
+    analysis_progress = pyqtSignal(str, int)
 
     def __init__(
         self, file_path: str, scan_mode: ScanMode, enable_heuristic: bool, extract_strings: bool
@@ -168,8 +170,10 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
     """Advanced widget for DIE protection detection with full feature access"""
 
     # Signals
-    protection_detected = pyqtSignal(str, list)  # protection_name, bypass_recommendations
-    analysis_requested = pyqtSignal(str)  # file_path
+    #: protection_name, bypass_recommendations (type: str, list)
+    protection_detected = pyqtSignal(str, list)
+    #: file_path (type: str)
+    analysis_requested = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Initialize advanced protection widget with parent widget and UI components."""

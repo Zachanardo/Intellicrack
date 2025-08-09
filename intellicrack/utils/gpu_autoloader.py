@@ -37,15 +37,24 @@ class GPUAutoLoader:
             self._try_cpu_fallback()
             return True
 
+        # Check if Intel XPU should be skipped due to GIL issues
+        skip_intel = os.environ.get("INTELLICRACK_SKIP_INTEL_XPU", "").lower() in ("1", "true", "yes")
+        
         logger.info("Starting GPU auto-detection...")
 
-        methods = [
-            self._try_intel_xpu,
+        methods = []
+        
+        if not skip_intel:
+            methods.append(self._try_intel_xpu)
+        else:
+            logger.info("Skipping Intel XPU due to environment variable")
+            
+        methods.extend([
             self._try_nvidia_cuda,
             self._try_amd_rocm,
             self._try_directml,
             self._try_cpu_fallback,
-        ]
+        ])
 
         for method in methods:
             try:
@@ -58,6 +67,10 @@ class GPUAutoLoader:
                     return True
             except Exception as e:
                 logger.debug(f"Method {method.__name__} failed: {e}")
+                # If Intel XPU fails with pybind11 error, automatically skip it in future runs
+                if method.__name__ == "_try_intel_xpu" and "pybind11" in str(e).lower():
+                    logger.warning("Intel XPU failed with pybind11 GIL error, will skip Intel XPU")
+                    os.environ["INTELLICRACK_SKIP_INTEL_XPU"] = "1"
                 continue
 
         logger.warning("No GPU acceleration available, using CPU")
@@ -94,48 +107,68 @@ class GPUAutoLoader:
                     # Inject the conda environment's packages
                     self._inject_conda_packages(conda_env["path"])
 
-            # Try to import
-            import torch
+            # Use thread-safe PyTorch import
+            from ..utils.torch_gil_safety import safe_torch_import
+            torch = safe_torch_import()
+            if torch is None:
+                return False
 
             self._torch = torch
 
-            # Check for Intel Extension
+            # Check for Intel Extension with GIL safety handling
             try:
+                # Import with caution due to potential GIL issues
                 import intel_extension_for_pytorch as ipex
-
                 self._ipex = ipex
-            except ImportError:
-                logger.debug("Intel Extension for PyTorch not available")
+                logger.debug("Intel Extension for PyTorch imported successfully")
+            except (ImportError, RuntimeError) as e:
+                logger.debug(f"Intel Extension for PyTorch not available or failed to load: {e}")
+                # Continue with regular PyTorch without IPEX optimizations
+                self._ipex = None
+
+            # Check XPU availability with defensive programming
+            try:
+                if hasattr(torch, "xpu") and torch.xpu.is_available():
+                    self.gpu_available = True
+                    self.gpu_type = "intel_xpu"
+                    self._device = torch.device("xpu")
+                    self._device_string = "xpu"
+
+                    # Get detailed info with error handling
+                    try:
+                        device_count = torch.xpu.device_count()
+                        self.gpu_info = {
+                            "device_count": device_count,
+                            "backend": "Intel Extension for PyTorch",
+                            "driver_version": torch.xpu.get_driver_version()
+                            if hasattr(torch.xpu, "get_driver_version")
+                            else "Unknown",
+                        }
+
+                        # Get info for first device
+                        if device_count > 0:
+                            try:
+                                self.gpu_info["device_name"] = torch.xpu.get_device_name(0)
+                                props = torch.xpu.get_device_properties(0)
+                                self.gpu_info["total_memory"] = (
+                                    f"{props.total_memory / (1024**3):.1f} GB"
+                                    if hasattr(props, "total_memory")
+                                    else "Unknown"
+                                )
+                            except Exception as e:
+                                logger.debug(f"Failed to get XPU device info: {e}")
+                    except Exception as e:
+                        logger.debug(f"Failed to get XPU detailed info: {e}")
+                        self.gpu_info = {"backend": "Intel Extension for PyTorch (Limited Info)"}
+
+                    return True
+                else:
+                    logger.debug("XPU not available or torch.xpu not present")
+            except Exception as e:
+                logger.debug(f"XPU availability check failed: {e}")
+                # If XPU check fails due to GIL issues, fall back to CPU with warning
+                logger.warning(f"Intel XPU initialization failed due to GIL/pybind11 issues: {e}")
                 return False
-
-            # Check XPU availability
-            if hasattr(torch, "xpu") and torch.xpu.is_available():
-                self.gpu_available = True
-                self.gpu_type = "intel_xpu"
-                self._device = torch.device("xpu")
-                self._device_string = "xpu"
-
-                # Get detailed info
-                device_count = torch.xpu.device_count()
-                self.gpu_info = {
-                    "device_count": device_count,
-                    "backend": "Intel Extension for PyTorch",
-                    "driver_version": torch.xpu.get_driver_version()
-                    if hasattr(torch.xpu, "get_driver_version")
-                    else "Unknown",
-                }
-
-                # Get info for first device
-                if device_count > 0:
-                    self.gpu_info["device_name"] = torch.xpu.get_device_name(0)
-                    props = torch.xpu.get_device_properties(0)
-                    self.gpu_info["total_memory"] = (
-                        f"{props.total_memory / (1024**3):.1f} GB"
-                        if hasattr(props, "total_memory")
-                        else "Unknown"
-                    )
-
-                return True
 
             return False
 
@@ -146,7 +179,11 @@ class GPUAutoLoader:
     def _try_nvidia_cuda(self) -> bool:
         """Try to use NVIDIA CUDA"""
         try:
-            import torch
+            # Use thread-safe PyTorch import
+            from ..utils.torch_gil_safety import safe_torch_import
+            torch = safe_torch_import()
+            if torch is None:
+                return False
 
             self._torch = torch
 
@@ -182,7 +219,11 @@ class GPUAutoLoader:
     def _try_amd_rocm(self) -> bool:
         """Try to use AMD ROCm"""
         try:
-            import torch
+            # Use thread-safe PyTorch import
+            from ..utils.torch_gil_safety import safe_torch_import
+            torch = safe_torch_import()
+            if torch is None:
+                return False
 
             self._torch = torch
 
@@ -224,7 +265,11 @@ class GPUAutoLoader:
     def _try_directml(self) -> bool:
         """Try to use DirectML (works with Intel Arc on Windows)"""
         try:
-            import torch
+            # Use thread-safe PyTorch import
+            from ..utils.torch_gil_safety import safe_torch_import
+            torch = safe_torch_import()
+            if torch is None:
+                return False
 
             self.gpu_available = True
             self.gpu_type = "directml"
@@ -247,7 +292,11 @@ class GPUAutoLoader:
     def _try_cpu_fallback(self) -> bool:
         """Fallback to CPU"""
         try:
-            import torch
+            # Use thread-safe PyTorch import
+            from ..utils.torch_gil_safety import safe_torch_import
+            torch = safe_torch_import()
+            if torch is None:
+                return False
 
             self._torch = torch
             self.gpu_available = False

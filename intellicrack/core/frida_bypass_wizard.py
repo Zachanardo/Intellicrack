@@ -78,10 +78,10 @@ class BypassStrategy:
             dependencies: Other protections that must be bypassed first
 
         Attributes:
-            success_indicators: Patterns indicating successful bypass
-            failure_indicators: Patterns indicating bypass failure
-            applied: Whether this strategy has been applied
-            success: True/False/None for success status
+            success_indicators (list): Patterns indicating successful bypass
+            failure_indicators (list): Patterns indicating bypass failure
+            applied (bool): Whether this strategy has been applied
+            success (bool or None): Success status (True/False/None)
 
         """
         self.protection_type = protection_type
@@ -149,14 +149,14 @@ class FridaBypassWizard:
             frida_manager: Instance of FridaManager for script execution
 
         Attributes:
-            state: Current wizard state
-            session_id: Active Frida session ID
-            target_process: Target process information
-            config: Active wizard configuration
-            mode: Operating mode (safe/balanced/aggressive/stealth/analysis)
-            detected_protections: Map of detected protection types
-            strategies: List of planned bypass strategies
-            metrics: Performance and success metrics
+            state (str): Current wizard state
+            session_id (str): Active Frida session ID
+            target_process (dict): Target process information
+            config (dict): Active wizard configuration
+            mode (str): Operating mode (safe/balanced/aggressive/stealth/analysis)
+            detected_protections (dict): Map of detected protection types
+            strategies (list): List of planned bypass strategies
+            metrics (dict): Performance and success metrics
 
         """
         self.frida_manager = frida_manager
@@ -351,6 +351,7 @@ class FridaBypassWizard:
             - Creates and loads temporary analysis script
             - Updates analysis_results dictionary
             - Updates progress to 20%
+
         """
         try:
             # Basic process analysis
@@ -512,6 +513,7 @@ class FridaBypassWizard:
         Side Effects:
             - Updates metrics['protections_detected']
             - Updates progress for each detection
+
         """
         try:
             # Get detection results from FridaManager
@@ -553,6 +555,7 @@ class FridaBypassWizard:
         """Analyze imported functions for protection indicators.
 
         Maps common protection-related API imports to protection types:
+        
         - Debugger detection APIs -> ANTI_DEBUG
         - VM detection APIs -> ANTI_VM
         - Timing APIs -> TIME based protections
@@ -565,6 +568,7 @@ class FridaBypassWizard:
         Complexity:
             Time: O(n) where n is number of imports
             Space: O(1)
+
         """
         protection_imports = {
             "IsDebuggerPresent": ProtectionType.ANTI_DEBUG,
@@ -593,6 +597,7 @@ class FridaBypassWizard:
         """Analyze strings for protection indicators.
 
         Searches collected strings for keywords indicating protections:
+        
         - 'license', 'trial' -> LICENSE protection
         - 'expire' -> TIME based protection
         - 'debug' -> ANTI_DEBUG
@@ -606,6 +611,7 @@ class FridaBypassWizard:
         Complexity:
             Time: O(n*m) where n is strings, m is patterns
             Space: O(p) where p is detected protections
+
         """
         protection_patterns = {
             "license": ProtectionType.LICENSE,
@@ -669,6 +675,7 @@ class FridaBypassWizard:
         Side Effects:
             - Populates self.strategies list
             - Updates progress to 50%
+
         """
         try:
             # Clear previous strategies
@@ -721,6 +728,7 @@ class FridaBypassWizard:
         """Apply bypass strategies in order.
 
         Executes each bypass strategy sequentially:
+        
         1. Checks if dependencies are satisfied
         2. Loads and executes bypass scripts
         3. Tracks success/failure for each strategy
@@ -737,6 +745,7 @@ class FridaBypassWizard:
         Complexity:
             Time: O(n*m) where n is strategies, m is scripts per strategy
             Space: O(n) for tracking results
+
         """
         try:
             completed_protections = set()
@@ -847,6 +856,7 @@ class FridaBypassWizard:
             - May load additional verification scripts
             - Triggers adaptive retry for failures
             - Updates progress to 95%
+
         """
         try:
             # Wait for bypasses to take effect
@@ -1313,6 +1323,7 @@ class FridaBypassWizard:
             - Changes state to FAILED
             - Updates progress with stop message
             - Does not clean up already applied bypasses
+
         """
         if self.state not in [WizardState.COMPLETE, WizardState.FAILED, WizardState.IDLE]:
             self._update_state(WizardState.FAILED)

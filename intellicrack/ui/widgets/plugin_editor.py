@@ -46,6 +46,7 @@ from PyQt6.QtWidgets import (
 )
 
 from intellicrack.logger import logger
+
 from .syntax_highlighters import JavaScriptHighlighter, PythonHighlighter
 
 
@@ -88,7 +89,8 @@ class PluginEditor(QWidget):
 
     textChanged = pyqtSignal()
     validationComplete = pyqtSignal(dict)
-    saveRequested = pyqtSignal(str)  # Emits file path
+    #: Emits file path (type: str)
+    saveRequested = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Initialize plugin editor with validation and UI setup."""

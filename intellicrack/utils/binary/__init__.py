@@ -21,4 +21,11 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 # Import PE common functions
 from .pe_common import extract_pe_imports, iterate_pe_imports_with_dll
 
-__all__ = ["extract_pe_imports", "iterate_pe_imports_with_dll"]
+# Import ELF analyzer
+try:
+    from .elf_analyzer import ELFAnalyzer, analyze_elf_file, is_elf_file, extract_elf_strings
+    _elf_imports = ["ELFAnalyzer", "analyze_elf_file", "is_elf_file", "extract_elf_strings"]
+except ImportError:
+    _elf_imports = []
+
+__all__ = ["extract_pe_imports", "iterate_pe_imports_with_dll"] + _elf_imports

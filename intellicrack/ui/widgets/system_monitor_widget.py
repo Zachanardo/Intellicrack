@@ -166,7 +166,8 @@ class SystemMonitorWidget(QWidget):
     """System monitoring widget for the Dashboard"""
 
     # Signals
-    alert_triggered = pyqtSignal(str, str)  # alert_type, message
+    #: alert_type, message (type: str, str)
+    alert_triggered = pyqtSignal(str, str)
 
     def __init__(self, parent=None):
         """Initialize system monitor widget with performance tracking and alerts."""

@@ -356,7 +356,8 @@ class FileTreeWidget(QTreeWidget):
 class CodeEditor(QPlainTextEdit):
     """Enhanced code editor with syntax highlighting and AI integration."""
 
-    content_changed = pyqtSignal(str)  # Emits file path when content changes
+    #: Signal emitted when content changes (str: file path)
+    content_changed = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Initialize the CodeEditor with default values."""

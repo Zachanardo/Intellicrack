@@ -39,7 +39,8 @@ logger = logging.getLogger(__name__)
 class ModelLoadingDialog(QDialog):
     """Dialog for managing model loading with progress tracking."""
 
-    model_loaded = pyqtSignal(str)  # model_id
+    #: model_id (type: str)
+    model_loaded = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Initialize the ModelLoadingDialog with default values."""

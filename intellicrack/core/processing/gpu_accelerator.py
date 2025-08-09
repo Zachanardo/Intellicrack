@@ -41,7 +41,7 @@ try:
 
     CUPY_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in gpu_accelerator: %s", e)
+    logger.debug("Optional dependency cupy not available: %s", e)
     CUPY_AVAILABLE = False
     cp = None
 

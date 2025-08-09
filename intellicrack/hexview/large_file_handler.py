@@ -286,8 +286,11 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
     """Background thread for loading file data."""
 
     # Signals for _Qt integration
+    #: Signal emitted when loading progress updates (type: int)
     progress_updated = pyqtSignal(int) if PYQT6_AVAILABLE else None
+    #: Signal emitted when a region is loaded (type: object)
     region_loaded = pyqtSignal(object) if PYQT6_AVAILABLE else None
+    #: Signal emitted when an error occurs (type: str)
     error_occurred = pyqtSignal(str) if PYQT6_AVAILABLE else None
 
     def __init__(self, file_path: str, cache: FileCache, config: MemoryConfig):

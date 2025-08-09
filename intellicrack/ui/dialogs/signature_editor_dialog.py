@@ -126,8 +126,10 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
 class SignatureTestWorker(QThread):
     """Worker thread for testing signatures against files"""
 
-    test_completed = pyqtSignal(str, bool, str)  # file_path, success, result
-    progress_update = pyqtSignal(int, str)  # progress, current_file
+    #: file_path, success, result (type: str, bool, str)
+    test_completed = pyqtSignal(str, bool, str)
+    #: progress, current_file (type: int, str)
+    progress_update = pyqtSignal(int, str)
 
     def __init__(self, signature_content: str, test_files: list[str]):
         """Initialize the SignatureTestWorker with default values."""

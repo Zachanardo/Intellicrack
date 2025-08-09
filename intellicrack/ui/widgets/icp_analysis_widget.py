@@ -35,7 +35,8 @@ logger = get_logger(__name__)
 class ICPAnalysisThread(QThread):
     """Background thread for ICP analysis"""
 
-    result_ready = pyqtSignal(object)  # ICPScanResult
+    #: ICPScanResult (type: object)
+    result_ready = pyqtSignal(object)
     error_occurred = pyqtSignal(str)
     progress_update = pyqtSignal(str)
 
@@ -76,8 +77,10 @@ class ICPAnalysisWidget(QWidget):
     """Widget for displaying ICP engine analysis results"""
 
     # Signals
-    analysis_complete = pyqtSignal(object)  # ICPScanResult
-    protection_selected = pyqtSignal(object)  # ICPDetection
+    #: ICPScanResult (type: object)
+    analysis_complete = pyqtSignal(object)
+    #: ICPDetection (type: object)
+    protection_selected = pyqtSignal(object)
 
     def __init__(self, parent=None):
         """Initialize the ICP analysis widget.

@@ -620,7 +620,7 @@ class TestFixtures:
             }
 
     def get_performance_metrics_tuple(self, test_results: List[TestResult]) -> Tuple[float, float, int]:
-        """Get performance metrics as a tuple (avg_time, avg_memory, total_tests)"""
+        """Get performance metrics as a tuple (``avg_time``, ``avg_memory``, ``total_tests``)"""
         if not test_results:
             return (0.0, 0.0, 0)
 

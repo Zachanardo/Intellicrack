@@ -41,8 +41,10 @@ class StructureVisualizerWidget(QWidget):
     """Interactive structure visualization widget for binary files"""
 
     # Signals
-    section_selected = pyqtSignal(str, dict)  # section_name, section_data
-    header_field_selected = pyqtSignal(str, str, Any)  # header_type, field_name, value
+    #: section_name, section_data (type: str, dict)
+    section_selected = pyqtSignal(str, dict)
+    #: header_type, field_name, value (type: str, str, Any)
+    header_field_selected = pyqtSignal(str, str, Any)
 
     def __init__(self, parent=None):
         """Initialize structure visualizer widget with binary structure analysis capabilities."""

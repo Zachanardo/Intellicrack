@@ -1,5 +1,4 @@
-"""
-Network License Server Emulator
+"""Network License Server Emulator
 
 Copyright (C) 2025 Zachary Flint
 

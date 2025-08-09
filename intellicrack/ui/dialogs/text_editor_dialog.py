@@ -261,8 +261,10 @@ class FindReplaceDialog(QDialog):
 class TextEditorDialog(QDialog):
     """Advanced text editor dialog for Intellicrack."""
 
-    file_saved = pyqtSignal(str)  # Emitted when file is saved
-    content_changed = pyqtSignal(bool)  # Emitted when content changes
+    #: Emitted when file is saved (type: str)
+    file_saved = pyqtSignal(str)
+    #: Emitted when content changes (type: bool)
+    content_changed = pyqtSignal(bool)
 
     def __init__(self, title="Text Editor", content="", syntax="python", parent=None):
         """Initialize text editor dialog with syntax highlighting and advanced editing features."""

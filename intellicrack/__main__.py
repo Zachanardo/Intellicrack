@@ -33,6 +33,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import sys
 
+# Disable pybind11 GIL assertions to prevent EnumType errors
+os.environ["PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF"] = "1"
+
 # Configure TensorFlow to prevent GPU initialization issues with Intel Arc B580
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow

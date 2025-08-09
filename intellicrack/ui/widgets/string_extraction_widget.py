@@ -12,9 +12,8 @@ import os
 import re
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtGui import QAction, QBrush, QColor
 from PyQt6.QtWidgets import (
-    QAction,
     QCheckBox,
     QComboBox,
     QFileDialog,
@@ -42,7 +41,8 @@ logger = get_logger(__name__)
 class StringExtractionThread(QThread):
     """Thread for extracting strings from binary files"""
 
-    strings_found = pyqtSignal(list)  # List of (offset, string, encoding)
+    #: List of (offset, string, encoding) (type: list)
+    strings_found = pyqtSignal(list)
     progress_update = pyqtSignal(int)
     error_occurred = pyqtSignal(str)
     status_update = pyqtSignal(str)
@@ -141,8 +141,10 @@ class StringExtractionWidget(QWidget):
     """String extraction widget with filtering and analysis"""
 
     # Signals
-    string_selected = pyqtSignal(int, str)  # offset, string
-    strings_exported = pyqtSignal(str)  # export path
+    #: offset, string (type: int, str)
+    string_selected = pyqtSignal(int, str)
+    #: export path (type: str)
+    strings_exported = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Initialize string extraction widget with empty state and UI setup."""

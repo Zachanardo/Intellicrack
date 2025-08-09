@@ -23,6 +23,7 @@ from threading import Thread
 from typing import Any
 
 from intellicrack.logger import logger
+from intellicrack.utils.torch_gil_safety import safe_torch_import, torch_thread_safe, _torch_lock
 
 """
 Model Manager Module
@@ -523,8 +524,10 @@ class ModelManager:
 
             elif model_type == "neural_network":
                 try:
-                    # Try PyTorch first
-                    import torch
+                    # Try PyTorch first with thread safety
+                    torch = safe_torch_import()
+                    if torch is None:
+                        raise ImportError("PyTorch not available")
                     from torch import nn
 
                     class SimpleNN(nn.Module):
@@ -543,9 +546,10 @@ class ModelManager:
                     # Create simple neural network
                     model = SimpleNN(10, 50, 2)  # Adjust sizes based on data
 
-                    # Use torch for basic operations to ensure import is used
-                    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-                    model = model.to(device)
+                    # Use torch for basic operations with thread safety
+                    with _torch_lock:
+                        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                        model = model.to(device)
 
                     self._last_trained_model = model
                     trained = True
@@ -557,7 +561,8 @@ class ModelManager:
 
                         model = keras.Sequential(
                             [
-                                keras.layers.Dense(50, activation="relu", input_shape=(10,)),
+                                keras.layers.Input(shape=(10,)),
+                                keras.layers.Dense(50, activation="relu"),
                                 keras.layers.Dense(2, activation="softmax"),
                             ]
                         )
@@ -628,12 +633,15 @@ class ModelManager:
                 logger.debug(f"Joblib not available for model saving: {e}")
 
             if not saved:
-                # Try PyTorch save
+                # Try PyTorch save with thread safety
                 try:
-                    import torch
+                    torch = safe_torch_import()
+                    if torch is None:
+                        raise ImportError("PyTorch not available")
 
                     if hasattr(model, "state_dict"):
-                        torch.save(model.state_dict(), path)
+                        with _torch_lock:
+                            torch.save(model.state_dict(), path)
                         logger.info(f"PyTorch model saved to: {path}")
                         saved = True
                 except ImportError as e:

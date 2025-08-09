@@ -90,8 +90,9 @@ try:
 
     HAS_PYNVML = True
 except ImportError as e:
-    logger.error("Import error in model_performance_monitor: %s", e)
+    logger.debug("Optional dependency pynvml not available: %s", e)
     pynvml = None
+    HAS_PYNVML = False
 
 logger = get_logger(__name__)
 

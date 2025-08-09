@@ -16,12 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Summary of S110 violation fixes."""
-
 import logging
 import os
 from datetime import datetime
 from pathlib import Path
+
+"""Summary of S110 violation fixes."""
 
 logger = logging.getLogger(__name__)
 

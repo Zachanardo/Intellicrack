@@ -16,12 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Find S110 violations (exceptions without logger) in the codebase."""
-
 import os
 import re
 from collections import defaultdict
 from pathlib import Path
+
+"""Find S110 violations (exceptions without logger) in the codebase."""
 
 
 def find_exception_blocks(file_path):

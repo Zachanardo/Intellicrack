@@ -58,6 +58,7 @@ class ResourceUsage:
     """Track resource usage statistics."""
 
     def __init__(self):
+        """Initialize resource usage statistics tracker."""
         self.cpu_percent = 0.0
         self.memory_mb = 0.0
         self.disk_io_mb = 0.0
@@ -756,6 +757,13 @@ class ResourceContext:
     """Context manager for managing multiple resources together."""
 
     def __init__(self, resource_manager: ResourceManager, owner: str = None):
+        """Initialize resource context.
+        
+        Args:
+            resource_manager: Resource manager instance
+            owner: Optional owner identifier for resources
+
+        """
         self.resource_manager = resource_manager
         self.owner = owner or f"context_{int(time.time())}"
         self.managed_resources: list[str] = []
@@ -816,6 +824,13 @@ class AutoCleanupResource:
     """Automatic cleanup decorator for functions that create resources."""
 
     def __init__(self, resource_manager: ResourceManager, resource_type: ResourceType):
+        """Initialize auto-cleanup decorator.
+        
+        Args:
+            resource_manager: Resource manager instance
+            resource_type: Type of resource being managed
+
+        """
         self.resource_manager = resource_manager
         self.resource_type = resource_type
 
@@ -924,6 +939,7 @@ class FallbackHandler:
     """Handles fallback mechanisms for unavailable tools and dependencies."""
 
     def __init__(self):
+        """Initialize fallback handler with tool alternatives."""
         self.fallback_registry = {}
         self.python_alternatives = {}
         self._setup_builtin_fallbacks()

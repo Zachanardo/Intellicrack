@@ -94,8 +94,10 @@ def create_enhanced_item_view(parent=None):
 class ModelDownloadThread(QThread):
     """Thread for downloading models."""
 
-    progress_updated = pyqtSignal(str, float)  # model_name, progress_percent
-    download_finished = pyqtSignal(str, bool)  # model_name, success
+    #: model_name, progress_percent (type: str, float)
+    progress_updated = pyqtSignal(str, float)
+    #: model_name, success (type: str, bool)
+    download_finished = pyqtSignal(str, bool)
     log_message = pyqtSignal(str)
 
     def __init__(self, model_url: str, model_name: str):

@@ -37,67 +37,62 @@ def configure_logging(level=logging.INFO, format_string=None):
 # ML/AI Libraries
 try:
     import numpy as np
-
     HAS_NUMPY = True
-
-    # Numpy utility functions
-    def create_numpy_array(data, dtype=None):
-        """Create a numpy array from data"""
-        return np.array(data, dtype=dtype)
-
-    def get_numpy_info():
-        """Get numpy version and configuration info"""
-        return {
-            "version": np.__version__,
-            "config": np.show_config(mode="dicts") if hasattr(np, "show_config") else {},
-        }
-
 except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     HAS_NUMPY = False
     np = None
 
-    def create_numpy_array(data, dtype=None):
-        """Create numpy array fallback using lists."""
+try:
+    import torch
+    HAS_TORCH = True
+except ImportError as e:
+    logger.error("Import error in common_imports: %s", e)
+    HAS_TORCH = False
+    torch = None
+
+
+# Numpy utility functions
+def create_numpy_array(data, dtype=None):
+    """Create a numpy array from data or fallback to list."""
+    if HAS_NUMPY:
+        return np.array(data, dtype=dtype)
+    else:
         return list(data)
 
-    def get_numpy_info():
-        """Get numpy information fallback."""
+
+def get_numpy_info():
+    """Get numpy version and configuration info."""
+    if HAS_NUMPY:
+        return {
+            "version": np.__version__,
+            "config": np.show_config(mode="dicts") if hasattr(np, "show_config") else {},
+        }
+    else:
         return {"version": "Not installed", "config": {}}
 
 
-try:
-    import torch
-
-    HAS_TORCH = True
-
-    # PyTorch utility functions
-    def create_torch_tensor(data, dtype=None, device=None):
-        """Create a PyTorch tensor"""
+# PyTorch utility functions
+def create_torch_tensor(data, dtype=None, device=None):
+    """Create a PyTorch tensor or fallback."""
+    if HAS_TORCH:
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
         return torch.tensor(data, dtype=dtype, device=device)
+    else:
+        return data
 
-    def get_torch_info():
-        """Get PyTorch version and CUDA availability"""
+
+def get_torch_info():
+    """Get PyTorch version and CUDA availability."""
+    if HAS_TORCH:
         return {
             "version": torch.__version__,
             "cuda_available": torch.cuda.is_available(),
             "cuda_version": torch.version.cuda if torch.cuda.is_available() else None,
             "device_count": torch.cuda.device_count() if torch.cuda.is_available() else 0,
         }
-
-except ImportError as e:
-    logger.error("Import error in common_imports: %s", e)
-    HAS_TORCH = False
-    torch = None
-
-    def create_torch_tensor(data, dtype=None, device=None):
-        """Create torch tensor fallback."""
-        return data
-
-    def get_torch_info():
-        """Get torch information fallback."""
+    else:
         return {"version": "Not installed", "cuda_available": False}
 
 
@@ -118,63 +113,54 @@ try:
     # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
     tf.config.set_visible_devices([], "GPU")
     HAS_TENSORFLOW = True
-
-    # TensorFlow utility functions
-    def create_tf_tensor(data, dtype=None):
-        """Create a TensorFlow tensor"""
-        return tf.constant(data, dtype=dtype)
-
-    def get_tf_info():
-        """Get TensorFlow version and GPU availability"""
-        return {
-            "version": tf.__version__,
-            "gpu_available": len(tf.config.list_physical_devices("GPU")) > 0,
-            "gpu_devices": [gpu.name for gpu in tf.config.list_physical_devices("GPU")],
-        }
-
 except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     HAS_TENSORFLOW = False
     tf = None
 
-    def create_tf_tensor(data, dtype=None):
-        """Create tensorflow tensor fallback."""
+
+# TensorFlow utility functions
+def create_tf_tensor(data, dtype=None):
+    """Create a TensorFlow tensor or fallback."""
+    if HAS_TENSORFLOW:
+        return tf.constant(data, dtype=dtype)
+    else:
         return data
 
-    def get_tf_info():
-        """Get tensorflow information fallback."""
+
+def get_tf_info():
+    """Get TensorFlow version and GPU availability."""
+    if HAS_TENSORFLOW:
+        return {
+            "version": tf.__version__,
+            "gpu_available": len(tf.config.list_physical_devices("GPU")) > 0,
+            "gpu_devices": [gpu.name for gpu in tf.config.list_physical_devices("GPU")],
+        }
+    else:
         return {"version": "Not installed", "gpu_available": False}
 
 
 # Binary Analysis Libraries
 try:
     import lief
-
     LIEF_AVAILABLE = True
-
-    # LIEF utility functions
-    def parse_binary_with_lief(file_path):
-        """Parse binary file using LIEF library."""
-        try:
-            return lief.parse(file_path)
-        except Exception as e:
-            logger.error(f"LIEF parsing error: {e}")
-            return None
-
-    def get_lief_info():
-        """Get LIEF version and capabilities"""
-        return {
-            "version": lief.__version__ if hasattr(lief, "__version__") else "Unknown",
-            "formats": ["PE", "ELF", "MachO"],
-        }
-
 except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     LIEF_AVAILABLE = False
     lief = None
 
-    def parse_binary_with_lief(file_path):
-        """Parse binary file using LIEF for exploit analysis."""
+
+# LIEF utility functions
+def parse_binary_with_lief(file_path):
+    """Parse binary file using LIEF library or fallback."""
+    if LIEF_AVAILABLE:
+        try:
+            return lief.parse(file_path)
+        except Exception as e:
+            logger.error(f"LIEF parsing error: {e}")
+            return None
+    else:
+        # Fallback implementation
         import os
 
         class BinaryInfo:
@@ -232,28 +218,44 @@ except ImportError as e:
 
         return BinaryInfo(file_path) if file_path else None
 
-    def get_lief_info():
-        """Get LIEF library information fallback."""
+
+def get_lief_info():
+    """Get LIEF version and capabilities."""
+    if LIEF_AVAILABLE:
+        return {
+            "version": lief.__version__ if hasattr(lief, "__version__") else "Unknown",
+            "formats": ["PE", "ELF", "MachO"],
+        }
+    else:
         return {"version": "Not installed", "formats": []}
 
 
 try:
     import psutil
-
     PSUTIL_AVAILABLE = True
+except ImportError as e:
+    logger.error("Import error in common_imports: %s", e)
+    PSUTIL_AVAILABLE = False
+    psutil = None
 
-    # psutil utility functions
-    def get_system_info():
-        """Get system information using psutil"""
+
+# psutil utility functions
+def get_system_info():
+    """Get system information using psutil or fallback."""
+    if PSUTIL_AVAILABLE:
         return {
             "cpu_percent": psutil.cpu_percent(interval=1),
             "memory_percent": psutil.virtual_memory().percent,
             "disk_usage": psutil.disk_usage("/").percent,
             "process_count": len(psutil.pids()),
         }
+    else:
+        return {"error": "psutil not installed"}
 
-    def get_process_info(pid=None):
-        """Get process information using psutil."""
+
+def get_process_info(pid=None):
+    """Get process information using psutil or fallback."""
+    if PSUTIL_AVAILABLE:
         try:
             proc = psutil.Process(pid) if pid else psutil.Process()
             return {
@@ -264,18 +266,7 @@ try:
             }
         except Exception as e:
             return {"error": str(e)}
-
-except ImportError as e:
-    logger.error("Import error in common_imports: %s", e)
-    PSUTIL_AVAILABLE = False
-    psutil = None
-
-    def get_system_info():
-        """Get system information fallback."""
-        return {"error": "psutil not installed"}
-
-    def get_process_info(pid=None):
-        """Get process information fallback."""
+    else:
         return {"error": "psutil not installed"}
 
 

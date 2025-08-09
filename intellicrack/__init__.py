@@ -36,7 +36,19 @@ Usage:
     app.run()
 """
 
-# Standard library imports first
+# Initialize GIL safety measures FIRST - must be done before any imports
+try:
+    from .utils.torch_gil_safety import initialize_gil_safety
+    initialize_gil_safety()
+except ImportError:
+    # If torch_gil_safety isn't available, set basic environment variables
+    import os
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+    os.environ.setdefault("MKL_NUM_THREADS", "1")
+    os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+    os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
+
+# Standard library imports
 import logging
 
 # Local imports
@@ -48,6 +60,12 @@ __license__ = "GPL-3.0"
 
 # Initialize GPU acceleration automatically
 try:
+    # Additional environment variables for PyTorch threading safety
+    import os
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+    os.environ.setdefault("MKL_NUM_THREADS", "1")
+    os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+    
     from .utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
 
     # Setup GPU on import (silent initialization for optimal performance)
@@ -99,7 +117,7 @@ if _config:
 
 # Main application
 try:
-    from .main import main
+    from .main import main  #:no-index:
     from .ui.main_app import IntellicrackApp
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
@@ -149,10 +167,12 @@ def get_version():
         str: The version string in semantic versioning format (e.g., "1.0.0")
 
     Example:
-        >>> from intellicrack import get_version
-        >>> version = get_version()
-        >>> print(f"Running Intellicrack v{version}")
-        Running Intellicrack v1.0.0
+        .. code-block:: python
+        
+            from intellicrack import get_version
+            version = get_version()
+            print(f"Running Intellicrack v{version}")
+            # Output: Running Intellicrack v1.0.0
 
     """
     return __version__
@@ -176,9 +196,11 @@ def create_app():
                     dependencies (typically PyQt6 or other UI components)
 
     Example:
-        >>> from intellicrack import create_app
-        >>> app = create_app()
-        >>> app.show()
+        .. code-block:: python
+        
+            from intellicrack import create_app
+            app = create_app()
+            app.show()
 
     Note:
         This function checks if the UI module was successfully imported
@@ -205,9 +227,11 @@ def run_app():
                     dependencies or import failures
 
     Example:
-        >>> from intellicrack import run_app
-        >>> exit_code = run_app()
-        >>> sys.exit(exit_code)
+        .. code-block:: python
+        
+            from intellicrack import run_app
+            exit_code = run_app()
+            sys.exit(exit_code)
 
     Note:
         This function wraps the main() function from intellicrack.main,
@@ -231,10 +255,12 @@ def get_default_device():
         str: The device string (e.g., 'cuda:0', 'cpu', 'mps')
 
     Example:
-        >>> from intellicrack import get_default_device
-        >>> device = get_default_device()
-        >>> print(f"Using device: {device}")
-        Using device: cuda:0
+        .. code-block:: python
+        
+            from intellicrack import get_default_device
+            device = get_default_device()
+            print(f"Using device: {device}")
+            # Output: Using device: cuda:0
 
     """
     return _default_device

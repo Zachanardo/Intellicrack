@@ -534,7 +534,7 @@ class NLPCodeProcessor:
         return list(set(meaningful_tokens))
 
     def _split_camel_case(self, text: str) -> list[str]:
-        """Split camelCase or snake_case text into words."""
+        """Split camelCase or ``snake_case`` text into words."""
         # Handle camelCase
         camel_split = re.sub(r"([a-z])([A-Z])", r"\1 \2", text).split()
 

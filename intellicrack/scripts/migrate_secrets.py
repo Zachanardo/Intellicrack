@@ -16,6 +16,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import json
+import sys
+from pathlib import Path
+
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from intellicrack.utils.logger import get_logger
+from intellicrack.utils.secrets_manager import get_secrets_manager
+
 """
 Migrate existing API keys and secrets to the centralized secrets manager.
 
@@ -24,16 +34,6 @@ This script will:
 2. Move them to the secure secrets manager
 3. Update configuration files to remove plain text secrets
 """
-
-import json
-import sys
-from pathlib import Path
-
-from intellicrack.utils.logger import get_logger
-from intellicrack.utils.secrets_manager import get_secrets_manager
-
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 logger = get_logger(__name__)
 

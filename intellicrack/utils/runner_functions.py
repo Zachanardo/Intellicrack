@@ -23,6 +23,7 @@ from .runtime.runner_functions import (
     run_ai_guided_patching,
     run_cfg_explorer,
     run_cloud_license_hooker,
+    run_comprehensive_analysis,
     run_concolic_execution,
     run_deep_license_analysis,
     run_distributed_processing,

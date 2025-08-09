@@ -968,7 +968,7 @@ class CloudLicenseResponseGenerator:
                     # For now, we register the hook for simulation
                     self.api_call_log.append(
                         {
-                            "timestamp": self._get_timestamp(),
+                            "timestamp": self._get_hook_timestamp(),
                             "api": function_name,
                             "dll": dll_name,
                             "status": "hooked",
@@ -998,7 +998,7 @@ class CloudLicenseResponseGenerator:
         # Log the API call
         self.api_call_log.append(
             {
-                "timestamp": self._get_timestamp(),
+                "timestamp": self._get_hook_timestamp(),
                 "category": "winsock",
                 "api": api_name,
                 "args": str(args)[:200],  # Limit arg length
@@ -1039,7 +1039,7 @@ class CloudLicenseResponseGenerator:
         # Log the API call
         self.api_call_log.append(
             {
-                "timestamp": self._get_timestamp(),
+                "timestamp": self._get_hook_timestamp(),
                 "category": "wininet",
                 "api": api_name,
                 "args": str(args)[:200],
@@ -1447,8 +1447,8 @@ class CloudLicenseResponseGenerator:
             self.logger.error(f"Signature generation failed: {e}")
             return "default_signature"
 
-    def _get_timestamp(self) -> float:
-        """Get current timestamp."""
+    def _get_hook_timestamp(self) -> float:
+        """Get current timestamp for hook operations."""
         return time.time()
 
     def _get_success_code_for_api(self, api_name: str) -> int:
@@ -1652,7 +1652,7 @@ class CloudLicenseResponseGenerator:
             cache_key = f"{software_type}_{hash(response) % 1000000}"
             self._activation_cache[cache_key] = {
                 "response": response,
-                "timestamp": self._get_timestamp(),
+                "timestamp": self._get_hook_timestamp(),
                 "software_type": software_type,
             }
 
@@ -2179,7 +2179,7 @@ class CloudLicenseResponseGenerator:
                             self.api_call_log.append(
                                 {
                                     "api": f"{module_name}.{func_name}",
-                                    "timestamp": self._get_timestamp(),
+                                    "timestamp": self._get_hook_timestamp(),
                                     "event_arg": str(arg)[:100] if arg else None,
                                 }
                             )

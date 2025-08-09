@@ -200,7 +200,7 @@ class BayesianAnalyzer:
         return (lower, upper)
 
     def posterior_probability(self, successes: int, failures: int, threshold: float) -> float:
-        """Calculate P(success_rate > threshold | data)"""
+        """Calculate P(``success_rate`` > threshold | data)"""
         alpha, beta = self.update_posterior(successes, failures)
         return 1 - stats.beta.cdf(threshold, alpha, beta)
 

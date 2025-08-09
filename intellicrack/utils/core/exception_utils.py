@@ -18,9 +18,12 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import hashlib
+import hmac
 import json
 import logging
 import os
+import pickle
 import sys
 import traceback
 from typing import Any
@@ -34,10 +37,6 @@ except ImportError as e:
     QMessageBox = None
     QApplication = None
 
-import hashlib
-import hmac
-import pickle
-
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
 
@@ -46,7 +45,7 @@ class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
     def find_class(self, module, name):
-        """Override find_class to restrict allowed classes."""
+        """Override ``find_class`` to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
             "numpy",

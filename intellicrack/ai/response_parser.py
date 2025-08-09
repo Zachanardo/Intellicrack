@@ -29,13 +29,15 @@ def parse_ai_response_sections(
 
     Args:
         response: The AI response text to parse
-        section_keywords: Dictionary mapping section names to keyword lists
-                         e.g., {'insights': ['vulnerabilit', 'security', 'risk'],
-                               'suggestions': ['recommend', 'suggest', 'should']}
+        section_keywords: Dictionary mapping section names to keyword lists.
+            
+            Example::
+            
+                {'insights': ['vulnerabilit', 'security', 'risk'],
+                 'suggestions': ['recommend', 'suggest', 'should']}
 
     Returns:
         Dictionary mapping section names to lists of extracted content
-
     """
     from .parsing_utils import ResponseLineParser
 

@@ -13,14 +13,12 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
 
-"""Common reporting utilities for generating analysis reports."""
-from intellicrack.logger import logger
+Common reporting utilities for generating analysis reports.
 
-"""
 Common report generation utilities to avoid code duplication.
 """
+from intellicrack.logger import logger
 
 
 def generate_analysis_report(app, report_type, results_data, generator_func=None):

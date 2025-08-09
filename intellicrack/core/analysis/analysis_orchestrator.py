@@ -18,8 +18,8 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from .binary_analyzer import BinaryAnalyzer
 from .dynamic_analyzer import DynamicAnalyzer
 from .entropy_analyzer import EntropyAnalyzer
-from .multi_format_analyzer import MultiFormatAnalyzer
-from .radare2_enhanced_integration import Radare2EnhancedIntegration
+from .multi_format_analyzer import MultiFormatBinaryAnalyzer as MultiFormatAnalyzer
+from .radare2_enhanced_integration import EnhancedR2Integration as Radare2EnhancedIntegration
 from .vulnerability_engine import VulnerabilityEngine
 from .yara_pattern_engine import YaraPatternEngine
 
@@ -67,10 +67,15 @@ class AnalysisOrchestrator(QObject):
     """Orchestrates comprehensive binary analysis using multiple engines"""
 
     # Signals
-    phase_started = pyqtSignal(str)  # phase_name
-    phase_completed = pyqtSignal(str, dict)  # phase_name, result
-    phase_failed = pyqtSignal(str, str)  # phase_name, error
-    progress_updated = pyqtSignal(int, int)  # current, total
+    #: phase_name (type: str)
+    phase_started = pyqtSignal(str)
+    #: phase_name, result (type: str, dict)
+    phase_completed = pyqtSignal(str, dict)
+    #: phase_name, error (type: str, str)
+    phase_failed = pyqtSignal(str, str)
+    #: current, total (type: int, int)
+    progress_updated = pyqtSignal(int, int)
+    #: Signal emitted when analysis is completed (type: OrchestrationResult)
     analysis_completed = pyqtSignal(OrchestrationResult)
 
     def __init__(self):

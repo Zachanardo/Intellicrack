@@ -76,10 +76,14 @@ class BatchAnalysisWorker(QThread):
     """Worker thread for batch analysis"""
 
     # Signals
-    progress_updated = pyqtSignal(int, int)  # current, total
-    file_completed = pyqtSignal(str, BatchAnalysisResult)  # file_path, result
-    analysis_finished = pyqtSignal(list)  # all results
-    error_occurred = pyqtSignal(str)  # error message
+    #: current, total (type: int, int)
+    progress_updated = pyqtSignal(int, int)
+    #: file_path, result (type: str, BatchAnalysisResult)
+    file_completed = pyqtSignal(str, BatchAnalysisResult)
+    #: all results (type: list)
+    analysis_finished = pyqtSignal(list)
+    #: error message (type: str)
+    error_occurred = pyqtSignal(str)
 
     def __init__(self, file_paths: list[str], max_workers: int = 4, deep_scan: bool = False):
         """Initialize batch analysis thread.
@@ -217,8 +221,10 @@ class BatchAnalysisWidget(QWidget):
     """Widget for batch analysis of multiple files"""
 
     # Signals
-    file_selected = pyqtSignal(str)  # file_path
-    analysis_requested = pyqtSignal(str)  # file_path for detailed analysis
+    #: file_path (type: str)
+    file_selected = pyqtSignal(str)
+    #: file_path for detailed analysis (type: str)
+    analysis_requested = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Initialize the batch analysis widget with UI components and analysis functionality."""

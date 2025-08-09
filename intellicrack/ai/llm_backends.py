@@ -2516,7 +2516,7 @@ Please analyze this script and return validation results in JSON format."""
         return False
 
     def add_llm(self, llm_id: str, config: LLMConfig) -> bool:
-        """Add an LLM with the given configuration (alias for register_llm)."""
+        """Add an LLM with the given configuration (alias for ``register_llm``)."""
         return self.register_llm(llm_id, config)
 
     def get_llm(self, llm_id: str) -> Any | None:
@@ -2533,7 +2533,7 @@ Please analyze this script and return validation results in JSON format."""
             return None
 
     def list_llms(self) -> list[str]:
-        """List all available LLM IDs (alias for get_available_llms)."""
+        """List all available LLM IDs (alias for ``get_available_llms``)."""
         return self.get_available_llms()
 
 

@@ -101,11 +101,11 @@ class QEMUTestManager:
         """
         self.logger = logging.getLogger(__name__ + ".QEMUTestManager")
         self.snapshots = {}
-        
+
         # Create working directory first (needed by base image initialization)
         self.working_dir = Path(tempfile.gettempdir()) / "intellicrack_qemu_tests"
         self.working_dir.mkdir(exist_ok=True)
-        
+
         self.base_images = {
             "windows": self._get_windows_base_image(),
             "linux": self._get_linux_base_image(),

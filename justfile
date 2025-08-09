@@ -83,3 +83,35 @@ lint:
 lint-fix:
     ruff check --fix intellicrack/
     ruff format intellicrack/
+
+# ==================== DOCUMENTATION ====================
+
+# Generate Sphinx documentation
+docs-build:
+    cd docs && sphinx-build -b html source build/html
+
+# Clean documentation build
+docs-clean:
+    cd docs && rm -rf build/*
+
+# Regenerate API documentation from code
+docs-apidoc:
+    cd docs && sphinx-apidoc -f -o source ../intellicrack
+
+# Full documentation rebuild
+docs-rebuild: docs-clean docs-apidoc docs-build
+    @echo "Documentation rebuilt in docs/build/html/index.html"
+
+# Open documentation in browser (Windows)
+docs-open:
+    start docs/build/html/index.html
+
+# Build PDF documentation
+docs-pdf:
+    cd docs && sphinx-build -b latex source build/latex
+    @echo "LaTeX files generated in docs/build/latex/"
+
+# Check documentation links
+docs-linkcheck:
+    cd docs && sphinx-build -b linkcheck source build/linkcheck
+    @echo "Link check results in docs/build/linkcheck/output.txt"

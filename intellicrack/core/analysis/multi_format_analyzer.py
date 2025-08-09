@@ -47,6 +47,28 @@ from ...utils.core.import_patterns import (
 from ...utils.protection.protection_utils import calculate_entropy
 
 
+class BinaryInfo:
+    """Container for binary file information used in script generation."""
+    
+    def __init__(self, file_path: str = "", file_size: int = 0, file_type: str = "",
+                 architecture: str = "", endianness: str = "", entry_point: int = 0,
+                 sections: list = None, imports: dict = None, exports: dict = None,
+                 strings: list = None, md5: str = "", sha256: str = ""):
+        """Initialize binary information container."""
+        self.file_path = file_path
+        self.file_size = file_size
+        self.file_type = file_type
+        self.architecture = architecture
+        self.endianness = endianness
+        self.entry_point = entry_point
+        self.sections = sections or []
+        self.imports = imports or {}
+        self.exports = exports or {}
+        self.strings = strings or []
+        self.md5 = md5
+        self.sha256 = sha256
+
+
 class MultiFormatBinaryAnalyzer:
     """Multi-format binary analyzer supporting PE, ELF, Mach-O, and other formats.
 

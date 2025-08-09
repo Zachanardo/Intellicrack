@@ -80,8 +80,10 @@ class PEStructureModel(QAbstractItemModel):
     """QAbstractItemModel for PE structure tree display"""
 
     # Signals
-    structure_selected = pyqtSignal(int, int)  # offset, size
-    rva_selected = pyqtSignal(int)  # RVA address
+    #: offset, size (type: int, int)
+    structure_selected = pyqtSignal(int, int)
+    #: RVA address (type: int)
+    rva_selected = pyqtSignal(int)
 
     def __init__(self, pe_model: PEFileModel | None = None, parent=None):
         """Initialize PE structure model with optional PE file data for tree representation."""

@@ -21,9 +21,8 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from typing import Any
 
-from PyQt6.QtGui import QColor, QFont, QIcon, QPalette
+from PyQt6.QtGui import QAction, QColor, QFont, QIcon, QPalette
 from PyQt6.QtWidgets import (
-    QAction,
     QApplication,
     QComboBox,
     QDialog,
@@ -318,14 +317,14 @@ class EnhancedAnalysisDashboard(QWidget):
 
     def add_activity(self, message: str):
         """Add activity to recent activity list"""
-        self.activity_list.insertItem(0, f"[{self._get_timestamp()}] {message}")
+        self.activity_list.insertItem(0, f"[{self._get_ui_timestamp()}] {message}")
 
         # Keep only last 20 items
         while self.activity_list.count() > 20:
             self.activity_list.takeItem(self.activity_list.count() - 1)
 
-    def _get_timestamp(self) -> str:
-        """Get current timestamp"""
+    def _get_ui_timestamp(self) -> str:
+        """Get current timestamp for UI display"""
         from datetime import datetime
 
         return datetime.now().strftime("%H:%M:%S")
@@ -384,7 +383,7 @@ class EnhancedAnalysisDashboard(QWidget):
         """Generate report based on template"""
         template = self.report_template_combo.currentText()
         self.report_editor.setText(
-            f"# {template}\n\nReport generated at {self._get_timestamp()}\n\nNo analysis data available yet."
+            f"# {template}\n\nReport generated at {self._get_ui_timestamp()}\n\nNo analysis data available yet."
         )
         self.add_activity(f"Generated {template} report")
 

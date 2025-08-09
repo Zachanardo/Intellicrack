@@ -37,7 +37,8 @@ logger = logging.getLogger(__name__)
 class ModelLoadingItemWidget(QWidget):
     """Widget for displaying a single model loading task."""
 
-    cancelled = pyqtSignal(str)  # model_id
+    #: model_id (type: str)
+    cancelled = pyqtSignal(str)
 
     def __init__(self, model_id: str, parent=None):
         """Initialize model loading item widget with model ID and parent widget."""
@@ -137,7 +138,8 @@ class ModelLoadingItemWidget(QWidget):
 class ModelLoadingProgressWidget(QWidget):
     """Main widget for monitoring model loading progress."""
 
-    model_loaded = pyqtSignal(str)  # model_id
+    #: model_id (type: str)
+    model_loaded = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Initialize model loading progress widget with LLM manager, progress callbacks, and UI components."""

@@ -365,7 +365,7 @@ class SearchEngine:
     def _search_forward(
         self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool
     ) -> SearchResult | None:
-        """Search forward from start_offset."""
+        """Search forward from ``start_offset``."""
         file_size = self.file_handler.get_file_size()
         offset = start_offset
         overlap_size = 100  # Reasonable overlap for pattern matching
@@ -396,7 +396,7 @@ class SearchEngine:
     def _search_backward(
         self, compiled_pattern: bytes | re.Pattern, start_offset: int, whole_words: bool
     ) -> SearchResult | None:
-        """Search backward from start_offset."""
+        """Search backward from ``start_offset``."""
         offset = min(start_offset, self.file_handler.get_file_size())
         overlap_size = 100
 
@@ -536,8 +536,11 @@ class SearchEngine:
 class SearchThread(QThread if PYQT6_AVAILABLE else object):
     """Background thread for long-running search operations."""
 
+    #: Signal emitted when search progress updates (type: int)
     progress_updated = pyqtSignal(int) if PYQT6_AVAILABLE else None
+    #: Signal emitted when a result is found (type: object)
     result_found = pyqtSignal(object) if PYQT6_AVAILABLE else None
+    #: Signal emitted when search is completed (type: list)
     search_completed = pyqtSignal(list) if PYQT6_AVAILABLE else None
 
     def __init__(

@@ -1,4 +1,6 @@
-"""Copyright (C) 2025 Zachary Flint
+"""UI helper module for Intellicrack.
+
+Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
 

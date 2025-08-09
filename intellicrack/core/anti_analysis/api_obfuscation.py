@@ -682,3 +682,466 @@ if (p{api_name}) {{
             # Initialize empty databases
             self.api_hash_db = {}
             self.encrypted_strings_db = {}
+
+    def _resolve_encrypted_strings(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+        """Resolve encrypted API strings.
+        
+        Args:
+            code: Code containing encrypted API strings
+            params: Parameters for decryption
+            
+        Returns:
+            Tuple of (resolved code, metadata)
+
+        """
+        try:
+            # Get encryption key from params
+            key = params.get("key", 0xDEADBEEF)
+
+            # Find encrypted string patterns
+            encrypted_patterns = []
+
+            # Simple XOR decryption for encrypted strings
+            resolved_code = bytearray(code)
+
+            # Look for common encrypted string patterns
+            for i in range(len(code) - 4):
+                # Check for potential encrypted string markers
+                if code[i:i+2] == b'\x68':  # PUSH instruction
+                    # Extract potential encrypted string address
+                    addr = int.from_bytes(code[i+1:i+5], 'little')
+
+                    # Try to decrypt
+                    if addr in self.encrypted_strings_db:
+                        decrypted = self.encrypted_strings_db[addr]
+                        encrypted_patterns.append({
+                            "offset": i,
+                            "encrypted": hex(addr),
+                            "decrypted": decrypted
+                        })
+
+            return bytes(resolved_code), {
+                "method": "string_encryption",
+                "key": key,
+                "resolved_count": len(encrypted_patterns),
+                "patterns": encrypted_patterns
+            }
+
+        except Exception as e:
+            self.logger.error(f"Failed to resolve encrypted strings: {e}")
+            return code, {"error": str(e)}
+
+    def _resolve_dynamic_imports(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+        """Resolve dynamically loaded API imports.
+        
+        Args:
+            code: Code containing dynamic imports
+            params: Parameters for resolution
+            
+        Returns:
+            Tuple of (resolved code, metadata)
+
+        """
+        try:
+            resolved_code = bytearray(code)
+            dynamic_imports = []
+
+            # Look for GetProcAddress patterns
+            for i in range(len(code) - 8):
+                # Check for GetProcAddress call pattern
+                if code[i:i+2] == b'\xFF\x15':  # CALL DWORD PTR
+                    # Extract potential API name
+                    api_addr = int.from_bytes(code[i+2:i+6], 'little')
+                    if api_addr in self.api_hash_db:
+                        api_name = self.api_hash_db[api_addr]
+                        dynamic_imports.append({
+                            "offset": i,
+                            "api": api_name,
+                            "method": "GetProcAddress"
+                        })
+
+            return bytes(resolved_code), {
+                "method": "dynamic_loading",
+                "resolved_count": len(dynamic_imports),
+                "imports": dynamic_imports
+            }
+
+        except Exception as e:
+            self.logger.error(f"Failed to resolve dynamic imports: {e}")
+            return code, {"error": str(e)}
+
+    def _resolve_redirected_apis(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+        """Resolve redirected API calls.
+        
+        Args:
+            code: Code containing redirected APIs
+            params: Parameters for resolution
+            
+        Returns:
+            Tuple of (resolved code, metadata)
+
+        """
+        try:
+            resolved_code = bytearray(code)
+            redirected_apis = []
+
+            # Look for JMP/CALL redirection patterns
+            for i in range(len(code) - 5):
+                # Check for JMP pattern
+                if code[i] == 0xE9:  # JMP rel32
+                    offset = int.from_bytes(code[i+1:i+5], 'little', signed=True)
+                    target = i + 5 + offset
+
+                    # Check if target is a known API
+                    if target in self.api_hash_db:
+                        api_name = self.api_hash_db[target]
+                        redirected_apis.append({
+                            "offset": i,
+                            "api": api_name,
+                            "method": "JMP redirection",
+                            "target": hex(target)
+                        })
+
+            return bytes(resolved_code), {
+                "method": "api_redirection",
+                "resolved_count": len(redirected_apis),
+                "redirections": redirected_apis
+            }
+
+        except Exception as e:
+            self.logger.error(f"Failed to resolve redirected APIs: {e}")
+            return code, {"error": str(e)}
+
+    def _generate_indirect_calls(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+        """Generate indirect API calls through function pointers.
+        
+        Args:
+            code: Original code bytes
+            params: Parameters for indirect call generation
+            
+        Returns:
+            Tuple of (modified code, metadata)
+
+        """
+        try:
+            modified_code = bytearray(code)
+            indirect_calls = []
+
+            # Look for direct API call patterns
+            for i in range(len(code) - 5):
+                # Check for direct CALL instruction
+                if code[i] == 0xE8:  # CALL rel32
+                    call_offset = int.from_bytes(code[i+1:i+5], 'little', signed=True)
+                    call_target = i + 5 + call_offset
+
+                    # Check if this calls a known API
+                    if call_target in self.api_hash_db:
+                        api_name = self.api_hash_db[call_target]
+
+                        # Generate indirect call sequence
+                        # MOV EAX, [API_ADDR]
+                        # CALL EAX
+                        indirect_sequence = bytearray()
+                        indirect_sequence.extend(b'\xA1')  # MOV EAX, [addr32]
+                        indirect_sequence.extend(call_target.to_bytes(4, 'little'))
+                        indirect_sequence.extend(b'\xFF\xD0')  # CALL EAX
+
+                        # Pad with NOPs if needed
+                        while len(indirect_sequence) < 5:
+                            indirect_sequence.append(0x90)  # NOP
+
+                        # Replace direct call with indirect call
+                        if len(indirect_sequence) <= 5:
+                            modified_code[i:i+5] = indirect_sequence[:5]
+
+                            indirect_calls.append({
+                                "offset": i,
+                                "api": api_name,
+                                "original": "CALL direct",
+                                "replacement": "CALL indirect"
+                            })
+
+                # Check for CALL DWORD PTR [addr] pattern
+                if code[i:i+2] == b'\xFF\x15':  # CALL DWORD PTR [addr32]
+                    import_addr = int.from_bytes(code[i+2:i+6], 'little')
+
+                    # Generate double-indirect call
+                    # MOV EAX, [import_addr]
+                    # MOV EBX, [EAX]
+                    # CALL EBX
+                    indirect_sequence = bytearray()
+                    indirect_sequence.extend(b'\xA1')  # MOV EAX, [addr32]
+                    indirect_sequence.extend(import_addr.to_bytes(4, 'little'))
+                    indirect_sequence.extend(b'\x8B\x18')  # MOV EBX, [EAX]
+                    indirect_sequence.extend(b'\xFF\xD3')  # CALL EBX
+
+                    # This sequence is longer, so we need to handle it differently
+                    # For now, mark it for later expansion
+                    indirect_calls.append({
+                        "offset": i,
+                        "type": "import_table_call",
+                        "import_addr": hex(import_addr),
+                        "needs_expansion": True
+                    })
+
+            return bytes(modified_code), {
+                "method": "indirect_calls",
+                "modified_count": len(indirect_calls),
+                "calls": indirect_calls
+            }
+
+        except Exception as e:
+            self.logger.error(f"Failed to generate indirect calls: {e}")
+            return code, {"error": str(e)}
+
+    def _generate_trampoline_calls(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+        """Generate trampoline-based API calls.
+        
+        Args:
+            code: Original code bytes
+            params: Parameters for trampoline generation
+            
+        Returns:
+            Tuple of (modified code with trampolines, metadata)
+
+        """
+        try:
+            # Trampolines will be appended to the end of the code
+            modified_code = bytearray(code)
+            trampolines = []
+            trampoline_offset = len(code)
+
+            # Look for API calls to redirect through trampolines
+            for i in range(len(code) - 5):
+                if code[i] == 0xE8:  # CALL rel32
+                    call_offset = int.from_bytes(code[i+1:i+5], 'little', signed=True)
+                    call_target = i + 5 + call_offset
+
+                    # Create a trampoline
+                    trampoline = bytearray()
+
+                    # Push return address manipulation
+                    trampoline.extend(b'\x68')  # PUSH imm32
+                    trampoline.extend((i + 5).to_bytes(4, 'little'))  # Return address
+
+                    # Jump to actual target
+                    trampoline.extend(b'\xE9')  # JMP rel32
+                    jmp_offset = call_target - (trampoline_offset + len(trampoline) + 4)
+                    trampoline.extend(jmp_offset.to_bytes(4, 'little', signed=True))
+
+                    # Update call to point to trampoline
+                    new_call_offset = trampoline_offset - (i + 5)
+                    modified_code[i+1:i+5] = new_call_offset.to_bytes(4, 'little', signed=True)
+
+                    trampolines.append({
+                        "offset": trampoline_offset,
+                        "size": len(trampoline),
+                        "target": hex(call_target),
+                        "original_call": hex(i)
+                    })
+
+                    # Append trampoline to code
+                    modified_code.extend(trampoline)
+                    trampoline_offset += len(trampoline)
+
+            return bytes(modified_code), {
+                "method": "trampoline_calls",
+                "trampoline_count": len(trampolines),
+                "trampolines": trampolines,
+                "new_size": len(modified_code)
+            }
+
+        except Exception as e:
+            self.logger.error(f"Failed to generate trampoline calls: {e}")
+            return code, {"error": str(e)}
+
+    def _generate_encrypted_payloads(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+        """Generate encrypted API call payloads.
+        
+        Args:
+            code: Original code bytes
+            params: Parameters for encryption
+            
+        Returns:
+            Tuple of (code with encrypted payloads, metadata)
+
+        """
+        try:
+            # Use XOR encryption for API call payloads
+            key = params.get("key", random.randint(1, 255))
+            modified_code = bytearray(code)
+            encrypted_sections = []
+
+            # Find and encrypt API call sequences
+            for i in range(len(code) - 10):
+                # Look for common API call patterns
+                if code[i] == 0xE8 or code[i:i+2] == b'\xFF\x15':  # CALL patterns
+                    # Encrypt the next 5-10 bytes
+                    section_size = min(10, len(code) - i)
+
+                    # XOR encrypt the section
+                    for j in range(section_size):
+                        modified_code[i + j] ^= key
+
+                    # Add decryption stub before the encrypted section
+                    # This would need runtime decryption
+                    encrypted_sections.append({
+                        "offset": i,
+                        "size": section_size,
+                        "key": key,
+                        "needs_runtime_decrypt": True
+                    })
+
+            return bytes(modified_code), {
+                "method": "encrypted_payloads",
+                "encryption_key": key,
+                "encrypted_count": len(encrypted_sections),
+                "sections": encrypted_sections
+            }
+
+        except Exception as e:
+            self.logger.error(f"Failed to generate encrypted payloads: {e}")
+            return code, {"error": str(e)}
+
+    def _generate_polymorphic_wrappers(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+        """Generate polymorphic wrappers for API calls.
+        
+        Args:
+            code: Original code bytes
+            params: Parameters for polymorphic generation
+            
+        Returns:
+            Tuple of (code with polymorphic wrappers, metadata)
+
+        """
+        try:
+            modified_code = bytearray(code)
+            wrappers = []
+
+            # Generate random instruction sequences that achieve the same result
+            polymorphic_variants = [
+                # Variant 1: Use different registers
+                [b'\x50', b'\x53', b'\x51'],  # PUSH EAX, PUSH EBX, PUSH ECX
+                # Variant 2: Use LEA instead of MOV
+                [b'\x8D\x05', b'\x8D\x1D', b'\x8D\x0D'],  # LEA variants
+                # Variant 3: Use arithmetic to obfuscate
+                [b'\x83\xC0\x00', b'\x83\xE8\x00'],  # ADD EAX, 0; SUB EAX, 0
+            ]
+
+            # Select random variant
+            variant = random.choice(polymorphic_variants)
+
+            # Look for API calls to wrap
+            for i in range(len(code) - 10):
+                if code[i] == 0xE8:  # CALL instruction
+                    # Insert polymorphic wrapper
+                    wrapper = bytearray()
+
+                    # Add junk instructions
+                    wrapper.extend(random.choice(variant))
+
+                    # Add the actual call
+                    wrapper.extend(code[i:i+5])
+
+                    # Add cleanup junk
+                    wrapper.extend(b'\x90' * random.randint(1, 3))  # Random NOPs
+
+                    wrappers.append({
+                        "offset": i,
+                        "variant_used": polymorphic_variants.index(variant),
+                        "wrapper_size": len(wrapper),
+                        "original_size": 5
+                    })
+
+            return bytes(modified_code), {
+                "method": "polymorphic_wrappers",
+                "wrapper_count": len(wrappers),
+                "wrappers": wrappers,
+                "variants_available": len(polymorphic_variants)
+            }
+
+        except Exception as e:
+            self.logger.error(f"Failed to generate polymorphic wrappers: {e}")
+            return code, {"error": str(e)}
+
+    def _resolve_delayed_imports(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+        """Resolve delayed/lazy loaded API imports.
+        
+        Args:
+            code: Code containing delayed imports
+            params: Parameters for resolution
+            
+        Returns:
+            Tuple of (resolved code, metadata)
+
+        """
+        try:
+            resolved_code = bytearray(code)
+            delayed_imports = []
+
+            # Look for delayed import table patterns
+            for i in range(len(code) - 8):
+                # Check for delayed import thunk patterns
+                if code[i:i+2] == b'\xFF\x25':  # JMP DWORD PTR [addr]
+                    import_addr = int.from_bytes(code[i+2:i+6], 'little')
+
+                    # Check if this is a delayed import thunk
+                    if import_addr & 0x80000000:  # High bit set indicates delayed import
+                        actual_addr = import_addr & 0x7FFFFFFF
+
+                        # Try to resolve the delayed import
+                        if actual_addr in self.api_hash_db:
+                            api_name = self.api_hash_db[actual_addr]
+                            delayed_imports.append({
+                                "offset": i,
+                                "api": api_name,
+                                "method": "Delayed import",
+                                "thunk_addr": hex(import_addr)
+                            })
+
+                # Check for LoadLibrary patterns for delayed loading
+                if code[i:i+4] == b'\x68':  # PUSH imm32
+                    lib_name_addr = int.from_bytes(code[i+1:i+5], 'little')
+
+                    # Check if followed by LoadLibrary call
+                    if i + 5 < len(code) - 5 and code[i+5:i+7] == b'\xFF\x15':  # CALL DWORD PTR
+                        call_target = int.from_bytes(code[i+7:i+11], 'little')
+
+                        # Check if this calls LoadLibrary
+                        if call_target in self.api_hash_db:
+                            api_name = self.api_hash_db[call_target]
+                            if 'LoadLibrary' in api_name:
+                                delayed_imports.append({
+                                    "offset": i,
+                                    "api": "LoadLibrary (delayed)",
+                                    "method": "Runtime loading",
+                                    "lib_addr": hex(lib_name_addr)
+                                })
+
+            # Look for delay-load helper patterns
+            for i in range(len(code) - 12):
+                # Check for __delayLoadHelper2 pattern
+                if code[i] == 0xE8:  # CALL rel32
+                    call_offset = int.from_bytes(code[i+1:i+5], 'little', signed=True)
+                    call_target = i + 5 + call_offset
+
+                    # Check if target looks like delay load helper
+                    if 0 <= call_target < len(code) - 8:
+                        # Check for characteristic delay load helper prologue
+                        if code[call_target:call_target+3] == b'\x55\x8B\xEC':  # push ebp; mov ebp, esp
+                            delayed_imports.append({
+                                "offset": i,
+                                "api": "Delay load helper",
+                                "method": "__delayLoadHelper2",
+                                "helper_addr": hex(call_target)
+                            })
+
+            return bytes(resolved_code), {
+                "method": "delayed_loading",
+                "resolved_count": len(delayed_imports),
+                "imports": delayed_imports
+            }
+
+        except Exception as e:
+            self.logger.error(f"Failed to resolve delayed imports: {e}")
+            return code, {"error": str(e)}

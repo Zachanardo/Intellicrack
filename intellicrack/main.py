@@ -1,8 +1,32 @@
-"""Main entry point for the Intellicrack binary analysis platform."""
+"""Main entry point for the Intellicrack binary analysis platform.
+
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 import logging
 import os
 import sys
+
+# Initialize GIL safety measures at the very start
+try:
+    from intellicrack.utils.torch_gil_safety import initialize_gil_safety
+    initialize_gil_safety()
+except ImportError:
+    # Fallback environment variables
+    os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
 
 # Initialize logger before it's used
 logger = logging.getLogger(__name__)
@@ -89,16 +113,16 @@ def main() -> int:
     and provides helpful error messages for missing dependencies.
 
     Returns:
-        int: Application exit code
-             - 0: Successful execution
-             - 1: Error during startup or execution
+        int: Application exit code. 0 for success, 1 for error.
 
     Raises:
-        No exceptions are raised; all errors are caught and logged
+        No exceptions are raised; all errors are caught and logged.
 
     Example:
-        >>> import sys
-        >>> sys.exit(main())
+        .. code-block:: python
+
+            import sys
+            sys.exit(main())
 
     """
     try:

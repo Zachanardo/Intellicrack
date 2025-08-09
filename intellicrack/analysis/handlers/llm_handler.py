@@ -201,8 +201,11 @@ class LLMHandler(QObject):
     """
 
     # Signals
-    llm_result_ready = pyqtSignal(dict)  # Emits LLM operation results
+    #: Signal emitted when LLM operation results are ready (type: dict)
+    llm_result_ready = pyqtSignal(dict)
+    #: Signal emitted when an LLM error occurs (type: str)
     llm_error = pyqtSignal(str)
+    #: Signal emitted to report LLM operation progress (type: str)
     llm_progress = pyqtSignal(str)
 
     def __init__(self, parent=None):

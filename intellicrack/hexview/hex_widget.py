@@ -72,10 +72,14 @@ class HexViewerWidget(QAbstractScrollArea):
     """
 
     # Signals
-    data_changed = pyqtSignal(int, int)  # (offset, size)
-    selection_changed = pyqtSignal(int, int)  # (start, end)
-    offset_changed = pyqtSignal(int)  # Current offset
-    view_mode_changed = pyqtSignal(ViewMode)  # Current view mode
+    #: Signal emitted when data is changed (type: offset: int, size: int)
+    data_changed = pyqtSignal(int, int)
+    #: Signal emitted when selection changes (type: start: int, end: int)
+    selection_changed = pyqtSignal(int, int)
+    #: Signal emitted when current offset changes (type: int)
+    offset_changed = pyqtSignal(int)
+    #: Signal emitted when view mode changes (type: ViewMode)
+    view_mode_changed = pyqtSignal(ViewMode)
 
     def __init__(self, parent=None):
         """Initialize the hex viewer widget.

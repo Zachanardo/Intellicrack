@@ -44,8 +44,10 @@ logger = get_logger(__name__)
 class ExportWorker(QThread):
     """Worker thread for export operations"""
 
-    export_completed = pyqtSignal(bool, str)  # success, message
-    progress_update = pyqtSignal(int, str)  # progress, status
+    #: success, message (type: bool, str)
+    export_completed = pyqtSignal(bool, str)
+    #: progress, status (type: int, str)
+    progress_update = pyqtSignal(int, str)
 
     def __init__(self, export_config: dict[str, Any]):
         """Initialize the ExportWorker with default values."""

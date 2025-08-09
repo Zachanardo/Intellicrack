@@ -1,6 +1,21 @@
 """Application context management for Intellicrack.
 
 This module provides centralized application context management including
+
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 configuration, state management, and shared resources across the application.
 """
 
@@ -24,23 +39,40 @@ class AppContext(QObject):
     """
 
     # State change signals
-    binary_loaded = pyqtSignal(dict)  # Emitted when a binary is loaded
-    binary_unloaded = pyqtSignal()  # Emitted when binary is unloaded
-    analysis_started = pyqtSignal(str, dict)  # analysis_type, options
-    analysis_completed = pyqtSignal(str, dict)  # analysis_type, results
-    analysis_failed = pyqtSignal(str, str)  # analysis_type, error_message
-    project_loaded = pyqtSignal(dict)  # project_info
-    project_saved = pyqtSignal(str)  # project_path
+    #: Emitted when a binary is loaded (type: dict)
+    binary_loaded = pyqtSignal(dict)
+    #: Signal emitted when binary is unloaded (type: no parameters)
+    binary_unloaded = pyqtSignal()
+    #: analysis_type, options (type: str, dict)
+    analysis_started = pyqtSignal(str, dict)
+    #: analysis_type, results (type: str, dict)
+    analysis_completed = pyqtSignal(str, dict)
+    #: analysis_type, error_message (type: str, str)
+    analysis_failed = pyqtSignal(str, str)
+    #: project_info (type: dict)
+    project_loaded = pyqtSignal(dict)
+    #: project_path (type: str)
+    project_saved = pyqtSignal(str)
+    #: Signal emitted when project is closed (type: no parameters)
     project_closed = pyqtSignal()
-    plugin_loaded = pyqtSignal(str, dict)  # plugin_name, plugin_info
-    plugin_unloaded = pyqtSignal(str)  # plugin_name
-    settings_changed = pyqtSignal(str, Any)  # setting_key, new_value
-    task_started = pyqtSignal(str, str)  # task_id, task_description
-    task_progress = pyqtSignal(str, int)  # task_id, progress_percentage
-    task_completed = pyqtSignal(str, Any)  # task_id, result
-    task_failed = pyqtSignal(str, str)  # task_id, error_message
-    model_loaded = pyqtSignal(str, dict)  # model_name, model_info
-    model_unloaded = pyqtSignal(str)  # model_name
+    #: plugin_name, plugin_info (type: str, dict)
+    plugin_loaded = pyqtSignal(str, dict)
+    #: plugin_name (type: str)
+    plugin_unloaded = pyqtSignal(str)
+    #: setting_key, new_value (type: str, Any)
+    settings_changed = pyqtSignal(str, Any)
+    #: task_id, task_description (type: str, str)
+    task_started = pyqtSignal(str, str)
+    #: task_id, progress_percentage (type: str, int)
+    task_progress = pyqtSignal(str, int)
+    #: task_id, result (type: str, Any)
+    task_completed = pyqtSignal(str, Any)
+    #: task_id, error_message (type: str, str)
+    task_failed = pyqtSignal(str, str)
+    #: model_name, model_info (type: str, dict)
+    model_loaded = pyqtSignal(str, dict)
+    #: model_name (type: str)
+    model_unloaded = pyqtSignal(str)
 
     def __init__(self):
         """Initialize the application context.

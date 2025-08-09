@@ -16,14 +16,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Fix all S110 violations (exceptions without logger) in the codebase."""
-
 import logging
 import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
+"""Fix all S110 violations (exceptions without logger) in the codebase."""
 
 logger = logging.getLogger(__name__)
 

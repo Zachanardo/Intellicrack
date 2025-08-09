@@ -339,7 +339,7 @@ class DataInspector(QWidget if PYQT6_AVAILABLE else object):
     including integers, floats, strings, timestamps, and more.
     """
 
-    # Signal emitted when user wants to modify data
+    #: Signal emitted when user wants to modify data (type: bytes)
     data_modified = pyqtSignal(bytes) if PYQT6_AVAILABLE else None
 
     def __init__(self, parent=None):

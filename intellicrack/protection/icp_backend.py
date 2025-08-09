@@ -183,16 +183,15 @@ class ICPScanResult:
 
     @classmethod
     def from_die_text(cls, file_path: str, die_text: str) -> "ICPScanResult":
-        """Create from die-python text output
+        """Create from die-python text output.
 
         Args:
             file_path: Path to the analyzed file
-            die_text: Text output from die.scan_file()
-                     Format: "PE64\n    Unknown: Unknown\n    Packer: UPX"
+            die_text: Text output from die.scan_file().
+                Example format: "PE64\\n    Unknown: Unknown\\n    Packer: UPX"
 
         Returns:
             ICPScanResult with parsed detections
-
         """
         obj = cls(file_path=file_path)
 
@@ -283,15 +282,17 @@ class ICPBackend:
     responsiveness in GUI applications.
 
     Example:
-        backend = ICPBackend()
-        result = await backend.analyze_file("target.exe", ScanMode.DEEP)
-        if result.is_packed:
-            print(f"File is packed with: {', '.join(result.all_detections)}")
+        .. code-block:: python
 
-        # Or use synchronous detailed analysis
-        analysis = backend.get_detailed_analysis("target.exe")
-        print(f"Entropy: {analysis['entropy']:.4f}")
-        print(f"Strings found: {len(analysis['strings'])}")
+            backend = ICPBackend()
+            result = await backend.analyze_file("target.exe", ScanMode.DEEP)
+            if result.is_packed:
+                print(f"File is packed with: {', '.join(result.all_detections)}")
+
+            # Or use synchronous detailed analysis
+            analysis = backend.get_detailed_analysis("target.exe")
+            print(f"Entropy: {analysis['entropy']:.4f}")
+            print(f"Strings found: {len(analysis['strings'])}")
 
     """
 

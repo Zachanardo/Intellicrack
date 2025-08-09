@@ -1,8 +1,5 @@
-"""Common imports module for UI components."""
+"""Common imports module for UI components.
 
-from intellicrack.logger import logger
-
-"""
 Common PyQt6 imports used across UI components
 
 Copyright (C) 2025 Zachary Flint
@@ -22,6 +19,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
+from intellicrack.logger import logger
 
 
 try:

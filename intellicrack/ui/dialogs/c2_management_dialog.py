@@ -15,13 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""
-C2 Management Dialog
-
-Advanced UI for managing Command and Control infrastructure,
-sessions, and remote operations.
-"""
-
 import asyncio
 import logging
 import os

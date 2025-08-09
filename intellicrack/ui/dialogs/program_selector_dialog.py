@@ -61,6 +61,15 @@ else:
     QTimer = object
 
     def pyqtSignal(*args):
+        """Create signal replacement for PyQt6 fallback.
+        
+        Args:
+            *args: Signal argument types
+            
+        Returns:
+            Identity function as signal placeholder
+
+        """
         return lambda x: x
 
 

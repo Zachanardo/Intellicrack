@@ -186,7 +186,8 @@ class GhidraScriptSelector(QDialog):
     """Dialog for selecting Ghidra scripts."""
 
     # Signal emitted when a script is selected
-    script_selected = pyqtSignal(str)  # Emits script path
+    #: Emits script path (type: str)
+    script_selected = pyqtSignal(str)
 
     def __init__(self, parent=None, show_invalid=False):
         """Initialize the GhidraScriptSelector with default values."""

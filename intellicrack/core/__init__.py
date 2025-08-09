@@ -35,6 +35,15 @@ except ImportError as e:
 # Import all core modules
 from . import analysis, network, patching, processing, protection_bypass, reporting
 
+# Import protection analyzer
+try:
+    from .protection_analyzer import ProtectionAnalyzer
+    PROTECTION_ANALYZER_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Protection analyzer not available: {e}")
+    ProtectionAnalyzer = None
+    PROTECTION_ANALYZER_AVAILABLE = False
+
 # Import new exploitation modules
 try:
     from . import (
@@ -157,6 +166,7 @@ def get_frida_bypass_wizard():
 __all__ = [
     "EXPLOITATION_MODULES_AVAILABLE",
     "FRIDA_MODULES_AVAILABLE",
+    "PROTECTION_ANALYZER_AVAILABLE",
     "SECURITY_ENFORCEMENT_AVAILABLE",
     "analysis",
     "exploitation",
@@ -166,7 +176,9 @@ __all__ = [
     "network",
     "patching",
     "processing",
+    "protection_analyzer",
     "protection_bypass",
+    "ProtectionAnalyzer",
     "reporting",
     "security_enforcement",
     "vulnerability_research",

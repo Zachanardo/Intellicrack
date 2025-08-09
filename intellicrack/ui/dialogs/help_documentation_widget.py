@@ -47,7 +47,8 @@ class HelpDocumentationWidget(QWidget):
     """
 
     # Signal emitted when user clicks on a feature to try it
-    feature_selected = pyqtSignal(str, str)  # category, feature_name
+    #: category, feature_name (type: str, str)
+    feature_selected = pyqtSignal(str, str)
 
     def __init__(self, parent=None):
         """Initialize the help documentation widget."""

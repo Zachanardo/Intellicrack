@@ -1,9 +1,4 @@
-"""Emulator UI enhancements for improved user experience."""
-
-from intellicrack.logger import logger
-
-"""
-UI enhancements for emulator status and warnings.
+"""Emulator UI enhancements for improved user experience.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,6 +17,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
+
+from intellicrack.logger import logger
 
 try:
     from PyQt6.QtWidgets import (
@@ -172,9 +169,8 @@ class EmulatorRequiredDecorator:
     """Decorator to ensure emulators are running before executing functions.
 
     Usage:
-        @EmulatorRequiredDecorator.requires_qemu
-        def my_qemu_function(self):
-            # Function code
+        Decorator for functions that require emulators to be running.
+        Apply to methods that need QEMU or Qiling functionality.
     """
 
     @staticmethod

@@ -46,6 +46,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 import aiohttp
+import aiohttp.web
 import jwt
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization

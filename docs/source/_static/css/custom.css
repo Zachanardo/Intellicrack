@@ -1,0 +1,289 @@
+/* Custom CSS for Intellicrack Documentation */
+
+/* Color scheme for security research theme */
+:root {
+    --primary-color: #2980B9;
+    --secondary-color: #1abc9c;
+    --warning-color: #e74c3c;
+    --success-color: #27ae60;
+    --dark-bg: #2c3e50;
+    --light-bg: #ecf0f1;
+    --code-bg: #f4f4f4;
+    --border-color: #bdc3c7;
+}
+
+/* Enhanced readability */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+}
+
+/* Code blocks styling */
+pre {
+    background-color: var(--code-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 12px;
+    overflow-x: auto;
+}
+
+code {
+    background-color: var(--code-bg);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 0.9em;
+}
+
+/* Warning boxes for security notices */
+.admonition.warning {
+    background-color: #fff5f5;
+    border-left: 4px solid var(--warning-color);
+    padding: 12px;
+    margin: 20px 0;
+}
+
+.admonition.warning .admonition-title {
+    color: var(--warning-color);
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+/* Note boxes */
+.admonition.note {
+    background-color: #f0f8ff;
+    border-left: 4px solid var(--primary-color);
+    padding: 12px;
+    margin: 20px 0;
+}
+
+.admonition.note .admonition-title {
+    color: var(--primary-color);
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+/* Important boxes */
+.admonition.important {
+    background-color: #fff9e6;
+    border-left: 4px solid #f39c12;
+    padding: 12px;
+    margin: 20px 0;
+}
+
+/* API documentation enhancements */
+.class {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border-color);
+}
+
+.method {
+    margin-left: 20px;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #fafafa;
+    border-left: 3px solid var(--secondary-color);
+}
+
+.function {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #fafafa;
+    border-radius: 4px;
+}
+
+/* Parameter lists */
+.field-list {
+    margin: 15px 0;
+}
+
+.field-name {
+    font-weight: bold;
+    color: var(--dark-bg);
+    min-width: 100px;
+    display: inline-block;
+}
+
+/* Return type styling */
+.sig-return-typehint {
+    color: var(--secondary-color);
+    font-style: italic;
+}
+
+/* Navigation improvements */
+.wy-nav-content {
+    max-width: 1200px;
+}
+
+.wy-nav-side {
+    background-color: var(--dark-bg);
+}
+
+.wy-side-nav-search {
+    background-color: var(--primary-color);
+}
+
+.wy-menu-vertical a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Table styling */
+table.docutils {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px 0;
+}
+
+table.docutils td, table.docutils th {
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+}
+
+table.docutils th {
+    background-color: var(--light-bg);
+    font-weight: bold;
+}
+
+table.docutils tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Syntax highlighting improvements */
+.highlight {
+    background: #f8f8f8;
+    border-radius: 4px;
+    margin: 15px 0;
+}
+
+.highlight .linenos {
+    color: #666;
+    border-right: 1px solid var(--border-color);
+    padding-right: 10px;
+    margin-right: 10px;
+}
+
+/* Module index styling */
+.modindextable td {
+    padding: 8px;
+}
+
+.modindextable .module-name {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+/* Search results */
+.search-results .context {
+    color: #666;
+    font-size: 0.9em;
+    margin: 5px 0;
+}
+
+.search-results .highlighted {
+    background-color: #ffeb3b;
+    padding: 2px 4px;
+    font-weight: bold;
+}
+
+/* Inheritance diagrams */
+.inheritance-diagram {
+    text-align: center;
+    margin: 20px 0;
+}
+
+/* Version information */
+.version-info {
+    background-color: var(--light-bg);
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-size: 0.9em;
+}
+
+/* Security badges */
+.security-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+    margin: 0 4px;
+}
+
+.security-badge.critical {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.security-badge.defensive {
+    background-color: var(--success-color);
+    color: white;
+}
+
+/* Responsive improvements */
+@media screen and (max-width: 768px) {
+    .wy-nav-content {
+        padding: 20px;
+    }
+    
+    .method {
+        margin-left: 10px;
+    }
+    
+    table.docutils {
+        font-size: 0.9em;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --code-bg: #2d2d2d;
+        --light-bg: #3a3a3a;
+        --border-color: #555;
+    }
+    
+    body {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+    }
+    
+    pre, code {
+        background-color: var(--code-bg);
+        color: #f8f8f2;
+    }
+    
+    .admonition.warning {
+        background-color: #3d1f1f;
+    }
+    
+    .admonition.note {
+        background-color: #1f2f3d;
+    }
+    
+    table.docutils tr:nth-child(even) {
+        background-color: #2a2a2a;
+    }
+}
+
+/* Print styles */
+@media print {
+    .wy-nav-side {
+        display: none;
+    }
+    
+    .wy-nav-content {
+        margin: 0;
+        max-width: 100%;
+    }
+    
+    .admonition {
+        border: 1px solid #999;
+    }
+    
+    a[href^="http"]:after {
+        content: " (" attr(href) ")";
+        font-size: 0.8em;
+    }
+}

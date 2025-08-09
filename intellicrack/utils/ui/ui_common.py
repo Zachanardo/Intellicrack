@@ -1,5 +1,10 @@
-"""This file is part of Intellicrack.
+"""Common UI utility functions and patterns for Intellicrack.
+
+This module consolidates repeated UI patterns to avoid code duplication.
+
 Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -14,13 +19,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-
-"""
-Common UI utility functions and patterns for Intellicrack.
-
-This module consolidates repeated UI patterns to avoid code duplication.
-"""
-
 import os
 import webbrowser
 from collections.abc import Callable

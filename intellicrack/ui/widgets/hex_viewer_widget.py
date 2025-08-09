@@ -93,8 +93,10 @@ class HexViewerWidget(QWidget):
     """Hex viewer widget with protection analysis integration"""
 
     # Signals
-    offset_selected = pyqtSignal(int)  # Offset clicked
-    region_highlighted = pyqtSignal(int, int)  # Start, end offsets
+    #: Offset clicked (type: int)
+    offset_selected = pyqtSignal(int)
+    #: Start, end offsets (type: int, int)
+    region_highlighted = pyqtSignal(int, int)
 
     def __init__(self, parent=None):
         """Initialize hex viewer widget with file data, PE analysis components, and UI setup."""
@@ -142,6 +144,10 @@ class HexViewerWidget(QWidget):
         self.ascii_display.setFont(QFont("Consolas", 10))
         self.ascii_display.setLineWrapMode(QTextEdit.NoWrap)
         right_splitter.addWidget(self.ascii_display)
+
+        # Add context menu to hex display for string extraction
+        self.hex_display.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.hex_display.customContextMenuRequested.connect(self._show_context_menu)
 
         # Info panel
         self.info_panel = self._create_info_panel()
@@ -878,3 +884,425 @@ class HexViewerWidget(QWidget):
         tooltip = self.structure_model.data(index, Qt.ToolTipRole)
         if tooltip and tooltip != name:
             self.structure_info_text.append(f"\nDetails:\n{tooltip}")
+
+    def _show_context_menu(self, position):
+        """Show context menu for hex display"""
+        from PyQt6.QtGui import QAction
+        from PyQt6.QtWidgets import QMenu
+
+        menu = QMenu(self)
+
+        # Extract strings action
+        extract_strings_action = QAction("Extract Strings", self)
+        extract_strings_action.triggered.connect(self._extract_strings_from_selection)
+        menu.addAction(extract_strings_action)
+
+        # Extract wide strings action
+        extract_wide_strings_action = QAction("Extract Wide Strings (Unicode)", self)
+        extract_wide_strings_action.triggered.connect(lambda: self._extract_strings_from_selection(wide=True))
+        menu.addAction(extract_wide_strings_action)
+
+        menu.addSeparator()
+
+        # Extract all strings from file
+        extract_all_strings_action = QAction("Extract All Strings from File", self)
+        extract_all_strings_action.triggered.connect(self._extract_all_strings)
+        menu.addAction(extract_all_strings_action)
+
+        # Find license patterns
+        find_license_action = QAction("Find License Patterns", self)
+        find_license_action.triggered.connect(self._find_license_patterns)
+        menu.addAction(find_license_action)
+
+        menu.addSeparator()
+
+        # Copy selection
+        copy_hex_action = QAction("Copy Hex", self)
+        copy_hex_action.triggered.connect(self._copy_hex_selection)
+        menu.addAction(copy_hex_action)
+
+        copy_ascii_action = QAction("Copy ASCII", self)
+        copy_ascii_action.triggered.connect(self._copy_ascii_selection)
+        menu.addAction(copy_ascii_action)
+
+        menu.exec(self.hex_display.mapToGlobal(position))
+
+    def _extract_strings_from_selection(self, wide=False):
+        """Extract strings from selected hex data"""
+        try:
+            from PyQt6.QtWidgets import (
+                QCheckBox,
+                QDialog,
+                QHBoxLayout,
+                QLabel,
+                QPushButton,
+                QSpinBox,
+                QTextEdit,
+                QVBoxLayout,
+            )
+
+            from intellicrack.core.analysis.memory_forensics_engine import MemoryForensicsEngine
+
+            # Get selected data
+            cursor = self.hex_display.textCursor()
+            selected_text = cursor.selectedText()
+
+            if not selected_text and self.file_data:
+                # Use entire loaded data if no selection
+                data_to_analyze = self.file_data
+            elif selected_text:
+                # Convert hex text to bytes
+                hex_only = ''.join(selected_text.split())
+                hex_only = ''.join(c for c in hex_only if c in '0123456789ABCDEFabcdef')
+                try:
+                    data_to_analyze = bytes.fromhex(hex_only)
+                except ValueError:
+                    QMessageBox.warning(self, "Invalid Selection", "Please select valid hex data")
+                    return
+            else:
+                QMessageBox.information(self, "No Data", "No data loaded or selected")
+                return
+
+            # Create results dialog
+            dialog = QDialog(self)
+            dialog.setWindowTitle("String Extraction Results")
+            dialog.setGeometry(100, 100, 800, 600)
+
+            layout = QVBoxLayout()
+
+            # Options
+            options_layout = QHBoxLayout()
+
+            min_length_label = QLabel("Minimum Length:")
+            min_length_spin = QSpinBox()
+            min_length_spin.setMinimum(3)
+            min_length_spin.setMaximum(100)
+            min_length_spin.setValue(5)
+
+            options_layout.addWidget(min_length_label)
+            options_layout.addWidget(min_length_spin)
+
+            filter_check = QCheckBox("Filter License-Related Only")
+            options_layout.addWidget(filter_check)
+
+            refresh_btn = QPushButton("Refresh")
+            options_layout.addWidget(refresh_btn)
+
+            options_layout.addStretch()
+            layout.addLayout(options_layout)
+
+            # Results display
+            results_text = QTextEdit()
+            results_text.setReadOnly(True)
+            results_text.setFont(QFont("Consolas", 10))
+            layout.addWidget(results_text)
+
+            # Statistics
+            stats_label = QLabel("Extracting strings...")
+            layout.addWidget(stats_label)
+
+            # Buttons
+            button_layout = QHBoxLayout()
+
+            export_btn = QPushButton("Export")
+            copy_btn = QPushButton("Copy All")
+            close_btn = QPushButton("Close")
+
+            button_layout.addWidget(export_btn)
+            button_layout.addWidget(copy_btn)
+            button_layout.addStretch()
+            button_layout.addWidget(close_btn)
+
+            layout.addLayout(button_layout)
+
+            def extract_and_display():
+                """Extract strings and display results"""
+                min_length = min_length_spin.value()
+                filter_license = filter_check.isChecked()
+
+                if wide:
+                    # Extract Unicode strings
+                    strings = self._extract_unicode_strings(data_to_analyze, min_length)
+                else:
+                    # Use MemoryForensicsEngine for ASCII extraction
+                    engine = MemoryForensicsEngine()
+                    strings = engine.extract_strings(data_to_analyze, min_length)
+
+                # Filter for license-related if requested
+                if filter_license:
+                    license_keywords = [
+                        'license', 'activation', 'serial', 'key', 'product',
+                        'registration', 'trial', 'expire', 'valid', 'crack',
+                        'patch', 'keygen', 'hwid', 'machine', 'signature'
+                    ]
+                    filtered = []
+                    for s in strings:
+                        s_lower = s.lower()
+                        if any(keyword in s_lower for keyword in license_keywords):
+                            filtered.append(s)
+                    strings = filtered
+
+                # Display results
+                results = []
+                results.append(f"{'='*60}")
+                results.append(f"String Extraction Results ({'Unicode' if wide else 'ASCII'})")
+                results.append(f"{'='*60}")
+                results.append(f"Data size: {len(data_to_analyze):,} bytes")
+                results.append(f"Minimum length: {min_length} characters")
+                results.append(f"Strings found: {len(strings)}")
+                if filter_license:
+                    results.append("Filter: License-related only")
+                results.append(f"{'='*60}\n")
+
+                # Group strings by potential category
+                categories = {
+                    'URLs': [],
+                    'Paths': [],
+                    'License': [],
+                    'Registry': [],
+                    'Error Messages': [],
+                    'Other': []
+                }
+
+                for string in strings:
+                    if string.startswith('http://') or string.startswith('https://'):
+                        categories['URLs'].append(string)
+                    elif '\\' in string or '/' in string:
+                        if any(ext in string.lower() for ext in ['.exe', '.dll', '.sys', '.dat']):
+                            categories['Paths'].append(string)
+                        elif 'HKEY' in string or 'Software\\' in string:
+                            categories['Registry'].append(string)
+                        else:
+                            categories['Other'].append(string)
+                    elif any(word in string.lower() for word in ['license', 'serial', 'activation', 'key']):
+                        categories['License'].append(string)
+                    elif any(word in string.lower() for word in ['error', 'fail', 'invalid', 'exception']):
+                        categories['Error Messages'].append(string)
+                    else:
+                        categories['Other'].append(string)
+
+                # Display by category
+                for category, items in categories.items():
+                    if items:
+                        results.append(f"\n[{category}] ({len(items)} strings)")
+                        results.append('-' * 40)
+                        for item in items[:100]:  # Limit display
+                            results.append(item)
+                        if len(items) > 100:
+                            results.append(f"... and {len(items) - 100} more")
+
+                results_text.setPlainText('\n'.join(results))
+                stats_label.setText(f"Total: {len(strings)} strings | Displayed: {min(len(strings), 600)} strings")
+
+            def export_strings():
+                """Export strings to file"""
+                from PyQt6.QtWidgets import QFileDialog
+
+                file_path, _ = QFileDialog.getSaveFileName(
+                    dialog,
+                    "Export Strings",
+                    "extracted_strings.txt",
+                    "Text Files (*.txt);;All Files (*)"
+                )
+
+                if file_path:
+                    try:
+                        with open(file_path, 'w', encoding='utf-8', errors='ignore') as f:
+                            f.write(results_text.toPlainText())
+                        QMessageBox.information(dialog, "Export Complete", f"Strings exported to {file_path}")
+                    except Exception as e:
+                        QMessageBox.critical(dialog, "Export Error", f"Failed to export: {str(e)}")
+
+            def copy_all():
+                """Copy all results to clipboard"""
+                from PyQt6.QtWidgets import QApplication
+                clipboard = QApplication.clipboard()
+                clipboard.setText(results_text.toPlainText())
+                stats_label.setText("Results copied to clipboard")
+
+            # Connect signals
+            refresh_btn.clicked.connect(extract_and_display)
+            export_btn.clicked.connect(export_strings)
+            copy_btn.clicked.connect(copy_all)
+            close_btn.clicked.connect(dialog.close)
+
+            # Initial extraction
+            extract_and_display()
+
+            dialog.setLayout(layout)
+            dialog.exec()
+
+        except Exception as e:
+            logger.error(f"String extraction failed: {str(e)}")
+            QMessageBox.critical(self, "Extraction Error", f"Failed to extract strings: {str(e)}")
+
+    def _extract_unicode_strings(self, data: bytes, min_length: int = 5) -> list[str]:
+        """Extract Unicode (UTF-16) strings from binary data"""
+        strings = []
+        current_string = ""
+
+        # Process as UTF-16 LE (Windows default)
+        i = 0
+        while i < len(data) - 1:
+            # Check for printable Unicode character
+            char_bytes = data[i:i+2]
+            if char_bytes[1] == 0:  # High byte is 0 (ASCII range)
+                if 32 <= char_bytes[0] <= 126:  # Printable ASCII
+                    current_string += chr(char_bytes[0])
+                else:
+                    if len(current_string) >= min_length:
+                        strings.append(current_string)
+                    current_string = ""
+            else:
+                if len(current_string) >= min_length:
+                    strings.append(current_string)
+                current_string = ""
+            i += 2
+
+        # Don't forget the last string
+        if len(current_string) >= min_length:
+            strings.append(current_string)
+
+        return strings
+
+    def _extract_all_strings(self):
+        """Extract all strings from the entire file"""
+        if not self.file_path:
+            QMessageBox.information(self, "No File", "Please load a file first")
+            return
+
+        try:
+            # Read entire file
+            with open(self.file_path, 'rb') as f:
+                data = f.read()
+
+            # Use a copy of file_data temporarily
+            original_data = self.file_data
+            self.file_data = data
+
+            # Extract strings
+            self._extract_strings_from_selection()
+
+            # Restore original data
+            self.file_data = original_data
+
+        except Exception as e:
+            logger.error(f"Failed to read file for string extraction: {str(e)}")
+            QMessageBox.critical(self, "Read Error", f"Failed to read file: {str(e)}")
+
+    def _find_license_patterns(self):
+        """Find and highlight license-related patterns in the hex view"""
+        try:
+            import re
+
+            from PyQt6.QtWidgets import (
+                QDialog,
+                QHBoxLayout,
+                QLabel,
+                QListWidget,
+                QPushButton,
+                QVBoxLayout,
+            )
+
+            if not self.file_data:
+                QMessageBox.information(self, "No Data", "Please load a file first")
+                return
+
+            # License-related patterns to search for
+            patterns = [
+                (b'LICENSE', 'License keyword'),
+                (b'ACTIVATION', 'Activation keyword'),
+                (b'SERIAL', 'Serial keyword'),
+                (b'PRODUCT.?KEY', 'Product key pattern'),
+                (b'TRIAL', 'Trial keyword'),
+                (b'EXPIRE', 'Expiration keyword'),
+                (b'HWID', 'Hardware ID'),
+                (b'MACHINE.?ID', 'Machine ID pattern'),
+                (b'[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}', 'Serial number pattern'),
+                (b'[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}', 'UUID pattern'),
+            ]
+
+            # Create results dialog
+            dialog = QDialog(self)
+            dialog.setWindowTitle("License Pattern Search Results")
+            dialog.setGeometry(100, 100, 600, 400)
+
+            layout = QVBoxLayout()
+
+            info_label = QLabel("Found license-related patterns:")
+            layout.addWidget(info_label)
+
+            results_list = QListWidget()
+            layout.addWidget(results_list)
+
+            # Search for patterns
+            found_count = 0
+            for pattern_bytes, description in patterns:
+                try:
+                    matches = list(re.finditer(pattern_bytes, self.file_data, re.IGNORECASE))
+                    if matches:
+                        found_count += len(matches)
+                        for match in matches:
+                            offset = match.start()
+                            matched_text = match.group(0).decode('utf-8', errors='ignore')
+                            item_text = f"0x{offset:08X}: {description} - '{matched_text}'"
+                            results_list.addItem(item_text)
+                except:
+                    pass
+
+            info_label.setText(f"Found {found_count} license-related patterns:")
+
+            # Buttons
+            button_layout = QHBoxLayout()
+
+            goto_btn = QPushButton("Go to Offset")
+            close_btn = QPushButton("Close")
+
+            button_layout.addWidget(goto_btn)
+            button_layout.addStretch()
+            button_layout.addWidget(close_btn)
+
+            layout.addLayout(button_layout)
+
+            def goto_selected():
+                """Navigate to selected pattern offset"""
+                current_item = results_list.currentItem()
+                if current_item:
+                    text = current_item.text()
+                    # Extract offset from text
+                    if text.startswith('0x'):
+                        offset_str = text.split(':')[0]
+                        offset = int(offset_str, 16)
+                        self.go_to_offset(offset)
+                        dialog.close()
+
+            goto_btn.clicked.connect(goto_selected)
+            results_list.itemDoubleClicked.connect(lambda: goto_selected())
+            close_btn.clicked.connect(dialog.close)
+
+            dialog.setLayout(layout)
+            dialog.exec()
+
+        except Exception as e:
+            logger.error(f"Pattern search failed: {str(e)}")
+            QMessageBox.critical(self, "Search Error", f"Failed to search patterns: {str(e)}")
+
+    def _copy_hex_selection(self):
+        """Copy selected hex to clipboard"""
+        from PyQt6.QtWidgets import QApplication
+        cursor = self.hex_display.textCursor()
+        selected_text = cursor.selectedText()
+        if selected_text:
+            # Clean up hex for copying
+            hex_only = ''.join(c for c in selected_text if c in '0123456789ABCDEFabcdef ')
+            clipboard = QApplication.clipboard()
+            clipboard.setText(hex_only)
+
+    def _copy_ascii_selection(self):
+        """Copy ASCII representation to clipboard"""
+        from PyQt6.QtWidgets import QApplication
+        cursor = self.ascii_display.textCursor()
+        selected_text = cursor.selectedText()
+        if selected_text:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(selected_text)

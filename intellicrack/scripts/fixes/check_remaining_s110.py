@@ -16,12 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Check remaining S110 violations in the codebase."""
-
 import os
 import re
 from collections import defaultdict
 from pathlib import Path
+
+"""Check remaining S110 violations in the codebase."""
 
 
 def check_for_logger_import(lines):

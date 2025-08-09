@@ -49,8 +49,14 @@ try:
 
     DASK_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in distributed_manager: %s", e)
+    logger.debug("Optional dependency dask.distributed not available: %s", e)
     DASK_AVAILABLE = False
+    # Provide fallback implementations
+    Client = None
+
+    def progress(futures):
+        """Fallback progress function that does nothing."""
+        pass
 
 try:
     import angr

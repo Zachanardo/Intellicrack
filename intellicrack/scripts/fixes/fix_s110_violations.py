@@ -16,11 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-"""Fix S110 violations (exceptions without logger) in the codebase."""
-
 import re
 import sys
 from pathlib import Path
+
+"""Fix S110 violations (exceptions without logger) in the codebase."""
 
 
 def has_logger_import(lines: list[str]) -> tuple[bool, str]:

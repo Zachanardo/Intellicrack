@@ -770,14 +770,5 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             return b"\xff\xff\xff\xff"  # Error response
 
 
-# Import generic implementation
-try:
-    from .generic_protocol_handler import GenericProtocolHandler
-except ImportError as e:
-    logger.error("Import error in license_protocol_handler: %s", e)
-    GenericProtocolHandler = None
-
 # Export main classes
 __all__ = ["FlexLMProtocolHandler", "HASPProtocolHandler", "LicenseProtocolHandler"]
-if GenericProtocolHandler:
-    __all__.append("GenericProtocolHandler")

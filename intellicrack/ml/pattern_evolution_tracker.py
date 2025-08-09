@@ -56,7 +56,7 @@ class RestrictedUnpickler(pickle.Unpickler):
     """Restricted unpickler that only allows safe classes."""
 
     def find_class(self, module, name):
-        """Override find_class to restrict allowed classes."""
+        """Override ``find_class`` to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
             "numpy",
@@ -695,7 +695,7 @@ class PatternMatcher:
                 pass  # Invalid regex
 
     def match(self, data: bytes, pattern_type: PatternType) -> list[tuple[str, float]]:
-        """Match data against patterns, return (pattern_id, confidence) tuples"""
+        """Match data against patterns, return (``pattern_id``, confidence) tuples"""
         matches = []
 
         # Quick bloom filter check

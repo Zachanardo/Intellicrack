@@ -62,6 +62,15 @@ except ImportError as e:
     QThread = object
 
     def pyqtSignal(*args):
+        """Create signal replacement for PyQt6 fallback.
+        
+        Args:
+            *args: Signal argument types
+            
+        Returns:
+            Identity function as signal placeholder
+
+        """
         return lambda x: x
 
 
@@ -97,8 +106,10 @@ logger = get_logger(__name__) if "get_logger" in globals() else logging.getLogge
 class ModelTestThread(QThread):
     """Thread for testing model configurations."""
 
-    test_complete = pyqtSignal(bool, str)  # success, message
-    test_progress = pyqtSignal(str)  # progress message
+    #: success, message (type: bool, str)
+    test_complete = pyqtSignal(bool, str)
+    #: progress message (type: str)
+    test_progress = pyqtSignal(str)
 
     def __init__(self, config: "LLMConfig"):
         """Initialize the ModelTestThread with default values."""

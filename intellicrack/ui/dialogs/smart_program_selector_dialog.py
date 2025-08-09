@@ -72,6 +72,15 @@ except ImportError as e:
     QThread = object
 
     def pyqtSignal(*args):
+        """Create signal replacement for PyQt6 fallback.
+        
+        Args:
+            *args: Signal argument types
+            
+        Returns:
+            None as signal placeholder
+
+        """
         return None
 
     QTimer = object

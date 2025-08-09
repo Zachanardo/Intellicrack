@@ -21,8 +21,10 @@ class IntellicrackHexProtectionIntegration(QObject):
     """Integrates protection analysis hex viewer with Intellicrack's hex viewer"""
 
     # Signals
-    offset_requested = pyqtSignal(int)  # Request jump to offset
-    section_requested = pyqtSignal(str)  # Request jump to section
+    #: Signal to request jumping to a specific offset (type: int)
+    offset_requested = pyqtSignal(int)
+    #: Signal to request jumping to a specific section (type: str)
+    section_requested = pyqtSignal(str)
 
     def __init__(self, hex_widget=None):
         """Initialize hex protection integration

@@ -1,4 +1,20 @@
-"""Plugin creation wizard for developing new Intellicrack plugins."""
+"""Plugin creation wizard for developing new Intellicrack plugins.
+
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 import json
 from datetime import datetime
@@ -52,7 +68,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 class PluginCreationWizard(QWizard):
     """Wizard for creating new plugins with professional templates"""
 
-    plugin_created = pyqtSignal(dict)  # Emitted when plugin is created
+    #: Emitted when plugin is created (type: dict)
+    plugin_created = pyqtSignal(dict)
 
     def __init__(self, parent=None, plugin_type="custom"):
         """Initialize the PluginCreationWizard with default values."""

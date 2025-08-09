@@ -58,7 +58,7 @@ try:
 
     HAS_BITSANDBYTES = True
 except ImportError as e:
-    logger.error("Import error in quantization_manager: %s", e)
+    logger.debug("Optional dependency bitsandbytes not available: %s", e)
     bnb = None
     HAS_BITSANDBYTES = False
 
@@ -67,7 +67,7 @@ try:
 
     HAS_AUTO_GPTQ = True
 except ImportError as e:
-    logger.error("Import error in quantization_manager: %s", e)
+    logger.debug("Optional dependency auto_gptq not available: %s", e)
     AutoGPTQForCausalLM = None
     BaseQuantizeConfig = None
     HAS_AUTO_GPTQ = False

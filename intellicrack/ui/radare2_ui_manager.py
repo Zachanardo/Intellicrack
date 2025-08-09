@@ -51,12 +51,18 @@ class R2UIManager(QObject):
     """
 
     # Signals for UI updates
-    analysis_started = pyqtSignal(str)  # analysis_type
-    analysis_progress = pyqtSignal(int)  # progress percentage
-    analysis_completed = pyqtSignal(dict)  # results
-    analysis_failed = pyqtSignal(str)  # error message
-    status_updated = pyqtSignal(str)  # status message
-    binary_loaded = pyqtSignal(str)  # binary path
+    #: Signal emitted when analysis starts (str: analysis_type)
+    analysis_started = pyqtSignal(str)
+    #: Signal emitted during analysis progress (int: progress percentage)
+    analysis_progress = pyqtSignal(int)
+    #: Signal emitted when analysis completes (dict: results)
+    analysis_completed = pyqtSignal(dict)
+    #: Signal emitted when analysis fails (str: error message)
+    analysis_failed = pyqtSignal(str)
+    #: Signal emitted when status updates (str: status message)
+    status_updated = pyqtSignal(str)
+    #: Signal emitted when binary is loaded (str: binary path)
+    binary_loaded = pyqtSignal(str)
 
     def __init__(self, main_app=None):
         """Initialize the radare2 UI manager with main application integration."""
@@ -322,7 +328,7 @@ class R2UIManager(QObject):
                     {
                         "type": analysis_type,
                         "binary": self.binary_path,
-                        "timestamp": self._get_timestamp(),
+                        "timestamp": self._get_r2_timestamp(),
                         "options": options or {},
                     }
                 )
@@ -413,7 +419,7 @@ class R2UIManager(QObject):
                 # Track in history
                 self.analysis_history.append(
                     {
-                        "timestamp": self._get_timestamp(),
+                        "timestamp": self._get_r2_timestamp(),
                         "action": "export",
                         "file_path": export_path,
                         "binary": self.binary_path,
@@ -452,8 +458,8 @@ class R2UIManager(QObject):
         if "results_viewer" in self.ui_components:
             self.ui_components["results_viewer"].results_data = {}
 
-    def _get_timestamp(self) -> str:
-        """Get current timestamp"""
+    def _get_r2_timestamp(self) -> str:
+        """Get current timestamp for radare2 operations"""
         from datetime import datetime
 
         return datetime.now().isoformat()

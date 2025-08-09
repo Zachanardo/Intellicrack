@@ -23,7 +23,7 @@ from intellicrack.logger import logger
 
 
 class ImportValidator:
-    """Utility class for validating Python imports in code files"""
+    """Utility class for validating Python imports in code files."""
 
     @staticmethod
     def validate_imports_from_code(code: str) -> tuple[bool, list[str]]:
@@ -188,7 +188,7 @@ class ImportValidator:
 
 
 class PluginStructureValidator:
-    """Utility class for validating plugin structure and AST patterns"""
+    """Utility class for validating plugin structure and AST patterns."""
 
     @staticmethod
     def validate_structure_from_code(

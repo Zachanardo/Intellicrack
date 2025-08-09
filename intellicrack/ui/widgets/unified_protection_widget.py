@@ -47,9 +47,11 @@ logger = get_logger(__name__)
 class UnifiedAnalysisThread(QThread):
     """Thread for running unified protection analysis"""
 
-    analysis_complete = pyqtSignal(object)  # UnifiedProtectionResult
+    #: UnifiedProtectionResult (type: object)
+    analysis_complete = pyqtSignal(object)
     analysis_error = pyqtSignal(str)
-    analysis_progress = pyqtSignal(str, int)  # message, percentage
+    #: message, percentage (type: str, int)
+    analysis_progress = pyqtSignal(str, int)
 
     def __init__(self, file_path: str, deep_scan: bool = True):
         """Initialize unified analysis thread.
@@ -96,7 +98,8 @@ class UnifiedAnalysisThread(QThread):
 class ProtectionCard(QFrame):
     """Card widget for displaying individual protection"""
 
-    clicked = pyqtSignal(dict)  # Emit protection data when clicked
+    #: Emit protection data when clicked (type: dict)
+    clicked = pyqtSignal(dict)
 
     def __init__(self, protection_data: dict[str, Any], parent=None):
         """Initialize protection card widget with analysis data and UI setup."""
@@ -181,8 +184,10 @@ class UnifiedProtectionWidget(QWidget):
     """Main widget for unified protection analysis"""
 
     # Signals
-    protection_analyzed = pyqtSignal(object)  # UnifiedProtectionResult
-    bypass_requested = pyqtSignal(str, dict)  # file_path, protection_data
+    #: UnifiedProtectionResult (type: object)
+    protection_analyzed = pyqtSignal(object)
+    #: file_path, protection_data (type: str, dict)
+    bypass_requested = pyqtSignal(str, dict)
 
     def __init__(self, parent=None):
         """Initialize the unified protection analysis widget.

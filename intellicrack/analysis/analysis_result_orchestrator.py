@@ -40,7 +40,8 @@ class AnalysisResultOrchestrator(QObject):
     """
 
     # Signals for status updates
-    handler_status = pyqtSignal(str, str)  # handler_name, status_message
+    #: Signal for handler status updates (type: handler_name: str, status_message: str)
+    handler_status = pyqtSignal(str, str)
 
     def __init__(self, parent=None):
         """Initialize the analysis result orchestrator.

@@ -13,15 +13,12 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
 
-"""
 Patch Generator Module
 
 Compatibility module that provides patch generation functionality
 by wrapping existing patch utilities.
 """
-
 import logging
 from typing import Any
 

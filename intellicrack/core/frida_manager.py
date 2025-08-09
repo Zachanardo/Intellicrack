@@ -61,11 +61,11 @@ class FridaOperationLogger:
     - Log export functionality
 
     Attributes:
-        log_dir: Directory for log files
-        operation_buffer: Circular buffer for recent operations
-        hook_buffer: Circular buffer for recent hook calls
-        performance_metrics: Dictionary of performance measurements
-        stats: Real-time statistics dictionary
+        log_dir (str): Directory for log files
+        operation_buffer (deque): Circular buffer for recent operations
+        hook_buffer (deque): Circular buffer for recent hook calls
+        performance_metrics (dict): Dictionary of performance measurements
+        stats (dict): Real-time statistics dictionary
 
     """
 
@@ -131,8 +131,8 @@ class FridaOperationLogger:
         Each logger has its own file handler with appropriate formatting.
 
         Complexity:
-            Time: O(1)
-            Space: O(1)
+            Time: O(1) constant time for logger setup
+            Space: O(1) constant space for logger instances
         """
         # Operation logger
         self.op_logger = logging.getLogger("frida.operations")
@@ -908,8 +908,8 @@ class FridaPerformanceOptimizer:
             - High call rate (>1000/sec): Only CRITICAL and HIGH
 
         Complexity:
-            Time: O(1)
-            Space: O(1)
+            Time: O(1) constant time for resource checks
+            Space: O(1) constant space for temporary variables
 
         """
         if not self.optimization_enabled:

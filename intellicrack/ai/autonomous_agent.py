@@ -1,4 +1,4 @@
-"""Autonomous AI Agent for Intellicrack - Claude Code-like Script Generation
+"""Autonomous AI Agent for Intellicrack - Claude Code-like Script Generation.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -218,7 +218,15 @@ class AutonomousAgent:
         )
 
     def _extract_binary_path(self, request: str) -> str:
-        """Extract binary path from request."""
+        """Extract binary path from request.
+        
+        Args:
+            request: User request string containing binary path
+            
+        Returns:
+            str: Extracted binary path or 'unknown' if not found
+
+        """
         for word in request.split():
             if word.endswith((".exe", ".dll", ".so", ".dylib", ".bin", ".elf")) or (
                 ("/" in word or "\\" in word) and not word.startswith("http")
@@ -230,7 +238,15 @@ class AutonomousAgent:
         return "unknown"
 
     def _extract_script_types(self, request_lower: str) -> list[ScriptType]:
-        """Extract script types from request."""
+        """Extract script types from request.
+        
+        Args:
+            request_lower: Lowercase user request string
+            
+        Returns:
+            list[ScriptType]: List of script types to generate
+
+        """
         script_types = []
         if "frida" in request_lower or "dynamic" in request_lower:
             script_types.append(ScriptType.FRIDA)
@@ -241,7 +257,15 @@ class AutonomousAgent:
         return script_types
 
     def _extract_test_environment(self, request_lower: str) -> TestEnvironment:
-        """Extract test environment from request."""
+        """Extract test environment from request.
+        
+        Args:
+            request_lower: Lowercase user request string
+            
+        Returns:
+            TestEnvironment: Selected test environment, defaults to QEMU
+
+        """
         if "qemu" in request_lower:
             return TestEnvironment.QEMU
         if "docker" in request_lower:
@@ -251,7 +275,15 @@ class AutonomousAgent:
         return TestEnvironment.QEMU
 
     def _analyze_target(self, binary_path: str) -> dict[str, Any] | None:
-        """Analyze the target binary for protection mechanisms."""
+        """Analyze the target binary for protection mechanisms.
+        
+        Args:
+            binary_path: Path to the binary to analyze
+            
+        Returns:
+            dict[str, Any] | None: Analysis results or None if analysis fails
+
+        """
         try:
             self._log_to_user("Running comprehensive binary analysis...")
 
@@ -281,7 +313,15 @@ class AutonomousAgent:
             return None
 
     def _get_binary_info(self, binary_path: str) -> dict[str, Any]:
-        """Get basic binary information."""
+        """Get basic binary information.
+        
+        Args:
+            binary_path: Path to the binary file
+            
+        Returns:
+            dict[str, Any]: Dictionary containing binary metadata
+
+        """
         try:
             path_obj = Path(binary_path)
             return {

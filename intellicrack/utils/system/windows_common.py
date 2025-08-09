@@ -13,14 +13,11 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
 
-"""
 Common Windows utilities and checks.
 
 This module consolidates Windows-specific functionality to reduce code duplication.
 """
-
 import logging
 import sys
 

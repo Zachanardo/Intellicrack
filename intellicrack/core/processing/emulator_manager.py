@@ -36,7 +36,7 @@ except ImportError as e:
     from PyQt6.QtCore import QObject, pyqtSignal
 
 try:
-    from .qemu_emulator import QemuEmulator
+    from .qemu_emulator import QEMUSystemEmulator as QemuEmulator
 
     QEMU_AVAILABLE = True
 except ImportError as e:
@@ -60,8 +60,10 @@ class EmulatorManager(QObject):
     """
 
     # Signals for UI updates
-    emulator_status_changed = pyqtSignal(str, bool, str)  # emulator_type, is_running, message
-    emulator_error = pyqtSignal(str, str)  # emulator_type, error_message
+    #: emulator_type, is_running, message (type: str, bool, str)
+    emulator_status_changed = pyqtSignal(str, bool, str)
+    #: emulator_type, error_message (type: str, str)
+    emulator_error = pyqtSignal(str, str)
 
     def __init__(self):
         """Initialize the emulator manager with signal handling and emulator setup."""

@@ -28,11 +28,13 @@ logger = get_logger(__name__)
 
 try:
     import binwalk
-
+    # Test that binwalk actually works by accessing core modules
+    from binwalk.core.module import Modules
     BINWALK_AVAILABLE = True
-except ImportError:
+    logger.info("Binwalk available - firmware analysis enabled")
+except (ImportError, ModuleNotFoundError) as e:
     BINWALK_AVAILABLE = False
-    logger.warning("Binwalk not available - firmware analysis disabled")
+    logger.warning("Binwalk not available - firmware analysis disabled: %s", e)
 
 
 class FirmwareType(Enum):

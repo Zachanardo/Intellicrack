@@ -1,4 +1,4 @@
-"""User interface helper utilities for Intellicrack
+"""User interface helper utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

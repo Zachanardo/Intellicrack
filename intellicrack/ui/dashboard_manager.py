@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Dashboard Manager for Intellicrack application.
 
 Copyright (C) 2025 Zachary Flint
@@ -16,14 +17,6 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
-#!/usr/bin/env python3
-"""
-Dashboard Manager for Intellicrack application.
-
-This module provides comprehensive dashboard management with project statistics,
-recent activities tracking, and quick access to common functions.
 """
 
 import datetime

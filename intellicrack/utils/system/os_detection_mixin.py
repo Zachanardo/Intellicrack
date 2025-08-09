@@ -13,15 +13,12 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
 
-"""
 OS Detection Mixin
 
 Shared mixin for classes that need OS detection functionality.
 Eliminates code duplication across multiple classes.
 """
-
 from .os_detection import detect_operating_system
 
 
@@ -45,3 +42,7 @@ class OSDetectionMixin:
     def _is_linux(self) -> bool:
         """Check if running on Linux."""
         return self._detect_os() == "linux"
+
+    def detect_platform(self) -> str:
+        """Detect the current platform (public method for compatibility)."""
+        return self._detect_os()

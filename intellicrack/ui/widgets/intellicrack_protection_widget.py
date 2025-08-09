@@ -44,7 +44,8 @@ logger = get_logger(__name__)
 class ProtectionAnalysisThread(QThread):
     """Thread for running protection analysis without blocking UI"""
 
-    analysis_complete = pyqtSignal(object)  # ProtectionAnalysis
+    #: ProtectionAnalysis (type: object)
+    analysis_complete = pyqtSignal(object)
     analysis_error = pyqtSignal(str)
     analysis_progress = pyqtSignal(str)
 
@@ -112,8 +113,10 @@ class IntellicrackProtectionWidget(QWidget):
     """Main widget for displaying Intellicrack protection detection results"""
 
     # Signals
-    protection_detected = pyqtSignal(str, list)  # protection_name, bypass_recommendations
-    analysis_requested = pyqtSignal(str)  # file_path
+    #: protection_name, bypass_recommendations (type: str, list)
+    protection_detected = pyqtSignal(str, list)
+    #: file_path (type: str)
+    analysis_requested = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Initialize protection widget with parent widget, AI assistant components, and UI setup."""

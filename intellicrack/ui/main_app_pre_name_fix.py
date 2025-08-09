@@ -1,37 +1,34 @@
-"""Main application window for the Intellicrack UI."""
+"""Pre-name fix version of main application module.
 
-from intellicrack.logger import logger
-
-"""
-Main application window for Intellicrack - Complete extraction of IntellicrackApp class.
+Contains the original implementation before naming convention fixes.
 
 Copyright (C) 2025 Zachary Flint
 
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
+This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-Intellicrack is distributed in the hope that it will be useful,
+This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+Preserved for compatibility and rollback purposes.
 """
-
 
 import base64
 import binascii
 import datetime
 import getpass
 import hashlib
+import hmac
 import json
 import logging
 import os
+import pickle
 import random
 import re
 import shutil
@@ -59,10 +56,35 @@ except ImportError:
     AdvancedDynamicAnalyzer = None
 
 # Import common patterns from centralized module
+from intellicrack.logger import logger
+
 from ..utils.core.import_patterns import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs, ELFFile, pefile
 
 # Import resource helper
 from ..utils.resource_helper import get_resource_path
+
+"""Main application window for the Intellicrack UI."""
+
+"""
+Main application window for Intellicrack - Complete extraction of IntellicrackApp class.
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 
 def log_message(message: str) -> str:
@@ -116,9 +138,6 @@ try:
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
     joblib = None
-
-import hmac
-import pickle
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
@@ -186,7 +205,7 @@ if not HAS_CTYPES:
         return x
 
     def mock_c_int(x):
-        """Mock c_int function."""
+        """Mock ``c_int`` function."""
         return x
 
     def mock_sizeof(x):
@@ -3205,9 +3224,9 @@ def run_cloud_license_hooker_fallback(app, *args, **kwargs):
                 app.update_output.emit(f"[Cloud License] {error_msg}")
             return {"success": False, "error": error_msg}
 
-    # Assign fallback function to original name
-    run_cloud_license_hooker = run_cloud_license_hooker_fallback
-    logger.debug("Using fallback cloud license hooker: %s", run_cloud_license_hooker)
+# Assign fallback function to original name
+run_cloud_license_hooker = run_cloud_license_hooker_fallback
+logger.debug("Using fallback cloud license hooker: %s", run_cloud_license_hooker)
 
 def run_cfg_explorer_inner(app, *args, **kwargs):
     """Run CFG explorer for visual control flow analysis when explorer not available"""
@@ -3259,422 +3278,423 @@ def run_cfg_explorer_inner(app, *args, **kwargs):
 
             # Helper function to build CFG using NetworkX
             def build_cfg_with_networkx(functions, edges):
-                    """Build Control Flow Graph using NetworkX"""
-                    app.cfg_graph.clear()
+                """Build Control Flow Graph using NetworkX"""
+                app.cfg_graph.clear()
 
-                    # Add nodes (basic blocks/functions)
-                    for func in functions:
-                        app.cfg_graph.add_node(
-                            func["address"],
-                            label=func.get("name", f"sub_{func['address']}"),
-                            size=func.get("size", 0),
-                            type=func.get("type", "function"),
-                            confidence=func.get("confidence", 0.5),
-                        )
-
-                    # Add edges (control flow)
-                    for edge in edges:
-                        app.cfg_graph.add_edge(
-                            edge["from"],
-                            edge["to"],
-                            type=edge.get("type", "call"),
-                            condition=edge.get("condition", None),
-                        )
-
-                    # Calculate graph metrics
-                    metrics = {
-                        "nodes": app.cfg_graph.number_of_nodes(),
-                        "edges": app.cfg_graph.number_of_edges(),
-                        "density": networkx.density(app.cfg_graph)
-                        if app.cfg_graph.number_of_nodes() > 0
-                        else 0,
-                        "is_connected": networkx.is_weakly_connected(app.cfg_graph)
-                        if app.cfg_graph.number_of_nodes() > 0
-                        else False,
-                    }
-
-                    # Find important nodes
-                    if app.cfg_graph.number_of_nodes() > 0:
-                        try:
-                            metrics["centrality"] = networkx.degree_centrality(app.cfg_graph)
-                            metrics["pagerank"] = networkx.pagerank(app.cfg_graph, max_iter=100)
-                        except:
-                            pass
-
-                    return metrics
-
-                # Attach the builder function to app
-                app.build_cfg_with_networkx = build_cfg_with_networkx
-
-            except ImportError as e:
-                logger.error("Import error in main_app.py: %s", e)
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(
-                        log_message("[CFG Explorer] NetworkX not available, using basic analysis")
+                # Add nodes (basic blocks/functions)
+                for func in functions:
+                    app.cfg_graph.add_node(
+                        func["address"],
+                        label=func.get("name", f"sub_{func['address']}"),
+                        size=func.get("size", 0),
+                        type=func.get("type", "function"),
+                        confidence=func.get("confidence", 0.5),
                     )
 
-            try:
-                import matplotlib.pyplot
+                # Add edges (control flow)
+                for edge in edges:
+                    app.cfg_graph.add_edge(
+                        edge["from"],
+                        edge["to"],
+                        type=edge.get("type", "call"),
+                        condition=edge.get("condition", None),
+                    )
 
-                app.cfg_analysis_tools["matplotlib_available"] = True
+                # Calculate graph metrics
+                metrics = {
+                    "nodes": app.cfg_graph.number_of_nodes(),
+                    "edges": app.cfg_graph.number_of_edges(),
+                    "density": networkx.density(app.cfg_graph)
+                    if app.cfg_graph.number_of_nodes() > 0
+                    else 0,
+                    "is_connected": networkx.is_weakly_connected(app.cfg_graph)
+                    if app.cfg_graph.number_of_nodes() > 0
+                    else False,
+                }
 
-                # Function to visualize CFG using matplotlib
-                def visualize_cfg_with_matplotlib(save_path=None):
-                    """Visualize CFG using matplotlib and networkx"""
-                    if not app.cfg_analysis_tools.get("networkx_available") or not hasattr(
-                        app, "cfg_graph"
-                    ):
-                        return {"error": "NetworkX not available or no graph data"}
-
-                    if app.cfg_graph.number_of_nodes() == 0:
-                        return {"error": "No nodes in graph"}
-
+                # Find important nodes
+                if app.cfg_graph.number_of_nodes() > 0:
                     try:
-                        matplotlib.pyplot.figure(figsize=(12, 8))
+                        metrics["centrality"] = networkx.degree_centrality(app.cfg_graph)
+                        metrics["pagerank"] = networkx.pagerank(app.cfg_graph, max_iter=100)
+                    except:
+                        pass
 
-                        # Generate layout
-                        if app.cfg_graph.number_of_nodes() < 50:
-                            pos = networkx.spring_layout(app.cfg_graph, k=2, iterations=50)
+                return metrics
+
+            # Attach the builder function to app
+            app.build_cfg_with_networkx = build_cfg_with_networkx
+
+        except ImportError as e:
+            logger.error("Import error in main_app.py: %s", e)
+            if hasattr(app, "update_output"):
+                app.update_output.emit(
+                    log_message("[CFG Explorer] NetworkX not available, using basic analysis")
+                )
+
+        try:
+            import matplotlib.pyplot
+
+            app.cfg_analysis_tools["matplotlib_available"] = True
+
+            # Function to visualize CFG using matplotlib
+            def visualize_cfg_with_matplotlib(save_path=None):
+                """Visualize CFG using matplotlib and networkx"""
+                if not app.cfg_analysis_tools.get("networkx_available") or not hasattr(
+                    app, "cfg_graph"
+                ):
+                    return {"error": "NetworkX not available or no graph data"}
+
+                if app.cfg_graph.number_of_nodes() == 0:
+                    return {"error": "No nodes in graph"}
+
+                try:
+                    matplotlib.pyplot.figure(figsize=(12, 8))
+
+                    # Generate layout
+                    if app.cfg_graph.number_of_nodes() < 50:
+                        pos = networkx.spring_layout(app.cfg_graph, k=2, iterations=50)
+                    else:
+                        pos = networkx.kamada_kawai_layout(app.cfg_graph)
+
+                    # Draw nodes
+                    node_colors = []
+                    node_sizes = []
+                    for node in app.cfg_graph.nodes():
+                        node_data = app.cfg_graph.nodes[node]
+                        # Color based on confidence or type
+                        confidence = node_data.get("confidence", 0.5)
+                        node_colors.append(matplotlib.pyplot.cm.RdYlGn(confidence))
+                        # Size based on function size
+                        size = min(node_data.get("size", 100) * 10, 3000)
+                        node_sizes.append(max(size, 300))
+
+                    # Draw the graph
+                    networkx.draw_networkx_nodes(
+                        app.cfg_graph,
+                        pos,
+                        node_color=node_colors,
+                        node_size=node_sizes,
+                        alpha=0.8,
+                    )
+
+                    # Draw edges with different styles for different types
+                    edge_colors = []
+                    edge_styles = []
+                    for _u, _v, data in app.cfg_graph.edges(data=True):
+                        edge_type = data.get("type", "call")
+                        if edge_type == "jump":
+                            edge_colors.append("blue")
+                            edge_styles.append("dashed")
+                        elif edge_type == "conditional":
+                            edge_colors.append("orange")
+                            edge_styles.append("dotted")
                         else:
-                            pos = networkx.kamada_kawai_layout(app.cfg_graph)
+                            edge_colors.append("black")
+                            edge_styles.append("solid")
 
-                        # Draw nodes
-                        node_colors = []
-                        node_sizes = []
-                        for node in app.cfg_graph.nodes():
-                            node_data = app.cfg_graph.nodes[node]
-                            # Color based on confidence or type
-                            confidence = node_data.get("confidence", 0.5)
-                            node_colors.append(matplotlib.pyplot.cm.RdYlGn(confidence))
-                            # Size based on function size
-                            size = min(node_data.get("size", 100) * 10, 3000)
-                            node_sizes.append(max(size, 300))
-
-                        # Draw the graph
-                        networkx.draw_networkx_nodes(
-                            app.cfg_graph,
-                            pos,
-                            node_color=node_colors,
-                            node_size=node_sizes,
-                            alpha=0.8,
-                        )
-
-                        # Draw edges with different styles for different types
-                        edge_colors = []
-                        edge_styles = []
-                        for _u, _v, data in app.cfg_graph.edges(data=True):
-                            edge_type = data.get("type", "call")
-                            if edge_type == "jump":
-                                edge_colors.append("blue")
-                                edge_styles.append("dashed")
-                            elif edge_type == "conditional":
-                                edge_colors.append("orange")
-                                edge_styles.append("dotted")
-                            else:
-                                edge_colors.append("black")
-                                edge_styles.append("solid")
-
-                        networkx.draw_networkx_edges(
-                            app.cfg_graph,
-                            pos,
-                            edge_color=edge_colors,
-                            arrows=True,
-                            arrowsize=20,
-                            alpha=0.6,
-                        )
-
-                        # Draw labels
-                        labels = {}
-                        for node in app.cfg_graph.nodes():
-                            labels[node] = app.cfg_graph.nodes[node].get("label", str(node))
-
-                        networkx.draw_networkx_labels(app.cfg_graph, pos, labels, font_size=8)
-
-                        matplotlib.pyplot.title("Control Flow Graph Visualization")
-                        matplotlib.pyplot.axis("off")
-                        matplotlib.pyplot.tight_layout()
-
-                        if save_path:
-                            matplotlib.pyplot.savefig(save_path, dpi=300, bbox_inches="tight")
-                            matplotlib.pyplot.close()
-                            return {"status": "saved", "path": save_path}
-                        matplotlib.pyplot.show()
-                        return {"status": "displayed"}
-
-                    except Exception as e:
-                        logger.error(f"Error visualizing CFG: {e}")
-                        return {"error": str(e)}
-
-                # Attach visualization function to app
-                app.visualize_cfg_with_matplotlib = visualize_cfg_with_matplotlib
-
-            except ImportError as e:
-                logger.error("Import error in main_app.py: %s", e)
-
-            try:
-                import r2pipe
-
-                app.cfg_analysis_tools["radare2_available"] = True
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(
-                        log_message("[CFG Explorer] Radare2 available for binary analysis")
+                    networkx.draw_networkx_edges(
+                        app.cfg_graph,
+                        pos,
+                        edge_color=edge_colors,
+                        arrows=True,
+                        arrowsize=20,
+                        alpha=0.6,
                     )
 
-                # Function to analyze binary with radare2
-                def analyze_with_r2pipe(binary_path):
-                    """Analyze binary using radare2 via r2pipe"""
-                    try:
-                        # Open binary in radare2
-                        r2 = r2pipe.open(binary_path)
+                    # Draw labels
+                    labels = {}
+                    for node in app.cfg_graph.nodes():
+                        labels[node] = app.cfg_graph.nodes[node].get("label", str(node))
 
-                        # Basic analysis
-                        r2.cmd("aaa")  # Analyze all
+                    networkx.draw_networkx_labels(app.cfg_graph, pos, labels, font_size=8)
 
-                        # Get binary info
-                        info = r2.cmdj("ij")  # Info in JSON
+                    matplotlib.pyplot.title("Control Flow Graph Visualization")
+                    matplotlib.pyplot.axis("off")
+                    matplotlib.pyplot.tight_layout()
 
-                        # Get functions
-                        functions = r2.cmdj("aflj")  # Function list in JSON
+                    if save_path:
+                        matplotlib.pyplot.savefig(save_path, dpi=300, bbox_inches="tight")
+                        matplotlib.pyplot.close()
+                        return {"status": "saved", "path": save_path}
+                    matplotlib.pyplot.show()
+                    return {"status": "displayed"}
 
-                        # Get imports
-                        imports = r2.cmdj("iij")  # Imports in JSON
+                except Exception as e:
+                    logger.error(f"Error visualizing CFG: {e}")
+                    return {"error": str(e)}
 
-                        # Get strings
-                        strings = r2.cmdj("izj")  # Strings in JSON
+            # Attach visualization function to app
+            app.visualize_cfg_with_matplotlib = visualize_cfg_with_matplotlib
 
-                        # Get sections
-                        sections = r2.cmdj("iSj")  # Sections in JSON
+        except ImportError as e:
+            logger.error("Import error in main_app.py: %s", e)
 
-                        # Build function nodes and edges for CFG
-                        func_nodes = []
-                        func_edges = []
+        try:
+            import r2pipe
 
-                        for func in functions[:50]:  # Limit to first 50 functions
-                            func_nodes.append(
-                                {
-                                    "address": hex(func.get("offset", 0)),
-                                    "name": func.get("name", "unknown"),
-                                    "size": func.get("size", 0),
-                                    "type": "function",
-                                    "confidence": 0.9,
-                                }
-                            )
+            app.cfg_analysis_tools["radare2_available"] = True
+            if hasattr(app, "update_output"):
+                app.update_output.emit(
+                    log_message("[CFG Explorer] Radare2 available for binary analysis")
+                )
 
-                            # Get function calls
-                            calls = r2.cmdj(f'axfj @ {func.get("offset", 0)}')
-                            for call in calls:
-                                if call.get("type") == "call":
-                                    func_edges.append(
-                                        {
-                                            "from": hex(func.get("offset", 0)),
-                                            "to": hex(call.get("to", 0)),
-                                            "type": "call",
-                                        }
-                                    )
+            # Function to analyze binary with radare2
+            def analyze_with_r2pipe(binary_path):
+                """Analyze binary using radare2 via r2pipe"""
+                r2 = None
+                try:
+                    # Open binary in radare2
+                    r2 = r2pipe.open(binary_path)
 
-                        # Find interesting strings (license-related)
-                        license_strings = []
-                        for s in strings:
-                            string_val = s.get("string", "").lower()
-                            if any(
-                                kw in string_val
-                                for kw in ["license", "key", "serial", "activation", "trial"]
-                            ):
-                                license_strings.append(
+                    # Basic analysis
+                    r2.cmd("aaa")  # Analyze all
+
+                    # Get binary info
+                    info = r2.cmdj("ij")  # Info in JSON
+
+                    # Get functions
+                    functions = r2.cmdj("aflj")  # Function list in JSON
+
+                    # Get imports
+                    imports = r2.cmdj("iij")  # Imports in JSON
+
+                    # Get strings
+                    strings = r2.cmdj("izj")  # Strings in JSON
+
+                    # Get sections
+                    sections = r2.cmdj("iSj")  # Sections in JSON
+
+                    # Build function nodes and edges for CFG
+                    func_nodes = []
+                    func_edges = []
+
+                    for func in functions[:50]:  # Limit to first 50 functions
+                        func_nodes.append(
+                            {
+                                "address": hex(func.get("offset", 0)),
+                                "name": func.get("name", "unknown"),
+                                "size": func.get("size", 0),
+                                "type": "function",
+                                "confidence": 0.9,
+                            }
+                        )
+
+                        # Get function calls
+                        calls = r2.cmdj(f'axfj @ {func.get("offset", 0)}')
+                        for call in calls:
+                            if call.get("type") == "call":
+                                func_edges.append(
                                     {
-                                        "address": hex(s.get("vaddr", 0)),
-                                        "string": s.get("string", ""),
-                                        "type": "license_related",
+                                        "from": hex(func.get("offset", 0)),
+                                        "to": hex(call.get("to", 0)),
+                                        "type": "call",
                                     }
                                 )
 
-                        result = {
-                            "status": "success",
-                            "info": info,
-                            "functions": func_nodes,
-                            "edges": func_edges,
-                            "imports": imports[:50],  # Limit imports
-                            "strings": strings[:100],  # Limit strings
-                            "license_strings": license_strings,
-                            "sections": sections,
-                        }
-
-                        # Close r2pipe connection
-                        r2.quit()
-
-                        return result
-
-                    except Exception as e:
-                        logger.error(f"r2pipe analysis error: {e}")
-                        return {"status": "error", "error": str(e)}
-
-                # Attach r2pipe analyzer to app
-                app.analyze_with_r2pipe = analyze_with_r2pipe
-
-            except ImportError as e:
-                logger.error("Import error in main_app.py: %s", e)
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(
-                        log_message(
-                            "[CFG Explorer] Radare2 not available, using pattern-based analysis"
-                        )
-                    )
-
-            try:
-                import capstone
-
-                app.cfg_analysis_tools["capstone_available"] = True
-
-                # Function to disassemble with capstone
-                def disassemble_with_capstone(binary_data, offset=0, arch="x86", mode="64"):
-                    """Disassemble binary data using Capstone disassembler"""
-                    try:
-                        # Set up architecture and mode
-                        if arch == "x86":
-                            if mode == "64":
-                                cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
-                            else:
-                                cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
-                        elif arch == "arm":
-                            cs = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM)
-                        elif arch == "arm64":
-                            cs = capstone.Cs(capstone.CS_ARCH_ARM64, capstone.CS_MODE_ARM)
-                        else:
-                            # Default to x86-64
-                            cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
-
-                        # Enable detail mode for more information
-                        cs.detail = True
-
-                        instructions = []
-                        basic_blocks = []
-                        current_block = []
-
-                        # Disassemble and analyze
-                        for insn in cs.disasm(binary_data, offset):
-                            insn_dict = {
-                                "address": hex(insn.address),
-                                "mnemonic": insn.mnemonic,
-                                "op_str": insn.op_str,
-                                "bytes": insn.bytes.hex(),
-                                "size": insn.size,
-                            }
-
-                            # Check for control flow instructions
-                            if insn.mnemonic in ["jmp", "je", "jne", "jz", "jnz", "call", "ret"]:
-                                insn_dict["is_control_flow"] = True
-                                if current_block:
-                                    basic_blocks.append(
-                                        {
-                                            "start": current_block[0]["address"],
-                                            "end": insn_dict["address"],
-                                            "instructions": current_block + [insn_dict],
-                                        }
-                                    )
-                                    current_block = []
-                            else:
-                                current_block.append(insn_dict)
-
-                            # Look for interesting patterns
-                            if any(
-                                kw in insn.op_str.lower() for kw in ["license", "key", "serial"]
-                            ):
-                                insn_dict["interesting"] = "license_related"
-
-                            instructions.append(insn_dict)
-
-                            # Limit output
-                            if len(instructions) >= 1000:
-                                break
-
-                        # Add final block
-                        if current_block:
-                            basic_blocks.append(
+                    # Find interesting strings (license-related)
+                    license_strings = []
+                    for s in strings:
+                        string_val = s.get("string", "").lower()
+                        if any(
+                            kw in string_val
+                            for kw in ["license", "key", "serial", "activation", "trial"]
+                        ):
+                            license_strings.append(
                                 {
-                                    "start": current_block[0]["address"],
-                                    "end": current_block[-1]["address"],
-                                    "instructions": current_block,
+                                    "address": hex(s.get("vaddr", 0)),
+                                    "string": s.get("string", ""),
+                                    "type": "license_related",
                                 }
                             )
 
-                        return {
-                            "status": "success",
-                            "instructions": instructions,
-                            "basic_blocks": basic_blocks,
-                            "total_instructions": len(instructions),
-                            "architecture": f"{arch}-{mode}",
+                    result = {
+                        "status": "success",
+                        "info": info,
+                        "functions": func_nodes,
+                        "edges": func_edges,
+                        "imports": imports[:50],  # Limit imports
+                        "strings": strings[:100],  # Limit strings
+                        "license_strings": license_strings,
+                        "sections": sections,
+                    }
+
+                    return result
+
+                except Exception as e:
+                    logger.error(f"r2pipe analysis error: {e}")
+                    return {"status": "error", "error": str(e)}
+                finally:
+                    if r2:
+                        r2.quit()
+
+            # Attach r2pipe analyzer to app
+            app.analyze_with_r2pipe = analyze_with_r2pipe
+
+        except ImportError as e:
+            logger.error("Import error in main_app.py: %s", e)
+            if hasattr(app, "update_output"):
+                app.update_output.emit(
+                    log_message(
+                        "[CFG Explorer] Radare2 not available, using pattern-based analysis"
+                    )
+                )
+
+        try:
+            import capstone
+
+            app.cfg_analysis_tools["capstone_available"] = True
+
+            # Function to disassemble with capstone
+            def disassemble_with_capstone(binary_data, offset=0, arch="x86", mode="64"):
+                """Disassemble binary data using Capstone disassembler"""
+                try:
+                    # Set up architecture and mode
+                    if arch == "x86":
+                        if mode == "64":
+                            cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+                        else:
+                            cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+                    elif arch == "arm":
+                        cs = capstone.Cs(capstone.CS_ARCH_ARM, capstone.CS_MODE_ARM)
+                    elif arch == "arm64":
+                        cs = capstone.Cs(capstone.CS_ARCH_ARM64, capstone.CS_MODE_ARM)
+                    else:
+                        # Default to x86-64
+                        cs = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
+
+                    # Enable detail mode for more information
+                    cs.detail = True
+
+                    instructions = []
+                    basic_blocks = []
+                    current_block = []
+
+                    # Disassemble and analyze
+                    for insn in cs.disasm(binary_data, offset):
+                        insn_dict = {
+                            "address": hex(insn.address),
+                            "mnemonic": insn.mnemonic,
+                            "op_str": insn.op_str,
+                            "bytes": insn.bytes.hex(),
+                            "size": insn.size,
                         }
 
-                    except Exception as e:
-                        logger.error(f"Capstone disassembly error: {e}")
-                        return {"status": "error", "error": str(e)}
+                        # Check for control flow instructions
+                        if insn.mnemonic in ["jmp", "je", "jne", "jz", "jnz", "call", "ret"]:
+                            insn_dict["is_control_flow"] = True
+                            if current_block:
+                                basic_blocks.append(
+                                    {
+                                        "start": current_block[0]["address"],
+                                        "end": insn_dict["address"],
+                                        "instructions": current_block + [insn_dict],
+                                    }
+                                )
+                                current_block = []
+                        else:
+                            current_block.append(insn_dict)
 
-                # Attach capstone disassembler to app
-                app.disassemble_with_capstone = disassemble_with_capstone
+                        # Look for interesting patterns
+                        if any(
+                            kw in insn.op_str.lower() for kw in ["license", "key", "serial"]
+                        ):
+                            insn_dict["interesting"] = "license_related"
 
-            except ImportError as e:
-                logger.error("Import error in main_app.py: %s", e)
+                        instructions.append(insn_dict)
 
-            # Initialize function analysis data
-            if not hasattr(app, "cfg_functions"):
-                app.cfg_functions = {}
+                        # Limit output
+                        if len(instructions) >= 1000:
+                            break
 
-            if not hasattr(app, "cfg_current_function"):
-                app.cfg_current_function = None
+                    # Add final block
+                    if current_block:
+                        basic_blocks.append(
+                            {
+                                "start": current_block[0]["address"],
+                                "end": current_block[-1]["address"],
+                                "instructions": current_block,
+                            }
+                        )
 
-            # Set up license pattern detection
-            if not hasattr(app, "license_patterns"):
-                app.license_patterns = {
-                    "keywords": [
-                        "license",
-                        "licens",
-                        "key",
-                        "serial",
-                        "activation",
-                        "activate",
-                        "register",
-                        "registr",
-                        "valid",
-                        "check",
-                        "verify",
-                        "auth",
-                        "trial",
-                        "demo",
-                        "expire",
-                        "expir",
-                        "cracked",
-                        "crack",
-                    ],
-                    "api_calls": [
-                        "GetTickCount",
-                        "GetSystemTime",
-                        "GetLocalTime",
-                        "timeGetTime",
-                        "CreateMutex",
-                        "OpenMutex",
-                        "RegOpenKey",
-                        "RegQueryValue",
-                        "GetVolumeInformation",
-                        "GetUserName",
-                        "GetComputerName",
-                    ],
-                    "crypto_functions": [
-                        "CryptHashData",
-                        "CryptCreateHash",
-                        "MD5",
-                        "SHA1",
-                        "SHA256",
-                        "AES_Encrypt",
-                        "DES_Encrypt",
-                        "RSA_",
-                        "encrypt",
-                        "decrypt",
-                    ],
-                }
+                    return {
+                        "status": "success",
+                        "instructions": instructions,
+                        "basic_blocks": basic_blocks,
+                        "total_instructions": len(instructions),
+                        "architecture": f"{arch}-{mode}",
+                    }
 
-            # Initialize basic control flow analysis
-            if hasattr(app, "binary_path") and app.binary_path:
-                try:
+                except Exception as e:
+                    logger.error(f"Capstone disassembly error: {e}")
+                    return {"status": "error", "error": str(e)}
+
+            # Attach capstone disassembler to app
+            app.disassemble_with_capstone = disassemble_with_capstone
+
+        except ImportError as e:
+            logger.error("Import error in main_app.py: %s", e)
+
+        # Initialize function analysis data
+        if not hasattr(app, "cfg_functions"):
+            app.cfg_functions = {}
+
+        if not hasattr(app, "cfg_current_function"):
+            app.cfg_current_function = None
+
+        # Set up license pattern detection
+        if not hasattr(app, "license_patterns"):
+            app.license_patterns = {
+                "keywords": [
+                    "license",
+                    "licens",
+                    "key",
+                    "serial",
+                    "activation",
+                    "activate",
+                    "register",
+                    "registr",
+                    "valid",
+                    "check",
+                    "verify",
+                    "auth",
+                    "trial",
+                    "demo",
+                    "expire",
+                    "expir",
+                    "cracked",
+                    "crack",
+                ],
+                "api_calls": [
+                    "GetTickCount",
+                    "GetSystemTime",
+                    "GetLocalTime",
+                    "timeGetTime",
+                    "CreateMutex",
+                    "OpenMutex",
+                    "RegOpenKey",
+                    "RegQueryValue",
+                    "GetVolumeInformation",
+                    "GetUserName",
+                    "GetComputerName",
+                ],
+                "crypto_functions": [
+                    "CryptHashData",
+                    "CryptCreateHash",
+                    "MD5",
+                    "SHA1",
+                    "SHA256",
+                    "AES_Encrypt",
+                    "DES_Encrypt",
+                    "RSA_",
+                    "encrypt",
+                    "decrypt",
+                ],
+            }
+
+        # Initialize basic control flow analysis
+        if hasattr(app, "binary_path") and app.binary_path:
+            try:
                     # Perform basic binary structure analysis
                     with open(app.binary_path, "rb") as binary_file:
                         binary_data = binary_file.read(65536)  # Read first 64KB
@@ -3766,27 +3786,27 @@ def run_cfg_explorer_inner(app, *args, **kwargs):
                                     )
                                 )
 
-                except (OSError, ValueError, RuntimeError) as cfg_error:
-                    logger.error(
-                        "(OSError, ValueError, RuntimeError) in main_app.py: %s", cfg_error
+            except (OSError, ValueError, RuntimeError) as cfg_error:
+                logger.error(
+                    "(OSError, ValueError, RuntimeError) in main_app.py: %s", cfg_error
+                )
+                if hasattr(app, "update_output"):
+                    app.update_output.emit(
+                        log_message(f"[CFG Explorer] Error analyzing binary: {cfg_error}")
                     )
-                    if hasattr(app, "update_output"):
-                        app.update_output.emit(
-                            log_message(f"[CFG Explorer] Error analyzing binary: {cfg_error}")
-                        )
-            elif hasattr(app, "update_output"):
-                app.update_output.emit(log_message("[CFG Explorer] No binary loaded for analysis"))
+        elif hasattr(app, "update_output"):
+            app.update_output.emit(log_message("[CFG Explorer] No binary loaded for analysis"))
 
-            # Initialize graph visualization data
-            if not hasattr(app, "cfg_graph_data"):
-                app.cfg_graph_data = {
-                    "nodes": [],
-                    "edges": [],
-                    "layouts": {},
-                    "current_layout": "spring",
-                    "node_styles": {},
-                    "edge_styles": {},
-                }
+        # Initialize graph visualization data
+        if not hasattr(app, "cfg_graph_data"):
+            app.cfg_graph_data = {
+                "nodes": [],
+                "edges": [],
+                "layouts": {},
+                "current_layout": "spring",
+                "node_styles": {},
+                "edge_styles": {},
+            }
 
             # Create sample graph if we have detected functions
             if hasattr(app, "cfg_detected_functions") and app.cfg_detected_functions:
@@ -3878,13 +3898,6 @@ def run_cfg_explorer_inner(app, *args, **kwargs):
                     log_message(
                         "[CFG Explorer] Control flow graph explorer initialized successfully"
                     )
-                )
-
-        except (OSError, ValueError, RuntimeError) as explorer_error:
-            logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", explorer_error)
-            if hasattr(app, "update_output"):
-                app.update_output.emit(
-                    log_message(f"[CFG Explorer] Error running CFG explorer: {explorer_error}")
                 )
 
     def run_concolic_execution(app, *args, **kwargs):
@@ -8579,7 +8592,7 @@ def run_cfg_explorer_inner(app, *args, **kwargs):
             # Use emulator manager for automatic QEMU startup
             try:
                 from ..core.processing.emulator_manager import run_with_qemu
-                from ..core.processing.qemu_emulator import QemuEmulator
+                from ..core.processing.qemu_emulator import QEMUSystemEmulator as QemuEmulator
 
                 def analyze_with_qemu():
                     emulator = QemuEmulator()

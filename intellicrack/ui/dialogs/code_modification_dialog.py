@@ -105,9 +105,12 @@ class DiffSyntaxHighlighter(QSyntaxHighlighter):
 class ModificationAnalysisThread(QThread):
     """Thread for analyzing modification requests."""
 
-    analysis_complete = pyqtSignal(list)  # List of CodeChange objects
-    progress_updated = pyqtSignal(str)  # Progress message
-    error_occurred = pyqtSignal(str)  # Error message
+    #: Signal emitted when analysis completes (list: List of CodeChange objects)
+    analysis_complete = pyqtSignal(list)
+    #: Signal emitted when progress updates (str: Progress message)
+    progress_updated = pyqtSignal(str)
+    #: Signal emitted when error occurs (str: Error message)
+    error_occurred = pyqtSignal(str)
 
     def __init__(self, modifier: IntelligentCodeModifier, request: ModificationRequest):
         """Initialize the ModificationAnalysisThread with default values."""

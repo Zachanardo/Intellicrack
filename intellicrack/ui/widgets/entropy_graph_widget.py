@@ -57,7 +57,8 @@ class EntropyGraphWidget(QWidget):
     """
 
     # Signals
-    section_clicked = pyqtSignal(str, float)  # section_name, entropy_value
+    #: section_name, entropy_value (type: str, float)
+    section_clicked = pyqtSignal(str, float)
 
     def __init__(self, parent=None):
         """Initialize entropy graph widget with data storage and UI setup."""

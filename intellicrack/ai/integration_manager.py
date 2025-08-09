@@ -55,7 +55,7 @@ except ImportError:
             """
             import tempfile
             from pathlib import Path
-            
+
             self.working_dir = Path(tempfile.gettempdir()) / "intellicrack_qemu_fallback"
             self.working_dir.mkdir(exist_ok=True)
             self.snapshots = {}

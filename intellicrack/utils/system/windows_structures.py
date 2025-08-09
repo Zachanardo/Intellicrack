@@ -232,7 +232,7 @@ class WindowsProcessStructures:
 
     @staticmethod
     def create_process_information():
-        """Create PROCESS_INFORMATION structure."""
+        """Create ``PROCESS_INFORMATION`` structure."""
         if not STRUCTURES_AVAILABLE:
             return None
 

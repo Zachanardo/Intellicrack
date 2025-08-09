@@ -13,15 +13,12 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
 
-"""
 Common import patterns used across the Intellicrack codebase.
 
 This module provides centralized import handling for commonly used libraries
 with consistent error handling and availability flags.
 """
-
 import logging
 
 logger = logging.getLogger(__name__)

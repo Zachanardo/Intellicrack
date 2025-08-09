@@ -2,6 +2,21 @@
 
 This module provides a drag-and-drop widget for file uploads,
 binary loading, and easy file handling in the user interface.
+
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
@@ -14,7 +29,8 @@ from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 class DropZoneWidget(QWidget):
     """A widget that provides a visual drop zone for files"""
 
-    files_dropped = pyqtSignal(list)  # List of file paths
+    #: List of file paths (type: list)
+    files_dropped = pyqtSignal(list)
 
     def __init__(self, parent=None):
         """Initialize drop zone widget with drag and drop file handling capabilities."""

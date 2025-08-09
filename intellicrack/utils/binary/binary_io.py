@@ -13,19 +13,16 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+Binary I/O utilities for reading and writing binary data.
+
+This module provides shared utilities for reading and analyzing binary files.
 """
 
-"""Binary I/O utilities for reading and writing binary data."""
 import os
 from typing import Any
 
 from intellicrack.logger import logger
-
-"""
-Common binary I/O utilities for Intellicrack.
-
-This module provides shared utilities for reading and analyzing binary files.
-"""
 
 
 def find_all_pattern_offsets(data: bytes, pattern: bytes) -> list[int]:

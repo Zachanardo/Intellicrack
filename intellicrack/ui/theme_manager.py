@@ -1,5 +1,20 @@
 """Theme Manager for Intellicrack UI
 Handles dynamic theme switching and stylesheet application
+
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
@@ -802,20 +817,23 @@ QStatusBar {
             print(f"Error applying fallback theme: {e}")
 
 
-# Global theme manager instance
-theme_manager = ThemeManager()
+# Global theme manager instance (lazy initialization)
+_theme_manager = None
 
 
 def get_theme_manager():
-    """Get the global theme manager instance"""
-    return theme_manager
+    """Get the global theme manager instance (lazy initialization)"""
+    global _theme_manager
+    if _theme_manager is None:
+        _theme_manager = ThemeManager()
+    return _theme_manager
 
 
 def apply_theme(theme_name):
     """Convenience function to apply a theme"""
-    theme_manager.set_theme(theme_name)
+    get_theme_manager().set_theme(theme_name)
 
 
 def get_current_theme():
     """Convenience function to get current theme"""
-    return theme_manager.get_current_theme()
+    return get_theme_manager().get_current_theme()

@@ -1,5 +1,20 @@
 """Security Enforcement Module for Intellicrack
 Implements security policies defined in intellicrack_config.json
+
+Copyright (C) 2025 Zachary Flint
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import hashlib
@@ -31,7 +46,7 @@ class SecurityEnforcement:
         self._bypass_security = False  # Emergency bypass flag
 
     def _load_config(self) -> dict[str, Any]:
-        """Load security configuration from intellicrack_config.json"""
+        """Load security configuration from ``intellicrack_config.json``"""
         config_paths = [
             Path(__file__).parent.parent.parent / "config" / "intellicrack_config.json",
             Path.cwd() / "config" / "intellicrack_config.json",
@@ -158,7 +173,7 @@ def _secure_subprocess_call(*args, **kwargs):
 
 
 def _secure_subprocess_check_call(*args, **kwargs):
-    """Secure wrapper for subprocess.check_call"""
+    """Secure wrapper for ``subprocess.check_call``"""
     if _security._bypass_security:
         return _security._original_functions["subprocess.check_call"](*args, **kwargs)
 
@@ -172,7 +187,7 @@ def _secure_subprocess_check_call(*args, **kwargs):
 
 
 def _secure_subprocess_check_output(*args, **kwargs):
-    """Secure wrapper for subprocess.check_output"""
+    """Secure wrapper for ``subprocess.check_output``"""
     if _security._bypass_security:
         return _security._original_functions["subprocess.check_output"](*args, **kwargs)
 

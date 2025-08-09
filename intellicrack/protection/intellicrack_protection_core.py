@@ -89,12 +89,14 @@ class IntellicrackProtectionCore:
     - Detailed metadata and confidence scoring
 
     Example:
-        detector = IntellicrackProtectionCore()
-        analysis = detector.detect_protections("target.exe")
-        for detection in analysis.detections:
-            print(f"Found: {detection.name} ({detection.type.value})")
-            for recommendation in detection.bypass_recommendations:
-                print(f"  - {recommendation}")
+        .. code-block:: python
+
+            detector = IntellicrackProtectionCore()
+            analysis = detector.detect_protections("target.exe")
+            for detection in analysis.detections:
+                print(f"Found: {detection.name} ({detection.type.value})")
+                for recommendation in detection.bypass_recommendations:
+                    print(f"  - {recommendation}")
 
     """
 

@@ -76,7 +76,7 @@ class STARTUPINFO(ctypes.Structure):
 
 
 class PROCESS_INFORMATION(ctypes.Structure):
-    """Windows PROCESS_INFORMATION structure."""
+    """Windows ``PROCESS_INFORMATION`` structure."""
 
     _fields_ = [
         ("hProcess", ctypes.wintypes.HANDLE),

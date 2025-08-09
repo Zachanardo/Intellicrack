@@ -1,4 +1,4 @@
-"""AI File System Tools
+"""AI File System Tools.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -451,5 +451,13 @@ class AIFileTools:
 
 
 def get_ai_file_tools(app_instance=None) -> AIFileTools:
-    """Factory function to create AI file tools instance."""
+    """Create AI file tools instance.
+    
+    Args:
+        app_instance: Optional application instance for UI updates
+        
+    Returns:
+        AIFileTools: Configured AI file tools instance
+
+    """
     return AIFileTools(app_instance)

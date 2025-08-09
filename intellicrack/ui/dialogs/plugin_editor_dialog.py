@@ -46,7 +46,8 @@ from ..widgets.plugin_editor import PluginEditor
 class PluginEditorDialog(QDialog):
     """Enhanced plugin editor dialog with testing capabilities"""
 
-    plugin_saved = pyqtSignal(str)  # Emitted when plugin is saved
+    #: Emitted when plugin is saved (type: str)
+    plugin_saved = pyqtSignal(str)
 
     def __init__(self, parent=None, plugin_path=None):
         """Initialize the PluginEditorDialog with default values."""

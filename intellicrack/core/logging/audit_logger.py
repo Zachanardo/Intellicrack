@@ -677,6 +677,7 @@ class PerformanceMonitor:
     """Monitors performance metrics and system health."""
 
     def __init__(self):
+        """Initialize performance metrics monitor."""
         self.metrics = {}
         self.start_times = {}
         self.counters = defaultdict(int)
@@ -831,6 +832,12 @@ class TelemetryCollector:
     """Collects and exports telemetry data."""
 
     def __init__(self, export_interval: int = 300):
+        """Initialize telemetry collector with export settings.
+        
+        Args:
+            export_interval: Seconds between telemetry exports (default 300)
+
+        """
         self.export_interval = export_interval
         self.performance_monitor = PerformanceMonitor()
         self.audit_logger = None
@@ -984,6 +991,13 @@ class ContextualLogger:
     """Logger with contextual information and structured logging."""
 
     def __init__(self, name: str, audit_logger: AuditLogger = None):
+        """Initialize contextual logger.
+        
+        Args:
+            name: Logger name
+            audit_logger: Optional audit logger instance for security events
+
+        """
         self.logger = logging.getLogger(name)
         self.audit_logger = audit_logger
         self.context = {}
