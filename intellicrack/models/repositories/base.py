@@ -24,7 +24,7 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
-import requests
+from ...handlers.requests_handler import requests
 
 from .interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
 
