@@ -31,62 +31,13 @@ via desktop shortcuts, file resolution, and program discovery.
 
 
 # Qt imports with fallback handling
-try:
-    from PyQt6.QtCore import QThread, QTimer, pyqtSignal
-    from PyQt6.QtGui import QIcon, QPixmap
-    from PyQt6.QtWidgets import (
-        QApplication,
-        QCheckBox,
-        QDialog,
-        QGroupBox,
-        QHBoxLayout,
-        QLabel,
-        QListWidget,
-        QListWidgetItem,
-        QProgressBar,
-        QPushButton,
-        QTabWidget,
-        QTextEdit,
-        QVBoxLayout,
-        QWidget,
-    )
-
-    HAS_QT = True
-except ImportError as e:
-    logger.error("Import error in smart_program_selector_dialog: %s", e)
-    # Fallback definitions for when PyQt6 is not available
-    QDialog = object
-    QVBoxLayout = object
-    QHBoxLayout = object
-    QLabel = object
-    QPushButton = object
-    QListWidget = object
-    QListWidgetItem = object
-    QTextEdit = object
-    QProgressBar = object
-    QCheckBox = object
-    QGroupBox = object
-    QTabWidget = object
-    QWidget = object
-    QApplication = object
-    QThread = object
-
-    def pyqtSignal(*args):
-        """Create signal replacement for PyQt6 fallback.
-        
-        Args:
-            *args: Signal argument types
-            
-        Returns:
-            None as signal placeholder
-
-        """
-        return None
-
-    QTimer = object
-    QIcon = object
-    QPixmap = object
-    HAS_QT = False
+from intellicrack.ui.dialogs.common_imports import (
+    HAS_PYQT as HAS_QT,
+    QApplication, QCheckBox, QDialog, QGroupBox, QHBoxLayout,
+    QIcon, QLabel, QListWidget, QListWidgetItem, QPixmap,
+    QProgressBar, QPushButton, QTabWidget, QTextEdit, QThread,
+    QTimer, QVBoxLayout, QWidget, pyqtSignal,
+)
 
 # Import program discovery components
 try:

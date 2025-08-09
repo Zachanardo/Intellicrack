@@ -22,18 +22,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import subprocess
 from typing import Any
 
-from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
-from PyQt6.QtWidgets import (
-    QComboBox,
-    QGridLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QProgressBar,
-    QPushButton,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QComboBox, QGridLayout, QGroupBox, QHBoxLayout,
+    QLabel, QObject, QProgressBar, QPushButton,
+    Qt, QTextEdit, QThread, QVBoxLayout,
+    QWidget, pyqtSignal,
 )
 
 

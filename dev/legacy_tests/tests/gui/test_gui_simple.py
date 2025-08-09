@@ -16,7 +16,7 @@ def main():
         print("Creating simple GUI test...")
 
         from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton
-        from PyQt6.QtCore import QTimer
+        from intellicrack.ui.dialogs.common_imports import QTimer
 
         app = QApplication(sys.argv)
 

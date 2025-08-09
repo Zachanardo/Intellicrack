@@ -17,8 +17,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import Qt
+from intellicrack.ui.dialogs.common_imports import (
     QButtonGroup,
     QCheckBox,
     QDialog,

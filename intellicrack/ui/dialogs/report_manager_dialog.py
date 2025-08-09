@@ -47,17 +47,13 @@ from .common_imports import (
     Qt,
     QTableWidget,
     QTableWidgetItem,
+    QTextBrowser,
     QThread,
     QVBoxLayout,
     QWidget,
     logger,
     pyqtSignal,
 )
-
-try:
-    from PyQt6.QtWidgets import QTextBrowser
-except ImportError as e:
-    logger.error("Import error in report_manager_dialog: %s", e)
 
 logger = logging.getLogger(__name__)
 

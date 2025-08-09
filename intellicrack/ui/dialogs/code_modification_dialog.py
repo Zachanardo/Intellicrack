@@ -20,11 +20,11 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
+    QColor,
     QDialog,
     QFileDialog,
+    QFont,
     QFormLayout,
     QFrame,
     QGroupBox,
@@ -38,13 +38,18 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QSpinBox,
     QSplitter,
+    QSyntaxHighlighter,
+    Qt,
     QTabWidget,
     QTextBrowser,
+    QTextCharFormat,
     QTextEdit,
+    QThread,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ...ai.intelligent_code_modifier import CodeChange, IntelligentCodeModifier, ModificationRequest

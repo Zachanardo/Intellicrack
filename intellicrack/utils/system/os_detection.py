@@ -19,6 +19,7 @@ Operating System Detection Utilities
 Shared OS detection functions to eliminate code duplication across the codebase.
 """
 import platform
+import os
 from typing import Any
 
 
@@ -97,8 +98,6 @@ def get_platform_specific_paths() -> dict[str, str]:
     current_os = detect_operating_system()
 
     if current_os == "windows":
-        import os
-
         return {
             "temp": os.environ.get("TEMP", "C:\\Windows\\Temp"),
             "appdata": os.environ.get("APPDATA", ""),
@@ -117,8 +116,44 @@ def get_platform_specific_paths() -> dict[str, str]:
     }
 
 
+def detect_file_type(file_path: str) -> str:
+    """Detect the type of a binary file.
+    
+    Args:
+        file_path: Path to the file to analyze
+        
+    Returns:
+        File type string: 'pe', 'elf', 'macho', or 'unknown'
+    """
+    if not os.path.exists(file_path):
+        return "unknown"
+    
+    try:
+        with open(file_path, 'rb') as f:
+            header = f.read(4)
+            
+            # Check for PE (Windows executable)
+            if header[:2] == b'MZ':
+                return "pe"
+            
+            # Check for ELF (Linux executable)
+            if header == b'\x7fELF':
+                return "elf"
+            
+            # Check for Mach-O (macOS executable)
+            if header in [b'\xfe\xed\xfa\xce', b'\xce\xfa\xed\xfe',
+                         b'\xfe\xed\xfa\xcf', b'\xcf\xfa\xed\xfe']:
+                return "macho"
+                
+    except Exception:
+        pass
+    
+    return "unknown"
+
+
 # Export main functions
 __all__ = [
+    "detect_file_type",
     "detect_operating_system",
     "get_default_persistence_method",
     "get_platform_details",

@@ -10,7 +10,7 @@ Copyright (C) 2025 Zachary Flint
 import logging
 import sys
 
-from PyQt6.QtCore import Qt
+from intellicrack.ui.dialogs.common_imports import Qt
 from PyQt6.QtWidgets import (
     QAction,
     QApplication,

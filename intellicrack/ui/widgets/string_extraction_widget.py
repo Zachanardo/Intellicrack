@@ -596,7 +596,7 @@ class StringExtractionWidget(QWidget):
             string_item = self.string_table.item(row, 1)
             if string_item:
                 full_string = string_item.data(Qt.UserRole)
-                from PyQt6.QtWidgets import QApplication
+                from intellicrack.ui.dialogs.common_imports import QApplication
 
                 QApplication.clipboard().setText(full_string)
 
@@ -606,7 +606,7 @@ class StringExtractionWidget(QWidget):
         if row >= 0:
             offset_item = self.string_table.item(row, 0)
             if offset_item:
-                from PyQt6.QtWidgets import QApplication
+                
 
                 QApplication.clipboard().setText(offset_item.text())
 
@@ -623,7 +623,7 @@ class StringExtractionWidget(QWidget):
                     else:
                         row_data.append(item.text())
 
-            from PyQt6.QtWidgets import QApplication
+            
 
             QApplication.clipboard().setText("\t".join(row_data))
 

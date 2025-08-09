@@ -22,13 +22,12 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QCheckBox,
     QComboBox,
     QDialog,
     QFileDialog,
+    QFont,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -36,11 +35,14 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QSplitter,
+    Qt,
     QTextEdit,
+    QTimer,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ...utils.logger import get_logger

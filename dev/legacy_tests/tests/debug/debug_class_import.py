@@ -21,7 +21,7 @@ def test_class_import():
 
     try:
         print("1. Importing PyQt6...")
-        from PyQt6.QtWidgets import QApplication
+        from intellicrack.ui.dialogs.common_imports import QApplication
         print("   ✓ PyQt6 imported")
 
         print("2. Creating QApplication...")

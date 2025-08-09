@@ -349,7 +349,7 @@ class ICPIntegrationTester:
 
             try:
                 from intellicrack.analysis.analysis_result_orchestrator import AnalysisResultOrchestrator
-                from PyQt6.QtCore import QObject
+                from intellicrack.ui.dialogs.common_imports import QObject
 
                 # Create test handler
                 class TestHandler(QObject):

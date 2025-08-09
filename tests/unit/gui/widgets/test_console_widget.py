@@ -9,9 +9,9 @@ import pytest
 import time
 from unittest.mock import patch
 from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QPushButton, QLineEdit, QCheckBox
-from PyQt6.QtCore import Qt
-from PyQt6.QtTest import QTest
-from PyQt6.QtGui import QTextCursor
+from intellicrack.ui.dialogs.common_imports import QTest, QTextCursor, QThread, Qt
+
+
 
 from intellicrack.ui.widgets.console_widget import ConsoleWidget
 
@@ -441,7 +441,7 @@ class TestConsoleWidget:
 
     def test_thread_safety_real_concurrent_logging(self, qtbot):
         """Test REAL thread safety for concurrent log operations."""
-        from PyQt6.QtCore import QThread
+        
 
         # Ensure operations happen in GUI thread
         assert QThread.currentThread() == QApplication.instance().thread()

@@ -17,8 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 
-from PyQt6.QtCore import QSettings, pyqtSignal
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QCheckBox,
     QComboBox,
     QDialog,
@@ -27,10 +26,12 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
     QPushButton,
+    QSettings,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 """Preferences dialog for Intellicrack settings."""
@@ -400,7 +401,7 @@ class PreferencesDialog(QDialog):
 if __name__ == "__main__":
     import sys
 
-    from PyQt6.QtWidgets import QApplication
+    from intellicrack.ui.dialogs.common_imports import QApplication
 
     app = QApplication(sys.argv)
     dialog = PreferencesDialog()

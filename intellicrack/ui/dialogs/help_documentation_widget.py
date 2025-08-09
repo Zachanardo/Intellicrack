@@ -18,8 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -28,12 +27,14 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QSplitter,
+    Qt,
     QTabWidget,
     QTextBrowser,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 __all__ = ["HelpDocumentationWidget"]

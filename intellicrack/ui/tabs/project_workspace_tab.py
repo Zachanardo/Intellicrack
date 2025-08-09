@@ -21,19 +21,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import (
-    QFileDialog,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QMenu,
-    QMessageBox,
-    QPushButton,
-    QSplitter,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QFileDialog, QGroupBox, QHBoxLayout, QLabel,
+    QMenu, QMessageBox, QPushButton, QSplitter,
+    Qt, QTextEdit, QVBoxLayout, QWidget, pyqtSignal,
 )
 
 from .base_tab import BaseTab

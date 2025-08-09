@@ -36,7 +36,7 @@ def check_binary_path_and_warn(app_instance):
     """
     if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
         try:
-            from PyQt6.QtWidgets import QMessageBox
+            from intellicrack.ui.dialogs.common_imports import QFileDialog, QMessageBox
 
             QMessageBox.warning(app_instance, "No File Selected", "Please select a program first.")
         except ImportError as e:
@@ -78,7 +78,7 @@ def show_file_dialog(parent, title, file_filter="HTML Files (*.html);;All Files 
 
     """
     try:
-        from PyQt6.QtWidgets import QFileDialog
+        
 
         filename, _ = QFileDialog.getSaveFileName(parent, title, "", file_filter)
         return filename if filename else ""
@@ -100,7 +100,7 @@ def ask_yes_no_question(parent, title, question):
 
     """
     try:
-        from PyQt6.QtWidgets import QMessageBox
+        
 
         return (
             QMessageBox.question(

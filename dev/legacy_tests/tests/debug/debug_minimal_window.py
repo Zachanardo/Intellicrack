@@ -15,7 +15,7 @@ def test_minimal_window():
     try:
         print("1. Importing Qt...")
         from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel
-        from PyQt6.QtCore import QTimer
+        from intellicrack.ui.dialogs.common_imports import QTimer
         print("   ✓ Qt imported")
 
         print("2. Creating QApplication...")

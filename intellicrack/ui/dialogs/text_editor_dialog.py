@@ -25,54 +25,54 @@ import re
 # Import common PyQt6 components
 from .common_imports import (
     HAS_PYQT,
+    QAction,
     QCheckBox,
+    QColor,
     QComboBox,
+    QDateTime,
     QDialog,
     QFileDialog,
+    QFileSystemWatcher,
     QFont,
     QGroupBox,
     QHBoxLayout,
+    QKeySequence,
     QLabel,
     QLineEdit,
     QMessageBox,
+    QPlainTextEdit,
     QPushButton,
     QSpinBox,
+    QStatusBar,
+    QSyntaxHighlighter,
+    QTextCharFormat,
+    QTextCursor,
+    QTextDocument,
+    QToolBar,
     QVBoxLayout,
+    Qt,
     logger,
     pyqtSignal,
 )
 
-try:
-    from PyQt6.QtCore import QDateTime, QFileSystemWatcher, Qt
-    from PyQt6.QtGui import (
-        QAction,
-        QColor,
-        QKeySequence,
-        QSyntaxHighlighter,
-        QTextCharFormat,
-        QTextCursor,
-        QTextDocument,
-    )
-    from PyQt6.QtWidgets import (
-        QPlainTextEdit,
-        QStatusBar,
-        QToolBar,
-    )
-except ImportError as e:
-    logger.error("Import error in text_editor_dialog: %s", e)
-
 logger = logging.getLogger(__name__)
 
 
-class PythonSyntaxHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for Python code."""
+if HAS_PYQT and QSyntaxHighlighter:
+    class PythonSyntaxHighlighter(QSyntaxHighlighter):
+        """Syntax highlighter for Python code."""
 
-    def __init__(self, document: QTextDocument):
-        """Initialize the Python syntax highlighter with formatting rules for keywords, strings, comments, and functions."""
-        if not HAS_PYQT:
-            return
+        def __init__(self, document: QTextDocument):
+            """Initialize the Python syntax highlighter with formatting rules for keywords, strings, comments, and functions."""
+            super().__init__(document)
 
-        super().__init__(document)
+            # Define syntax highlighting rules
+            self.highlighting_rules = []
+
+            # Python keywords
+            keyword_format = QTextCharFormat()
+            keyword_format.setColor(QColor(85, 85, 255))
+            keyword_format.setFontWeight(QFont.Weight.Bold)
 
         # Define syntax highlighting rules
         self.highlighting_rules = []
@@ -143,23 +143,41 @@ class PythonSyntaxHighlighter(QSyntaxHighlighter):
         # Functions
         function_format = QTextCharFormat()
         function_format.setColor(QColor(0, 0, 255))
-        function_format.setFontWeight(QFont.Bold)
+        function_format.setFontWeight(QFont.Weight.Bold)
         self.highlighting_rules.append((re.compile(r"\bdef\s+(\w+)"), function_format))
 
-    def highlightBlock(self, text: str):
-        """Apply syntax highlighting to a block of text."""
-        if not HAS_PYQT:
-            return
+        def highlightBlock(self, text: str):
+            """Apply syntax highlighting to a block of text."""
+            for pattern, text_format in self.highlighting_rules:
+                for _match in pattern.finditer(text):
+                    start = _match.start()
+                    length = _match.end() - start
+                    self.setFormat(start, length, text_format)
 
-        for pattern, text_format in self.highlighting_rules:
-            for _match in pattern.finditer(text):
-                start = _match.start()
-                length = _match.end() - start
-                self.setFormat(start, length, text_format)
+else:
+    class PythonSyntaxHighlighter:
+        """Fallback syntax highlighter when PyQt6 is not available."""
+        
+        def __init__(self, document=None):
+            """Initialize fallback highlighter."""
+            self.document = document
+            
+        def setDocument(self, document):
+            """Set document for highlighting."""
+            self.document = document
+            
+        def rehighlight(self):
+            """Rehighlight document - no-op in fallback."""
+            pass
+            
+        def highlightBlock(self, text):
+            """No-op highlighting in fallback."""
+            pass
 
 
-class FindReplaceDialog(QDialog):
-    """Find and replace dialog."""
+if HAS_PYQT and QDialog:
+    class FindReplaceDialog(QDialog):
+        """Find and replace dialog."""
 
     def __init__(self, parent=None):
         """Initialize the find and replace dialog for text search and replacement functionality."""
@@ -257,14 +275,30 @@ class FindReplaceDialog(QDialog):
             if HAS_PYQT:
                 QMessageBox.information(self, "Replace All", f"Replaced {count} occurrences")
 
+else:
+    class FindReplaceDialog:
+        """Fallback find and replace dialog when PyQt6 is not available."""
+        
+        def __init__(self, parent=None):
+            """Initialize fallback find and replace dialog."""
+            pass
+        
+        def show(self):
+            """Show dialog (no-op in fallback)."""
+            pass
+        
+        def hide(self):
+            """Hide dialog (no-op in fallback)."""
+            pass
 
-class TextEditorDialog(QDialog):
-    """Advanced text editor dialog for Intellicrack."""
+if HAS_PYQT and QDialog:
+    class TextEditorDialog(QDialog):
+        """Advanced text editor dialog for Intellicrack."""
 
-    #: Emitted when file is saved (type: str)
-    file_saved = pyqtSignal(str)
-    #: Emitted when content changes (type: bool)
-    content_changed = pyqtSignal(bool)
+        #: Emitted when file is saved (type: str)
+        file_saved = pyqtSignal(str)
+        #: Emitted when content changes (type: bool)
+        content_changed = pyqtSignal(bool)
 
     def __init__(self, title="Text Editor", content="", syntax="python", parent=None):
         """Initialize text editor dialog with syntax highlighting and advanced editing features."""
@@ -784,8 +818,8 @@ class TextEditorDialog(QDialog):
     def _export_to_pdf(self, file_path, content, include_highlighting, include_line_numbers):
         """Export content to PDF format."""
         try:
-            from PyQt6.QtGui import QTextDocument
-            from PyQt6.QtPrintSupport import QPrinter
+            from intellicrack.ui.dialogs.common_imports import QPrinter, QTextDocument
+            
 
             printer = QPrinter(QPrinter.PrinterMode.HighResolution)
             printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
@@ -1055,6 +1089,32 @@ class TextEditorDialog(QDialog):
             event.accept()
         else:
             event.ignore()
+
+else:
+    class TextEditorDialog:
+        """Fallback text editor dialog when PyQt6 is not available."""
+        
+        def __init__(self, parent=None, title="Text Editor", content=""):
+            """Initialize fallback text editor dialog."""
+            self.content = content
+            self.title = title
+            self.parent = parent
+        
+        def show(self):
+            """Show dialog (no-op in fallback)."""
+            pass
+        
+        def exec(self):
+            """Execute dialog (no-op in fallback)."""
+            return 0
+        
+        def get_content(self):
+            """Get editor content."""
+            return self.content
+        
+        def set_content(self, content):
+            """Set editor content."""
+            self.content = content
 
 
 # Export for external use

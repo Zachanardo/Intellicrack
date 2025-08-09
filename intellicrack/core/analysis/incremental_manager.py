@@ -45,7 +45,7 @@ improving performance for large binaries.
 
 
 try:
-    from PyQt6.QtWidgets import QMessageBox
+    from intellicrack.ui.dialogs.common_imports import QMessageBox
 
     PYQT_AVAILABLE = True
 except ImportError as e:

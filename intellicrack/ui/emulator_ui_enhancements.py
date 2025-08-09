@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 from intellicrack.logger import logger
 
 try:
-    from PyQt6.QtWidgets import (
+    from intellicrack.ui.dialogs.common_imports import (
         QHBoxLayout,
         QLabel,
         QMessageBox,
@@ -29,7 +29,7 @@ try:
     )
 except ImportError as e:
     logger.error("Import error in emulator_ui_enhancements: %s", e)
-    from PyQt6.QtWidgets import (
+    from intellicrack.ui.dialogs.common_imports import (
         QHBoxLayout,
         QLabel,
         QMessageBox,

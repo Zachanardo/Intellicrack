@@ -15,7 +15,7 @@ def test_theme_application():
     try:
         print("1. Importing Qt...")
         from PyQt6.QtWidgets import QApplication, QMainWindow
-        from PyQt6.QtCore import Qt
+        from intellicrack.ui.dialogs.common_imports import Qt
         from PyQt6.QtGui import QPalette, QColor
         print("   ✓ Qt imported")
 

@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PyQt6.QtWidgets import QApplication
+from intellicrack.ui.dialogs.common_imports import QApplication
 
 
 def get_default_window_size(

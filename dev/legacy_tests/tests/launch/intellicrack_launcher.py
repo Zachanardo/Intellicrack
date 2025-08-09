@@ -52,7 +52,7 @@ def main():
             # Fallback to minimal UI
             logger.info("Attempting minimal UI fallback...")
             from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget
-            from PyQt6.QtCore import Qt
+            from intellicrack.ui.dialogs.common_imports import Qt
 
             app = QApplication(sys.argv)
 

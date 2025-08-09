@@ -12,21 +12,14 @@ import os
 import re
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import (
-    QColor,
-    QFont,
-    QStandardItem,
-    QStandardItemModel,
-    QSyntaxHighlighter,
-    QTextCharFormat,
-)
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QApplication,
+    QColor,
     QComboBox,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
+    QFont,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
@@ -37,11 +30,19 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QSplitter,
+    QStandardItem,
+    QStandardItemModel,
+    QSyntaxHighlighter,
+    Qt,
     QTableView,
     QTabWidget,
+    QTextCharFormat,
     QTextEdit,
+    QThread,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
+    pyqtSlot,
 )
 
 from ...protection.unified_protection_engine import get_unified_engine

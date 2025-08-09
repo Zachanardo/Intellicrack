@@ -6,7 +6,16 @@ print("Testing PyQt6 compatibility fixes...")
 
 # Test 1: Qt enum fixes
 try:
-    from PyQt6.QtCore import Qt
+    from intellicrack.ui.dialogs.common_imports import (
+    QAbstractItemView,
+    QAction,
+    QDialogButtonBox,
+    QFrame,
+    QRegularExpression,
+    QSizePolicy,
+    QWebEngineView,
+    Qt,
+)
     print("✓ Qt imported successfully")
 
     # Test Qt.Orientation
@@ -36,14 +45,14 @@ except ImportError as e:
 
 # Test 2: Widget imports
 try:
-    from PyQt6.QtGui import QAction
+    
     print("✓ QAction imported from QtGui")
 except ImportError as e:
     print(f"✗ Failed to import QAction: {e}")
 
 # Test 3: QFrame enums
 try:
-    from PyQt6.QtWidgets import QFrame
+    
     box = QFrame.Shape.Box
     raised = QFrame.Shadow.Raised
     print("✓ QFrame.Shape.Box and QFrame.Shadow.Raised work")
@@ -52,7 +61,7 @@ except Exception as e:
 
 # Test 4: QDialogButtonBox enums
 try:
-    from PyQt6.QtWidgets import QDialogButtonBox
+    
     ok = QDialogButtonBox.StandardButton.Ok
     cancel = QDialogButtonBox.StandardButton.Cancel
     print("✓ QDialogButtonBox.StandardButton.Ok and .Cancel work")
@@ -61,7 +70,7 @@ except Exception as e:
 
 # Test 5: QSizePolicy enums
 try:
-    from PyQt6.QtWidgets import QSizePolicy
+    
     minimum = QSizePolicy.Policy.Minimum
     print("✓ QSizePolicy.Policy.Minimum works")
 except Exception as e:
@@ -69,7 +78,7 @@ except Exception as e:
 
 # Test 6: QAbstractItemView enums
 try:
-    from PyQt6.QtWidgets import QAbstractItemView
+    
     single = QAbstractItemView.SelectionMode.SingleSelection
     print("✓ QAbstractItemView.SelectionMode.SingleSelection works")
 except Exception as e:
@@ -84,7 +93,7 @@ except Exception as e:
 
 # Test 8: QRegularExpression
 try:
-    from PyQt6.QtCore import QRegularExpression
+    
     regex = QRegularExpression("test")
     print("✓ QRegularExpression imported and created")
 except Exception as e:
@@ -92,7 +101,7 @@ except Exception as e:
 
 # Test 9: WebEngine
 try:
-    from PyQt6.QtWebEngineWidgets import QWebEngineView
+    
     print("✓ QWebEngineView imported successfully")
 except ImportError as e:
     print(f"✗ Failed to import QWebEngineView: {e}")

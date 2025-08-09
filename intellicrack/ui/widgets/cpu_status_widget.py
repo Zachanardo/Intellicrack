@@ -23,19 +23,11 @@ import platform
 from typing import Any
 
 import psutil
-from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QColor
-from PyQt6.QtWidgets import (
-    QGridLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QHeaderView,
-    QLabel,
-    QProgressBar,
-    QTableWidget,
-    QTableWidgetItem,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QColor, QGridLayout, QGroupBox, QHBoxLayout,
+    QHeaderView, QLabel, QObject, QProgressBar,
+    Qt, QTableWidget, QTableWidgetItem, QThread,
+    QVBoxLayout, QWidget, pyqtSignal,
 )
 
 

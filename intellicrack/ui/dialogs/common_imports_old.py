@@ -20,166 +20,42 @@ from intellicrack.logger import logger
 """
 Common imports for dialog modules.
 
-This module centralizes ALL PyQt6 imports to avoid duplication and eliminate
-Sphinx documentation warnings about duplicate object descriptions.
+This module centralizes common PyQt6 imports to avoid duplication.
 """
 
-# Comprehensive PyQt6 imports
+# Common PyQt6 imports
 try:
-    # QtCore imports
-    from PyQt6.QtCore import (
-        PYQT_VERSION_STR,
-        QAbstractItemModel,
-        QBuffer,
-        QCoreApplication,
-        QDateTime,
-        QFileInfo,
-        QFileSystemWatcher,
-        QIODevice,
-        QMetaObject,
-        QModelIndex,
-        QObject,
-        QPoint,
-        QProcess,
-        QRect,
-        QRegularExpression,
-        QRunnable,
-        QSettings,
-        QSize,
-        QT_VERSION_STR,
-        QThread,
-        QThreadPool,
-        QTimer,
-        QUrl,
-        Qt,
-        pyqtSignal,
-        pyqtSlot,
-    )
-
-    # QtGui imports  
-    from PyQt6.QtGui import (
-        QAction,
-        QBrush,
-        QCloseEvent,
-        QColor,
-        QDesktopServices,
-        QDragEnterEvent,
-        QDropEvent,
-        QFont,
-        QFontDatabase,
-        QIcon,
-        QImage,
-        QKeyEvent,
-        QKeySequence,
-        QOpenGLContext,
-        QPainter,
-        QPalette,
-        QPen,
-        QPixmap,
-        QSurfaceFormat,
-        QSyntaxHighlighter,
-        QTextCharFormat,
-        QTextCursor,
-        QTextDocument,
-        QTextFormat,
-        qRgba,
-    )
-
-    # QtWidgets imports
+    from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+    from PyQt6.QtGui import QFont, QIcon, QPixmap
     from PyQt6.QtWidgets import (
-        QAbstractItemView,
-        QApplication,
-        QButtonGroup,
         QCheckBox,
         QComboBox,
         QDialog,
-        QDialogButtonBox,
-        QDoubleSpinBox,
         QFileDialog,
-        QFileIconProvider,
         QFormLayout,
-        QFrame,
-        QGraphicsView,
-        QGridLayout,
         QGroupBox,
         QHBoxLayout,
         QHeaderView,
         QInputDialog,
         QLabel,
         QLineEdit,
-        QListView,
         QListWidget,
         QListWidgetItem,
-        QMainWindow,
-        QMenu,
-        QMenuBar,
         QMessageBox,
-        QPlainTextEdit,
         QProgressBar,
-        QProgressDialog,
         QPushButton,
-        QRadioButton,
-        QScrollArea,
-        QSizePolicy,
         QSlider,
-        QSpacerItem,
         QSpinBox,
-        QSplashScreen,
         QSplitter,
-        QStatusBar,
-        QStyle,
-        QTabWidget,
-        QTableView,
         QTableWidget,
         QTableWidgetItem,
-        QTextBrowser,
+        QTabWidget,
         QTextEdit,
-        QToolBar,
         QTreeWidget,
         QTreeWidgetItem,
         QVBoxLayout,
         QWidget,
-        QWizard,
-        QWizardPage,
     )
-
-    # Optional imports that may not be available
-    # QtPrintSupport
-    try:
-        from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
-    except ImportError:
-        QPrintDialog = None
-        QPrinter = None
-
-    # QtWebEngineWidgets  
-    try:
-        from PyQt6.QtWebEngineWidgets import QWebEngineView
-    except ImportError:
-        QWebEngineView = None
-
-    # QtPdf
-    try:
-        from PyQt6.QtPdf import QPdfDocument
-    except ImportError:
-        QPdfDocument = None
-
-    # QtPdfWidgets
-    try:
-        from PyQt6.QtPdfWidgets import QPdfView
-    except ImportError:
-        QPdfView = None
-
-    # QtTest  
-    try:
-        from PyQt6.QtTest import QTest
-    except ImportError:
-        QTest = None
-
-    # QtOpenGLWidgets
-    try:
-        from PyQt6.QtOpenGLWidgets import QOpenGLWidget
-    except ImportError:
-        QOpenGLWidget = None
 
     HAS_PYQT = True
 
@@ -200,18 +76,18 @@ try:
     def get_user_input(parent, title, label, default="", password=False):
         """Get user input using QInputDialog"""
         if password:
-            text, ok = QInputDialog.getText(parent, title, label, QLineEdit.EchoMode.Password, default)
+            text, ok = QInputDialog.getText(parent, title, label, QLineEdit.Password, default)
         else:
-            text, ok = QInputDialog.getText(parent, title, label, QLineEdit.EchoMode.Normal, default)
+            text, ok = QInputDialog.getText(parent, title, label, QLineEdit.Normal, default)
         return text, ok
 
     def create_horizontal_slider(min_val=0, max_val=100, value=50, tick_interval=10):
         """Create a configured horizontal slider"""
-        slider = QSlider(Qt.Orientation.Horizontal)
+        slider = QSlider(Qt.Horizontal)
         slider.setMinimum(min_val)
         slider.setMaximum(max_val)
         slider.setValue(value)
-        slider.setTickPosition(QSlider.TickPosition.TicksBelow)
+        slider.setTickPosition(QSlider.TicksBelow)
         slider.setTickInterval(tick_interval)
         return slider
 
@@ -219,122 +95,43 @@ except ImportError as e:
     logger.error("Import error in common_imports: %s", e)
     HAS_PYQT = False
 
-    # Define all imported classes as None when PyQt is not available
-    PYQT_VERSION_STR = None
-    QAbstractItemModel = None
-    QAbstractItemView = None
-    QAction = None
-    QApplication = None
-    QBrush = None
-    QBuffer = None
-    QButtonGroup = None
-    QCheckBox = None
-    QCloseEvent = None
-    QColor = None
-    QComboBox = None
-    QCoreApplication = None
-    QDateTime = None
-    QDesktopServices = None
-    QDialog = None
-    QDialogButtonBox = None
-    QDoubleSpinBox = None
-    QDragEnterEvent = None
-    QDropEvent = None
-    QFileDialog = None
-    QFileIconProvider = None
-    QFileInfo = None
-    QFileSystemWatcher = None
+    # Define missing imports as None when PyQt is not available
+    Qt = None
+    QThread = None
+    QTimer = None
+    pyqtSignal = lambda *args, **kwargs: lambda: None
     QFont = None
-    QFontDatabase = None
+    QIcon = None
+    QPixmap = None
+    QCheckBox = None
+    QComboBox = None
+    QDialog = None
+    QFileDialog = None
     QFormLayout = None
-    QFrame = None
-    QGraphicsView = None
-    QGridLayout = None
     QGroupBox = None
     QHBoxLayout = None
     QHeaderView = None
-    QIODevice = None
-    QIcon = None
-    QImage = None
     QInputDialog = None
-    QKeyEvent = None
-    QKeySequence = None
     QLabel = None
     QLineEdit = None
-    QListView = None
     QListWidget = None
     QListWidgetItem = None
-    QMainWindow = None
-    QMenu = None
-    QMenuBar = None
     QMessageBox = None
-    QMetaObject = None
-    QModelIndex = None
-    QObject = None
-    QOpenGLContext = None
-    QOpenGLWidget = None
-    QPaintDevice = None
-    QPainter = None
-    QPalette = None
-    QPdfDocument = None
-    QPdfView = None
-    QPen = None
-    QPixmap = None
-    QPlainTextEdit = None
-    QPoint = None
-    QPrintDialog = None
-    QPrinter = None
-    QProcess = None
     QProgressBar = None
-    QProgressDialog = None
     QPushButton = None
-    QT_VERSION_STR = None
-    QRadioButton = None
-    QRect = None
-    QRegularExpression = None
-    QRunnable = None
-    QScrollArea = None
-    QSettings = None
-    QSize = None
-    QSizePolicy = None
     QSlider = None
-    QSpacerItem = None
     QSpinBox = None
-    QSplashScreen = None
     QSplitter = None
-    QStatusBar = None
-    QStyle = None
-    QSurfaceFormat = None
-    QSyntaxHighlighter = None
-    QTabWidget = None
-    QTableView = None
     QTableWidget = None
     QTableWidgetItem = None
-    QTest = None
-    QTextBrowser = None
-    QTextCharFormat = None
-    QTextCursor = None
-    QTextDocument = None
+    QTabWidget = None
     QTextEdit = None
-    QTextFormat = None
-    QThread = None
-    QThreadPool = None
-    QTimer = None
-    QToolBar = None
     QTreeWidget = None
     QTreeWidgetItem = None
-    QUrl = None
     QVBoxLayout = None
-    QWebEngineView = None
     QWidget = None
-    QWizard = None
-    QWizardPage = None
-    Qt = None
-    pyqtSignal = lambda *args, **kwargs: lambda: None
-    pyqtSlot = lambda *args, **kwargs: lambda: None
-    qRgba = None
 
-    # Fallback functions for non-PyQt environments (keeping existing implementations)
+    # Fallback functions for non-PyQt environments
     def create_icon(path_or_pixmap):
         """Create icon for exploit dialog UI elements."""
         import os
@@ -353,6 +150,7 @@ except ImportError as e:
                     except Exception:
                         self._image = None
                 elif hasattr(source, 'size') and hasattr(source, 'mode'):
+                    # Already a PIL Image
                     self._image = source
                     self._size = source.size
 
@@ -419,6 +217,7 @@ except ImportError as e:
                     return Pixmap(None, (width, height))
                 
                 if aspect_ratio_mode == "keep":
+                    # Calculate aspect ratio
                     aspect = self._image.width / self._image.height
                     if width / height > aspect:
                         width = int(height * aspect)
@@ -428,6 +227,7 @@ except ImportError as e:
                 resample = Image.Resampling.LANCZOS if transform_mode == "smooth" else Image.Resampling.NEAREST
                 scaled_image = self._image.resize((width, height), resample)
                 
+                # Create new Pixmap with scaled image
                 new_pixmap = Pixmap(None)
                 new_pixmap._image = scaled_image
                 new_pixmap.valid = True
@@ -476,9 +276,10 @@ except ImportError as e:
         from tkinter import simpledialog
         
         root = tk.Tk()
-        root.withdraw()
+        root.withdraw()  # Hide the main window
         
         if password:
+            # Create custom password dialog
             dialog = simpledialog.askstring(title, label, show='*', initialvalue=default, parent=root)
         else:
             dialog = simpledialog.askstring(title, label, initialvalue=default, parent=root)
@@ -639,29 +440,46 @@ except ImportError as e:
 __all__ = [
     # Availability flag
     "HAS_PYQT",
-    # QtCore imports
-    "PYQT_VERSION_STR", "QAbstractItemModel", "QBuffer", "QCoreApplication", "QDateTime",
-    "QFileInfo", "QFileSystemWatcher", "QIODevice", "QMetaObject", "QModelIndex", "QObject", "QPoint", 
-    "QProcess", "QRect", "QRegularExpression", "QRunnable", "QSettings", "QSize", 
-    "QT_VERSION_STR", "QThread", "QThreadPool", "QTimer", "QUrl", "Qt", "pyqtSignal", "pyqtSlot",
-    # QtGui imports
-    "QAction", "QBrush", "QCloseEvent", "QColor", "QDesktopServices", "QDragEnterEvent",
-    "QDropEvent", "QFont", "QFontDatabase", "QIcon", "QImage", "QKeyEvent", "QKeySequence", "QOpenGLContext",
-    "QPainter", "QPalette", "QPen", "QPixmap", "QSurfaceFormat", "QSyntaxHighlighter",
-    "QTextCharFormat", "QTextCursor", "QTextDocument", "QTextFormat", "qRgba",
-    # QtWidgets imports
-    "QAbstractItemView", "QApplication", "QButtonGroup", "QCheckBox", "QComboBox", "QDialog",
-    "QDialogButtonBox", "QDoubleSpinBox", "QFileDialog", "QFileIconProvider", "QFormLayout",
-    "QFrame", "QGraphicsView", "QGridLayout", "QGroupBox", "QHBoxLayout", "QHeaderView",
-    "QInputDialog", "QLabel", "QLineEdit", "QListView", "QListWidget", "QListWidgetItem",
-    "QMainWindow", "QMenu", "QMenuBar", "QMessageBox", "QPlainTextEdit", "QProgressBar",
-    "QProgressDialog", "QPushButton", "QRadioButton", "QScrollArea", "QSizePolicy",
-    "QSlider", "QSpacerItem", "QSpinBox", "QSplashScreen", "QSplitter", "QStatusBar",
-    "QStyle", "QTabWidget", "QTableView", "QTableWidget", "QTableWidgetItem", "QTextBrowser",
-    "QTextEdit", "QToolBar", "QTreeWidget", "QTreeWidgetItem", "QVBoxLayout", "QWidget",
-    "QWizard", "QWizardPage",
-    # Optional imports  
-    "QPrintDialog", "QPrinter", "QWebEngineView", "QPdfDocument", "QPdfView", "QTest", "QOpenGLWidget",
+    # Core imports
+    "Qt",
+    "QThread",
+    "QTimer",
+    "pyqtSignal",
+    # GUI imports
+    "QFont",
+    "QIcon",
+    "QPixmap",
+    # Widget imports
+    "QCheckBox",
+    "QComboBox",
+    "QDialog",
+    "QFileDialog",
+    "QFormLayout",
+    "QGroupBox",
+    "QHBoxLayout",
+    "QHeaderView",
+    "QInputDialog",
+    "QLabel",
+    "QLineEdit",
+    "QListWidget",
+    "QListWidgetItem",
+    "QMessageBox",
+    "QProgressBar",
+    "QPushButton",
+    "QSlider",
+    "QSpinBox",
+    "QSplitter",
+    "QTableWidget",
+    "QTableWidgetItem",
+    "QTabWidget",
+    "QTextEdit",
+    "QTreeWidget",
+    "QTreeWidgetItem",
+    "QVBoxLayout",
+    "QWidget",
     # Utility functions
-    "create_icon", "create_pixmap_from_file", "get_user_input", "create_horizontal_slider",
+    "create_icon",
+    "create_pixmap_from_file",
+    "get_user_input",
+    "create_horizontal_slider",
 ]

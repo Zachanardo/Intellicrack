@@ -14,26 +14,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QBrush, QColor, QFont
-from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QFileDialog,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QMessageBox,
-    QProgressBar,
-    QPushButton,
-    QSpinBox,
-    QSplitter,
-    QTableWidget,
-    QTableWidgetItem,
-    QTabWidget,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QBrush, QCheckBox, QColor, QComboBox, QFileDialog,
+    QFont, QGroupBox, QHBoxLayout, QLabel, QMessageBox,
+    QProgressBar, QPushButton, QSpinBox, QSplitter,
+    Qt, QTableWidget, QTableWidgetItem, QTabWidget,
+    QTextEdit, QThread, QVBoxLayout, QWidget,
+    pyqtSignal, pyqtSlot,
 )
 
 from ...protection.unified_protection_engine import get_unified_engine

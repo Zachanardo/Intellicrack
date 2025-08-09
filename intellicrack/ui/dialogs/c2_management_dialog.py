@@ -22,12 +22,14 @@ import time
 from datetime import datetime
 from typing import Any
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QAction, QBrush, QColor, QFont
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
+    QAction,
+    QBrush,
     QCheckBox,
+    QColor,
     QComboBox,
     QDialog,
+    QFont,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
@@ -37,13 +39,16 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QSpinBox,
+    Qt,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
     QTextEdit,
+    QThread,
     QTreeWidget,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ...core.c2 import C2Server
@@ -1019,7 +1024,7 @@ class C2ManagementDialog(QDialog):
                 remote_path = file_path
 
             # Show file dialog for local save location
-            from PyQt6.QtWidgets import QFileDialog
+            from intellicrack.ui.dialogs.common_imports import QFileDialog
 
             local_path, _ = QFileDialog.getSaveFileName(
                 self,
@@ -1111,7 +1116,7 @@ class C2ManagementDialog(QDialog):
     def add_file_to_upload(self):
         """Add file to upload list."""
         try:
-            from PyQt6.QtWidgets import QFileDialog
+            
 
             # Open file dialog to select files
             file_paths, _ = QFileDialog.getOpenFileNames(

@@ -17,9 +17,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from collections.abc import Callable
 
-from PyQt6.QtCore import QThread, QTimer
-from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import QDialog, QMenu, QMessageBox, QWidget
+from intellicrack.ui.dialogs.common_imports import (
+    QCloseEvent,
+    QDialog,
+    QMenu,
+    QMessageBox,
+    QThread,
+    QTimer,
+    QWidget,
+)
 
 """
 Event Handler Utilities for Dialog Management

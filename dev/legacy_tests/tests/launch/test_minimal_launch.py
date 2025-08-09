@@ -12,7 +12,7 @@ print("[TEST] Starting minimal launch test...")
 
 try:
     print("[TEST] Importing PyQt6...")
-    from PyQt6.QtWidgets import QApplication
+    from intellicrack.ui.dialogs.common_imports import QApplication
     print("[TEST] PyQt6 imported successfully")
 
     print("[TEST] Creating QApplication...")

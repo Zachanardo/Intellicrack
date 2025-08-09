@@ -810,7 +810,7 @@ class StructureVisualizerWidget(QWidget):
         """Export structure data"""
         import json
 
-        from PyQt6.QtWidgets import QFileDialog
+        from intellicrack.ui.dialogs.common_imports import QFileDialog, QMessageBox
 
         filename, _ = QFileDialog.getSaveFileName(
             self,
@@ -830,14 +830,14 @@ class StructureVisualizerWidget(QWidget):
                         f.write(self._format_structure_text())
 
                 # Show success message
-                from PyQt6.QtWidgets import QMessageBox
+                
 
                 QMessageBox.information(
                     self, "Export Complete", f"Structure exported to {filename}"
                 )
 
             except Exception as e:
-                from PyQt6.QtWidgets import QMessageBox
+                
 
                 QMessageBox.critical(self, "Export Error", f"Failed to export: {e!s}")
 

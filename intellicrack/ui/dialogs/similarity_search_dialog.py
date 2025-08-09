@@ -21,23 +21,11 @@ import logging
 import os
 from typing import Any
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtWidgets import (
-    QAbstractItemView,
-    QDialog,
-    QHBoxLayout,
-    QHeaderView,
-    QInputDialog,
-    QLabel,
-    QMessageBox,
-    QPushButton,
-    QSlider,
-    QSplitter,
-    QTableWidget,
-    QTableWidgetItem,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QAbstractItemView, QDialog, QHBoxLayout, QHeaderView, QInputDialog,
+    QLabel, QMessageBox, QPushButton, QSlider, QSplitter, Qt,
+    QTableWidget, QTableWidgetItem, QTextEdit, QThread, QVBoxLayout,
+    QWidget, pyqtSignal,
 )
 
 from intellicrack.logger import logger

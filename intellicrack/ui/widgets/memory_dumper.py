@@ -19,21 +19,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import platform
 
-from PyQt6.QtCore import QThread, pyqtSignal
-from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QFileDialog,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QProgressBar,
-    QPushButton,
-    QTableWidget,
-    QTableWidgetItem,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QCheckBox, QComboBox, QFileDialog, QGroupBox,
+    QHBoxLayout, QLabel, QProgressBar, QPushButton,
+    QTableWidget, QTableWidgetItem, QTextEdit,
+    QThread, QVBoxLayout, QWidget, pyqtSignal,
 )
 
 

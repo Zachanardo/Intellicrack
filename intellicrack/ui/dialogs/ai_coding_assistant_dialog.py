@@ -25,13 +25,15 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QFileSystemWatcher, Qt, pyqtSignal
-from PyQt6.QtGui import QAction, QColor, QFont, QSyntaxHighlighter, QTextCharFormat
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
+    QAction,
     QCheckBox,
+    QColor,
     QComboBox,
     QDialog,
     QFileDialog,
+    QFileSystemWatcher,
+    QFont,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -42,13 +44,17 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QSplitter,
     QStatusBar,
+    QSyntaxHighlighter,
+    Qt,
     QTabWidget,
+    QTextCharFormat,
     QTextEdit,
     QToolBar,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ...utils.logger import get_logger

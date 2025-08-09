@@ -501,7 +501,7 @@ else:
                             if plugin_info.get("enabled", True):
                                 list_item.setForeground(list_item.foreground())  # Default color
                             else:
-                                from PyQt6.QtGui import QColor
+                                from intellicrack.ui.dialogs.common_imports import QColor
 
                                 list_item.setForeground(QColor(128, 128, 128))  # Gray for disabled
 
@@ -633,7 +633,7 @@ Description: {plugin_info['description']}"""
                 plugin_info = current_item.data(0)
                 plugin_info["enabled"] = False
                 current_item.setData(0, plugin_info)
-                from PyQt6.QtGui import QColor
+                from intellicrack.ui.dialogs.common_imports import QColor
 
                 current_item.setForeground(QColor(128, 128, 128))  # Gray out
                 self.on_installed_selection_changed()  # Refresh info display

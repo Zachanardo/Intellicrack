@@ -23,28 +23,13 @@ import json
 import logging
 import os
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont
-from PyQt6.QtWidgets import (
-    QCheckBox,
-    QColorDialog,
-    QComboBox,
-    QDoubleSpinBox,
-    QFileDialog,
-    QFontComboBox,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QMessageBox,
-    QPushButton,
-    QSlider,
-    QSpinBox,
-    QSplitter,
-    QTabWidget,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QCheckBox, QColor, QColorDialog, QComboBox,
+    QDoubleSpinBox, QFileDialog, QFont, QFontComboBox,
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+    QMessageBox, QPushButton, QSlider, QSpinBox,
+    QSplitter, Qt, QTabWidget, QTextEdit,
+    QVBoxLayout, QWidget, pyqtSignal,
 )
 
 from .base_tab import BaseTab

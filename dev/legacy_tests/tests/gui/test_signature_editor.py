@@ -26,7 +26,7 @@ This script tests the signature editor functionality independently.
 import os
 import sys
 
-from PyQt6.QtWidgets import QApplication
+from intellicrack.ui.dialogs.common_imports import QApplication
 
 from intellicrack.ui.dialogs.signature_editor_dialog import SignatureEditorDialog
 

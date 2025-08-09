@@ -40,7 +40,7 @@ except ImportError:
 # Check OpenGL info
 print("\n2. OPENGL INFORMATION:")
 try:
-    from PyQt6.QtWidgets import QApplication
+    from intellicrack.ui.dialogs.common_imports import QApplication, QTimer, Qt
     from PyQt6.QtGui import QOpenGLContext, QSurfaceFormat
 
     app = QApplication(sys.argv)
@@ -106,7 +106,7 @@ import sys
 
 try:
     from PyQt6.QtWidgets import QApplication, QWidget
-    from PyQt6.QtCore import Qt
+    
 
     app = QApplication(sys.argv)
     QApplication.setAttribute(Qt.AA_UseSoftwareOpenGL, {"software" in str(env_vars.get("QT_OPENGL", ""))})
@@ -117,7 +117,7 @@ try:
     window.show()
 
     # Close immediately
-    from PyQt6.QtCore import QTimer
+    
     QTimer.singleShot(100, app.quit)
 
     exit_code = app.exec()

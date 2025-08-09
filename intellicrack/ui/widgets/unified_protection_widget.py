@@ -427,7 +427,7 @@ class UnifiedProtectionWidget(QWidget):
 
         # Get AI coordination strategy suggestion if available
         try:
-            from PyQt6.QtWidgets import QApplication
+            from intellicrack.ui.dialogs.common_imports import QApplication, QInputDialog
 
             main_window = None
             for widget in QApplication.allWidgets():
@@ -1125,7 +1125,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
             return
 
         # Create a simple dialog to choose script type
-        from PyQt6.QtWidgets import QInputDialog
+        
 
         script_type, ok = QInputDialog.getItem(
             self,

@@ -14,7 +14,7 @@ def test_dashboard_tab():
     """Test creating DashboardTab."""
     try:
         print("1. Importing Qt...")
-        from PyQt6.QtWidgets import QApplication
+        from intellicrack.ui.dialogs.common_imports import QApplication
         print("   ✓ Qt imported")
 
         print("2. Creating QApplication...")

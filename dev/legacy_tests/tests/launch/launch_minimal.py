@@ -19,7 +19,7 @@ def main():
         print("Starting minimal Intellicrack...")
 
         from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QTabWidget
-        from PyQt6.QtCore import Qt
+        from intellicrack.ui.dialogs.common_imports import Qt
 
         app = QApplication(sys.argv)
 

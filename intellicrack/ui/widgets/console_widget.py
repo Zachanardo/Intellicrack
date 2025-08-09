@@ -21,17 +21,11 @@ A professional console widget with syntax highlighting, filtering, and search ca
 
 from datetime import datetime
 
-from PyQt6.QtCore import QRegularExpression, Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QSyntaxHighlighter, QTextCharFormat, QTextCursor
-from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QHBoxLayout,
-    QLineEdit,
-    QPushButton,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QCheckBox, QColor, QComboBox, QFont, QHBoxLayout,
+    QLineEdit, QPushButton, QRegularExpression,
+    QSyntaxHighlighter, Qt, QTextCharFormat, QTextCursor,
+    QTextEdit, QVBoxLayout, QWidget, pyqtSignal,
 )
 
 
@@ -335,7 +329,7 @@ class ConsoleWidget(QWidget):
 
     def export_log(self):
         """Export console log to file"""
-        from PyQt6.QtWidgets import QFileDialog
+        from intellicrack.ui.dialogs.common_imports import QFileDialog
 
         filename, _ = QFileDialog.getSaveFileName(
             self,

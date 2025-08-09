@@ -23,8 +23,8 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QSettings
+from intellicrack.ui.dialogs.common_imports import QApplication, QSettings
+
 
 # Create QApplication if it doesn't exist
 if not QApplication.instance():

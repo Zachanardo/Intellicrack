@@ -20,7 +20,9 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 
-from PyQt6.QtCore import QDateTime, QFileInfo, QTimer
+from intellicrack.ui.dialogs.common_imports import (
+    QDateTime, QFileInfo, QTimer,
+)
 
 logger = logging.getLogger(__name__)
 

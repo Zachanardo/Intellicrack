@@ -138,6 +138,18 @@ autodoc_mock_imports = [
     'joblib', 'dill', 'cloudpickle',
     # Testing
     'pytest', 'hypothesis',
+    # Heavy ML/AI libraries that slow down doc build
+    'torch', 'tensorflow', 'transformers', 
+    'intel_extension_for_pytorch', 'ipex',
+    'bitsandbytes', 'peft', 'accelerate',
+    'datasets', 'evaluate', 'safetensors',
+    'trl', 'sentence_transformers',
+    # GUI libraries
+    'PyQt6', 'pyqtgraph', 'matplotlib',
+    # Security/RE tools
+    'mitmproxy', 'frida', 'capstone',
+    'unicorn', 'keystone', 'pwntools',
+    'angr', 'z3',
 ]
 
 # Template path
@@ -213,26 +225,43 @@ language = 'en'
 exclude_trees = []
 
 # The name of the Pygments syntax highlighting style
-pygments_style = 'sphinx'
+pygments_style = 'friendly'
 pygments_dark_style = 'monokai'
 
 # -- Options for HTML output -------------------------------------------------
 
 # HTML theme configuration
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 html_theme_options = {
-    'logo_only': False,
-    'prev_next_buttons_location': 'bottom',
-    'style_external_links': True,
-    'style_nav_header_background': '#2980B9',
-    # Table of contents options
-    'collapse_navigation': False,
-    'sticky_navigation': True,
-    'navigation_depth': 4,
-    'includehidden': True,
-    'titles_only': False,
-    # Version control integration
-    'vcs_pageview_mode': 'blob',
+    # Dark mode by default with automatic light/dark mode toggle
+    'light_css_variables': {
+        'color-brand-primary': '#2962ff',
+        'color-brand-content': '#2962ff',
+        'color-admonition-background': 'orange',
+        'color-api-background': '#f0f0f0',
+        'color-api-background-hover': '#e0e0e0',
+    },
+    'dark_css_variables': {
+        'color-brand-primary': '#4fc3f7',
+        'color-brand-content': '#4fc3f7',
+        'color-admonition-background': 'orange',
+        'color-api-background': '#1a1a1a',
+        'color-api-background-hover': '#2a2a2a',
+        'color-background-primary': '#0d0d0d',
+        'color-background-secondary': '#1a1a1a',
+        'color-background-hover': '#2a2a2a',
+        'color-background-border': '#333333',
+        'color-foreground-primary': '#e0e0e0',
+        'color-foreground-secondary': '#b0b0b0',
+        'color-foreground-muted': '#808080',
+        'color-foreground-border': '#404040',
+    },
+    # Enable features
+    'navigation_with_keys': True,
+    'top_of_page_button': 'edit',
+    # Sidebar behavior
+    'sidebar_hide_name': False,
+    'announcement': None,
 }
 
 # Paths for static files
@@ -443,40 +472,106 @@ def setup(app):
             lines.append('PyQt6 signal object.')
             return
         
-        # Fix inline emphasis issues by escaping single asterisks
+        # Fix common docstring formatting issues
         for i, line in enumerate(lines):
-            # Replace single asterisks that aren't already part of **bold** or *italic*
-            if '*' in line and not '**' in line:
-                # Check if it's a properly closed emphasis
-                asterisk_count = line.count('*')
-                if asterisk_count == 1 or asterisk_count % 2 != 0:
-                    # Escape single asterisks
-                    lines[i] = line.replace('*', r'\*')
+            # Fix inline emphasis issues by escaping problematic asterisks
+            if '*' in line:
+                # Escape asterisks in Qt logging rules patterns
+                if '*.debug=' in line or 'QT_LOGGING_RULES' in line:
+                    lines[i] = line.replace('*.debug=', r'\*.debug=')
+                # Replace single asterisks that aren't already part of **bold** or *italic*
+                elif not '**' in line:
+                    # Check if it's a properly closed emphasis
+                    asterisk_count = line.count('*')
+                    if asterisk_count == 1 or asterisk_count % 2 != 0:
+                        # Escape single asterisks
+                        lines[i] = line.replace('*', r'\*')
+            
+            # Fix common definition list formatting issues
+            stripped = line.strip()
+            if stripped and ':' in stripped and not stripped.endswith(':'):
+                # Check for common Args:/Returns: patterns that need periods
+                if (stripped.startswith('Args:') or 
+                    stripped.startswith('Returns:') or 
+                    stripped.startswith('Note:') or
+                    stripped.startswith('Example:') or
+                    any(param_pattern in stripped for param_pattern in [
+                        'operation:', 'details:', 'function_name:', 'module:', 
+                        'metric_name:', 'value:', 'protection_type:', 'technique:',
+                        'output_dir:', 'category:', 'hook_spec:', 'importance:',
+                        'process_identifier:', 'script_content:', 'script_name:'
+                    ])):
+                    # Add period if missing and not already ending with punctuation
+                    if not stripped.endswith(('.', '!', '?', ':', ')', '}')):
+                        lines[i] = line.rstrip() + '.'
+    
+    # Custom handler to skip entire common_imports modules
+    def autodoc_skip_module(app, what, name, obj, skip, options):
+        """Skip entire common_imports modules from documentation."""
+        # Skip entire common_imports modules
+        if what == 'module' and 'common_imports' in name:
+            return True
+        return skip
     
     # Custom handler to prevent duplicate object descriptions
     def autodoc_skip_member(app, what, name, obj, skip, options):
-        """Skip duplicate PyQt6 class definitions."""
-        # Skip PyQt6 signal objects that would create duplicates
-        if 'pyqtSignal' in str(type(obj)):
-            return True
-        
-        # Skip duplicate imports from common_imports modules
-        if name in ['QAction', 'QWidget', 'QDialog', 'QMainWindow', 'QApplication',
-                    'QLabel', 'QPushButton', 'QLineEdit', 'QTextEdit', 'QComboBox',
-                    'QCheckBox', 'QRadioButton', 'QSpinBox', 'QSlider', 'QProgressBar',
-                    'QTableWidget', 'QListWidget', 'QTreeWidget', 'QTabWidget',
-                    'QGroupBox', 'QFrame', 'QSplitter', 'QScrollArea', 'QToolBar',
-                    'QStatusBar', 'QMenuBar', 'QMenu', 'QVBoxLayout', 'QHBoxLayout',
-                    'QGridLayout', 'QFormLayout', 'Qt', 'QThread', 'QTimer', 'pyqtSignal']:
-            # Check if this is from a common_imports module
-            if hasattr(obj, '__module__') and 'common_imports' in obj.__module__:
+        """Skip duplicate PyQt6 class definitions and common imports."""
+        try:
+            # Skip PyQt6 signal objects that would create duplicates
+            if 'pyqtSignal' in str(type(obj)):
                 return True
+            
+            # Get module name safely
+            module_name = None
+            if hasattr(obj, '__module__'):
+                module_name = getattr(obj, '__module__', None)
+            
+            # If module_name is None or not a string, return default skip value
+            if module_name is None:
+                return skip
+            
+            # Convert to string if it's not already
+            if not isinstance(module_name, str):
+                module_name = str(module_name)
+            
+            # Skip ALL PyQt6 imports that are re-exported from other modules
+            # This prevents duplicate object descriptions warnings
+            if module_name.startswith('PyQt6'):
+                # Get the fully qualified name of where this is being documented
+                doc_module = getattr(app.env, 'temp_data', {}).get('autodoc:module', '')
+                
+                # If it's a PyQt6 object being documented outside of PyQt6 itself, skip it
+                if doc_module and not doc_module.startswith('PyQt6'):
+                    return True
+            
+            # Skip all objects from common_imports modules
+            if 'common_imports' in module_name:
+                return True
+            
+            # Skip elftools objects in import_patterns
+            if 'elftools' in module_name:
+                current_doc = getattr(app.env, 'docname', '')
+                if current_doc and 'import_patterns' in current_doc:
+                    return True
+            
+            # Skip duplicate SeverityLevel when re-exported
+            if name == 'SeverityLevel' and 'severity_levels' not in module_name:
+                return True
+            
+            # Skip Qt enums and other PyQt6 objects that commonly cause duplicates
+            if what == 'class' and ('Qt.' in name or name.startswith('Qt.')):
+                return True
+                
+        except Exception:
+            # If any error occurs, just return the default skip value
+            pass
         
         return skip
     
     # Connect event handlers
     app.connect('autodoc-process-docstring', process_docstring)
     app.connect('autodoc-skip-member', autodoc_skip_member)
+    app.connect('autodoc-skip-member', autodoc_skip_module)
     app.connect('builder-inited', lambda app: print(f'Building {project} documentation...'))
     
     return {

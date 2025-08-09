@@ -779,7 +779,7 @@ class C2Client(BaseC2):
                 try:
                     import sys
 
-                    from PyQt6.QtWidgets import QApplication
+                    from intellicrack.ui.dialogs.common_imports import QApplication
 
                     app = QApplication.instance()
                     if app is None:

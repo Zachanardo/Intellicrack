@@ -21,11 +21,10 @@ import os
 from datetime import datetime
 from typing import Any
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QCheckBox,
     QFileDialog,
+    QFont,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -35,12 +34,15 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QProgressBar,
     QPushButton,
+    Qt,
     QTabWidget,
     QTextEdit,
+    QThread,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from intellicrack.logger import logger

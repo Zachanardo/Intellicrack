@@ -24,10 +24,10 @@ Common functionality for menu operations to eliminate code duplication.
 from intellicrack.logger import logger
 
 try:
-    from PyQt6.QtWidgets import QMenu, QMenuBar
+    from intellicrack.ui.dialogs.common_imports import QMenu, QMenuBar
 except ImportError as e:
     logger.error("Import error in menu_utils: %s", e)
-    from PyQt6.QtWidgets import QMenu, QMenuBar
+    from intellicrack.ui.dialogs.common_imports import QMenu, QMenuBar
 
 
 def find_or_create_menu(menu_bar: QMenuBar, menu_name: str) -> QMenu:

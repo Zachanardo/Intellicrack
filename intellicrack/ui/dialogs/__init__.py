@@ -52,7 +52,7 @@ except ImportError as e:
 
 try:
     from .plugin_manager_dialog import PluginManagerDialog
-except ImportError as e:
+except (ImportError, IndentationError, SyntaxError) as e:
     logger.warning("Failed to import plugin_manager_dialog: %s", e)
     PluginManagerDialog = None
 

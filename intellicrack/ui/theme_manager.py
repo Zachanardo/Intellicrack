@@ -19,8 +19,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 
-from PyQt6.QtCore import QSettings
-from PyQt6.QtWidgets import QApplication
+from intellicrack.ui.dialogs.common_imports import QApplication, QSettings
+
 
 
 class ThemeManager:

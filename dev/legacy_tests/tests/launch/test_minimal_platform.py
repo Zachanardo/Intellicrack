@@ -9,7 +9,7 @@ def main():
     try:
         print("Testing with minimal platform...")
 
-        from PyQt6.QtWidgets import QApplication
+        from intellicrack.ui.dialogs.common_imports import QApplication
 
         print("Creating QApplication with minimal platform...")
         app = QApplication(sys.argv + ['-platform', 'minimal'])

@@ -9,12 +9,11 @@ Licensed under GNU General Public License v3.0
 
 import logging
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QComboBox,
     QDialog,
     QDialogButtonBox,
+    QFont,
     QFormLayout,
     QGroupBox,
     QLabel,
@@ -23,9 +22,11 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QSpinBox,
+    Qt,
     QTabWidget,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ...ai.background_loader import LoadingState

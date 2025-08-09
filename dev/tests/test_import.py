@@ -60,7 +60,7 @@ except Exception as e:
 
 try:
     print("\n4. Testing PyQt5...")
-    from PyQt6.QtWidgets import QApplication
+    from intellicrack.ui.dialogs.common_imports import QApplication
     print("   SUCCESS: PyQt5 imported")
 
     print("\n5. Creating QApplication...")

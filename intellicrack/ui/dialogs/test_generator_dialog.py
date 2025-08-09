@@ -20,24 +20,11 @@ import subprocess
 import sys
 from typing import Any, Dict
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
-    QCheckBox,
-    QFileDialog,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QListWidget,
-    QMessageBox,
-    QProgressBar,
-    QPushButton,
-    QSpinBox,
-    QSplitter,
-    QTabWidget,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QCheckBox, QFileDialog, QFont, QGroupBox, QHBoxLayout, QLabel,
+    QListWidget, QMessageBox, QProgressBar, QPushButton, QSpinBox,
+    QSplitter, Qt, QTabWidget, QTextEdit, QThread, QVBoxLayout,
+    QWidget, pyqtSignal,
 )
 
 from intellicrack.logger import logger

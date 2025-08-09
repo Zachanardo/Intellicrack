@@ -33,6 +33,7 @@ from .common_imports import (
     QCheckBox,
     QDialog,
     QFileDialog,
+    QFont,
     QGroupBox,
     QHBoxLayout,
     QHeaderView,
@@ -42,35 +43,18 @@ from .common_imports import (
     QProgressBar,
     QPushButton,
     QSplitter,
+    QStyle,
     Qt,
     QTableWidget,
     QTableWidgetItem,
     QTextEdit,
+    QThread,
+    QTimer,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
+    pyqtSignal,
 )
-
-if HAS_PYQT:
-    from PyQt6.QtCore import QThread, QTimer, pyqtSignal
-    from PyQt6.QtGui import QFont
-    from PyQt6.QtWidgets import QStyle
-else:
-    # Fallback definitions when PyQt is not available
-    QThread = object
-    QTimer = object
-
-    def pyqtSignal(*args):
-        """Create signal replacement for PyQt6 fallback.
-        
-        Args:
-            *args: Signal argument types
-            
-        Returns:
-            Identity function as signal placeholder
-
-        """
-        return lambda x: x
 
 
 logger = logging.getLogger(__name__)

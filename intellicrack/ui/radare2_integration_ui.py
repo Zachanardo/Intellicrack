@@ -23,14 +23,13 @@ import logging
 import os
 from typing import Any
 
-from PyQt6.QtCore import QThread, pyqtSignal
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
+    QFont,
     QFormLayout,
     QGridLayout,
     QGroupBox,
@@ -47,10 +46,12 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
     QTabWidget,
     QTextEdit,
+    QThread,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ..core.analysis.cfg_explorer import CFGExplorer

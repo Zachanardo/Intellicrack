@@ -24,7 +24,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from PyQt6.QtWidgets import QApplication
+from intellicrack.ui.dialogs.common_imports import QApplication
 
 from intellicrack.protection.intellicrack_protection_core import (
     DetectionResult,

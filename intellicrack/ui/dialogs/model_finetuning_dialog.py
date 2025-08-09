@@ -63,42 +63,15 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-try:
-    from PyQt6.QtCore import Qt, QThread, pyqtSignal
-    from PyQt6.QtWidgets import (
-        QApplication,
-        QCheckBox,
-        QComboBox,
-        QDialog,
-        QDoubleSpinBox,
-        QFileDialog,
-        QFormLayout,
-        QGroupBox,
-        QHBoxLayout,
-        QHeaderView,
-        QLabel,
-        QLineEdit,
-        QMessageBox,
-        QProgressBar,
-        QProgressDialog,
-        QPushButton,
-        QScrollArea,
-        QSlider,
-        QSpinBox,
-        QTableWidget,
-        QTableWidgetItem,
-        QTabWidget,
-        QTextEdit,
-        QVBoxLayout,
-        QWidget,
-    )
-
-    PYQT6_AVAILABLE = True
-except ImportError as e:
-    logger.error("Import error in model_finetuning_dialog: %s", e)
-    PYQT6_AVAILABLE = False
-    QDialog = object
-    QThread = object
+from intellicrack.ui.dialogs.common_imports import (
+    HAS_PYQT as PYQT6_AVAILABLE,
+    QApplication, QCheckBox, QComboBox, QDialog, QDoubleSpinBox,
+    QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QHeaderView,
+    QLabel, QLineEdit, QMessageBox, QProgressBar, QProgressDialog,
+    QPushButton, QScrollArea, QSlider, QSpinBox, Qt, QTableWidget,
+    QTableWidgetItem, QTabWidget, QTextEdit, QThread, QVBoxLayout,
+    QWidget, pyqtSignal,
+)
 
 # Optional ML dependencies
 try:
@@ -2705,7 +2678,7 @@ class ModelFinetuningDialog(QDialog):
             plt.close(fig)
 
             # Update visualization label
-            from PyQt6.QtGui import QPixmap
+            from intellicrack.ui.dialogs.common_imports import QPixmap
 
             pixmap = QPixmap(temp_path)
             scaled_pixmap = pixmap.scaled(

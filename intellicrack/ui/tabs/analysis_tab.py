@@ -21,22 +21,12 @@ vulnerability detection, and security assessment capabilities.
 
 import os
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QProgressBar,
-    QPushButton,
-    QSpinBox,
-    QSplitter,
-    QTabWidget,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QCheckBox, QComboBox, QFileDialog, QFont, QGroupBox,
+    QHBoxLayout, QInputDialog, QLabel, QMessageBox,
+    QProgressBar, QPushButton, QSpinBox, QSplitter,
+    Qt, QTabWidget, QTextEdit, QVBoxLayout, QWidget,
+    pyqtSignal,
 )
 
 from ...core.analysis.analysis_orchestrator import AnalysisPhase
@@ -554,7 +544,7 @@ class AnalysisTab(BaseTab):
     def start_static_analysis(self):
         """Start static analysis only"""
         if not self.current_binary:
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -711,7 +701,7 @@ class AnalysisTab(BaseTab):
     def detect_protections(self):
         """Detect binary protections"""
         if not self.current_binary:
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -805,7 +795,7 @@ class AnalysisTab(BaseTab):
     def start_dynamic_monitoring(self):
         """Start dynamic monitoring"""
         if not self.current_binary:
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -937,7 +927,7 @@ class AnalysisTab(BaseTab):
     def open_hex_viewer(self):
         """Open hex viewer for current binary"""
         if not self.current_binary:
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return
@@ -962,21 +952,21 @@ class AnalysisTab(BaseTab):
 
         except ImportError as e:
             self.log_activity(f"Hex viewer not available: {e!s}")
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(
                 self, "Error", "Hex viewer module not available. Please check installation."
             )
         except Exception as e:
             self.log_activity(f"Error opening hex viewer: {e!s}")
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {e!s}")
 
     def embed_hex_viewer(self):
         """Embed hex viewer in the results panel"""
         if not self.current_binary:
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return
@@ -1113,7 +1103,7 @@ class AnalysisTab(BaseTab):
             import json
             import time
 
-            from PyQt6.QtWidgets import QInputDialog
+            
 
             from ...utils.system.snapshot_common import create_system_snapshot
 
@@ -1335,7 +1325,7 @@ class AnalysisTab(BaseTab):
     def _export_comparison(self, comparison_text):
         """Export comparison results to file"""
         try:
-            from PyQt6.QtWidgets import QFileDialog
+            
 
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
@@ -1361,7 +1351,7 @@ class AnalysisTab(BaseTab):
     def analyze_network_capture(self):
         """Analyze PCAP files using NetworkForensicsEngine"""
         try:
-            from PyQt6.QtWidgets import QFileDialog
+            
 
             from ...core.analysis.network_forensics_engine import NetworkForensicsEngine
 
@@ -1589,7 +1579,7 @@ class AnalysisTab(BaseTab):
 
                 import json
 
-                from PyQt6.QtWidgets import QFileDialog
+                
 
                 file_path, _ = QFileDialog.getSaveFileName(
                     dialog,

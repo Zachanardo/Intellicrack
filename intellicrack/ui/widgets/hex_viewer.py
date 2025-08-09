@@ -18,16 +18,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import math
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QKeyEvent, QPainter
-from PyQt6.QtWidgets import (
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QScrollBar,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QColor, QFont, QHBoxLayout, QKeyEvent,
+    QLabel, QLineEdit, QPainter, QPushButton,
+    QScrollBar, Qt, QVBoxLayout, QWidget,
+    pyqtSignal,
 )
 
 

@@ -26,7 +26,7 @@ from ...utils.ui.ui_common import ask_open_report
 logger = logging.getLogger(__name__)
 
 try:
-    from PyQt6.QtWidgets import QInputDialog
+    from intellicrack.ui.dialogs.common_imports import QInputDialog
 
     PYQT6_AVAILABLE = True
 except ImportError as e:

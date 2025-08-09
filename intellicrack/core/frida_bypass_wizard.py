@@ -72,16 +72,16 @@ class BypassStrategy:
         """Initialize a bypass strategy.
 
         Args:
-            protection_type: The type of protection this strategy bypasses
-            scripts: List of Frida script paths to apply
-            priority: Execution priority (higher = earlier execution)
-            dependencies: Other protections that must be bypassed first
+            protection_type: The type of protection this strategy bypasses.
+            scripts: List of Frida script paths to apply.
+            priority: Execution priority (higher = earlier execution).
+            dependencies: Other protections that must be bypassed first.
 
         Attributes:
-            success_indicators (list): Patterns indicating successful bypass
-            failure_indicators (list): Patterns indicating bypass failure
-            applied (bool): Whether this strategy has been applied
-            success (bool or None): Success status (True/False/None)
+            success_indicators (list): Patterns indicating successful bypass.
+            failure_indicators (list): Patterns indicating bypass failure.
+            applied (bool): Whether this strategy has been applied.
+            success (bool or None): Success status (True/False/None).
 
         """
         self.protection_type = protection_type
@@ -99,7 +99,7 @@ class BypassStrategy:
         Args:
             indicator: Dictionary containing pattern/condition that indicates
                       the bypass was successful (e.g., specific log messages,
-                      function return values, etc.)
+                      function return values, etc.).
 
         """
         self.success_indicators.append(indicator)
@@ -110,7 +110,7 @@ class BypassStrategy:
         Args:
             indicator: Dictionary containing pattern/condition that indicates
                       the bypass failed (e.g., error messages, exceptions,
-                      protection still active, etc.)
+                      protection still active, etc.).
 
         """
         self.failure_indicators.append(indicator)
@@ -122,10 +122,10 @@ class BypassStrategy:
         successfully bypassed first.
 
         Args:
-            completed_protections: Set of protections already bypassed
+            completed_protections: Set of protections already bypassed.
 
         Returns:
-            bool: True if all dependencies are satisfied
+            bool: True if all dependencies are satisfied.
 
         Example:
             If LICENSE bypass depends on ANTI_DEBUG, it can only run

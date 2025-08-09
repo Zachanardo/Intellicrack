@@ -143,12 +143,11 @@ def create_binary_selection_header(
         extra_buttons: List of (button_text, callback) tuples for additional buttons
 
     Returns:
-        Dictionary with widget references: {
-            'group': QGroupBox,
-            'path_edit': QLineEdit,
-            'browse_btn': QPushButton,
-            'extra_buttons': {button_text: QPushButton}
-        }
+        dict: Dictionary with widget references containing:
+            - 'group': QGroupBox
+            - 'path_edit': QLineEdit
+            - 'browse_btn': QPushButton
+            - 'extra_buttons': dict mapping button_text to QPushButton
 
     """
     if not HAS_PYQT:

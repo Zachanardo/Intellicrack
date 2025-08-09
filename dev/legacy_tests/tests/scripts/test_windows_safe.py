@@ -15,7 +15,7 @@ def main():
         print("Testing Windows platform with WARP...")
 
         from PyQt6.QtWidgets import QApplication, QMainWindow
-        from PyQt6.QtCore import QTimer
+        from intellicrack.ui.dialogs.common_imports import QTimer
 
         print("Creating QApplication...")
         app = QApplication(sys.argv)

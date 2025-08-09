@@ -9,28 +9,13 @@ Licensed under GNU General Public License v3.0
 
 import os
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor, QFont
-from PyQt6.QtWidgets import (
-    QCheckBox,
-    QComboBox,
-    QFileDialog,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QMessageBox,
-    QProgressBar,
-    QPushButton,
-    QSplitter,
-    QTableWidget,
-    QTableWidgetItem,
-    QTabWidget,
-    QTextBrowser,
-    QTextEdit,
-    QTreeWidget,
-    QTreeWidgetItem,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QBrush, QCheckBox, QColor, QComboBox, QFileDialog,
+    QFont, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
+    QProgressBar, QPushButton, QSplitter, Qt,
+    QTableWidget, QTableWidgetItem, QTabWidget,
+    QTextBrowser, QTextEdit, QThread, QTreeWidget,
+    QTreeWidgetItem, QVBoxLayout, QWidget, pyqtSignal,
 )
 
 from ...protection.intellicrack_protection_advanced import (

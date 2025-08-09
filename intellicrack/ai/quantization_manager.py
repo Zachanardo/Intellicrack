@@ -57,8 +57,14 @@ try:
     import bitsandbytes as bnb
 
     HAS_BITSANDBYTES = True
-except ImportError as e:
+except (ImportError, AttributeError) as e:
+    # AttributeError can occur if bitsandbytes has internal import issues
     logger.debug("Optional dependency bitsandbytes not available: %s", e)
+    bnb = None
+    HAS_BITSANDBYTES = False
+except Exception as e:
+    # Catch any other errors from bitsandbytes initialization
+    logger.debug("Error initializing bitsandbytes: %s", e)
     bnb = None
     HAS_BITSANDBYTES = False
 

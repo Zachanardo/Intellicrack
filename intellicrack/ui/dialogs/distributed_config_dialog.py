@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import multiprocessing
 from typing import Any
 
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QCheckBox,
     QComboBox,
     QDialog,

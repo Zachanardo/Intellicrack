@@ -746,7 +746,7 @@ class MemoryOptimizer:
 
             # Check for UI widget leaks
             if hasattr(self.app, "findChildren"):
-                from PyQt6.QtWidgets import QWidget
+                from intellicrack.ui.dialogs.common_imports import QWidget
 
                 widgets = self.app.findChildren(QWidget)
                 if len(widgets) > 1000:

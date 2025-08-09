@@ -9,8 +9,9 @@ Licensed under GNU General Public License v3.0
 
 from typing import Any
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from intellicrack.ui.dialogs.common_imports import (
+    QHBoxLayout, QLabel, Qt, QVBoxLayout, QWidget, pyqtSignal,
+)
 
 from ...utils.logger import get_logger
 

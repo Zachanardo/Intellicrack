@@ -30,48 +30,13 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-try:
-    from PyQt6.QtCore import Qt, QThread, pyqtSignal
-    from PyQt6.QtGui import QFont
-    from PyQt6.QtWidgets import (
-        QCheckBox,
-        QComboBox,
-        QDialog,
-        QDoubleSpinBox,
-        QFileDialog,
-        QFormLayout,
-        QHBoxLayout,
-        QLabel,
-        QLineEdit,
-        QListWidget,
-        QListWidgetItem,
-        QMessageBox,
-        QProgressBar,
-        QPushButton,
-        QSpinBox,
-        QSplitter,
-        QTabWidget,
-        QTextEdit,
-        QVBoxLayout,
-        QWidget,
-    )
-except ImportError as e:
-    logger.error("Import error in llm_config_dialog: %s", e)
-    # Fallback for environments without PyQt6
-    QDialog = object
-    QThread = object
-
-    def pyqtSignal(*args):
-        """Create signal replacement for PyQt6 fallback.
-        
-        Args:
-            *args: Signal argument types
-            
-        Returns:
-            Identity function as signal placeholder
-
-        """
-        return lambda x: x
+from intellicrack.ui.dialogs.common_imports import (
+    QApplication, QCheckBox, QComboBox, QDialog, QDoubleSpinBox,
+    QFileDialog, QFont, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
+    QListWidget, QListWidgetItem, QMessageBox, QProgressBar,
+    QPushButton, QSpinBox, QSplitter, Qt, QTabWidget, QTextEdit,
+    QThread, QVBoxLayout, QWidget, pyqtSignal,
+)
 
 
 # Local imports
@@ -1928,7 +1893,7 @@ if __name__ == "__main__":
     # For testing the dialog standalone
     import sys
 
-    from PyQt6.QtWidgets import QApplication
+    
 
     app = QApplication(sys.argv)
     dialog = LLMConfigDialog()

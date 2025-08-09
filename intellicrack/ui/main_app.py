@@ -78,50 +78,34 @@ else:
     byref = c_int = sizeof = windll = None
     HAS_CTYPES = False
 
-# PyQt6 imports (conditional)
+# PyQt6 imports (consolidated)
 try:
-    from PyQt6 import QtCore
-    from PyQt6.QtCore import (
-        QDateTime,
-        QFileInfo,
-        QMetaObject,
-        QSettings,
-        QSize,
-        Qt,
-        QThread,
-        QTimer,
-        QUrl,
-        pyqtSignal,
-    )
-    from PyQt6.QtGui import (
-        QAction,
-        QColor,
-        QDesktopServices,
-        QFont,
-        QIcon,
-        QPainter,
-        QPalette,
-        QPen,
-        QPixmap,
-        QTextCursor,
-    )
-    from PyQt6.QtWidgets import (
+    from intellicrack.ui.dialogs.common_imports import (
+        HAS_PYQT,
         QAbstractItemView,
+        QAction,
         QApplication,
         QButtonGroup,
         QCheckBox,
+        QColor,
         QComboBox,
+        QCoreApplication,
+        QDateTime,
+        QDesktopServices,
         QDialog,
         QDialogButtonBox,
         QDoubleSpinBox,
         QFileDialog,
         QFileIconProvider,
+        QFileInfo,
+        QFont,
         QFormLayout,
         QFrame,
         QGridLayout,
         QGroupBox,
         QHBoxLayout,
         QHeaderView,
+        QIcon,
         QInputDialog,
         QLabel,
         QLineEdit,
@@ -130,51 +114,54 @@ try:
         QMainWindow,
         QMenu,
         QMessageBox,
+        QMetaObject,
+        QModelIndex,
+        QPainter,
+        QPalette,
+        QPdfDocument,
+        QPdfView,
+        QPen,
+        QPixmap,
         QPlainTextEdit,
+        QPrintDialog,
+        QPrinter,
         QProgressBar,
         QProgressDialog,
         QPushButton,
         QRadioButton,
         QScrollArea,
+        QSettings,
+        QSize,
         QSizePolicy,
         QSlider,
         QSpacerItem,
         QSpinBox,
         QSplitter,
         QStyle,
+        QTabWidget,
         QTableView,
         QTableWidget,
         QTableWidgetItem,
-        QTabWidget,
         QTextBrowser,
+        QTextCursor,
         QTextEdit,
+        QThread,
+        QTimer,
         QToolBar,
         QTreeWidget,
         QTreeWidgetItem,
+        QUrl,
         QVBoxLayout,
+        QWebEngineView,
         QWidget,
         QWizard,
         QWizardPage,
+        Qt,
+        pyqtSignal,
     )
-
-    # Optional PyQt components
-    try:
-        from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
-    except ImportError:
-        QPrintDialog = QPrinter = None
-
-    try:
-        from PyQt6.QtWebEngineWidgets import QWebEngineView
-    except ImportError:
-        QWebEngineView = None
-
-    try:
-        from PyQt6.QtPdf import QPdfDocument
-        from PyQt6.QtPdfWidgets import QPdfView
-        HAS_PDF_SUPPORT = True
-    except ImportError:
-        QPdfDocument = QPdfView = None
-        HAS_PDF_SUPPORT = False
+    
+    # Check PDF support
+    HAS_PDF_SUPPORT = QPdfDocument is not None and QPdfView is not None
 
 except ImportError:
     # Real tkinter-based fallback implementation for environments without PyQt6
@@ -12814,7 +12801,7 @@ def compute_file_hash(file_path, algorithm="sha256"):
 def get_file_icon(file_path):
     """Get file icon for the given file path."""
     try:
-        from PyQt6.QtWidgets import QFileIconProvider
+        from intellicrack.ui.dialogs.common_imports import QFileIconProvider
 
         if not file_path:
             return None
@@ -13568,22 +13555,10 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             import os
             import time
 
-            from PyQt6.QtCore import Qt, QThread, pyqtSignal
-            from PyQt6.QtWidgets import (
-                QCheckBox,
-                QComboBox,
-                QDialog,
-                QFileDialog,
-                QGroupBox,
-                QHBoxLayout,
-                QLabel,
-                QProgressBar,
-                QPushButton,
-                QTabWidget,
-                QTextEdit,
-                QTreeWidget,
-                QTreeWidgetItem,
-                QVBoxLayout,
+            from intellicrack.ui.dialogs.common_imports import (
+                Qt, QThread, pyqtSignal, QCheckBox, QComboBox, QDialog, QFileDialog, 
+                QGroupBox, QHBoxLayout, QLabel, QProgressBar, QPushButton, QTabWidget, 
+                QTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout
             )
 
             from intellicrack.core.analysis.memory_forensics_engine import (
@@ -13963,7 +13938,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             import os
             import time
 
-            from PyQt6.QtWidgets import (
+            from intellicrack.ui.dialogs.common_imports import (
                 QDialog,
                 QFileDialog,
                 QHBoxLayout,
@@ -14087,7 +14062,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         try:
 
             import psutil
-            from PyQt6.QtWidgets import (
+            from intellicrack.ui.dialogs.common_imports import (
                 QDialog,
                 QHBoxLayout,
                 QLabel,
@@ -14550,7 +14525,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
             # Start a timer to periodically update the UI with captured packets
             if self.packet_update_timer is None:
-                from PyQt6.QtCore import QTimer
+                from intellicrack.ui.dialogs.common_imports import QApplication, QMessageBox, QTimer, Qt
 
                 self.packet_update_timer = QTimer()
                 self.packet_update_timer.timeout.connect(self._update_packet_display)
@@ -17257,7 +17232,7 @@ class Plugin:
     def analyze_process_behavior(self):
         """Analyze live process behavior using dynamic analysis."""
         try:
-            from PyQt6.QtWidgets import QInputDialog, QMessageBox
+            from intellicrack.ui.dialogs.common_imports import QInputDialog, QMessageBox
 
             # Get process name or PID from user
             process_name, ok = QInputDialog.getText(
@@ -17313,7 +17288,7 @@ class Plugin:
     def run_memory_keyword_scan(self):
         """Run dynamic memory keyword scan using Frida."""
         try:
-            from PyQt6.QtWidgets import QInputDialog, QMessageBox
+            from intellicrack.ui.dialogs.common_imports import QInputDialog, QMessageBox
 
             # Get keywords from user
             keywords, ok = QInputDialog.getText(
@@ -25147,7 +25122,7 @@ def register():
             }
 
             # Download in a separate thread to avoid blocking the UI
-            from PyQt6.QtCore import QThread, pyqtSignal
+            from intellicrack.ui.dialogs.common_imports import QThread, pyqtSignal
 
             class DownloadThread(QThread):
                 """Thread for downloading models without blocking the UI."""
@@ -30812,7 +30787,7 @@ Focus on:
                             # Define the thread-safe confirmation function
                             def ask_user_confirmation(app, tool_name, parameters):
                                 """Thread-safe user confirmation dialog for sensitive AI tools"""
-                                from PyQt6.QtWidgets import QMessageBox
+                                
 
                                 param_text = "\n".join([f"{k}: {v}" for k, v in parameters.items()])
                                 result = QMessageBox.question(
@@ -34630,8 +34605,8 @@ def launch():
     # Set Qt attributes before creating QApplication
     try:
         print("[LAUNCH] Importing Qt modules...")
-        from PyQt6.QtCore import Qt
-        from PyQt6.QtWidgets import QApplication
+        
+        
 
         print("[LAUNCH] Qt modules imported successfully")
 
@@ -34764,7 +34739,7 @@ def launch():
                     pass
 
             # Show a simple error dialog
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.critical(
                 None,
@@ -34913,7 +34888,7 @@ def launch():
     logger.info("App is about to quit: %s", app_instance.aboutToQuit)
 
     # Add a single-shot timer to log after event loop starts
-    from PyQt6.QtCore import QTimer
+    
 
     def log_after_start():
         logger.info("Qt event loop started successfully")

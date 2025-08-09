@@ -7,8 +7,8 @@ NO mocked components - validates actual dialog behavior.
 
 import pytest
 from PyQt6.QtWidgets import QApplication, QDialog
-from PyQt6.QtCore import Qt
-from PyQt6.QtTest import QTest
+from intellicrack.ui.dialogs.common_imports import QTest, QThread, Qt
+
 
 from intellicrack.ui.dialogs.base_dialog import BaseDialog
 
@@ -279,7 +279,7 @@ class TestBaseDialog:
 
     def test_dialog_thread_safety_real_gui_thread(self, qtbot):
         """Test REAL thread safety with GUI thread operations."""
-        from PyQt6.QtCore import QThread
+        
 
         # Ensure dialog operations happen in GUI thread
         assert QThread.currentThread() == QApplication.instance().thread()

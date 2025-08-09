@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
 
-from PyQt6.QtWidgets import QMessageBox
+from intellicrack.ui.dialogs.common_imports import QMessageBox
 
 from ..core.analysis.core_analysis import decrypt_embedded_script
 from ..core.protection_bypass.dongle_emulator import HardwareDongleEmulator

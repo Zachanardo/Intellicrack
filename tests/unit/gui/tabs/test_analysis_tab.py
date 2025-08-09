@@ -10,8 +10,8 @@ import tempfile
 import os
 from unittest.mock import patch, MagicMock
 from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QProgressBar, QPushButton, QTabWidget
-from PyQt6.QtCore import Qt
-from PyQt6.QtTest import QTest
+from intellicrack.ui.dialogs.common_imports import QGraphicsView, QTest, Qt
+
 
 from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
@@ -258,7 +258,7 @@ class TestAnalysisTab:
     def test_visualization_widgets_real_display(self, qtbot):
         """Test REAL visualization widgets for analysis data."""
         # Check for visualization components
-        from PyQt6.QtWidgets import QGraphicsView
+        
         graphics_views = self.tab.findChildren(QGraphicsView)
 
         # Check for entropy visualizer

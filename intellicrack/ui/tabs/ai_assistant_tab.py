@@ -4,18 +4,11 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtWidgets import (
-    QComboBox,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QMessageBox,
-    QPushButton,
-    QSplitter,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QComboBox, QGroupBox, QHBoxLayout, QLabel,
+    QMessageBox, QPushButton, QSplitter, Qt,
+    QTextEdit, QThread, QVBoxLayout, QWidget,
+    pyqtSignal,
 )
 
 from intellicrack.ai.ai_assistant_enhanced import IntellicrackAIAssistant
@@ -219,7 +212,7 @@ class AIAssistantTab(QWidget):
     
     def export_script(self):
         """Export generated script to file."""
-        from PyQt6.QtWidgets import QFileDialog
+        from intellicrack.ui.dialogs.common_imports import QApplication, QFileDialog
         
         file_path, _ = QFileDialog.getSaveFileName(
             self,
@@ -249,7 +242,7 @@ class AIAssistantTab(QWidget):
     
     def copy_to_clipboard(self):
         """Copy output to clipboard."""
-        from PyQt6.QtWidgets import QApplication
+        
         
         clipboard = QApplication.clipboard()
         clipboard.setText(self.output_text.toPlainText())

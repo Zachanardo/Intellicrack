@@ -28,55 +28,13 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-try:
-    from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
-    from PyQt6.QtGui import QColor, QFont, QPixmap
-    from PyQt6.QtWidgets import (
-        QCheckBox,
-        QComboBox,
-        QDialog,
-        QFileDialog,
-        QGridLayout,
-        QGroupBox,
-        QHBoxLayout,
-        QHeaderView,
-        QLabel,
-        QLineEdit,
-        QMessageBox,
-        QProgressBar,
-        QPushButton,
-        QTableWidget,
-        QTableWidgetItem,
-        QTabWidget,
-        QTextEdit,
-        QVBoxLayout,
-        QWidget,
-    )
-except ImportError as e:
-    logger.error("Import error in system_utilities_dialog: %s", e)
-
-    # Fallback for environments without PyQt6
-    class QDialog:
-        """Stub class for QDialog when PyQt6 is not available.
-
-        Provides a placeholder to prevent import errors in non-GUI environments.
-        """
-
-    def pyqtSignal(*args, **kwargs):
-        """Stub function for pyqtSignal when PyQt6 is not available.
-
-        Args:
-            *args: Signal type arguments (ignored)
-            **kwargs: Signal keyword arguments (ignored)
-
-        Returns:
-            lambda: A no-op function
-
-        """
-        _ = args, kwargs
-        return lambda: None
-
-    Qt = None
+from intellicrack.ui.dialogs.common_imports import (
+    QCheckBox, QColor, QComboBox, QDialog, QFileDialog, QFont,
+    QGridLayout, QGroupBox, QHBoxLayout, QHeaderView, QLabel,
+    QLineEdit, QMessageBox, QPixmap, QProgressBar, QPushButton,
+    Qt, QTableWidget, QTableWidgetItem, QTabWidget, QTextEdit,
+    QThread, QTimer, QVBoxLayout, QWidget, pyqtSignal,
+)
 
 
 class SystemUtilitiesWorker(QThread):

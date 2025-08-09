@@ -21,9 +21,10 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import os
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QPainter, QPixmap
-from PyQt6.QtWidgets import QApplication, QLabel, QProgressBar, QSplashScreen
+from intellicrack.ui.dialogs.common_imports import (
+    QApplication, QColor, QFont, QLabel, QPainter, QPixmap,
+    QProgressBar, QSplashScreen, Qt, pyqtSignal,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -10,8 +10,8 @@ import tempfile
 import os
 from unittest.mock import patch, MagicMock
 from PyQt6.QtWidgets import QApplication, QDialog, QComboBox, QLineEdit, QPushButton
-from PyQt6.QtCore import Qt
-from PyQt6.QtTest import QTest
+from intellicrack.ui.dialogs.common_imports import QTest, QThread, Qt
+
 
 from intellicrack.ui.dialogs.llm_config_dialog import LLMConfigDialog
 
@@ -355,7 +355,7 @@ class TestLLMConfigDialog:
 
     def test_thread_safety_real_async_operations(self, qtbot):
         """Test REAL thread safety for async operations."""
-        from PyQt6.QtCore import QThread
+        
 
         # Ensure dialog operations happen in GUI thread
         assert QThread.currentThread() == QApplication.instance().thread()

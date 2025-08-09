@@ -20,11 +20,11 @@ import os
 import queue
 from typing import Any
 
-from PyQt6.QtCore import QSize, Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QTextCursor, QTextFormat
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
+    QColor,
     QDialog,
     QFileDialog,
+    QFont,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -33,14 +33,20 @@ from PyQt6.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
+    QSize,
     QSplitter,
+    Qt,
     QTabWidget,
+    QTextCursor,
     QTextEdit,
+    QTextFormat,
+    QThread,
     QToolBar,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ...tools.plugin_debugger import DebuggerState, DebuggerThread, PluginDebugger
@@ -746,7 +752,7 @@ class CodeEditorWidget(QTextEdit):
 
     def line_number_area_paint_event(self, event):
         """Paint line numbers"""
-        from PyQt6.QtGui import QPainter
+        from intellicrack.ui.dialogs.common_imports import QPainter
 
         painter = QPainter(self.line_number_area)
         painter.fillRect(event.rect(), Qt.GlobalColor.lightGray)

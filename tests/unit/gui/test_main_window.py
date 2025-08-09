@@ -9,9 +9,9 @@ import pytest
 import tempfile
 import os
 from unittest.mock import patch
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import Qt
-from PyQt6.QtTest import QTest
+from intellicrack.ui.dialogs.common_imports import QApplication, QTest, Qt
+
+
 
 from intellicrack.ui.main_window import IntellicrackMainWindow
 from intellicrack.core.analysis.multi_format_analyzer import MultiFormatBinaryAnalyzer

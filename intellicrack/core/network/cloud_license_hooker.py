@@ -35,7 +35,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 
 try:
-    from PyQt6.QtWidgets import QMessageBox
+    from intellicrack.ui.dialogs.common_imports import QMessageBox
 
     PYQT6_AVAILABLE = True
 except ImportError as e:

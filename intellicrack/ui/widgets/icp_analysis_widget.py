@@ -8,22 +8,12 @@ Licensed under GNU General Public License v3.0
 
 import asyncio
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QBrush, QColor, QFont
-from PyQt6.QtWidgets import (
-    QComboBox,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QProgressBar,
-    QPushButton,
-    QSplitter,
-    QTabWidget,
-    QTextEdit,
-    QTreeWidget,
-    QTreeWidgetItem,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QBrush, QColor, QComboBox, QFont, QGroupBox,
+    QHBoxLayout, QLabel, QProgressBar, QPushButton,
+    QSplitter, Qt, QTabWidget, QTextEdit, QThread,
+    QTreeWidget, QTreeWidgetItem, QVBoxLayout,
+    QWidget, pyqtSignal, pyqtSlot,
 )
 
 from ...protection.icp_backend import ICPDetection, ICPScanResult, ScanMode, get_icp_backend

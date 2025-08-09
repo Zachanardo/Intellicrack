@@ -248,7 +248,7 @@ class HexViewerWidget(QAbstractScrollArea):
             self.viewport().update()
 
             # Schedule multiple updates to ensure rendering
-            from PyQt6.QtCore import QTimer
+            from intellicrack.ui.dialogs.common_imports import QTimer
 
             QTimer.singleShot(50, self.viewport().update)
             QTimer.singleShot(100, self.viewport().update)

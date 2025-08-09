@@ -287,7 +287,7 @@ class ScriptDisplayDialog(QDialog):
 
     def copy_script(self):
         """Copy script to clipboard"""
-        from PyQt6.QtWidgets import QApplication
+        from intellicrack.ui.dialogs.common_imports import QApplication, QFileDialog
 
         QApplication.clipboard().setText(self.script_data.get("script", ""))
 
@@ -297,7 +297,7 @@ class ScriptDisplayDialog(QDialog):
 
     def save_script(self):
         """Save script to file"""
-        from PyQt6.QtWidgets import QFileDialog
+        
 
         script_type = self.script_data.get("type", "script").lower()
         if script_type == "frida":

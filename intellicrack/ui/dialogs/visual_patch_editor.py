@@ -19,23 +19,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
-    QAbstractItemView,
-    QDialog,
-    QFormLayout,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QListWidget,
-    QListWidgetItem,
-    QMessageBox,
-    QPushButton,
-    QSplitter,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QAbstractItemView, QDialog, QFont, QFormLayout, QHBoxLayout,
+    QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox,
+    QPushButton, QSplitter, Qt, QTextEdit, QVBoxLayout, QWidget,
 )
 
 from intellicrack.logger import logger

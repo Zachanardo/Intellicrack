@@ -8,7 +8,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from PyQt6.QtWidgets import QApplication
+from intellicrack.ui.dialogs.common_imports import QApplication
 from intellicrack.ui.dialogs.llm_config_dialog import LLMConfigDialog
 from intellicrack.config import CONFIG
 

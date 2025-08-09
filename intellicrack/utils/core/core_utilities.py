@@ -134,7 +134,7 @@ def run_gui_mode(args) -> int:
     """
     _ = args
     try:
-        from PyQt6.QtWidgets import QApplication
+        from intellicrack.ui.dialogs.common_imports import QApplication
 
         from ...ui.main_app import launch
 

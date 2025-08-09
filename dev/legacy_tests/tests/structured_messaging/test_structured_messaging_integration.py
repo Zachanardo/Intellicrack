@@ -17,7 +17,7 @@ try:
     from intellicrack.core.frida_manager import FridaManager
     from intellicrack.ui.dialogs.frida_manager_dialog import FridaManagerDialog
     from PyQt6.QtWidgets import QApplication, QMainWindow
-    from PyQt6.QtCore import QTimer
+    from intellicrack.ui.dialogs.common_imports import QTimer
     import frida
 
     class TestMainWindow(QMainWindow):

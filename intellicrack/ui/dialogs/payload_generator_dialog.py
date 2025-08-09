@@ -19,12 +19,11 @@ import asyncio
 import logging
 from typing import Any
 
-from PyQt6.QtCore import QThread, pyqtSignal
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QCheckBox,
     QComboBox,
     QFileDialog,
+    QFont,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -33,8 +32,10 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QSpinBox,
     QTextEdit,
+    QThread,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ...core.exploitation import (

@@ -15,8 +15,8 @@ def main():
     try:
         print("Testing with offscreen platform...")
 
-        from PyQt6.QtWidgets import QApplication
-        from PyQt6.QtCore import QCoreApplication
+        from intellicrack.ui.dialogs.common_imports import QApplication, QCoreApplication
+        
 
         # Try headless mode
         QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_UseSoftwareOpenGL)

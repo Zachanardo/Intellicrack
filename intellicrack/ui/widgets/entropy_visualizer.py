@@ -21,8 +21,9 @@ from collections import Counter
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
+from intellicrack.ui.dialogs.common_imports import (
+    QLabel, Qt, QVBoxLayout, QWidget, pyqtSignal,
+)
 
 
 class EntropyVisualizer(QWidget):

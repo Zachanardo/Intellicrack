@@ -67,7 +67,7 @@ except ImportError as e:
 
             # Show message box if Qt is available
             try:
-                from PyQt6.QtWidgets import QMessageBox
+                from intellicrack.ui.dialogs.common_imports import QMessageBox
 
                 QMessageBox.warning(
                     main_app,

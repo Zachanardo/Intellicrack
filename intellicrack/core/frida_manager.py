@@ -74,7 +74,7 @@ class FridaOperationLogger:
 
         Args:
             log_dir: Optional custom log directory. If not provided,
-                    uses default from plugin_paths.get_frida_logs_dir()
+                    uses default from plugin_paths.get_frida_logs_dir().
 
         Side Effects:
             - Creates log directory if it doesn't exist
@@ -195,11 +195,11 @@ class FridaOperationLogger:
             success: Whether the operation succeeded
             error: Error message if operation failed
 
-        Side Effects:
-            - Appends entry to operation_buffer
-            - Increments total_operations counter
-            - Writes to operation log file
-            - Logs details as JSON for parsing
+        Note:
+            Appends entry to operation_buffer,
+            increments total_operations counter,
+            writes to operation log file,
+            and logs details as JSON for parsing.
 
         Example:
             logger.log_operation('attach', {
@@ -356,11 +356,11 @@ class FridaOperationLogger:
             details: Optional additional context (e.g., error messages,
                     timing information, verification results)
 
-        Side Effects:
-            - Increments bypasses_attempted counter
-            - Increments bypasses_successful if success=True
-            - Writes JSON entry to bypass log
-            - Logs with INFO level for success, WARNING for failure
+        Note:
+            Increments bypasses_attempted counter,
+            increments bypasses_successful if success=True,
+            writes JSON entry to bypass log,
+            and logs with INFO level for success, WARNING for failure.
 
         Example:
             logger.log_bypass_attempt(
@@ -628,9 +628,9 @@ class ProtectionDetector:
         Returns:
             Set of detected ProtectionType enums
 
-        Side Effects:
-            - Updates detected_protections map
-            - May trigger adaptation callbacks
+        Note:
+            Updates detected_protections map
+            and may trigger adaptation callbacks.
 
         Complexity:
             Time: O(n*m) where n is protection types, m is signatures per type

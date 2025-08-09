@@ -11,18 +11,20 @@ import logging
 import subprocess
 import sys
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QCheckBox,
     QDialog,
+    QFont,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QProgressBar,
     QPushButton,
+    Qt,
     QTextEdit,
+    QThread,
     QVBoxLayout,
+    pyqtSignal,
 )
 
 logger = logging.getLogger(__name__)

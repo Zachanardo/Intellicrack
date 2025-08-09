@@ -21,22 +21,25 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from typing import Any
 
-from PyQt6.QtGui import QAction, QColor, QFont, QIcon, QPalette
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
+    QAction,
     QApplication,
+    QColor,
     QComboBox,
     QDialog,
     QFileDialog,
+    QFont,
     QFrame,
-    QGraphicsScene,
     QGraphicsView,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
+    QIcon,
     QLabel,
     QListWidget,
     QMainWindow,
     QMessageBox,
+    QPalette,
     QProgressBar,
     QPushButton,
     QStatusBar,

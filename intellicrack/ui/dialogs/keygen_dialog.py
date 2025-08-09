@@ -703,7 +703,7 @@ class KeygenDialog(BinarySelectionDialog):
         key = self.key_display.toPlainText().strip()
         if key:
             try:
-                from PyQt6.QtWidgets import QApplication
+                from intellicrack.ui.dialogs.common_imports import QApplication
 
                 QApplication.clipboard().setText(key)
                 self.status_label.setText("Key copied to clipboard")

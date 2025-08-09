@@ -24,7 +24,7 @@ def test_detailed_imports():
 
     try:
         print("1. Creating QApplication...")
-        from PyQt6.QtWidgets import QApplication
+        from intellicrack.ui.dialogs.common_imports import QApplication
         app = QApplication(sys.argv)
         print("   ✓ QApplication created")
 

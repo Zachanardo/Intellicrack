@@ -22,20 +22,23 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QFont, QTextCursor
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QDialog,
     QDialogButtonBox,
+    QFont,
     QLabel,
     QProgressBar,
     QPushButton,
+    Qt,
     QTabWidget,
+    QTextCursor,
     QTextEdit,
+    QThread,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ...ai.qemu_test_manager import ExecutionResult, QEMUTestManager
@@ -513,7 +516,7 @@ class QEMUTestResultsDialog(QDialog):
         }
 
         # Save to file
-        from PyQt6.QtWidgets import QFileDialog
+        from intellicrack.ui.dialogs.common_imports import QFileDialog
 
         filename, _ = QFileDialog.getSaveFileName(
             self,

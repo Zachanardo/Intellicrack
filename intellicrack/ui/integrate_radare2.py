@@ -22,7 +22,8 @@ def add_radare2_to_intellicrack_app(app_instance) -> bool:
     This is the main entry point for users who want to add radare2 functionality
     to their existing Intellicrack application.
 
-    Usage:
+    Usage::
+
         from intellicrack.ui.integrate_radare2 import add_radare2_to_intellicrack_app
 
         # In your main application initialization:
@@ -103,7 +104,7 @@ def integrate_with_main_app():
         main_app = None
 
         # Method 1: Check if running in QApplication context
-        from PyQt6.QtWidgets import QApplication
+        from intellicrack.ui.dialogs.common_imports import QApplication
 
         app = QApplication.instance()
         if app:

@@ -23,7 +23,7 @@ import os
 import sys
 from typing import Any
 
-from PyQt6.QtWidgets import QMessageBox
+from intellicrack.ui.dialogs.common_imports import QMessageBox
 
 from ...utils.logger import get_logger
 from ...utils.protection.protection_detection import (

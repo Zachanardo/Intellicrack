@@ -19,15 +19,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, pyqtSignal
-
-# Import missing class
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QApplication,
     QCheckBox,
     QComboBox,
     QFileDialog,
+    QFont,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -37,10 +34,12 @@ from PyQt6.QtWidgets import (
     QListWidgetItem,
     QMessageBox,
     QPushButton,
+    Qt,
     QTextEdit,
     QVBoxLayout,
     QWizard,
     QWizardPage,
+    pyqtSignal,
 )
 
 from intellicrack.logger import logger

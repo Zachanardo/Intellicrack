@@ -22,7 +22,7 @@ import logging
 import os
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QAction
+from intellicrack.ui.dialogs.common_imports import QAction
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,

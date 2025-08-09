@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, '/mnt/c/Intellicrack')
 
 try:
-    from PyQt6.QtWidgets import QApplication
+    from intellicrack.ui.dialogs.common_imports import QApplication
     app = QApplication(sys.argv)
 
     # Test imports that might fail

@@ -414,7 +414,7 @@ class PluginEditor(QWidget):
     def show_find_dialog(self):
         """Show find/replace dialog"""
         # Simple find implementation
-        from PyQt6.QtWidgets import QInputDialog
+        from intellicrack.ui.dialogs.common_imports import QInputDialog
 
         text, ok = QInputDialog.getText(self, "Find", "Find text:")
         if ok and text:

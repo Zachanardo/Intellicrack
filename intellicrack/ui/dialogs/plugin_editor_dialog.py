@@ -19,25 +19,29 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import sys
 
-from PyQt6.QtCore import QProcess, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QCheckBox,
     QDialog,
     QDialogButtonBox,
+    QFileDialog,
+    QFont,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QListWidget,
     QMessageBox,
+    QProcess,
     QPushButton,
     QSplitter,
+    Qt,
     QTabWidget,
     QTextBrowser,
     QTextEdit,
+    QTimer,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ..widgets.plugin_editor import PluginEditor
@@ -351,7 +355,7 @@ Process.enumerateModules().forEach(function(module) {
 
     def browse_test_file(self):
         """Browse for test file"""
-        from PyQt6.QtWidgets import QFileDialog
+        
 
         file_path, _ = QFileDialog.getOpenFileName(
             self,

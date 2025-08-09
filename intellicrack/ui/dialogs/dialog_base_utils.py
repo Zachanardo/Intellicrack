@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PyQt6.QtWidgets import QHBoxLayout, QProgressBar, QPushButton
+from intellicrack.ui.dialogs.common_imports import QHBoxLayout, QProgressBar, QPushButton
 
 
 def create_standard_control_layout(buttons_config, include_progress=True):

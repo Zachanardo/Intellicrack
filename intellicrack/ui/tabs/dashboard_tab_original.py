@@ -952,7 +952,7 @@ class DashboardTab(BaseTab):
 
         else:
             # Multiple files - ask user what to do
-            from PyQt6.QtWidgets import QMenu
+            from intellicrack.ui.dialogs.common_imports import QMenu
 
             menu = QMenu(self)
             menu.addAction(

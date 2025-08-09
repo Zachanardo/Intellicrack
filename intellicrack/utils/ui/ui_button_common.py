@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from intellicrack.logger import logger
 
 try:
-    from PyQt6.QtWidgets import QPushButton
+    from intellicrack.ui.dialogs.common_imports import QPushButton
 
     PYQT_AVAILABLE = True
 except ImportError as e:

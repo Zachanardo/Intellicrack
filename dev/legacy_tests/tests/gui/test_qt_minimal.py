@@ -54,7 +54,7 @@ def test_qt_web_components():
     print("\nTesting Qt web components...")
 
     try:
-        from PyQt6.QtWebEngineWidgets import QWebEngineView
+        from intellicrack.ui.dialogs.common_imports import QWebEngineView
         print("✓ QtWebEngineWidgets import successful")
 
         # Test actual usage

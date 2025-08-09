@@ -14,7 +14,7 @@ def test_step_by_step():
     print("Starting step-by-step import test...")
 
     print("1. Testing basic PyQt6...")
-    from PyQt6.QtWidgets import QApplication
+    from intellicrack.ui.dialogs.common_imports import QApplication
     app = QApplication(sys.argv)
     print("   ✓ PyQt6 works")
 

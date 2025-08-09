@@ -12,7 +12,7 @@ import time
 from unittest.mock import patch
 from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QTextEdit
 from PyQt6.QtCore import Qt, QFileInfo
-from PyQt6.QtTest import QTest
+from intellicrack.ui.dialogs.common_imports import QGroupBox, QPushButton, QTest, QThread
 
 from intellicrack.ui.widgets.file_metadata_widget import FileMetadataWidget
 
@@ -311,7 +311,7 @@ class TestFileMetadataWidget:
                     assert True
 
         # Check for copy buttons
-        from PyQt6.QtWidgets import QPushButton
+        
         buttons = self.widget.findChildren(QPushButton)
 
         for button in buttons:
@@ -367,7 +367,7 @@ class TestFileMetadataWidget:
             assert layout.count() >= 0
 
             # Check for grouped metadata sections
-            from PyQt6.QtWidgets import QGroupBox
+            
             group_boxes = self.widget.findChildren(QGroupBox)
 
             for group_box in group_boxes:
@@ -445,7 +445,7 @@ class TestFileMetadataWidget:
 
     def test_thread_safety_real_async_operations(self, qtbot, sample_file):
         """Test REAL thread safety for metadata operations."""
-        from PyQt6.QtCore import QThread
+        
 
         # Ensure operations happen in GUI thread
         assert QThread.currentThread() == QApplication.instance().thread()

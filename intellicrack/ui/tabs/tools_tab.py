@@ -22,27 +22,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import subprocess
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QFont
-from PyQt6.QtWidgets import (
-    QComboBox,
-    QFileDialog,
-    QGridLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QInputDialog,
-    QLabel,
-    QLineEdit,
-    QListWidget,
-    QListWidgetItem,
-    QPushButton,
-    QSplitter,
-    QTableWidget,
-    QTableWidgetItem,
-    QTabWidget,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QColor, QComboBox, QFileDialog, QFont,
+    QGridLayout, QGroupBox, QHBoxLayout, QInputDialog,
+    QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QPushButton, QSplitter, Qt, QTableWidget,
+    QTableWidgetItem, QTabWidget, QTextEdit,
+    QVBoxLayout, QWidget, pyqtSignal,
 )
 
 from .base_tab import BaseTab

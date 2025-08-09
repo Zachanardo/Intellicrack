@@ -26,13 +26,14 @@ try:
 except ImportError:
     frida = None
 
-from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
-from PyQt6.QtGui import QAction, QColor, QFont
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
+    QAction,
     QCheckBox,
+    QColor,
     QComboBox,
     QDialog,
     QFileDialog,
+    QFont,
     QGroupBox,
     QHBoxLayout,
     QInputDialog,
@@ -46,13 +47,17 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QSpinBox,
     QSplitter,
+    Qt,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
     QTextEdit,
+    QThread,
+    QTimer,
     QTreeWidget,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from intellicrack.logger import logger

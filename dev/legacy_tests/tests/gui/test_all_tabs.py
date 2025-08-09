@@ -17,7 +17,7 @@ def test_tabs():
     try:
         print("Testing Intellicrack tabs...")
 
-        from PyQt6.QtWidgets import QApplication
+        from intellicrack.ui.dialogs.common_imports import QApplication
         app = QApplication(sys.argv)
 
         # Test shared context

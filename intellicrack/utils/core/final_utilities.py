@@ -127,7 +127,7 @@ def browse_dataset(parent: Any = None) -> str | None:
         logger.warning("PyQt6 not available, cannot browse dataset")
         return None
 
-    from PyQt6.QtWidgets import QFileDialog
+    from intellicrack.ui.dialogs.common_imports import QApplication, QFileDialog
 
     file_path, _ = QFileDialog.getOpenFileName(
         parent,
@@ -152,7 +152,7 @@ def browse_model(parent: Any = None) -> str | None:
         logger.warning("PyQt6 not available, cannot browse model")
         return None
 
-    from PyQt6.QtWidgets import QFileDialog
+    
 
     file_path, _ = QFileDialog.getOpenFileName(
         parent,
@@ -1213,7 +1213,7 @@ def center_on_screen(widget: Any) -> None:
     if not HAS_PYQT or not widget:
         return
 
-    from PyQt6.QtWidgets import QApplication
+    
 
     app = QApplication.instance()
     if app:

@@ -23,7 +23,7 @@ This module provides UI components and dialogs for analysis tab original functio
 import os
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont
+from intellicrack.ui.dialogs.common_imports import QFont, QMessageBox
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -512,7 +512,7 @@ class AnalysisTab(BaseTab):
     def start_static_analysis(self):
         """Start static analysis only"""
         if not self.current_binary:
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -669,7 +669,7 @@ class AnalysisTab(BaseTab):
     def detect_protections(self):
         """Detect binary protections"""
         if not self.current_binary:
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -763,7 +763,7 @@ class AnalysisTab(BaseTab):
     def start_dynamic_monitoring(self):
         """Start dynamic monitoring"""
         if not self.current_binary:
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -895,7 +895,7 @@ class AnalysisTab(BaseTab):
     def open_hex_viewer(self):
         """Open hex viewer for current binary"""
         if not self.current_binary:
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return
@@ -920,21 +920,21 @@ class AnalysisTab(BaseTab):
 
         except ImportError as e:
             self.log_activity(f"Hex viewer not available: {e!s}")
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(
                 self, "Error", "Hex viewer module not available. Please check installation."
             )
         except Exception as e:
             self.log_activity(f"Error opening hex viewer: {e!s}")
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {e!s}")
 
     def embed_hex_viewer(self):
         """Embed hex viewer in the results panel"""
         if not self.current_binary:
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return

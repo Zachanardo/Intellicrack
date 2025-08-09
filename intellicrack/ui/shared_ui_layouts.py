@@ -21,7 +21,7 @@ Common UI layout patterns to eliminate code duplication between dialog classes.
 
 from collections.abc import Callable
 
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QFormLayout,
     QGroupBox,
     QHBoxLayout,

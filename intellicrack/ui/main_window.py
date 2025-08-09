@@ -21,23 +21,28 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from typing import Any
 
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QAction, QFont, QIcon
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
+    QAction,
+    QApplication,
     QCheckBox,
     QFileDialog,
+    QFont,
     QGroupBox,
     QHBoxLayout,
+    QIcon,
     QLabel,
     QMainWindow,
     QMessageBox,
     QProgressBar,
     QPushButton,
+    QSplitter,
     QStatusBar,
+    Qt,
     QTabWidget,
     QTextEdit,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ..ai.ai_assistant_enhanced import IntellicrackAIAssistant, create_ai_assistant_widget
@@ -296,8 +301,8 @@ class IntellicrackMainWindow(QMainWindow):
         container_layout = QVBoxLayout(protection_container)
 
         # Create splitter for two widgets
-        from PyQt6.QtCore import Qt
-        from PyQt6.QtWidgets import QSplitter
+        
+        
 
         splitter = QSplitter(Qt.Vertical)
 
@@ -852,7 +857,7 @@ Licensing Files Found: {len(licensing_files)}"""
                 msg += "Script saved to clipboard."
 
                 # Copy script to clipboard
-                from PyQt6.QtWidgets import QApplication
+                
 
                 clipboard = QApplication.clipboard()
                 clipboard.setText(result["script"])

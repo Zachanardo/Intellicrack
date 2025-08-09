@@ -10,8 +10,8 @@ import tempfile
 import os
 from unittest.mock import patch, MagicMock
 from PyQt6.QtWidgets import QApplication, QWidget, QTextEdit, QTableWidget
-from PyQt6.QtCore import Qt
-from PyQt6.QtTest import QTest
+from intellicrack.ui.dialogs.common_imports import QTest, Qt
+
 
 from intellicrack.ui.widgets.hex_viewer_widget import HexViewerWidget
 

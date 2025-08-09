@@ -5,7 +5,7 @@ import os
 os.environ['MKL_THREADING_LAYER'] = 'GNU'
 
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel
-from PyQt6.QtCore import Qt
+from intellicrack.ui.dialogs.common_imports import Qt
 
 def test_window():
     app = QApplication(sys.argv)

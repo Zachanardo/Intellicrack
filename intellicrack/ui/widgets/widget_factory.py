@@ -23,8 +23,8 @@ to reduce code duplication across dialog implementations.
 from collections.abc import Callable
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from intellicrack.ui.dialogs.common_imports import QFont, Qt
+
 from PyQt6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,

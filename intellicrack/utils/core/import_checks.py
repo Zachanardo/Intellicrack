@@ -53,13 +53,16 @@ except ImportError as e:
     capstone = None
 
 try:
-    from elftools.elf.elffile import ELFFile
+    from elftools.elf import elffile
+    # Import indirectly to avoid Sphinx documentation issues
+    ELFFile = getattr(elffile, 'ELFFile', None) if 'elffile' in locals() else None
 
     PYELFTOOLS_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
     PYELFTOOLS_AVAILABLE = False
     ELFFile = None
+    elffile = None
 
 # System monitoring
 try:
@@ -124,20 +127,13 @@ except ImportError as e:
     TENSORFLOW_AVAILABLE = False
     tf = None
 
-# GUI framework
+# GUI framework availability check only - imports handled by common_imports
 try:
-    from PyQt6.QtCore import QThread, QTimer, pyqtSignal
-    from PyQt6.QtWidgets import QApplication, QWidget
-
+    import PyQt6
     HAS_PYQT = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
     HAS_PYQT = False
-    QThread = None
-    QTimer = None
-    pyqtSignal = None
-    QApplication = None
-    QWidget = None
 
 # Numerical computing
 try:
@@ -178,10 +174,6 @@ __all__ = [
     "TENSORFLOW_AVAILABLE",
     "WINREG_AVAILABLE",
     "ELFFile",
-    "QApplication",
-    "QThread",
-    "QTimer",
-    "QWidget",
     "capstone",
     "frida",
     "lief",
@@ -190,7 +182,6 @@ __all__ = [
     "pefile",
     "plt",
     "psutil",
-    "pyqtSignal",
     "tf",
     "winreg",
 ]

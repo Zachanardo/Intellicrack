@@ -270,7 +270,7 @@ def apply_tooltips_to_all_elements(parent_widget):
 
     """
     try:
-        from PyQt6.QtWidgets import (
+        from intellicrack.ui.dialogs.common_imports import (
             QCheckBox,
             QComboBox,
             QDoubleSpinBox,
@@ -289,7 +289,7 @@ def apply_tooltips_to_all_elements(parent_widget):
         )
     except ImportError as e:
         logger.error("Import error in tooltip_helper: %s", e)
-        from PyQt6.QtWidgets import QPushButton
+        from intellicrack.ui.dialogs.common_imports import QPushButton
 
         QLabel = QLineEdit = QComboBox = QCheckBox = QPushButton  # Fallback
         QSpinBox = QDoubleSpinBox = QTabWidget = QSlider = QPushButton

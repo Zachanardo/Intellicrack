@@ -50,9 +50,9 @@ def test_path_handling():
 def test_pyqt6_import():
     """Test PyQt6 imports work correctly"""
     try:
-        from PyQt6.QtWidgets import QApplication
-        from PyQt6.QtCore import Qt
-        from PyQt6.QtGui import QFont
+        from intellicrack.ui.dialogs.common_imports import QApplication, QFont, Qt
+        
+        
         print("PyQt6 imports successful")
 
         # Test Qt namespace (common issue)

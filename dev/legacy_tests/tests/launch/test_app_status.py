@@ -18,11 +18,11 @@ def test_app():
     try:
         print("Testing Intellicrack status...")
 
-        from PyQt6.QtWidgets import QApplication
+        from intellicrack.ui.dialogs.common_imports import QApplication, QTimer
         from intellicrack.main import main
 
         # Create a timer to close the app after a few seconds
-        from PyQt6.QtCore import QTimer
+        
 
         def auto_close():
             print("\n✓ Application is running successfully!")

@@ -179,73 +179,141 @@ except ImportError as e:
     logger.error("Import error for pyqtgraph in enhanced_training_interface: %s", e)
     PYQTGRAPH_AVAILABLE = False
 
-    # Create a stub PlotWidget class for when pyqtgraph is not available
+    # Create a matplotlib-based PlotWidget for when pyqtgraph is not available
+    import matplotlib
+    matplotlib.use('Agg')  # Use non-interactive backend
+    import matplotlib.pyplot as plt
+    from matplotlib.figure import Figure
+    from matplotlib.backends.backend_agg import FigureCanvasAgg
+    
     class PlotWidget:
-        """Stub PlotWidget class for when pyqtgraph is not available."""
+        """Matplotlib-based PlotWidget for when pyqtgraph is not available."""
 
         def __init__(self, *args, **kwargs):
-            """Initialize stub PlotWidget that provides minimal functionality."""
+            """Initialize matplotlib-based PlotWidget with full plotting functionality."""
             self.parent = kwargs.get("parent")
-            self._enabled = False
+            self._enabled = True
             self._data_x = []
             self._data_y = []
+            self._plots = []
+            
+            # Create matplotlib figure and axis
+            self.figure = Figure(figsize=(8, 6), dpi=100)
+            self.canvas = FigureCanvasAgg(self.figure)
+            self.ax = self.figure.add_subplot(111)
+            
+            self._labels = {}
+            self._grid_settings = {"x": False, "y": False}
+            self._legend_enabled = False
+            self._auto_range_enabled = True
 
         def plot(self, *args, **kwargs):
-            """Stub plot method that stores data but doesn't display."""
+            """Plot data using matplotlib."""
             if len(args) >= 2:
-                self._data_x = args[0]
-                self._data_y = args[1]
+                x_data = args[0]
+                y_data = args[1]
+            elif len(args) == 1:
+                y_data = args[0]
+                x_data = list(range(len(args[0])))
+            else:
+                return self
+            
+            # Extract plot parameters
+            pen = kwargs.get('pen', 'b-')
+            name = kwargs.get('name', f'Plot {len(self._plots) + 1}')
+            
+            # Create the plot
+            line, = self.ax.plot(x_data, y_data, pen, label=name)
+            self._plots.append(line)
+            
+            # Store data for reference
+            self._data_x = x_data
+            self._data_y = y_data
+            
+            # Update display
+            self._update_display()
+            
             return self
 
         def clear(self):
-            """Clear stored plot data."""
+            """Clear all plots."""
+            self.ax.clear()
+            self._plots = []
             self._data_x = []
             self._data_y = []
+            self._update_display()
 
         def setLabel(self, axis, text, **kwargs):
-            """Stub method for setting axis labels."""
-            # Store label settings for potential future use
+            """Set axis labels using matplotlib."""
             if not hasattr(self, "_labels"):
                 self._labels = {}
             self._labels[axis] = {"text": text, "kwargs": kwargs}
-            logger.debug(f"PlotWidget stub: setLabel({axis}, {text})")
+            
+            if axis.lower() == 'left' or axis.lower() == 'y':
+                self.ax.set_ylabel(text)
+            elif axis.lower() == 'bottom' or axis.lower() == 'x':
+                self.ax.set_xlabel(text)
+            elif axis.lower() == 'top':
+                self.ax.set_title(text)
+            
+            self._update_display()
 
         def enableAutoRange(self, *args, **kwargs):
-            """Stub method for enabling auto range."""
-            # Store auto range settings
+            """Enable auto range for axes."""
             self._auto_range_enabled = True
-            self._auto_range_args = args
-            self._auto_range_kwargs = kwargs
-            logger.debug(f"PlotWidget stub: enableAutoRange({args}, {kwargs})")
+            if self._auto_range_enabled:
+                self.ax.autoscale(enable=True)
+            self._update_display()
 
         def showGrid(self, x=None, y=None, **kwargs):
-            """Stub method for showing grid."""
-            # Store grid settings
+            """Show grid on the plot."""
             if not hasattr(self, "_grid_settings"):
                 self._grid_settings = {}
-            self._grid_settings["x"] = x if x is not None else self._grid_settings.get("x", True)
-            self._grid_settings["y"] = y if y is not None else self._grid_settings.get("y", True)
+            
+            show_x = x if x is not None else self._grid_settings.get("x", True)
+            show_y = y if y is not None else self._grid_settings.get("y", True)
+            
+            self._grid_settings["x"] = show_x
+            self._grid_settings["y"] = show_y
             self._grid_settings.update(kwargs)
-            logger.debug(f"PlotWidget stub: showGrid(x={x}, y={y}, {kwargs})")
+            
+            # Apply grid settings
+            self.ax.grid(True, which='both', axis='both' if show_x and show_y else ('x' if show_x else 'y'))
+            self._update_display()
 
         def setBackground(self, *args, **kwargs):
-            """Stub method for setting background."""
-            # Store background settings
-            self._background_args = args
-            self._background_kwargs = kwargs
+            """Set background color of the plot."""
             if args:
-                self._background_color = args[0]
-            logger.debug(f"PlotWidget stub: setBackground({args}, {kwargs})")
+                color = args[0]
+                if isinstance(color, str):
+                    self.figure.patch.set_facecolor(color)
+                    self.ax.set_facecolor(color)
+                elif isinstance(color, (tuple, list)) and len(color) >= 3:
+                    # Assume RGB or RGBA values
+                    self.figure.patch.set_facecolor(color)
+                    self.ax.set_facecolor(color)
+            
+            self._update_display()
 
         def addLegend(self, *args, **kwargs):
-            """Stub method for adding legend."""
-            # Store legend settings
+            """Add legend to the plot."""
             self._legend_enabled = True
-            self._legend_args = args
-            self._legend_kwargs = kwargs
-            logger.debug(f"PlotWidget stub: addLegend({args}, {kwargs})")
-            # Return self to allow method chaining
+            if self._plots:
+                self.ax.legend(**kwargs)
+            self._update_display()
             return self
+        
+        def _update_display(self):
+            """Update the plot display."""
+            try:
+                self.figure.canvas.draw()
+            except Exception as e:
+                logger.debug(f"PlotWidget display update: {e}")
+        
+        def export(self, filename, dpi=100):
+            """Export plot to file."""
+            self.figure.savefig(filename, dpi=dpi, bbox_inches='tight')
+            return True
 
 
 __all__ = [

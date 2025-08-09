@@ -25,27 +25,13 @@ import mimetypes
 import os
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QFont
-from PyQt6.QtWidgets import (
-    QFileDialog,
-    QGroupBox,
-    QHBoxLayout,
-    QInputDialog,
-    QLabel,
-    QLineEdit,
-    QListWidget,
-    QListWidgetItem,
-    QMenu,
-    QMessageBox,
-    QPushButton,
-    QSplitter,
-    QTabWidget,
-    QTextEdit,
-    QTreeWidget,
-    QTreeWidgetItem,
-    QVBoxLayout,
-    QWidget,
+from intellicrack.ui.dialogs.common_imports import (
+    QDragEnterEvent, QDropEvent, QFileDialog, QFont,
+    QGroupBox, QHBoxLayout, QInputDialog, QLabel,
+    QLineEdit, QListWidget, QListWidgetItem, QMenu,
+    QMessageBox, QPushButton, QSplitter, Qt,
+    QTabWidget, QTextEdit, QTreeWidget, QTreeWidgetItem,
+    QVBoxLayout, QWidget, pyqtSignal,
 )
 
 from ..widgets.cpu_status_widget import CPUStatusWidget

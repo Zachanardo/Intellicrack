@@ -241,7 +241,7 @@ if not HAS_CTYPES:
     sizeof = mock_sizeof
 
 try:  # pylint: disable=unused-argument
-    from PyQt6.QtWidgets import (
+    from intellicrack.ui.dialogs.common_imports import (
         QApplication,
         QButtonGroup,
         QCheckBox,
@@ -296,20 +296,29 @@ try:  # pylint: disable=unused-argument
 
     # Optional PyQt imports
     try:
-        from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
+        from intellicrack.ui.dialogs.common_imports import QPrintDialog, QPrinter
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
         QPrinter = QPrintDialog = None
 
     try:
-        from PyQt6.QtWebEngineWidgets import QWebEngineView
+        from intellicrack.ui.dialogs.common_imports import (
+    QApplication,
+    QFileIconProvider,
+    QMessageBox,
+    QPdfDocument,
+    QPdfView,
+    QTimer,
+    QWebEngineView,
+    Qt,
+)
     except ImportError as e:
         logger.error("Import error in main_app.py: %s", e)
         QWebEngineView = None
 
     try:
-        from PyQt6.QtPdf import QPdfDocument
-        from PyQt6.QtPdfWidgets import QPdfView
+        
+        
 
         HAS_PDF_SUPPORT = True
     except ImportError as e:
@@ -319,8 +328,7 @@ try:  # pylint: disable=unused-argument
             logger.error("Import error in main_app.py: %s", e)
         QPdfDocument = QPdfView = None
         HAS_PDF_SUPPORT = False
-    from PyQt6 import QtCore
-    from PyQt6.QtCore import (
+    from intellicrack.ui.dialogs.common_imports import (
         QDateTime,
         QFileInfo,
         QMetaObject,
@@ -331,8 +339,6 @@ try:  # pylint: disable=unused-argument
         QTimer,
         QUrl,
         pyqtSignal,
-    )
-    from PyQt6.QtGui import (
         QAction,
         QColor,
         QDesktopServices,
@@ -11627,7 +11633,7 @@ def compute_file_hash(file_path, algorithm="sha256"):
 def get_file_icon(file_path):
     """Get file icon for the given file path."""
     try:
-        from PyQt6.QtWidgets import QFileIconProvider
+        
 
         if not file_path:
             return None
@@ -12362,7 +12368,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
             # Start a timer to periodically update the UI with captured packets
             if self.packet_update_timer is None:
-                from PyQt6.QtCore import QTimer
+                
 
                 self.packet_update_timer = QTimer()
                 self.packet_update_timer.timeout.connect(self._update_packet_display)
@@ -14983,7 +14989,7 @@ class Plugin:
     def analyze_process_behavior(self):
         """Analyze live process behavior using dynamic analysis."""
         try:
-            from PyQt6.QtWidgets import QInputDialog, QMessageBox
+            from intellicrack.ui.dialogs.common_imports import QInputDialog, QMessageBox
 
             # Get process name or PID from user
             process_name, ok = QInputDialog.getText(
@@ -15033,7 +15039,7 @@ class Plugin:
     def run_memory_keyword_scan(self):
         """Run dynamic memory keyword scan using Frida."""
         try:
-            from PyQt6.QtWidgets import QInputDialog, QMessageBox
+            from intellicrack.ui.dialogs.common_imports import QInputDialog, QMessageBox
 
             # Get keywords from user
             keywords, ok = QInputDialog.getText(
@@ -22791,7 +22797,7 @@ def register():
             }
 
             # Download in a separate thread to avoid blocking the UI
-            from PyQt6.QtCore import QThread, pyqtSignal
+            from intellicrack.ui.dialogs.common_imports import QThread, pyqtSignal
 
             class DownloadThread(QThread):
                 """Thread for downloading models without blocking the UI."""
@@ -28364,7 +28370,7 @@ Focus on:
                             # Define the thread-safe confirmation function
                             def ask_user_confirmation(app, tool_name, parameters):
                                 """Thread-safe user confirmation dialog for sensitive AI tools"""
-                                from PyQt6.QtWidgets import QMessageBox
+                                
 
                                 param_text = "\n".join([f"{k}: {v}" for k, v in parameters.items()])
                                 result = QMessageBox.question(
@@ -32098,8 +32104,8 @@ def launch():
     # Set Qt attributes before creating QApplication
     try:
         print("[LAUNCH] Importing Qt modules...")
-        from PyQt6.QtCore import Qt
-        from PyQt6.QtWidgets import QApplication
+        
+        
 
         print("[LAUNCH] Qt modules imported successfully")
 
@@ -32232,7 +32238,7 @@ def launch():
                     pass
 
             # Show a simple error dialog
-            from PyQt6.QtWidgets import QMessageBox
+            
 
             QMessageBox.critical(
                 None,
@@ -32381,7 +32387,7 @@ def launch():
     logger.info("App is about to quit: %s", app_instance.aboutToQuit)
 
     # Add a single-shot timer to log after event loop starts
-    from PyQt6.QtCore import QTimer
+    
 
     def log_after_start():
         logger.info("Qt event loop started successfully")

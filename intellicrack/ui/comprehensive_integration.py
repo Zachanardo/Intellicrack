@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PyQt6.QtWidgets import QMainWindow, QTabWidget, QWidget
+from intellicrack.ui.dialogs.common_imports import QMainWindow, QTabWidget, QWidget
 
 from ..utils.logger import get_logger
 from .enhanced_ui_integration import EnhancedAnalysisDashboard

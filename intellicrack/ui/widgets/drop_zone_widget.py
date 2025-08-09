@@ -21,9 +21,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QColor, QDragEnterEvent, QDropEvent, QFont, QPainter, QPen
-from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
+from intellicrack.ui.dialogs.common_imports import (
+    QColor, QDragEnterEvent, QDropEvent, QFont,
+    QLabel, QPainter, QPen, Qt, QVBoxLayout,
+    QWidget, pyqtSignal,
+)
 
 
 class DropZoneWidget(QWidget):

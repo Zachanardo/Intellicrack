@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import logging
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont
+from intellicrack.ui.dialogs.common_imports import QFont
 from PyQt6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,

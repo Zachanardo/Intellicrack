@@ -29,7 +29,7 @@ print("Creating minimal Qt window...")
 
 try:
     from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel
-    from PyQt6.QtCore import Qt
+    from intellicrack.ui.dialogs.common_imports import Qt
 
     print("Qt imported successfully")
 

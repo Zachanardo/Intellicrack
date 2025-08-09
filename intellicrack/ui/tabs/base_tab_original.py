@@ -19,8 +19,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
+from intellicrack.ui.dialogs.common_imports import QFont, Qt
+
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
 """UI module for Base Tab Original.

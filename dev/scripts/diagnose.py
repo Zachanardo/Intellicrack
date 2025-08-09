@@ -81,14 +81,14 @@ except Exception as e:
 # Test Qt
 print("\n4. Testing Qt...")
 try:
-    from PyQt6.QtWidgets import QApplication
+    from intellicrack.ui.dialogs.common_imports import QApplication, QMainWindow
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
     print("   ✓ Qt initialized successfully")
 
     # Test creating a simple window
-    from PyQt6.QtWidgets import QMainWindow
+    
     window = QMainWindow()
     window.setWindowTitle("Test")
     print("   ✓ Test window created")

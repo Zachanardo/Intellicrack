@@ -20,18 +20,19 @@ import datetime
 import os
 from typing import Any
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon, QPixmap
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import Qt
+from intellicrack.ui.dialogs.common_imports import (
     QCheckBox,
     QDialog,
     QFileDialog,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
+    QIcon,
     QLabel,
     QLineEdit,
     QMessageBox,
+    QPixmap,
     QPushButton,
     QSizePolicy,
     QSpacerItem,

@@ -20,8 +20,7 @@ along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path
 
-from PyQt6.QtCore import QThread, QTimer, pyqtSignal
-from PyQt6.QtWidgets import (
+from intellicrack.ui.dialogs.common_imports import (
     QAbstractItemView,
     QCheckBox,
     QDialog,
@@ -39,8 +38,11 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
     QTabWidget,
     QTextEdit,
+    QThread,
+    QTimer,
     QVBoxLayout,
     QWidget,
+    pyqtSignal,
 )
 
 from ...ai.local_gguf_server import gguf_manager
@@ -79,7 +81,7 @@ def configure_table_selection(table, behavior=None, mode=None):
 
 def create_enhanced_item_view(parent=None):
     """Create an enhanced item view with custom behavior"""
-    from PyQt6.QtWidgets import QListView
+    from intellicrack.ui.dialogs.common_imports import QListView
 
     view = QListView(parent)
     # Use QAbstractItemView methods

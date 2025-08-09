@@ -55,11 +55,14 @@ except ImportError:
     logger.debug("lief not available")
 
 try:
-    from elftools.elf.elffile import ELFFile
+    from elftools.elf import elffile
+    # Import indirectly to avoid Sphinx documentation issues
+    ELFFile = getattr(elffile, 'ELFFile', None) if 'elffile' in locals() else None
 
     PYELFTOOLS_AVAILABLE = True
 except ImportError:
     ELFFile = None
+    elffile = None
     PYELFTOOLS_AVAILABLE = False
     logger.debug("pyelftools not available")
 
