@@ -17,7 +17,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 class HeadlessTrainingInterface:
     """Production-ready headless interface for AI model training.
-    
+
     Provides complete training functionality through console interface
     without requiring GUI components.
     """
@@ -53,13 +53,13 @@ class HeadlessTrainingInterface:
 
     def load_configuration(self, config_path: str) -> Dict[str, Any]:
         """Load training configuration from file.
-        
+
         Args:
             config_path: Path to configuration JSON file
-            
+
         Returns:
             Configuration dictionary
-            
+
         Raises:
             FileNotFoundError: If config file doesn't exist
             json.JSONDecodeError: If config file is invalid JSON
@@ -80,7 +80,7 @@ class HeadlessTrainingInterface:
 
     def save_configuration(self, config: Dict[str, Any], config_path: str) -> None:
         """Save training configuration to file.
-        
+
         Args:
             config: Configuration dictionary to save
             config_path: Path where to save configuration
@@ -99,7 +99,7 @@ class HeadlessTrainingInterface:
                       progress_callback: Optional[Callable] = None,
                       status_callback: Optional[Callable] = None) -> None:
         """Start AI model training with given configuration.
-        
+
         Args:
             config: Training configuration dictionary
             progress_callback: Optional callback for progress updates
@@ -169,7 +169,7 @@ class HeadlessTrainingInterface:
 
     def get_training_status(self) -> Dict[str, Any]:
         """Get current training status.
-        
+
         Returns:
             Dictionary containing current training status
 
@@ -185,7 +185,7 @@ class HeadlessTrainingInterface:
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get current training metrics.
-        
+
         Returns:
             Dictionary containing current metrics
 
@@ -194,7 +194,7 @@ class HeadlessTrainingInterface:
 
     def set_training_parameters(self, **params) -> None:
         """Set training parameters dynamically.
-        
+
         Args:
             **params: Training parameters to update
 
@@ -206,7 +206,7 @@ class HeadlessTrainingInterface:
 
     def _training_worker(self, config: Dict[str, Any]) -> None:
         """Internal worker function for training execution.
-        
+
         Args:
             config: Training configuration dictionary
 
@@ -364,10 +364,10 @@ class HeadlessTrainingInterface:
 
     def _save_trained_model(self, config: Dict[str, Any]) -> str:
         """Save trained model to disk.
-        
+
         Args:
             config: Training configuration
-            
+
         Returns:
             Path where model was saved
 
@@ -408,7 +408,7 @@ class ConsoleTrainingManager:
 
     def interactive_training_session(self, config_path: str) -> None:
         """Run interactive training session from console.
-        
+
         Args:
             config_path: Path to training configuration file
 
@@ -449,7 +449,7 @@ class ConsoleTrainingManager:
 
     def _progress_callback(self, progress: float) -> None:
         """Handle progress updates.
-        
+
         Args:
             progress: Training progress percentage
 
@@ -459,7 +459,7 @@ class ConsoleTrainingManager:
 
     def _status_callback(self, status: str) -> None:
         """Handle status updates.
-        
+
         Args:
             status: Status message
 
@@ -468,7 +468,7 @@ class ConsoleTrainingManager:
 
     def _handle_command(self, command: str) -> None:
         """Handle interactive commands.
-        
+
         Args:
             command: User command
 

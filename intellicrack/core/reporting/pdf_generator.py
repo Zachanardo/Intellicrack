@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import base64
@@ -28,7 +28,8 @@ from typing import Any
 
 from intellicrack.logger import logger
 
-from ...utils.core.common_imports import MATPLOTLIB_AVAILABLE, PDFKIT_AVAILABLE, pdfkit, plt
+from ...handlers.matplotlib_handler import MATPLOTLIB_AVAILABLE, plt
+from ...handlers.pdfkit_handler import PDFKIT_AVAILABLE, pdfkit
 from ...utils.core.import_patterns import PEFILE_AVAILABLE, pefile
 
 """
@@ -49,7 +50,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 #!/usr/bin/env python3

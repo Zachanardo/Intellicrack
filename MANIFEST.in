@@ -18,7 +18,7 @@ include .editorconfig
 recursive-include intellicrack *.py
 recursive-include intellicrack/assets *
 recursive-include intellicrack/data *
-recursive-include intellicrack/plugins *.py *.js *.java
+recursive-include intellicrack/intellicrack/plugins *.py *.js *.java
 
 # Include tests
 recursive-include tests *.py

@@ -11,7 +11,7 @@ import logging
 import subprocess
 import sys
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QDialog,
     QFont,

@@ -12,14 +12,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Operating System Detection Utilities
 
 Shared OS detection functions to eliminate code duplication across the codebase.
 """
-import platform
 import os
+import platform
 from typing import Any
 
 
@@ -118,36 +118,36 @@ def get_platform_specific_paths() -> dict[str, str]:
 
 def detect_file_type(file_path: str) -> str:
     """Detect the type of a binary file.
-    
+
     Args:
         file_path: Path to the file to analyze
-        
+
     Returns:
         File type string: 'pe', 'elf', 'macho', or 'unknown'
     """
     if not os.path.exists(file_path):
         return "unknown"
-    
+
     try:
         with open(file_path, 'rb') as f:
             header = f.read(4)
-            
+
             # Check for PE (Windows executable)
             if header[:2] == b'MZ':
                 return "pe"
-            
+
             # Check for ELF (Linux executable)
             if header == b'\x7fELF':
                 return "elf"
-            
+
             # Check for Mach-O (macOS executable)
             if header in [b'\xfe\xed\xfa\xce', b'\xce\xfa\xed\xfe',
                          b'\xfe\xed\xfa\xcf', b'\xcf\xfa\xed\xfe']:
                 return "macho"
-                
+
     except Exception:
         pass
-    
+
     return "unknown"
 
 

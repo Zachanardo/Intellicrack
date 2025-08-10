@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -27,10 +27,8 @@ import time
 from datetime import datetime
 from typing import Any
 
-from .base_dialog import BaseTemplateDialog
-
 # Import common PyQt6 components
-from .common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT,
     QCheckBox,
     QComboBox,
@@ -54,6 +52,8 @@ from .common_imports import (
     logger,
     pyqtSignal,
 )
+
+from .base_dialog import BaseTemplateDialog
 
 logger = logging.getLogger(__name__)
 

@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Common PE file analysis utilities.
 
@@ -81,7 +81,7 @@ def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image
 
     """
     try:
-        import pefile
+        from intellicrack.handlers.pefile_handler import pefile
 
         pe = pefile.PE(pe_path)
 
@@ -273,7 +273,7 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
     try:
         import os
 
-        import pefile
+        from intellicrack.handlers.pefile_handler import pefile
 
         pe = pefile.PE(pe_path)
         base_name = os.path.splitext(os.path.basename(pe_path))[0]
@@ -343,7 +343,7 @@ def get_pe_icon_info(pe_path: str) -> dict[str, any]:
     }
 
     try:
-        import pefile
+        from intellicrack.handlers.pefile_handler import pefile
 
         pe = pefile.PE(pe_path)
 
@@ -392,24 +392,24 @@ def get_pe_icon_info(pe_path: str) -> dict[str, any]:
 
 class PEAnalyzer:
     """Production-ready PE file analyzer for comprehensive binary analysis."""
-    
+
     def __init__(self):
         self.logger = logger
-        
+
     def analyze(self, file_path: str) -> dict:
         """Analyze PE file and extract comprehensive metadata.
-        
+
         Args:
             file_path: Path to PE file to analyze
-            
+
         Returns:
             Dictionary containing PE analysis results
         """
         try:
-            import pefile
-            
+            from intellicrack.handlers.pefile_handler import pefile
+
             pe = pefile.PE(file_path)
-            
+
             results = {
                 "imports": self._extract_imports(pe),
                 "exports": self._extract_exports(pe),
@@ -425,23 +425,23 @@ class PEAnalyzer:
                 "checksum": pe.OPTIONAL_HEADER.CheckSum,
                 "entry_point": pe.OPTIONAL_HEADER.AddressOfEntryPoint,
             }
-            
+
             return results
-            
+
         except Exception as e:
             self.logger.error(f"PE analysis failed for {file_path}: {e}")
             return {"error": str(e)}
-            
+
     def _extract_imports(self, pe) -> list[dict]:
         """Extract import information from PE file."""
         imports = []
-        
+
         try:
             if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
                     dll_name = entry.dll.decode('utf-8', errors='ignore')
                     functions = []
-                    
+
                     for imp in entry.imports:
                         if imp.name:
                             functions.append({
@@ -449,20 +449,20 @@ class PEAnalyzer:
                                 "address": imp.address,
                                 "ordinal": imp.ordinal
                             })
-                    
+
                     imports.append({
                         "dll": dll_name,
                         "functions": functions
                     })
         except Exception as e:
             self.logger.debug(f"Import extraction failed: {e}")
-            
+
         return imports
-        
+
     def _extract_exports(self, pe) -> list[dict]:
         """Extract export information from PE file."""
         exports = []
-        
+
         try:
             if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
                 for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
@@ -473,27 +473,27 @@ class PEAnalyzer:
                     })
         except Exception as e:
             self.logger.debug(f"Export extraction failed: {e}")
-            
+
         return exports
-        
+
     def _extract_headers(self, pe) -> dict:
         """Extract PE header information."""
         headers = {}
-        
+
         try:
             headers["dos_header"] = {
                 "signature": pe.DOS_HEADER.e_magic,
                 "bytes_in_last_page": pe.DOS_HEADER.e_cblp,
                 "pages_in_file": pe.DOS_HEADER.e_cp,
             }
-            
+
             headers["file_header"] = {
                 "machine": pe.FILE_HEADER.Machine,
                 "number_of_sections": pe.FILE_HEADER.NumberOfSections,
                 "timestamp": pe.FILE_HEADER.TimeDateStamp,
                 "characteristics": pe.FILE_HEADER.Characteristics,
             }
-            
+
             headers["optional_header"] = {
                 "magic": pe.OPTIONAL_HEADER.Magic,
                 "major_linker_version": pe.OPTIONAL_HEADER.MajorLinkerVersion,
@@ -507,17 +507,17 @@ class PEAnalyzer:
             }
         except Exception as e:
             self.logger.debug(f"Header extraction failed: {e}")
-            
+
         return headers
-        
+
     def _extract_resources(self, pe) -> dict:
         """Extract resource information from PE file."""
         resources = {"has_resources": False, "resource_types": [], "total_resources": 0}
-        
+
         try:
             if hasattr(pe, 'DIRECTORY_ENTRY_RESOURCE'):
                 resources["has_resources"] = True
-                
+
                 for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                     if hasattr(resource_type, 'id'):
                         resources["resource_types"].append({
@@ -527,27 +527,27 @@ class PEAnalyzer:
                         resources["total_resources"] += 1
         except Exception as e:
             self.logger.debug(f"Resource extraction failed: {e}")
-            
+
         return resources
-        
+
     def _extract_certificates(self, pe) -> dict:
         """Extract certificate information from PE file."""
         certs = {"has_certificates": False, "certificate_count": 0}
-        
+
         try:
             if hasattr(pe, 'DIRECTORY_ENTRY_SECURITY'):
                 certs["has_certificates"] = True
                 certs["certificate_count"] = len(pe.DIRECTORY_ENTRY_SECURITY)
         except Exception as e:
             self.logger.debug(f"Certificate extraction failed: {e}")
-            
+
         return certs
-        
+
     def _get_architecture(self, pe) -> str:
         """Determine PE file architecture."""
         try:
             machine_type = pe.FILE_HEADER.Machine
-            
+
             if machine_type == 0x014c:  # IMAGE_FILE_MACHINE_I386
                 return "x86"
             elif machine_type == 0x8664:  # IMAGE_FILE_MACHINE_AMD64

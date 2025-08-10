@@ -13,17 +13,28 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
 import platform
 
-from intellicrack.ui.dialogs.common_imports import (
-    QCheckBox, QComboBox, QFileDialog, QGroupBox,
-    QHBoxLayout, QLabel, QProgressBar, QPushButton,
-    QTableWidget, QTableWidgetItem, QTextEdit,
-    QThread, QVBoxLayout, QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QCheckBox,
+    QComboBox,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QTextEdit,
+    QThread,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 
@@ -188,7 +199,7 @@ class MemoryDumperWidget(QWidget):
     def _refresh_windows_processes(self):
         """Refresh Windows process list."""
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             for proc in psutil.process_iter(["pid", "name"]):
                 try:
@@ -222,7 +233,7 @@ class MemoryDumperWidget(QWidget):
     def _refresh_linux_processes(self):
         """Refresh Linux process list."""
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             for proc in psutil.process_iter(["pid", "name"]):
                 try:

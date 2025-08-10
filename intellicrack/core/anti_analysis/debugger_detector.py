@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import ctypes
@@ -367,7 +367,7 @@ class DebuggerDetector(BaseDetector):
 
         try:
             # Get parent process name
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             current_process = psutil.Process()
             parent = current_process.parent()

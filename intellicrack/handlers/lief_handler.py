@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
@@ -31,22 +31,27 @@ implementations for essential binary parsing operations.
 # LIEF availability detection and import handling
 try:
     import lief
-    from lief import (
-        ARCHITECTURES,
-        ELF,
-        ENDIANNESS,
-        MODES,
-        PE,
-        Binary,
-        Function,
-        MachO,
-        Section,
-        Symbol,
-        is_elf,
-        is_macho,
-        is_pe,
-        parse,
-    )
+
+    # Import individual modules as LIEF structure has changed
+    from lief import ELF, PE, MachO, is_elf, is_macho, is_pe, parse
+
+    # Try to import architecture constants - these may have moved
+    try:
+        from lief import ARCHITECTURES, ENDIANNESS, MODES
+    except ImportError:
+        # Create fallback classes if not available
+        ARCHITECTURES = None
+        ENDIANNESS = None
+        MODES = None
+
+    # Import available classes
+    try:
+        from lief import Binary, Function, Section, Symbol
+    except ImportError:
+        Binary = None
+        Function = None
+        Section = None
+        Symbol = None
 
     HAS_LIEF = True
     LIEF_VERSION = lief.__version__
@@ -638,6 +643,22 @@ except ImportError as e:
         is_macho = staticmethod(is_macho)
 
     lief = FallbackLIEF()
+
+    # Export constants at module level
+    Binary = FallbackBinary
+    Section = FallbackSection
+    Symbol = FallbackSymbol
+    Function = FallbackFunction
+    PE = PE
+    ELF = ELF
+    MachO = MachO
+    ARCHITECTURES = ARCHITECTURES
+    ENDIANNESS = ENDIANNESS
+    MODES = MODES
+    parse = parse
+    is_pe = is_pe
+    is_elf = is_elf
+    is_macho = is_macho
 
 
 # Export all LIEF objects and availability flag

@@ -15,12 +15,12 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from pathlib import Path
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QAbstractItemView,
     QCheckBox,
     QDialog,
@@ -81,7 +81,7 @@ def configure_table_selection(table, behavior=None, mode=None):
 
 def create_enhanced_item_view(parent=None):
     """Create an enhanced item view with custom behavior"""
-    from intellicrack.ui.dialogs.common_imports import QListView
+    from intellicrack.handlers.pyqt6_handler import QListView
 
     view = QListView(parent)
     # Use QAbstractItemView methods

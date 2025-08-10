@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 from intellicrack.logger import logger
@@ -106,8 +106,10 @@ try:
         QDoubleSpinBox,
         QFileDialog,
         QFileIconProvider,
+        QFontComboBox,
         QFormLayout,
         QFrame,
+        QGraphicsScene,
         QGraphicsView,
         QGridLayout,
         QGroupBox,
@@ -187,10 +189,12 @@ try:
         QOpenGLWidget = None
 
     HAS_PYQT = True
+    PYQT6_AVAILABLE = True
 
 except ImportError as e:
     logger.error("PyQt6 not available: %s", e)
     HAS_PYQT = False
+    PYQT6_AVAILABLE = False
 
     # Null object pattern for all PyQt6 classes when not available
     PYQT_VERSION_STR = None
@@ -321,6 +325,7 @@ except ImportError as e:
 __all__ = [
     # Availability flag
     "HAS_PYQT",
+    "PYQT6_AVAILABLE",
     # QtCore imports
     "PYQT_VERSION_STR", "QAbstractItemModel", "QBuffer", "QCoreApplication", "QDateTime",
     "QFileInfo", "QFileSystemWatcher", "QIODevice", "QMetaObject", "QModelIndex", "QObject", "QPoint",

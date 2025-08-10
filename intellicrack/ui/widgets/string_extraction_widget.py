@@ -14,6 +14,7 @@ import re
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QAction, QBrush, QColor
 from PyQt6.QtWidgets import (
+    QApplication,
     QCheckBox,
     QComboBox,
     QFileDialog,
@@ -596,7 +597,7 @@ class StringExtractionWidget(QWidget):
             string_item = self.string_table.item(row, 1)
             if string_item:
                 full_string = string_item.data(Qt.UserRole)
-                from intellicrack.ui.dialogs.common_imports import QApplication
+                from intellicrack.handlers.pyqt6_handler import QApplication
 
                 QApplication.clipboard().setText(full_string)
 
@@ -606,7 +607,7 @@ class StringExtractionWidget(QWidget):
         if row >= 0:
             offset_item = self.string_table.item(row, 0)
             if offset_item:
-                
+
 
                 QApplication.clipboard().setText(offset_item.text())
 
@@ -623,7 +624,7 @@ class StringExtractionWidget(QWidget):
                     else:
                         row_data.append(item.text())
 
-            
+
 
             QApplication.clipboard().setText("\t".join(row_data))
 

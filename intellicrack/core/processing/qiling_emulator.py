@@ -28,7 +28,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 #!/usr/bin/env python3
@@ -888,7 +888,7 @@ class QilingEmulator:
 
         try:
             # Try PE format detection
-            import pefile
+            from intellicrack.handlers.pefile_handler import pefile
 
             pe = pefile.PE(self.binary_path)
             format_info["format"] = "PE"
@@ -966,7 +966,7 @@ def run_qiling_emulation(binary_path: str, options: dict[str, Any] = None) -> di
     try:
         # Detect OS and architecture
         try:
-            import pefile
+            from intellicrack.handlers.pefile_handler import pefile
         except ImportError as e:
             logger.error("Import error in qiling_emulator: %s", e)
             pefile = None

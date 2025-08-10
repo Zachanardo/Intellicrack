@@ -13,14 +13,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
 import json
 import logging
 import math
-from ...handlers.sqlite3_handler import sqlite3
 import threading
 import time
 import warnings
@@ -31,13 +30,14 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import matplotlib.pyplot as plt
-import numpy as np
-from matplotlib.backends.backend_pdf import PdfPages
 from scipy import stats
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
 from sklearn.linear_model import BayesianRidge
 from sklearn.preprocessing import StandardScaler
+
+from intellicrack.handlers.matplotlib_handler import PdfPages, plt
+from intellicrack.handlers.numpy_handler import numpy as np
+from intellicrack.handlers.sqlite3_handler import sqlite3
 
 warnings.filterwarnings("ignore")
 

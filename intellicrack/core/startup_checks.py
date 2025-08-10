@@ -73,7 +73,7 @@ def check_dependencies() -> dict[str, bool]:
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-        from ...handlers.tensorflow_handler import tensorflow as tf
+        from intellicrack.handlers.tensorflow_handler import tensorflow as tf
 
         # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
         tf.config.set_visible_devices([], "GPU")
@@ -321,7 +321,7 @@ def validate_tensorflow_models() -> dict[str, any]:
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-        from ...handlers.tensorflow_handler import tensorflow as tf
+        from intellicrack.handlers.tensorflow_handler import tensorflow as tf
 
         # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
         tf.config.set_visible_devices([], "GPU")
@@ -547,7 +547,7 @@ def get_system_health_report() -> dict[str, any]:
         # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
         os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-        from ...handlers.tensorflow_handler import tensorflow as tf
+        from intellicrack.handlers.tensorflow_handler import tensorflow as tf
 
         # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
         tf.config.set_visible_devices([], "GPU")

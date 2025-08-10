@@ -260,6 +260,14 @@ intellicrack.core.analysis.symbolic\_executor module
    :show-inheritance:
    :undoc-members:
 
+intellicrack.core.analysis.simconcolic module
+----------------------------------------------------
+
+.. automodule:: intellicrack.core.analysis.simconcolic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 intellicrack.core.analysis.taint\_analyzer module
 -------------------------------------------------
 

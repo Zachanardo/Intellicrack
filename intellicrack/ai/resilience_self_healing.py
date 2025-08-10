@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
@@ -41,7 +41,7 @@ from .performance_monitor import performance_monitor, profile_ai_operation
 logger = get_logger(__name__)
 
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:

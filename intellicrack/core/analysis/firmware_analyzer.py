@@ -28,6 +28,7 @@ logger = get_logger(__name__)
 
 try:
     import binwalk
+
     # Test that binwalk actually works by accessing core modules
     from binwalk.core.module import Modules
     BINWALK_AVAILABLE = True

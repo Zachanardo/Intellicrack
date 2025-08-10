@@ -13,13 +13,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
 import sys
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QDialog,
     QDialogButtonBox,
@@ -355,7 +355,7 @@ Process.enumerateModules().forEach(function(module) {
 
     def browse_test_file(self):
         """Browse for test file"""
-        
+
 
         file_path, _ = QFileDialog.getOpenFileName(
             self,

@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 #!/usr/bin/env python3
@@ -31,8 +31,6 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
-# Third-party imports
-import psutil
 from rich import box
 from rich.console import Console
 from rich.layout import Layout
@@ -51,6 +49,9 @@ from rich.progress import (
 )
 from rich.table import Table
 from rich.text import Text
+
+# Third-party imports
+from intellicrack.handlers.psutil_handler import psutil
 
 """
 Progress Manager for Intellicrack CLI

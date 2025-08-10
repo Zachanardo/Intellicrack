@@ -194,7 +194,7 @@ See the [Plugin Development Guide](docs/development/plugins.md) for more informa
 from intellicrack.utils.binary_analysis import analyze_binary
 
 # Analyze executable
-result = analyze_binary("malware.exe")
+result = analyze_binary("protected.exe")
 print(f"SHA256: {result['hashes']['sha256']}")
 print(f"Entropy: {result['entropy']}")
 ```

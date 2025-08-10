@@ -15,8 +15,7 @@ from .secrets_manager import get_secret
 logger = logging.getLogger(__name__)
 
 try:
-    import aiohttp
-    from aiohttp import ClientTimeout
+    from intellicrack.handlers.aiohttp_handler import ClientTimeout, aiohttp
 
     HAS_AIOHTTP = True
 except ImportError as e:

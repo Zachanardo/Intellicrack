@@ -67,7 +67,7 @@ Custom Packers
 **Interpretation Guidance:**
 - **UPX Detection**: Usually indicates size optimization, easy to unpack
 - **Commercial Packers**: May indicate professional software protection
-- **Custom Packers**: Suggests intentional obfuscation or malware
+- **Custom Packers**: Suggests intentional obfuscation or custom protection
 - **Multiple Packers**: Complex protection scheme, requires careful analysis
 
 ### Protectors
@@ -365,7 +365,7 @@ Analysis: Multi-stage approach required
 Time Investment: Significant
 
 Example Result:
-File: advanced_malware.exe
+File: protected_software.exe
 ├── Is Packed: YES
 ├── Is Protected: YES
 ├── Detections:
@@ -464,9 +464,9 @@ Investigate detection accuracy
 
 ## Common Result Patterns
 
-### Malware Patterns
+### License Bypass Patterns
 
-**Typical Malware Protection:**
+**Typical License Bypass Protection:**
 ```
 Detection Pattern:
 ├── [PACKER] Custom or modified UPX

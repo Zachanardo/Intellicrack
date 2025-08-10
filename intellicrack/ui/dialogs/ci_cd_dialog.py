@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -21,7 +21,7 @@ import os
 from datetime import datetime
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QFileDialog,
     QFont,
@@ -44,7 +44,6 @@ from intellicrack.ui.dialogs.common_imports import (
     QWidget,
     pyqtSignal,
 )
-
 from intellicrack.logger import logger
 
 from ...tools.plugin_ci_cd import CICDPipeline, GitHubActionsGenerator
@@ -66,7 +65,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 

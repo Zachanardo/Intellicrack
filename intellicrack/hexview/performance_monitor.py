@@ -15,14 +15,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
 import time
 from typing import Any
 
-from ..ui.common_imports import (
+from ..handlers.pyqt6_handler import (
     PYQT6_AVAILABLE,
     QFont,
     QFormLayout,
@@ -389,7 +389,7 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
         # System memory (would need psutil integration)
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             memory = psutil.virtual_memory()
             self.system_memory_label.setText(f"{memory.percent:.1f}%")

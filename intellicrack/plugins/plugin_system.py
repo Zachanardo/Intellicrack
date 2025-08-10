@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import importlib
@@ -30,10 +30,10 @@ from typing import Any
 
 from PyQt6.QtWidgets import QInputDialog, QMessageBox
 
+from intellicrack.handlers.frida_handler import HAS_FRIDA as FRIDA_AVAILABLE
 from intellicrack.logger import logger
 
 from ..config import CONFIG
-from ..utils.core.common_imports import FRIDA_AVAILABLE
 from ..utils.process_utils import get_target_process_pid
 from .remote_executor import RemotePluginExecutor
 
@@ -55,7 +55,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 #!/usr/bin/env python3
@@ -72,7 +72,7 @@ Author: Intellicrack Development Team
 
 
 if FRIDA_AVAILABLE:
-    import frida  # pylint: disable=import-error
+    from intellicrack.handlers.frida_handler import frida
 else:
     frida = None
 
@@ -110,7 +110,7 @@ def log_message(msg: str) -> str:
     return f"[{msg}]"
 
 
-def load_plugins(plugin_dir: str = "intellicrack/plugins") -> dict[str, list[dict[str, Any]]]:
+def load_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> dict[str, list[dict[str, Any]]]:
     """Loads and initializes plugins from the plugin directory.
     Returns a dictionary of loaded plugins by category.
 
@@ -566,7 +566,7 @@ def run_ghidra_plugin_from_file(app, plugin_path: str) -> None:
             )
 
 
-def create_sample_plugins(plugin_dir: str = "intellicrack/plugins") -> None:
+def create_sample_plugins(plugin_dir: str = "intellicrack/intellicrack/plugins") -> None:
     """Creates comprehensive sample plugin files for users to reference.
     Now includes multiple templates for different use cases.
 
@@ -1364,7 +1364,7 @@ class NetworkAnalysisPlugin:
     def _get_process_pid(self, process_name):
         """Get PID from process name."""
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
             for proc in psutil.process_iter(['pid', 'name']):
                 if process_name.lower() in proc.info['name'].lower():
                     return proc.info['pid']
@@ -1391,7 +1391,7 @@ class NetworkAnalysisPlugin:
         results = []
 
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
             process = psutil.Process(pid)
             connections = process.connections(kind='inet')
 
@@ -1478,7 +1478,7 @@ def create_plugin_template(plugin_name: str, template_type: str = "advanced") ->
 
     Args:
         plugin_name: Name for the plugin
-        template_type: Type of template (simple, advanced, patcher, network, malware)
+        template_type: Type of template (simple, advanced, patcher, network, license_bypass)
 
     Returns:
         String containing the plugin template code
@@ -1746,7 +1746,7 @@ class PluginSystem:
     This class provides a unified interface for plugin management in Intellicrack.
     """
 
-    def __init__(self, plugin_dir: str = "intellicrack/plugins"):
+    def __init__(self, plugin_dir: str = "intellicrack/intellicrack/plugins"):
         """Initialize the plugin system."""
         self.plugin_dir = plugin_dir
         self.plugins = None

@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import subprocess
@@ -32,8 +32,29 @@ implementations for essential operations used in Intellicrack.
 # Frida availability detection and import handling
 try:
     import frida
-    from frida import Device, FileMonitor, Process, Script, Session
-    from frida.core import DeviceManager, ScriptMessage
+
+    # Try to import individual components - they may have moved
+    try:
+        from frida import Device, FileMonitor, Process, Script, Session
+    except ImportError:
+        # Create fallback references if not available
+        Device = None
+        FileMonitor = None
+        Process = None
+        Script = None
+        Session = None
+
+    # Try to import from core module
+    try:
+        from frida.core import DeviceManager, ScriptMessage
+    except ImportError:
+        # Try alternative import locations
+        try:
+            DeviceManager = frida.DeviceManager if hasattr(frida, 'DeviceManager') else None
+            ScriptMessage = frida.ScriptMessage if hasattr(frida, 'ScriptMessage') else None
+        except:
+            DeviceManager = None
+            ScriptMessage = None
 
     HAS_FRIDA = True
     FRIDA_VERSION = frida.__version__
@@ -597,6 +618,25 @@ except ImportError as e:
         enumerate_devices = staticmethod(enumerate_devices)
 
     frida = FallbackFrida()
+
+# Ensure module-level exports for both cases
+if not HAS_FRIDA:
+    Device = FallbackDevice
+    Process = FallbackProcess
+    Session = FallbackSession
+    Script = FallbackScript
+    DeviceManager = FallbackDeviceManager
+    FileMonitor = FallbackFileMonitor
+    ScriptMessage = FallbackScriptMessage
+    get_local_device = get_local_device
+    get_remote_device = get_remote_device
+    get_usb_device = get_usb_device
+    get_device_manager = get_device_manager
+    attach = attach
+    spawn = spawn
+    resume = resume
+    kill = kill
+    enumerate_devices = enumerate_devices
 
 
 # Export all Frida objects and availability flag

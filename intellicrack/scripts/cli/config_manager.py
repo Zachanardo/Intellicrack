@@ -19,12 +19,12 @@ logger = get_logger(__name__)
 
 class ConfigManager:
     """Manage Intellicrack configuration settings."""
-    
+
     def __init__(self):
         """Initialize configuration manager."""
         self.config = CONFIG
         self.config_file = Path.home() / ".intellicrack" / "config.json"
-    
+
     def load_config(self):
         """Load configuration from file."""
         if self.config_file.exists():
@@ -35,7 +35,7 @@ class ConfigManager:
                     logger.info(f"Loaded configuration from {self.config_file}")
             except Exception as e:
                 logger.error(f"Failed to load config: {e}")
-    
+
     def save_config(self):
         """Save configuration to file."""
         try:
@@ -45,15 +45,15 @@ class ConfigManager:
             logger.info(f"Saved configuration to {self.config_file}")
         except Exception as e:
             logger.error(f"Failed to save config: {e}")
-    
+
     def get(self, key, default=None):
         """Get configuration value."""
         return self.config.get(key, default)
-    
+
     def set(self, key, value):
         """Set configuration value."""
         self.config[key] = value
-    
+
     def list_settings(self):
         """List all configuration settings."""
         return self.config.copy()
@@ -62,29 +62,29 @@ class ConfigManager:
 def main():
     """Configuration management CLI."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Intellicrack Configuration Manager")
     parser.add_argument("action", choices=["get", "set", "list"], help="Action to perform")
     parser.add_argument("key", nargs="?", help="Configuration key")
     parser.add_argument("value", nargs="?", help="Configuration value (for set)")
-    
+
     args = parser.parse_args()
-    
+
     manager = ConfigManager()
     manager.load_config()
-    
+
     if args.action == "list":
         settings = manager.list_settings()
         for key, value in settings.items():
             print(f"{key}: {value}")
-    
+
     elif args.action == "get":
         if not args.key:
             print("Error: Key required for get operation")
             return 1
         value = manager.get(args.key)
         print(f"{args.key}: {value}")
-    
+
     elif args.action == "set":
         if not args.key or args.value is None:
             print("Error: Key and value required for set operation")
@@ -92,7 +92,7 @@ def main():
         manager.set(args.key, args.value)
         manager.save_config()
         print(f"Set {args.key} = {args.value}")
-    
+
     return 0
 
 

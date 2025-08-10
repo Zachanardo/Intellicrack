@@ -15,10 +15,17 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from .common_imports import QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton
+from .handlers.pyqt6_handler import (
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+)
 
 
 def setup_footer(dialog, layout):

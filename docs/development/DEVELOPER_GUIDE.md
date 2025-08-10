@@ -59,7 +59,7 @@ intellicrack/
 │   ├── unit/                  # Unit tests
 │   ├── integration/           # Integration tests
 │   └── performance/           # Performance tests
-├── scripts/                   # Development scripts
+
 ├── requirements/              # Dependencies
 └── setup/                     # Setup and installation
 ```

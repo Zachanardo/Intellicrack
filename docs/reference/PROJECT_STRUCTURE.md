@@ -24,7 +24,7 @@ intellicrack/
 ├── reports/                   # Generated reports
 ├── requirements/              # Dependency requirements
 ├── samples/                   # Binary samples (gitignored)
-├── scripts/                   # Utility scripts
+
 ├── ssl_certificates/          # SSL certificates
 ├── tests/                     # Test suite
 ├── tools/                     # External tools integration
@@ -108,7 +108,7 @@ The main application package containing:
   - `test_programs/` - Test binary programs
 
 ### Scripts & Examples
-- `scripts/` - Utility scripts organized by type
+- `intellicrack/intellicrack/scripts/` - Utility scripts organized by type
   - `cli/` - CLI enhancement scripts
   - `frida/` - Frida scripts
   - `ghidra/` - Ghidra scripts
@@ -124,7 +124,7 @@ The main application package containing:
 1. **Python modules** - All Python code in `intellicrack/` package
 2. **Documentation** - User docs in `docs/`, project docs in `project-docs/`
 3. **Configuration** - Root level for tool configs, `config/` for app configs
-4. **Scripts** - Organized by type in `scripts/`
+4. **Scripts** - Organized by type in `intellicrack/intellicrack/scripts/`
 5. **Tests** - Mirror package structure in `tests/`
 6. **Generated files** - Output to appropriate directories (logs/, reports/, etc.)
 7. **Temporary files** - Use `cache/` directory

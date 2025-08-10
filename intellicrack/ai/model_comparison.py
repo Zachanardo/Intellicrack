@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -25,8 +25,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-from matplotlib import pyplot as plt
+from intellicrack.handlers.matplotlib_handler import plt
+from intellicrack.handlers.numpy_handler import numpy as np
 
 from ..utils.logger import get_logger
 from .llm_backends import LLMManager, LLMMessage

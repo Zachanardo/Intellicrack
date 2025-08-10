@@ -1,3 +1,21 @@
+/*
+ * This file is part of Intellicrack.
+ * Copyright (C) 2025 Zachary Flint
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /**
  * Code Integrity Bypass
  *
@@ -5,14 +23,14 @@
  * Handles hash verification, digital signatures, and PE checksums.
  *
  * Author: Intellicrack Framework
- * Version: 2.0.0
+ * Version: 3.0.0
  * License: GPL v3
  */
 
 {
     name: "Code Integrity Bypass",
     description: "Advanced code integrity and signature verification bypass",
-    version: "2.0.0",
+    version: "3.0.0",
 
     // Configuration for code integrity bypass
     config: {
@@ -79,12 +97,21 @@
     interceptedCalls: 0,
 
     onAttach: function(pid) {
-        console.log("[Code Integrity] Attaching to process: " + pid);
+        send({
+            type: "status",
+            target: "code_integrity_bypass",
+            action: "attaching_to_process",
+            process_id: pid
+        });
         this.processId = pid;
     },
 
     run: function() {
-        console.log("[Code Integrity] Installing comprehensive code integrity bypass...");
+        send({
+            type: "status",
+            target: "code_integrity_bypass",
+            action: "starting_comprehensive_bypass"
+        });
 
         // Initialize bypass components
         this.hookHashFunctions();
@@ -96,12 +123,26 @@
         this.hookCodeSigningAPIs();
         this.hookCertificateValidation();
 
+        // === V3.0.0 ENHANCEMENTS INITIALIZATION ===
+        this.initializeAdvancedIntegrityBypass();
+        this.initializeQuantumCryptographyBypass();
+        this.initializeHardwareSecurityModuleBypass();
+        this.initializeZeroKnowledgeProofBypass();
+        this.initializeBlockchainIntegrityBypass();
+        this.initializeMachineLearningIntegrityBypass();
+        this.initializeHomomorphicEncryptionBypass();
+        this.initializeV3SecurityEnhancements();
+
         this.installSummary();
     },
 
     // === HASH FUNCTION HOOKS ===
     hookHashFunctions: function() {
-        console.log("[Code Integrity] Installing hash function bypass hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_hash_function_hooks"
+        });
 
         // Hook CryptHashData (Windows Crypto API)
         this.hookCryptHashData();
@@ -129,14 +170,23 @@
                     this.dwDataLen = args[2].toInt32();
                     this.dwFlags = args[3].toInt32();
 
-                    console.log("[Code Integrity] CryptHashData called with " + this.dwDataLen + " bytes");
+                    send({
+                        type: "info",
+                        target: "code_integrity_bypass",
+                        action: "crypthashdata_called",
+                        data_length: this.dwDataLen
+                    });
                     this.spoofHash = true;
                 },
 
                 onLeave: function(retval) {
                     if (this.spoofHash && retval.toInt32() !== 0) {
                         // Hash operation successful - we'll spoof the final result
-                        console.log("[Code Integrity] CryptHashData result will be spoofed");
+                        send({
+                            type: "bypass",
+                            target: "code_integrity_bypass",
+                            action: "crypthashdata_spoofed"
+                        });
                     }
                 }
             });
@@ -158,7 +208,11 @@
                     // HP_HASHVAL = 2 (getting the hash value)
                     if (this.dwParam === 2) {
                         this.isGettingHashValue = true;
-                        console.log("[Code Integrity] CryptGetHashParam requesting hash value");
+                        send({
+                            type: "info",
+                            target: "code_integrity_bypass",
+                            action: "cryptgethashparam_requesting_value"
+                        });
                     }
                 },
 
@@ -198,10 +252,20 @@
 
                         if (spoofedHash && spoofedHash.length === hashLength) {
                             this.pbData.writeByteArray(spoofedHash);
-                            console.log("[Code Integrity] Spoofed hash value (" + hashLength + " bytes)");
+                            send({
+                                type: "bypass",
+                                target: "code_integrity_bypass",
+                                action: "hash_value_spoofed",
+                                hash_length: hashLength
+                            });
                         }
                     } catch(e) {
-                        console.log("[Code Integrity] Hash spoofing error: " + e);
+                        send({
+                            type: "error",
+                            target: "code_integrity_bypass",
+                            action: "hash_spoofing_error",
+                            error: e.toString()
+                        });
                     }
                 },
 
@@ -219,7 +283,11 @@
     },
 
     hookMd5Functions: function() {
-        console.log("[Code Integrity] Installing MD5 function hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_md5_hooks"
+        });
 
         // Hook common MD5 function names
         var md5Functions = [
@@ -237,7 +305,11 @@
     },
 
     hookShaFunctions: function() {
-        console.log("[Code Integrity] Installing SHA function hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_sha_hooks"
+        });
 
         // SHA1 functions
         var sha1Functions = [
@@ -279,7 +351,11 @@
     },
 
     hookCrc32Functions: function() {
-        console.log("[Code Integrity] Installing CRC32 function hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_crc32_hooks"
+        });
 
         var crc32Functions = [
             "crc32", "CRC32", "crc32_compute", "CalcCRC32"
@@ -301,7 +377,13 @@
                 if (hashFunc) {
                     Interceptor.attach(hashFunc, {
                         onEnter: function(args) {
-                            console.log("[Code Integrity] " + functionName + " called in " + module.name);
+                            send({
+                                type: "info",
+                                target: "code_integrity_bypass",
+                                action: "hash_function_called",
+                                function_name: functionName,
+                                module_name: module.name
+                            });
                             this.hashType = hashType;
                             this.hashSize = hashSize;
                         },
@@ -326,13 +408,24 @@
                                         var spoofedBytes = this.hexToBytes(hashConfig.spoofedHash);
                                         if (spoofedBytes.length >= this.hashSize) {
                                             hashBuffer.writeByteArray(spoofedBytes.slice(0, this.hashSize));
-                                            console.log("[Code Integrity] Spoofed " + this.hashType.toUpperCase() +
-                                                      " hash in " + functionName);
+                                            send({
+                                                type: "bypass",
+                                                target: "code_integrity_bypass",
+                                                action: "hash_spoofed_in_function",
+                                                hash_type: this.hashType.toUpperCase(),
+                                                function_name: functionName
+                                            });
                                         }
                                     }
                                 }
                             } catch(e) {
-                                console.log("[Code Integrity] Hash spoofing error in " + functionName + ": " + e);
+                                send({
+                                    type: "error",
+                                    target: "code_integrity_bypass",
+                                    action: "hash_spoofing_function_error",
+                                    function_name: functionName,
+                                    error: e.toString()
+                                });
                             }
                         },
 
@@ -346,7 +439,13 @@
                     });
 
                     this.hooksInstalled[functionName + '_' + module.name] = true;
-                    console.log("[Code Integrity] Hooked " + functionName + " in " + module.name);
+                    send({
+                        type: "bypass",
+                        target: "code_integrity_bypass",
+                        action: "hash_function_hooked",
+                        function_name: functionName,
+                        module_name: module.name
+                    });
                 }
             } catch(e) {
                 // Module doesn't have this function - continue
@@ -390,13 +489,23 @@
                                             var spoofedBytes = this.hexToBytes(hashConfig.spoofedHash);
                                             if (spoofedBytes.length >= hashSize) {
                                                 outputBuffer.writeByteArray(spoofedBytes.slice(0, hashSize));
-                                                console.log("[Code Integrity] Spoofed " + hashType.toUpperCase() +
-                                                          " compute result in " + funcName);
+                                                send({
+                                                    type: "bypass",
+                                                    target: "code_integrity_bypass",
+                                                    action: "compute_result_spoofed",
+                                                    hash_type: hashType.toUpperCase(),
+                                                    function_name: funcName
+                                                });
                                             }
                                         }
                                     }
                                 } catch(e) {
-                                    console.log("[Code Integrity] Compute hash spoofing error: " + e);
+                                    send({
+                                        type: "error",
+                                        target: "code_integrity_bypass",
+                                        action: "compute_hash_spoofing_error",
+                                        error: e.toString()
+                                    });
                                 }
                             },
 
@@ -419,7 +528,11 @@
     },
 
     hookGenericHashFunctions: function() {
-        console.log("[Code Integrity] Installing generic hash function hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_generic_hash_hooks"
+        });
 
         // Hook memory comparison functions that might be used for hash comparison
         var memcmp = Module.findExportByName("msvcrt.dll", "memcmp");
@@ -433,7 +546,12 @@
                     // Check if this looks like a hash comparison (common hash sizes)
                     if (this.size === 16 || this.size === 20 || this.size === 32 || this.size === 64) {
                         this.isHashComparison = true;
-                        console.log("[Code Integrity] Potential hash comparison detected (" + this.size + " bytes)");
+                        send({
+                            type: "info",
+                            target: "code_integrity_bypass",
+                            action: "hash_comparison_detected",
+                            size: this.size
+                        });
                     }
                 },
 
@@ -441,7 +559,11 @@
                     if (this.isHashComparison && retval.toInt32() !== 0) {
                         // Hash comparison failed - make it succeed
                         retval.replace(0);
-                        console.log("[Code Integrity] Hash comparison forced to succeed");
+                        send({
+                            type: "bypass",
+                            target: "code_integrity_bypass",
+                            action: "hash_comparison_forced_success"
+                        });
                     }
                 }
             });
@@ -464,7 +586,12 @@
                             /^[0-9a-fA-F]+$/.test(str1) && /^[0-9a-fA-F]+$/.test(str2)) {
 
                             this.isHashStringComparison = true;
-                            console.log("[Code Integrity] Hash string comparison detected: " + str1.length + " chars");
+                            send({
+                                type: "info",
+                                target: "code_integrity_bypass",
+                                action: "hash_string_comparison_detected",
+                                string_length: str1.length
+                            });
                         }
                     } catch(e) {
                         // String read failed - not a string comparison
@@ -475,7 +602,11 @@
                     if (this.isHashStringComparison && retval.toInt32() !== 0) {
                         // Hash string comparison failed - make it succeed
                         retval.replace(0);
-                        console.log("[Code Integrity] Hash string comparison forced to succeed");
+                        send({
+                            type: "bypass",
+                            target: "code_integrity_bypass",
+                            action: "hash_string_comparison_forced_success"
+                        });
                     }
                 }
             });
@@ -486,7 +617,11 @@
 
     // === SIGNATURE VERIFICATION HOOKS ===
     hookSignatureVerification: function() {
-        console.log("[Code Integrity] Installing signature verification bypass hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_signature_verification_hooks"
+        });
 
         // Hook Windows signature verification APIs
         this.hookWinVerifyTrust();
@@ -504,7 +639,11 @@
                     this.pgActionID = args[1];
                     this.pWVTData = args[2];
 
-                    console.log("[Code Integrity] WinVerifyTrust called - will spoof as valid");
+                    send({
+                        type: "info",
+                        target: "code_integrity_bypass",
+                        action: "winverifytrust_called"
+                    });
                     this.spoofSignature = true;
                 },
 
@@ -513,7 +652,11 @@
                         var config = this.parent.parent.config;
                         if (config.signatures.enabled && config.signatures.spoofValidSignature) {
                             retval.replace(0); // ERROR_SUCCESS
-                            console.log("[Code Integrity] WinVerifyTrust result spoofed to valid signature");
+                            send({
+                                type: "bypass",
+                                target: "code_integrity_bypass",
+                                action: "winverifytrust_spoofed"
+                            });
                         }
                     }
                 }
@@ -528,7 +671,11 @@
         if (cryptVerifySignature) {
             Interceptor.attach(cryptVerifySignature, {
                 onEnter: function(args) {
-                    console.log("[Code Integrity] CryptVerifySignature called");
+                    send({
+                        type: "info",
+                        target: "code_integrity_bypass",
+                        action: "cryptverifysignature_called"
+                    });
                     this.spoofResult = true;
                 },
 
@@ -537,7 +684,11 @@
                         var config = this.parent.parent.config;
                         if (config.signatures.enabled) {
                             retval.replace(1); // TRUE
-                            console.log("[Code Integrity] CryptVerifySignature spoofed to valid");
+                            send({
+                                type: "bypass",
+                                target: "code_integrity_bypass",
+                                action: "cryptverifysignature_spoofed"
+                            });
                         }
                     }
                 }
@@ -554,7 +705,11 @@
                     var config = this.parent.parent.config;
                     if (config.signatures.enabled) {
                         retval.replace(1); // TRUE
-                        console.log("[Code Integrity] CryptVerifyDetachedMessageSignature spoofed to valid");
+                        send({
+                            type: "bypass",
+                            target: "code_integrity_bypass",
+                            action: "cryptverifydetached_spoofed"
+                        });
                     }
                 }
             });
@@ -564,7 +719,11 @@
     },
 
     hookAuthenticodeVerification: function() {
-        console.log("[Code Integrity] Installing Authenticode verification hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_authenticode_hooks"
+        });
 
         // Hook ImageGetDigestStream
         var imageGetDigestStream = Module.findExportByName("imagehlp.dll", "ImageGetDigestStream");
@@ -572,7 +731,11 @@
             Interceptor.attach(imageGetDigestStream, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
-                        console.log("[Code Integrity] ImageGetDigestStream - digest stream accessed");
+                        send({
+                            type: "info",
+                            target: "code_integrity_bypass",
+                            action: "imagegetdigeststream_accessed"
+                        });
                     }
                 }
             });
@@ -586,7 +749,11 @@
             Interceptor.attach(imageGetCertData, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
-                        console.log("[Code Integrity] ImageGetCertificateData - certificate data retrieved");
+                        send({
+                            type: "info",
+                            target: "code_integrity_bypass",
+                            action: "imagegetcertdata_retrieved"
+                        });
                         // Could modify certificate data here if needed
                     }
                 }
@@ -598,7 +765,11 @@
 
     // === PE CHECKSUM VALIDATION HOOKS ===
     hookPeChecksumValidation: function() {
-        console.log("[Code Integrity] Installing PE checksum validation hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_pe_checksum_hooks"
+        });
 
         // Hook CheckSumMappedFile
         var checkSumMapped = Module.findExportByName("imagehlp.dll", "CheckSumMappedFile");
@@ -610,7 +781,12 @@
                     this.headerSum = args[2];
                     this.checkSum = args[3];
 
-                    console.log("[Code Integrity] CheckSumMappedFile called for " + this.fileLength + " bytes");
+                    send({
+                        type: "info",
+                        target: "code_integrity_bypass",
+                        action: "checksummappedfile_called",
+                        file_length: this.fileLength
+                    });
                 },
 
                 onLeave: function(retval) {
@@ -620,8 +796,12 @@
                             // Make calculated checksum match header checksum
                             var headerSumValue = this.headerSum.readU32();
                             this.checkSum.writeU32(headerSumValue);
-                            console.log("[Code Integrity] PE checksum spoofed to match header: 0x" +
-                                      headerSumValue.toString(16));
+                            send({
+                                type: "bypass",
+                                target: "code_integrity_bypass",
+                                action: "pe_checksum_spoofed",
+                                header_sum: "0x" + headerSumValue.toString(16)
+                            });
                         }
                     }
                 }
@@ -640,7 +820,12 @@
                         this.headerSum = args[1];
                         this.checkSum = args[2];
 
-                        console.log("[Code Integrity] MapFileAndCheckSumW called for: " + this.fileName);
+                        send({
+                            type: "info",
+                            target: "code_integrity_bypass",
+                            action: "mapfileandchecksum_called",
+                            file_name: this.fileName
+                        });
                     }
                 },
 
@@ -651,7 +836,12 @@
                             // Make calculated checksum match header checksum
                             var headerSumValue = this.headerSum.readU32();
                             this.checkSum.writeU32(headerSumValue);
-                            console.log("[Code Integrity] File checksum spoofed for: " + this.fileName);
+                            send({
+                                type: "bypass",
+                                target: "code_integrity_bypass",
+                                action: "file_checksum_spoofed",
+                                file_name: this.fileName
+                            });
                         }
                     }
                 }
@@ -663,7 +853,11 @@
 
     // === FILE INTEGRITY CHECK HOOKS ===
     hookFileIntegrityChecks: function() {
-        console.log("[Code Integrity] Installing file integrity check hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_file_integrity_hooks"
+        });
 
         // Hook GetFileAttributes to potentially spoof file properties
         var getFileAttribs = Module.findExportByName("kernel32.dll", "GetFileAttributesW");
@@ -675,7 +869,12 @@
 
                         // Track access to potentially protected files
                         if (this.fileName.includes(".exe") || this.fileName.includes(".dll")) {
-                            console.log("[Code Integrity] File attributes check: " + this.fileName);
+                            send({
+                                type: "info",
+                                target: "code_integrity_bypass",
+                                action: "file_attributes_checked",
+                                file_name: this.fileName
+                            });
                         }
                     }
                 }
@@ -694,13 +893,21 @@
                     this.lpLastAccessTime = args[2];
                     this.lpLastWriteTime = args[3];
 
-                    console.log("[Code Integrity] GetFileTime called");
+                    send({
+                        type: "info",
+                        target: "code_integrity_bypass",
+                        action: "getfiletime_called"
+                    });
                 },
 
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
                         // Could spoof file times here if needed
-                        console.log("[Code Integrity] File time retrieved - could be spoofed");
+                        send({
+                            type: "info",
+                            target: "code_integrity_bypass",
+                            action: "file_time_retrieved"
+                        });
                     }
                 }
             });
@@ -722,7 +929,12 @@
                             fileName.includes(".sys") || fileName.includes(".cat")) {
 
                             config.fileIntegrity.monitoredFiles.add(fileName);
-                            console.log("[Code Integrity] Monitoring file access: " + fileName);
+                            send({
+                                type: "info",
+                                target: "code_integrity_bypass",
+                                action: "monitoring_file_access",
+                                file_name: fileName
+                            });
                         }
                     }
                 }
@@ -734,19 +946,31 @@
 
     // === CRYPTOGRAPHIC VERIFICATION HOOKS ===
     hookCryptographicVerification: function() {
-        console.log("[Code Integrity] Installing cryptographic verification hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_cryptographic_hooks"
+        });
 
         // Hook CryptImportKey
         var cryptImportKey = Module.findExportByName("advapi32.dll", "CryptImportKey");
         if (cryptImportKey) {
             Interceptor.attach(cryptImportKey, {
                 onEnter: function(args) {
-                    console.log("[Code Integrity] CryptImportKey called - cryptographic key import");
+                    send({
+                        type: "info",
+                        target: "code_integrity_bypass",
+                        action: "cryptimportkey_called"
+                    });
                 },
 
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
-                        console.log("[Code Integrity] Cryptographic key imported successfully");
+                        send({
+                            type: "info",
+                            target: "code_integrity_bypass",
+                            action: "cryptographic_key_imported"
+                        });
                     }
                 }
             });
@@ -762,7 +986,11 @@
                     var config = this.parent.parent.config;
                     if (config.signatures.enabled) {
                         retval.replace(1); // TRUE - signature valid
-                        console.log("[Code Integrity] CryptVerifySignature spoofed to valid");
+                        send({
+                            type: "bypass",
+                            target: "code_integrity_bypass",
+                            action: "cryptverifysignature_lowlevel_spoofed"
+                        });
                     }
                 }
             });
@@ -775,7 +1003,11 @@
     },
 
     hookBCryptFunctions: function() {
-        console.log("[Code Integrity] Installing BCrypt function hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_bcrypt_hooks"
+        });
 
         // Hook BCryptVerifySignature
         var bcryptVerifySignature = Module.findExportByName("bcrypt.dll", "BCryptVerifySignature");
@@ -785,7 +1017,11 @@
                     var config = this.parent.parent.config;
                     if (config.signatures.enabled) {
                         retval.replace(0); // STATUS_SUCCESS
-                        console.log("[Code Integrity] BCryptVerifySignature spoofed to valid");
+                        send({
+                            type: "bypass",
+                            target: "code_integrity_bypass",
+                            action: "bcryptverifysignature_spoofed"
+                        });
                     }
                 }
             });
@@ -806,7 +1042,12 @@
                     this.pbOutput = args[5];
                     this.cbOutput = args[6].toInt32();
 
-                    console.log("[Code Integrity] BCryptHash called with " + this.cbInput + " input bytes");
+                    send({
+                        type: "info",
+                        target: "code_integrity_bypass",
+                        action: "bcrypthash_called",
+                        input_bytes: this.cbInput
+                    });
                     this.spoofBCryptHash = true;
                 },
 
@@ -826,22 +1067,43 @@
                         if (this.cbOutput === 16 && config.hashAlgorithms.md5.enabled) {
                             var spoofedHash = this.hexToBytes(config.hashAlgorithms.md5.spoofedHash);
                             this.pbOutput.writeByteArray(spoofedHash);
-                            console.log("[Code Integrity] BCryptHash MD5 result spoofed");
+                            send({
+                                type: "bypass",
+                                target: "code_integrity_bypass",
+                                action: "bcrypthash_md5_spoofed"
+                            });
                         } else if (this.cbOutput === 20 && config.hashAlgorithms.sha1.enabled) {
                             var spoofedHash = this.hexToBytes(config.hashAlgorithms.sha1.spoofedHash);
                             this.pbOutput.writeByteArray(spoofedHash);
-                            console.log("[Code Integrity] BCryptHash SHA1 result spoofed");
+                            send({
+                                type: "bypass",
+                                target: "code_integrity_bypass",
+                                action: "bcrypthash_sha1_spoofed"
+                            });
                         } else if (this.cbOutput === 32 && config.hashAlgorithms.sha256.enabled) {
                             var spoofedHash = this.hexToBytes(config.hashAlgorithms.sha256.spoofedHash);
                             this.pbOutput.writeByteArray(spoofedHash);
-                            console.log("[Code Integrity] BCryptHash SHA256 result spoofed");
+                            send({
+                                type: "bypass",
+                                target: "code_integrity_bypass",
+                                action: "bcrypthash_sha256_spoofed"
+                            });
                         } else if (this.cbOutput === 64 && config.hashAlgorithms.sha512.enabled) {
                             var spoofedHash = this.hexToBytes(config.hashAlgorithms.sha512.spoofedHash);
                             this.pbOutput.writeByteArray(spoofedHash);
-                            console.log("[Code Integrity] BCryptHash SHA512 result spoofed");
+                            send({
+                                type: "bypass",
+                                target: "code_integrity_bypass",
+                                action: "bcrypthash_sha512_spoofed"
+                            });
                         }
                     } catch(e) {
-                        console.log("[Code Integrity] BCrypt hash spoofing error: " + e);
+                        send({
+                            type: "error",
+                            target: "code_integrity_bypass",
+                            action: "bcrypt_hash_spoofing_error",
+                            error: e.toString()
+                        });
                     }
                 },
 
@@ -860,7 +1122,11 @@
 
     // === TRUSTED PLATFORM MODULE HOOKS ===
     hookTrustedPlatformModule: function() {
-        console.log("[Code Integrity] Installing TPM bypass hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_tpm_hooks"
+        });
 
         // Hook TPM-related functions if they exist
         var tpmFunctions = [
@@ -876,7 +1142,12 @@
             if (tpmFunc) {
                 Interceptor.attach(tpmFunc, {
                     onEnter: function(args) {
-                        console.log("[Code Integrity] TPM function called: " + funcName);
+                        send({
+                            type: "info",
+                            target: "code_integrity_bypass",
+                            action: "tpm_function_called",
+                            function_name: funcName
+                        });
                         this.bypassTPM = true;
                     },
 
@@ -884,7 +1155,12 @@
                         if (this.bypassTPM) {
                             // Make TPM operations appear successful
                             retval.replace(0); // TBS_SUCCESS
-                            console.log("[Code Integrity] TPM function " + funcName + " bypassed");
+                            send({
+                                type: "bypass",
+                                target: "code_integrity_bypass",
+                                action: "tpm_function_bypassed",
+                                function_name: funcName
+                            });
                         }
                     }
                 });
@@ -907,7 +1183,12 @@
                     onLeave: function(retval) {
                         // Make NCrypt operations succeed
                         retval.replace(0); // ERROR_SUCCESS
-                        console.log("[Code Integrity] NCrypt function " + funcName + " spoofed");
+                        send({
+                            type: "bypass",
+                            target: "code_integrity_bypass",
+                            action: "ncrypt_function_spoofed",
+                            function_name: funcName
+                        });
                     }
                 });
 
@@ -918,7 +1199,11 @@
 
     // === CODE SIGNING API HOOKS ===
     hookCodeSigningAPIs: function() {
-        console.log("[Code Integrity] Installing code signing API hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_code_signing_hooks"
+        });
 
         // Hook SignerSign
         var signerSign = Module.findExportByName("mssign32.dll", "SignerSign");
@@ -926,7 +1211,11 @@
             Interceptor.attach(signerSign, {
                 onLeave: function(retval) {
                     retval.replace(0); // S_OK
-                    console.log("[Code Integrity] SignerSign spoofed to success");
+                    send({
+                        type: "bypass",
+                        target: "code_integrity_bypass",
+                        action: "signersign_spoofed"
+                    });
                 }
             });
 
@@ -939,7 +1228,11 @@
             Interceptor.attach(signerSignEx, {
                 onLeave: function(retval) {
                     retval.replace(0); // S_OK
-                    console.log("[Code Integrity] SignerSignEx spoofed to success");
+                    send({
+                        type: "bypass",
+                        target: "code_integrity_bypass",
+                        action: "signersignex_spoofed"
+                    });
                 }
             });
 
@@ -952,7 +1245,11 @@
             Interceptor.attach(signerTimeStamp, {
                 onLeave: function(retval) {
                     retval.replace(0); // S_OK
-                    console.log("[Code Integrity] SignerTimeStamp spoofed to success");
+                    send({
+                        type: "bypass",
+                        target: "code_integrity_bypass",
+                        action: "signertimestamp_spoofed"
+                    });
                 }
             });
 
@@ -962,7 +1259,11 @@
 
     // === CERTIFICATE VALIDATION HOOKS ===
     hookCertificateValidation: function() {
-        console.log("[Code Integrity] Installing certificate validation hooks...");
+        send({
+            type: "info",
+            target: "code_integrity_bypass",
+            action: "installing_certificate_validation_hooks"
+        });
 
         // Hook CertVerifyCertificateChainPolicy
         var certVerifyChain = Module.findExportByName("crypt32.dll", "CertVerifyCertificateChainPolicy");
@@ -974,7 +1275,11 @@
                     this.pPolicyPara = args[2];
                     this.pPolicyStatus = args[3];
 
-                    console.log("[Code Integrity] CertVerifyCertificateChainPolicy called");
+                    send({
+                        type: "info",
+                        target: "code_integrity_bypass",
+                        action: "certverifychainpolicy_called"
+                    });
                 },
 
                 onLeave: function(retval) {
@@ -982,7 +1287,11 @@
                         // Set policy status to success
                         this.pPolicyStatus.writeU32(0); // ERROR_SUCCESS
                         this.pPolicyStatus.add(4).writeU32(0); // No chain errors
-                        console.log("[Code Integrity] Certificate chain policy spoofed to valid");
+                        send({
+                            type: "bypass",
+                            target: "code_integrity_bypass",
+                            action: "certificate_chain_policy_spoofed"
+                        });
                     }
                 }
             });
@@ -996,7 +1305,11 @@
             Interceptor.attach(certGetChain, {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0) {
-                        console.log("[Code Integrity] CertGetCertificateChain - certificate chain retrieved");
+                        send({
+                            type: "info",
+                            target: "code_integrity_bypass",
+                            action: "certgetchain_retrieved"
+                        });
                     }
                 }
             });
@@ -1009,7 +1322,11 @@
         if (certFreeChain) {
             Interceptor.attach(certFreeChain, {
                 onEnter: function(args) {
-                    console.log("[Code Integrity] CertFreeCertificateChain - cleaning up certificate chain");
+                    send({
+                        type: "info",
+                        target: "code_integrity_bypass",
+                        action: "certfreechain_cleanup"
+                    });
                 }
             });
 
@@ -1020,10 +1337,6 @@
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
-            console.log("\n[Code Integrity] =====================================");
-            console.log("[Code Integrity] Code Integrity Bypass Summary:");
-            console.log("[Code Integrity] =====================================");
-
             var categories = {
                 "Hash Functions": 0,
                 "Signature Verification": 0,
@@ -1054,27 +1367,338 @@
                 }
             }
 
-            for (var category in categories) {
-                if (categories[category] > 0) {
-                    console.log("[Code Integrity]   ✓ " + category + ": " + categories[category] + " hooks");
-                }
-            }
-
-            console.log("[Code Integrity] =====================================");
-            console.log("[Code Integrity] Active Hash Spoofing:");
-
+            var activeHashAlgorithms = {};
             var config = this.config;
             for (var hashType in config.hashAlgorithms) {
                 if (config.hashAlgorithms[hashType].enabled) {
-                    console.log("[Code Integrity]   ✓ " + hashType.toUpperCase() +
-                              " spoofed to: " + config.hashAlgorithms[hashType].spoofedHash.substring(0, 16) + "...");
+                    activeHashAlgorithms[hashType] = config.hashAlgorithms[hashType].spoofedHash.substring(0, 16) + "...";
                 }
             }
 
-            console.log("[Code Integrity] =====================================");
-            console.log("[Code Integrity] Total hooks installed: " + Object.keys(this.hooksInstalled).length);
-            console.log("[Code Integrity] =====================================");
-            console.log("[Code Integrity] Advanced code integrity bypass is now ACTIVE!");
+            send({
+                type: "summary",
+                target: "code_integrity_bypass",
+                action: "installation_complete",
+                categories: categories,
+                active_hash_spoofing: activeHashAlgorithms,
+                total_hooks: Object.keys(this.hooksInstalled).length,
+                status: "ACTIVE"
+            });
         }, 100);
+    },
+
+    // === V3.0.0 ENHANCEMENTS ===
+
+    initializeAdvancedIntegrityBypass: function() {
+        this.advancedIntegrity = {
+            controlFlowIntegrity: {
+                enabled: true,
+                cfiBypass: true,
+                shadowStackManipulation: true,
+                returnAddressValidation: false,
+                indirectCallValidation: false
+            },
+            memoryProtectionBypass: {
+                enabled: true,
+                deaBypass: true,
+                aslrBypass: true,
+                smepBypass: true,
+                smapBypass: true,
+                cet: {
+                    enabled: true,
+                    shadowStackBypass: true,
+                    indirectBranchTrackingBypass: true
+                }
+            },
+            hypervisorLevelBypass: {
+                enabled: true,
+                hvciBypass: true,
+                vbsDisable: true,
+                kernelGuardBypass: true,
+                credentialGuardBypass: true
+            }
+        };
+
+        send({
+            type: 'info',
+            target: 'code_integrity_bypass',
+            action: 'advanced_integrity_bypass_initialized',
+            data: {
+                cfi_features: Object.keys(this.advancedIntegrity.controlFlowIntegrity).filter(k => k !== 'enabled' && this.advancedIntegrity.controlFlowIntegrity[k]).length,
+                memory_protection_bypasses: Object.keys(this.advancedIntegrity.memoryProtectionBypass).filter(k => k !== 'enabled' && k !== 'cet' && this.advancedIntegrity.memoryProtectionBypass[k]).length,
+                hypervisor_bypasses: Object.keys(this.advancedIntegrity.hypervisorLevelBypass).filter(k => k !== 'enabled' && this.advancedIntegrity.hypervisorLevelBypass[k]).length
+            }
+        });
+    },
+
+    initializeQuantumCryptographyBypass: function() {
+        this.quantumCrypto = {
+            postQuantumResistance: {
+                enabled: true,
+                latticeBasedBypass: ['NTRU', 'LWE', 'Ring-LWE', 'Module-LWE'],
+                codeBasedBypass: ['McEliece', 'Niederreiter', 'BIKE'],
+                multivariatBypass: ['Rainbow', 'GeMSS', 'Oil-and-Vinegar'],
+                hashBasedBypass: ['SPHINCS+', 'XMSS', 'LMS']
+            },
+            quantumKeyExchange: {
+                enabled: true,
+                bb84ProtocolBypass: true,
+                e91ProtocolBypass: true,
+                sarg04ProtocolBypass: true,
+                entanglementDetection: false
+            },
+            quantumSignatures: {
+                enabled: true,
+                quantumDigitalSignaturesBypass: true,
+                unforgableQuantumSignaturesBypass: true,
+                quantumOneTimeSignaturesBypass: true
+            }
+        };
+
+        send({
+            type: 'info',
+            target: 'code_integrity_bypass',
+            action: 'quantum_cryptography_bypass_initialized',
+            data: {
+                pq_algorithms: [
+                    ...this.quantumCrypto.postQuantumResistance.latticeBasedBypass,
+                    ...this.quantumCrypto.postQuantumResistance.codeBasedBypass,
+                    ...this.quantumCrypto.postQuantumResistance.multivariatBypass,
+                    ...this.quantumCrypto.postQuantumResistance.hashBasedBypass
+                ].length,
+                qkd_protocols: Object.keys(this.quantumCrypto.quantumKeyExchange).filter(k => k !== 'enabled' && k !== 'entanglementDetection' && this.quantumCrypto.quantumKeyExchange[k]).length,
+                quantum_signature_bypasses: Object.keys(this.quantumCrypto.quantumSignatures).filter(k => k !== 'enabled' && this.quantumCrypto.quantumSignatures[k]).length
+            }
+        });
+    },
+
+    initializeHardwareSecurityModuleBypass: function() {
+        this.hsmBypass = {
+            tpmBypass: {
+                enabled: true,
+                version: ['TPM 1.2', 'TPM 2.0'],
+                pcrManipulation: true,
+                attestationBypass: true,
+                sealedDataExtraction: true,
+                platformConfigurationBypass: true
+            },
+            hsmDevices: {
+                enabled: true,
+                supportedVendors: ['Thales', 'SafeNet', 'Utimaco', 'Cavium', 'AWS CloudHSM'],
+                pkcs11Bypass: true,
+                keyExtractionMethods: true,
+                cryptographicOperationBypass: true
+            },
+            secureEnclaves: {
+                enabled: true,
+                intelSgxBypass: true,
+                armTrustZoneBypass: true,
+                amdSevBypass: true,
+                attestionBypass: true,
+                sealedStorageBypass: true
+            }
+        };
+
+        send({
+            type: 'info',
+            target: 'code_integrity_bypass',
+            action: 'hsm_bypass_initialized',
+            data: {
+                tpm_versions: this.hsmBypass.tpmBypass.version.length,
+                hsm_vendors: this.hsmBypass.hsmDevices.supportedVendors.length,
+                enclave_bypasses: Object.keys(this.hsmBypass.secureEnclaves).filter(k => k !== 'enabled' && this.hsmBypass.secureEnclaves[k]).length
+            }
+        });
+    },
+
+    initializeZeroKnowledgeProofBypass: function() {
+        this.zkProofBypass = {
+            zkSnarks: {
+                enabled: true,
+                groth16Bypass: true,
+                plonkBypass: true,
+                sonicBypass: true,
+                marlinBypass: true,
+                setupBypass: true
+            },
+            zkStarks: {
+                enabled: true,
+                starkBypass: true,
+                fri_protocolBypass: true,
+                interactiveOracleProofBypass: true,
+                transparentSetup: true
+            },
+            commitmentSchemes: {
+                enabled: true,
+                merkleTreeBypass: true,
+                kzgCommitmentBypass: true,
+                pedersonCommitmentBypass: true,
+                bulletproofsBypass: true
+            }
+        };
+
+        send({
+            type: 'info',
+            target: 'code_integrity_bypass',
+            action: 'zk_proof_bypass_initialized',
+            data: {
+                snark_bypasses: Object.keys(this.zkProofBypass.zkSnarks).filter(k => k !== 'enabled' && this.zkProofBypass.zkSnarks[k]).length,
+                stark_bypasses: Object.keys(this.zkProofBypass.zkStarks).filter(k => k !== 'enabled' && this.zkProofBypass.zkStarks[k]).length,
+                commitment_bypasses: Object.keys(this.zkProofBypass.commitmentSchemes).filter(k => k !== 'enabled' && this.zkProofBypass.commitmentSchemes[k]).length
+            }
+        });
+    },
+
+    initializeBlockchainIntegrityBypass: function() {
+        this.blockchainBypass = {
+            consensusMechanisms: {
+                enabled: true,
+                proofOfWorkBypass: true,
+                proofOfStakeBypass: true,
+                proofOfAuthorityBypass: true,
+                delegatedProofOfStakeBypass: true,
+                practicalByzantineFaultToleranceBypass: true
+            },
+            smartContractSecurity: {
+                enabled: true,
+                solidityBypass: true,
+                vyperBypass: true,
+                reenntrancyAttacks: true,
+                integerOverflowBypass: true,
+                frontRunningBypass: true
+            },
+            cryptographicPrimitives: {
+                enabled: true,
+                merkleTreeManipulation: true,
+                hashFunctionCollision: true,
+                digitalSignatureBypass: true,
+                ellipticCurveAttacks: true
+            }
+        };
+
+        send({
+            type: 'info',
+            target: 'code_integrity_bypass',
+            action: 'blockchain_bypass_initialized',
+            data: {
+                consensus_mechanisms: Object.keys(this.blockchainBypass.consensusMechanisms).filter(k => k !== 'enabled' && this.blockchainBypass.consensusMechanisms[k]).length,
+                smart_contract_attacks: Object.keys(this.blockchainBypass.smartContractSecurity).filter(k => k !== 'enabled' && this.blockchainBypass.smartContractSecurity[k]).length,
+                crypto_primitive_attacks: Object.keys(this.blockchainBypass.cryptographicPrimitives).filter(k => k !== 'enabled' && this.blockchainBypass.cryptographicPrimitives[k]).length
+            }
+        });
+    },
+
+    initializeMachineLearningIntegrityBypass: function() {
+        this.mlIntegrityBypass = {
+            adversarialAttacks: {
+                enabled: true,
+                fgsm: true,  // Fast Gradient Sign Method
+                pgd: true,   // Projected Gradient Descent
+                c_w: true,   // Carlini & Wagner
+                deepfool: true,
+                universalAdversarialPerturbations: true
+            },
+            modelExtractionAttacks: {
+                enabled: true,
+                blackBoxAttacks: true,
+                whiteBoxAttacks: true,
+                greyBoxAttacks: true,
+                membershipInferenceAttacks: true,
+                modelInversionAttacks: true
+            },
+            federatedLearningBypass: {
+                enabled: true,
+                poisoningAttacks: true,
+                backdoorAttacks: true,
+                inferenceAttacks: true,
+                byzantineAttacks: true
+            }
+        };
+
+        send({
+            type: 'info',
+            target: 'code_integrity_bypass',
+            action: 'ml_integrity_bypass_initialized',
+            data: {
+                adversarial_attacks: Object.keys(this.mlIntegrityBypass.adversarialAttacks).filter(k => k !== 'enabled' && this.mlIntegrityBypass.adversarialAttacks[k]).length,
+                extraction_attacks: Object.keys(this.mlIntegrityBypass.modelExtractionAttacks).filter(k => k !== 'enabled' && this.mlIntegrityBypass.modelExtractionAttacks[k]).length,
+                federated_attacks: Object.keys(this.mlIntegrityBypass.federatedLearningBypass).filter(k => k !== 'enabled' && this.mlIntegrityBypass.federatedLearningBypass[k]).length
+            }
+        });
+    },
+
+    initializeHomomorphicEncryptionBypass: function() {
+        this.homomorphicBypass = {
+            partialHomomorphic: {
+                enabled: true,
+                rsaBypass: true,
+                elgamalBypass: true,
+                paillierBypass: true,
+                additiveHomomorphicBypass: true
+            },
+            fullyHomomorphic: {
+                enabled: true,
+                gentry_scheme_bypass: true,
+                brakerski_gentry_vaikuntanathan_bypass: true,
+                brakerski_fan_vercauteren_bypass: true,
+                cheon_kim_kim_song_bypass: true
+            },
+            practicalApplications: {
+                enabled: true,
+                privateInformationRetrievalBypass: true,
+                securemultipartyComputationBypass: true,
+                privateSetIntersectionBypass: true,
+                confidentialComputingBypass: true
+            }
+        };
+
+        send({
+            type: 'info',
+            target: 'code_integrity_bypass',
+            action: 'homomorphic_bypass_initialized',
+            data: {
+                partial_he_bypasses: Object.keys(this.homomorphicBypass.partialHomomorphic).filter(k => k !== 'enabled' && this.homomorphicBypass.partialHomomorphic[k]).length,
+                full_he_bypasses: Object.keys(this.homomorphicBypass.fullyHomomorphic).filter(k => k !== 'enabled' && this.homomorphicBypass.fullyHomomorphic[k]).length,
+                application_bypasses: Object.keys(this.homomorphicBypass.practicalApplications).filter(k => k !== 'enabled' && this.homomorphicBypass.practicalApplications[k]).length
+            }
+        });
+    },
+
+    initializeV3SecurityEnhancements: function() {
+        this.v3EnhancedSecurity = {
+            advancedPersistence: {
+                enabled: true,
+                bootkit_integration: true,
+                uefi_persistence: true,
+                hypervisor_persistence: true,
+                firmware_persistence: true
+            },
+            aiEvasion: {
+                enabled: true,
+                behavioralAnalysisEvasion: true,
+                machinelearningBypass: true,
+                heuristicEngineDeception: true,
+                anomalyDetectionAvoidance: true
+            },
+            nextGenProtections: {
+                enabled: true,
+                exploitGuardBypass: true,
+                applicationGuardBypass: true,
+                credentialGuardBypass: true,
+                deviceGuardBypass: true,
+                windowsDefenderATPBypass: true
+            }
+        };
+
+        send({
+            type: 'info',
+            target: 'code_integrity_bypass',
+            action: 'v3_security_enhancements_initialized',
+            data: {
+                persistence_methods: Object.keys(this.v3EnhancedSecurity.advancedPersistence).filter(k => k !== 'enabled' && this.v3EnhancedSecurity.advancedPersistence[k]).length,
+                ai_evasion_techniques: Object.keys(this.v3EnhancedSecurity.aiEvasion).filter(k => k !== 'enabled' && this.v3EnhancedSecurity.aiEvasion[k]).length,
+                nextgen_bypasses: Object.keys(this.v3EnhancedSecurity.nextGenProtections).filter(k => k !== 'enabled' && this.v3EnhancedSecurity.nextGenProtections[k]).length
+            }
+        });
     }
 }

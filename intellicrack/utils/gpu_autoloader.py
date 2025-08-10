@@ -39,16 +39,16 @@ class GPUAutoLoader:
 
         # Check if Intel XPU should be skipped due to GIL issues
         skip_intel = os.environ.get("INTELLICRACK_SKIP_INTEL_XPU", "").lower() in ("1", "true", "yes")
-        
+
         logger.info("Starting GPU auto-detection...")
 
         methods = []
-        
+
         if not skip_intel:
             methods.append(self._try_intel_xpu)
         else:
             logger.info("Skipping Intel XPU due to environment variable")
-            
+
         methods.extend([
             self._try_nvidia_cuda,
             self._try_amd_rocm,
@@ -101,6 +101,7 @@ class GPUAutoLoader:
                     check=False,
                     capture_output=True,
                     text=True,
+                    timeout=5,  # 5 second timeout to prevent hanging
                 )
 
                 if result.returncode == 0 and "True" in result.stdout:
@@ -187,7 +188,7 @@ class GPUAutoLoader:
 
             self._torch = torch
 
-            if torch.cuda.is_available():
+            if hasattr(torch, 'cuda') and torch.cuda.is_available():
                 self.gpu_available = True
                 self.gpu_type = "nvidia_cuda"
                 self._device = torch.device("cuda")
@@ -274,7 +275,7 @@ class GPUAutoLoader:
             self.gpu_available = True
             self.gpu_type = "directml"
             self._torch = torch
-            self._device = torch.device("cpu")  # DirectML uses CPU device designation
+            self._device = torch.device("cpu") if torch else None  # DirectML uses CPU device designation
             self._device_string = "cpu"  # DirectML operations happen through CPU API
 
             self.gpu_info = {
@@ -295,17 +296,22 @@ class GPUAutoLoader:
             # Use thread-safe PyTorch import
             from ..utils.torch_gil_safety import safe_torch_import
             torch = safe_torch_import()
-            if torch is None:
-                return False
 
-            self._torch = torch
+            # In fallback mode (no PyTorch), just set CPU config without torch
+            self._torch = torch  # Will be None in fallback mode
             self.gpu_available = False
             self.gpu_type = "cpu"
-            self._device = torch.device("cpu")
+
+            # Only create torch device if torch is available
+            if torch is not None:
+                self._device = torch.device("cpu")
+            else:
+                self._device = None  # No torch available
+
             self._device_string = "cpu"
 
             self.gpu_info = {
-                "backend": "CPU",
+                "backend": "CPU (PyTorch fallback mode)" if torch is None else "CPU",
                 "cores": os.cpu_count(),
             }
 

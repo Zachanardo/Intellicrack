@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import ctypes
@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 # Check Windows availability and pefile
 if is_windows_available():
     try:
-        import pefile
+        from intellicrack.handlers.pefile_handler import pefile
 
         AVAILABLE = True
     except ImportError as e:

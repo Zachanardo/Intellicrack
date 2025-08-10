@@ -12,19 +12,20 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
 import logging
 import os
 import shutil
-from ...handlers.sqlite3_handler import sqlite3
 import threading
 import time
 import uuid
 from pathlib import Path
 from typing import Any
+
+from intellicrack.handlers.sqlite3_handler import sqlite3
 
 """
 Session Manager for C2 Infrastructure

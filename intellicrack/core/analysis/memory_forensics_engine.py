@@ -52,7 +52,7 @@ class MemoryArtifactType(Enum):
     INJECTED_CODE = "injected_code"
     HIDDEN_PROCESSES = "hidden_processes"
     ROOTKIT_ARTIFACTS = "rootkit_artifacts"
-    MALWARE_INDICATORS = "malware_indicators"
+    LICENSE_BYPASS_INDICATORS = "license_bypass_indicators"
     CREDENTIAL_MATERIAL = "credential_material"
     ENCRYPTED_REGIONS = "encrypted_regions"
 
@@ -174,7 +174,7 @@ class MemoryForensicsEngine:
     - Network connection forensics
     - Module and DLL analysis
     - Registry artifact extraction
-    - Malware detection and analysis
+    - License bypass detection and analysis
     - Credential extraction
     - Rootkit detection
     """
@@ -797,7 +797,7 @@ class MemoryForensicsEngine:
         """Check for suspicious process indicators"""
         indicators = []
 
-        # Check for common malware process names
+        # Check for common license bypass tool process names
         suspicious_names = [
             "svchost.exe",
             "explorer.exe",
@@ -809,7 +809,7 @@ class MemoryForensicsEngine:
             "wininit.exe",
         ]
 
-        # Check if process name is suspicious (common system process names used by malware)
+        # Check if process name is suspicious (common system process names used by cracks)
         if process.name.lower() in [name.lower() for name in suspicious_names]:
             # Additional checks for legitimate vs suspicious instances
             # Check process path and signature to distinguish from legitimate system processes
@@ -883,16 +883,16 @@ class MemoryForensicsEngine:
                 "keylogger",
                 "rootkit",
                 "backdoor",
-                "trojan",
-                "virus",
-                "malware",
-                "hack",
+                "keygen",
+                "patch",
                 "crack",
-                "exploit",
-                "inject",
-                "stealer",
-                "rat",
-                "bot",
+                "loader",
+                "bypass",
+                "activator",
+                "license",
+                "serial",
+                "emulator",
+                "unlocker",
                 "miner",
                 "dropper",
             ]
@@ -1180,7 +1180,7 @@ class MemoryForensicsEngine:
             # Get handles
             handles = []
             try:
-                import psutil
+                from intellicrack.handlers.psutil_handler import psutil
 
                 proc = psutil.Process(process_id)
 
@@ -1220,7 +1220,7 @@ class MemoryForensicsEngine:
             # Network connections
             connections = []
             try:
-                import psutil
+                from intellicrack.handlers.psutil_handler import psutil
 
                 proc = psutil.Process(process_id)
                 for conn in proc.connections():

@@ -16,38 +16,36 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
 import re
 from typing import Any, Dict, List, Optional
 
-# Import availability checks from common module
-from ..core.common_imports import (
-    CAPSTONE_AVAILABLE,
-    PEFILE_AVAILABLE,
-    PSUTIL_AVAILABLE,
-)
+# Import availability checks from correct handlers
+from intellicrack.handlers.capstone_handler import CAPSTONE_AVAILABLE
+from intellicrack.handlers.pefile_handler import PEFILE_AVAILABLE
+from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
 
 logger = logging.getLogger(__name__)
 
 
 # Import optional dependencies
 try:
-    import capstone
+    from intellicrack.handlers.capstone_handler import capstone
 except ImportError as e:
     logger.error("Import error in security_analysis: %s", e)
     capstone = None
 
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 except ImportError as e:
     logger.error("Import error in security_analysis: %s", e)
     psutil = None
 
 try:
-    import pefile
+    from intellicrack.handlers.pefile_handler import pefile
 except ImportError as e:
     logger.error("Import error in security_analysis: %s", e)
     pefile = None

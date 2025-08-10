@@ -6,7 +6,7 @@ Intellicrack Documentation
 **Intellicrack** - Advanced Binary Analysis & Security Research Platform
 
 .. warning::
-   
+
    This tool is designed for **defensive security research** only. It helps software developers
    identify and strengthen vulnerabilities in their own licensing and protection systems.
    Use only in controlled, isolated environments for authorized security assessment.
@@ -32,11 +32,8 @@ Key Features
 .. toctree::
    :maxdepth: 2
    :caption: API Reference
-   :glob:
 
    modules
-   intellicrack
-   intellicrack.*
 
 Indices and Tables
 ==================
@@ -58,6 +55,6 @@ License
 This project is licensed under the terms specified in the LICENSE file.
 
 .. note::
-   
+
    This documentation is automatically generated from the source code.
    For the most up-to-date information, refer to the source code and docstrings.

@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -267,7 +267,7 @@ class NetworkAnalysisPlugin:
             connection_log = []
 
             try:
-                import psutil
+                from intellicrack.handlers.psutil_handler import psutil
 
                 initial_connections = set()
                 for conn in psutil.net_connections(kind="inet"):
@@ -343,7 +343,7 @@ class NetworkAnalysisPlugin:
         }
 
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             # Get current network connections
             connections = psutil.net_connections(kind="inet")
@@ -440,7 +440,7 @@ class NetworkAnalysisPlugin:
         try:
             import socket
 
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             # Get network connections
             connections = psutil.net_connections(kind="inet")

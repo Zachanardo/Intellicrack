@@ -21,7 +21,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 from pathlib import Path
 
@@ -107,7 +107,7 @@ def get_frida_scripts_dir() -> Path:
         Path: Absolute path to the Frida scripts directory
 
     """
-    return Path(get_resource_path("plugins/frida_scripts"))
+    return Path(get_resource_path("intellicrack/intellicrack/scripts/frida"))
 
 
 def get_ghidra_scripts_dir() -> Path:
@@ -117,7 +117,7 @@ def get_ghidra_scripts_dir() -> Path:
         Path: Absolute path to the Ghidra scripts directory
 
     """
-    return Path(get_resource_path("plugins/ghidra_scripts"))
+    return Path(get_resource_path("intellicrack/intellicrack/scripts/ghidra"))
 
 
 def get_plugin_modules_dir() -> Path:

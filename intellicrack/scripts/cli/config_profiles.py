@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 #!/usr/bin/env python3
@@ -292,9 +292,9 @@ def create_default_profiles():
     full_analysis.output_format = "html"
     manager.save_profile(full_analysis)
 
-    # Malware analysis profile
-    malware = ConfigProfile("malware_analysis", "Specialized malware analysis")
-    malware.analysis_options = [
+    # Protection bypass analysis profile
+    bypass_analysis = ConfigProfile("bypass_analysis", "Specialized license bypass analysis")
+    bypass_analysis.analysis_options = [
         "static",
         "dynamic",
         "strings",
@@ -302,13 +302,13 @@ def create_default_profiles():
         "protection",
         "signature",
     ]
-    malware.settings = {
+    bypass_analysis.settings = {
         "timeout": 300,
         "sandbox": True,
         "network_monitoring": True,
         "behavioral_analysis": True,
     }
-    manager.save_profile(malware)
+    manager.save_profile(bypass_analysis)
 
     # License analysis profile
     license_check = ConfigProfile("license_check", "Focus on license and protection mechanisms")

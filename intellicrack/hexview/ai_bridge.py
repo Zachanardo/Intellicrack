@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -539,7 +539,7 @@ class AIBinaryBridge:
                 messages = [
                     LLMMessage(
                         role="system",
-                        content="You are an autonomous binary analysis expert specialized in reverse engineering and malware analysis.",
+                        content="You are an autonomous binary analysis expert specialized in reverse engineering and license protection analysis.",
                     ),
                     LLMMessage(role="user", content=prompt),
                 ]
@@ -1423,7 +1423,7 @@ class AIBinaryBridge:
         # Enhanced fallback analysis (better than mock)
         query_lower = query.lower() if query else ""
         is_security_focused = any(
-            word in query_lower for word in ["security", "vulnerability", "exploit", "malware"]
+            word in query_lower for word in ["security", "vulnerability", "exploit", "license", "protection"]
         )
         is_structure_focused = any(
             word in query_lower for word in ["structure", "format", "header", "metadata"]

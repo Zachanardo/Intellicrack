@@ -13,13 +13,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
 from datetime import datetime
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QApplication,
     QCheckBox,
     QComboBox,
@@ -41,7 +41,6 @@ from intellicrack.ui.dialogs.common_imports import (
     QWizardPage,
     pyqtSignal,
 )
-
 from intellicrack.logger import logger
 
 """
@@ -60,7 +59,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 

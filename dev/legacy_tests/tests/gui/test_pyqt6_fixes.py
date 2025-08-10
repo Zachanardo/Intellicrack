@@ -45,14 +45,14 @@ except ImportError as e:
 
 # Test 2: Widget imports
 try:
-    
+
     print("✓ QAction imported from QtGui")
 except ImportError as e:
     print(f"✗ Failed to import QAction: {e}")
 
 # Test 3: QFrame enums
 try:
-    
+
     box = QFrame.Shape.Box
     raised = QFrame.Shadow.Raised
     print("✓ QFrame.Shape.Box and QFrame.Shadow.Raised work")
@@ -61,7 +61,7 @@ except Exception as e:
 
 # Test 4: QDialogButtonBox enums
 try:
-    
+
     ok = QDialogButtonBox.StandardButton.Ok
     cancel = QDialogButtonBox.StandardButton.Cancel
     print("✓ QDialogButtonBox.StandardButton.Ok and .Cancel work")
@@ -70,7 +70,7 @@ except Exception as e:
 
 # Test 5: QSizePolicy enums
 try:
-    
+
     minimum = QSizePolicy.Policy.Minimum
     print("✓ QSizePolicy.Policy.Minimum works")
 except Exception as e:
@@ -78,7 +78,7 @@ except Exception as e:
 
 # Test 6: QAbstractItemView enums
 try:
-    
+
     single = QAbstractItemView.SelectionMode.SingleSelection
     print("✓ QAbstractItemView.SelectionMode.SingleSelection works")
 except Exception as e:
@@ -93,7 +93,7 @@ except Exception as e:
 
 # Test 8: QRegularExpression
 try:
-    
+
     regex = QRegularExpression("test")
     print("✓ QRegularExpression imported and created")
 except Exception as e:
@@ -101,7 +101,7 @@ except Exception as e:
 
 # Test 9: WebEngine
 try:
-    
+
     print("✓ QWebEngineView imported successfully")
 except ImportError as e:
     print(f"✗ Failed to import QWebEngineView: {e}")

@@ -15,16 +15,25 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
 import os
 
-from intellicrack.ui.dialogs.common_imports import (
-    QDateTime, QFileInfo, QGridLayout, QGroupBox,
-    QHBoxLayout, QLabel, QPushButton, Qt,
-    QTextEdit, QVBoxLayout, QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QDateTime,
+    QFileInfo,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    Qt,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 logger = logging.getLogger(__name__)

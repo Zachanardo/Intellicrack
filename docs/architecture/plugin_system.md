@@ -17,7 +17,7 @@ The Intellicrack plugin system provides a flexible and secure way to extend the 
 ### Plugin Structure
 
 ```python
-intellicrack/plugins/
+intellicrack/intellicrack/plugins/
 ├── __init__.py
 ├── plugin_system.py      # Core plugin manager
 ├── custom_modules/       # User plugins directory

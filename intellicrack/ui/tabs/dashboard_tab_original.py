@@ -17,7 +17,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
@@ -659,7 +659,7 @@ class DashboardTab(BaseTab):
         """Populate the recent files list"""
         # Simulated recent files - in real implementation, this would load from settings
         recent_files = [
-            "C:\\samples\\malware1.exe",
+            "C:\\samples\\protected_app1.exe",
             "C:\\samples\\target_app.exe",
             "/home/user/binaries/test.so",
             "C:\\analysis\\crackme.exe",
@@ -952,7 +952,7 @@ class DashboardTab(BaseTab):
 
         else:
             # Multiple files - ask user what to do
-            from intellicrack.ui.dialogs.common_imports import QMenu
+            from intellicrack.handlers.pyqt6_handler import QMenu
 
             menu = QMenu(self)
             menu.addAction(

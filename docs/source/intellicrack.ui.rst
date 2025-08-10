@@ -15,14 +15,6 @@ Subpackages
 Submodules
 ----------
 
-intellicrack.ui.common\_imports module
---------------------------------------
-
-.. automodule:: intellicrack.ui.common_imports
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 intellicrack.ui.comprehensive\_integration module
 -------------------------------------------------
 
@@ -35,14 +27,6 @@ intellicrack.ui.dashboard\_manager module
 -----------------------------------------
 
 .. automodule:: intellicrack.ui.dashboard_manager
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-intellicrack.ui.dialog\_utils module
-------------------------------------
-
-.. automodule:: intellicrack.ui.dialog_utils
    :members:
    :show-inheritance:
    :undoc-members:
@@ -87,13 +71,6 @@ intellicrack.ui.main\_app module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.ui.main\_app\_pre\_name\_fix module
-------------------------------------------------
-
-.. automodule:: intellicrack.ui.main_app_pre_name_fix
-   :members:
-   :show-inheritance:
-   :undoc-members:
 
 intellicrack.ui.main\_window module
 -----------------------------------

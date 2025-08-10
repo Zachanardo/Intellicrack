@@ -44,14 +44,14 @@ This document showcases the new CLI enhancements implemented for Intellicrack, d
 ### Example 1: Interactive Analysis Session
 
 ```bash
-$ python scripts/cli/interactive_mode.py
+$ python intellicrack/intellicrack/scripts/cli/interactive_mode.py
 
 ╔══════════════════════════════════════════════════════════════════╗
 ║              🚀 Intellicrack Interactive Mode v2.0               ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-intellicrack> load malware_sample.exe
-✓ Loaded: malware_sample.exe
+intellicrack> load protected_sample.exe
+✓ Loaded: protected_sample.exe
 
 intellicrack> analyze
 [Progress bar animation]
@@ -73,33 +73,33 @@ intellicrack> export results.json
 
 ```bash
 # Create a custom profile
-$ python scripts/cli/config_profiles.py
+$ python intellicrack/intellicrack/scripts/cli/config_profiles.py
 > 2  # Create new profile
-Profile name: quick_malware_scan
+Profile name: quick_protection_scan
 # ... configure options ...
 
 # Use the profile in analysis
-$ python scripts/cli/main.py --profile quick_malware_scan suspicious.exe
+$ python intellicrack/intellicrack/scripts/cli/main.py basic-analyze suspicious.exe
 ```
 
 ### Example 3: Pipeline Processing
 
 ```bash
 # Analyze multiple files and extract high-risk functions
-$ ls *.exe | python scripts/cli/pipeline.py \
+$ ls *.exe | python intellicrack/intellicrack/scripts/cli/pipeline.py \
     "analyze | filter imports CreateRemoteThread,VirtualAllocEx | transform csv | output risky_functions.csv"
 
 # Generate a security audit report
-$ python scripts/cli/pipeline.py -i application.exe \
+$ python intellicrack/intellicrack/scripts/cli/pipeline.py -i application.exe \
     "analyze | filter vulnerability | transform html | output security_report.html"
 ```
 
 ### Example 4: Progress-Enabled Analysis
 
 ```bash
-$ python scripts/cli/enhanced_runner.py
+$ python intellicrack/intellicrack/scripts/cli/enhanced_runner.py
 
-Enter binary path: /samples/packed_malware.bin
+Enter binary path: /samples/packed_software.bin
 
 Select operations to perform:
   Run Static Analysis? (Y/n): y
@@ -149,14 +149,14 @@ Analysis Summary
 ### Security Auditing
 ```bash
 # Comprehensive security audit with report
-python scripts/cli/enhanced_runner.py --profile security_audit target.exe
+python intellicrack/intellicrack/scripts/cli/enhanced_runner.py --profile security_audit target.exe
 ```
 
 ### Batch Processing
 ```bash
 # Process all executables in a directory
-for file in /malware_samples/*.exe; do
-    python scripts/cli/pipeline.py -i "$file" \
+for file in /protected_samples/*.exe; do
+    python intellicrack/intellicrack/scripts/cli/pipeline.py -i "$file" \
         "analyze | filter protection | output ${file}.protections.json"
 done
 ```
@@ -164,14 +164,14 @@ done
 ### License Analysis
 ```bash
 # Find all license-related functions
-python scripts/cli/pipeline.py -i commercial_app.exe \
+python intellicrack/intellicrack/scripts/cli/pipeline.py -i commercial_app.exe \
     "analyze | filter imports license,activation,serial | transform table"
 ```
 
 ### Vulnerability Research
 ```bash
 # Interactive vulnerability exploration
-python scripts/cli/interactive_mode.py
+python intellicrack/intellicrack/scripts/cli/interactive_mode.py
 > load vulnerable_app.exe
 > find_rop_gadgets
 > show gadgets type:jmp_esp
@@ -218,22 +218,22 @@ child_profile.add_options(["additional_analysis"])
 
 2. **Try Interactive Mode**:
    ```bash
-   python scripts/cli/interactive_mode.py
+   python intellicrack/intellicrack/scripts/cli/interactive_mode.py
    ```
 
 3. **Run with Progress**:
    ```bash
-   python scripts/cli/enhanced_runner.py
+   python intellicrack/intellicrack/scripts/cli/enhanced_runner.py
    ```
 
 4. **Create Profiles**:
    ```bash
-   python scripts/cli/config_profiles.py
+   python intellicrack/intellicrack/scripts/cli/config_profiles.py
    ```
 
 5. **Build Pipelines**:
    ```bash
-   python scripts/cli/pipeline.py -h  # See examples
+   python intellicrack/intellicrack/scripts/cli/pipeline.py -h  # See examples
    ```
 
 ## 🔮 Future Enhancements

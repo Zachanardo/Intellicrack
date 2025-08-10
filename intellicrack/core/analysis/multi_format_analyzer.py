@@ -20,7 +20,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -49,7 +49,7 @@ from ...utils.protection.protection_utils import calculate_entropy
 
 class BinaryInfo:
     """Container for binary file information used in script generation."""
-    
+
     def __init__(self, file_path: str = "", file_size: int = 0, file_type: str = "",
                  architecture: str = "", endianness: str = "", entry_point: int = 0,
                  sections: list = None, imports: dict = None, exports: dict = None,

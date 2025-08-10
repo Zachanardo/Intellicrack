@@ -26,18 +26,37 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
-from intellicrack.ui.dialogs.common_imports import (
-    QApplication, QCheckBox, QComboBox, QDialog, QDoubleSpinBox,
-    QFileDialog, QFont, QFormLayout, QHBoxLayout, QLabel, QLineEdit,
-    QListWidget, QListWidgetItem, QMessageBox, QProgressBar,
-    QPushButton, QSpinBox, QSplitter, Qt, QTabWidget, QTextEdit,
-    QThread, QVBoxLayout, QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDoubleSpinBox,
+    QFileDialog,
+    QFont,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QSpinBox,
+    QSplitter,
+    Qt,
+    QTabWidget,
+    QTextEdit,
+    QThread,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
-
 
 # Local imports
 try:
@@ -1893,7 +1912,7 @@ if __name__ == "__main__":
     # For testing the dialog standalone
     import sys
 
-    
+
 
     app = QApplication(sys.argv)
     dialog = LLMConfigDialog()

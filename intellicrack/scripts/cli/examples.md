@@ -7,10 +7,10 @@ This document demonstrates the 7 new advanced features added to the Intellicrack
 ### 1. Launch GUI with Results
 ```bash
 # Analyze a binary and launch GUI with results
-python scripts/cli/main.py malware.exe --comprehensive --launch-gui
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe --comprehensive --launch-gui
 
 # Combine with other analysis options
-python scripts/cli/main.py target.exe \
+python intellicrack/intellicrack/scripts/cli/main.py target.exe \
   --vulnerability-scan \
   --detect-protections \
   --launch-gui
@@ -19,7 +19,7 @@ python scripts/cli/main.py target.exe \
 ### 2. Export to GUI Format
 ```bash
 # Export analysis results for later GUI viewing
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --comprehensive \
   --gui-export analysis_results.gui.json
 
@@ -30,13 +30,13 @@ python scripts/cli/main.py binary.exe \
 ### 3. Visual CFG Generation
 ```bash
 # Generate visual control flow graph
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --cfg-analysis \
   --visual-cfg \
   --visual-cfg-output my_cfg.png
 
 # Generate high-res CFG for presentation
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --cfg-analysis \
   --visual-cfg \
   --visual-cfg-output presentation_cfg.svg
@@ -45,12 +45,12 @@ python scripts/cli/main.py binary.exe \
 ### 4. Interactive Hex Editor
 ```bash
 # Launch hex editor after analysis
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --section-analysis \
   --interactive-hex
 
 # Quick hex view of suspicious file
-python scripts/cli/main.py suspicious.bin \
+python intellicrack/intellicrack/scripts/cli/main.py suspicious.bin \
   --skip-basic \
   --interactive-hex
 ```
@@ -60,12 +60,12 @@ python scripts/cli/main.py suspicious.bin \
 ### 5. Developer Debug Mode
 ```bash
 # Enable detailed debug tracing
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --debug-mode \
   --symbolic-execution
 
 # Debug with verbose output
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --debug-mode \
   --verbose \
   --timeout 600
@@ -74,12 +74,12 @@ python scripts/cli/main.py binary.exe \
 ### 6. Performance Profiling
 ```bash
 # Profile performance of analysis
-python scripts/cli/main.py large_binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py large_binary.exe \
   --comprehensive \
   --profile-performance
 
 # Profile specific expensive operations
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --symbolic-execution \
   --concolic-execution \
   --profile-performance \
@@ -89,12 +89,12 @@ python scripts/cli/main.py binary.exe \
 ### 7. Memory Usage Tracking
 ```bash
 # Track memory usage during analysis
-python scripts/cli/main.py huge_binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py huge_binary.exe \
   --comprehensive \
   --memory-trace
 
 # Memory optimization with tracking
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --memory-optimized \
   --memory-trace \
   --gpu-accelerate
@@ -104,21 +104,21 @@ python scripts/cli/main.py binary.exe \
 
 ### Security Assessment with Visual Output
 ```bash
-python scripts/cli/main.py malware.exe \
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --comprehensive \
   --vulnerability-scan \
   --detect-protections \
   --cfg-analysis \
   --visual-cfg \
-  --visual-cfg-output malware_flow.png \
-  --gui-export malware_analysis.gui.json \
+  --visual-cfg-output protection_flow.png \
+  --gui-export protection_analysis.gui.json \
   --format pdf \
-  --output malware_report.pdf
+  --output protection_report.pdf
 ```
 
 ### Performance-Optimized Batch Analysis
 ```bash
-python scripts/cli/main.py \
+python intellicrack/intellicrack/scripts/cli/main.py \
   --batch samples.txt \
   --comprehensive \
   --gpu-accelerate \
@@ -130,7 +130,7 @@ python scripts/cli/main.py \
 
 ### Debug Mode for Development
 ```bash
-python scripts/cli/main.py test_binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py test_binary.exe \
   --debug-mode \
   --profile-performance \
   --memory-trace \
@@ -142,21 +142,21 @@ python scripts/cli/main.py test_binary.exe \
 ### Interactive Analysis Session
 ```bash
 # Start with basic analysis
-python scripts/cli/main.py unknown.exe --quick
+python intellicrack/intellicrack/scripts/cli/main.py unknown.exe --quick
 
 # If suspicious, do deeper analysis with visual output
-python scripts/cli/main.py unknown.exe \
+python intellicrack/intellicrack/scripts/cli/main.py unknown.exe \
   --license-analysis \
   --detect-protections \
   --cfg-analysis \
   --visual-cfg
 
 # Launch hex editor to inspect specific sections
-python scripts/cli/main.py unknown.exe \
+python intellicrack/intellicrack/scripts/cli/main.py unknown.exe \
   --interactive-hex
 
 # Finally, launch full GUI for detailed exploration
-python scripts/cli/main.py unknown.exe \
+python intellicrack/intellicrack/scripts/cli/main.py unknown.exe \
   --comprehensive \
   --launch-gui
 ```
@@ -169,7 +169,7 @@ python scripts/cli/main.py unknown.exe \
 # ci-security-check.sh
 
 # Run analysis with performance tracking
-python scripts/cli/main.py build/app.exe \
+python intellicrack/intellicrack/scripts/cli/main.py build/app.exe \
   --vulnerability-scan \
   --detect-protections \
   --profile-performance \
@@ -198,7 +198,7 @@ fi
 # Enable all debugging features
 export INTELLICRACK_DEBUG=1
 
-python scripts/cli/main.py dev_binary.exe \
+python intellicrack/intellicrack/scripts/cli/main.py dev_binary.exe \
   --debug-mode \
   --profile-performance \
   --memory-trace \

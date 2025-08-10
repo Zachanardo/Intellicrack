@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -53,14 +53,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
 try:
-    import numpy as np
-
-    NUMPY_AVAILABLE = True
+    from intellicrack.handlers.numpy_handler import HAS_NUMPY as NUMPY_AVAILABLE
+    from intellicrack.handlers.numpy_handler import numpy as np
 except ImportError as e:
     logger.error("Import error in cfg_explorer: %s", e)
     np = None
@@ -85,16 +84,23 @@ except ImportError as e:
     nx = _MockNetworkX()
 
 try:
-    import matplotlib.pyplot as plt
+    from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, plt
 
-    MATPLOTLIB_AVAILABLE = True
+    MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 except ImportError as e:
     logger.error("Import error in cfg_explorer: %s", e)
     MATPLOTLIB_AVAILABLE = False
+    HAS_MATPLOTLIB = False
+    plt = None
 
 try:
-    import capstone
-    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+    from intellicrack.handlers.capstone_handler import (
+        CS_ARCH_X86,
+        CS_MODE_32,
+        CS_MODE_64,
+        Cs,
+        capstone,
+    )
 
     CAPSTONE_AVAILABLE = True
 except ImportError as e:
@@ -104,7 +110,7 @@ except ImportError as e:
     CAPSTONE_AVAILABLE = False
 
 try:
-    import pefile
+    from intellicrack.handlers.pefile_handler import pefile
 
     PEFILE_AVAILABLE = True
 except ImportError as e:

@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Console Widget for displaying logs and output
 
@@ -21,11 +21,23 @@ A professional console widget with syntax highlighting, filtering, and search ca
 
 from datetime import datetime
 
-from intellicrack.ui.dialogs.common_imports import (
-    QCheckBox, QColor, QComboBox, QFont, QHBoxLayout,
-    QLineEdit, QPushButton, QRegularExpression,
-    QSyntaxHighlighter, Qt, QTextCharFormat, QTextCursor,
-    QTextEdit, QVBoxLayout, QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QCheckBox,
+    QColor,
+    QComboBox,
+    QFont,
+    QHBoxLayout,
+    QLineEdit,
+    QPushButton,
+    QRegularExpression,
+    QSyntaxHighlighter,
+    Qt,
+    QTextCharFormat,
+    QTextCursor,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 
@@ -329,7 +341,7 @@ class ConsoleWidget(QWidget):
 
     def export_log(self):
         """Export console log to file"""
-        from intellicrack.ui.dialogs.common_imports import QFileDialog
+        from intellicrack.handlers.pyqt6_handler import QFileDialog
 
         filename, _ = QFileDialog.getSaveFileName(
             self,

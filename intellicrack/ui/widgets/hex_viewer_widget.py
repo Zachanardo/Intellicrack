@@ -10,13 +10,35 @@ Licensed under GNU General Public License v3.0
 import os
 import struct
 
-from intellicrack.ui.dialogs.common_imports import (
-    QBrush, QCheckBox, QColor, QComboBox, QFileDialog,
-    QFont, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-    QMessageBox, QModelIndex, QPushButton, QSpinBox,
-    QSplitter, Qt, QTableWidget, QTableWidgetItem,
-    QTextCharFormat, QTextCursor, QTextEdit, QThread,
-    QTreeView, QVBoxLayout, QWidget, pyqtSignal, pyqtSlot,
+from intellicrack.handlers.pyqt6_handler import (
+    QApplication,
+    QBrush,
+    QCheckBox,
+    QColor,
+    QComboBox,
+    QFileDialog,
+    QFont,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QModelIndex,
+    QPushButton,
+    QSpinBox,
+    QSplitter,
+    Qt,
+    QTableWidget,
+    QTableWidgetItem,
+    QTextCharFormat,
+    QTextCursor,
+    QTextEdit,
+    QThread,
+    QTreeView,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
+    pyqtSlot,
 )
 
 from ...utils.logger import get_logger
@@ -874,8 +896,8 @@ class HexViewerWidget(QWidget):
 
     def _show_context_menu(self, position):
         """Show context menu for hex display"""
-        from intellicrack.ui.dialogs.common_imports import QAction, QApplication, QFileDialog, QMenu
-        
+        from intellicrack.handlers.pyqt6_handler import QAction, QMenu
+
 
         menu = QMenu(self)
 
@@ -1083,7 +1105,7 @@ class HexViewerWidget(QWidget):
 
             def export_strings():
                 """Export strings to file"""
-                
+
 
                 file_path, _ = QFileDialog.getSaveFileName(
                     dialog,
@@ -1102,7 +1124,7 @@ class HexViewerWidget(QWidget):
 
             def copy_all():
                 """Copy all results to clipboard"""
-                
+
                 clipboard = QApplication.clipboard()
                 clipboard.setText(results_text.toPlainText())
                 stats_label.setText("Results copied to clipboard")
@@ -1276,7 +1298,7 @@ class HexViewerWidget(QWidget):
 
     def _copy_hex_selection(self):
         """Copy selected hex to clipboard"""
-        
+
         cursor = self.hex_display.textCursor()
         selected_text = cursor.selectedText()
         if selected_text:
@@ -1287,7 +1309,7 @@ class HexViewerWidget(QWidget):
 
     def _copy_ascii_selection(self):
         """Copy ASCII representation to clipboard"""
-        
+
         cursor = self.ascii_display.textCursor()
         selected_text = cursor.selectedText()
         if selected_text:

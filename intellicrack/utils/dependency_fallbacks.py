@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Dependency fallbacks for Intellicrack
 Provides safe imports and fallback implementations when dependencies are missing or incompatible
@@ -35,9 +35,10 @@ def safe_import_numpy():
     """Safely import numpy with fallback."""
     global NUMPY_AVAILABLE
     try:
-        import numpy as np
+        from intellicrack.handlers.numpy_handler import HAS_NUMPY
+        from intellicrack.handlers.numpy_handler import numpy as np
 
-        NUMPY_AVAILABLE = True
+        NUMPY_AVAILABLE = HAS_NUMPY
         return np
     except ImportError:
         logger.warning("numpy not available - using fallback")
@@ -98,10 +99,13 @@ def safe_import_lief():
     """Safely import lief with fallback."""
     global LIEF_AVAILABLE
     try:
-        import lief
+        from intellicrack.handlers.lief_handler import HAS_LIEF, lief
 
-        LIEF_AVAILABLE = True
-        return lief
+        LIEF_AVAILABLE = HAS_LIEF
+        if HAS_LIEF:
+            return lief
+        else:
+            raise ImportError("LIEF not available")
     except ImportError:
         logger.warning("lief not available - using fallback")
         LIEF_AVAILABLE = False
@@ -112,8 +116,14 @@ def safe_import_pyelftools():
     """Safely import pyelftools with fallback."""
     global PYELFTOOLS_AVAILABLE
     try:
-        from elftools.common.py3compat import bytes2str, maxint
-        from elftools.elf.elffile import ELFFile
+        from intellicrack.handlers.pyelftools_handler import (
+            HAS_PYELFTOOLS,
+            ELFFile,
+            bytes2str,
+            maxint,
+        )
+        if not HAS_PYELFTOOLS:
+            raise ImportError("pyelftools not available")
 
         # Test that imports work by using them
         test_bytes = b"test"

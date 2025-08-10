@@ -3,8 +3,7 @@
 import os
 import time
 
-import psutil
-
+from intellicrack.handlers.psutil_handler import psutil
 from intellicrack.logger import logger
 
 from ...utils.constants import ADOBE_PROCESSES
@@ -27,14 +26,12 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
 try:
-    import frida  # pylint: disable=import-error
-
-    HAS_FRIDA = True
+    from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
 except ImportError as e:
     logger.error("Import error in adobe_full_auto_injector: %s", e)
     HAS_FRIDA = False

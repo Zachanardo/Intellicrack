@@ -18,7 +18,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -27,8 +27,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from ...utils.system.file_resolution import file_resolver
-from .common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT,
     QCheckBox,
     QDialog,
@@ -49,13 +48,13 @@ from .common_imports import (
     QTableWidgetItem,
     QTextEdit,
     QThread,
-    QTimer,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     pyqtSignal,
 )
 
+from ...utils.system.file_resolution import file_resolver
 
 logger = logging.getLogger(__name__)
 

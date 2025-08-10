@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Import checking utilities for validating module availability.
 
@@ -26,7 +26,7 @@ from intellicrack.logger import logger
 
 # Binary analysis libraries
 try:
-    import pefile
+    from intellicrack.handlers.pefile_handler import pefile
 
     PEFILE_AVAILABLE = True
 except ImportError as e:
@@ -35,16 +35,17 @@ except ImportError as e:
     pefile = None
 
 try:
-    import lief
+    from intellicrack.handlers.lief_handler import HAS_LIEF, lief
 
-    LIEF_AVAILABLE = True
+    LIEF_AVAILABLE = HAS_LIEF
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
     LIEF_AVAILABLE = False
+    HAS_LIEF = False
     lief = None
 
 try:
-    import capstone
+    from intellicrack.handlers.capstone_handler import capstone
 
     CAPSTONE_AVAILABLE = True
 except ImportError as e:
@@ -53,20 +54,19 @@ except ImportError as e:
     capstone = None
 
 try:
-    from elftools.elf import elffile
-    # Import indirectly to avoid Sphinx documentation issues
-    ELFFile = getattr(elffile, 'ELFFile', None) if 'elffile' in locals() else None
+    from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile, elffile
 
-    PYELFTOOLS_AVAILABLE = True
+    PYELFTOOLS_AVAILABLE = HAS_PYELFTOOLS
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
     PYELFTOOLS_AVAILABLE = False
+    HAS_PYELFTOOLS = False
     ELFFile = None
     elffile = None
 
 # System monitoring
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:
@@ -76,27 +76,29 @@ except ImportError as e:
 
 # Instrumentation
 try:
-    import frida
+    from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
 
-    FRIDA_AVAILABLE = True
+    FRIDA_AVAILABLE = HAS_FRIDA
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
     FRIDA_AVAILABLE = False
+    HAS_FRIDA = False
     frida = None
 
 # Visualization
 try:
-    import matplotlib.pyplot as plt
+    from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, plt
 
-    MATPLOTLIB_AVAILABLE = True
+    MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
     MATPLOTLIB_AVAILABLE = False
+    HAS_MATPLOTLIB = False
     plt = None
 
 # PDF generation
 try:
-    import pdfkit
+    from intellicrack.handlers.pdfkit_handler import pdfkit
 
     PDFKIT_AVAILABLE = True
 except ImportError as e:
@@ -117,7 +119,7 @@ try:
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    from ...handlers.tensorflow_handler import tensorflow as tf
+    from intellicrack.handlers.tensorflow_handler import tensorflow as tf
 
     # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
     tf.config.set_visible_devices([], "GPU")
@@ -137,9 +139,8 @@ except ImportError as e:
 
 # Numerical computing
 try:
-    import numpy as np
-
-    HAS_NUMPY = True
+    from intellicrack.handlers.numpy_handler import HAS_NUMPY
+    from intellicrack.handlers.numpy_handler import numpy as np
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)
     HAS_NUMPY = False

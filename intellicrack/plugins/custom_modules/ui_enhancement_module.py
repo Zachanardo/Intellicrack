@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 # Standard library imports
@@ -24,18 +24,17 @@ import subprocess
 import sys
 import threading
 import time
-import tkinter as tk
 import webbrowser
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from tkinter import filedialog, messagebox, scrolledtext, ttk
 from typing import Any
 
 # Third-party imports
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
+from intellicrack.handlers.matplotlib_handler import Figure, FigureCanvasTkAgg
+from intellicrack.handlers.tkinter_handler import filedialog, messagebox, scrolledtext, ttk
+from intellicrack.handlers.tkinter_handler import tkinter as tk
 
 """
 UI Enhancement Module
@@ -2418,7 +2417,7 @@ class UIEnhancementModule:
             self.file_explorer.refresh_tree()
 
             # Update memory usage
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             memory_percent = psutil.virtual_memory().percent
             self.memory_label.config(text=f"Memory: {memory_percent:.1f}%")

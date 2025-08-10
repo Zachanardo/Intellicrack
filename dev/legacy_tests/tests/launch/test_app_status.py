@@ -22,7 +22,7 @@ def test_app():
         from intellicrack.main import main
 
         # Create a timer to close the app after a few seconds
-        
+
 
         def auto_close():
             print("\n✓ Application is running successfully!")

@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import functools
@@ -23,7 +23,6 @@ import logging
 import mmap
 import multiprocessing as mp
 import pickle
-from ...handlers.sqlite3_handler import sqlite3
 import threading
 import time
 import tracemalloc
@@ -37,8 +36,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-import psutil
+from intellicrack.handlers.numpy_handler import numpy as np
+from intellicrack.handlers.psutil_handler import psutil
+from intellicrack.handlers.sqlite3_handler import sqlite3
 
 """
 Performance Optimizer for Intellicrack Framework
@@ -53,13 +53,7 @@ License: GPL v3
 """
 
 # GPU acceleration support
-try:
-    import torch
-    import torch.cuda
-
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
+from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
 
 try:
     import cupy

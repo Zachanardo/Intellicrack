@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -23,7 +23,7 @@ import os
 import re
 
 # Import common PyQt6 components
-from .common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT,
     QAction,
     QCheckBox,
@@ -45,12 +45,12 @@ from .common_imports import (
     QSpinBox,
     QStatusBar,
     QSyntaxHighlighter,
+    Qt,
     QTextCharFormat,
     QTextCursor,
     QTextDocument,
     QToolBar,
     QVBoxLayout,
-    Qt,
     logger,
     pyqtSignal,
 )
@@ -74,77 +74,69 @@ if HAS_PYQT and QSyntaxHighlighter:
             keyword_format.setColor(QColor(85, 85, 255))
             keyword_format.setFontWeight(QFont.Weight.Bold)
 
-        # Define syntax highlighting rules
-        self.highlighting_rules = []
+            keywords = [
+                "and",
+                "as",
+                "assert",
+                "break",
+                "class",
+                "continue",
+                "def",
+                "del",
+                "elif",
+                "else",
+                "except",
+                "exec",
+                "finally",
+                "for",
+                "from",
+                "global",
+                "if",
+                "import",
+                "in",
+                "is",
+                "lambda",
+                "not",
+                "or",
+                "pass",
+                "print",
+                "raise",
+                "return",
+                "try",
+                "while",
+                "with",
+                "yield",
+                "True",
+                "False",
+                "None",
+            ]
 
-        # Python keywords
-        keyword_format = QTextCharFormat()
-        keyword_format.setColor(QColor(85, 85, 255))
-        keyword_format.setFontWeight(QFont.Bold)
+            for _keyword in keywords:
+                pattern = r"\b" + _keyword + r"\b"
+                self.highlighting_rules.append((re.compile(pattern), keyword_format))
 
-        keywords = [
-            "and",
-            "as",
-            "assert",
-            "break",
-            "class",
-            "continue",
-            "def",
-            "del",
-            "elif",
-            "else",
-            "except",
-            "exec",
-            "finally",
-            "for",
-            "from",
-            "global",
-            "if",
-            "import",
-            "in",
-            "is",
-            "lambda",
-            "not",
-            "or",
-            "pass",
-            "print",
-            "raise",
-            "return",
-            "try",
-            "while",
-            "with",
-            "yield",
-            "True",
-            "False",
-            "None",
-        ]
+            # String literals
+            string_format = QTextCharFormat()
+            string_format.setColor(QColor(0, 128, 0))
+            self.highlighting_rules.append((re.compile(r'".*?"'), string_format))
+            self.highlighting_rules.append((re.compile(r"'.*?'"), string_format))
 
-        for _keyword in keywords:
-            pattern = r"\b" + _keyword + r"\b"
-            self.highlighting_rules.append((re.compile(pattern), keyword_format))
+            # Comments
+            comment_format = QTextCharFormat()
+            comment_format.setColor(QColor(128, 128, 128))
+            comment_format.setFontItalic(True)
+            self.highlighting_rules.append((re.compile(r"#.*"), comment_format))
 
-        # String literals
-        string_format = QTextCharFormat()
-        string_format.setColor(QColor(0, 128, 0))
-        self.highlighting_rules.append((re.compile(r'".*?"'), string_format))
-        self.highlighting_rules.append((re.compile(r"'.*?'"), string_format))
+            # Numbers
+            number_format = QTextCharFormat()
+            number_format.setColor(QColor(255, 0, 255))
+            self.highlighting_rules.append((re.compile(r"\b\d+\b"), number_format))
 
-        # Comments
-        comment_format = QTextCharFormat()
-        comment_format.setColor(QColor(128, 128, 128))
-        comment_format.setFontItalic(True)
-        self.highlighting_rules.append((re.compile(r"#.*"), comment_format))
-
-        # Numbers
-        number_format = QTextCharFormat()
-        number_format.setColor(QColor(255, 0, 255))
-        self.highlighting_rules.append((re.compile(r"\b\d+\b"), number_format))
-
-        # Functions
-        function_format = QTextCharFormat()
-        function_format.setColor(QColor(0, 0, 255))
-        function_format.setFontWeight(QFont.Weight.Bold)
-        self.highlighting_rules.append((re.compile(r"\bdef\s+(\w+)"), function_format))
+            # Functions
+            function_format = QTextCharFormat()
+            function_format.setColor(QColor(0, 0, 255))
+            function_format.setFontWeight(QFont.Weight.Bold)
+            self.highlighting_rules.append((re.compile(r"\bdef\s+(\w+)"), function_format))
 
         def highlightBlock(self, text: str):
             """Apply syntax highlighting to a block of text."""
@@ -157,19 +149,19 @@ if HAS_PYQT and QSyntaxHighlighter:
 else:
     class PythonSyntaxHighlighter:
         """Fallback syntax highlighter when PyQt6 is not available."""
-        
+
         def __init__(self, document=None):
             """Initialize fallback highlighter."""
             self.document = document
-            
+
         def setDocument(self, document):
             """Set document for highlighting."""
             self.document = document
-            
+
         def rehighlight(self):
             """Rehighlight document - no-op in fallback."""
             pass
-            
+
         def highlightBlock(self, text):
             """No-op highlighting in fallback."""
             pass
@@ -278,15 +270,15 @@ if HAS_PYQT and QDialog:
 else:
     class FindReplaceDialog:
         """Fallback find and replace dialog when PyQt6 is not available."""
-        
+
         def __init__(self, parent=None):
             """Initialize fallback find and replace dialog."""
             pass
-        
+
         def show(self):
             """Show dialog (no-op in fallback)."""
             pass
-        
+
         def hide(self):
             """Hide dialog (no-op in fallback)."""
             pass
@@ -818,8 +810,8 @@ if HAS_PYQT and QDialog:
     def _export_to_pdf(self, file_path, content, include_highlighting, include_line_numbers):
         """Export content to PDF format."""
         try:
-            from intellicrack.ui.dialogs.common_imports import QPrinter, QTextDocument
-            
+            from intellicrack.handlers.pyqt6_handler import QPrinter, QTextDocument
+
 
             printer = QPrinter(QPrinter.PrinterMode.HighResolution)
             printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
@@ -1093,25 +1085,25 @@ if HAS_PYQT and QDialog:
 else:
     class TextEditorDialog:
         """Fallback text editor dialog when PyQt6 is not available."""
-        
+
         def __init__(self, parent=None, title="Text Editor", content=""):
             """Initialize fallback text editor dialog."""
             self.content = content
             self.title = title
             self.parent = parent
-        
+
         def show(self):
             """Show dialog (no-op in fallback)."""
             pass
-        
+
         def exec(self):
             """Execute dialog (no-op in fallback)."""
             return 0
-        
+
         def get_content(self):
             """Get editor content."""
             return self.content
-        
+
         def set_content(self, content):
             """Set editor content."""
             self.content = content

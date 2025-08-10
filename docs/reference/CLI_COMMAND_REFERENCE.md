@@ -60,7 +60,7 @@ Options:
 
 Examples:
   intellicrack analyze app.exe
-  intellicrack analyze --deep --gpu malware.bin
+  intellicrack analyze --deep --gpu protected_software.bin
   intellicrack analyze --profile quick --output results/ target.elf
 ```
 
@@ -382,7 +382,7 @@ intellicrack report \
 intellicrack ai analyze \
   --model claude-3.5-sonnet \
   --context previous_analysis.json \
-  suspect_malware.exe \
+  protected_sample.exe \
   --output ai_analysis.json
 
 # Generate bypass based on AI analysis

@@ -12,13 +12,12 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
 
-from intellicrack.ui.dialogs.common_imports import Qt
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QButtonGroup,
     QCheckBox,
     QDialog,
@@ -27,6 +26,7 @@ from intellicrack.ui.dialogs.common_imports import (
     QLabel,
     QPushButton,
     QRadioButton,
+    Qt,
     QTextEdit,
     QVBoxLayout,
 )

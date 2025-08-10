@@ -88,7 +88,7 @@ try:
     print("   ✓ Qt initialized successfully")
 
     # Test creating a simple window
-    
+
     window = QMainWindow()
     window.setWindowTitle("Test")
     print("   ✓ Test window created")

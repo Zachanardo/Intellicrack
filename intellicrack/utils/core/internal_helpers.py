@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
@@ -27,13 +27,15 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+# Import availability flags from correct handlers
+from intellicrack.handlers.numpy_handler import HAS_NUMPY
+from intellicrack.handlers.opencl_handler import HAS_OPENCL
+from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE as HAS_PSUTIL
+from intellicrack.handlers.tensorflow_handler import HAS_TENSORFLOW
+from intellicrack.handlers.torch_handler import HAS_TORCH
 from intellicrack.logger import logger
 
 from ..utils.logger import setup_logger
-
-# Import availability flags from common imports
-from .common_imports import HAS_NUMPY, HAS_OPENCL, HAS_TENSORFLOW, HAS_TORCH
-from .common_imports import PSUTIL_AVAILABLE as HAS_PSUTIL
 
 """
 Internal helper functions for Intellicrack.
@@ -53,18 +55,18 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
 # Import actual modules when available
 if HAS_NUMPY:
-    import numpy as np
+    from intellicrack.handlers.numpy_handler import numpy as np
 else:
     np = None
 
 if HAS_PSUTIL:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 else:
     psutil = None
 
@@ -83,7 +85,9 @@ if HAS_TENSORFLOW:
 
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    from ...handlers.tensorflow_handler import tensorflow as tf  # pylint: disable=import-error
+    from intellicrack.handlers.tensorflow_handler import (
+        tensorflow as tf,  # pylint: disable=import-error
+    )
 else:
     tf = None
 
@@ -2060,8 +2064,6 @@ def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> list[int]:
         return _match_pattern(data, pattern)
 
     try:
-        import numpy as np
-
         # Convert bytes to numerical arrays for TensorFlow processing
         data_array = np.frombuffer(data, dtype=np.uint8)
         pattern_array = np.frombuffer(pattern, dtype=np.uint8)
@@ -2126,8 +2128,6 @@ def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
 
     """
     try:
-        import numpy as np
-
         # Reshape data for TensorFlow convolution
         # TensorFlow expects [batch, height, width, channels] format
         data_tensor = tf.expand_dims(tf.expand_dims(tf.cast(data_array, tf.float32), 0), -1)
@@ -2170,8 +2170,6 @@ def _numpy_correlation_search(data_array: "np.ndarray", pattern_array: "np.ndarr
 
     """
     try:
-        import numpy as np
-
         # Use normalized cross-correlation
         pattern_normalized = pattern_array.astype(np.float32)
         data_normalized = data_array.astype(np.float32)
@@ -2205,8 +2203,6 @@ def _sliding_window_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
 
     """
     try:
-        import numpy as np
-
         matches = []
         pattern_len = len(pattern_array)
         data_len = len(data_array)

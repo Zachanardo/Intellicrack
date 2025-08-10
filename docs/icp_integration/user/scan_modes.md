@@ -144,7 +144,7 @@ Confidence: High
 ✓ Custom protection analysis
 ✓ Zero-day protection detection
 ✓ Academic research
-✓ Malware analysis
+✓ License protection analysis
 
 ✗ Known protection analysis
 ✗ Speed-critical applications
@@ -332,9 +332,9 @@ Use DEEP mode (default)
 
 ### Scenario-Based Recommendations
 
-**Scenario 1: Malware Triage**
+**Scenario 1: License Bypass Triage**
 ```
-Files: 1000+ samples
+Files: 1000+ protected samples
 Goal: Quick categorization
 Recommendation: NORMAL mode
 Rationale: Speed over accuracy for initial sorting
@@ -456,8 +456,8 @@ Slow Analysis:
 Create custom combinations for specific needs:
 
 ```python
-# Example: Custom malware analysis profile
-MALWARE_PROFILE = {
+# Example: Custom license protection analysis profile
+LICENSE_ANALYSIS_PROFILE = {
     "flags": DEEP_SCAN | HEURISTIC_SCAN,
     "timeout": 60,
     "memory_limit": "512MB",

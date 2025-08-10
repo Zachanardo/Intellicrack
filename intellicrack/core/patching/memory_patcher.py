@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import datetime
@@ -23,7 +23,7 @@ import os
 import sys
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import QMessageBox
+from intellicrack.handlers.pyqt6_handler import QMessageBox
 
 from ...utils.logger import get_logger
 from ...utils.protection.protection_detection import (
@@ -134,7 +134,10 @@ import subprocess
 import threading
 
 try:
-    import frida
+    from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+    if not HAS_FRIDA:
+        print("Error: Frida is required. Install with: pip install frida-tools")
+        sys.exit(1)
 except ImportError as e:
     logger.error("Import error in memory_patcher: %s", e)
     print("Error: Frida is required. Install with: pip install frida-tools")
@@ -256,7 +259,6 @@ def main():
     if "{patching_strategy}" == "memory":
         # Check if Frida is available
         try:
-            import frida
             print("[+] Frida is available")
             return launch_with_frida()
         except ImportError as e:

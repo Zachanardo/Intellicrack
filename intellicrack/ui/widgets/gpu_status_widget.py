@@ -16,17 +16,27 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import subprocess
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import (
-    QComboBox, QGridLayout, QGroupBox, QHBoxLayout,
-    QLabel, QObject, QProgressBar, QPushButton,
-    Qt, QTextEdit, QThread, QVBoxLayout,
-    QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QComboBox,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QObject,
+    QProgressBar,
+    QPushButton,
+    Qt,
+    QTextEdit,
+    QThread,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 

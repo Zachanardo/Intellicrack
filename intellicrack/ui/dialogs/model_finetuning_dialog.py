@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import csv
@@ -59,38 +59,53 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT as PYQT6_AVAILABLE,
-    QApplication, QCheckBox, QComboBox, QDialog, QDoubleSpinBox,
-    QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QHeaderView,
-    QLabel, QLineEdit, QMessageBox, QProgressBar, QProgressDialog,
-    QPushButton, QScrollArea, QSlider, QSpinBox, Qt, QTableWidget,
-    QTableWidgetItem, QTabWidget, QTextEdit, QThread, QVBoxLayout,
-    QWidget, pyqtSignal,
+)
+from intellicrack.handlers.pyqt6_handler import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDoubleSpinBox,
+    QFileDialog,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QProgressBar,
+    QProgressDialog,
+    QPushButton,
+    QScrollArea,
+    QSlider,
+    QSpinBox,
+    Qt,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QTextEdit,
+    QThread,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 # Optional ML dependencies
+from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, nn, torch
+
+# Import unified GPU system
 try:
-    import torch
-    from torch import nn
-
-    TORCH_AVAILABLE = True
-
-    # Import unified GPU system
-    try:
-        from ...utils.gpu_autoloader import get_device, get_gpu_info, to_device
-
-        GPU_AUTOLOADER_AVAILABLE = True
-    except ImportError:
-        GPU_AUTOLOADER_AVAILABLE = False
-
+    from ...utils.gpu_autoloader import get_device, get_gpu_info, to_device
+    GPU_AUTOLOADER_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
-    TORCH_AVAILABLE = False
     GPU_AUTOLOADER_AVAILABLE = False
 
 try:
@@ -125,12 +140,14 @@ except ImportError as e:
     nltk = None
 
 try:
-    import matplotlib.pyplot as plt
+    from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, plt
 
-    MATPLOTLIB_AVAILABLE = True
+    MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 except ImportError as e:
     logger.error("Import error in model_finetuning_dialog: %s", e)
     MATPLOTLIB_AVAILABLE = False
+    HAS_MATPLOTLIB = False
+    plt = None
 
 
 class TrainingStatus(Enum):
@@ -2678,7 +2695,7 @@ class ModelFinetuningDialog(QDialog):
             plt.close(fig)
 
             # Update visualization label
-            from intellicrack.ui.dialogs.common_imports import QPixmap
+            from intellicrack.handlers.pyqt6_handler import QPixmap
 
             pixmap = QPixmap(temp_path)
             scaled_pixmap = pixmap.scaled(

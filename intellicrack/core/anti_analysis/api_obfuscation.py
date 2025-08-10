@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import ctypes
@@ -421,7 +421,7 @@ class APIObfuscator:
         return "".join(chr(b ^ key) for b in data[1:])
 
     def _djb2_hash(self, string: str) -> int:
-        """DJB2 hash algorithm commonly used in malware."""
+        """DJB2 hash algorithm commonly used in protected software."""
         hash_value = 5381
         for char in string:
             hash_value = ((hash_value << 5) + hash_value) + ord(char)
@@ -685,11 +685,11 @@ if (p{api_name}) {{
 
     def _resolve_encrypted_strings(self, code: bytes, params: dict) -> tuple[bytes, dict]:
         """Resolve encrypted API strings.
-        
+
         Args:
             code: Code containing encrypted API strings
             params: Parameters for decryption
-            
+
         Returns:
             Tuple of (resolved code, metadata)
 
@@ -733,11 +733,11 @@ if (p{api_name}) {{
 
     def _resolve_dynamic_imports(self, code: bytes, params: dict) -> tuple[bytes, dict]:
         """Resolve dynamically loaded API imports.
-        
+
         Args:
             code: Code containing dynamic imports
             params: Parameters for resolution
-            
+
         Returns:
             Tuple of (resolved code, metadata)
 
@@ -772,11 +772,11 @@ if (p{api_name}) {{
 
     def _resolve_redirected_apis(self, code: bytes, params: dict) -> tuple[bytes, dict]:
         """Resolve redirected API calls.
-        
+
         Args:
             code: Code containing redirected APIs
             params: Parameters for resolution
-            
+
         Returns:
             Tuple of (resolved code, metadata)
 
@@ -814,11 +814,11 @@ if (p{api_name}) {{
 
     def _generate_indirect_calls(self, code: bytes, params: dict) -> tuple[bytes, dict]:
         """Generate indirect API calls through function pointers.
-        
+
         Args:
             code: Original code bytes
             params: Parameters for indirect call generation
-            
+
         Returns:
             Tuple of (modified code, metadata)
 
@@ -896,11 +896,11 @@ if (p{api_name}) {{
 
     def _generate_trampoline_calls(self, code: bytes, params: dict) -> tuple[bytes, dict]:
         """Generate trampoline-based API calls.
-        
+
         Args:
             code: Original code bytes
             params: Parameters for trampoline generation
-            
+
         Returns:
             Tuple of (modified code with trampolines, metadata)
 
@@ -957,11 +957,11 @@ if (p{api_name}) {{
 
     def _generate_encrypted_payloads(self, code: bytes, params: dict) -> tuple[bytes, dict]:
         """Generate encrypted API call payloads.
-        
+
         Args:
             code: Original code bytes
             params: Parameters for encryption
-            
+
         Returns:
             Tuple of (code with encrypted payloads, metadata)
 
@@ -1005,11 +1005,11 @@ if (p{api_name}) {{
 
     def _generate_polymorphic_wrappers(self, code: bytes, params: dict) -> tuple[bytes, dict]:
         """Generate polymorphic wrappers for API calls.
-        
+
         Args:
             code: Original code bytes
             params: Parameters for polymorphic generation
-            
+
         Returns:
             Tuple of (code with polymorphic wrappers, metadata)
 
@@ -1066,11 +1066,11 @@ if (p{api_name}) {{
 
     def _resolve_delayed_imports(self, code: bytes, params: dict) -> tuple[bytes, dict]:
         """Resolve delayed/lazy loaded API imports.
-        
+
         Args:
             code: Code containing delayed imports
             params: Parameters for resolution
-            
+
         Returns:
             Tuple of (resolved code, metadata)
 

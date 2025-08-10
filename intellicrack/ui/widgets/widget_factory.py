@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Widget Factory for Common UI Patterns
 
@@ -22,8 +22,6 @@ to reduce code duplication across dialog implementations.
 
 from collections.abc import Callable
 from typing import Any
-
-from intellicrack.ui.dialogs.common_imports import QFont, Qt
 
 from PyQt6.QtWidgets import (
     QGroupBox,
@@ -36,6 +34,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from intellicrack.handlers.pyqt6_handler import QFont, Qt
 
 
 def create_tree_widget(

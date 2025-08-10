@@ -11,6 +11,7 @@ from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont, QTextDocument
 from PyQt6.QtWidgets import (
     QDialog,
+    QFileDialog,
     QHBoxLayout,
     QLabel,
     QMessageBox,
@@ -287,7 +288,7 @@ class ScriptDisplayDialog(QDialog):
 
     def copy_script(self):
         """Copy script to clipboard"""
-        from intellicrack.ui.dialogs.common_imports import QApplication, QFileDialog
+        from PyQt6.QtWidgets import QApplication
 
         QApplication.clipboard().setText(self.script_data.get("script", ""))
 
@@ -297,7 +298,7 @@ class ScriptDisplayDialog(QDialog):
 
     def save_script(self):
         """Save script to file"""
-        
+
 
         script_type = self.script_data.get("type", "script").lower()
         if script_type == "frida":

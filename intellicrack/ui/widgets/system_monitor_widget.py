@@ -12,7 +12,6 @@ from collections import deque
 from dataclasses import dataclass
 from typing import Any
 
-import psutil
 from PyQt6.QtCore import QObject, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtWidgets import (
@@ -29,6 +28,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from intellicrack.handlers.psutil_handler import psutil
 
 try:
     import pyqtgraph as pg

@@ -16,18 +16,29 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import platform
 from typing import Any
 
-import psutil
-from intellicrack.ui.dialogs.common_imports import (
-    QColor, QGridLayout, QGroupBox, QHBoxLayout,
-    QHeaderView, QLabel, QObject, QProgressBar,
-    Qt, QTableWidget, QTableWidgetItem, QThread,
-    QVBoxLayout, QWidget, pyqtSignal,
+from intellicrack.handlers.psutil_handler import psutil
+from intellicrack.handlers.pyqt6_handler import (
+    QColor,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QObject,
+    QProgressBar,
+    Qt,
+    QTableWidget,
+    QTableWidgetItem,
+    QThread,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 

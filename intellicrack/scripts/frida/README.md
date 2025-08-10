@@ -1,240 +1,203 @@
-# Intellicrack Frida Scripts - System Integration
+# Frida Scripts
 
-This directory contains **system-level Frida scripts** used by the Intellicrack CLI and internal components for automated analysis and protection bypass operations.
-
-## Overview
-
-These scripts are designed for programmatic execution by the Intellicrack framework, CLI interface, and automated analysis pipelines. They provide core functionality for protection bypass, dynamic analysis, and automated instrumentation.
+This directory contains a comprehensive collection of Frida scripts for bypassing various software protections, analyzing binaries, and performing dynamic instrumentation tasks.
 
 ## Script Categories
 
-### 🔒 Protection Bypass (8 scripts)
-- **`anti_debugger.js`** - Enhanced anti-debugging protection bypass
-- **`code_integrity_bypass.js`** - Advanced code integrity verification bypass
-- **`drm_bypass.js`** - Comprehensive Digital Rights Management bypass
-- **`kernel_mode_bypass.js`** - Kernel-level protection mechanism bypass
-- **`memory_integrity_bypass.js`** - Memory integrity verification bypass
-- **`tpm_emulator.js`** - Trusted Platform Module emulation and bypass
-- **`virtualization_bypass.js`** - VM and sandbox detection countermeasures
-- **`hwid_spoofer.js`** - Hardware ID spoofing for license bypass
+### Protection Bypass
+- **certificate_pinning_bypass.js** - Bypasses SSL certificate pinning implementations
+- **anti_debugger.js** - Disables anti-debugging mechanisms
+- **virtualization_bypass.js** - Circumvents VM detection techniques
+- **code_integrity_bypass.js** - Bypasses code integrity checks
+- **memory_integrity_bypass.js** - Disables memory protection mechanisms
 
-### 🌐 Network & Cloud (4 scripts)
-- **`cloud_licensing_bypass.js`** - Cloud-based license verification bypass
-- **`certificate_pinner_bypass.js`** - Certificate pinning bypass
-- **`http3_quic_interceptor.js`** - HTTP/3 and QUIC protocol interception
-- **`websocket_interceptor.js`** - WebSocket communication interception
+### License & Authentication
+- **adobe_bypass.js** - Adobe software license bypass
+- **cloud_licensing_bypass.js** - Cloud-based license validation bypass
+- **blockchain_license_bypass.js** - Blockchain license system bypass
+- **drm_bypass.js** - Digital rights management bypass
+- **time_bomb_defuser.js** - Disables time-based license restrictions
+- **time_bomb_defuser_advanced.js** - Advanced time-based protection bypass
 
-### 🛠️ System Analysis (6 scripts)
-- **`behavioral_pattern_analyzer.js`** - Behavioral analysis for hook optimization
-- **`dynamic_script_generator.js`** - Intelligent script generation from binary analysis
-- **`hook_effectiveness_monitor.js`** - Hook effectiveness measurement system
-- **`ml_license_detector.js`** - ML-based license function detection
-- **`obfuscation_detector.js`** - Obfuscation detection and analysis
-- **`realtime_protection_detector.js`** - Real-time protection detection system
+### Hardware & System
+- **enhanced_hardware_spoofer.js** - Comprehensive hardware fingerprint spoofing
+- **hwid_spoofer.js** - Hardware ID spoofing
+- **tpm_emulator.js** - TPM (Trusted Platform Module) emulation
+- **registry_monitor.js** - Windows registry monitoring and modification
+- **registry_monitor_enhanced.js** - Advanced registry manipulation
 
-### 🔧 Utility & Framework (8 scripts)
-- **`bypass_success_tracker.js`** - Bypass success rate tracking system
-- **`central_orchestrator.js`** - Central coordination for multiple scripts
-- **`modular_hook_library.js`** - Reusable hook components system
-- **`enhanced_hardware_spoofer.js`** - Hardware fingerprinting bypass
-- **`registry_monitor.js`** - Registry access monitoring
-- **`registry_monitor_enhanced.js`** - Enhanced registry monitoring
-- **`telemetry_blocker.js`** - Telemetry and analytics blocking
-- **`time_bomb_defuser.js`** - Time bomb detection and defusal
-- **`time_bomb_defuser_advanced.js`** - Advanced time bomb countermeasures
+### Network & Protocol
+- **http3_quic_interceptor.js** - HTTP/3 and QUIC protocol interception
+- **websocket_interceptor.js** - WebSocket communication interception
+- **certificate_pinner_bypass.js** - Certificate pinning bypass for network requests
+- **ntp_blocker.js** - Network Time Protocol blocking
+- **telemetry_blocker.js** - Telemetry and analytics blocking
 
-### 📱 Platform-Specific (3 scripts)
-- **`android_bypass_suite.js`** - Android platform bypass suite
-- **`dotnet_bypass_suite.js`** - .NET framework bypass suite
-- **`ntp_blocker.js`** - Network Time Protocol blocking
+### Analysis & Detection
+- **ml_license_detector.js** - Machine learning-based license detection
+- **behavioral_pattern_analyzer.js** - Application behavior analysis
+- **obfuscation_detector.js** - Code obfuscation detection
+- **realtime_protection_detector.js** - Real-time protection mechanism detection
+- **hook_effectiveness_monitor.js** - Hook success rate monitoring
 
-### 🎨 Adobe-Specific (2 scripts)
-- **`adobe_bypass.js`** - Adobe application bypass
-- **`adobe_bypass_frida.js`** - Adobe Frida-specific bypass
+### Platform-Specific
+- **android_bypass_suite.js** - Android-specific bypass techniques
+- **dotnet_bypass_suite.js** - .NET application bypass methods
+- **kernel_bridge.js** - Kernel-level interaction bridge
+- **kernel_mode_bypass.js** - Kernel mode protection bypass
+- **wasm_protection_bypass.js** - WebAssembly protection bypass
 
-## Usage Context
+### Utility & Framework
+- **modular_hook_library.js** - Reusable hooking functions and utilities
+- **dynamic_script_generator.js** - Runtime script generation
+- **central_orchestrator.js** - Coordination of multiple bypass techniques
+- **bypass_success_tracker.js** - Success rate tracking and analytics
+- **quantum_crypto_handler.js** - Quantum-resistant cryptographic operations
 
-### CLI Integration
-These scripts are executed by the Intellicrack CLI via the `--frida-script` parameter:
-```bash
-python scripts/cli/main.py binary.exe --frida-script cloud_licensing_bypass.js
-```
+## Usage
 
-### Automated Analysis
-Scripts are automatically selected and executed based on binary analysis results:
-- License detection → `ml_license_detector.js`
-- Protection analysis → `realtime_protection_detector.js`
-- Bypass generation → `dynamic_script_generator.js`
+### Loading Scripts
+Scripts can be loaded through the Frida Manager interface:
 
-### System Integration
-Scripts integrate with the Intellicrack framework through:
-- **Structured messaging** - All scripts use `send()` calls for communication
-- **Configuration system** - Scripts read from global configuration
-- **Analysis pipeline** - Scripts contribute to comprehensive analysis reports
+1. Select target process
+2. Choose appropriate script from the list
+3. Click "Load Script" to inject
 
-## Message System
+### Script Output
+All scripts provide detailed logging and status information through the console interface. Messages are categorized by type:
 
-All scripts use structured messaging for communication with the Intellicrack framework:
+- **Info** - General information and status updates
+- **Warning** - Potential issues or non-critical problems
+- **Error** - Critical errors and failures
+- **Success** - Successful operations and bypasses
+- **Detection** - Protection mechanisms detected
+- **Bypass** - Successful bypass operations
+- **Status** - Current operation status
+- **Notification** - System events and alerts
 
-```javascript
-// Status messages
-send({
-    type: "status",
-    target: "script_name",
-    action: "operation_started"
-});
-
-// Success messages
-send({
-    type: "success",
-    target: "script_name",
-    action: "bypass_applied",
-    data: { method: "api_hook", target_function: "LicenseCheck" }
-});
-
-// Error messages
-send({
-    type: "error",
-    target: "script_name",
-    action: "operation_failed",
-    data: { error: "Target function not found" }
-});
-```
-
-**Message Types:**
-- `info` - General information
-- `warning` - Warning conditions
-- `error` - Error conditions
-- `status` - Operation status
-- `bypass` - Bypass operations
-- `success` - Successful operations
-- `detection` - Detection results
-- `notification` - System notifications
-
-## Configuration
-
-Scripts are configured through the global Intellicrack configuration system:
+### Configuration
+Many scripts support configuration options that can be modified at runtime:
 
 ```javascript
-// Scripts read configuration from global config
+// Example configuration in scripts
 const config = {
-    networkInterception: {
-        enabled: true,
-        interceptHttps: true,
-        blockLicenseChecks: true
-    },
-    hardwareSpoofer: {
-        enabled: true,
-        spoofCpuId: true,
-        spoofMacAddress: true
-    }
+    enabled: true,
+    verbose: false,
+    strategy: "aggressive",
+    timeout: 5000
 };
 ```
 
-## Script Execution
+### Combining Scripts
+Scripts are designed to work together. Common combinations:
 
-### Automatic Execution
-Scripts are automatically selected based on:
-- Binary analysis results
-- Protection mechanisms detected
-- User-specified bypass requirements
-- AI-driven recommendations
+- **Hardware Spoofing + License Bypass** - Complete identity masking
+- **Anti-Debug + VM Detection** - Analysis environment evasion
+- **Certificate Pinning + Network Interception** - Complete network control
+- **Registry Monitor + Telemetry Blocker** - System-level protection
 
-### Manual Execution
-Scripts can be executed manually via:
-- CLI `--frida-script` parameter
-- GUI script selection interface
-- API script execution endpoints
+## Script Development
 
-## Performance Considerations
+### Message Format
+Scripts use a structured message format for consistent logging:
 
-### Resource Usage
-- Scripts are optimized for minimal overhead
-- Memory usage is monitored and reported
-- CPU impact is measured for optimization
-
-### Effectiveness Tracking
-- Success rates are tracked per script
-- Performance metrics are collected
-- Optimization recommendations are generated
-
-## Development Guidelines
-
-### Script Structure
 ```javascript
-{
-    name: "Script Name",
-    description: "Script description",
-    version: "2.0.0",
+send({
+    type: "info|warning|error|success|detection|bypass|status|notification",
+    target: "script_name",
+    action: "operation_description",
+    // Additional contextual data
+    data: { key: value }
+});
+```
 
-    config: {
-        // Configuration options
-    },
+### Error Handling
+All scripts implement comprehensive error handling:
 
-    // Script implementation
-    main: function() {
-        // Script logic
-    }
+```javascript
+try {
+    // Operation code
+} catch (e) {
+    send({
+        type: "error",
+        target: "script_name",
+        action: "operation_failed",
+        error: String(e)
+    });
 }
 ```
 
-### Messaging Standards
-- Use structured `send()` calls for all communication
-- Include meaningful target and action identifiers
-- Provide relevant data in message payloads
-- Follow established message type conventions
+### Performance Considerations
+- Scripts are optimized for minimal performance impact
+- Hooks are placed strategically to avoid excessive overhead
+- Batch operations where possible to reduce context switching
 
-### Error Handling
-- Implement graceful error handling
-- Report errors through structured messaging
-- Provide fallback mechanisms where possible
-- Log detailed error information for debugging
+## Testing
 
-## Integration Points
+### Test Script
+Use `test_structured_messaging.js` to verify script functionality and message handling:
 
-### CLI Interface
-- Executed via `--frida-script` parameter
-- Results integrated into CLI reports
-- Status displayed in terminal interface
+```bash
+frida -f target_process -l test_structured_messaging.js
+```
 
-### GUI Interface
-- Available through script selection dialogs
-- Results displayed in console widgets
-- Progress shown in status bars
+### Validation
+Scripts undergo automated validation for:
+- Message format compliance
+- Error handling coverage
+- Performance impact assessment
+- Compatibility testing
 
-### API Interface
-- Executable through REST API endpoints
-- Results returned in JSON format
-- Status available through WebSocket connections
+## Compatibility
 
-## Security Considerations
+### Supported Platforms
+- Windows 10/11 (x64)
+- Android 8.0+ (ARM64)
+- Linux (x64)
+- macOS 10.15+ (x64/ARM64)
 
-### Execution Environment
-- Scripts execute in controlled Frida environment
-- Limited access to system resources
-- Monitored for malicious behavior
-- Sandboxed execution when required
+### Frida Version
+- Minimum: Frida 16.0.0
+- Recommended: Latest stable release
 
-### Protection Mechanisms
-- Script integrity verification
-- Digital signature validation
-- Source code analysis
-- Runtime behavior monitoring
+### Target Applications
+Scripts are tested against common software categories:
+- Office suites (Microsoft Office, Adobe Creative Suite)
+- Development tools (IDEs, compilers)
+- Security software (antivirus, firewalls)
+- Games and entertainment software
+- Mobile applications
 
-## Related Documentation
+## Troubleshooting
 
-- **User Scripts**: `intellicrack/plugins/frida_scripts/README.md`
-- **CLI Usage**: `intellicrack/scripts/cli/README.md`
-- **Plugin System**: `intellicrack/plugins/README.md`
-- **API Documentation**: `docs/api_reference.md`
+### Common Issues
+1. **Script Load Failures** - Check process permissions and target compatibility
+2. **Hook Placement Errors** - Verify function addresses and signatures
+3. **Permission Denied** - Run with appropriate privileges
+4. **Target Process Crashes** - Reduce hook aggressiveness or check compatibility
 
-## Version Information
+### Debug Mode
+Enable verbose logging in scripts by setting debug flags:
 
-- **Framework Version**: 2.0.0
-- **Frida Version**: Latest supported
-- **Last Updated**: July 2025
-- **Compatibility**: Windows, Linux, macOS
+```javascript
+const DEBUG = true;
+```
 
----
+### Support
+For issues or questions:
+- Check the main Intellicrack documentation
+- Review script-specific comments and configurations
+- Test with minimal examples first
 
-*Note: These are system-level scripts for framework integration. For user-written scripts and plugins, see the `intellicrack/plugins/frida_scripts/` directory.*
+## Security Notice
+
+These scripts are intended for legitimate security research, penetration testing, and educational purposes only. Users are responsible for ensuring compliance with applicable laws and regulations when using these tools.
+
+## Contributing
+
+When adding new scripts:
+1. Follow the established message format
+2. Include comprehensive error handling
+3. Add appropriate documentation
+4. Test across supported platforms
+5. Validate performance impact

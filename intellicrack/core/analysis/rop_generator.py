@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -26,7 +26,7 @@ from ...utils.ui.ui_common import ask_open_report
 logger = logging.getLogger(__name__)
 
 try:
-    from intellicrack.ui.dialogs.common_imports import QInputDialog
+    from intellicrack.handlers.pyqt6_handler import QInputDialog
 
     PYQT6_AVAILABLE = True
 except ImportError as e:
@@ -203,7 +203,7 @@ class ROPChainGenerator:
         try:
             # Try using Capstone disassembler first
             try:
-                import capstone
+                from intellicrack.handlers.capstone_handler import capstone
 
                 # Determine architecture from binary header
                 arch = capstone.CS_ARCH_X86
@@ -274,7 +274,9 @@ class ROPChainGenerator:
         try:
             # Try using lief if available
             try:
-                import lief
+                from intellicrack.handlers.lief_handler import HAS_LIEF, lief
+                if not HAS_LIEF:
+                    raise ImportError("LIEF not available")
 
                 if binary_data[:2] == b"MZ":  # PE
                     if hasattr(lief, "parse"):

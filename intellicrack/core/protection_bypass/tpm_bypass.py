@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -316,8 +316,7 @@ class TPMProtectionBypass:
 
         # Generate real RSA public key structure
         try:
-            from cryptography.hazmat.primitives import serialization
-            from cryptography.hazmat.primitives.asymmetric import rsa
+            from intellicrack.handlers.cryptography_handler import rsa, serialization
 
             # Generate actual RSA key pair
             private_key = rsa.generate_private_key(
@@ -436,15 +435,15 @@ class TPMProtectionBypass:
             # Try to use stored key for signing
             if hasattr(self, "_tpm_keys") and key_handle_bytes in self._tpm_keys:
                 private_key = self._tpm_keys[key_handle_bytes]
-                from cryptography.hazmat.primitives import hashes
-                from cryptography.hazmat.primitives.asymmetric import padding
+                from intellicrack.handlers.cryptography_handler import hashes
+                from intellicrack.handlers.cryptography_handler import padding as asym_padding
 
                 # Create real signature
                 signature_bytes = private_key.sign(
                     digest,
-                    padding.PSS(
-                        mgf=padding.MGF1(hashes.SHA256()),
-                        salt_length=padding.PSS.MAX_LENGTH,
+                    asym_padding.PSS(
+                        mgf=asym_padding.MGF1(hashes.SHA256()),
+                        salt_length=asym_padding.PSS.MAX_LENGTH,
                     ),
                     hashes.SHA256(),
                 )

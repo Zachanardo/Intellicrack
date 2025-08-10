@@ -15,13 +15,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from pathlib import Path
 from typing import Any
 
-import numpy as np
+from intellicrack.handlers.numpy_handler import numpy as np
 
 from ..utils.logger import get_logger
 
@@ -78,7 +78,7 @@ try:
 
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    from ...handlers.tensorflow_handler import tensorflow as tf
+    from intellicrack.handlers.tensorflow_handler import tensorflow as tf
 
     HAS_TF = True
 except ImportError as e:

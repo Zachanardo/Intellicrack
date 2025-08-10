@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import fnmatch
@@ -24,7 +24,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from ..ui.common_imports import (
+from ..handlers.pyqt6_handler import (
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -452,10 +452,10 @@ class AIFileTools:
 
 def get_ai_file_tools(app_instance=None) -> AIFileTools:
     """Create AI file tools instance.
-    
+
     Args:
         app_instance: Optional application instance for UI updates
-        
+
     Returns:
         AIFileTools: Configured AI file tools instance
 

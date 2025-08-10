@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 """
@@ -30,9 +30,9 @@ def parse_ai_response_sections(
     Args:
         response: The AI response text to parse
         section_keywords: Dictionary mapping section names to keyword lists.
-            
+
             Example::
-            
+
                 {'insights': ['vulnerabilit', 'security', 'risk'],
                  'suggestions': ['recommend', 'suggest', 'should']}
 

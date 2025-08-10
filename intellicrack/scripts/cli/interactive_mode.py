@@ -19,44 +19,44 @@ logger = get_logger(__name__)
 
 class IntellicrackShell(cmd.Cmd):
     """Interactive command shell for Intellicrack."""
-    
+
     intro = """
     ╔══════════════════════════════════════════════════════════════╗
     ║           Intellicrack Interactive Shell v1.0.0              ║
     ║     Advanced Binary Analysis & Security Research Platform    ║
     ╚══════════════════════════════════════════════════════════════╝
-    
+
     Type 'help' for available commands or 'exit' to quit.
     """
-    
+
     prompt = "intellicrack> "
-    
+
     def __init__(self):
         """Initialize the interactive shell."""
         super().__init__()
         self.current_file = None
         self.analysis_results = None
-    
+
     def do_load(self, arg):
         """Load a binary file for analysis: load <filepath>"""
         if not arg:
             print("Usage: load <filepath>")
             return
-        
+
         filepath = Path(arg)
         if not filepath.exists():
             print(f"Error: File not found: {arg}")
             return
-        
+
         self.current_file = filepath
         print(f"Loaded: {filepath}")
-    
+
     def do_analyze(self, arg):
         """Analyze the currently loaded file"""
         if not self.current_file:
             print("Error: No file loaded. Use 'load' command first.")
             return
-        
+
         try:
             print(f"Analyzing {self.current_file}...")
             self.analysis_results = run_comprehensive_analysis(
@@ -66,27 +66,27 @@ class IntellicrackShell(cmd.Cmd):
             print("Analysis complete!")
         except Exception as e:
             print(f"Analysis failed: {e}")
-    
+
     def do_status(self, arg):
         """Show current status"""
         print(f"Current file: {self.current_file or 'None'}")
         print(f"Analysis results: {'Available' if self.analysis_results else 'None'}")
-    
+
     def do_clear(self, arg):
         """Clear current session"""
         self.current_file = None
         self.analysis_results = None
         print("Session cleared")
-    
+
     def do_exit(self, arg):
         """Exit the interactive shell"""
         print("Goodbye!")
         return True
-    
+
     def do_quit(self, arg):
         """Exit the interactive shell"""
         return self.do_exit(arg)
-    
+
     def do_help(self, arg):
         """Show help for commands"""
         if arg:
@@ -111,7 +111,7 @@ def main():
     except KeyboardInterrupt:
         print("\n\nInterrupted. Use 'exit' to quit properly.")
         return main()
-    
+
     return 0
 
 

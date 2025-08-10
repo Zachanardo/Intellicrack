@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -187,19 +187,19 @@ class FridaOperationLogger:
         updates statistics, and provides structured logging for analysis.
 
         Args:
-            operation: Name of the operation (e.g., 'attach', 'hook_install')
+            operation: Name of the operation (e.g., 'attach', 'hook_install').
             details: Dictionary with operation details including:
-                    - pid: Process ID
-                    - process_name: Name of target process
-                    - Additional operation-specific data
-            success: Whether the operation succeeded
-            error: Error message if operation failed
+                    - pid: Process ID.
+                    - process_name: Name of target process.
+                    - Additional operation-specific data.
+            success: Whether the operation succeeded.
+            error: Error message if operation failed.
 
         Note:
-            Appends entry to operation_buffer,
-            increments total_operations counter,
-            writes to operation log file,
-            and logs details as JSON for parsing.
+            - Appends entry to operation_buffer.
+            - Increments total_operations counter.
+            - Writes to operation log file.
+            - Logs details as JSON for parsing.
 
         Example:
             logger.log_operation('attach', {
@@ -251,11 +251,11 @@ class FridaOperationLogger:
         log bloat.
 
         Args:
-            function_name: Name of the hooked function
-            module: Module containing the function (e.g., 'kernel32.dll')
-            arguments: List of function arguments (truncated to 200 chars)
-            return_value: Function return value (truncated to 100 chars)
-            modified: Whether the return value was modified by the hook
+            function_name: Name of the hooked function.
+            module: Module containing the function (e.g., 'kernel32.dll').
+            arguments: List of function arguments (truncated to 200 chars).
+            return_value: Function return value (truncated to 100 chars).
+            modified: Whether the return value was modified by the hook.
 
         Side Effects:
             - Appends to hook_buffer
@@ -297,10 +297,10 @@ class FridaOperationLogger:
         Maintains running statistics for CPU time and memory usage.
 
         Args:
-            metric_name: Name of the metric (e.g., 'hook_execution_time')
-            value: Numeric value of the measurement
-            unit: Unit of measurement (default: "ms")
-            metadata: Optional additional context information
+            metric_name: Name of the metric (e.g., 'hook_execution_time').
+            value: Numeric value of the measurement.
+            unit: Unit of measurement (default: "ms").
+            metadata: Optional additional context information.
 
         Side Effects:
             - Appends value to performance_metrics[metric_name]
@@ -350,11 +350,11 @@ class FridaOperationLogger:
         by protection type and technique used.
 
         Args:
-            protection_type: Type of protection being bypassed (from enum)
-            technique: Name/description of bypass technique used
-            success: Whether the bypass succeeded
+            protection_type: Type of protection being bypassed (from enum).
+            technique: Name/description of bypass technique used.
+            success: Whether the bypass succeeded.
             details: Optional additional context (e.g., error messages,
-                    timing information, verification results)
+                    timing information, verification results).
 
         Note:
             Increments bypasses_attempted counter,

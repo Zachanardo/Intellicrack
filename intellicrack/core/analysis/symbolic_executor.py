@@ -27,7 +27,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
@@ -1187,7 +1187,7 @@ int main() {{
         try:
             # Try to use capstone if available
             try:
-                import capstone
+                from intellicrack.handlers.capstone_handler import capstone
 
                 # Detect architecture from binary header
                 if binary_data.startswith(b"MZ"):  # PE file

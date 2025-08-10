@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Menu utilities for creating and managing UI menus.
 
@@ -24,10 +24,10 @@ Common functionality for menu operations to eliminate code duplication.
 from intellicrack.logger import logger
 
 try:
-    from intellicrack.ui.dialogs.common_imports import QMenu, QMenuBar
+    from intellicrack.handlers.pyqt6_handler import QMenu, QMenuBar
 except ImportError as e:
     logger.error("Import error in menu_utils: %s", e)
-    from intellicrack.ui.dialogs.common_imports import QMenu, QMenuBar
+    from intellicrack.handlers.pyqt6_handler import QMenu, QMenuBar
 
 
 def find_or_create_menu(menu_bar: QMenuBar, menu_name: str) -> QMenu:

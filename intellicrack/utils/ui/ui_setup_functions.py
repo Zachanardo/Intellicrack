@@ -15,17 +15,18 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from typing import Any
 
 # Optional imports with graceful fallbacks
-from ..core.common_imports import HAS_PYQT
+from intellicrack.handlers.pyqt6_handler import HAS_PYQT
+
 from ..utils.logger import setup_logger
 
 if HAS_PYQT:
-    from ..core.common_imports import (
+    from intellicrack.handlers.pyqt6_handler import (
         QComboBox,
         QGroupBox,
         QHBoxLayout,
@@ -64,13 +65,10 @@ else:
 logger = setup_logger(__name__)
 
 try:
-    import matplotlib
-
-    matplotlib.use("qtagg")
-    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.figure import Figure
-
-    HAS_MATPLOTLIB = True
+    from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, Figure, matplotlib
+    from intellicrack.handlers.matplotlib_handler import FigureCanvasQTAgg as FigureCanvas
+    if HAS_MATPLOTLIB:
+        matplotlib.use("qtagg")
 except ImportError as e:
     logger.error("Import error in ui_setup_functions: %s", e)
     HAS_MATPLOTLIB = False

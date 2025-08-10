@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -61,16 +61,7 @@ if not SYMBOLIC_ENGINE:
 # Finally try simconcolic fallback
 if not SYMBOLIC_ENGINE:
     try:
-        import os
-        import sys
-
-        import intellicrack
-
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
-        scripts_dir = os.path.join(base_dir, "intellicrack", "scripts")
-        if os.path.exists(scripts_dir):
-            sys.path.insert(0, scripts_dir)
-        from simconcolic import BinaryAnalyzer as SimConcolic
+        from .simconcolic import BinaryAnalyzer as SimConcolic  # :no-index:
 
         SYMBOLIC_ENGINE = "simconcolic"
         SYMBOLIC_ENGINE_NAME = "simconcolic"

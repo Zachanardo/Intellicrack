@@ -436,7 +436,7 @@ frida_compiled/
 
 # Ghidra, IDA, etc.
 ghidra/
-radare2/
+
 ida/
 
 # ==============================================================================
@@ -609,6 +609,7 @@ mamba_env/**
 !CODE_OF_CONDUCT.md
 !CHANGELOG.md
 !LICENSE
+!CLAUDE.md
 
 # Temporary analysis files from mock/stub scanning
 mock_objects.txt
@@ -622,3 +623,19 @@ tests_mock_usage.txt
 # Exclude batch files except essential ones
 /*.bat
 !RUN_INTELLICRACK.bat
+!LAUNCH_TESTING_SOFTWARE.bat
+
+# Additional root files to ignore
+launch_intellicrack.py
+pyrightconfig.json
+.markdownlint.json
+eslint.config.js
+pytest.ini
+nul
+
+# Linting and testing reports
+bandit-report.json
+build_log.txt
+build_output.txt
+sphinx_output.txt
+rollout-*.json

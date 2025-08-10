@@ -18,7 +18,7 @@ from ...utils.logger import get_logger
 logger = get_logger(__name__)
 
 try:
-    import pefile
+    from intellicrack.handlers.pefile_handler import pefile
 
     PEFILE_AVAILABLE = True
 except ImportError as e:

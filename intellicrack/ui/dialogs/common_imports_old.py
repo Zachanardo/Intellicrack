@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 from intellicrack.logger import logger
@@ -135,14 +135,15 @@ except ImportError as e:
     def create_icon(path_or_pixmap):
         """Create icon for exploit dialog UI elements."""
         import os
+
         from PIL import Image
-        
+
         class Icon:
             def __init__(self, source):
                 self.source = source
                 self._image = None
                 self._size = (32, 32)
-                
+
                 if isinstance(source, str) and os.path.exists(source):
                     try:
                         self._image = Image.open(source)
@@ -170,13 +171,13 @@ except ImportError as e:
                     def __init__(self, w, h):
                         self._width = w
                         self._height = h
-                    
+
                     def width(self):
                         return self._width
-                    
+
                     def height(self):
                         return self._height
-                
+
                 return Size(self._size[0], self._size[1])
 
         return Icon(path_or_pixmap)
@@ -184,6 +185,7 @@ except ImportError as e:
     def create_pixmap_from_file(path, size=None):
         """Create pixmap from file for exploit visualization."""
         import os
+
         from PIL import Image
 
         class Pixmap:
@@ -191,12 +193,12 @@ except ImportError as e:
                 self.path = path
                 self._image = None
                 self.valid = False
-                
+
                 if path and os.path.exists(path):
                     try:
                         self._image = Image.open(path)
                         self.valid = True
-                        
+
                         if size:
                             target_width = size[0] if isinstance(size, (list, tuple)) else size
                             target_height = size[1] if isinstance(size, (list, tuple)) else size
@@ -204,7 +206,7 @@ except ImportError as e:
                     except Exception:
                         self._image = None
                         self.valid = False
-                
+
                 if self._image:
                     self.width, self.height = self._image.size
                 else:
@@ -215,7 +217,7 @@ except ImportError as e:
                 """Scale pixmap for display."""
                 if not self._image:
                     return Pixmap(None, (width, height))
-                
+
                 if aspect_ratio_mode == "keep":
                     # Calculate aspect ratio
                     aspect = self._image.width / self._image.height
@@ -223,10 +225,10 @@ except ImportError as e:
                         width = int(height * aspect)
                     else:
                         height = int(width / aspect)
-                
+
                 resample = Image.Resampling.LANCZOS if transform_mode == "smooth" else Image.Resampling.NEAREST
                 scaled_image = self._image.resize((width, height), resample)
-                
+
                 # Create new Pixmap with scaled image
                 new_pixmap = Pixmap(None)
                 new_pixmap._image = scaled_image
@@ -240,13 +242,13 @@ except ImportError as e:
                     def __init__(self, w, h):
                         self._width = w
                         self._height = h
-                    
+
                     def width(self):
                         return self._width
-                    
+
                     def height(self):
                         return self._height
-                
+
                 return Size(self.width, self.height)
 
             def isNull(self):
@@ -256,13 +258,13 @@ except ImportError as e:
                 """Save pixmap to file."""
                 if not self._image:
                     return False
-                
+
                 try:
                     save_kwargs = {"format": format}
                     if format.upper() in ["JPEG", "JPG"]:
                         save_kwargs["quality"] = quality
                         save_kwargs["optimize"] = True
-                    
+
                     self._image.save(path, **save_kwargs)
                     return True
                 except Exception:
@@ -272,29 +274,29 @@ except ImportError as e:
 
     def get_user_input(parent, title, label, default="", password=False):
         """Get user input through dialog."""
-        import tkinter as tk
-        from tkinter import simpledialog
-        
+        from intellicrack.handlers.tkinter_handler import simpledialog
+        from intellicrack.handlers.tkinter_handler import tkinter as tk
+
         root = tk.Tk()
         root.withdraw()  # Hide the main window
-        
+
         if password:
             # Create custom password dialog
             dialog = simpledialog.askstring(title, label, show='*', initialvalue=default, parent=root)
         else:
             dialog = simpledialog.askstring(title, label, initialvalue=default, parent=root)
-        
+
         root.destroy()
-        
+
         if dialog is not None:
             return (dialog, True)
         return ("", False)
 
     def create_horizontal_slider(min_val=0, max_val=100, value=50, tick_interval=10):
         """Create horizontal slider for exploit parameter control."""
-        import tkinter as tk
-        from tkinter import ttk
-        
+        from intellicrack.handlers.tkinter_handler import tkinter as tk
+        from intellicrack.handlers.tkinter_handler import ttk
+
         class HorizontalSlider:
             def __init__(self):
                 self._root = None

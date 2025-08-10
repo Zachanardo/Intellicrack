@@ -256,7 +256,7 @@ class TestRealMemoryForensics:
         assert isinstance(urls, list), "URLs must be a list"
 
         suspicious_urls = [url for url in urls if any(
-            indicator in url.lower() for indicator in ['evil', 'exfiltrat', 'malware', 'c2']
+            indicator in url.lower() for indicator in ['crack', 'keygen', 'patch', 'bypass']
         )]
         assert len(suspicious_urls) > 0, "Must detect suspicious URLs"
 
@@ -448,7 +448,7 @@ class TestRealMemoryForensics:
 
             # Simulate changes
             # Add new process
-            new_process = b'Proc' + struct.pack('<I', 9999) + b'malware.exe\x00'
+            new_process = b'Proc' + struct.pack('<I', 9999) + b'crack.exe\x00'
             modified_data.extend(new_process.ljust(128, b'\x00'))
 
             # Modify existing data
@@ -471,8 +471,8 @@ class TestRealMemoryForensics:
             # Verify new process detection
             new_processes = diff_result['new_processes']
             assert len(new_processes) > 0, "Must detect new process"
-            assert any('malware' in p.get('name', '').lower() for p in new_processes), \
-                   "Must detect malware process"
+            assert any('crack' in p.get('name', '').lower() for p in new_processes), \
+                   "Must detect crack process"
 
             # Check modified regions
             modifications = diff_result['modified_regions']

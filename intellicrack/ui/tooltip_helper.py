@@ -20,7 +20,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
@@ -56,7 +56,7 @@ def get_tooltip_definitions() -> dict[str, str]:
         ),
         "Binary Similarity Search": (
             "Compares this binary against a database of known binaries.\n"
-            "Helps identify: Similar malware families, code reuse,\n"
+            "Helps identify: Similar protection methods, code reuse,\n"
             "library versions, and potential vulnerabilities from similar code."
         ),
         # Protection Detection
@@ -270,7 +270,7 @@ def apply_tooltips_to_all_elements(parent_widget):
 
     """
     try:
-        from intellicrack.ui.dialogs.common_imports import (
+        from intellicrack.handlers.pyqt6_handler import (
             QCheckBox,
             QComboBox,
             QDoubleSpinBox,
@@ -289,7 +289,7 @@ def apply_tooltips_to_all_elements(parent_widget):
         )
     except ImportError as e:
         logger.error("Import error in tooltip_helper: %s", e)
-        from intellicrack.ui.dialogs.common_imports import QPushButton
+        from intellicrack.handlers.pyqt6_handler import QPushButton
 
         QLabel = QLineEdit = QComboBox = QCheckBox = QPushButton  # Fallback
         QSpinBox = QDoubleSpinBox = QTabWidget = QSlider = QPushButton

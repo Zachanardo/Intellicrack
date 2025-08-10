@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -792,7 +792,7 @@ def _try_pefile_import_analysis(binary_path: str) -> List[Dict[str, Any]]:
     patches = []
 
     try:
-        import pefile
+        from intellicrack.handlers.pefile_handler import pefile
 
         pe = pefile.PE(binary_path)
 

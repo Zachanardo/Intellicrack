@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 
 This package provides comprehensive tools for binary analysis, vulnerability detection,
 automated patching, and advanced security research capabilities.
@@ -65,7 +65,7 @@ try:
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     os.environ.setdefault("MKL_NUM_THREADS", "1")
     os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
-    
+
     from .utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader
 
     # Setup GPU on import (silent initialization for optimal performance)
@@ -73,7 +73,7 @@ try:
 
     # Log GPU status only if logger is configured
     gpu_info = get_gpu_info()
-    if gpu_info["gpu_available"]:
+    if gpu_info.get("available", False):
         import sys
 
         # Get the actual device for logging
@@ -117,7 +117,7 @@ if _config:
 
 # Main application
 try:
-    from .main import main  #:no-index:
+    from .main import main
     from .ui.main_app import IntellicrackApp
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
@@ -168,7 +168,7 @@ def get_version():
 
     Example:
         .. code-block:: python
-        
+
             from intellicrack import get_version
             version = get_version()
             print(f"Running Intellicrack v{version}")
@@ -197,7 +197,7 @@ def create_app():
 
     Example:
         .. code-block:: python
-        
+
             from intellicrack import create_app
             app = create_app()
             app.show()
@@ -228,7 +228,7 @@ def run_app():
 
     Example:
         .. code-block:: python
-        
+
             from intellicrack import run_app
             exit_code = run_app()
             sys.exit(exit_code)
@@ -256,7 +256,7 @@ def get_default_device():
 
     Example:
         .. code-block:: python
-        
+
             from intellicrack import get_default_device
             device = get_default_device()
             print(f"Using device: {device}")
@@ -278,7 +278,6 @@ __all__ = [
     "get_default_device",
     "get_version",
     "hexview",
-    "main",
     "plugins",
     "run_app",
     "ui",

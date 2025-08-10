@@ -3,9 +3,9 @@
 import logging
 import os
 
-from intellicrack.ui.dialogs.common_imports import QAction
 from PyQt6.QtWidgets import QDialog, QMessageBox, QToolBar
 
+from intellicrack.handlers.pyqt6_handler import QAction
 from intellicrack.logger import logger
 
 """
@@ -26,7 +26,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 

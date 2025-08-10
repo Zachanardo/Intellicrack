@@ -26,12 +26,12 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:
@@ -746,7 +746,7 @@ class MemoryOptimizer:
 
             # Check for UI widget leaks
             if hasattr(self.app, "findChildren"):
-                from intellicrack.ui.dialogs.common_imports import QWidget
+                from intellicrack.handlers.pyqt6_handler import QWidget
 
                 widgets = self.app.findChildren(QWidget)
                 if len(widgets) > 1000:

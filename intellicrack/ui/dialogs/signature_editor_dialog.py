@@ -12,7 +12,7 @@ import os
 import re
 from pathlib import Path
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QApplication,
     QColor,
     QComboBox,

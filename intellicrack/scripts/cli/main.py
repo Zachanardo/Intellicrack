@@ -23,44 +23,44 @@ def create_parser():
         description="Intellicrack CLI - Advanced Binary Analysis & Security Research Platform",
         epilog="For defensive security research only. Use responsibly in controlled environments.",
     )
-    
+
     parser.add_argument(
         "--version",
         action="version",
         version="Intellicrack 1.0.0",
     )
-    
+
     parser.add_argument(
         "-f", "--file",
         type=str,
         help="Path to binary file to analyze",
     )
-    
+
     parser.add_argument(
         "-m", "--mode",
         choices=["analyze", "exploit", "patch", "monitor"],
         default="analyze",
         help="Operation mode",
     )
-    
+
     parser.add_argument(
         "-o", "--output",
         type=str,
         help="Output directory for results",
     )
-    
+
     parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Enable verbose output",
     )
-    
+
     parser.add_argument(
         "--gui",
         action="store_true",
         help="Launch GUI interface",
     )
-    
+
     return parser
 
 
@@ -68,17 +68,17 @@ def main():
     """Main CLI entry point."""
     parser = create_parser()
     args = parser.parse_args()
-    
+
     if args.gui:
         # Launch GUI
         from intellicrack.ui.main_app import main as gui_main
         return gui_main()
-    
+
     if args.file:
         logger.info(f"Analyzing file: {args.file}")
         # Import analysis functions
         from intellicrack.utils.runner_functions import run_comprehensive_analysis
-        
+
         try:
             result = run_comprehensive_analysis(
                 args.file,
@@ -90,7 +90,7 @@ def main():
         except Exception as e:
             logger.error(f"Analysis failed: {e}")
             return 1
-    
+
     # If no file specified, show help
     parser.print_help()
     return 0

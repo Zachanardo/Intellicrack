@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
@@ -71,7 +71,7 @@ def detect_virtualization_protection(binary_path: str | None = None) -> dict[str
 
         # Check running processes (if possible)
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             running_processes = [
                 _p.info["name"].lower() for _p in psutil.process_iter(["name"]) if _p.info["name"]
@@ -197,7 +197,7 @@ def detect_commercial_protections(binary_path: str) -> dict[str, Any]:
 
         # Check section names for _protection indicators
         try:
-            import pefile
+            from intellicrack.handlers.pefile_handler import pefile
 
             pe = pefile.PE(binary_path)
 
@@ -661,7 +661,7 @@ def detect_anti_debugging_techniques(binary_path: str) -> dict[str, Any]:
 
         # Try PE analysis for more detailed checks
         try:
-            import pefile
+            from intellicrack.handlers.pefile_handler import pefile
 
             pe = pefile.PE(binary_path)
 
@@ -733,7 +733,7 @@ def scan_for_bytecode_protectors(binary_path):
         }
 
         try:
-            import pefile
+            from intellicrack.handlers.pefile_handler import pefile
 
             pe = pefile.PE(binary_path)
         except ImportError:

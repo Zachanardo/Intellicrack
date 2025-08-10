@@ -26,13 +26,13 @@ os.environ.setdefault("BLIS_NUM_THREADS", "1")
 
 def torch_thread_safe(func: Callable) -> Callable:
     """Decorator to ensure PyTorch operations are thread-safe.
-    
+
     This decorator wraps PyTorch operations with proper locking
     to prevent GIL-related errors with pybind11 extensions.
-    
+
     Args:
         func: Function that uses PyTorch operations
-        
+
     Returns:
         Thread-safe wrapped function
     """
@@ -45,7 +45,7 @@ def torch_thread_safe(func: Callable) -> Callable:
 
 def safe_torch_import():
     """Safely import PyTorch with thread-safe configuration.
-    
+
     Returns:
         torch module or None if import fails
     """
@@ -56,35 +56,25 @@ def safe_torch_import():
             os.environ.setdefault("OMP_NUM_THREADS", "1")
             os.environ.setdefault("MKL_NUM_THREADS", "1")
             os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
-            
-            import torch
-            
-            # Only set thread count if not already set
-            try:
-                torch.set_num_threads(1)
-            except RuntimeError:
-                # Already set, ignore
-                pass
-            
-            try:
-                torch.set_num_interop_threads(1) 
-            except RuntimeError:
-                # Already set, ignore
-                pass
-            
-            return torch
+
+            # Use torch_handler to avoid direct import that causes hang on Intel Arc B580
+            from intellicrack.handlers import torch_handler
+
+            # Return None since torch_handler.torch is None in fallback mode
+            # This is expected behavior when PyTorch causes hangs
+            return torch_handler.torch
         except ImportError:
             return None
 
 
 class TorchGILSafeContext:
     """Context manager for PyTorch operations that ensures GIL safety."""
-    
+
     def __enter__(self):
         """Enter the thread-safe PyTorch context."""
         _torch_lock.acquire()
         return self
-        
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit the thread-safe PyTorch context."""
         _torch_lock.release()
@@ -92,10 +82,10 @@ class TorchGILSafeContext:
 
 def with_torch_gil_safety(torch_func: Callable) -> Callable:
     """Wrap a PyTorch function call with GIL safety.
-    
+
     Args:
         torch_func: PyTorch function to call safely
-        
+
     Returns:
         Thread-safe wrapped function
     """
@@ -107,33 +97,33 @@ def with_torch_gil_safety(torch_func: Callable) -> Callable:
 
 def configure_pybind11_environment():
     """Configure environment for pybind11 GIL safety.
-    
+
     This should be called very early in application startup,
     before any C++ extensions are imported.
     """
     # Disable pybind11 GIL checks if they're causing issues
     # This is a last resort but may be necessary for complex applications
     os.environ.setdefault("PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF", "1")
-    
+
     # Set NDEBUG to disable debug assertions
     os.environ.setdefault("NDEBUG", "1")
-    
+
     # Additional pybind11 safety flags
     os.environ.setdefault("PYBIND11_DISABLE_GIL_CHECKS", "1")  # Not standard but some builds check this
-    
+
     # Ensure single-threaded execution for critical libraries
     os.environ.setdefault("PYTORCH_DISABLE_CUDNN_BATCH_NORM", "1")
     os.environ.setdefault("CUDA_LAUNCH_BLOCKING", "1")
-    
+
     # Force Python to use a single thread for C extensions
     if hasattr(sys, 'setcheckinterval'):
         sys.setcheckinterval(1000)  # Reduce thread switching frequency
-        
+
     # Try to override pybind11 settings programmatically
     try:
         # Try to access and modify pybind11 internal settings if possible
         import warnings
-        warnings.filterwarnings("ignore", category=RuntimeError, 
+        warnings.filterwarnings("ignore", category=RuntimeError,
                               message=".*pybind11.*GIL.*")
     except:
         pass
@@ -141,15 +131,15 @@ def configure_pybind11_environment():
 
 def initialize_gil_safety():
     """Initialize GIL safety measures for the application.
-    
+
     This function should be called at the very beginning of the application
     before any threading or C++ extension imports occur.
     """
     configure_pybind11_environment()
-    
+
     # Import threading and set up proper thread state
     import threading
-    
+
     # Ensure we're running in the main thread for GIL operations
     if threading.current_thread() is not threading.main_thread():
         import warnings

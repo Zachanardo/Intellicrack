@@ -1,3 +1,21 @@
+/*
+ * This file is part of Intellicrack.
+ * Copyright (C) 2025 Zachary Flint
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /**
  * Real-Time Protection Technique Detection System
  *
@@ -138,13 +156,22 @@
     },
 
     onAttach: function(pid) {
-        console.log("[Protection Detector] Attaching to process: " + pid);
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "attaching_to_process",
+            pid: pid
+        });
         this.processId = pid;
         this.detectionEngine.startTime = Date.now();
     },
 
     run: function() {
-        console.log("[Protection Detector] Starting real-time protection detection system...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "starting_system"
+        });
 
         // Initialize detection engine
         this.initializeDetectionEngine();
@@ -158,7 +185,11 @@
 
     // === DETECTION ENGINE INITIALIZATION ===
     initializeDetectionEngine: function() {
-        console.log("[Protection Detector] Initializing detection engine...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "initializing_detection_engine"
+        });
 
         this.detectionEngine.isRunning = true;
         this.detectionEngine.lastAnalysis = Date.now();
@@ -176,11 +207,19 @@
         // Initialize analysis buffers
         this.clearAnalysisBuffers();
 
-        console.log("[Protection Detector] Detection engine initialized");
+        send({
+            type: "success",
+            target: "realtime_protection_detector",
+            action: "detection_engine_initialized"
+        });
     },
 
     initializeAdaptiveThresholds: function() {
-        console.log("[Protection Detector] Initializing adaptive thresholds...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "initializing_adaptive_thresholds"
+        });
 
         var categories = [
             "antiDebug", "licensing", "integrity", "virtualization",
@@ -212,7 +251,11 @@
 
     // === PROTECTION SIGNATURES LOADING ===
     loadProtectionSignatures: function() {
-        console.log("[Protection Detector] Loading protection technique signatures...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "loading_protection_signatures"
+        });
 
         this.loadAntiDebugSignatures();
         this.loadLicensingSignatures();
@@ -230,11 +273,20 @@
             totalSignatures += categoryMap.size;
         });
 
-        console.log("[Protection Detector] Loaded " + totalSignatures + " protection signatures");
+        send({
+            type: "success",
+            target: "realtime_protection_detector",
+            action: "protection_signatures_loaded",
+            count: totalSignatures
+        });
     },
 
     loadAntiDebugSignatures: function() {
-        console.log("[Protection Detector] Loading anti-debug signatures...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "loading_anti_debug_signatures"
+        });
 
         // API-based anti-debug signatures
         this.protectionSignatures.antiDebug.set("IsDebuggerPresent", {
@@ -298,7 +350,11 @@
     },
 
     loadLicensingSignatures: function() {
-        console.log("[Protection Detector] Loading licensing signatures...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "loading_licensing_signatures"
+        });
 
         // Local license validation
         this.protectionSignatures.licensing.set("License_File_Access", {
@@ -348,7 +404,11 @@
     },
 
     loadIntegritySignatures: function() {
-        console.log("[Protection Detector] Loading integrity check signatures...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "loading_integrity_check_signatures"
+        });
 
         // Code integrity checks
         this.protectionSignatures.integrity.set("PE_Checksum_Validation", {
@@ -382,7 +442,11 @@
     },
 
     loadVirtualizationSignatures: function() {
-        console.log("[Protection Detector] Loading virtualization detection signatures...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "loading_virtualization_signatures"
+        });
 
         // VM detection techniques
         this.protectionSignatures.virtualization.set("VMware_Detection", {
@@ -416,7 +480,11 @@
     },
 
     loadPackingSignatures: function() {
-        console.log("[Protection Detector] Loading packing detection signatures...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "loading_packing_signatures"
+        });
 
         // Runtime unpacking indicators
         this.protectionSignatures.packing.set("Memory_Expansion", {
@@ -442,7 +510,11 @@
     },
 
     loadObfuscationSignatures: function() {
-        console.log("[Protection Detector] Loading obfuscation detection signatures...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "loading_obfuscation_signatures"
+        });
 
         // Code obfuscation indicators
         this.protectionSignatures.obfuscation.set("Control_Flow_Obfuscation", {
@@ -468,7 +540,11 @@
     },
 
     loadNetworkSignatures: function() {
-        console.log("[Protection Detector] Loading network protection signatures...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "loading_network_protection_signatures"
+        });
 
         // Network communication patterns
         this.protectionSignatures.network.set("Encrypted_Communication", {
@@ -494,7 +570,11 @@
     },
 
     loadHardwareSignatures: function() {
-        console.log("[Protection Detector] Loading hardware protection signatures...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "loading_hardware_protection_signatures"
+        });
 
         // Hardware-based protections
         this.protectionSignatures.hardware.set("TPM_Operations", {
@@ -520,7 +600,11 @@
     },
 
     loadMemorySignatures: function() {
-        console.log("[Protection Detector] Loading memory protection signatures...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "loading_memory_protection_signatures"
+        });
 
         // Memory protection techniques
         this.protectionSignatures.memory.set("DEP_Check", {
@@ -546,7 +630,11 @@
     },
 
     loadTimingSignatures: function() {
-        console.log("[Protection Detector] Loading timing attack signatures...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "loading_timing_attack_signatures"
+        });
 
         // Timing-based protections
         this.protectionSignatures.timing.set("Execution_Time_Check", {
@@ -573,7 +661,11 @@
 
     // === MONITORING HOOKS SETUP ===
     setupMonitoringHooks: function() {
-        console.log("[Protection Detector] Setting up real-time monitoring hooks...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "setting_up_monitoring_hooks"
+        });
 
         this.setupAPIMonitoring();
         this.setupMemoryMonitoring();
@@ -583,11 +675,19 @@
         this.setupProcessMonitoring();
         this.setupTimingMonitoring();
 
-        console.log("[Protection Detector] Monitoring hooks installed");
+        send({
+            type: "success",
+            target: "realtime_protection_detector",
+            action: "monitoring_hooks_installed"
+        });
     },
 
     setupAPIMonitoring: function() {
-        console.log("[Protection Detector] Setting up API monitoring...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "setting_up_api_monitoring"
+        });
 
         // High-priority protection APIs
         var criticalAPIs = [
@@ -660,12 +760,22 @@
             });
 
         } catch(e) {
-            console.log("[Protection Detector] Failed to hook " + apiName + ": " + e);
+            send({
+                type: "error",
+                target: "realtime_protection_detector",
+                action: "api_hook_failed",
+                api: apiName,
+                error: e.toString()
+            });
         }
     },
 
     setupMemoryMonitoring: function() {
-        console.log("[Protection Detector] Setting up memory access monitoring...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "setting_up_memory_monitoring"
+        });
 
         // Monitor VirtualProtect for code modification detection
         var virtualProtect = Module.findExportByName("kernel32.dll", "VirtualProtect");
@@ -696,7 +806,11 @@
     },
 
     setupNetworkMonitoring: function() {
-        console.log("[Protection Detector] Setting up network monitoring...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "setting_up_network_monitoring"
+        });
 
         // Monitor WinHTTP operations
         var winHttpSendRequest = Module.findExportByName("winhttp.dll", "WinHttpSendRequest");
@@ -721,7 +835,11 @@
     },
 
     setupRegistryMonitoring: function() {
-        console.log("[Protection Detector] Setting up registry monitoring...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "setting_up_registry_monitoring"
+        });
 
         // Monitor registry queries
         var regQueryValueEx = Module.findExportByName("advapi32.dll", "RegQueryValueExW");
@@ -756,7 +874,11 @@
     },
 
     setupFileMonitoring: function() {
-        console.log("[Protection Detector] Setting up file operation monitoring...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "setting_up_file_monitoring"
+        });
 
         // Monitor file access
         var createFileW = Module.findExportByName("kernel32.dll", "CreateFileW");
@@ -790,7 +912,11 @@
     },
 
     setupProcessMonitoring: function() {
-        console.log("[Protection Detector] Setting up process monitoring...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "setting_up_process_monitoring"
+        });
 
         // Monitor process creation
         var createProcessW = Module.findExportByName("kernel32.dll", "CreateProcessW");
@@ -816,7 +942,11 @@
     },
 
     setupTimingMonitoring: function() {
-        console.log("[Protection Detector] Setting up timing monitoring...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "setting_up_timing_monitoring"
+        });
 
         // Monitor timing-sensitive operations
         var sleep = Module.findExportByName("kernel32.dll", "Sleep");
@@ -842,7 +972,11 @@
 
     // === REAL-TIME ANALYSIS ENGINE ===
     startRealTimeAnalysis: function() {
-        console.log("[Protection Detector] Starting real-time analysis engine...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "starting_analysis_engine"
+        });
 
         // Start continuous analysis loop
         setInterval(() => {
@@ -854,7 +988,11 @@
             this.cleanupAnalysisData();
         }, this.config.performance.cleanupInterval);
 
-        console.log("[Protection Detector] Real-time analysis engine started");
+        send({
+            type: "success",
+            target: "realtime_protection_detector",
+            action: "analysis_engine_started"
+        });
     },
 
     performRealTimeAnalysis: function() {
@@ -891,11 +1029,21 @@
 
             // Performance monitoring
             if (analysisTime > 50) { // More than 50ms is concerning
-                console.log("[Protection Detector] Analysis took " + analysisTime + "ms");
+                send({
+                    type: "info",
+                    target: "realtime_protection_detector",
+                    action: "analysis_time",
+                    duration: analysisTime
+                });
             }
 
         } catch(e) {
-            console.log("[Protection Detector] Analysis error: " + e);
+            send({
+                type: "error",
+                target: "realtime_protection_detector",
+                action: "analysis_error",
+                error: e.toString()
+            });
         }
     },
 
@@ -1139,7 +1287,12 @@
         this.detectionEngine.detectedTechniques.set(detectionKey, detection);
         this.stats.detectionsCount++;
 
-        console.log("[Protection Detector] DETECTED: " + category + "." + technique +
+        send({
+            type: "detection",
+            target: "realtime_protection_detector",
+            action: "protection_detected",
+            category: category,
+            technique: technique,
                   " (confidence: " + confidence.toFixed(3) + ")");
 
         // Apply immediate countermeasures if enabled
@@ -1162,7 +1315,12 @@
         var signature = this.getSignatureForDetection(detection);
         if (!signature || !signature.countermeasure) return;
 
-        console.log("[Protection Detector] Applying countermeasure: " + signature.countermeasure);
+        send({
+            type: "bypass",
+            target: "realtime_protection_detector",
+            action: "applying_countermeasure",
+            countermeasure: signature.countermeasure
+        });
 
         try {
             switch(signature.countermeasure) {
@@ -1183,7 +1341,12 @@
                     break;
 
                 default:
-                    console.log("[Protection Detector] Unknown countermeasure: " + signature.countermeasure);
+                    send({
+                        type: "warning",
+                        target: "realtime_protection_detector",
+                        action: "unknown_countermeasure",
+                        countermeasure: signature.countermeasure
+                    });
                     break;
             }
 
@@ -1191,31 +1354,53 @@
             this.stats.bypassesTriggered++;
 
         } catch(e) {
-            console.log("[Protection Detector] Countermeasure failed: " + e);
+            send({
+                type: "error",
+                target: "realtime_protection_detector",
+                action: "countermeasure_failed",
+                error: e.toString()
+            });
         }
     },
 
     applyReplaceReturnCountermeasure: function(detection, returnValue) {
         // This would integrate with the hook system to replace return values
-        console.log("[Protection Detector] Would replace return value with: " + returnValue);
+        send({
+            type: "bypass",
+            target: "realtime_protection_detector",
+            action: "replacing_return_value",
+            value: returnValue
+        });
         this.stats.successfulBypasses++;
     },
 
     applySpoofTimingCountermeasure: function(detection) {
         // This would normalize timing to avoid detection
-        console.log("[Protection Detector] Would apply timing normalization");
+        send({
+            type: "bypass",
+            target: "realtime_protection_detector",
+            action: "applying_timing_normalization"
+        });
         this.stats.successfulBypasses++;
     },
 
     applyMemoryPatchCountermeasure: function(detection) {
         // This would patch memory locations to bypass checks
-        console.log("[Protection Detector] Would apply memory patching");
+        send({
+            type: "bypass",
+            target: "realtime_protection_detector",
+            action: "applying_memory_patching"
+        });
         this.stats.successfulBypasses++;
     },
 
     applyInterceptSpoofCountermeasure: function(detection) {
         // This would intercept and spoof network communications
-        console.log("[Protection Detector] Would intercept and spoof communications");
+        send({
+            type: "bypass",
+            target: "realtime_protection_detector",
+            action: "spoofing_communications"
+        });
         this.stats.successfulBypasses++;
     },
 
@@ -1284,7 +1469,12 @@
 
     triggerImmediateAnalysis: function(callData) {
         // Perform immediate deep analysis for critical API calls
-        console.log("[Protection Detector] Immediate analysis triggered for: " + callData.apiName);
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "immediate_analysis_triggered",
+            api: callData.apiName
+        });
 
         // Check context and call stack
         if (callData.callStack && callData.callStack.length > 0) {
@@ -1360,7 +1550,11 @@
     initializeMachineLearning: function() {
         if (!this.config.advanced.machineLearning) return;
 
-        console.log("[Protection Detector] Initializing machine learning components...");
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "initializing_ml_components"
+        });
 
         // Initialize ML models
         this.mlComponents.classificationModel = this.createClassificationModel();
@@ -1368,7 +1562,11 @@
         this.mlComponents.sequencePredictor = this.createSequencePredictor();
         this.mlComponents.confidenceEstimator = this.createConfidenceEstimator();
 
-        console.log("[Protection Detector] Machine learning components initialized");
+        send({
+            type: "success",
+            target: "realtime_protection_detector",
+            action: "ml_components_initialized"
+        });
     },
 
     createClassificationModel: function() {
@@ -1467,7 +1665,11 @@
 
     trainClassificationModel: function(trainingData) {
         // Simplified neural network training
-        console.log("[Protection Detector] Training classification model with " +
+        send({
+            type: "info",
+            target: "realtime_protection_detector",
+            action: "training_classification_model",
+            samples:
                   trainingData.length + " samples");
         this.mlComponents.classificationModel.trained = true;
     },
@@ -1614,7 +1816,11 @@
 
     notifyMainSystem: function(detection) {
         // Notify the main Intellicrack system about the detection
-        console.log("[Protection Detector] NOTIFICATION: " +
+        send({
+            type: "notification",
+            target: "realtime_protection_detector",
+            action: "notification",
+            message:
                   detection.category + "." + detection.technique + " detected");
 
         // This would integrate with the main system's event system
@@ -1654,9 +1860,21 @@
     // === INSTALLATION SUMMARY ===
     installSummary: function() {
         setTimeout(() => {
-            console.log("\n[Protection Detector] ========================================");
-            console.log("[Protection Detector] Real-Time Protection Detector Summary:");
-            console.log("[Protection Detector] ========================================");
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_separator"
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_title"
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_separator"
+            });
 
             var activeFeatures = [];
 
@@ -1680,11 +1898,24 @@
             }
 
             for (var i = 0; i < activeFeatures.length; i++) {
-                console.log("[Protection Detector]   ✓ " + activeFeatures[i]);
+                send({
+                    type: "info",
+                    target: "realtime_protection_detector",
+                    action: "active_feature",
+                    feature: activeFeatures[i]
+                });
             }
 
-            console.log("[Protection Detector] ========================================");
-            console.log("[Protection Detector] Monitoring Categories:");
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_separator"
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_monitoring_categories"
+            });
 
             var categories = [
                 "antiDebugTechniques", "licenseValidation", "codeIntegrity",
@@ -1695,54 +1926,185 @@
             for (var i = 0; i < categories.length; i++) {
                 var category = categories[i];
                 if (this.config.monitoring[category]) {
-                    console.log("[Protection Detector]   • " + category + ": enabled");
+                    send({
+                        type: "info",
+                        target: "realtime_protection_detector",
+                        action: "monitoring_category_enabled",
+                        category: category
+                    });
                 }
             }
 
-            console.log("[Protection Detector] ========================================");
-            console.log("[Protection Detector] Detection Configuration:");
-            console.log("[Protection Detector]   • Real-Time Analysis: " + this.config.detection.realTimeAnalysis);
-            console.log("[Protection Detector]   • Minimum Confidence: " + this.config.detection.minConfidence);
-            console.log("[Protection Detector]   • Analysis Interval: " + this.config.performance.analysisInterval + "ms");
-            console.log("[Protection Detector]   • Max Monitored APIs: " + this.config.performance.maxMonitoredAPIs);
-            console.log("[Protection Detector]   • Pattern Learning: " + this.config.detection.patternLearning);
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_separator"
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_detection_config"
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "config_realtime_analysis",
+                enabled: this.config.detection.realTimeAnalysis
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "config_min_confidence",
+                value: this.config.detection.minConfidence
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "config_analysis_interval",
+                interval: this.config.performance.analysisInterval
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "config_max_monitored_apis",
+                max: this.config.performance.maxMonitoredAPIs
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "config_pattern_learning",
+                enabled: this.config.detection.patternLearning
+            });
 
-            console.log("[Protection Detector] ========================================");
-            console.log("[Protection Detector] Protection Signatures:");
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_separator"
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_protection_signatures"
+            });
 
             var totalSignatures = 0;
             this.protectionSignatures.forEach((categoryMap, category) => {
                 var count = categoryMap.size;
                 if (count > 0) {
-                    console.log("[Protection Detector]   • " + category + ": " + count + " signatures");
+                    send({
+                        type: "info",
+                        target: "realtime_protection_detector",
+                        action: "signature_count",
+                        category: category,
+                        count: count
+                    });
                     totalSignatures += count;
                 }
             });
 
-            console.log("[Protection Detector]   • Total: " + totalSignatures + " protection signatures");
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "total_signatures",
+                count: totalSignatures
+            });
 
-            console.log("[Protection Detector] ========================================");
-            console.log("[Protection Detector] Machine Learning:");
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_separator"
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_machine_learning"
+            });
             if (this.config.advanced.machineLearning) {
-                console.log("[Protection Detector]   • Classification Model: " + this.mlComponents.classificationModel.layers.join("-"));
-                console.log("[Protection Detector]   • Anomaly Detection: baseline tracking");
-                console.log("[Protection Detector]   • Sequence Prediction: pattern analysis");
-                console.log("[Protection Detector]   • Confidence Estimation: multi-factor");
+                send({
+                    type: "info",
+                    target: "realtime_protection_detector",
+                    action: "ml_classification_model",
+                    layers: this.mlComponents.classificationModel.layers.join("-")
+                });
+                send({
+                    type: "info",
+                    target: "realtime_protection_detector",
+                    action: "ml_anomaly_detection"
+                });
+                send({
+                    type: "info",
+                    target: "realtime_protection_detector",
+                    action: "ml_sequence_prediction"
+                });
+                send({
+                    type: "info",
+                    target: "realtime_protection_detector",
+                    action: "ml_confidence_estimation"
+                });
             } else {
-                console.log("[Protection Detector]   • Machine Learning: disabled");
+                send({
+                    type: "info",
+                    target: "realtime_protection_detector",
+                    action: "ml_disabled"
+                });
             }
 
-            console.log("[Protection Detector] ========================================");
-            console.log("[Protection Detector] Runtime Statistics:");
-            console.log("[Protection Detector]   • Monitored APIs: " + this.detectionEngine.monitoredAPIs.size);
-            console.log("[Protection Detector]   • Detections: " + this.stats.detectionsCount);
-            console.log("[Protection Detector]   • Bypasses Triggered: " + this.stats.bypassesTriggered);
-            console.log("[Protection Detector]   • Successful Bypasses: " + this.stats.successfulBypasses);
-            console.log("[Protection Detector]   • Accuracy: " + (this.stats.accuracy * 100).toFixed(1) + "%");
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_separator"
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_runtime_statistics"
+            });
+            send({
+                type: "status",
+                target: "realtime_protection_detector",
+                action: "stat_monitored_apis",
+                count: this.detectionEngine.monitoredAPIs.size
+            });
+            send({
+                type: "status",
+                target: "realtime_protection_detector",
+                action: "stat_detections",
+                count: this.stats.detectionsCount
+            });
+            send({
+                type: "status",
+                target: "realtime_protection_detector",
+                action: "stat_bypasses_triggered",
+                count: this.stats.bypassesTriggered
+            });
+            send({
+                type: "status",
+                target: "realtime_protection_detector",
+                action: "stat_successful_bypasses",
+                count: this.stats.successfulBypasses
+            });
+            send({
+                type: "status",
+                target: "realtime_protection_detector",
+                action: "stat_accuracy",
+                accuracy: (this.stats.accuracy * 100).toFixed(1)
+            });
 
-            console.log("[Protection Detector] ========================================");
-            console.log("[Protection Detector] Real-time protection detection system is now ACTIVE!");
-            console.log("[Protection Detector] Continuously monitoring for protection techniques...");
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "summary_separator"
+            });
+            send({
+                type: "success",
+                target: "realtime_protection_detector",
+                action: "system_active"
+            });
+            send({
+                type: "info",
+                target: "realtime_protection_detector",
+                action: "continuous_monitoring"
+            });
         }, 100);
     }
 }

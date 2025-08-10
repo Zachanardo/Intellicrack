@@ -2,7 +2,7 @@
 
 This module provides entropy calculation and analysis capabilities to identify
 potentially packed, encrypted, or obfuscated sections within binary files,
-supporting security research and malware analysis workflows.
+supporting security research and license protection analysis workflows.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -19,7 +19,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging

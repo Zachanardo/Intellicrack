@@ -441,7 +441,7 @@ class TestConsoleWidget:
 
     def test_thread_safety_real_concurrent_logging(self, qtbot):
         """Test REAL thread safety for concurrent log operations."""
-        
+
 
         # Ensure operations happen in GUI thread
         assert QThread.currentThread() == QApplication.instance().thread()

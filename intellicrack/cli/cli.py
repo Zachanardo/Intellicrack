@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import asyncio
@@ -1718,7 +1718,7 @@ def ai_generate(
 
                     generator = AIScriptGenerator()
 
-                    save_dir = output or "scripts/ai_generated"
+                    save_dir = output or "intellicrack/intellicrack/scripts/ai_generated"
                     saved_path = generator.save_script(script, save_dir)
 
                     click.echo(f"💾 Saved: {saved_path}")
@@ -2061,7 +2061,7 @@ def autonomous(
                         from intellicrack.ai.ai_script_generator import AIScriptGenerator
 
                         generator = AIScriptGenerator()
-                        saved_path = generator.save_script(script, "scripts/autonomous")
+                        saved_path = generator.save_script(script, "intellicrack/intellicrack/scripts/autonomous")
                         click.echo(f"      Saved: {saved_path}")
                     except (
                         OSError,

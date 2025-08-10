@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -33,7 +33,7 @@ from .process_utils import get_all_processes
 logger = logging.getLogger(__name__)
 
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 except ImportError as e:
     logger.error("Import error in system_utils: %s", e)
     psutil = None
@@ -497,7 +497,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
 
         # Cross-platform fallback: Try to extract from PE file
         try:
-            import pefile
+            from intellicrack.handlers.pefile_handler import pefile
 
             pe = pefile.PE(exe_path)
 

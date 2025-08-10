@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import base64
@@ -37,11 +37,17 @@ logger = logging.getLogger(__name__)
 # Optional cryptography imports
 HAS_CRYPTOGRAPHY = False
 try:
-    from cryptography.hazmat.backends import default_backend
-    from cryptography.hazmat.primitives import hashes, serialization
-    from cryptography.hazmat.primitives.asymmetric import padding, rsa
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from intellicrack.handlers.cryptography_handler import (
+        PBKDF2HMAC,
+        Cipher,
+        algorithms,
+        default_backend,
+        hashes,
+        modes,
+        rsa,
+        serialization,
+    )
+    from intellicrack.handlers.cryptography_handler import padding as asym_padding
 
     HAS_CRYPTOGRAPHY = True
 except ImportError as e:
@@ -272,8 +278,8 @@ class EncryptionManager:
             # Encrypt session key with client's public key
             encrypted_session_key = client_public_key.encrypt(
                 session_key,
-                padding.OAEP(
-                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                asym_padding.OAEP(
+                    mgf=asym_padding.MGF1(algorithm=hashes.SHA256()),
                     algorithm=hashes.SHA256(),
                     label=None,
                 ),

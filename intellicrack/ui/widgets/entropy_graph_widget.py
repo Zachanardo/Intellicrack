@@ -9,16 +9,20 @@ Licensed under GNU General Public License v3.0
 
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import (
-    QHBoxLayout, QLabel, Qt, QVBoxLayout, QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QHBoxLayout,
+    QLabel,
+    Qt,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 from ...utils.logger import get_logger
 
 try:
-    import numpy as np
-
-    HAS_NUMPY = True
+    from intellicrack.handlers.numpy_handler import HAS_NUMPY
+    from intellicrack.handlers.numpy_handler import numpy as np
 except ImportError:
     np = None
     HAS_NUMPY = False
@@ -40,11 +44,15 @@ except ImportError as e:
     PYQTGRAPH_AVAILABLE = False
     # Fallback to matplotlib if pyqtgraph not available
     try:
-        import matplotlib.pyplot as plt
-        from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-        from matplotlib.figure import Figure
+        from intellicrack.handlers.matplotlib_handler import (
+            HAS_MATPLOTLIB,
+            Figure,
+            FigureCanvasQTAgg,
+            plt,
+        )
 
-        plt.style.use("dark_background")
+        if HAS_MATPLOTLIB:
+            plt.style.use("dark_background")
     except ImportError as e:
         logger.error("Import error in entropy_graph_widget: %s", e)
         # Already initialized to None above

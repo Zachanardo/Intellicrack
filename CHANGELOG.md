@@ -67,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Moved runtime files (c2_sessions.db, c2_uploads/, c2_downloads/, cache/) to data/ directory
 - Updated session_manager.py to use new data directory paths with migration support
-- Consolidated scripts directories - moved all scripts from root /scripts/ to /intellicrack/scripts/
+- Consolidated scripts directories - moved all scripts from root /scripts/ to /intellicrack/intellicrack/scripts/
 - Moved Sphinx documentation artifacts to docs/ directory
 - Organized scripts into subdirectories (frida/, ghidra/, fixes/, etc.)
 - Migrated from pyproject.toml to requirements.txt structure

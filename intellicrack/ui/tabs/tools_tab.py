@@ -16,19 +16,36 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
 import subprocess
+from pathlib import Path
 
-from intellicrack.ui.dialogs.common_imports import (
-    QColor, QComboBox, QFileDialog, QFont,
-    QGridLayout, QGroupBox, QHBoxLayout, QInputDialog,
-    QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QPushButton, QSplitter, Qt, QTableWidget,
-    QTableWidgetItem, QTabWidget, QTextEdit,
-    QVBoxLayout, QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QColor,
+    QComboBox,
+    QFileDialog,
+    QFont,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QSplitter,
+    Qt,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 from .base_tab import BaseTab
@@ -463,7 +480,7 @@ class ToolsTab(BaseTab):
         try:
             import platform
 
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             info = []
             info.append(f"System: {platform.system()}")
@@ -483,7 +500,7 @@ class ToolsTab(BaseTab):
     def list_processes(self):
         """List running processes"""
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             processes = []
             for proc in psutil.process_iter(["pid", "name", "cpu_percent", "memory_percent"]):
@@ -511,7 +528,7 @@ class ToolsTab(BaseTab):
     def get_memory_info(self):
         """Get memory information"""
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             memory = psutil.virtual_memory()
             swap = psutil.swap_memory()
@@ -801,7 +818,7 @@ class ToolsTab(BaseTab):
             return
 
         try:
-            import pefile
+            from intellicrack.handlers.pefile_handler import pefile
 
             pe = pefile.PE(binary_path)
 
@@ -837,7 +854,7 @@ class ToolsTab(BaseTab):
             return
 
         try:
-            import pefile
+            from intellicrack.handlers.pefile_handler import pefile
 
             pe = pefile.PE(binary_path)
 
@@ -881,7 +898,7 @@ class ToolsTab(BaseTab):
             return
 
         try:
-            import pefile
+            from intellicrack.handlers.pefile_handler import pefile
 
             pe = pefile.PE(binary_path)
 
@@ -1204,7 +1221,7 @@ def get_plugin():
         self.interface_combo.clear()
 
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             interfaces = psutil.net_if_addrs()
             for interface_name in interfaces.keys():

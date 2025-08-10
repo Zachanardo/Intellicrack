@@ -258,7 +258,7 @@ class TestAnalysisTab:
     def test_visualization_widgets_real_display(self, qtbot):
         """Test REAL visualization widgets for analysis data."""
         # Check for visualization components
-        
+
         graphics_views = self.tab.findChildren(QGraphicsView)
 
         # Check for entropy visualizer

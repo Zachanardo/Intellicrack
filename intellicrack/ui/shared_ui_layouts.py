@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Shared UI Layout Utilities
 
@@ -21,7 +21,7 @@ Common UI layout patterns to eliminate code duplication between dialog classes.
 
 from collections.abc import Callable
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QFormLayout,
     QGroupBox,
     QHBoxLayout,

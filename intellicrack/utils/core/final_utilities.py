@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
@@ -28,10 +28,11 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from intellicrack.handlers.numpy_handler import HAS_NUMPY
+from intellicrack.handlers.pyqt6_handler import HAS_PYQT, QFileDialog
 from intellicrack.logger import logger
 
 from ..utils.logger import setup_logger
-from .common_imports import HAS_NUMPY, HAS_PYQT
 
 """
 Final utility functions to complete the Intellicrack refactoring.
@@ -51,13 +52,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
 # Optional imports with graceful fallbacks
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 
     HAS_PSUTIL = True
 except ImportError as e:
@@ -74,7 +75,7 @@ except ImportError as e:
 
 
 if HAS_PYQT:
-    from .common_imports import QApplication
+    from intellicrack.handlers.pyqt6_handler import QApplication
 if HAS_NUMPY:
     pass
 
@@ -127,7 +128,7 @@ def browse_dataset(parent: Any = None) -> str | None:
         logger.warning("PyQt6 not available, cannot browse dataset")
         return None
 
-    from intellicrack.ui.dialogs.common_imports import QApplication, QFileDialog
+    from intellicrack.handlers.pyqt6_handler import QFileDialog
 
     file_path, _ = QFileDialog.getOpenFileName(
         parent,
@@ -152,7 +153,7 @@ def browse_model(parent: Any = None) -> str | None:
         logger.warning("PyQt6 not available, cannot browse model")
         return None
 
-    
+
 
     file_path, _ = QFileDialog.getOpenFileName(
         parent,
@@ -329,7 +330,7 @@ def compute_section_hashes(binary_path: str) -> dict[str, str]:
     section_hashes = {}
 
     try:
-        import pefile
+        from intellicrack.handlers.pefile_handler import pefile
 
         pe = pefile.PE(binary_path)
 
@@ -1213,7 +1214,7 @@ def center_on_screen(widget: Any) -> None:
     if not HAS_PYQT or not widget:
         return
 
-    
+
 
     app = QApplication.instance()
     if app:
@@ -1901,7 +1902,7 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
         if db_type == "sqlite":
             # SQLite database storage
             try:
-                from ...handlers.sqlite3_handler import sqlite3
+                from intellicrack.handlers.sqlite3_handler import sqlite3
 
                 db_path = config.get("path", "intellicrack_reports.db")
                 conn = sqlite3.connect(db_path)

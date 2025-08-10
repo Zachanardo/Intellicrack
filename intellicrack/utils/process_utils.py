@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 # Import consolidated functions from the new location
@@ -35,9 +35,9 @@ from .system.process_utils import (
 
 logger = logging.getLogger(__name__)
 
-# Try to import psutil for enhanced process management
+# Try to from intellicrack.handlers.psutil_handler import psutil for enhanced process management
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:

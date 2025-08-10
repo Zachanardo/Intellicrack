@@ -8,7 +8,6 @@ Subpackages
    :maxdepth: 4
 
    intellicrack.plugins.custom_modules
-   intellicrack.plugins.ghidra_scripts
 
 Submodules
 ----------

@@ -77,7 +77,7 @@ Modern Qt-based interface with professional IDE features:
 - **Tools Tab**: Integrated external tool management
 - **Dashboard**: System monitoring and resource management
 
-### 4. Plugin System (`intellicrack/plugins/`)
+### 4. Plugin System (`intellicrack/intellicrack/plugins/`)
 
 Extensible plugin architecture supporting:
 - **Custom Analysis Modules**

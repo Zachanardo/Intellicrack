@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 # Import PE common functions
@@ -23,7 +23,7 @@ from .pe_common import extract_pe_imports, iterate_pe_imports_with_dll
 
 # Import ELF analyzer
 try:
-    from .elf_analyzer import ELFAnalyzer, analyze_elf_file, is_elf_file, extract_elf_strings
+    from .elf_analyzer import ELFAnalyzer, analyze_elf_file, extract_elf_strings, is_elf_file
     _elf_imports = ["ELFAnalyzer", "analyze_elf_file", "is_elf_file", "extract_elf_strings"]
 except ImportError:
     _elf_imports = []

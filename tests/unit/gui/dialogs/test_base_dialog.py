@@ -279,7 +279,7 @@ class TestBaseDialog:
 
     def test_dialog_thread_safety_real_gui_thread(self, qtbot):
         """Test REAL thread safety with GUI thread operations."""
-        
+
 
         # Ensure dialog operations happen in GUI thread
         assert QThread.currentThread() == QApplication.instance().thread()

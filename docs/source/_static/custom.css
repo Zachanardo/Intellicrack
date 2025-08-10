@@ -1,0 +1,147 @@
+/* Dark mode for sphinx_rtd_theme */
+@media (prefers-color-scheme: dark) {
+    /* Main background and text */
+    body {
+        background: #0d1117 !important;
+        color: #c9d1d9 !important;
+    }
+    
+    .wy-nav-content {
+        background: #0d1117 !important;
+        color: #c9d1d9 !important;
+    }
+    
+    /* Sidebar */
+    .wy-side-nav-search {
+        background-color: #161b22 !important;
+    }
+    
+    .wy-nav-side {
+        background: #0d1117 !important;
+    }
+    
+    .wy-menu-vertical a {
+        color: #8b949e !important;
+    }
+    
+    .wy-menu-vertical a:hover {
+        background-color: #1f2937 !important;
+        color: #58a6ff !important;
+    }
+    
+    .wy-menu-vertical li.current > a {
+        background: #1f2937 !important;
+        color: #58a6ff !important;
+        border-right: solid 1px #58a6ff !important;
+    }
+    
+    /* Code blocks */
+    .highlight {
+        background: #161b22 !important;
+    }
+    
+    div[class*="highlight-"] {
+        background: #161b22 !important;
+    }
+    
+    .highlight pre {
+        background: #161b22 !important;
+        color: #c9d1d9 !important;
+    }
+    
+    code, .rst-content code {
+        background: #1f2937 !important;
+        color: #79c0ff !important;
+        border: 1px solid #30363d !important;
+    }
+    
+    /* Tables */
+    .wy-table-odd td, .wy-table-striped tr:nth-child(2n-1) td {
+        background-color: #161b22 !important;
+    }
+    
+    .rst-content table.docutils thead {
+        background-color: #1f2937 !important;
+    }
+    
+    /* Admonitions */
+    .admonition {
+        background: #161b22 !important;
+        border: 1px solid #30363d !important;
+    }
+    
+    .admonition-title {
+        background: #1f2937 !important;
+    }
+    
+    /* Links */
+    a {
+        color: #58a6ff !important;
+    }
+    
+    a:visited {
+        color: #8b949e !important;
+    }
+    
+    /* Search */
+    .wy-side-nav-search input[type=text] {
+        background-color: #0d1117 !important;
+        color: #c9d1d9 !important;
+        border: 1px solid #30363d !important;
+    }
+    
+    /* Buttons */
+    .btn {
+        background-color: #1f2937 !important;
+        border: 1px solid #30363d !important;
+        color: #c9d1d9 !important;
+    }
+    
+    .btn:hover {
+        background-color: #30363d !important;
+    }
+    
+    /* API documentation */
+    dl.class, dl.function, dl.method {
+        background: #161b22 !important;
+        border: 1px solid #30363d !important;
+    }
+    
+    dt {
+        background: #1f2937 !important;
+    }
+    
+    /* Footer */
+    footer {
+        background: #0d1117 !important;
+        border-top: 1px solid #30363d !important;
+    }
+}
+
+/* Force dark mode regardless of system preference */
+html[data-theme="dark"] body,
+body.dark-mode {
+    background: #0d1117 !important;
+    color: #c9d1d9 !important;
+}
+
+/* Improve readability for all modes */
+.rst-content .section ul li {
+    margin-bottom: 0.5em;
+}
+
+.rst-content .highlight {
+    margin: 1em 0;
+}
+
+/* Better spacing for API docs */
+.rst-content dl dd {
+    margin-left: 30px;
+}
+
+/* Fix viewcode links */
+.viewcode-link, .viewcode-back {
+    color: #58a6ff !important;
+    float: right;
+    text-align: right;
+}

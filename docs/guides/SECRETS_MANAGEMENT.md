@@ -63,7 +63,7 @@ set_secret('MY_API_KEY', 'secret-value-here')
 Run the migration script to move existing API keys to secure storage:
 
 ```bash
-python scripts/migrate_secrets.py
+python intellicrack/intellicrack/scripts/migrate_secrets.py
 ```
 
 ## Storage Hierarchy
@@ -89,7 +89,6 @@ The secrets manager checks for secrets in this order:
 ### Security Analysis Services
 - `VIRUSTOTAL_API_KEY`
 - `HYBRID_ANALYSIS_API_KEY`
-- `MALWARE_BAZAAR_API_KEY`
 
 ### Cloud Services
 - `AWS_ACCESS_KEY_ID`
@@ -223,4 +222,4 @@ The new system:
 - Uses OS keychains when available
 - Maintains backward compatibility
 
-Run `python scripts/migrate_secrets.py` to automatically migrate.
+Run `python intellicrack/intellicrack/scripts/migrate_secrets.py` to automatically migrate.

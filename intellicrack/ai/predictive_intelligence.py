@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -35,16 +35,17 @@ from .learning_engine_simple import get_learning_engine
 from .performance_monitor import profile_ai_operation
 
 try:
-    import numpy as np
+    from intellicrack.handlers.numpy_handler import HAS_NUMPY
+    from intellicrack.handlers.numpy_handler import numpy as np
 
-    NUMPY_AVAILABLE = True
+    NUMPY_AVAILABLE = HAS_NUMPY
 except ImportError as e:
     logger.error("Import error in predictive_intelligence: %s", e)
     np = None
     NUMPY_AVAILABLE = False
 
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:

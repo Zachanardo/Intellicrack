@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -33,12 +33,12 @@ logger = logging.getLogger(__name__)
 
 # Try to import optional dependencies
 try:
-    import numpy as np
-
-    NUMPY_AVAILABLE = True
+    from intellicrack.handlers.numpy_handler import HAS_NUMPY as NUMPY_AVAILABLE
+    from intellicrack.handlers.numpy_handler import numpy as np
 except ImportError as e:
     logger.error("Import error in distributed_processing: %s", e)
     NUMPY_AVAILABLE = False
+    np = None
 
 # Try to import GPU autoloader
 GPU_AUTOLOADER_AVAILABLE = False
@@ -65,14 +65,7 @@ try:
 except ImportError:
     pass
 
-try:
-    import torch
-
-    TORCH_AVAILABLE = True
-except ImportError as e:
-    logger.error("Import error in distributed_processing: %s", e)
-    torch = None
-    TORCH_AVAILABLE = False
+from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
 
 logger = logging.getLogger(__name__)
 

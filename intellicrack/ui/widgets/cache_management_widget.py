@@ -8,12 +8,25 @@ Licensed under GNU General Public License v3.0
 
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import (
-    QApplication, QFont, QGroupBox, QHBoxLayout,
-    QHeaderView, QLabel, QMessageBox, QProgressBar,
-    QPushButton, QSplitter, Qt, QTableWidget,
-    QTableWidgetItem, QTextEdit, QTimer, QVBoxLayout,
-    QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QApplication,
+    QFont,
+    QGroupBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QSplitter,
+    Qt,
+    QTableWidget,
+    QTableWidgetItem,
+    QTextEdit,
+    QTimer,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 from ...protection.analysis_cache import get_analysis_cache
@@ -297,7 +310,7 @@ class CacheManagementWidget(QWidget):
 
         # Add AI coordination layer performance statistics if available
         try:
-            
+
 
             main_window = None
             for widget in QApplication.allWidgets():
@@ -403,7 +416,7 @@ class CacheManagementWidget(QWidget):
 
                 # Also clear AI coordination layer cache if available
                 try:
-                    
+
 
                     main_window = None
                     for widget in QApplication.allWidgets():

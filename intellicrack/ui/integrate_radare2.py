@@ -104,7 +104,7 @@ def integrate_with_main_app():
         main_app = None
 
         # Method 1: Check if running in QApplication context
-        from intellicrack.ui.dialogs.common_imports import QApplication
+        from intellicrack.handlers.pyqt6_handler import QApplication
 
         app = QApplication.instance()
         if app:

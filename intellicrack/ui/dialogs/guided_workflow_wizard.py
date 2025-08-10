@@ -13,15 +13,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import datetime
 import os
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import Qt
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QDialog,
     QFileDialog,
@@ -37,12 +36,12 @@ from intellicrack.ui.dialogs.common_imports import (
     QSizePolicy,
     QSpacerItem,
     QSpinBox,
+    Qt,
     QTextEdit,
     QVBoxLayout,
     QWizard,
     QWizardPage,
 )
-
 from intellicrack.logger import logger
 
 """
@@ -63,12 +62,12 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
 try:
-    import pefile
+    from intellicrack.handlers.pefile_handler import pefile
 
     HAS_PEFILE = True
 except ImportError as e:

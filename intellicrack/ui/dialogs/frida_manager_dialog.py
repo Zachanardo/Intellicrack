@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -22,11 +22,12 @@ from datetime import datetime
 from pathlib import Path
 
 try:
-    import frida
+    from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
 except ImportError:
+    HAS_FRIDA = False
     frida = None
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QAction,
     QCheckBox,
     QColor,
@@ -59,7 +60,6 @@ from intellicrack.ui.dialogs.common_imports import (
     QWidget,
     pyqtSignal,
 )
-
 from intellicrack.logger import logger
 
 from ...core.frida_constants import HookCategory, ProtectionType
@@ -97,7 +97,7 @@ class ProcessWorker(QThread):
         """Scan for running processes that can be hooked with Frida."""
         try:
             try:
-                import psutil
+                from intellicrack.handlers.psutil_handler import psutil
             except ImportError:
                 self.error.emit("psutil library not available - cannot scan processes")
                 return
@@ -2278,7 +2278,7 @@ class FridaManagerDialog(QDialog):
             save_dir = QFileDialog.getExistingDirectory(
                 self,
                 "Select Directory to Save AI Scripts",
-                "scripts/ai_generated",
+                "intellicrack/scripts/ai_generated",
             )
 
             if not save_dir:

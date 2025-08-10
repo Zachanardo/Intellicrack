@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import ctypes
@@ -167,7 +167,7 @@ class SandboxDetector(BaseDetector):
 
             suspicious_users = [
                 "sandbox",
-                "malware",
+                "cracked",
                 "virus",
                 "maltest",
                 "test",
@@ -192,7 +192,7 @@ class SandboxDetector(BaseDetector):
             else:
                 suspicious_computers = [
                     "sandbox",
-                    "malware",
+                    "cracked",
                     "virus",
                     "test",
                     "vmware",
@@ -285,7 +285,7 @@ class SandboxDetector(BaseDetector):
             # Check memory
             if platform.system() == "Windows":
                 try:
-                    import psutil
+                    from intellicrack.handlers.psutil_handler import psutil
 
                     mem = psutil.virtual_memory()
                     total_gb = mem.total / (1024**3)
@@ -480,7 +480,7 @@ class SandboxDetector(BaseDetector):
                 os.path.join(os.environ.get("SystemDrive", "C:"), "analysis"),
                 os.path.join(os.environ.get("SystemDrive", "C:"), "analyzer"),
                 os.path.join(os.environ.get("SystemDrive", "C:"), "sandbox"),
-                os.path.join(os.environ.get("SystemDrive", "C:"), "malware"),
+                os.path.join(os.environ.get("SystemDrive", "C:"), "analysis"),
                 "/tmp/analysis/",
                 "/tmp/cuckoo/",
                 "/opt/sandbox/",
@@ -556,7 +556,7 @@ class SandboxDetector(BaseDetector):
                             details["monitoring_signs"].append(f"Monitor process: {proc}")
 
                     # Check current process for suspicious DLLs
-                    import psutil
+                    from intellicrack.handlers.psutil_handler import psutil
 
                     current_proc = psutil.Process()
 
@@ -820,7 +820,7 @@ bool IsSandbox() {
     GetComputerName(computername, &size);
 
     // Common sandbox names
-    const char* bad_names[] = {"sandbox", "malware", "virus", "test", "analyst"};
+    const char* bad_names[] = {"sandbox", "crack", "keygen", "test", "analyst"};
     for (int i = 0; i < 5; i++) {
         if (strstr(username, bad_names[i]) || strstr(computername, bad_names[i])) {
             return true;

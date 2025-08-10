@@ -10,7 +10,6 @@ Copyright (C) 2025 Zachary Flint
 import logging
 import sys
 
-from intellicrack.ui.dialogs.common_imports import Qt
 from PyQt6.QtWidgets import (
     QAction,
     QApplication,
@@ -24,6 +23,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from intellicrack.ui.dialogs.common_imports import Qt
 
 # Add parent directory to path for imports
 sys.path.insert(0, "..")

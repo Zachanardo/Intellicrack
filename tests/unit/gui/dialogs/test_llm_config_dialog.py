@@ -355,7 +355,7 @@ class TestLLMConfigDialog:
 
     def test_thread_safety_real_async_operations(self, qtbot):
         """Test REAL thread safety for async operations."""
-        
+
 
         # Ensure dialog operations happen in GUI thread
         assert QThread.currentThread() == QApplication.instance().thread()

@@ -17,7 +17,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 # Standard library imports
@@ -46,12 +46,14 @@ from functools import partial
 
 # Third-party imports (conditional)
 try:
-    import numpy as np
+    from intellicrack.handlers.numpy_handler import HAS_NUMPY as NUMPY_AVAILABLE
+    from intellicrack.handlers.numpy_handler import numpy as np
 except ImportError:
+    NUMPY_AVAILABLE = False
     np = None
 
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 except ImportError:
     psutil = None
 
@@ -80,7 +82,7 @@ else:
 
 # PyQt6 imports (consolidated)
 try:
-    from intellicrack.ui.dialogs.common_imports import (
+    from intellicrack.handlers.pyqt6_handler import (
         HAS_PYQT,
         QAbstractItemView,
         QAction,
@@ -137,11 +139,13 @@ try:
         QSpacerItem,
         QSpinBox,
         QSplitter,
+        QStackedWidget,
         QStyle,
-        QTabWidget,
+        Qt,
         QTableView,
         QTableWidget,
         QTableWidgetItem,
+        QTabWidget,
         QTextBrowser,
         QTextCursor,
         QTextEdit,
@@ -156,19 +160,19 @@ try:
         QWidget,
         QWizard,
         QWizardPage,
-        Qt,
         pyqtSignal,
     )
-    
+
     # Check PDF support
     HAS_PDF_SUPPORT = QPdfDocument is not None and QPdfView is not None
 
 except ImportError:
     # Real tkinter-based fallback implementation for environments without PyQt6
     import threading
-    import tkinter as tk
-    from tkinter import ttk
     from typing import Any, Callable, List
+
+    from intellicrack.handlers.tkinter_handler import tkinter as tk
+    from intellicrack.handlers.tkinter_handler import ttk
 
     class QMainWindow:
         """Tkinter-based main window implementation for PyQt6 fallback."""
@@ -255,6 +259,39 @@ except ImportError:
         """Create a real signal for PyQt fallback."""
         return RealSignal()
 
+    class QThread(threading.Thread):
+        """Thread implementation for PyQt fallback."""
+
+        # Class-level signals
+        started = RealSignal()
+        finished = RealSignal()
+
+        def __init__(self, parent=None):
+            """Initialize thread."""
+            super().__init__(daemon=True)
+            self.parent = parent
+            # Instance signals
+            self.started = RealSignal()
+            self.finished = RealSignal()
+
+        def run(self):
+            """Run the thread."""
+            self.started.emit()
+            try:
+                # Subclasses should override this
+                pass
+            finally:
+                self.finished.emit()
+
+        def quit(self):
+            """Stop the thread."""
+            # In real QThread this would stop the event loop
+            pass
+
+        def wait(self, timeout=None):
+            """Wait for thread to finish."""
+            self.join(timeout)
+
     # Create minimal Qt namespace replacements with real functionality
     class QtNamespace:
         """Minimal Qt namespace replacement."""
@@ -320,13 +357,13 @@ except ImportError:
 
         def __init__(self, title="Intellicrack Loading", message="Initializing..."):
             """Initialize splash screen with tkinter.
-            
+
             Args:
                 title: Window title for splash screen
                 message: Loading message to display
 
             """
-            import tkinter as tk
+            from intellicrack.handlers.tkinter_handler import tkinter as tk
             self.root = tk.Tk()
             self.root.title(title)
             self.root.overrideredirect(True)  # Remove window decorations
@@ -394,7 +431,7 @@ except ImportError:
 
         def update_message(self, message: str):
             """Update the loading message.
-            
+
             Args:
                 message: New message to display
 
@@ -411,15 +448,15 @@ except ImportError:
                 pass  # Window might already be destroyed
 
     # Real fallback implementations for UI components
-    import tkinter as tk
-    from tkinter import messagebox, ttk
+    from intellicrack.handlers.tkinter_handler import messagebox, ttk
+    from intellicrack.handlers.tkinter_handler import tkinter as tk
 
     class DistributedProcessingConfigDialog:
         """Real distributed processing configuration dialog."""
 
         def __init__(self, parent=None):
             """Initialize config dialog.
-            
+
             Args:
                 parent: Parent window
 
@@ -464,7 +501,7 @@ except ImportError:
 
         def __init__(self, parent=None, **kwargs):
             """Initialize status widget.
-            
+
             Args:
                 parent: Parent widget
                 **kwargs: Additional frame arguments
@@ -477,7 +514,7 @@ except ImportError:
 
         def update_status(self, status: str, running: bool = False):
             """Update emulator status display.
-            
+
             Args:
                 status: Status message
                 running: Whether emulator is running
@@ -489,7 +526,7 @@ except ImportError:
 
     def add_emulator_tooltips(widget):
         """Add tooltips to emulator-related widgets.
-        
+
         Args:
             widget: Widget to add tooltips to
 
@@ -528,7 +565,7 @@ except ImportError:
 
         def __init__(self, func):
             """Initialize decorator.
-            
+
             Args:
                 func: Function to decorate
 
@@ -549,7 +586,7 @@ except ImportError:
 
     def get_tooltip_definitions():
         """Get tooltip text definitions.
-        
+
         Returns:
             dict: Tooltip mappings
 
@@ -564,7 +601,7 @@ except ImportError:
 
     def apply_tooltips_to_buttons(container):
         """Apply tooltips to all buttons in container.
-        
+
         Args:
             container: Widget container
 
@@ -758,7 +795,7 @@ except ImportError:
 
             def _load_theme_preference(self) -> str:
                 """Load saved theme preference from disk.
-                
+
                 Returns:
                     str: Saved theme name or 'dark' as default
 
@@ -785,7 +822,7 @@ except ImportError:
 
             def set_theme(self, theme: str):
                 """Apply a theme to the application.
-                
+
                 Args:
                     theme: Name of theme to apply ('dark', 'light', or 'hacker')
 
@@ -804,7 +841,7 @@ except ImportError:
 
             def get_current_theme(self) -> str:
                 """Get the name of the current theme.
-                
+
                 Returns:
                     str: Current theme name
 
@@ -813,7 +850,7 @@ except ImportError:
 
             def get_theme_data(self) -> dict:
                 """Get the current theme's color data.
-                
+
                 Returns:
                     dict: Theme color mappings
 
@@ -822,7 +859,7 @@ except ImportError:
 
             def register_callback(self, callback):
                 """Register a callback for theme changes.
-                
+
                 Args:
                     callback: Function to call when theme changes
 
@@ -832,7 +869,7 @@ except ImportError:
 
             def get_available_themes(self) -> list:
                 """Get list of available theme names.
-                
+
                 Returns:
                     list: Theme names
 
@@ -886,11 +923,11 @@ except ImportError:
 
         def execute(self, binary_path: str, entry_point: int = 0) -> List[Dict]:
             """Execute binary symbolically.
-            
+
             Args:
                 binary_path: Path to binary file
                 entry_point: Entry point address
-                
+
             Returns:
                 List of execution paths
 
@@ -914,10 +951,10 @@ except ImportError:
 
         def analyze(self, binary_path: str) -> Dict:
             """Analyze binary for taint propagation.
-            
+
             Args:
                 binary_path: Path to binary
-                
+
             Returns:
                 Taint analysis results
 
@@ -941,10 +978,10 @@ except ImportError:
 
     def run_standalone_taint_analysis(binary_path: str) -> Dict:
         """Run taint analysis on binary.
-        
+
         Args:
             binary_path: Path to binary
-            
+
         Returns:
             Analysis results
 
@@ -962,11 +999,11 @@ except ImportError:
 
         def execute(self, binary_path: str, inputs: Dict = None) -> List:
             """Execute binary concolically.
-            
+
             Args:
                 binary_path: Path to binary
                 inputs: Concrete input values
-                
+
             Returns:
                 Execution traces
 
@@ -993,10 +1030,10 @@ except ImportError:
 
         def find_gadgets(self, binary_path: str) -> List[Dict]:
             """Find ROP gadgets in binary.
-            
+
             Args:
                 binary_path: Path to binary
-                
+
             Returns:
                 List of gadgets
 
@@ -1017,10 +1054,10 @@ except ImportError:
 
         def generate_chain(self, target: str) -> List:
             """Generate ROP chain for target.
-            
+
             Args:
                 target: Target function/address
-                
+
             Returns:
                 ROP chain
 
@@ -1035,7 +1072,7 @@ except ImportError:
 
         def __init__(self, workers: int = 4):
             """Initialize distributed manager.
-            
+
             Args:
                 workers: Number of worker threads
 
@@ -1064,10 +1101,10 @@ except ImportError:
 
         def _process_task(self, task: Dict) -> Dict:
             """Process a single task.
-            
+
             Args:
                 task: Task to process
-                
+
             Returns:
                 Processing result
 
@@ -1076,7 +1113,7 @@ except ImportError:
 
         def submit_task(self, task: Dict):
             """Submit task for processing.
-            
+
             Args:
                 task: Task to submit
 
@@ -1093,7 +1130,7 @@ except ImportError:
 
         def _check_gpu(self) -> bool:
             """Check if GPU is available.
-            
+
             Returns:
                 True if GPU available
 
@@ -1107,12 +1144,12 @@ except ImportError:
 
         def accelerate(self, func, *args, **kwargs):
             """Accelerate function execution on GPU.
-            
+
             Args:
                 func: Function to accelerate
                 *args: Function arguments
                 **kwargs: Function keyword arguments
-                
+
             Returns:
                 Function result
 
@@ -1129,7 +1166,7 @@ except ImportError:
 
         def __init__(self, chunk_size: int = 4096):
             """Initialize loader.
-            
+
             Args:
                 chunk_size: Size of chunks to read
 
@@ -1139,12 +1176,12 @@ except ImportError:
 
         def load(self, path: str, offset: int = 0, size: int = None) -> bytes:
             """Load binary data efficiently.
-            
+
             Args:
                 path: File path
                 offset: Read offset
                 size: Bytes to read
-                
+
             Returns:
                 Binary data
 
@@ -1168,7 +1205,7 @@ except ImportError:
 
         def add_section(self, title: str, content: str):
             """Add section to report.
-            
+
             Args:
                 title: Section title
                 content: Section content
@@ -1178,7 +1215,7 @@ except ImportError:
 
         def generate(self, output_path: str):
             """Generate PDF report.
-            
+
             Args:
                 output_path: Output file path
 
@@ -1194,7 +1231,7 @@ except ImportError:
 
     def run_report_generation(results: Dict, output_path: str):
         """Generate report from results.
-        
+
         Args:
             results: Analysis results
             output_path: Output path
@@ -1215,7 +1252,7 @@ except ImportError:
 
         def load_model(self, model_name: str, model_path: str = None):
             """Load AI model.
-            
+
             Args:
                 model_name: Model identifier
                 model_path: Path to model files
@@ -1230,10 +1267,10 @@ except ImportError:
 
         def predict(self, prompt: str) -> str:
             """Generate prediction from model.
-            
+
             Args:
                 prompt: Input prompt
-                
+
             Returns:
                 Model response
 
@@ -1258,7 +1295,7 @@ except ImportError:
 
         def update_stat(self, key: str, value: Any):
             """Update dashboard statistic.
-            
+
             Args:
                 key: Stat key
                 value: New value
@@ -1278,7 +1315,7 @@ except ImportError:
 
         def register_callback(self, callback):
             """Register update callback.
-            
+
             Args:
                 callback: Callback function
 
@@ -1304,7 +1341,7 @@ try:
 except ImportError:
     def inject_comprehensive_api_hooks(app, *args, **kwargs):
         """Fallback function for API hook injection when protection_utils unavailable.
-        
+
         Args:
             app: Application instance
             *args: Additional positional arguments
@@ -1354,14 +1391,16 @@ else:
 
 # Additional imports for data processing
 try:
-    import numpy as np
+    from intellicrack.handlers.numpy_handler import HAS_NUMPY as NUMPY_AVAILABLE
+    from intellicrack.handlers.numpy_handler import numpy as np
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
+    NUMPY_AVAILABLE = False
     np = None
 
 # Optional imports with fallbacks
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 except ImportError as e:
     logger.error("Import error in main_app.py: %s", e)
     psutil = None
@@ -3780,10 +3819,13 @@ def _generate_ssl_certificates(cert_store_path):
 
         # Generate real CA certificate using cryptography
         try:
-            from cryptography import x509
-            from cryptography.hazmat.primitives import hashes, serialization
-            from cryptography.hazmat.primitives.asymmetric import rsa
-            from cryptography.x509.oid import NameOID
+            from intellicrack.handlers.cryptography_handler import (
+                NameOID,
+                hashes,
+                rsa,
+                serialization,
+                x509,
+            )
 
             # Generate CA private key
             ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -4318,9 +4360,10 @@ def _check_intercepted_traffic(proxy_server):
                     )
 
             try:
-                import matplotlib.pyplot
+                from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB
+                from intellicrack.handlers.matplotlib_handler import plt as matplotlib_pyplot
 
-                app.cfg_analysis_tools["matplotlib_available"] = True
+                app.cfg_analysis_tools["matplotlib_available"] = HAS_MATPLOTLIB
 
                 # Function to visualize CFG using matplotlib
                 def visualize_cfg_with_matplotlib(save_path=None):
@@ -4334,7 +4377,7 @@ def _check_intercepted_traffic(proxy_server):
                         return {"error": "No nodes in graph"}
 
                     try:
-                        matplotlib.pyplot.figure(figsize=(12, 8))
+                        matplotlib_pyplot.figure(figsize=(12, 8))
 
                         # Generate layout
                         if app.cfg_graph.number_of_nodes() < 50:
@@ -4349,7 +4392,7 @@ def _check_intercepted_traffic(proxy_server):
                             node_data = app.cfg_graph.nodes[node]
                             # Color based on confidence or type
                             confidence = node_data.get("confidence", 0.5)
-                            node_colors.append(matplotlib.pyplot.cm.RdYlGn(confidence))
+                            node_colors.append(matplotlib_pyplot.cm.RdYlGn(confidence))
                             # Size based on function size
                             size = min(node_data.get("size", 100) * 10, 3000)
                             node_sizes.append(max(size, 300))
@@ -4394,16 +4437,16 @@ def _check_intercepted_traffic(proxy_server):
 
                         networkx.draw_networkx_labels(app.cfg_graph, pos, labels, font_size=8)
 
-                        matplotlib.pyplot.title("Control Flow Graph Visualization")
-                        matplotlib.pyplot.axis("off")
-                        matplotlib.pyplot.tight_layout()
+                        matplotlib_pyplot.title("Control Flow Graph Visualization")
+                        matplotlib_pyplot.axis("off")
+                        matplotlib_pyplot.tight_layout()
 
                         if save_path:
-                            matplotlib.pyplot.savefig(save_path, dpi=300, bbox_inches="tight")
-                            matplotlib.pyplot.close()
+                            matplotlib_pyplot.savefig(save_path, dpi=300, bbox_inches="tight")
+                            matplotlib_pyplot.close()
                             return {"status": "saved", "path": save_path}
                         else:
-                            matplotlib.pyplot.show()
+                            matplotlib_pyplot.show()
                             return {"status": "displayed"}
 
                     except Exception as e:
@@ -4527,7 +4570,7 @@ def _check_intercepted_traffic(proxy_server):
                     )
 
             try:
-                import capstone
+                from intellicrack.handlers.capstone_handler import capstone
 
                 app.cfg_analysis_tools["capstone_available"] = True
 
@@ -5139,8 +5182,8 @@ def _check_intercepted_traffic(proxy_server):
                 pass
 
             try:
-                scripts_dir = get_resource_path("scripts")
-                if os.path.exists(os.path.join(scripts_dir, "simconcolic.py")):
+                analysis_dir = get_resource_path("core/analysis")
+                if os.path.exists(os.path.join(analysis_dir, "simconcolic.py")):
                     execution_engines["simconcolic"] = True
                     if hasattr(app, "update_output"):
                         app.update_output.emit(
@@ -5882,7 +5925,7 @@ def _check_intercepted_traffic(proxy_server):
                 # Method 2: Use Capstone disassembler if available
                 if not edges and app.cfg_analysis_tools.get("capstone_available"):
                     try:
-                        import capstone
+                        from intellicrack.handlers.capstone_handler import capstone
                     except ImportError as e:
                         logger.error("Import error in main_app.py: %s", e)
                         if hasattr(app, "update_output"):
@@ -8334,7 +8377,7 @@ def _check_intercepted_traffic(proxy_server):
 
                 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-                from ...handlers.tensorflow_handler import tensorflow as tf
+                from intellicrack.handlers.tensorflow_handler import tensorflow as tf
 
                 if tf.config.list_physical_devices("GPU"):
                     gpu_frameworks["tensorflow_gpu"] = True
@@ -8626,7 +8669,6 @@ def _check_intercepted_traffic(proxy_server):
                         if gpu_frameworks.get("cuda", False) and best_gpu["framework"] == "CUDA":
                             try:
                                 import cupy as cp  # pylint: disable=import-error
-                                import numpy as np
 
                                 # Measure CPU baseline
                                 cpu_start = time.time()
@@ -8755,12 +8797,10 @@ def _check_intercepted_traffic(proxy_server):
                             and best_gpu["framework"] == "OpenCL"
                         ):
                             try:
-                                import numpy as np
                                 import pyopencl as cl
                             except ImportError as e:
                                 logger.error("Import error in main_app.py: %s", e)
                                 cl = None
-                                np = None
                             if cl and np:
                                 try:
                                     # Create OpenCL context and queue
@@ -10216,7 +10256,9 @@ def _check_intercepted_traffic(proxy_server):
                 import time
                 from collections import defaultdict
 
-                import frida
+                from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+                if not HAS_FRIDA:
+                    raise ImportError("Frida not available")
 
                 # Get local device
                 device = frida.get_local_device()
@@ -12801,7 +12843,7 @@ def compute_file_hash(file_path, algorithm="sha256"):
 def get_file_icon(file_path):
     """Get file icon for the given file path."""
     try:
-        from intellicrack.ui.dialogs.common_imports import QFileIconProvider
+        from intellicrack.handlers.pyqt6_handler import QFileIconProvider
 
         if not file_path:
             return None
@@ -12933,7 +12975,7 @@ def load_ai_model(model_path):
 
                 os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-                from ...handlers.tensorflow_handler import tensorflow as tf
+                from intellicrack.handlers.tensorflow_handler import tensorflow as tf
 
                 if hasattr(tf, "keras"):
                     model = tf.keras.models.load_model(model_path)
@@ -13502,7 +13544,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
     #: Signal emitted to update output display
     update_output = pyqtSignal(str)
-    #: Signal emitted to update status display  
+    #: Signal emitted to update status display
     update_status = pyqtSignal(str)
     #: Signal emitted to update analysis results
     update_analysis_results = pyqtSignal(str)
@@ -13555,15 +13597,28 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             import os
             import time
 
-            from intellicrack.ui.dialogs.common_imports import (
-                Qt, QThread, pyqtSignal, QCheckBox, QComboBox, QDialog, QFileDialog, 
-                QGroupBox, QHBoxLayout, QLabel, QProgressBar, QPushButton, QTabWidget, 
-                QTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout
-            )
-
             from intellicrack.core.analysis.memory_forensics_engine import (
                 AnalysisProfile,
                 MemoryForensicsEngine,
+            )
+            from intellicrack.handlers.pyqt6_handler import (
+                QCheckBox,
+                QComboBox,
+                QDialog,
+                QFileDialog,
+                QGroupBox,
+                QHBoxLayout,
+                QLabel,
+                QProgressBar,
+                QPushButton,
+                Qt,
+                QTabWidget,
+                QTextEdit,
+                QThread,
+                QTreeWidget,
+                QTreeWidgetItem,
+                QVBoxLayout,
+                pyqtSignal,
             )
 
             # File selection dialog
@@ -13938,7 +13993,8 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             import os
             import time
 
-            from intellicrack.ui.dialogs.common_imports import (
+            from intellicrack.core.analysis.memory_forensics_engine import MemoryForensicsEngine
+            from intellicrack.handlers.pyqt6_handler import (
                 QDialog,
                 QFileDialog,
                 QHBoxLayout,
@@ -13948,8 +14004,6 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 QPushButton,
                 QVBoxLayout,
             )
-
-            from intellicrack.core.analysis.memory_forensics_engine import MemoryForensicsEngine
 
             # Check if there are any cached analysis results
             if not hasattr(self, '_memory_analysis_cache'):
@@ -14061,8 +14115,8 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         """Capture memory from a running process"""
         try:
 
-            import psutil
-            from intellicrack.ui.dialogs.common_imports import (
+            from intellicrack.handlers.psutil_handler import psutil
+            from intellicrack.handlers.pyqt6_handler import (
                 QDialog,
                 QHBoxLayout,
                 QLabel,
@@ -14284,7 +14338,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         <p><strong>Analysis Time:</strong> {time:.2f} seconds</p>
         <p><strong>Suspicious Activity Detected:</strong> {suspicious}</p>
     </div>
-    
+
     <h2>Processes ({process_count})</h2>
     <table>
         <tr>
@@ -14297,7 +14351,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         </tr>
         {process_rows}
     </table>
-    
+
     <h2>Loaded Modules ({module_count})</h2>
     <table>
         <tr>
@@ -14309,7 +14363,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         </tr>
         {module_rows}
     </table>
-    
+
     <h2>Network Connections ({network_count})</h2>
     <table>
         <tr>
@@ -14321,7 +14375,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         </tr>
         {network_rows}
     </table>
-    
+
     <h2>Security Findings</h2>
     <ul>
         {findings}
@@ -14429,7 +14483,12 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     try:
                         from reportlab.lib.pagesizes import letter
                         from reportlab.lib.styles import getSampleStyleSheet
-                        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table  # noqa: F401
+                        from reportlab.platypus import (  # noqa: F401
+                            Paragraph,
+                            SimpleDocTemplate,
+                            Spacer,
+                            Table,
+                        )
 
                         # Create PDF using reportlab
                         doc = SimpleDocTemplate(output_path, pagesize=letter)
@@ -14525,7 +14584,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
             # Start a timer to periodically update the UI with captured packets
             if self.packet_update_timer is None:
-                from intellicrack.ui.dialogs.common_imports import QApplication, QMessageBox, QTimer, Qt
+                from intellicrack.handlers.pyqt6_handler import (
+                    QTimer,
+                )
 
                 self.packet_update_timer = QTimer()
                 self.packet_update_timer.timeout.connect(self._update_packet_display)
@@ -17232,7 +17293,7 @@ class Plugin:
     def analyze_process_behavior(self):
         """Analyze live process behavior using dynamic analysis."""
         try:
-            from intellicrack.ui.dialogs.common_imports import QInputDialog, QMessageBox
+            from intellicrack.handlers.pyqt6_handler import QInputDialog, QMessageBox
 
             # Get process name or PID from user
             process_name, ok = QInputDialog.getText(
@@ -17288,7 +17349,7 @@ class Plugin:
     def run_memory_keyword_scan(self):
         """Run dynamic memory keyword scan using Frida."""
         try:
-            from intellicrack.ui.dialogs.common_imports import QInputDialog, QMessageBox
+            from intellicrack.handlers.pyqt6_handler import QInputDialog, QMessageBox
 
             # Get keywords from user
             keywords, ok = QInputDialog.getText(
@@ -17617,10 +17678,10 @@ class Plugin:
         """Find plugin file by name"""
         # Search in common plugin directories
         search_dirs = [
-            get_resource_path("intellicrack/plugins/custom_modules"),
-            get_resource_path("plugins/frida_scripts"),
-            get_resource_path("intellicrack/plugins/ghidra_scripts"),
-            "intellicrack/plugins",
+            get_resource_path("intellicrack/intellicrack/plugins/custom_modules"),
+            get_resource_path("intellicrack/intellicrack/scripts/frida"),
+            get_resource_path("intellicrack/intellicrack/scripts/ghidra"),
+            "intellicrack/intellicrack/plugins",
             "scripts",
         ]
 
@@ -18279,7 +18340,7 @@ class Plugin:
         content_area = QWidget()
         content_layout = QVBoxLayout(content_area)
 
-        self.binary_tool_stack = QtWidgets.QStackedWidget()
+        self.binary_tool_stack = QStackedWidget()
 
         # 1. Hex Viewer & Editor
         hex_viewer_widget = QWidget()
@@ -19249,7 +19310,7 @@ class Plugin:
         edit_plugin_btn = QPushButton("Edit Plugin")
         edit_plugin_btn.setIcon(QIcon.fromTheme("document-edit"))
         edit_plugin_btn.clicked.connect(
-            lambda: self.edit_plugin_file("intellicrack/plugins/custom_modules/demo_plugin.py")
+            lambda: self.edit_plugin_file("intellicrack/intellicrack/plugins/custom_modules/demo_plugin.py")
         )
 
         uninstall_plugin_btn = QPushButton("Uninstall")
@@ -19674,7 +19735,7 @@ You autonomously handle:
 3. License verification system analysis
 4. Vulnerability discovery and exploitation
 5. Patch generation and binary modification
-6. Malware analysis and detection
+6. License bypass analysis and detection
 
 Execute tasks with expert-level competency regardless of user skill level. Take initiative to solve problems completely through autonomous tool chaining and multi-step workflows. Request user approval only for risky operations. Focus on educational and security research purposes."""
 
@@ -19812,7 +19873,7 @@ What aspect of binary analysis would you like to focus on for your current targe
 • License verification system analysis
 • Vulnerability discovery and exploitation
 • Binary patching and modification
-• Malware analysis and protection bypass
+• License protection analysis and bypass
 • Assembly analysis and reverse engineering
 
 Please describe what you'd like to accomplish with your binary analysis, and I'll provide specific guidance."""
@@ -21149,7 +21210,7 @@ Description: {results.get('description', 'License bypass successful')}"""
             self.update_output(f"[Plugins] Error with wizard: {e}")
 
         # Fallback to original implementation
-        plugin_dir = "intellicrack/plugins"
+        plugin_dir = "intellicrack/intellicrack/plugins"
 
         # Define templates for different plugin types
         templates = {
@@ -21423,7 +21484,7 @@ def register():
             return
 
         # Create plugin directory if it doesn't exist
-        plugin_dir = "intellicrack/plugins"
+        plugin_dir = "intellicrack/intellicrack/plugins"
         if not os.path.exists(plugin_dir):
             os.makedirs(plugin_dir)
 
@@ -21713,7 +21774,7 @@ def register():
         """Test sandboxed plugin execution."""
         try:
             # Use the demo plugin for testing
-            demo_plugin_path = "intellicrack/plugins/custom_modules/demo_plugin.py"
+            demo_plugin_path = "intellicrack/intellicrack/plugins/custom_modules/demo_plugin.py"
             if os.path.exists(demo_plugin_path):
                 self.update_output.emit(log_message("[Test] Testing sandboxed plugin execution..."))
                 self.run_plugin_in_sandbox(demo_plugin_path, "analyze", "test_binary.exe")
@@ -21736,7 +21797,7 @@ def register():
             # Create a mock plugin info for testing
             plugin_info = {
                 "name": "Demo Plugin",
-                "path": "intellicrack/plugins/custom_modules/demo_plugin.py",
+                "path": "intellicrack/intellicrack/plugins/custom_modules/demo_plugin.py",
                 "description": "Test plugin for remote execution",
             }
 
@@ -23190,7 +23251,7 @@ def register():
             ),
             "Extract Embedded/Encrypted Scripts": (
                 "Searches for hidden or encrypted script content.\n"
-                "Many malware hide PowerShell/JavaScript inside.\n"
+                "Many protection schemes hide PowerShell/JavaScript inside.\n"
                 "Attempts automatic decryption of common schemes."
             ),
         }
@@ -25122,7 +25183,7 @@ def register():
             }
 
             # Download in a separate thread to avoid blocking the UI
-            from intellicrack.ui.dialogs.common_imports import QThread, pyqtSignal
+            from intellicrack.handlers.pyqt6_handler import QThread, pyqtSignal
 
             class DownloadThread(QThread):
                 """Thread for downloading models without blocking the UI."""
@@ -30787,7 +30848,7 @@ Focus on:
                             # Define the thread-safe confirmation function
                             def ask_user_confirmation(app, tool_name, parameters):
                                 """Thread-safe user confirmation dialog for sensitive AI tools"""
-                                
+
 
                                 param_text = "\n".join([f"{k}: {v}" for k, v in parameters.items()])
                                 result = QMessageBox.question(
@@ -32901,7 +32962,7 @@ Focus on:
                 }
 
                 # Import and use pdfkit locally
-                import pdfkit
+                from intellicrack.handlers.pdfkit_handler import pdfkit
 
                 pdfkit.from_file(temp_html_path, output_path, options=options)
 
@@ -33898,8 +33959,9 @@ ANALYSIS SUMMARY
         try:
             import os
 
-            import pefile
             from PIL import Image
+
+            from intellicrack.handlers.pefile_handler import pefile
 
             # Parse PE file
             pe = pefile.PE(self.binary_path)
@@ -34420,7 +34482,7 @@ ANALYSIS SUMMARY
         try:
             import gc
 
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             # Get current memory usage
             process = psutil.Process()
@@ -34605,8 +34667,8 @@ def launch():
     # Set Qt attributes before creating QApplication
     try:
         print("[LAUNCH] Importing Qt modules...")
-        
-        
+
+
 
         print("[LAUNCH] Qt modules imported successfully")
 
@@ -34739,7 +34801,7 @@ def launch():
                     pass
 
             # Show a simple error dialog
-            
+
 
             QMessageBox.critical(
                 None,
@@ -34888,7 +34950,7 @@ def launch():
     logger.info("App is about to quit: %s", app_instance.aboutToQuit)
 
     # Add a single-shot timer to log after event loop starts
-    
+
 
     def log_after_start():
         logger.info("Qt event loop started successfully")

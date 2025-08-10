@@ -18,10 +18,10 @@ cd dependencies
 python scripts/intellicrack_cli.py binary.exe
 
 # Full comprehensive analysis
-python scripts/intellicrack_cli.py binary.exe --comprehensive
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe --comprehensive
 
 # Help and all options
-python scripts/intellicrack_cli.py --help
+python intellicrack/intellicrack/scripts/cli/main.py --help
 ```
 
 ### Alternative Entry Points
@@ -30,7 +30,7 @@ python scripts/intellicrack_cli.py --help
 intellicrack-cli binary.exe --comprehensive
 
 # Direct script execution
-./scripts/intellicrack_cli.py binary.exe
+python intellicrack/intellicrack/scripts/cli/main.py binary.exe
 
 # Via wrapper
 ./intellicrack_cli binary.exe
@@ -417,7 +417,7 @@ intellicrack_cli.py binary.exe --comprehensive --quiet
 ### Full Security Assessment
 ```bash
 # Comprehensive security analysis
-intellicrack_cli.py malware.exe \
+intellicrack_cli.py protected_software.exe \
   --comprehensive \
   --vulnerability-scan \
   --detect-protections \
@@ -453,17 +453,17 @@ intellicrack_cli.py client.exe \
   --output network_analysis.html
 ```
 
-### Batch Malware Analysis
+### Batch License Protection Analysis
 ```bash
-# Analyze malware samples in batch
+# Analyze protected software samples in batch
 intellicrack_cli.py \
-  --batch malware_samples.txt \
+  --batch protected_samples.txt \
   --comprehensive \
   --ml-vulnerability \
   --gpu-accelerate \
   --batch-parallel \
   --threads 16 \
-  --batch-output-dir malware_reports/ \
+  --batch-output-dir protection_reports/ \
   --format json
 ```
 

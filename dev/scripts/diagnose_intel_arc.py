@@ -106,7 +106,7 @@ import sys
 
 try:
     from PyQt6.QtWidgets import QApplication, QWidget
-    
+
 
     app = QApplication(sys.argv)
     QApplication.setAttribute(Qt.AA_UseSoftwareOpenGL, {"software" in str(env_vars.get("QT_OPENGL", ""))})
@@ -117,7 +117,7 @@ try:
     window.show()
 
     # Close immediately
-    
+
     QTimer.singleShot(100, app.quit)
 
     exit_code = app.exec()

@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import datetime
@@ -51,7 +51,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
@@ -74,12 +74,14 @@ except ImportError as e:
 
 # Visualization dependencies
 try:
-    import matplotlib.pyplot as plt
+    from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, plt
 
-    MATPLOTLIB_AVAILABLE = True
+    MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 except ImportError as e:
     logger.error("Import error in traffic_analyzer: %s", e)
     MATPLOTLIB_AVAILABLE = False
+    HAS_MATPLOTLIB = False
+    plt = None
 
 # Determine available packet capture library
 if PYSHARK_AVAILABLE:

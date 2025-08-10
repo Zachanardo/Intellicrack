@@ -15,17 +15,31 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 vulnerability detection, and security assessment capabilities.
 """
 
 import os
 
-from intellicrack.ui.dialogs.common_imports import (
-    QCheckBox, QComboBox, QFileDialog, QFont, QGroupBox,
-    QHBoxLayout, QInputDialog, QLabel, QMessageBox,
-    QProgressBar, QPushButton, QSpinBox, QSplitter,
-    Qt, QTabWidget, QTextEdit, QVBoxLayout, QWidget,
+from intellicrack.handlers.pyqt6_handler import (
+    QCheckBox,
+    QComboBox,
+    QFileDialog,
+    QFont,
+    QGroupBox,
+    QHBoxLayout,
+    QInputDialog,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QSpinBox,
+    QSplitter,
+    Qt,
+    QTabWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
     pyqtSignal,
 )
 
@@ -544,7 +558,7 @@ class AnalysisTab(BaseTab):
     def start_static_analysis(self):
         """Start static analysis only"""
         if not self.current_binary:
-            
+
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -701,7 +715,7 @@ class AnalysisTab(BaseTab):
     def detect_protections(self):
         """Detect binary protections"""
         if not self.current_binary:
-            
+
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -795,7 +809,7 @@ class AnalysisTab(BaseTab):
     def start_dynamic_monitoring(self):
         """Start dynamic monitoring"""
         if not self.current_binary:
-            
+
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -927,7 +941,7 @@ class AnalysisTab(BaseTab):
     def open_hex_viewer(self):
         """Open hex viewer for current binary"""
         if not self.current_binary:
-            
+
 
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return
@@ -952,21 +966,21 @@ class AnalysisTab(BaseTab):
 
         except ImportError as e:
             self.log_activity(f"Hex viewer not available: {e!s}")
-            
+
 
             QMessageBox.warning(
                 self, "Error", "Hex viewer module not available. Please check installation."
             )
         except Exception as e:
             self.log_activity(f"Error opening hex viewer: {e!s}")
-            
+
 
             QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {e!s}")
 
     def embed_hex_viewer(self):
         """Embed hex viewer in the results panel"""
         if not self.current_binary:
-            
+
 
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return
@@ -1102,8 +1116,6 @@ class AnalysisTab(BaseTab):
         try:
             import json
             import time
-
-            
 
             from ...utils.system.snapshot_common import create_system_snapshot
 
@@ -1325,7 +1337,7 @@ class AnalysisTab(BaseTab):
     def _export_comparison(self, comparison_text):
         """Export comparison results to file"""
         try:
-            
+
 
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
@@ -1351,7 +1363,7 @@ class AnalysisTab(BaseTab):
     def analyze_network_capture(self):
         """Analyze PCAP files using NetworkForensicsEngine"""
         try:
-            
+
 
             from ...core.analysis.network_forensics_engine import NetworkForensicsEngine
 
@@ -1458,7 +1470,7 @@ class AnalysisTab(BaseTab):
             interface_combo = QComboBox()
             # Get available interfaces
             try:
-                import psutil
+                from intellicrack.handlers.psutil_handler import psutil
                 interfaces = list(psutil.net_if_addrs().keys())
                 interface_combo.addItems(interfaces)
             except:
@@ -1579,7 +1591,7 @@ class AnalysisTab(BaseTab):
 
                 import json
 
-                
+
 
                 file_path, _ = QFileDialog.getSaveFileName(
                     dialog,

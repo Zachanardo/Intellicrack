@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -134,7 +134,7 @@ def run_gui_mode(args) -> int:
     """
     _ = args
     try:
-        from intellicrack.ui.dialogs.common_imports import QApplication
+        from intellicrack.handlers.pyqt6_handler import QApplication
 
         from ...ui.main_app import launch
 

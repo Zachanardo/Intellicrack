@@ -71,7 +71,7 @@ test-install:
 
 # Verify no mocks or fake data
 test-verify-real:
-    python scripts/verify_no_mocks.py
+    python tests/utils/verify_no_mocks.py
     @echo "All tests use REAL data ✓"
 
 # Lint code with ruff
@@ -83,6 +83,34 @@ lint:
 lint-fix:
     ruff check --fix intellicrack/
     ruff format intellicrack/
+
+# Lint JavaScript files with ESLint
+lint-js:
+    npx eslint . --ext .js
+
+# Fix JavaScript linting issues automatically
+lint-js-fix:
+    npx eslint . --ext .js --fix
+
+# Lint Java files with Checkstyle
+lint-java:
+    ./tools/checkstyle/checkstyle -c ./tools/checkstyle/intellicrack_checks.xml $(find . -name "*.java" -not -path "./tools/*" -not -path "./.venv*/*" -not -path "./mamba_env/*" -not -path "./build/*" -not -path "./dist/*")
+
+# Lint Markdown files with markdownlint
+lint-md:
+    markdownlint "**/*.md" --ignore node_modules --ignore .venv* --ignore mamba_env --ignore build --ignore dist --ignore tools
+
+# Fix Markdown linting issues automatically
+lint-md-fix:
+    markdownlint "**/*.md" --fix --ignore node_modules --ignore .venv* --ignore mamba_env --ignore build --ignore dist --ignore tools
+
+# Lint all supported file types
+lint-all: lint lint-js lint-java lint-md
+    @echo "All linting complete ✓"
+
+# Fix all auto-fixable linting issues
+lint-all-fix: lint-fix lint-js-fix lint-md-fix
+    @echo "All auto-fixable linting issues resolved ✓"
 
 # ==================== DOCUMENTATION ====================
 

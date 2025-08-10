@@ -6,22 +6,22 @@ This directory contains the comprehensive command-line interface for Intellicrac
 
 ```bash
 # Basic analysis
-python scripts/cli/main.py binary.exe
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe
 
 # Comprehensive analysis
-python scripts/cli/main.py binary.exe --comprehensive
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe --comprehensive
 
 # Full help with all commands
-python scripts/cli/main.py --help
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py --help
 
 # Category-specific help
-python scripts/cli/main.py --help-category analysis
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py --help-category analysis
 ```
 
 ## File Structure
 
 ```
-scripts/cli/
+intellicrack/intellicrack/scripts/cli/
 ├── main.py              # Main CLI script with all 78 features
 ├── README.md            # This file
 ├── commands.md          # Complete command reference
@@ -29,7 +29,7 @@ scripts/cli/
 ├── interactive.py       # Interactive mode (coming soon)
 ├── completion.sh        # Bash completion script (coming soon)
 └── templates/           # Analysis templates (coming soon)
-    ├── malware.json
+    ├── bypass.json
     ├── license.json
     └── network.json
 ```
@@ -305,7 +305,7 @@ The CLI provides access to every single Intellicrack feature through command-lin
 
 ### Complete Security Assessment
 ```bash
-python scripts/cli/main.py malware.exe \
+python intellicrack/intellicrack/scripts/cli/main.py protected.exe \
   --comprehensive \
   --vulnerability-scan \
   --detect-protections \
@@ -318,7 +318,7 @@ python scripts/cli/main.py malware.exe \
 
 ### License Analysis and Bypass
 ```bash
-python scripts/cli/main.py software.exe \
+python intellicrack/intellicrack/scripts/cli/main.py software.exe \
   --license-analysis \
   --detect-protections \
   --suggest-patches \
@@ -334,7 +334,7 @@ python scripts/cli/main.py software.exe \
 
 ### Network Protocol Analysis
 ```bash
-python scripts/cli/main.py client.exe \
+python intellicrack/intellicrack/scripts/cli/main.py client.exe \
   --network-capture --capture-duration 120 \
   --protocol-fingerprint \
   --ssl-intercept \
@@ -344,7 +344,7 @@ python scripts/cli/main.py client.exe \
 
 ### Advanced Binary Analysis
 ```bash
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --cfg-analysis --cfg-output cfg.dot \
   --symbolic-execution \
   --concolic-execution \
@@ -356,10 +356,10 @@ python scripts/cli/main.py binary.exe \
   --output advanced_analysis.json
 ```
 
-### Batch Malware Analysis
+### Batch Protected Binary Analysis
 ```bash
-python scripts/cli/main.py \
-  --batch malware_samples.txt \
+python intellicrack/intellicrack/scripts/cli/main.py \
+  --batch protected_samples.txt \
   --comprehensive \
   --ml-vulnerability \
   --gpu-accelerate \
@@ -372,22 +372,22 @@ python scripts/cli/main.py \
 ### Plugin Development and Testing
 ```bash
 # List available plugins
-python scripts/cli/main.py --plugin-list
+python intellicrack/intellicrack/scripts/cli/main.py --plugin-list
 
 # Run plugin locally
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --plugin-run custom_analyzer \
   --plugin-params '{"depth": 5}'
 
 # Run plugin remotely
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --plugin-run custom_analyzer \
   --plugin-remote \
   --plugin-server analysis.server.com \
   --plugin-port 9999
 
 # Run plugin in sandbox
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --plugin-run untrusted_plugin \
   --plugin-sandbox
 ```
@@ -395,7 +395,7 @@ python scripts/cli/main.py binary.exe \
 ### Machine Learning Workflows
 ```bash
 # Train custom model
-python scripts/cli/main.py \
+python intellicrack/intellicrack/scripts/cli/main.py \
   --train-model \
   --training-data /path/to/samples \
   --model-type rf \
@@ -403,7 +403,7 @@ python scripts/cli/main.py \
   --save-model custom_model.pkl
 
 # Use custom model for prediction
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --ml-vulnerability \
   --ml-model custom_model.pkl \
   --ml-similarity \
@@ -413,10 +413,10 @@ python scripts/cli/main.py binary.exe \
 ### Server and Monitoring Modes
 ```bash
 # Run as REST API server
-python scripts/cli/main.py --server --server-port 8080
+python intellicrack/intellicrack/scripts/cli/main.py --server --server-port 8080
 
 # Watch file for changes
-python scripts/cli/main.py binary.exe \
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe \
   --watch \
   --watch-interval 5 \
   --comprehensive
@@ -427,7 +427,7 @@ python scripts/cli/main.py binary.exe \
 ### CI/CD Pipeline Integration
 ```bash
 # Security scan in CI/CD
-python scripts/cli/main.py build/app.exe \
+python intellicrack/intellicrack/scripts/cli/main.py build/app.exe \
   --vulnerability-scan \
   --detect-protections \
   --format json \
@@ -446,14 +446,14 @@ fi
 ### Shell Pipeline Integration
 ```bash
 # Use with other tools
-python scripts/cli/main.py binary.exe --format json | \
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe --format json | \
   jq '.vulnerabilities[] | select(.severity == "high")' | \
   alert-system
 
 # Generate multiple formats
-python scripts/cli/main.py binary.exe --comprehensive \
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe --comprehensive \
   --output report.json --format json
-python scripts/cli/main.py binary.exe --comprehensive \
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe --comprehensive \
   --output report.pdf --format pdf
 ```
 
@@ -491,12 +491,12 @@ The CLI handles missing dependencies gracefully:
 
 ### Debug Mode
 ```bash
-python scripts/cli/main.py binary.exe --debug --verbose
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe --debug --verbose
 ```
 
 ### Ignore Errors
 ```bash
-python scripts/cli/main.py binary.exe --ignore-errors --batch files.txt
+python intellicrack/intellicrack/intellicrack/scripts/cli/main.py binary.exe --ignore-errors --batch files.txt
 ```
 
 ## Next Steps

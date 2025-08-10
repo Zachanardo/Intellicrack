@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QApplication,
     QButtonGroup,
     QCheckBox,
@@ -946,7 +946,7 @@ class ExportDialog(QDialog):
 
 def main():
     """Test the export dialog"""
-    
+
 
     app = QApplication([])
     app.setApplicationName("IntellicrackExportTest")

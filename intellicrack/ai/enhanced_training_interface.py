@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -29,37 +29,44 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 try:
-    from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
-    from PyQt6.QtGui import QFont, QIcon, QPalette, QPixmap
-    from PyQt6.QtWidgets import (
+    from intellicrack.handlers.pyqt6_handler import (
+        HAS_PYQT,
         QCheckBox,
         QComboBox,
         QDialog,
         QDoubleSpinBox,
         QFileDialog,
+        QFont,
         QFormLayout,
         QFrame,
         QGridLayout,
         QGroupBox,
         QHBoxLayout,
+        QIcon,
         QLabel,
         QLineEdit,
         QMessageBox,
+        QPalette,
+        QPixmap,
         QProgressBar,
         QPushButton,
         QScrollArea,
         QSlider,
         QSpinBox,
         QSplitter,
+        Qt,
         QTableWidget,
         QTableWidgetItem,
         QTabWidget,
         QTextEdit,
+        QThread,
+        QTimer,
         QVBoxLayout,
         QWidget,
+        pyqtSignal,
     )
 
-    PYQT6_AVAILABLE = True
+    PYQT6_AVAILABLE = HAS_PYQT
 except ImportError as e:
     logger.error("Import error in enhanced_training_interface: %s", e)
     PYQT6_AVAILABLE = False
@@ -156,12 +163,16 @@ except ImportError as e:
     QPixmap = None
 
 try:
-    import numpy as np
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.figure import Figure
+    from intellicrack.handlers.matplotlib_handler import (
+        MATPLOTLIB_AVAILABLE,
+        Figure,
+    )
+    from intellicrack.handlers.matplotlib_handler import (
+        FigureCanvasQTAgg as FigureCanvas,
+    )
+    from intellicrack.handlers.numpy_handler import numpy as np
 
     # These will be used in widget classes that support matplotlib visualization
-    MATPLOTLIB_AVAILABLE = True
     # Store at module level to prevent F401
     _matplotlib_imports = {"FigureCanvas": FigureCanvas, "Figure": Figure}
 except ImportError as e:
@@ -180,12 +191,15 @@ except ImportError as e:
     PYQTGRAPH_AVAILABLE = False
 
     # Create a matplotlib-based PlotWidget for when pyqtgraph is not available
-    import matplotlib
-    matplotlib.use('Agg')  # Use non-interactive backend
-    import matplotlib.pyplot as plt
-    from matplotlib.figure import Figure
-    from matplotlib.backends.backend_agg import FigureCanvasAgg
-    
+    from intellicrack.handlers.matplotlib_handler import (
+        HAS_MATPLOTLIB,
+        Figure,
+        FigureCanvasAgg,
+        matplotlib,
+    )
+    if HAS_MATPLOTLIB:
+        matplotlib.use('Agg')  # Use non-interactive backend
+
     class PlotWidget:
         """Matplotlib-based PlotWidget for when pyqtgraph is not available."""
 
@@ -196,12 +210,12 @@ except ImportError as e:
             self._data_x = []
             self._data_y = []
             self._plots = []
-            
+
             # Create matplotlib figure and axis
             self.figure = Figure(figsize=(8, 6), dpi=100)
             self.canvas = FigureCanvasAgg(self.figure)
             self.ax = self.figure.add_subplot(111)
-            
+
             self._labels = {}
             self._grid_settings = {"x": False, "y": False}
             self._legend_enabled = False
@@ -217,22 +231,22 @@ except ImportError as e:
                 x_data = list(range(len(args[0])))
             else:
                 return self
-            
+
             # Extract plot parameters
             pen = kwargs.get('pen', 'b-')
             name = kwargs.get('name', f'Plot {len(self._plots) + 1}')
-            
+
             # Create the plot
             line, = self.ax.plot(x_data, y_data, pen, label=name)
             self._plots.append(line)
-            
+
             # Store data for reference
             self._data_x = x_data
             self._data_y = y_data
-            
+
             # Update display
             self._update_display()
-            
+
             return self
 
         def clear(self):
@@ -248,14 +262,14 @@ except ImportError as e:
             if not hasattr(self, "_labels"):
                 self._labels = {}
             self._labels[axis] = {"text": text, "kwargs": kwargs}
-            
+
             if axis.lower() == 'left' or axis.lower() == 'y':
                 self.ax.set_ylabel(text)
             elif axis.lower() == 'bottom' or axis.lower() == 'x':
                 self.ax.set_xlabel(text)
             elif axis.lower() == 'top':
                 self.ax.set_title(text)
-            
+
             self._update_display()
 
         def enableAutoRange(self, *args, **kwargs):
@@ -269,14 +283,14 @@ except ImportError as e:
             """Show grid on the plot."""
             if not hasattr(self, "_grid_settings"):
                 self._grid_settings = {}
-            
+
             show_x = x if x is not None else self._grid_settings.get("x", True)
             show_y = y if y is not None else self._grid_settings.get("y", True)
-            
+
             self._grid_settings["x"] = show_x
             self._grid_settings["y"] = show_y
             self._grid_settings.update(kwargs)
-            
+
             # Apply grid settings
             self.ax.grid(True, which='both', axis='both' if show_x and show_y else ('x' if show_x else 'y'))
             self._update_display()
@@ -292,7 +306,7 @@ except ImportError as e:
                     # Assume RGB or RGBA values
                     self.figure.patch.set_facecolor(color)
                     self.ax.set_facecolor(color)
-            
+
             self._update_display()
 
         def addLegend(self, *args, **kwargs):
@@ -302,14 +316,14 @@ except ImportError as e:
                 self.ax.legend(**kwargs)
             self._update_display()
             return self
-        
+
         def _update_display(self):
             """Update the plot display."""
             try:
                 self.figure.canvas.draw()
             except Exception as e:
                 logger.debug(f"PlotWidget display update: {e}")
-        
+
         def export(self, filename, dpi=100):
             """Export plot to file."""
             self.figure.savefig(filename, dpi=dpi, bbox_inches='tight')
@@ -590,8 +604,7 @@ class DatasetAnalysisWidget(QWidget):
         self.matplotlib_canvas = None
         self.matplotlib_figure = None
         if MATPLOTLIB_AVAILABLE:
-            from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-            from matplotlib.figure import Figure
+            from intellicrack.handlers.matplotlib_handler import Figure, FigureCanvas
 
             # Create matplotlib figure for advanced visualizations
             self.matplotlib_figure = Figure(figsize=(8, 6))
@@ -1211,7 +1224,7 @@ class EnhancedTrainingInterface(QDialog):
             [
                 "vulnerability_classifier",
                 "exploit_detector",
-                "malware_classifier",
+                "bypass_classifier",
                 "license_detector",
                 "packer_identifier",
             ]

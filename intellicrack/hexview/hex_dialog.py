@@ -15,14 +15,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
 import os
 
 from PyQt6.QtCore import QSize, Qt
-from intellicrack.ui.dialogs.common_imports import QAction
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -39,6 +38,8 @@ from PyQt6.QtWidgets import (
     QToolBar,
     QVBoxLayout,
 )
+
+from intellicrack.handlers.pyqt6_handler import QAction
 
 from .hex_highlighter import HighlightType
 from .hex_renderer import ViewMode

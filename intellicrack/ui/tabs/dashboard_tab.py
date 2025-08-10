@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
@@ -25,13 +25,30 @@ import mimetypes
 import os
 from datetime import datetime
 
-from intellicrack.ui.dialogs.common_imports import (
-    QDragEnterEvent, QDropEvent, QFileDialog, QFont,
-    QGroupBox, QHBoxLayout, QInputDialog, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QMenu,
-    QMessageBox, QPushButton, QSplitter, Qt,
-    QTabWidget, QTextEdit, QTreeWidget, QTreeWidgetItem,
-    QVBoxLayout, QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QDragEnterEvent,
+    QDropEvent,
+    QFileDialog,
+    QFont,
+    QGroupBox,
+    QHBoxLayout,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMenu,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    Qt,
+    QTabWidget,
+    QTextEdit,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 from ..widgets.cpu_status_widget import CPUStatusWidget
@@ -588,7 +605,7 @@ class DashboardTab(BaseTab):
         """Populate the recent files list"""
         # Simulated recent files - in real implementation, this would load from settings
         recent_files = [
-            "C:\\samples\\malware1.exe",
+            "C:\\samples\\protected_app1.exe",
             "C:\\samples\\target_app.exe",
             "/home/user/binaries/test.so",
             "C:\\analysis\\crackme.exe",

@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
@@ -445,12 +445,12 @@ class R2JSONStandardizer:
                 "signatures_found": raw_result.get("signatures_found", []),
                 "signature_matches": raw_result.get("signature_matches", {}),
                 "pattern_analysis": raw_result.get("pattern_analysis", {}),
-                "malware_signatures": raw_result.get("malware_signatures", []),
+                "license_bypass_signatures": raw_result.get("license_bypass_signatures", []),
                 "library_signatures": raw_result.get("library_signatures", []),
             },
             "summary_statistics": {
                 "total_signatures": len(raw_result.get("signatures_found", [])),
-                "malware_signature_count": len(raw_result.get("malware_signatures", [])),
+                "license_bypass_signature_count": len(raw_result.get("license_bypass_signatures", [])),
                 "library_signature_count": len(raw_result.get("library_signatures", [])),
                 "confidence_score": raw_result.get("confidence_score", 0),
             },

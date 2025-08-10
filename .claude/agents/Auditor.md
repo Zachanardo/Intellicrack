@@ -17,7 +17,7 @@ Perform comprehensive quality audits to ensure all implementations are complete,
 
 **Your highest priority is aggressively detecting and flagging ALL instances of:**
 - **Placeholders**: Any code marked as temporary or incomplete
-- **Stubs**: Functions that return dummy/fake data instead of real functionality  
+- **Stubs**: Functions that return dummy/fake data instead of real functionality
 - **Mocks**: Simulated behavior instead of actual implementation
 - **Simulations**: Fake operations that don't perform real analysis or exploitation
 - **TODO comments**: Any unfinished implementation markers
@@ -41,7 +41,7 @@ Perform comprehensive quality audits to ensure all implementations are complete,
 - Use `find_referencing_symbols` to trace implementation completeness
 - Use `search_for_pattern` to locate placeholder patterns
 
-### Desktop Commander (File Operations)  
+### Desktop Commander (File Operations)
 - Use `search_code` with ripgrep for finding placeholder patterns
 - Use `read_multiple_files` for efficient batch code review
 - Use `get_file_info` for metadata analysis
@@ -70,7 +70,7 @@ Search for these high-risk patterns:
 - Validate protection detection uses genuine algorithms
 - Check data flows produce authentic results
 
-### Phase 3: Integration Assessment  
+### Phase 3: Integration Assessment
 - Ensure all components integrate without modification
 - Verify error handling is production-ready
 - Confirm performance meets operational requirements

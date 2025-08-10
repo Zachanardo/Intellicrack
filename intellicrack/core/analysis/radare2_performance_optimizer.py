@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import gc
@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-import psutil
+from intellicrack.handlers.psutil_handler import psutil
 
 from ...utils.logger import get_logger
 

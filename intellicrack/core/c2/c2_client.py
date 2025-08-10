@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import asyncio
@@ -26,7 +26,7 @@ import sys
 import time
 from typing import Any
 
-import psutil
+from intellicrack.handlers.psutil_handler import psutil
 
 from .base_c2 import BaseC2
 
@@ -779,7 +779,7 @@ class C2Client(BaseC2):
                 try:
                     import sys
 
-                    from intellicrack.ui.dialogs.common_imports import QApplication
+                    from intellicrack.handlers.pyqt6_handler import QApplication
 
                     app = QApplication.instance()
                     if app is None:
@@ -1222,7 +1222,7 @@ class C2Client(BaseC2):
     async def _get_process_list(self) -> list[dict[str, Any]]:
         """Get list of running processes."""
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             processes = []
 
@@ -2344,7 +2344,7 @@ WantedBy=multi-user.target
     async def _get_system_status(self) -> dict[str, Any]:
         """Get current system status."""
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             return {
                 "cpu_percent": psutil.cpu_percent(),

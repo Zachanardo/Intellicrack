@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
@@ -32,9 +32,6 @@ from typing import Any
 
 import jwt
 import uvicorn
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
@@ -43,6 +40,9 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, T
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship, sessionmaker
 from sqlalchemy.pool import StaticPool
+
+from intellicrack.handlers.cryptography_handler import Cipher, algorithms, hashes, modes, rsa
+from intellicrack.handlers.cryptography_handler import padding as asym_padding
 
 """
 License Server Emulator
@@ -250,9 +250,9 @@ class CryptoManager:
 
             signature = self.private_key.sign(
                 json_data,
-                padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH,
+                asym_padding.PSS(
+                    mgf=asym_padding.MGF1(hashes.SHA256()),
+                    salt_length=asym_padding.PSS.MAX_LENGTH,
                 ),
                 hashes.SHA256(),
             )
@@ -271,9 +271,9 @@ class CryptoManager:
             self.public_key.verify(
                 signature_bytes,
                 json_data,
-                padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH,
+                asym_padding.PSS(
+                    mgf=asym_padding.MGF1(hashes.SHA256()),
+                    salt_length=asym_padding.PSS.MAX_LENGTH,
                 ),
                 hashes.SHA256(),
             )
@@ -485,8 +485,7 @@ class HASPEmulator:
 
     def _derive_master_key(self) -> bytes:
         """Derive master encryption key from device ID"""
-        from cryptography.hazmat.primitives import hashes
-        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+        from intellicrack.handlers.cryptography_handler import PBKDF2HMAC, hashes
 
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
@@ -620,8 +619,7 @@ class HASPEmulator:
             self.next_handle += 1
 
             # Generate session key
-            from cryptography.hazmat.primitives import hashes
-            from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+            from intellicrack.handlers.cryptography_handler import HKDF, hashes
 
             session_salt = os.urandom(16)
             hkdf = HKDF(
@@ -686,7 +684,7 @@ class HASPEmulator:
             session_key = self.session_keys[handle]
 
             # Use AES-GCM for authenticated encryption
-            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+            from intellicrack.handlers.cryptography_handler import AESGCM
 
             aesgcm = AESGCM(session_key[:16])  # Use first 16 bytes for AES-128
             nonce = os.urandom(12)  # 96-bit nonce for GCM
@@ -724,7 +722,7 @@ class HASPEmulator:
             ciphertext = data[12:]
 
             # Use AES-GCM for authenticated decryption
-            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+            from intellicrack.handlers.cryptography_handler import AESGCM
 
             aesgcm = AESGCM(session_key[:16])  # Use first 16 bytes for AES-128
 
@@ -1394,7 +1392,7 @@ class HardwareFingerprintGenerator:
 
             # Get RAM size - cross-platform
             try:
-                import psutil
+                from intellicrack.handlers.psutil_handler import psutil
 
                 fingerprint.ram_size = int(psutil.virtual_memory().total / (1024**3))  # GB
             except Exception:

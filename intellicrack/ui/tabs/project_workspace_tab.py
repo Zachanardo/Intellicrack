@@ -16,15 +16,25 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
 
-from intellicrack.ui.dialogs.common_imports import (
-    QFileDialog, QGroupBox, QHBoxLayout, QLabel,
-    QMenu, QMessageBox, QPushButton, QSplitter,
-    Qt, QTextEdit, QVBoxLayout, QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QMenu,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    Qt,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 from .base_tab import BaseTab

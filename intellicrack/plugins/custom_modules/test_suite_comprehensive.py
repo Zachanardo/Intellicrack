@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 """
@@ -33,13 +33,13 @@ import unittest
 import pytest
 import asyncio
 import time
-import psutil
+from intellicrack.handlers.psutil_handler import psutil
 import threading
 import multiprocessing
 import tempfile
 import shutil
 import json
-import sqlite3
+from intellicrack.handlers.sqlite3_handler import HAS_SQLITE, sqlite3
 import logging
 import sys
 import os
@@ -55,11 +55,11 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, MagicMock
 from contextlib import contextmanager
 import coverage
-import requests
-import numpy as np
+from intellicrack.handlers.requests_handler import HAS_REQUESTS, requests
+from intellicrack.handlers.numpy_handler import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-import matplotlib.pyplot as plt
+from intellicrack.handlers.matplotlib_handler import plt
 import seaborn as sns
 
 class TestCategory(Enum):
@@ -1910,8 +1910,10 @@ class TestRunner:
 
     def _generate_performance_charts(self, results: TestSuiteResults):
         try:
-            import matplotlib.pyplot as plt
+            from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, plt
             import seaborn as sns
+            if not HAS_MATPLOTLIB:
+                return  # Skip chart generation if matplotlib not available
 
             # Set style
             plt.style.use('default')

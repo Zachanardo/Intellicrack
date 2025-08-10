@@ -13,18 +13,30 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import (
-    QAbstractItemView, QDialog, QFont, QFormLayout, QHBoxLayout,
-    QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox,
-    QPushButton, QSplitter, Qt, QTextEdit, QVBoxLayout, QWidget,
+from intellicrack.handlers.pyqt6_handler import (
+    QAbstractItemView,
+    QDialog,
+    QFont,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    Qt,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
-
 from intellicrack.logger import logger
 
 """
@@ -45,12 +57,12 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
 try:
-    import pefile
+    from intellicrack.handlers.pefile_handler import pefile
 
     HAS_PEFILE = True
 except ImportError as e:
@@ -58,7 +70,7 @@ except ImportError as e:
     HAS_PEFILE = False
 
 try:
-    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+    from intellicrack.handlers.capstone_handler import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
 
     HAS_CAPSTONE = True
 except ImportError as e:

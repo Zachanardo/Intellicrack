@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import asyncio
@@ -30,7 +30,6 @@ import random
 import re
 import secrets
 import socket
-from ...handlers.sqlite3_handler import sqlite3
 import ssl
 import struct
 import threading
@@ -45,14 +44,18 @@ from enum import Enum
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-import aiohttp
-import aiohttp.web
 import jwt
-from cryptography import x509
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.x509.oid import NameOID
+
+from intellicrack.handlers.aiohttp_handler import aiohttp
+from intellicrack.handlers.cryptography_handler import (
+    NameOID,
+    hashes,
+    load_pem_private_key,
+    rsa,
+    serialization,
+    x509,
+)
+from intellicrack.handlers.sqlite3_handler import sqlite3
 
 """
 Cloud License Interceptor

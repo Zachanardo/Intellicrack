@@ -388,7 +388,7 @@ engine.register_protection(custom)
 
 ## Protection Bypass Scripts
 
-Intellicrack includes pre-made bypass scripts in `plugins/frida_scripts/`:
+Intellicrack includes pre-made bypass scripts in `intellicrack/intellicrack/scripts/frida/`:
 - `anti_debug_bypass.js`
 - `vm_detection_bypass.js`
 - `integrity_check_bypass.js`

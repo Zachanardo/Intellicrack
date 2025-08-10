@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -28,7 +28,8 @@ import threading
 import traceback
 from typing import Any
 
-from ..core.common_imports import PSUTIL_AVAILABLE
+from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
+
 from ..core.misc_utils import log_message
 
 try:
@@ -38,7 +39,7 @@ except ImportError:
 
 
 if PSUTIL_AVAILABLE:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 else:
     psutil = None
 
@@ -873,7 +874,7 @@ def run_advanced_ghidra_analysis(
         else:
             # Use default script from centralized location
             script_source = get_resource_path(
-                "intellicrack", "plugins/ghidra_scripts/default/AdvancedAnalysis.java"
+                "intellicrack", "intellicrack/intellicrack/scripts/ghidra/default/AdvancedAnalysis.java"
             )
             script_destination = os.path.join(temp_script_dir, "AdvancedAnalysis.java")
             script_name = "AdvancedAnalysis.java"
@@ -1684,7 +1685,7 @@ def run_memory_analysis(
         f"Memory analysis called with binary_path: {binary_path}, {len(kwargs)} kwargs: {list(kwargs.keys())}"
     )
     try:
-        import pefile
+        from intellicrack.handlers.pefile_handler import pefile
     except ImportError as e:
         logger.error("Import error in runner_functions: %s", e)
         pefile = None
@@ -1829,7 +1830,7 @@ def run_network_analysis(
     import socket
 
     try:
-        import pefile
+        from intellicrack.handlers.pefile_handler import pefile
     except ImportError as e:
         logger.error("Import error in runner_functions: %s", e)
         pefile = None
@@ -2281,12 +2282,12 @@ def run_frida_analysis(
 
         # Check if Frida is available
         try:
-            import frida
-
-            frida_available = True
+            from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+            frida_available = HAS_FRIDA
         except ImportError as e:
             logger.error("Import error in runner_functions: %s", e)
             frida_available = False
+            frida = None
 
         if not frida_available:
             # Use wrapper function as fallback
@@ -2294,9 +2295,9 @@ def run_frida_analysis(
 
             # Try to find a suitable Frida script
             script_options = [
-                get_resource_path("intellicrack", "plugins/frida_scripts/registry_monitor.js"),
-                get_resource_path("intellicrack", "plugins/frida_scripts/anti_debugger.js"),
-                get_resource_path("intellicrack", "plugins/frida_scripts/registry_monitor.js"),
+                get_resource_path("intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"),
+                get_resource_path("intellicrack", "intellicrack/intellicrack/scripts/frida/anti_debugger.js"),
+                get_resource_path("intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"),
             ]
 
             script_path = None
@@ -2494,8 +2495,8 @@ def run_dynamic_instrumentation(
         if not script_path:
             # Default to registry monitor script
             script_candidates = [
-                get_resource_path("intellicrack", "plugins/frida_scripts/registry_monitor.js"),
-                get_resource_path("intellicrack", "plugins/frida_scripts/registry_monitor.js"),
+                get_resource_path("intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"),
+                get_resource_path("intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"),
             ]
 
             for candidate in script_candidates:
@@ -2716,7 +2717,9 @@ def run_frida_script(
 
         # Import Frida
         try:
-            import frida
+            from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+            if not HAS_FRIDA:
+                raise ImportError("Frida not available")
 
             # Get target
             target = kwargs.get("target", binary_path)

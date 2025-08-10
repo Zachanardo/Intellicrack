@@ -20,7 +20,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import psutil
+from intellicrack.handlers.psutil_handler import psutil
 
 from ...utils.logger import get_logger
 from ..logging.audit_logger import get_audit_logger
@@ -598,7 +598,7 @@ class ResourceManager:
     def _get_memory_usage(self) -> dict[str, int]:
         """Get current memory usage."""
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             process = psutil.Process()
             return {
@@ -758,7 +758,7 @@ class ResourceContext:
 
     def __init__(self, resource_manager: ResourceManager, owner: str = None):
         """Initialize resource context.
-        
+
         Args:
             resource_manager: Resource manager instance
             owner: Optional owner identifier for resources
@@ -825,7 +825,7 @@ class AutoCleanupResource:
 
     def __init__(self, resource_manager: ResourceManager, resource_type: ResourceType):
         """Initialize auto-cleanup decorator.
-        
+
         Args:
             resource_manager: Resource manager instance
             resource_type: Type of resource being managed
@@ -1070,7 +1070,7 @@ class FallbackHandler:
 
             # Try PE analysis
             try:
-                import pefile
+                from intellicrack.handlers.pefile_handler import pefile
 
                 pe = pefile.PE(binary_path)
 
@@ -1099,7 +1099,9 @@ class FallbackHandler:
 
             # Try ELF analysis
             try:
-                from elftools.elf.elffile import ELFFile
+                from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
+                if not HAS_PYELFTOOLS:
+                    raise ImportError("pyelftools not available")
 
                 with open(binary_path, "rb") as f:
                     elf = ELFFile(f)
@@ -1132,7 +1134,9 @@ class FallbackHandler:
     def _readelf_fallback(self, binary_path: str, options: list[str] = None) -> str:
         """Python-based readelf fallback using pyelftools."""
         try:
-            from elftools.elf.elffile import ELFFile
+            from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
+            if not HAS_PYELFTOOLS:
+                raise ImportError("pyelftools not available")
 
             result = []
             with open(binary_path, "rb") as f:
@@ -1220,7 +1224,7 @@ class FallbackHandler:
     def _netstat_fallback(self) -> list[dict[str, Any]]:
         """Python-based netstat fallback using psutil."""
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             connections = []
             for conn in psutil.net_connections():

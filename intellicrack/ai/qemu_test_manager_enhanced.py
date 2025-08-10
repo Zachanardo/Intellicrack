@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -49,7 +49,7 @@ class EnhancedQEMUTestManager:
 
         # Create enhanced Frida wrapper that captures more data
         wrapper_script = f'''
-import frida
+from intellicrack.handlers.frida_handler import frida
 import sys
 import json
 import time
@@ -263,7 +263,8 @@ Process.enumerateModules().forEach(module => {{{{
     def analyze_binary_for_vm(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary to determine VM requirements."""
         import magic
-        import pefile
+
+        from intellicrack.handlers.pefile_handler import pefile
 
         result = {
             "platform": "unknown",

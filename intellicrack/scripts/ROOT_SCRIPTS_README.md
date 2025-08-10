@@ -11,7 +11,7 @@ Scripts for radare2 setup and configuration:
 
 ### Python Scripts
 - `run_analysis_cli.py` - Command-line analysis interface
-- `simconcolic.py` - Concolic execution utilities
+
 - `test_imports.py` - Test import functionality
 - `test_integration.py` - Integration testing
 

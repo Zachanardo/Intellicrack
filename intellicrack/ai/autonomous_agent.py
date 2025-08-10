@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -219,10 +219,10 @@ class AutonomousAgent:
 
     def _extract_binary_path(self, request: str) -> str:
         """Extract binary path from request.
-        
+
         Args:
             request: User request string containing binary path
-            
+
         Returns:
             str: Extracted binary path or 'unknown' if not found
 
@@ -239,10 +239,10 @@ class AutonomousAgent:
 
     def _extract_script_types(self, request_lower: str) -> list[ScriptType]:
         """Extract script types from request.
-        
+
         Args:
             request_lower: Lowercase user request string
-            
+
         Returns:
             list[ScriptType]: List of script types to generate
 
@@ -258,10 +258,10 @@ class AutonomousAgent:
 
     def _extract_test_environment(self, request_lower: str) -> TestEnvironment:
         """Extract test environment from request.
-        
+
         Args:
             request_lower: Lowercase user request string
-            
+
         Returns:
             TestEnvironment: Selected test environment, defaults to QEMU
 
@@ -276,10 +276,10 @@ class AutonomousAgent:
 
     def _analyze_target(self, binary_path: str) -> dict[str, Any] | None:
         """Analyze the target binary for protection mechanisms.
-        
+
         Args:
             binary_path: Path to the binary to analyze
-            
+
         Returns:
             dict[str, Any] | None: Analysis results or None if analysis fails
 
@@ -314,10 +314,10 @@ class AutonomousAgent:
 
     def _get_binary_info(self, binary_path: str) -> dict[str, Any]:
         """Get basic binary information.
-        
+
         Args:
             binary_path: Path to the binary file
-            
+
         Returns:
             dict[str, Any]: Dictionary containing binary metadata
 

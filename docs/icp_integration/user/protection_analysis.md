@@ -316,7 +316,7 @@ Generated reports include:
 ### Custom Scan Profiles
 
 Configure custom analysis profiles for specific use cases:
-- **Malware Analysis**: Optimized for malicious samples
+- **License Protection Analysis**: Optimized for protected software samples
 - **Software Research**: Focused on commercial protections
 - **Rapid Triage**: Maximum speed for large batches
 - **Comprehensive**: Maximum detection coverage

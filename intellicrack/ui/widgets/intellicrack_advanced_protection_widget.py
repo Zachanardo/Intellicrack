@@ -9,13 +9,32 @@ Licensed under GNU General Public License v3.0
 
 import os
 
-from intellicrack.ui.dialogs.common_imports import (
-    QBrush, QCheckBox, QColor, QComboBox, QFileDialog,
-    QFont, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
-    QProgressBar, QPushButton, QSplitter, Qt,
-    QTableWidget, QTableWidgetItem, QTabWidget,
-    QTextBrowser, QTextEdit, QThread, QTreeWidget,
-    QTreeWidgetItem, QVBoxLayout, QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QBrush,
+    QCheckBox,
+    QColor,
+    QComboBox,
+    QFileDialog,
+    QFont,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QSplitter,
+    Qt,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QTextBrowser,
+    QTextEdit,
+    QThread,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 from ...protection.intellicrack_protection_advanced import (
@@ -28,16 +47,13 @@ from ...protection.intellicrack_protection_advanced import (
 from ...utils.logger import get_logger
 
 try:
-    import matplotlib.pyplot as plt
-    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-    from matplotlib.figure import Figure
-
-    HAS_MATPLOTLIB = True
+    from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, Figure, plt
+    from intellicrack.handlers.matplotlib_handler import FigureCanvasQTAgg as FigureCanvas
 except ImportError:
+    HAS_MATPLOTLIB = False
     plt = None
     FigureCanvas = None
     Figure = None
-    HAS_MATPLOTLIB = False
 
 
 logger = get_logger(__name__)

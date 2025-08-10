@@ -657,7 +657,7 @@ class ICPBackend:
             sections = []
 
             # Try to get sections from PE analysis
-            import pefile
+            from intellicrack.handlers.pefile_handler import pefile
 
             try:
                 pe = pefile.PE(file_path)
@@ -1293,7 +1293,7 @@ class ICPBackend:
             if SUPPLEMENTAL_ENGINES_AVAILABLE
             else False,
             "engines_summary": {
-                "yara": "Pattern matching for protections, packers, and malware",
+                "yara": "Pattern matching for protections, packers, and license systems",
                 "binwalk": "Firmware analysis and embedded file extraction",
                 "volatility3": "Memory forensics for runtime analysis",
             },

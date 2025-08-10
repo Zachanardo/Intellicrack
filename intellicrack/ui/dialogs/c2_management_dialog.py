@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import asyncio
@@ -22,13 +22,14 @@ import time
 from datetime import datetime
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QAction,
     QBrush,
     QCheckBox,
     QColor,
     QComboBox,
     QDialog,
+    QFileDialog,
     QFont,
     QGroupBox,
     QHBoxLayout,
@@ -1024,7 +1025,7 @@ class C2ManagementDialog(QDialog):
                 remote_path = file_path
 
             # Show file dialog for local save location
-            from intellicrack.ui.dialogs.common_imports import QFileDialog
+            from intellicrack.handlers.pyqt6_handler import QFileDialog
 
             local_path, _ = QFileDialog.getSaveFileName(
                 self,
@@ -1116,7 +1117,7 @@ class C2ManagementDialog(QDialog):
     def add_file_to_upload(self):
         """Add file to upload list."""
         try:
-            
+
 
             # Open file dialog to select files
             file_paths, _ = QFileDialog.getOpenFileNames(

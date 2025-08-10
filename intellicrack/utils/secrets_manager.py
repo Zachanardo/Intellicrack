@@ -19,9 +19,7 @@ logger = get_logger(__name__)
 
 # Optional dependencies with fallbacks
 try:
-    from cryptography.fernet import Fernet
-    from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from intellicrack.handlers.cryptography_handler import PBKDF2HMAC, Fernet, hashes
 
     HAS_CRYPTOGRAPHY = True
 except ImportError as e:
@@ -80,7 +78,6 @@ class SecretsManager:
         # Analysis Services
         "VIRUSTOTAL_API_KEY",
         "HYBRID_ANALYSIS_API_KEY",
-        "MALWARE_BAZAAR_API_KEY",
         # Database
         "DATABASE_URL",
         "DB_PASSWORD",

@@ -15,14 +15,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
 import json
 import logging
 import re
-from ...handlers.sqlite3_handler import sqlite3
 import threading
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
@@ -30,7 +29,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-import numpy as np
+from intellicrack.handlers.numpy_handler import numpy as np
+from intellicrack.handlers.sqlite3_handler import sqlite3
 
 from .performance_monitor_simple import profile_ai_operation
 
@@ -1181,7 +1181,6 @@ class AILearningEngine:
     def _init_ml_models(self):
         """Initialize machine learning models for pattern recognition and prediction."""
         try:
-            import numpy as np
             from sklearn.ensemble import IsolationForest, RandomForestClassifier
             from sklearn.neural_network import MLPClassifier
             from sklearn.preprocessing import StandardScaler
@@ -1439,8 +1438,6 @@ class AILearningEngine:
                 logger.info("Not enough valid features extracted")
                 return
 
-            import numpy as np
-
             X = np.array(features)
             y = np.array(labels)
 
@@ -1627,8 +1624,6 @@ class AILearningEngine:
             return
 
         try:
-            import numpy as np
-
             # Get feature importances from Random Forest
             importances = self.pattern_classifier.feature_importances_
             important_features = np.argsort(importances)[::-1][:5]
@@ -1678,8 +1673,6 @@ class AILearningEngine:
             features = self._extract_features({"exploit_data": exploit_data, "success": False})
             if features is None:
                 return {"status": "feature_extraction_failed", "probability": 0.5}
-
-            import numpy as np
 
             X = np.array([features])
             X_scaled = self.scaler.transform(X)

@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -222,31 +222,39 @@ def setup_required_environment() -> dict[str, Any]:
 
     # Check ML availability
     try:
-        import numpy
         import sklearn
 
-        # Get versions for logging
-        numpy_version = getattr(numpy, "__version__", "unknown")
-        sklearn_version = getattr(sklearn, "__version__", "unknown")
-        env_status["ml_available"] = True
-        logger.info(
-            f"✓ Machine learning features available (numpy {numpy_version}, sklearn {sklearn_version})"
-        )
+        from intellicrack.handlers.numpy_handler import HAS_NUMPY, numpy
+
+        if HAS_NUMPY:
+            # Get versions for logging
+            numpy_version = getattr(numpy, "__version__", "unknown")
+            sklearn_version = getattr(sklearn, "__version__", "unknown")
+            env_status["ml_available"] = True
+            logger.info(
+                f"✓ Machine learning features available (numpy {numpy_version}, sklearn {sklearn_version})"
+            )
+        else:
+            raise ImportError("NumPy not available")
     except ImportError:
         logger.warning("✗ ML features not available")
         env_status["missing_dependencies"].extend(["numpy", "scikit-learn"])
 
     # Check dynamic analysis
     try:
-        import frida
+        from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
 
-        # Get Frida version for logging
-        frida_version = getattr(frida, "__version__", "unknown")
-        env_status["dynamic_analysis_available"] = True
-        logger.info(f"✓ Dynamic analysis (Frida {frida_version}) available")
+        if HAS_FRIDA:
+            # Get Frida version for logging
+            frida_version = getattr(frida, "__version__", "unknown")
+            env_status["dynamic_analysis_available"] = True
+            logger.info(f"✓ Dynamic analysis (Frida {frida_version}) available")
+        else:
+            raise ImportError("Frida not available")
     except ImportError:
         logger.warning("✗ Dynamic analysis not available")
         env_status["missing_dependencies"].append("frida")
+        env_status["dynamic_analysis_available"] = False
 
     # Check symbolic execution
     try:

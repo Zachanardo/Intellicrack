@@ -8,12 +8,29 @@ import hashlib
 import hmac
 from datetime import datetime, timedelta
 from pathlib import Path
-from cryptography import x509
-from cryptography.x509.oid import NameOID
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa, padding
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
+from intellicrack.handlers.cryptography_handler import (
+    HAS_CRYPTOGRAPHY,
+    x509,
+    hashes,
+    serialization,
+    rsa,
+    asym_padding as padding,
+    Cipher,
+    algorithms,
+    modes,
+    default_backend
+)
+
+if HAS_CRYPTOGRAPHY:
+    from cryptography.x509.oid import NameOID
+else:
+    # Define fallback for NameOID when cryptography is not available
+    class NameOID:
+        COUNTRY_NAME = None
+        STATE_OR_PROVINCE_NAME = None
+        LOCALITY_NAME = None
+        ORGANIZATION_NAME = None
+        COMMON_NAME = None
 
 from intellicrack.utils.secrets_manager import SecretsManager
 from intellicrack.utils.binary.certificate_extractor import CertificateExtractor

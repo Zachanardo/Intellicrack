@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 # File: ai_tools.py
@@ -816,7 +816,7 @@ class CodeAnalyzer:
             messages = [
                 LLMMessage(
                     role="system",
-                    content="You are a cybersecurity expert specializing in binary analysis and malware detection.",
+                    content="You are a cybersecurity expert specializing in binary analysis and license protection detection.",
                 ),
                 LLMMessage(role="user", content=prompt),
             ]
@@ -1088,7 +1088,7 @@ def get_ai_suggestions(context: str, domain: str = "security") -> list[str]:
                 "Find license validation routines",
                 "Analyze control flow patterns",
             ],
-            "malware": [
+            "license_bypass": [
                 "Check for packing/obfuscation",
                 "Analyze network behavior",
                 "Look for persistence mechanisms",

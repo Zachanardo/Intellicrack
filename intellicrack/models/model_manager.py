@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
@@ -23,7 +23,7 @@ from threading import Thread
 from typing import Any
 
 from intellicrack.logger import logger
-from intellicrack.utils.torch_gil_safety import safe_torch_import, torch_thread_safe, _torch_lock
+from intellicrack.utils.torch_gil_safety import _torch_lock, safe_torch_import
 
 """
 Model Manager Module

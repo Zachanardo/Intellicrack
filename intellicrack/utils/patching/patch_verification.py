@@ -30,14 +30,19 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
 # Import analysis dependencies with fallbacks
 try:
-    import capstone
-    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+    from intellicrack.handlers.capstone_handler import (
+        CS_ARCH_X86,
+        CS_MODE_32,
+        CS_MODE_64,
+        Cs,
+        capstone,
+    )
 
     CAPSTONE_AVAILABLE = True
 except ImportError as e:
@@ -47,7 +52,7 @@ except ImportError as e:
     CAPSTONE_AVAILABLE = False
 
 try:
-    import pefile
+    from intellicrack.handlers.pefile_handler import pefile
 
     PEFILE_AVAILABLE = True
 except ImportError as e:

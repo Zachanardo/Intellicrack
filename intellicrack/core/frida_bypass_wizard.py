@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import asyncio
@@ -234,8 +234,8 @@ class FridaBypassWizard:
         """Set callback functions for progress and status updates.
 
         Args:
-            progress_callback: Function called with progress percentage (0-100)
-            status_callback: Function called with status message strings
+            progress_callback: Function called with progress percentage (0-100).
+            status_callback: Function called with status message strings.
 
         Example:
             wizard.set_callbacks(
@@ -555,7 +555,7 @@ class FridaBypassWizard:
         """Analyze imported functions for protection indicators.
 
         Maps common protection-related API imports to protection types:
-        
+
         - Debugger detection APIs -> ANTI_DEBUG
         - VM detection APIs -> ANTI_VM
         - Timing APIs -> TIME based protections
@@ -597,7 +597,7 @@ class FridaBypassWizard:
         """Analyze strings for protection indicators.
 
         Searches collected strings for keywords indicating protections:
-        
+
         - 'license', 'trial' -> LICENSE protection
         - 'expire' -> TIME based protection
         - 'debug' -> ANTI_DEBUG
@@ -728,7 +728,7 @@ class FridaBypassWizard:
         """Apply bypass strategies in order.
 
         Executes each bypass strategy sequentially:
-        
+
         1. Checks if dependencies are satisfied
         2. Loads and executes bypass scripts
         3. Tracks success/failure for each strategy
@@ -1386,17 +1386,17 @@ class WizardPresetManager:
 
         Args:
             config: Custom configuration dictionary with:
-                   - mode: Operating mode (safe/balanced/aggressive)
-                   - priority: List of prioritized protection types
-                   - exclude: Protection types to skip
-                   - max_scripts: Maximum scripts to load
-                   - options: Additional script options
+                   - mode: Operating mode (safe/balanced/aggressive).
+                   - priority: List of prioritized protection types.
+                   - exclude: Protection types to skip.
+                   - max_scripts: Maximum scripts to load.
+                   - options: Additional script options.
 
         Returns:
-            FridaBypassWizard: Configured wizard instance
+            FridaBypassWizard: Configured wizard instance.
 
         Raises:
-            ImportError: If FridaManager is not available
+            ImportError: If FridaManager is not available.
 
         Example:
             wizard = WizardPresetManager.create_custom_wizard({

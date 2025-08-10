@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import gc
@@ -52,7 +52,7 @@ class MemoryManager:
     def check_memory_usage(self) -> dict[str, Any]:
         """Check current memory usage."""
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             process = psutil.Process()
             memory_info = process.memory_info()

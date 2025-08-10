@@ -226,11 +226,11 @@ table.docutils tr:nth-child(even) {
     .wy-nav-content {
         padding: 20px;
     }
-    
+
     .method {
         margin-left: 10px;
     }
-    
+
     table.docutils {
         font-size: 0.9em;
     }
@@ -243,25 +243,25 @@ table.docutils tr:nth-child(even) {
         --light-bg: #3a3a3a;
         --border-color: #555;
     }
-    
+
     body {
         background-color: #1e1e1e;
         color: #e0e0e0;
     }
-    
+
     pre, code {
         background-color: var(--code-bg);
         color: #f8f8f2;
     }
-    
+
     .admonition.warning {
         background-color: #3d1f1f;
     }
-    
+
     .admonition.note {
         background-color: #1f2f3d;
     }
-    
+
     table.docutils tr:nth-child(even) {
         background-color: #2a2a2a;
     }
@@ -272,16 +272,16 @@ table.docutils tr:nth-child(even) {
     .wy-nav-side {
         display: none;
     }
-    
+
     .wy-nav-content {
         margin: 0;
         max-width: 100%;
     }
-    
+
     .admonition {
         border: 1px solid #999;
     }
-    
+
     a[href^="http"]:after {
         content: " (" attr(href) ")";
         font-size: 0.8em;

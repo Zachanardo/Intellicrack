@@ -13,14 +13,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
 import queue
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QColor,
     QDialog,
     QFileDialog,
@@ -752,7 +752,7 @@ class CodeEditorWidget(QTextEdit):
 
     def line_number_area_paint_event(self, event):
         """Paint line numbers"""
-        from intellicrack.ui.dialogs.common_imports import QPainter
+        from intellicrack.handlers.pyqt6_handler import QPainter
 
         painter = QPainter(self.line_number_area)
         painter.fillRect(event.rect(), Qt.GlobalColor.lightGray)

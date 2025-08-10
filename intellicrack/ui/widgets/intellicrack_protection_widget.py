@@ -9,12 +9,28 @@ Licensed under GNU General Public License v3.0
 
 import os
 
-from intellicrack.ui.dialogs.common_imports import (
-    QBrush, QColor, QDialog, QDialogButtonBox,
-    QFileDialog, QFont, QHBoxLayout, QLabel,
-    QLineEdit, QMessageBox, QPushButton, QSplitter,
-    Qt, QTabWidget, QTextEdit, QThread, QTreeWidget,
-    QTreeWidgetItem, QVBoxLayout, QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QBrush,
+    QColor,
+    QDialog,
+    QDialogButtonBox,
+    QFileDialog,
+    QFont,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    Qt,
+    QTabWidget,
+    QTextEdit,
+    QThread,
+    QTreeWidget,
+    QTreeWidgetItem,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
 
 from ...ai.ai_assistant_enhanced import IntellicrackAIAssistant

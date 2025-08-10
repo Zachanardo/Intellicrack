@@ -13,16 +13,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
 import time
 
 from intellicrack.ai.ai_tools import AIAssistant
-from intellicrack.logger import logger
-
-from ..common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QColor,
     QComboBox,
@@ -45,6 +43,8 @@ from ..common_imports import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.logger import logger
+
 from .base_dialog import BinarySelectionDialog
 
 """
@@ -65,12 +65,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
-from intellicrack.ui.dialogs.common_imports import (
-    QApplication, QPlainTextEdit, QSyntaxHighlighter, QTextCharFormat,
+from intellicrack.handlers.pyqt6_handler import (
+    QApplication,
+    QSyntaxHighlighter,
+    QTextCharFormat,
 )
 
 
@@ -666,7 +668,7 @@ class ScriptGeneratorDialog(BinarySelectionDialog):
         script_content = self.script_display.toPlainText()
         if script_content:
             try:
-                
+
 
                 QApplication.clipboard().setText(script_content)
                 self.status_label.setText("Script copied to clipboard")

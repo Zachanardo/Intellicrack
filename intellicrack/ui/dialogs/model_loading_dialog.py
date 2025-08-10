@@ -9,7 +9,7 @@ Licensed under GNU General Public License v3.0
 
 import logging
 
-from intellicrack.ui.dialogs.common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QComboBox,
     QDialog,
     QDialogButtonBox,

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide covers Intellicrack's advanced memory and network forensics capabilities for malware analysis, incident response, and security research. Learn to extract artifacts, analyze memory dumps, and investigate network traffic.
+This guide covers Intellicrack's advanced memory and network forensics capabilities for license protection analysis, incident response, and security research. Learn to extract artifacts, analyze memory dumps, and investigate network traffic.
 
 ## Table of Contents
 
@@ -10,7 +10,7 @@ This guide covers Intellicrack's advanced memory and network forensics capabilit
 2. [Process Analysis](#process-analysis)
 3. [Network Forensics](#network-forensics)
 4. [Artifact Extraction](#artifact-extraction)
-5. [Malware Analysis](#malware-analysis)
+5. [Protection Analysis](#protection-analysis)
 6. [Timeline Analysis](#timeline-analysis)
 7. [Reporting](#reporting)
 
@@ -49,7 +49,7 @@ print(f"OS Profile: {profile}")
 forensics.configure({
     "profile": profile,
     "plugins": ["pslist", "dlllist", "handles", "malfind"],
-    "yara_rules": "rules/malware.yar"
+    "yara_rules": "rules/license_bypass.yar"
 })
 ```
 
@@ -132,7 +132,7 @@ mutex_handles = [h for h in handles if h['type'] == 'Mutant']
 
 # Check for suspicious handles
 suspicious_mutexes = [
-    "\\BaseNamedObjects\\Malware123",
+    "\\BaseNamedObjects\\CrackLoader123",
     "\\BaseNamedObjects\\SingleInstance"
 ]
 
@@ -261,14 +261,14 @@ for cred in creds:
         print(f"NTLM: {cred['ntlm']}")
 ```
 
-## Malware Analysis
+## Protection Analysis
 
-### Malware Detection
+### License Bypass Detection
 
 ```python
 # Run YARA rules
 yara_hits = forensics.yarascan(
-    rules_file="malware_rules.yar",
+    rules_file="license_bypass_rules.yar",
     pid=None  # Scan all processes
 )
 
@@ -399,7 +399,7 @@ ml_forensics = ForensicsML()
 # Detect anomalies in memory
 anomalies = ml_forensics.detect_anomalies(
     memory_dump="memory.dmp",
-    model="malware_detection_v2"
+    model="license_bypass_detection_v2"
 )
 
 for anomaly in anomalies:

@@ -15,13 +15,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import QMessageBox, QObject, QTabWidget, pyqtSignal
+from intellicrack.handlers.pyqt6_handler import QMessageBox, QObject, QTabWidget, pyqtSignal
 
 from ..utils.logger import get_logger
 from .enhanced_ui_integration import (

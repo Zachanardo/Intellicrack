@@ -15,14 +15,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
 import time
 from typing import Any
 
-import numpy as np
+from intellicrack.handlers.numpy_handler import numpy as np
 
 logger = logging.getLogger(__name__)
 

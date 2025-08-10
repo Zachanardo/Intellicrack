@@ -15,10 +15,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+import os
 import re
 import traceback
 from typing import Any
@@ -46,19 +47,8 @@ except ImportError:
 
     # Try to use simconcolic as a fallback
     try:
-        import os
-        import sys
-
-        # Add scripts directory to path
-        import intellicrack
-
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
-        scripts_dir = os.path.join(base_dir, "intellicrack", "scripts")
-        if os.path.exists(scripts_dir):
-            sys.path.insert(0, scripts_dir)
-
-        from simconcolic import BinaryAnalyzer as Manticore
-        from simconcolic import Plugin
+        from .simconcolic import BinaryAnalyzer as Manticore  # :no-index:
+        from .simconcolic import Plugin  # :no-index:
 
         MANTICORE_AVAILABLE = True
         MANTICORE_TYPE = "simconcolic"
@@ -485,12 +475,14 @@ except ImportError:
             logging.getLogger(__name__).warning("Neither Manticore nor simconcolic available")
 
 try:
-    import lief
+    from intellicrack.handlers.lief_handler import HAS_LIEF, lief
 
-    LIEF_AVAILABLE = True
+    LIEF_AVAILABLE = HAS_LIEF
 except ImportError as e:
     logger.error("Import error in concolic_executor: %s", e)
     LIEF_AVAILABLE = False
+    HAS_LIEF = False
+    lief = None
 
 
 class ConcolicExecutionEngine:

@@ -246,7 +246,9 @@ def require_radare2():
 def require_frida():
     """Ensure Frida is available for tests that need it."""
     try:
-        import frida
+        from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+        if not HAS_FRIDA:
+            raise ImportError("Frida not available")
         frida.get_local_device()
     except Exception:
         pytest.skip("Real Frida installation required for this test")

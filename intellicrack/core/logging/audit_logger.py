@@ -217,7 +217,7 @@ class AuditLogger:
     def _init_encryption(self):
         """Initialize encryption for log entries."""
         try:
-            from cryptography.fernet import Fernet
+            from intellicrack.handlers.cryptography_handler import Fernet
 
             # Get or generate audit encryption key
             key = get_secret("AUDIT_LOG_ENCRYPTION_KEY")
@@ -775,7 +775,7 @@ class PerformanceMonitor:
     def _get_system_metrics(self) -> dict[str, Any]:
         """Get system-level metrics."""
         try:
-            import psutil
+            from intellicrack.handlers.psutil_handler import psutil
 
             # CPU metrics
             cpu_percent = psutil.cpu_percent(interval=0.1)
@@ -833,7 +833,7 @@ class TelemetryCollector:
 
     def __init__(self, export_interval: int = 300):
         """Initialize telemetry collector with export settings.
-        
+
         Args:
             export_interval: Seconds between telemetry exports (default 300)
 
@@ -992,7 +992,7 @@ class ContextualLogger:
 
     def __init__(self, name: str, audit_logger: AuditLogger = None):
         """Initialize contextual logger.
-        
+
         Args:
             name: Logger name
             audit_logger: Optional audit logger instance for security events

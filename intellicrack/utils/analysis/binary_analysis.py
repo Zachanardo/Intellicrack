@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -44,7 +44,7 @@ except ImportError as e:
 
 # Import binary analysis libraries with proper error handling
 try:
-    import pefile
+    from intellicrack.handlers.pefile_handler import pefile
 
     PEFILE_AVAILABLE = True
 except ImportError as e:
@@ -53,22 +53,24 @@ except ImportError as e:
     PEFILE_AVAILABLE = False
 
 try:
-    import lief
+    from intellicrack.handlers.lief_handler import HAS_LIEF, lief
 
-    LIEF_AVAILABLE = True
+    LIEF_AVAILABLE = HAS_LIEF
 except ImportError as e:
     logger.error("Import error in binary_analysis: %s", e)
     lief = None
     LIEF_AVAILABLE = False
+    HAS_LIEF = False
 
 try:
-    from elftools.elf.elffile import ELFFile
+    from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
 
-    PYELFTOOLS_AVAILABLE = True
+    PYELFTOOLS_AVAILABLE = HAS_PYELFTOOLS
 except ImportError as e:
     logger.error("Import error in binary_analysis: %s", e)
     ELFFile = None
     PYELFTOOLS_AVAILABLE = False
+    HAS_PYELFTOOLS = False
 
 try:
     from macholib.MachO import MachO
@@ -79,7 +81,7 @@ except ImportError as e:
     MACHOLIB_AVAILABLE = False
 
 try:
-    import capstone
+    from intellicrack.handlers.capstone_handler import capstone
 
     HAS_CAPSTONE = True
 except ImportError as e:

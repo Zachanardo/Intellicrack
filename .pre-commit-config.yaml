@@ -12,7 +12,7 @@ repos:
 
       - id: no-mock-validation
         name: Verify no mock/fake data in tests
-        entry: C:/Intellicrack/mamba_env/python.exe scripts/verify_no_mocks.py
+        entry: C:/Intellicrack/mamba_env/python.exe tests/utils/verify_no_mocks.py
         language: system
         pass_filenames: false
         always_run: true

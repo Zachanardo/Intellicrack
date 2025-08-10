@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 
 This module provides UI components and dialogs for analysis tab original functionality.
 """
@@ -23,7 +23,6 @@ This module provides UI components and dialogs for analysis tab original functio
 import os
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from intellicrack.ui.dialogs.common_imports import QFont, QMessageBox
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -39,6 +38,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from intellicrack.handlers.pyqt6_handler import QFont, QMessageBox
 
 from ...core.analysis.analysis_orchestrator import AnalysisOrchestrator, AnalysisPhase
 from ..widgets.entropy_visualizer import EntropyVisualizerWidget
@@ -512,7 +513,7 @@ class AnalysisTab(BaseTab):
     def start_static_analysis(self):
         """Start static analysis only"""
         if not self.current_binary:
-            
+
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -669,7 +670,7 @@ class AnalysisTab(BaseTab):
     def detect_protections(self):
         """Detect binary protections"""
         if not self.current_binary:
-            
+
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -763,7 +764,7 @@ class AnalysisTab(BaseTab):
     def start_dynamic_monitoring(self):
         """Start dynamic monitoring"""
         if not self.current_binary:
-            
+
 
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
@@ -895,7 +896,7 @@ class AnalysisTab(BaseTab):
     def open_hex_viewer(self):
         """Open hex viewer for current binary"""
         if not self.current_binary:
-            
+
 
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return
@@ -920,21 +921,21 @@ class AnalysisTab(BaseTab):
 
         except ImportError as e:
             self.log_activity(f"Hex viewer not available: {e!s}")
-            
+
 
             QMessageBox.warning(
                 self, "Error", "Hex viewer module not available. Please check installation."
             )
         except Exception as e:
             self.log_activity(f"Error opening hex viewer: {e!s}")
-            
+
 
             QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {e!s}")
 
     def embed_hex_viewer(self):
         """Embed hex viewer in the results panel"""
         if not self.current_binary:
-            
+
 
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return

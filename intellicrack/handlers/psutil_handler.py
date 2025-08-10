@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
@@ -69,11 +69,13 @@ try:
     )
 
     HAS_PSUTIL = True
+    PSUTIL_AVAILABLE = True
     PSUTIL_VERSION = psutil.__version__
 
 except ImportError as e:
     logger.error("Psutil not available, using fallback implementations: %s", e)
     HAS_PSUTIL = False
+    PSUTIL_AVAILABLE = False
     PSUTIL_VERSION = None
 
     # Production-ready fallback implementations
@@ -834,7 +836,7 @@ except ImportError as e:
 # Export all psutil objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_PSUTIL", "PSUTIL_VERSION",
+    "HAS_PSUTIL", "PSUTIL_AVAILABLE", "PSUTIL_VERSION",
     # Main module
     "psutil",
     # Classes

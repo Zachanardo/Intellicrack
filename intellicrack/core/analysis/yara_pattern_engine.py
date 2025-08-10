@@ -1,6 +1,6 @@
 """YARA Pattern Engine
 
-Advanced pattern matching engine for protection and malware detection using YARA rules.
+Advanced pattern matching engine for protection and license bypass detection using YARA rules.
 Provides comprehensive pattern analysis for identifying protections, packers, and suspicious code.
 
 Copyright (C) 2025 Zachary Flint
@@ -41,7 +41,7 @@ class PatternCategory(Enum):
     OBFUSCATION = "obfuscation"
     COMPILER = "compiler"
     SUSPICIOUS = "suspicious"
-    MALWARE = "malware"
+    LICENSE_BYPASS = "license_bypass"
 
 
 @dataclass
@@ -62,7 +62,7 @@ class YaraMatch:
     @property
     def severity(self) -> str:
         """Get severity based on category and confidence"""
-        if self.category in [PatternCategory.MALWARE, PatternCategory.ANTI_DEBUG]:
+        if self.category in [PatternCategory.LICENSE_BYPASS, PatternCategory.ANTI_DEBUG]:
             return "high" if self.confidence > 0.8 else "medium"
         if self.category in [PatternCategory.PROTECTION, PatternCategory.PACKER]:
             return "medium" if self.confidence > 0.7 else "low"
@@ -661,8 +661,8 @@ rule Basic_PE_Detection
             return PatternCategory.ANTI_VM
         if any(keyword in rule_name for keyword in ["compiler", "msvc", "gcc", "delphi"]):
             return PatternCategory.COMPILER
-        if any(keyword in rule_name for keyword in ["malware", "trojan", "virus"]):
-            return PatternCategory.MALWARE
+        if any(keyword in rule_name for keyword in ["crack", "keygen", "patch"]):
+            return PatternCategory.LICENSE_BYPASS
         return PatternCategory.SUSPICIOUS
 
     def _calculate_confidence(self, match) -> float:

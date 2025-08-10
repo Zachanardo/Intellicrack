@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import hashlib
@@ -312,7 +312,7 @@ def create_sample_plugins() -> bool:
 
     """
     try:
-        plugins_dir = "intellicrack/plugins/custom_modules"
+        plugins_dir = "intellicrack/intellicrack/plugins/custom_modules"
         os.makedirs(plugins_dir, exist_ok=True)
 
         # Sample Python plugin

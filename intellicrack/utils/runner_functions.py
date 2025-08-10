@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 # Import all functions from the runtime runner_functions module
@@ -23,7 +23,6 @@ from .runtime.runner_functions import (
     run_ai_guided_patching,
     run_cfg_explorer,
     run_cloud_license_hooker,
-    run_comprehensive_analysis,
     run_concolic_execution,
     run_deep_license_analysis,
     run_distributed_processing,

@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import datetime
@@ -29,7 +29,7 @@ from intellicrack.logger import logger
 from ...utils.protection.protection_utils import calculate_entropy
 
 try:
-    import pefile
+    from intellicrack.handlers.pefile_handler import pefile
 
     HAS_PEFILE = True
 except ImportError as e:

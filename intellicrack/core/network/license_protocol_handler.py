@@ -26,7 +26,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 #!/usr/bin/env python3
@@ -642,8 +642,12 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         # Use proper encryption (AES-CTR mode for HASP emulation)
                         import os
 
-                        from cryptography.hazmat.backends import default_backend
-                        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+                        from intellicrack.handlers.cryptography_handler import (
+                            Cipher,
+                            algorithms,
+                            default_backend,
+                            modes,
+                        )
 
                         # Generate or use stored key/nonce for this session
                         if self._hasp_aes_key is None:
@@ -675,8 +679,12 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                     data_to_decrypt = request_data[8:]
                     try:
                         # Use proper decryption (AES-CTR mode for HASP emulation)
-                        from cryptography.hazmat.backends import default_backend
-                        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+                        from intellicrack.handlers.cryptography_handler import (
+                            Cipher,
+                            algorithms,
+                            default_backend,
+                            modes,
+                        )
 
                         # Use stored key/nonce from encryption
                         if self._hasp_aes_key is not None:

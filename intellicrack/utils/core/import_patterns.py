@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Common import patterns used across the Intellicrack codebase.
 
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Binary analysis tools
 try:
-    import pefile
+    from intellicrack.handlers.pefile_handler import pefile
 
     PEFILE_AVAILABLE = True
 except ImportError:
@@ -34,7 +34,7 @@ except ImportError:
     logger.debug("pefile not available")
 
 try:
-    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+    from intellicrack.handlers.capstone_handler import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
 
     CAPSTONE_AVAILABLE = True
 except ImportError:
@@ -46,24 +46,24 @@ except ImportError:
     logger.debug("capstone not available")
 
 try:
-    import lief
+    from intellicrack.handlers.lief_handler import HAS_LIEF, lief
 
-    LIEF_AVAILABLE = True
+    LIEF_AVAILABLE = HAS_LIEF
 except ImportError:
     lief = None
     LIEF_AVAILABLE = False
+    HAS_LIEF = False
     logger.debug("lief not available")
 
 try:
-    from elftools.elf import elffile
-    # Import indirectly to avoid Sphinx documentation issues
-    ELFFile = getattr(elffile, 'ELFFile', None) if 'elffile' in locals() else None
+    from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile, elffile
 
-    PYELFTOOLS_AVAILABLE = True
+    PYELFTOOLS_AVAILABLE = HAS_PYELFTOOLS
 except ImportError:
     ELFFile = None
     elffile = None
     PYELFTOOLS_AVAILABLE = False
+    HAS_PYELFTOOLS = False
     logger.debug("pyelftools not available")
 
 try:
@@ -96,7 +96,7 @@ except ImportError:
 
 # System tools
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 
     PSUTIL_AVAILABLE = True
 except ImportError:

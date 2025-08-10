@@ -16,7 +16,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-import psutil
+from intellicrack.handlers.psutil_handler import psutil
 
 # Optional imports for enhanced dashboard
 try:

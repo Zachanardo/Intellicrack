@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import asyncio
@@ -45,9 +45,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import psutil
 import yaml
 from jsonschema import ValidationError, validate
+
+from intellicrack.handlers.psutil_handler import psutil
 
 """
 Intellicrack Core Engine
@@ -531,10 +532,10 @@ class ConfigurationManager:
             },
             "plugins": {
                 "directories": [
-                    "intellicrack/plugins/ghidra_scripts/user",
-                    "intellicrack/plugins/frida_scripts",
-                    "intellicrack/plugins/radare2_modules",
-                    "intellicrack/plugins/custom_modules",
+                    "intellicrack/intellicrack/scripts/ghidra/user",
+                    "intellicrack/intellicrack/scripts/frida",
+                    "intellicrack/intellicrack/scripts/radare2",
+                    "intellicrack/intellicrack/plugins/custom_modules",
                     "intellicrack/ml",
                 ],
                 "auto_discover": True,
@@ -1042,7 +1043,7 @@ class FridaPlugin(AbstractPlugin):
     async def initialize(self, config: dict[str, Any]) -> bool:
         """Initialize Frida plugin"""
         try:
-            import frida
+            from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
 
             self.status = PluginStatus.INITIALIZING
             self.config.update(config)
@@ -1107,7 +1108,7 @@ class FridaPlugin(AbstractPlugin):
     async def execute_operation(self, operation: str, parameters: dict[str, Any]) -> Any:
         """Execute Frida operation"""
         try:
-            import frida
+            from intellicrack.handlers.frida_handler import frida
 
             # Check Frida version and capabilities
             frida_version = frida.__version__
@@ -1161,9 +1162,9 @@ class FridaPlugin(AbstractPlugin):
         self, target: str | int, parameters: dict[str, Any]
     ) -> dict[str, Any]:
         """Attach to target process"""
-        import frida
-
         try:
+            from intellicrack.handlers.frida_handler import frida
+
             # Get device
             device = frida.get_local_device()
 

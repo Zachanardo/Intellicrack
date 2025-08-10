@@ -311,7 +311,7 @@ class TestFileMetadataWidget:
                     assert True
 
         # Check for copy buttons
-        
+
         buttons = self.widget.findChildren(QPushButton)
 
         for button in buttons:
@@ -367,7 +367,7 @@ class TestFileMetadataWidget:
             assert layout.count() >= 0
 
             # Check for grouped metadata sections
-            
+
             group_boxes = self.widget.findChildren(QGroupBox)
 
             for group_box in group_boxes:
@@ -445,7 +445,7 @@ class TestFileMetadataWidget:
 
     def test_thread_safety_real_async_operations(self, qtbot, sample_file):
         """Test REAL thread safety for metadata operations."""
-        
+
 
         # Ensure operations happen in GUI thread
         assert QThread.currentThread() == QApplication.instance().thread()

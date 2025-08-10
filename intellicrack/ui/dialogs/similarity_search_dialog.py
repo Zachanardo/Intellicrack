@@ -13,7 +13,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -21,13 +21,26 @@ import logging
 import os
 from typing import Any
 
-from intellicrack.ui.dialogs.common_imports import (
-    QAbstractItemView, QDialog, QHBoxLayout, QHeaderView, QInputDialog,
-    QLabel, QMessageBox, QPushButton, QSlider, QSplitter, Qt,
-    QTableWidget, QTableWidgetItem, QTextEdit, QThread, QVBoxLayout,
-    QWidget, pyqtSignal,
+from intellicrack.handlers.pyqt6_handler import (
+    QAbstractItemView,
+    QDialog,
+    QHBoxLayout,
+    QHeaderView,
+    QInputDialog,
+    QLabel,
+    QMessageBox,
+    QPushButton,
+    QSlider,
+    QSplitter,
+    Qt,
+    QTableWidget,
+    QTableWidgetItem,
+    QTextEdit,
+    QThread,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
 )
-
 from intellicrack.logger import logger
 
 """
@@ -48,7 +61,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 

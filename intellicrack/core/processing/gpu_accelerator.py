@@ -15,9 +15,11 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from intellicrack.handlers.numpy_handler import numpy as np
+from intellicrack.handlers.opencl_handler import OPENCL_AVAILABLE, cl
 from intellicrack.logger import logger
 
 from ...utils.core.import_checks import TENSORFLOW_AVAILABLE
@@ -26,14 +28,9 @@ from ...utils.logger import get_logger
 
 # Optional GPU backend imports
 try:
-    import pyopencl as cl
     import pyopencl.array as cl_array
-
-    OPENCL_AVAILABLE = True
 except ImportError as e:
     logger.error("Import error in gpu_accelerator: %s", e)
-    OPENCL_AVAILABLE = False
-    cl = None
     cl_array = None
 
 try:
@@ -198,8 +195,6 @@ class GPUAccelerationManager:
         if not self._torch:
             return self._cpu_pattern_matching(data, patterns)
 
-        import numpy as np
-
         all_matches = []
 
         # Convert data to tensor on device
@@ -233,8 +228,6 @@ class GPUAccelerationManager:
         """OpenCL-based pattern matching."""
         if not self.cl or not self.context:
             return self._cpu_pattern_matching(data, patterns)
-
-        import numpy as np
 
         # OpenCL kernel for pattern matching
         kernel_source = """
@@ -326,8 +319,6 @@ class GPUAccelerationManager:
         """CUDA-based pattern matching using CuPy."""
         if not cp:
             return self._cpu_pattern_matching(data, patterns)
-
-        import numpy as np
 
         # CUDA kernel for pattern matching
         pattern_match_kernel = cp.RawKernel(

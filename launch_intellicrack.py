@@ -21,7 +21,7 @@ os.environ["PYBIND11_NO_ASSERT_GIL_HELD_INCREF_DECREF"] = "1"
 try:
     import ctypes
     import ctypes.util
-    
+
     # Try to find and load the Python shared library
     python_lib = None
     if sys.platform.startswith('win'):
@@ -32,11 +32,11 @@ try:
         libname = ctypes.util.find_library('python{}.{}'.format(*sys.version_info[:2]))
         if libname:
             python_lib = ctypes.CDLL(libname)
-    
+
     # If we successfully loaded the library, we can potentially set flags
     if python_lib:
         print("Python library loaded for pybind11 configuration", file=sys.stderr)
-        
+
 except Exception as e:
     print(f"Could not configure pybind11 via ctypes: {e}", file=sys.stderr)
 
@@ -61,14 +61,13 @@ def run_intellicrack():
     """Run Intellicrack with proper GIL handling."""
     try:
         # Set up thread safety before any imports
-        import threading
         if hasattr(sys, 'setcheckinterval'):
             sys.setcheckinterval(10000)  # Reduce thread switching
-        
+
         # Import and run the main application
         from intellicrack.main import main
         return main()
-        
+
     except Exception as e:
         print(f"Error starting Intellicrack: {e}", file=sys.stderr)
         return 1

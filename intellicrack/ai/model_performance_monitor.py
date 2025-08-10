@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -62,15 +62,15 @@ HAS_TORCH = False
 HAS_PYNVML = False
 
 try:
-    import numpy as np
-
-    HAS_NUMPY = True
+    from intellicrack.handlers.numpy_handler import HAS_NUMPY
+    from intellicrack.handlers.numpy_handler import numpy as np
 except ImportError as e:
     logger.error("Import error in model_performance_monitor: %s", e)
     np = None
+    HAS_NUMPY = False
 
 try:
-    import psutil
+    from intellicrack.handlers.psutil_handler import psutil
 
     HAS_PSUTIL = True
 except ImportError as e:

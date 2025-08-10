@@ -246,7 +246,7 @@ Structure:
 ### Project Templates
 
 Choose default project templates:
-- ☑ Malware Analysis
+- ☑ License Protection Analysis
 - ☑ Vulnerability Research
 - ☑ Binary Patching
 - ☐ Forensics Investigation
@@ -376,7 +376,7 @@ After setup, you'll see the main interface with:
 3. **Safe Practices**
    - Always work in sandbox
    - Keep backups of targets
-   - Use isolated VMs for malware
+   - Use isolated VMs for protected software analysis
 
 ## Advanced Configuration
 

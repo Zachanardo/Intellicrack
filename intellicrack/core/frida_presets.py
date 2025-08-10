@@ -12,7 +12,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 """
@@ -580,7 +580,7 @@ def get_scripts_for_protection(protection_type: str) -> list:
         ['cloud_licensing_bypass', 'registry_monitor']
 
     Note:
-        Script names correspond to files in the scripts/frida directory
+        Script names correspond to files in the intellicrack/intellicrack/scripts/frida directory
         or built-in script templates.
 
     Complexity:

@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
@@ -23,7 +23,7 @@ import shutil
 import zipfile
 
 # Optional imports with graceful fallbacks
-from .common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT,
     QCheckBox,
     QComboBox,
@@ -501,7 +501,7 @@ else:
                             if plugin_info.get("enabled", True):
                                 list_item.setForeground(list_item.foreground())  # Default color
                             else:
-                                from intellicrack.ui.dialogs.common_imports import QColor
+                                from intellicrack.handlers.pyqt6_handler import QColor
 
                                 list_item.setForeground(QColor(128, 128, 128))  # Gray for disabled
 
@@ -633,7 +633,7 @@ Description: {plugin_info['description']}"""
                 plugin_info = current_item.data(0)
                 plugin_info["enabled"] = False
                 current_item.setData(0, plugin_info)
-                from intellicrack.ui.dialogs.common_imports import QColor
+                from intellicrack.handlers.pyqt6_handler import QColor
 
                 current_item.setForeground(QColor(128, 128, 128))  # Gray out
                 self.on_installed_selection_changed()  # Refresh info display

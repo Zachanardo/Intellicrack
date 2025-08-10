@@ -6,9 +6,7 @@ import platform
 import subprocess
 import time
 
-from intellicrack.logger import logger
-
-from ..common_imports import (
+from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QColor,
     QComboBox,
@@ -33,6 +31,8 @@ from ..common_imports import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.logger import logger
+
 from .base_dialog import BinarySelectionDialog
 
 """
@@ -53,7 +53,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
@@ -703,7 +703,7 @@ class KeygenDialog(BinarySelectionDialog):
         key = self.key_display.toPlainText().strip()
         if key:
             try:
-                from intellicrack.ui.dialogs.common_imports import QApplication
+                from intellicrack.handlers.pyqt6_handler import QApplication
 
                 QApplication.clipboard().setText(key)
                 self.status_label.setText("Key copied to clipboard")

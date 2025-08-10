@@ -42,24 +42,6 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress TensorFlow warnings
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Disable GPU for TensorFlow
 os.environ["MKL_THREADING_LAYER"] = "GNU"  # Fix PyTorch + TensorFlow import conflict
 
-"""
-Main Entry Point for Intellicrack
-
-Copyright (C) 2025 Zachary Flint
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-"""
 
 
 # Set Qt to offscreen mode for WSL/headless environments if no display
@@ -105,6 +87,7 @@ def main() -> int:
     """Main entry point for the Intellicrack application.
 
     This function performs the following operations:
+
     1. Executes startup checks and auto-configuration
     2. Imports and launches the GUI application
     3. Handles import errors and other exceptions gracefully
@@ -113,10 +96,10 @@ def main() -> int:
     and provides helpful error messages for missing dependencies.
 
     Returns:
-        int: Application exit code. 0 for success, 1 for error.
+        int: Application exit code - 0 for success, 1 for error.
 
-    Raises:
-        No exceptions are raised; all errors are caught and logged.
+    Note:
+        No exceptions are raised - all errors are caught and logged.
 
     Example:
         .. code-block:: python

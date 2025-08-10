@@ -35,7 +35,7 @@ except ImportError:
 
         """
         from ..utils.torch_gil_safety import safe_torch_import
-        
+
         torch = safe_torch_import()
         if torch is None:
             # Return string representation if torch not available

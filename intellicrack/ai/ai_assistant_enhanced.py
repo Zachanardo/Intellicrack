@@ -15,7 +15,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import json
@@ -1059,7 +1059,7 @@ What security aspect interests you?"""
 
 def create_ai_assistant_widget():
     """Create the AI assistant widget for the UI."""
-    from ..ui.common_imports import QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QWidget
+    from ..handlers.pyqt6_handler import QHBoxLayout, QPushButton, QTextEdit, QVBoxLayout, QWidget
 
     widget = QWidget()
     layout = QVBoxLayout(widget)

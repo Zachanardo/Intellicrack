@@ -18,7 +18,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see <https://www.gnu.org/licenses/>.
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
@@ -244,7 +244,7 @@ class ConfigManager:
             "log_dir": str(config.get_logs_dir()),
             "output_dir": str(config.get_output_dir()),
             "temp_dir": config.get("directories.temp", str(config.get_cache_dir())),
-            "plugin_directory": "intellicrack/plugins",
+            "plugin_directory": "intellicrack/intellicrack/plugins",
             "download_directory": str(config.get_cache_dir() / "downloads"),
             # Tool paths
             "ghidra_path": config.get_tool_path("ghidra"),
