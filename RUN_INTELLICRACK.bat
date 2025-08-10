@@ -13,6 +13,6 @@ set QT_QUICK_BACKEND=software
 set QT_QPA_PLATFORM=windows
 
 REM Environment is auto-activated via .env file configuration
-echo Starting Intellicrack with Intel GPU support...
+echo Starting Intellicrack...
 C:\Intellicrack\mamba_env\python.exe launch_intellicrack.py
 pause
