@@ -441,17 +441,28 @@ function bypassHardwareFingerprinting() {
                             type: 'bypass',
                             target: 'hardware_fingerprinting',
                             action: 'api_intercepted',
-                            api: `${api.module}!${api.func}`
+                            api: `${api.module}!${api.func}`,
+                            spoofed_values: spoofedValues
                         });
                     },
                     onLeave: function(retval) {
-                        // Spoof hardware-related return values
+                        // Spoof hardware-related return values using spoofedValues
                         if (retval.toInt32() !== 0) {
+                            // Inject spoofed hardware IDs into registry queries
+                            if (api.func === 'RegQueryValueExW' && this.context.r8) {
+                                try {
+                                    const buffer = this.context.r8;
+                                    Memory.writeUtf16String(buffer, spoofedValues.hardwareId);
+                                } catch (_) {
+                                    // Fallback to basic spoofing
+                                }
+                            }
                             send({
                                 type: 'bypass',
                                 target: 'hardware_fingerprinting',
                                 action: 'return_value_spoofed',
-                                api: `${api.module}!${api.func}`
+                                api: `${api.module}!${api.func}`,
+                                spoofed_with: spoofedValues.hardwareId
                             });
                         }
                     }
@@ -474,13 +485,18 @@ function bypassHardwareFingerprinting() {
 
 function bypassApplicationSpecificChecks() {
     const currentProcess = Process.getCurrentThreadId();
-    const processName = Process.getCurrentDir();
+    const processName = Process.enumerateModules()[0].name;
+
+    send({
+        type: 'info',
+        message: `Application-specific bypass initializing for process: ${processName} (Thread ID: ${currentProcess})`
+    });
 
     for (const [appName, appConfig] of Object.entries(ADOBE_APPLICATIONS)) {
-        if (processName.includes(appName.replace('.exe', ''))) {
+        if (processName.toLowerCase().includes(appName.replace('.exe', '').toLowerCase())) {
             send({
                 type: 'info',
-                message: `Detected Adobe application: ${appName}`
+                message: `Detected Adobe application: ${appName} (Process: ${processName}, Thread: ${currentProcess})`
             });
 
             // Apply application-specific bypasses
@@ -541,7 +557,7 @@ function bypassModernCreativeCloudDesktop() {
                         }, 'int', []));
                         patchCount++;
                     }
-                } catch (e) {
+                } catch (_e) {
                     // Continue with other functions
                 }
             }
@@ -629,7 +645,7 @@ function bypassActivationService() {
                             });
                         }
                     }
-                } catch (e) {
+                } catch (_e) {
                     // Continue with other functions
                 }
             }
@@ -676,7 +692,7 @@ function bypassRealTimeProtection() {
                         }, 'int', []));
                         protectionCount++;
                     }
-                } catch (e) {
+                } catch (_e) {
                     // Continue
                 }
             }
@@ -705,7 +721,7 @@ function bypassRealTimeProtection() {
                     }, 'int', []));
                     protectionCount++;
                 }
-            } catch (e) {
+            } catch (_e) {
                 // Continue
             }
         }
@@ -1136,7 +1152,7 @@ function bypassAdvancedCertificatePinning() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch (_e) {
                 // Continue with other APIs
             }
         }
@@ -1409,15 +1425,38 @@ function bypassWebAssemblyProtection() {
             'WebAssembly.validate'
         ];
 
+        send({
+            type: 'info',
+            target: 'wasm_protection',
+            action: 'v8_webassembly_functions_targeted',
+            functions: v8Functions
+        });
+
         try {
             if (typeof WebAssembly !== 'undefined') {
+                // Hook each V8 function from our list
+                for (const funcName of v8Functions) {
+                    const funcPath = funcName.split('.');
+                    if (funcPath.length === 2 && typeof window[funcPath[0]] !== 'undefined' && 
+                        typeof window[funcPath[0]][funcPath[1]] === 'function') {
+                        send({
+                            type: 'info',
+                            target: 'wasm_protection',
+                            action: 'v8_function_available',
+                            function: funcName
+                        });
+                        wasmBypassCount++;
+                    }
+                }
+
                 const originalInstantiate = WebAssembly.instantiate;
                 WebAssembly.instantiate = function(bytes, imports) {
                     send({
                         type: 'bypass',
                         target: 'wasm_protection',
                         action: 'webassembly_instantiate_intercepted',
-                        bytes_length: bytes.length || 0
+                        bytes_length: bytes.length || 0,
+                        v8_function: v8Functions[0]
                     });
 
                     // Modify WASM bytecode if it contains license validation
@@ -1713,12 +1752,12 @@ function handleQuantumResistantCrypto() {
                                 }, 'int', []));
                                 quantumBypassCount++;
                             }
-                        } catch (e) {
+                        } catch (_e) {
                             // Continue
                         }
                     }
                 }
-            } catch (e) {
+            } catch (_e) {
                 // Continue
             }
         }
@@ -2009,7 +2048,7 @@ function bypassKernelLevelProtection() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch (_e) {
                 // Continue
             }
         }
@@ -2130,7 +2169,7 @@ function bypassAdvancedMemoryProtection() {
                     }, 'int', []));
                     memoryProtectionBypassCount++;
                 }
-            } catch (e) {
+            } catch (_e) {
                 // Continue
             }
         }
@@ -2262,7 +2301,7 @@ function disruptCrossPlatformLicenseSync() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch (_e) {
                 // Continue
             }
         }
