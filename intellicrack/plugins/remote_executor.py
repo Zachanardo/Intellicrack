@@ -29,6 +29,7 @@ import threading
 from typing import Any
 
 from intellicrack.logger import logger
+from intellicrack.utils.service_health_checker import get_service_url
 
 from ..utils.secrets_manager import get_secret
 
@@ -68,12 +69,21 @@ class RemotePluginExecutor:
         """Initialize the remote plugin executor.
 
         Args:
-            remote_host: Remote host to connect to (default: localhost)
-            remote_port: Remote port to connect to (default: 8765)
+            remote_host: Remote host to connect to (default: from config)
+            remote_port: Remote port to connect to (default: from config)
 
         """
-        self.remote_host = remote_host or "localhost"
-        self.remote_port = remote_port or 8765
+        # Get WebSocket server URL from configuration
+        if remote_host is None or remote_port is None:
+            ws_url = get_service_url("websocket_server")
+            default_host = ws_url.replace("ws://", "").replace("wss://", "").split(":")[0]
+            default_port = int(ws_url.split(":")[-1].replace("/", "")) if ":" in ws_url else 8765
+            
+            self.remote_host = remote_host or default_host
+            self.remote_port = remote_port or default_port
+        else:
+            self.remote_host = remote_host
+            self.remote_port = remote_port
         self.logger = logging.getLogger(__name__)
 
         # Security: Shared secret for HMAC validation (should be configured securely)
@@ -242,11 +252,11 @@ class RemotePluginExecutor:
             return [error_msg]
 
     @staticmethod
-    def start_server(host: str = "localhost", port: int = 8765) -> None:
+    def start_server(host: str | None = None, port: int | None = None) -> None:
         """Start a remote plugin execution server.
 
         Args:
-            host: Host to bind to
+            host: Host to bind to (default: from config)
             port: Port to bind to
 
         """
@@ -405,6 +415,14 @@ class RemotePluginExecutor:
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.error("Error in remote_executor: %s", e)
 
+        # Get configuration if not provided
+        if host is None or port is None:
+            ws_url = get_service_url("websocket_server")
+            default_host = ws_url.replace("ws://", "").replace("wss://", "").split(":")[0]
+            default_port = int(ws_url.split(":")[-1].replace("/", "")) if ":" in ws_url else 8765
+            host = host or default_host
+            port = port or default_port
+
         # Create server socket
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -499,12 +517,12 @@ def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwar
         return [f"Plugin execution error: {e}"]
 
 
-def create_remote_executor(host: str = "localhost", port: int = 8765) -> RemotePluginExecutor:
+def create_remote_executor(host: str | None = None, port: int | None = None) -> RemotePluginExecutor:
     """Factory function to create a RemotePluginExecutor.
 
     Args:
-        host: Remote host address
-        port: Remote port number
+        host: Remote host address (default: from config)
+        port: Remote port number (default: from config)
 
     Returns:
         Configured RemotePluginExecutor instance

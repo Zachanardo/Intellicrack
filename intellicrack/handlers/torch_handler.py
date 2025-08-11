@@ -25,10 +25,13 @@ When PyTorch is not available, it provides fallback implementations for
 tensor operations used in Intellicrack's ML components.
 """
 
-# PyTorch availability detection and import handling
-# TEMPORARY FIX: Disable PyTorch import due to Intel Arc B580 compatibility issues
-# The import causes a hang on systems with Intel Arc GPUs
-# Using fallback implementations until the issue is resolved
+# PyTorch availability detection and import handling with Intel Arc B580 compatibility
+import os
+import threading
+import time
+from typing import Optional
+
+# Initialize variables
 HAS_TORCH = False
 TORCH_AVAILABLE = False
 TORCH_VERSION = None
@@ -43,103 +46,165 @@ save = None
 load = None
 tensor = None
 
-# Original import code (disabled):
-# try:
-#     import torch
-#     from torch import (
-#         Tensor,
-#         cuda,
-#         device,
-#         dtype,
-#         nn,
-#         optim,
-#         save,
-#         load,
-#         tensor,
-#     )
-#     
-#     HAS_TORCH = True
-#     TORCH_AVAILABLE = True
-#     TORCH_VERSION = torch.__version__
-#     
-# except ImportError as e:
+# Load environment variables from .env file
+# Users can customize GPU settings in the .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # Load .env file from project root
+except ImportError:
+    pass  # dotenv not available, use system environment variables
 
-if False:  # Keep exception handling structure intact
-    pass
+# Detect Intel Arc GPU and apply workaround
+def _detect_and_fix_intel_arc():
+    """Detect Intel Arc GPU and apply CPU-only workaround to prevent GIL crashes."""
+    # Check if UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS is set (Intel Arc indicator)
+    if os.environ.get("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS") == "1":
+        logger.info("Intel Arc GPU environment detected - using CPU mode for PyTorch to prevent GIL issues")
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""  # Empty string = no CUDA devices
+        return True
     
-# Always use fallback implementations since PyTorch causes hang
-logger.info("Using PyTorch fallback implementations (Intel Arc B580 compatibility mode)")
+    # Also check for Intel GPU environment variables
+    if os.environ.get("ONEAPI_DEVICE_SELECTOR") or os.environ.get("SYCL_DEVICE_FILTER"):
+        logger.info("Intel GPU environment detected - using CPU mode for PyTorch")
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        return True
+        
+    return False
 
-# Production-ready fallback implementations
-class FallbackTensor:
-    """Fallback tensor implementation."""
-    def __init__(self, data=None, dtype=None, device=None):
-        self.data = data or []
-        self.dtype = dtype
-        self.device = device
+_is_intel_arc = _detect_and_fix_intel_arc()
+
+def _safe_torch_import(timeout: float = 10.0) -> tuple[bool, Optional[object], Optional[Exception]]:
+    """Safely import PyTorch with Intel Arc workaround applied."""
+    try:
+        # Direct import - Intel Arc workaround already applied
+        import torch as torch_temp
+        torch_modules = {
+            'torch': torch_temp,
+            'Tensor': torch_temp.Tensor,
+            'cuda': torch_temp.cuda,
+            'device': torch_temp.device,
+            'dtype': torch_temp.dtype,
+            'nn': torch_temp.nn,
+            'optim': torch_temp.optim,
+            'save': torch_temp.save,
+            'load': torch_temp.load,
+            'tensor': torch_temp.tensor
+        }
+        return True, torch_modules, None
+    except Exception as e:
+        logger.warning(f"PyTorch import failed: {e}")
+        return False, None, e
+
+# Attempt safe PyTorch import - skip entirely if Intel Arc detected
+if _is_intel_arc:
+    logger.info("Intel Arc GPU detected - skipping PyTorch import to prevent GIL crashes, using fallbacks")
+    HAS_TORCH = False
+    TORCH_AVAILABLE = False
+    TORCH_VERSION = None
+else:
+    try:
+        success, modules, error = _safe_torch_import()
+        
+        if success and modules:
+            # Use the successfully imported modules WITHOUT re-importing
+            torch = modules['torch']
+            Tensor = modules['Tensor']
+            cuda = modules['cuda']
+            device = modules['device']
+            dtype = modules['dtype']
+            nn = modules['nn']
+            optim = modules['optim']
+            save = modules['save']
+            load = modules['load']
+            tensor = modules['tensor']
+            
+            HAS_TORCH = True
+            TORCH_AVAILABLE = True
+            TORCH_VERSION = torch.__version__
+            logger.info(f"PyTorch {TORCH_VERSION} imported successfully with universal GPU compatibility")
+        else:
+            raise error or ImportError("PyTorch import failed")
+            
+    except Exception as e:
+        logger.info(f"Using PyTorch fallbacks due to import issue: {e}")
+        HAS_TORCH = False
+        TORCH_AVAILABLE = False
+        TORCH_VERSION = None
+
+# Set up fallback implementations when PyTorch is not available
+if not HAS_TORCH:
+    logger.info("Setting up PyTorch fallback implementations")
     
-    def __repr__(self):
-        return f"FallbackTensor({self.data})"
-    
-    def cuda(self):
-        """Move to CUDA (no-op in fallback)."""
-        return self
-    
-    def cpu(self):
-        """Move to CPU (no-op in fallback)."""
-        return self
-    
-    def numpy(self):
-        """Convert to numpy array."""
-        return self.data
+    # Production-ready fallback implementations
+    class FallbackTensor:
+        """Fallback tensor implementation."""
+        def __init__(self, data=None, dtype=None, device=None):
+            self.data = data or []
+            self.dtype = dtype
+            self.device = device
+        
+        def __repr__(self):
+            return f"FallbackTensor({self.data})"
+        
+        def cuda(self):
+            """Move to CUDA (no-op in fallback)."""
+            return self
+        
+        def cpu(self):
+            """Move to CPU (no-op in fallback)."""
+            return self
+        
+        def numpy(self):
+            """Convert to numpy array."""
+            return self.data
 
-class FallbackCuda:
-    """Fallback CUDA interface."""
-    @staticmethod
-    def is_available():
-        return False
-    
-    @staticmethod
-    def device_count():
-        return 0
-    
-    @staticmethod
-    def get_device_name(device=None):
-        return "CPU Fallback"
+    class FallbackCuda:
+        """Fallback CUDA interface."""
+        @staticmethod
+        def is_available():
+            return False
+        
+        @staticmethod
+        def device_count():
+            return 0
+        
+        @staticmethod
+        def get_device_name(device=None):
+            return "CPU Fallback"
 
-class FallbackDevice:
-    """Fallback device."""
-    def __init__(self, device_str):
-        self.type = "cpu"
+    class FallbackDevice:
+        """Fallback device."""
+        def __init__(self, device_str):
+            self.type = "cpu"
 
-class FallbackModule:
-    """Fallback neural network module."""
-    pass
+    class FallbackModule:
+        """Fallback neural network module."""
+        pass
 
-class FallbackOptimizer:
-    """Fallback optimizer."""
-    pass
+    class FallbackOptimizer:
+        """Fallback optimizer."""
+        pass
 
-# Assign fallback objects
-torch = None
-Tensor = FallbackTensor
-cuda = FallbackCuda()
-device = FallbackDevice
-dtype = None
-nn = type('nn', (), {'Module': FallbackModule})()
-optim = type('optim', (), {'Optimizer': FallbackOptimizer})()
+    # Assign fallback objects
+    torch = None
+    Tensor = FallbackTensor
+    cuda = FallbackCuda()
+    device = FallbackDevice
+    dtype = None
+    nn = type('nn', (), {'Module': FallbackModule})()
+    optim = type('optim', (), {'Optimizer': FallbackOptimizer})()
 
-def tensor(data, **kwargs):
-    """Create fallback tensor."""
-    return FallbackTensor(data, **kwargs)
+    def tensor(data, **kwargs):
+        """Create fallback tensor."""
+        return FallbackTensor(data, **kwargs)
 
-def save(obj, path):
-    """Fallback save function."""
-    pass
+    def save(obj, path):
+        """Fallback save function."""
+        pass
 
-def load(path, **kwargs):
-    """Fallback load function."""
-    return {}
+    def load(path, **kwargs):
+        """Fallback load function."""
+        return {}
 
 # Export all PyTorch objects and availability flag
 __all__ = [

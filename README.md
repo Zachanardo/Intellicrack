@@ -1,8 +1,8 @@
 # Intellicrack
 
-A comprehensive binary analysis and security research tool with GUI, AI integration, and advanced analysis capabilities.
+A comprehensive binary analysis and security research platform designed to help software developers identify and strengthen vulnerabilities in their own licensing and protection systems.
 
-![Python](https://img.shields.io/badge/python-3.8%2B-blue)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License](https://img.shields.io/badge/license-GPL%20v3-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
 
@@ -10,22 +10,24 @@ A comprehensive binary analysis and security research tool with GUI, AI integrat
 
 ### Core Capabilities
 - **Multi-Format Binary Analysis**: PE, ELF, Mach-O support
-- **Protection Detection**: Anti-debug, packing, obfuscation identification
-- **Vulnerability Scanning**: Buffer overflows, format strings, integer overflows
-- **License Bypass Mechanisms**: Various bypass techniques for software protections
-- **Network Analysis**: Traffic capture, protocol fingerprinting, SSL interception
+- **Protection Detection**: Anti-debug, packing, obfuscation identification  
+- **Vulnerability Research**: Buffer overflows, format strings, integer overflows
+- **Exploitation Framework**: Advanced exploit development and testing
+- **Network Analysis**: Traffic capture, protocol fingerprinting, license server emulation
 
 ### Advanced Features
-- **AI/ML Integration**: 16+ AI providers with dynamic model fetching (OpenAI, Anthropic, Google, Local models, and more)
+- **AI/ML Integration**: Multiple AI providers with dynamic model fetching (OpenAI, Anthropic, Google, Local models)
 - **GPU Acceleration**: NVIDIA, AMD, and Intel GPU support for intensive operations
 - **Distributed Processing**: Ray, Dask, and multiprocessing support
 - **Symbolic Execution**: Advanced path exploration and constraint solving
 - **Dynamic Analysis**: Runtime behavior analysis and instrumentation
+- **C2 Infrastructure**: Command and control capabilities for security testing
 
 ### User Interface
-- **Modern GUI**: Built with PyQt5 for cross-platform compatibility
-- **Hex Editor**: Built-in viewer/editor with pattern highlighting
-- **Visual Patch Editor**: Graphical interface for binary modifications
+- **Modern GUI**: Built with PyQt6 for cross-platform compatibility
+- **Three-Panel Layout**: Professional IDE-like interface with tabs and output panel
+- **Hex Editor**: Built-in viewer/editor with pattern highlighting and data inspection
+- **AI Assistant Tab**: Integrated AI-powered analysis and script generation
 - **Plugin System**: Extensible architecture for custom tools
 - **Real-time Logging**: Comprehensive logging with adjustable verbosity
 
@@ -45,42 +47,36 @@ A comprehensive binary analysis and security research tool with GUI, AI integrat
 
 ## 🔧 Installation
 
-### Automatic Installation (Recommended)
-
-Just run the PowerShell installer:
-
-```powershell
-# Windows (PowerShell)
-.\Install.ps1
-```
-
-This single script automatically:
-- ✅ Installs Python 3.11 if not present
-- ✅ Detects your GPU (NVIDIA/AMD/Intel) and configures accordingly
-- ✅ Installs all 100+ Python packages
-- ✅ Installs system tools (Ghidra, Radare2, x64dbg, etc.)
-- ✅ Sets up the complete environment
-- ✅ Creates desktop shortcuts
-
-**No manual configuration needed!**
-
 ### Manual Installation
 
-If you prefer manual setup:
+1. **Install Python 3.11 or 3.12**
+   ```bash
+   # Verify Python version
+   python --version  # Should be 3.11.x or 3.12.x
+   ```
 
-```bash
-# 1. Install Python 3.11 or 3.12 (3.13+ not supported)
+2. **Clone the repository**
+   ```bash
+   git clone https://github.com/Zachanardo/Intellicrack.git
+   cd Intellicrack
+   ```
 
-# 2. Clone the repository
-git clone https://github.com/yourusername/intellicrack.git
-cd intellicrack
+3. **Create and activate virtual environment**
+   ```bash
+   # Windows
+   python -m venv mamba_env
+   mamba_env\Scripts\activate
 
-# 3. Install dependencies
-pip install -r requirements/requirements.txt
+   # Linux/macOS
+   python -m venv mamba_env
+   source mamba_env/bin/activate
+   ```
 
-# 4. Launch the application
-python launch_intellicrack.py
-```
+4. **Install dependencies**
+   ```bash
+   # Install from requirements lock file
+   pip install -r requirements/requirements.lock
+   ```
 
 ### Platform-Specific Dependencies
 
@@ -88,25 +84,29 @@ Intellicrack automatically manages platform-specific dependencies:
 
 #### Windows
 - **Primary Engine**: angr (full Windows support)
-- **Excluded**: manticore (Linux-only, not required)
-- All Windows users get a fully functional system without Linux-specific tools
+- **GPU Support**: Intel Arc B580 detection with GIL crash prevention
+- All Windows users get a fully functional system
 
 #### Linux/Unix
 - **Primary Engine**: angr (recommended)
 - **Secondary Engine**: manticore (automatically installed)
-- **Optional**: Install with `pip install intellicrack[linux]` for all Linux tools
+- **Full QEMU support**: For emulation and dynamic analysis
 
 #### Symbolic Execution Support
 - **angr**: Cross-platform, installed by default, recommended for all users
 - **manticore**: Linux-only, optional fallback
-- **simconcolic**: Built-in fallback for minimal functionality
+- **Built-in fallback**: For minimal functionality
 
 ## 🎯 Usage
 
 ### GUI Mode
-Simply run the launcher to start the graphical interface:
+Launch the graphical interface:
 ```bash
+# Using the launcher script
 python launch_intellicrack.py
+
+# Using module mode
+python -m intellicrack --gui
 ```
 
 ### Command Line
@@ -123,34 +123,33 @@ python -m intellicrack strings target.exe
 
 ### Python API
 ```python
-from intellicrack.core.analysis import CoreAnalyzer
+from intellicrack.core.analysis import BinaryAnalyzer
 
-analyzer = CoreAnalyzer()
+analyzer = BinaryAnalyzer()
 result = analyzer.analyze_binary("target.exe", {
     "deep_scan": True,
     "detect_protections": True
 })
 
-print(f"File type: {result['file_info']['type']}")
-print(f"Protections: {result['protections']}")
+print(f"File type: {result.file_format}")
+print(f"Protections: {result.protections}")
 ```
 
 ## 📚 Documentation
 
 Comprehensive documentation is available in the `docs/` directory:
 
-- [Getting Started](docs/index.md)
-- [AI Assistant Guide](docs/usage/ai_assistant.md) - **NEW**: Dynamic model selection with 16+ providers
-- [AI Models Quick Reference](docs/AI_MODELS_QUICK_REFERENCE.md) - Provider setup and model recommendations
-- [Basic Analysis Guide](docs/usage/basic_analysis.md)
-- [Patching Guide](docs/usage/patching.md)
+- [Architecture Overview](docs/architecture/COMPREHENSIVE_ARCHITECTURE.md)
+- [User Guide](docs/guides/COMPREHENSIVE_USER_GUIDE.md)
+- [AI Assistant Guide](docs/usage/ai_assistant.md)
+- [AI Models Quick Reference](docs/reference/AI_MODELS_QUICK_REFERENCE.md)
 - [Plugin Development](docs/development/plugins.md)
-- [API Reference](docs/api_reference.md)
-- [Network Protocol Analysis](docs/network_protocols.md)
+- [GPU Acceleration Guide](docs/guides/GPU_ACCELERATION_GUIDE.md)
+- [Security and Ethics](docs/security/SECURITY_AND_ETHICS_GUIDE.md)
 
 ## 🛠️ Configuration
 
-Intellicrack uses a JSON configuration file. Key settings include:
+Intellicrack uses JSON configuration files. Key settings include:
 
 ```json
 {
@@ -166,7 +165,7 @@ Intellicrack uses a JSON configuration file. Key settings include:
 }
 ```
 
-See [Configuration Guide](docs/usage/basic_analysis.md#configuration) for details.
+See the [Configuration Reference](docs/reference/CONFIGURATION_REFERENCE.md) for details.
 
 ## 🧩 Plugins
 
@@ -191,23 +190,24 @@ See the [Plugin Development Guide](docs/development/plugins.md) for more informa
 
 ### Basic Binary Analysis
 ```python
-from intellicrack.utils.binary_analysis import analyze_binary
+from intellicrack.core.analysis import BinaryAnalyzer
 
 # Analyze executable
-result = analyze_binary("protected.exe")
-print(f"SHA256: {result['hashes']['sha256']}")
-print(f"Entropy: {result['entropy']}")
+analyzer = BinaryAnalyzer()
+result = analyzer.analyze_binary("protected.exe")
+print(f"SHA256: {result.hashes['sha256']}")
+print(f"Entropy: {result.entropy}")
 ```
 
-### Vulnerability Detection
+### Protection Detection
 ```python
-from intellicrack.core.analysis import VulnerabilityEngine
+from intellicrack.protection import ProtectionDetector
 
-engine = VulnerabilityEngine()
-vulnerabilities = engine.scan_binary("app.exe")
+detector = ProtectionDetector()
+protections = detector.detect("app.exe")
 
-for vuln in vulnerabilities:
-    print(f"{vuln.type}: {vuln.description}")
+for protection in protections:
+    print(f"{protection.type}: {protection.description}")
 ```
 
 ### Network Analysis
@@ -226,7 +226,7 @@ packets = analyzer.stop_capture()
 
 1. **Import Errors**
    ```
-   Solution: Run install_dependencies.bat or pip install -r requirements/requirements.txt
+   Solution: Ensure all dependencies are installed from requirements.lock
    ```
 
 2. **GPU Not Detected**
@@ -236,15 +236,13 @@ packets = analyzer.stop_capture()
 
 3. **Qt Warnings**
    ```
-   Already suppressed in launch script, can be ignored
+   PyQt6 warnings can be ignored - application functions normally
    ```
 
-4. **Intel Arc Graphics Crash**
+4. **Intel Arc Graphics Issues**
    ```
-   If application crashes with Intel Arc Graphics:
-   - Run RUN_INTELLICRACK_SAFE_MODE.bat for software rendering
-   - Or press Y when prompted after crash to restart in safe mode
-   - Update Intel Arc drivers to latest version
+   Intel Arc B580 GPU issues are automatically detected and handled
+   GIL crash prevention is built-in
    ```
 
 5. **Slow Analysis**
@@ -263,39 +261,6 @@ Enable detailed logging for troubleshooting:
 }
 ```
 
-## 🔧 Troubleshooting
-
-### Missing Dependencies
-
-If you encounter errors about missing dependencies:
-
-1. **Flask/llama-cpp-python not available**:
-   ```bash
-   # Windows
-   python fix_missing_core_dependencies.py
-   # or
-   .\install_missing_dependencies.bat
-
-   # Linux/WSL
-   ./install_missing_dependencies.sh
-   ```
-
-2. **QEMU not found**:
-   - **Windows**: Download from https://www.qemu.org/download/#windows
-   - **Linux/WSL**: `sudo apt-get install qemu-system-x86 qemu-user qemu-utils`
-
-3. **Matplotlib 3D projection error**:
-   ```bash
-   pip uninstall -y matplotlib
-   pip install matplotlib==3.8.0
-   ```
-
-4. **Intel GPU not detected**:
-   - Install Intel Graphics Driver
-   - Install Intel Extension for PyTorch: `pip install intel-extension-for-pytorch`
-
-For more detailed troubleshooting, see [Troubleshooting Guide](docs/troubleshooting.md).
-
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
@@ -309,5 +274,12 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ## ⚠️ Disclaimer
+
+**Intellicrack** is developed for **defensive security research** to help software developers:
+
+- **Identify weaknesses** in their own licensing protection mechanisms
+- **Test robustness** of their protection implementations in controlled environments
+- **Strengthen defenses** against potential attacks by understanding attack vectors
+- **Validate security** of their own software before deployment
 
 This tool is for educational and authorized security research purposes only. Users are responsible for complying with applicable laws and regulations. The authors assume no liability for misuse or damage caused by this software.

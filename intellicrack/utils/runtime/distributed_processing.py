@@ -27,6 +27,7 @@ from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from typing import Any
 
+from intellicrack.utils.service_health_checker import get_service_url
 from ..analysis.entropy_utils import calculate_byte_entropy
 
 logger = logging.getLogger(__name__)
@@ -1536,7 +1537,8 @@ def run_celery_distributed_analysis(
 
     try:
         # Initialize Celery app
-        app = Celery("intellicrack", broker="redis://localhost:6379/0")
+        redis_url = get_service_url("redis_server")
+        app = Celery("intellicrack", broker=f"{redis_url}/0")
 
         # Define task inline
         @app.task(name=f"intellicrack.{task_name}")

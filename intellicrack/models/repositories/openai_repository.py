@@ -21,6 +21,8 @@ from typing import Any
 
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
+from intellicrack.core.config_manager import get_config
+from intellicrack.utils.secrets_manager import SecretsManager
 
 """
 OpenAI Repository Implementation
@@ -39,7 +41,7 @@ class OpenAIRepository(APIRepositoryBase):
     def __init__(
         self,
         repository_name: str = "openai",
-        api_endpoint: str = "https://api.openai.com/v1",
+        api_endpoint: str | None = None,
         api_key: str = "",
         timeout: int = 60,
         proxy: str = "",
@@ -51,8 +53,8 @@ class OpenAIRepository(APIRepositoryBase):
 
         Args:
             repository_name: Name of the repository
-            api_endpoint: Base URL of the API
-            api_key: OpenAI API key
+            api_endpoint: Base URL of the API (loaded from config if None)
+            api_key: OpenAI API key (loaded from secrets if empty)
             timeout: Request timeout in seconds
             proxy: Proxy URL
             rate_limit_config: Rate limiting configuration
@@ -60,6 +62,16 @@ class OpenAIRepository(APIRepositoryBase):
             download_dir: Directory for downloaded models (unused for API-only repos)
 
         """
+        # Get API endpoint from config if not provided
+        if api_endpoint is None:
+            config = get_config()
+            api_endpoint = config.get_api_endpoint("openai") or "https://api.openai.com/v1"
+        
+        # Get API key from secrets manager if not provided
+        if not api_key:
+            secrets_manager = SecretsManager()
+            api_key = secrets_manager.get("OPENAI_API_KEY") or ""
+        
         super().__init__(
             repository_name=repository_name,
             api_endpoint=api_endpoint,

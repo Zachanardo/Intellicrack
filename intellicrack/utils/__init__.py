@@ -24,21 +24,20 @@ import logging
 _init_logger = logging.getLogger(__name__)
 
 # Import utility modules with error handling
-# TEMPORARY FIX: Disable binary_utils import causing hang on Intel Arc B580
-# try:
-#     from .binary.binary_utils import (
-#         analyze_binary_format,
-#         check_suspicious_pe_sections,
-#         compute_file_hash,
-#         get_file_entropy,
-#         get_file_hash,
-#         is_binary_file,
-#         read_binary,
-#         validate_binary_path,
-#         write_binary,
-#     )
-# except ImportError as e:
-#     _init_logger.warning("Failed to import binary_utils: %s", e)
+try:
+    from .binary.binary_utils import (
+        analyze_binary_format,
+        check_suspicious_pe_sections,
+        compute_file_hash,
+        get_file_entropy,
+        get_file_hash,
+        is_binary_file,
+        read_binary,
+        validate_binary_path,
+        write_binary,
+    )
+except ImportError as e:
+    _init_logger.warning("Failed to import binary_utils: %s", e)
 
 try:
     from .logger import get_logger, logger, setup_logging

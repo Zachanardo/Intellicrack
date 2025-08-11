@@ -138,6 +138,7 @@ try:
         QSpinBox,
         QSplashScreen,
         QSplitter,
+        QStackedWidget,
         QStatusBar,
         QStyle,
         QTableView,
@@ -285,6 +286,7 @@ except ImportError as e:
     QSpinBox = None
     QSplashScreen = None
     QSplitter = None
+    QStackedWidget = None
     QStandardItem = None
     QStandardItemModel = None
     QStatusBar = None
@@ -343,7 +345,7 @@ __all__ = [
     "QInputDialog", "QLabel", "QLineEdit", "QListView", "QListWidget", "QListWidgetItem",
     "QMainWindow", "QMenu", "QMenuBar", "QMessageBox", "QPlainTextEdit", "QProgressBar",
     "QProgressDialog", "QPushButton", "QRadioButton", "QScrollArea", "QScrollBar", "QSizePolicy",
-    "QSlider", "QSpacerItem", "QSpinBox", "QSplashScreen", "QSplitter", "QStatusBar",
+    "QSlider", "QSpacerItem", "QSpinBox", "QSplashScreen", "QSplitter", "QStackedWidget", "QStatusBar",
     "QStyle", "QTabWidget", "QTableView", "QTableWidget", "QTableWidgetItem", "QTextBrowser",
     "QTextEdit", "QToolBar", "QTreeView", "QTreeWidget", "QTreeWidgetItem", "QVBoxLayout", "QWidget",
     "QWizard", "QWizardPage",

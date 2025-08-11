@@ -27,9 +27,10 @@ logger = get_logger(__name__)
 class AIAssistantTab(QWidget):
     """AI Assistant tab providing AI-powered analysis and script generation."""
 
-    def __init__(self, parent=None):
+    def __init__(self, shared_context=None, parent=None):
         """Initialize the AI Assistant tab."""
         super().__init__(parent)
+        self.shared_context = shared_context
         self.ai_assistant = None
         self.init_ui()
         self.setup_ai_assistant()

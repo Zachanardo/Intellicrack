@@ -28,6 +28,8 @@ import threading
 import traceback
 from typing import Any
 
+from intellicrack.utils.service_health_checker import get_service_url
+
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
 
 from ..core.misc_utils import log_message
@@ -66,7 +68,10 @@ def run_network_license_server(app_instance=None, **kwargs) -> dict[str, Any]:
     try:
         # Configure server based on kwargs
         port = kwargs.get("port", 27000)
-        host = kwargs.get("host", "localhost")
+        # Get license server URL from configuration  
+        license_url = get_service_url("license_server")
+        default_host = license_url.replace("http://", "").replace("https://", "").split(":")[0]
+        host = kwargs.get("host", default_host)
         debug_mode = kwargs.get("debug", False)
 
         logger.info("Starting network license server on %s:%s", host, port)

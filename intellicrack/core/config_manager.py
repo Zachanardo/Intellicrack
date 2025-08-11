@@ -24,11 +24,14 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import os
+import re
 import shutil
 import sys
 import threading
 from pathlib import Path
 from typing import Any
+
+from intellicrack.core.exceptions import ConfigurationError
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +82,7 @@ class IntellicrackConfig:
             - Creates configuration directories if they don't exist
             - Loads existing config or creates default config
             - Sets up logging for the configuration manager
+            - Enables auto-save functionality
 
         Attributes Set:
             - config_dir: Platform-specific config directory
@@ -86,6 +90,7 @@ class IntellicrackConfig:
             - cache_dir: Directory for cached data
             - logs_dir: Directory for log files
             - output_dir: Directory for output files
+            - auto_save: Whether to automatically save on changes
         """
         if hasattr(self, "_initialized"):
             return
@@ -94,6 +99,7 @@ class IntellicrackConfig:
         self.logger = logging.getLogger(__name__ + ".IntellicrackConfig")
         self._config = {}
         self._config_lock = threading.RLock()
+        self.auto_save = True  # Enable auto-save by default
 
         # Set up directories
         self.config_dir = self._get_user_config_dir()
@@ -109,30 +115,18 @@ class IntellicrackConfig:
     def _get_user_config_dir(self) -> Path:
         """Get platform-appropriate user config directory.
 
-        Follows platform conventions for configuration storage:
-        - Windows: %APPDATA%\\Intellicrack
-        - macOS: ~/Library/Application Support/Intellicrack
-        - Linux: $XDG_CONFIG_HOME/intellicrack or ~/.config/intellicrack
+        Uses unified configuration directory at C:\\Intellicrack\\config
+        for all platforms to ensure consistency.
 
         Returns:
-            Path: Platform-specific configuration directory path
+            Path: Configuration directory path (C:\\Intellicrack\\config)
 
         Example:
-            Windows: C:\\Users\\Username\\AppData\\Roaming\\Intellicrack
-            macOS: /Users/Username/Library/Application Support/Intellicrack
-            Linux: /home/username/.config/intellicrack
+            All platforms: C:\\Intellicrack\\config
 
         """
-        if sys.platform == "win32":
-            # Windows: Use APPDATA environment variable
-            base = os.environ.get("APPDATA", os.path.expanduser("~"))
-            return Path(base) / "Intellicrack"
-        if sys.platform == "darwin":
-            # macOS: Use Application Support directory
-            return Path.home() / "Library" / "Application Support" / "Intellicrack"
-        # Linux/Unix: Follow XDG Base Directory specification
-        xdg_config = os.environ.get("XDG_CONFIG_HOME", "~/.config")
-        return Path(xdg_config).expanduser() / "intellicrack"
+        # Use unified configuration directory for all platforms
+        return Path("C:/Intellicrack/config")
 
     def _ensure_directories_exist(self):
         """Create necessary directories if they don't exist.
@@ -184,98 +178,233 @@ class IntellicrackConfig:
             self._create_default_config()
 
     def _create_default_config(self):
-        """Create intelligent default configuration.
+        """Create or load unified configuration.
 
-        Generates a comprehensive default configuration with:
-        - Platform-specific paths
-        - Auto-discovered tools
-        - Sensible default preferences
-        - Security-conscious defaults
+        Attempts to load the unified config.json from C:\\Intellicrack\\config.
+        If not found, creates a comprehensive default configuration.
 
         Side Effects:
             - Sets internal configuration dictionary
-            - Saves configuration to disk
-            - Runs tool discovery (may take several seconds)
+            - Saves configuration to disk if created
+            - Runs tool discovery if creating new config
 
-        Configuration sections:
-            - directories: Platform-specific paths
-            - tools: Auto-discovered tool locations
-            - preferences: User preferences and UI settings
-            - analysis: Analysis engine settings
-            - network: Network and proxy configuration
-            - security: Security and sandboxing options
-            - patching: Binary patching preferences
-            - ui: User interface settings
-            - ai: AI model configuration
         """
+        # Try to load existing unified config first
+        unified_config_file = Path("C:/Intellicrack/config/config.json")
+        if unified_config_file.exists():
+            try:
+                with open(unified_config_file, encoding="utf-8") as f:
+                    with self._config_lock:
+                        self._config = json.load(f)
+                logger.info(f"Loaded unified configuration from {unified_config_file}")
+                return
+            except Exception as e:
+                logger.error(f"Failed to load unified config: {e}")
+        
+        # Fall back to creating default config with auto-discovery
         logger.info("Creating default configuration with auto-discovery")
 
         default_config = {
-            "version": "2.0",
+            "version": "3.0",
             "created": str(Path().resolve()),
             "platform": sys.platform,
+            "application": {
+                "name": "Intellicrack",
+                "version": "3.0.0",
+                "environment": "production",
+                "debug": False
+            },
+            "api_endpoints": {
+                "openai": "https://api.openai.com/v1",
+                "anthropic": "https://api.anthropic.com/v1",
+                "google": "https://generativelanguage.googleapis.com/v1",
+                "openrouter": "https://openrouter.ai/api/v1",
+                "huggingface": "https://api-inference.huggingface.co",
+                "groq": "https://api.groq.com/openai/v1",
+                "cohere": "https://api.cohere.ai/v1",
+                "together": "https://api.together.xyz/v1",
+                "ollama": "http://localhost:11434/api",
+                "local_llm": "http://localhost:8080/v1"
+            },
             "directories": {
                 "config": str(self.config_dir),
                 "output": str(self.output_dir),
                 "logs": str(self.logs_dir),
                 "cache": str(self.cache_dir),
-                "temp": str(
-                    Path.home() / "tmp"
-                    if sys.platform != "win32"
-                    else Path.home() / "AppData" / "Local" / "Temp"
-                ),
+                "temp": str(self.cache_dir / "temp"),
+                "scripts": "C:\\Intellicrack\\scripts",
+                "plugins": "C:\\Intellicrack\\plugins",
+                "signatures": "C:\\Intellicrack\\signatures",
+                "reports": "C:\\Intellicrack\\reports",
+                "backups": "C:\\Intellicrack\\backups"
             },
             "tools": self._auto_discover_tools(),
-            "preferences": {
-                "auto_update_signatures": True,
-                "log_level": "INFO",
-                "parallel_analysis": True,
-                "max_analysis_threads": os.cpu_count() or 4,
-                "auto_backup_results": True,
-                "ui_theme": "dark",
-                "check_for_updates": True,
+            "ui_preferences": {
+                "theme": "dark",
+                "font_size": 10,
+                "show_tooltips": True,
+                "auto_save_layout": True,
+                "hex_view_columns": 16,
+                "remember_window_position": True,
+                "default_tab": "protection_analysis",
+                "show_status_bar": True,
+                "show_toolbar": True,
+                "language": "en",
+                "animations_enabled": True,
+                "auto_complete": True,
+                "syntax_highlighting": True
             },
-            "analysis": {
+            "analysis_settings": {
                 "default_timeout": 300,
                 "max_memory_usage": "2GB",
                 "enable_ml_analysis": True,
                 "enable_ai_features": True,
                 "save_intermediate_results": True,
+                "parallel_analysis": True,
+                "max_analysis_threads": os.cpu_count() or 4,
+                "auto_backup_results": True,
+                "cache_analysis_results": True,
+                "verbose_logging": False,
+                "deep_analysis_mode": False,
+                "heuristic_detection": True,
+                "signature_matching": True,
+                "behavioral_analysis": True,
+                "static_analysis": True,
+                "dynamic_analysis": True
             },
             "network": {
                 "proxy_enabled": False,
                 "proxy_host": "",
                 "proxy_port": 8080,
+                "proxy_username": "",
+                "proxy_password": "",
                 "ssl_verify": True,
                 "timeout": 30,
+                "max_retries": 3,
+                "retry_delay": 1,
+                "user_agent": "Intellicrack/3.0",
+                "follow_redirects": True,
+                "max_redirects": 5
+            },
+            "logging": {
+                "level": "INFO",
+                "file_logging": True,
+                "console_logging": True,
+                "log_rotation": True,
+                "max_log_size": "50MB",
+                "max_log_files": 10,
+                "log_format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                "log_directory": str(self.logs_dir),
+                "separate_error_log": True,
+                "performance_logging": False,
+                "debug_mode": False
             },
             "security": {
                 "sandbox_analysis": True,
                 "allow_network_access": False,
                 "log_sensitive_data": False,
                 "encrypt_config": False,
+                "secure_communication": True,
+                "verify_signatures": True,
+                "sandbox_timeout": 60,
+                "max_sandbox_memory": "1GB",
+                "isolate_processes": True,
+                "monitor_system_calls": True
             },
             "patching": {
                 "backup_original": True,
                 "verify_patches": True,
                 "max_patch_size": "10MB",
                 "patch_format": "binary",
+                "create_restore_point": True,
+                "validate_checksums": True,
+                "preserve_timestamps": False,
+                "compression_enabled": True,
+                "diff_algorithm": "myers"
             },
-            "ui": {
-                "theme": "dark",
-                "font_size": 10,
-                "show_tooltips": True,
-                "auto_save_layout": True,
-                "hex_view_columns": 16,
-            },
-            "ai": {
-                "enabled": True,
-                "model_provider": "auto",
+            "ai_models": {
+                "default_provider": "auto",
                 "temperature": 0.7,
                 "max_tokens": 2048,
                 "cache_responses": True,
                 "background_loading": True,
+                "model_preferences": {
+                    "script_generation": "gpt-4",
+                    "code_analysis": "claude-3-opus",
+                    "vulnerability_detection": "gpt-4-turbo",
+                    "patch_generation": "claude-3-sonnet"
+                },
+                "fallback_models": [
+                    "gpt-3.5-turbo",
+                    "claude-2",
+                    "llama-2-70b"
+                ],
+                "local_model_settings": {
+                    "use_gpu": True,
+                    "quantization": "int8",
+                    "batch_size": 4,
+                    "context_window": 4096
+                }
             },
+            "service_urls": {
+                "update_check": "https://api.intellicrack.com/v1/updates",
+                "signature_database": "https://signatures.intellicrack.com/v1",
+                "plugin_repository": "https://plugins.intellicrack.com/v1",
+                "documentation": "https://docs.intellicrack.com",
+                "telemetry": "https://telemetry.intellicrack.com/v1",
+                "license_server": "https://license.intellicrack.com/v1"
+            },
+            "performance": {
+                "lazy_loading": True,
+                "cache_size": "500MB",
+                "memory_limit": "4GB",
+                "cpu_cores": 0,
+                "gpu_acceleration": True,
+                "optimize_for": "balanced",
+                "preload_models": False,
+                "async_operations": True,
+                "batch_processing": True,
+                "compression_level": 6
+            },
+            "updates": {
+                "auto_check": True,
+                "auto_download": False,
+                "auto_install": False,
+                "check_interval": 86400,
+                "channel": "stable",
+                "signature_verification": True,
+                "backup_before_update": True
+            },
+            "plugins": {
+                "enabled": True,
+                "auto_load": True,
+                "safe_mode": False,
+                "plugin_directory": "C:\\Intellicrack\\plugins",
+                "trusted_sources": [],
+                "sandbox_plugins": True,
+                "max_plugin_memory": "500MB"
+            },
+            "export": {
+                "default_format": "json",
+                "include_metadata": True,
+                "compress_output": False,
+                "encryption_enabled": False,
+                "timestamp_format": "ISO8601",
+                "include_screenshots": True,
+                "include_logs": False,
+                "sanitize_paths": True
+            },
+            "shortcuts": {
+                "new_analysis": "Ctrl+N",
+                "open_file": "Ctrl+O",
+                "save_results": "Ctrl+S",
+                "export_report": "Ctrl+E",
+                "quit_application": "Ctrl+Q",
+                "toggle_theme": "Ctrl+T",
+                "refresh_tools": "F5",
+                "show_settings": "Ctrl+,",
+                "toggle_fullscreen": "F11"
+            }
         }
 
         with self._config_lock:
@@ -552,16 +681,18 @@ class IntellicrackConfig:
     def _upgrade_config_if_needed(self):
         """Upgrade configuration if version changed."""
         current_version = self._config.get("version", "1.0")
-        if current_version != "2.0":
-            logger.info(f"Upgrading configuration from {current_version} to 2.0")
+        target_version = "3.0"
+        if current_version != target_version:
+            logger.info(f"Upgrading configuration from {current_version} to {target_version}")
             self._upgrade_config(current_version)
 
     def _upgrade_config(self, from_version: str):
         """Upgrade configuration from older version."""
         logger.info(f"Upgrading configuration schema from version: {from_version}")
         # Preserve user settings while updating structure
-        user_preferences = self._config.get("preferences", {})
+        user_preferences = self._config.get("preferences", self._config.get("ui_preferences", {}))
         user_tools = self._config.get("tools", {})
+        user_api_endpoints = self._config.get("api_endpoints", {})
 
         # Create new config with current structure
         self._create_default_config()
@@ -569,7 +700,10 @@ class IntellicrackConfig:
         # Restore user preferences over defaults
         with self._config_lock:
             if user_preferences:
-                self._config["preferences"].update(user_preferences)
+                if "ui_preferences" in self._config:
+                    self._config["ui_preferences"].update(user_preferences)
+                elif "preferences" in self._config:
+                    self._config["preferences"].update(user_preferences)
 
             # Merge user tool configurations
             for tool_name, tool_config in user_tools.items():
@@ -578,6 +712,10 @@ class IntellicrackConfig:
                     # but use auto-discovered paths for auto-discovered tools
                     if not tool_config.get("auto_discovered", True):
                         self._config["tools"][tool_name] = tool_config
+            
+            # Merge user API endpoints
+            if user_api_endpoints and "api_endpoints" in self._config:
+                self._config["api_endpoints"].update(user_api_endpoints)
 
         self._save_config()
         logger.info("Configuration upgrade completed")
@@ -614,24 +752,61 @@ class IntellicrackConfig:
 
     # Public API methods
 
+    def _expand_environment_variables(self, value: Any) -> Any:
+        """Expand environment variables in configuration values.
+        
+        Supports ${VAR_NAME} and ${VAR_NAME:default_value} syntax.
+        
+        Args:
+            value: Configuration value to expand
+            
+        Returns:
+            Value with environment variables expanded
+        """
+        if not isinstance(value, str):
+            return value
+        
+        # Pattern to match ${VAR_NAME} or ${VAR_NAME:default}
+        env_pattern = r'\$\{([^}:]+)(?::([^}]*))?\}'
+        
+        def replace_env_var(match):
+            var_name = match.group(1)
+            default_value = match.group(2) if match.group(2) is not None else ""
+            
+            # Get environment variable value
+            env_value = os.environ.get(var_name)
+            
+            if env_value is not None:
+                return env_value
+            elif default_value:
+                return default_value
+            else:
+                # If no default and env var not set, raise error
+                raise ConfigurationError(
+                    f"Environment variable '{var_name}' is not set and no default provided in config key '{key}'",
+                    config_key=key
+                )
+        
+        return re.sub(env_pattern, replace_env_var, value)
+
     def get(self, key: str, default: Any = None) -> Any:
         """Get configuration value with dot notation support.
 
         Retrieves nested configuration values using dot-separated keys.
-        Thread-safe access using read lock.
+        Thread-safe access using read lock. Expands environment variables.
 
         Args:
             key: Dot-separated configuration key (e.g., 'tools.ghidra.path')
             default: Default value if key not found
 
         Returns:
-            Configuration value or default if not found
+            Configuration value with environment variables expanded, or default if not found
 
         Example:
             >>> config.get('tools.ghidra.path')
             '/opt/ghidra/ghidraRun'
-            >>> config.get('preferences.ui_theme', 'light')
-            'dark'
+            >>> config.get('service_urls.c2_server')  # ${C2_SERVER_URL:http://localhost:8888}
+            'https://c2.mycompany.com'  # From environment variable
 
         Complexity:
             Time: O(n) where n is the number of dots in key
@@ -645,12 +820,15 @@ class IntellicrackConfig:
             try:
                 for k in keys:
                     value = value[k]
-                return value
+                
+                # Expand environment variables in the retrieved value
+                return self._expand_environment_variables(value)
+                
             except (KeyError, TypeError) as e:
                 self.logger.error("Error in config_manager: %s", e)
                 return default
 
-    def set(self, key: str, value: Any, save: bool = True):
+    def set(self, key: str, value: Any, save: bool | None = None):
         """Set configuration value with dot notation support.
 
         Updates nested configuration values using dot-separated keys.
@@ -659,11 +837,11 @@ class IntellicrackConfig:
         Args:
             key: Dot-separated configuration key (e.g., 'tools.ghidra.path')
             value: Value to set
-            save: Whether to save config to disk immediately
+            save: Whether to save config to disk immediately (uses auto_save if None)
 
         Side Effects:
             - Modifies internal configuration dictionary
-            - Saves to disk if save=True
+            - Saves to disk if save=True or auto_save is enabled
             - Creates intermediate dictionaries if needed
 
         Example:
@@ -689,6 +867,10 @@ class IntellicrackConfig:
             # Set the final value at the last key
             config[keys[-1]] = value
 
+        # Use auto_save setting if save not specified
+        if save is None:
+            save = self.auto_save
+        
         if save:
             self._save_config()
 
@@ -713,6 +895,41 @@ class IntellicrackConfig:
         if tool_config and tool_config.get("available"):
             return tool_config.get("path")
         return None
+    
+    def get_api_endpoint(self, service: str) -> str | None:
+        """Get API endpoint for a service.
+        
+        Retrieves the configured API endpoint URL for a service.
+        
+        Args:
+            service: Name of the service (e.g., 'openai', 'anthropic')
+            
+        Returns:
+            API endpoint URL if configured, None otherwise
+            
+        Example:
+            >>> endpoint = config.get_api_endpoint('openai')
+            >>> print(endpoint)  # 'https://api.openai.com/v1'
+        
+        """
+        return self.get(f"api_endpoints.{service}")
+    
+    def set_auto_save(self, enabled: bool):
+        """Enable or disable auto-save functionality.
+        
+        When enabled, configuration changes are automatically saved to disk.
+        
+        Args:
+            enabled: True to enable auto-save, False to disable
+            
+        Example:
+            >>> config.set_auto_save(False)  # Disable auto-save
+            >>> config.set('some.key', 'value')  # Won't save automatically
+            >>> config.set_auto_save(True)  # Re-enable auto-save
+        
+        """
+        self.auto_save = enabled
+        logger.info(f"Auto-save {'enabled' if enabled else 'disabled'}")
 
     def is_tool_available(self, tool_name: str) -> bool:
         """Check if a tool is available.

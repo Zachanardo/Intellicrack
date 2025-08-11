@@ -31,6 +31,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from intellicrack.core.config_manager import get_config
+
 logger = logging.getLogger(__name__)
 
 
@@ -308,7 +310,16 @@ class AdvancedToolDiscovery:
             "qemu-system-i386": ToolValidator.validate_qemu,
         }
 
-        self.discovered_tools = {}
+        # Load configuration
+        self.config = get_config()
+        
+        # Load discovered tools from config
+        self.discovered_tools = self.config.get("tools.discovered", {})
+        
+        # Load manual overrides from config
+        self.manual_overrides = self.config.get("tools.manual_overrides", {})
+        
+        # Config-based caching (no longer using in-memory cache)
         self.search_cache = {}
 
     def discover_all_tools(self) -> dict[str, Any]:
@@ -370,18 +381,42 @@ class AdvancedToolDiscovery:
                     "discovery_time": time.time(),
                 }
 
+        # Save discovered tools to configuration
+        self.discovered_tools = results
+        self.config.set("tools.discovered", results)
+        
+        # Also save last discovery timestamp
+        self.config.set("tools.last_discovery", time.time())
+        
+        # Save the configuration (if auto-save is enabled)
+        self.config.save()
+
         return results
 
     def discover_tool(self, tool_name: str, config: dict[str, Any]) -> dict[str, Any]:
         """Discover a specific tool with comprehensive search."""
         discovery_start = time.time()
 
-        # Check cache first
-        cache_key = f"{tool_name}_{hash(str(config))}"
-        if cache_key in self.search_cache:
-            cached_result = self.search_cache[cache_key]
-            if time.time() - cached_result.get("discovery_time", 0) < 3600:  # 1 hour cache
-                return cached_result
+        # Check for manual override first
+        if tool_name in self.manual_overrides:
+            manual_path = self.manual_overrides[tool_name]
+            if manual_path and os.path.exists(manual_path):
+                logger.info(f"Using manual override for {tool_name}: {manual_path}")
+                tool_info = self._validate_and_populate(manual_path, tool_name)
+                tool_info["discovery_method"] = "manual_override"
+                tool_info["discovery_time"] = discovery_start
+                tool_info["discovery_duration"] = time.time() - discovery_start
+                return tool_info
+
+        # Check config-based cache
+        cached_tools = self.config.get("tools.discovered", {})
+        if tool_name in cached_tools:
+            cached_result = cached_tools[tool_name]
+            # Check if cache is still valid (1 hour)
+            if cached_result.get("discovery_time"):
+                if time.time() - cached_result["discovery_time"] < 3600:
+                    logger.debug(f"Using cached result for {tool_name}")
+                    return cached_result
 
         tool_info = {
             "available": False,
@@ -423,8 +458,9 @@ class AdvancedToolDiscovery:
 
         tool_info["discovery_duration"] = time.time() - discovery_start
 
-        # Cache result
-        self.search_cache[cache_key] = tool_info
+        # Save individual tool discovery to config
+        self.discovered_tools[tool_name] = tool_info
+        self.config.set(f"tools.discovered.{tool_name}", tool_info)
 
         return tool_info
 
@@ -622,7 +658,10 @@ class AdvancedToolDiscovery:
     def refresh_discovery(self) -> dict[str, Any]:
         """Refresh tool discovery by clearing cache and re-scanning."""
         logger.info("Refreshing tool discovery")
-        self.search_cache.clear()
+        # Clear config-based cache
+        self.config.set("tools.discovered", {})
+        self.config.set("tools.last_discovery", None)
+        self.discovered_tools = {}
         return self.discover_all_tools()
 
     def get_tool_capabilities(self, tool_name: str) -> list[str]:
@@ -635,3 +674,188 @@ class AdvancedToolDiscovery:
         """Check if tool has required capabilities."""
         tool_capabilities = self.get_tool_capabilities(tool_name)
         return all(cap in tool_capabilities for cap in required_capabilities)
+    
+    def set_manual_override(self, tool_name: str, tool_path: str) -> bool:
+        """Set a manual override for a tool path.
+        
+        Args:
+            tool_name: Name of the tool
+            tool_path: Manual path to the tool executable
+            
+        Returns:
+            True if override was set successfully, False otherwise
+        """
+        if not os.path.exists(tool_path):
+            logger.error(f"Cannot set manual override: path {tool_path} does not exist")
+            return False
+        
+        if not os.access(tool_path, os.X_OK):
+            logger.warning(f"Path {tool_path} may not be executable")
+        
+        # Save to config
+        self.manual_overrides[tool_name] = tool_path
+        self.config.set(f"tools.manual_overrides.{tool_name}", tool_path)
+        self.config.save()
+        
+        logger.info(f"Set manual override for {tool_name}: {tool_path}")
+        
+        # Clear cached discovery for this tool to force re-validation
+        if tool_name in self.discovered_tools:
+            del self.discovered_tools[tool_name]
+            self.config.set(f"tools.discovered.{tool_name}", None)
+        
+        return True
+    
+    def clear_manual_override(self, tool_name: str) -> bool:
+        """Clear a manual override for a tool.
+        
+        Args:
+            tool_name: Name of the tool
+            
+        Returns:
+            True if override was cleared, False if no override existed
+        """
+        if tool_name not in self.manual_overrides:
+            return False
+        
+        del self.manual_overrides[tool_name]
+        self.config.set(f"tools.manual_overrides.{tool_name}", None)
+        self.config.save()
+        
+        logger.info(f"Cleared manual override for {tool_name}")
+        
+        # Clear cached discovery to force re-discovery
+        if tool_name in self.discovered_tools:
+            del self.discovered_tools[tool_name]
+            self.config.set(f"tools.discovered.{tool_name}", None)
+        
+        return True
+    
+    def get_manual_overrides(self) -> dict[str, str]:
+        """Get all manual tool path overrides.
+        
+        Returns:
+            Dictionary of tool_name -> manual_path mappings
+        """
+        return self.manual_overrides.copy()
+    
+    def get_tool_path(self, tool_name: str) -> str | None:
+        """Get the path for a tool, checking manual overrides first.
+        
+        Args:
+            tool_name: Name of the tool
+            
+        Returns:
+            Path to the tool executable, or None if not found
+        """
+        # Check manual override first
+        if tool_name in self.manual_overrides:
+            return self.manual_overrides[tool_name]
+        
+        # Check discovered tools
+        if tool_name in self.discovered_tools:
+            tool_info = self.discovered_tools[tool_name]
+            if tool_info.get("available"):
+                return tool_info.get("path")
+        
+        return None
+    
+    def health_check_tool(self, tool_name: str) -> dict[str, Any]:
+        """Perform a health check on a specific tool.
+        
+        Args:
+            tool_name: Name of the tool to check
+            
+        Returns:
+            Dictionary with health check results
+        """
+        health_status = {
+            "tool_name": tool_name,
+            "healthy": False,
+            "available": False,
+            "executable": False,
+            "version_valid": False,
+            "issues": [],
+            "timestamp": time.time()
+        }
+        
+        # Get tool path
+        tool_path = self.get_tool_path(tool_name)
+        if not tool_path:
+            health_status["issues"].append("Tool path not found")
+            return health_status
+        
+        # Check if path exists
+        if not os.path.exists(tool_path):
+            health_status["issues"].append(f"Path does not exist: {tool_path}")
+            return health_status
+        
+        health_status["available"] = True
+        
+        # Check if executable
+        if not os.access(tool_path, os.X_OK):
+            health_status["issues"].append("File is not executable")
+        else:
+            health_status["executable"] = True
+        
+        # Run validator if available
+        validator = None
+        for validator_name, validator_func in self.validators.items():
+            if validator_name in tool_name or tool_name in validator_name:
+                validator = validator_func
+                break
+        
+        if validator:
+            validation_result = validator(tool_path)
+            if validation_result["valid"]:
+                health_status["version_valid"] = True
+                health_status["version"] = validation_result.get("version")
+                health_status["capabilities"] = validation_result.get("capabilities", [])
+            else:
+                health_status["issues"].extend(validation_result.get("issues", []))
+        
+        # Determine overall health
+        health_status["healthy"] = (
+            health_status["available"] and 
+            health_status["executable"] and 
+            (health_status["version_valid"] or not validator)
+        )
+        
+        return health_status
+    
+    def health_check_all_tools(self) -> dict[str, dict[str, Any]]:
+        """Perform health checks on all configured tools.
+        
+        Returns:
+            Dictionary mapping tool names to health check results
+        """
+        results = {}
+        
+        # Check all discovered tools
+        for tool_name in self.discovered_tools:
+            results[tool_name] = self.health_check_tool(tool_name)
+        
+        # Check manual overrides not in discovered tools
+        for tool_name in self.manual_overrides:
+            if tool_name not in results:
+                results[tool_name] = self.health_check_tool(tool_name)
+        
+        # Save health check results to config
+        self.config.set("tools.last_health_check", results)
+        self.config.set("tools.last_health_check_time", time.time())
+        self.config.save()
+        
+        return results
+    
+    def get_healthy_tools(self) -> list[str]:
+        """Get list of tools that passed health checks.
+        
+        Returns:
+            List of healthy tool names
+        """
+        health_results = self.health_check_all_tools()
+        return [
+            tool_name 
+            for tool_name, status in health_results.items() 
+            if status.get("healthy", False)
+        ]

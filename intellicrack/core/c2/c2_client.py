@@ -27,6 +27,7 @@ import time
 from typing import Any
 
 from intellicrack.handlers.psutil_handler import psutil
+from intellicrack.utils.service_health_checker import get_service_url
 
 from .base_c2 import BaseC2
 
@@ -54,8 +55,12 @@ class C2Client(BaseC2):
         self.logger = logging.getLogger("IntellicrackLogger.C2Client")
 
         # Client configuration
-        self.server_host = config.get("server_host", os.environ.get("C2_SERVER_HOST", "localhost"))
-        self.server_port = config.get("server_port", int(os.environ.get("C2_SERVER_PORT", "8080")))
+        c2_url = get_service_url("c2_server")
+        default_host = c2_url.replace("http://", "").replace("https://", "").split(":")[0]
+        default_port = int(c2_url.split(":")[-1].replace("/", "")) if ":" in c2_url else 8888
+        
+        self.server_host = config.get("server_host", os.environ.get("C2_SERVER_HOST", default_host))
+        self.server_port = config.get("server_port", int(os.environ.get("C2_SERVER_PORT", str(default_port))))
         self.protocol = config.get("protocol", "https")
         self.encryption_key = config.get("encryption_key")
         self.client_id = config.get("client_id", self._generate_client_id())
@@ -104,10 +109,12 @@ class C2Client(BaseC2):
         # HTTPS Protocol (primary)
         if protocol_configs.get("https_enabled", True):
             https_config = protocol_configs.get("https", {})
+            c2_url = get_service_url("c2_server")
+            default_host = c2_url.replace("http://", "").replace("https://", "").split(":")[0]
             protocols_config.append(
                 {
                     "type": "https",
-                    "server_url": f"https://{https_config.get('host', os.environ.get('C2_HTTPS_HOST', '127.0.0.1'))}:{https_config.get('port', int(os.environ.get('C2_HTTPS_PORT', '443')))}",
+                    "server_url": f"https://{https_config.get('host', os.environ.get('C2_HTTPS_HOST', default_host))}:{https_config.get('port', int(os.environ.get('C2_HTTPS_PORT', '443')))}",
                     "headers": https_config.get("headers", {}),
                     "priority": 1,
                 }
@@ -116,13 +123,15 @@ class C2Client(BaseC2):
         # DNS Protocol (backup)
         if protocol_configs.get("dns_enabled", False):
             dns_config = protocol_configs.get("dns", {})
+            c2_url = get_service_url("c2_server")
+            default_host = c2_url.replace("http://", "").replace("https://", "").split(":")[0]
             protocols_config.append(
                 {
                     "type": "dns",
                     "domain": dns_config.get(
                         "domain", os.environ.get("DNS_DOMAIN", "internal.local")
                     ),
-                    "dns_server": f"{dns_config.get('host', os.environ.get('C2_DNS_HOST', '127.0.0.1'))}:{dns_config.get('port', int(os.environ.get('C2_DNS_PORT', '53')))}",
+                    "dns_server": f"{dns_config.get('host', os.environ.get('C2_DNS_HOST', default_host))}:{dns_config.get('port', int(os.environ.get('C2_DNS_PORT', '53')))}",
                     "priority": 2,
                 }
             )
@@ -130,11 +139,14 @@ class C2Client(BaseC2):
         # TCP Protocol (fallback)
         if protocol_configs.get("tcp_enabled", False):
             tcp_config = protocol_configs.get("tcp", {})
+            c2_url = get_service_url("c2_server")
+            default_host = c2_url.replace("http://", "").replace("https://", "").split(":")[0]
+            default_port = int(c2_url.split(":")[-1].replace("/", "")) if ":" in c2_url else 4444
             protocols_config.append(
                 {
                     "type": "tcp",
-                    "host": tcp_config.get("host", os.environ.get("C2_TCP_HOST", "127.0.0.1")),
-                    "port": tcp_config.get("port", int(os.environ.get("C2_TCP_PORT", "4444"))),
+                    "host": tcp_config.get("host", os.environ.get("C2_TCP_HOST", default_host)),
+                    "port": tcp_config.get("port", int(os.environ.get("C2_TCP_PORT", str(default_port)))),
                     "priority": 3,
                 }
             )

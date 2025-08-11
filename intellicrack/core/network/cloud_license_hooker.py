@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from intellicrack.logger import logger
+from intellicrack.utils.service_health_checker import get_service_url
 
 """
 Cloud License Response Generator Module
@@ -1139,7 +1140,10 @@ class CloudLicenseResponseGenerator:
                 original_port = args[1] if len(args) > 1 else 80
 
                 # Log redirection details
-                self.logger.info(f"Redirecting {original_host}:{original_port} to 127.0.0.1:8080")
+                proxy_url = get_service_url("proxy_server")
+                redirect_host = proxy_url.replace("http://", "").replace("https://", "").split(":")[0]
+                redirect_port = int(proxy_url.split(":")[-1].replace("/", "")) if ":" in proxy_url else 8080
+                self.logger.info(f"Redirecting {original_host}:{original_port} to {redirect_host}:{redirect_port}")
 
                 # Store original target for response crafting
                 self.license_targets[original_host] = {

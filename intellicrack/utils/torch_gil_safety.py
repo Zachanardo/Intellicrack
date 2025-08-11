@@ -49,20 +49,20 @@ def safe_torch_import():
     Returns:
         torch module or None if import fails
     """
+    # Intel Arc detection - return None immediately without ANY torch import
+    if os.environ.get("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS") == "1":
+        return None  # Intel Arc detected, avoid PyTorch import completely
+    
     with _torch_lock:
         try:
             # Set environment variables before importing torch
-            import os
             os.environ.setdefault("OMP_NUM_THREADS", "1")
             os.environ.setdefault("MKL_NUM_THREADS", "1")
             os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
-
-            # Use torch_handler to avoid direct import that causes hang on Intel Arc B580
-            from intellicrack.handlers import torch_handler
-
-            # Return None since torch_handler.torch is None in fallback mode
-            # This is expected behavior when PyTorch causes hangs
-            return torch_handler.torch
+            
+            # Try to import PyTorch directly with protection
+            import torch
+            return torch
         except ImportError:
             return None
 

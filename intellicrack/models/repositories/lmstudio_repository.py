@@ -19,6 +19,8 @@ import logging
 import os
 from typing import Any
 
+from intellicrack.utils.service_health_checker import get_service_url
+
 from .base import APIRepositoryBase, RateLimitConfig
 from .interface import ModelInfo
 
@@ -39,7 +41,7 @@ class LMStudioRepository(APIRepositoryBase):
     def __init__(
         self,
         repository_name: str = "lmstudio",
-        api_endpoint: str = "http://localhost:1234/v1",
+        api_endpoint: str | None = None,
         api_key: str = "",
         timeout: int = 60,
         proxy: str = "",
@@ -60,6 +62,10 @@ class LMStudioRepository(APIRepositoryBase):
             download_dir: Directory for downloaded models (unused for API-only repos)
 
         """
+        # Use service health checker to get LMStudio URL if not provided
+        if api_endpoint is None:
+            api_endpoint = get_service_url("lmstudio_api") + "/v1"
+        
         super().__init__(
             repository_name=repository_name,
             api_endpoint=api_endpoint,

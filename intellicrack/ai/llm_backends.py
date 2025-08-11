@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from ..core.exceptions import ConfigurationError
 from ..utils.secrets_manager import get_secret
 from .background_loader import LoadingTask, QueuedProgressCallback, get_background_loader
 from .llm_types import LoadingState, ProgressCallback
@@ -527,7 +528,13 @@ class OllamaBackend(LLMBackend):
 
         """
         super().__init__(config)
-        self.base_url = config.api_base or get_secret("OLLAMA_API_BASE", "http://localhost:11434")
+        # Get URL from configuration first, then secrets, then service config
+        from intellicrack.utils.service_health_checker import get_service_url
+        try:
+            self.base_url = config.api_base or get_secret("OLLAMA_API_BASE") or get_service_url("ollama_api")
+        except Exception as e:
+            self.logger.error(f"Failed to get Ollama API URL: {e}")
+            raise ConfigurationError("Ollama API URL not configured. Please set 'service_urls.ollama_api' in configuration or OLLAMA_API_BASE environment variable.")
 
     def initialize(self) -> bool:
         """Initialize Ollama connection."""
@@ -622,7 +629,13 @@ class LocalGGUFBackend(LLMBackend):
 
         """
         super().__init__(config)
-        self.server_url = config.api_base or "http://127.0.0.1:8000"
+        # Get URL from configuration first, then fallback
+        from intellicrack.utils.service_health_checker import get_service_url
+        try:
+            self.server_url = config.api_base or get_service_url("local_llm_server")
+        except Exception as e:
+            self.logger.error(f"Failed to get Local LLM server URL: {e}")
+            raise ConfigurationError("Local LLM server URL not configured. Please set 'service_urls.local_llm_server' in configuration.")
         self.gguf_manager = None
 
     def initialize(self) -> bool:
@@ -2575,10 +2588,11 @@ def create_gguf_config(model_path: str, model_name: str = None, **kwargs) -> LLM
 
 def create_ollama_config(model_name: str, api_base: str = None, **kwargs) -> LLMConfig:
     """Create Ollama configuration."""
+    from intellicrack.utils.service_health_checker import get_service_url
     return LLMConfig(
         provider=LLMProvider.OLLAMA,
         model_name=model_name,
-        api_base=api_base or "http://localhost:11434",
+        api_base=api_base or get_service_url("ollama_api"),
         **kwargs,
     )
 

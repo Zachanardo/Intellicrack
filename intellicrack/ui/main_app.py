@@ -82,6 +82,7 @@ else:
 
 # PyQt6 imports (consolidated)
 try:
+    print("[MAIN_APP] Attempting to import from pyqt6_handler...")
     from intellicrack.handlers.pyqt6_handler import (
         HAS_PYQT,
         QAbstractItemView,
@@ -165,8 +166,10 @@ try:
 
     # Check PDF support
     HAS_PDF_SUPPORT = QPdfDocument is not None and QPdfView is not None
+    print(f"[MAIN_APP] PyQt6 import successful! QMainWindow: {QMainWindow}")
 
-except ImportError:
+except ImportError as e:
+    print(f"[MAIN_APP] PyQt6 import failed: {e}")
     # Real tkinter-based fallback implementation for environments without PyQt6
     import threading
     from typing import Any, Callable, List
@@ -174,6 +177,29 @@ except ImportError:
     from intellicrack.handlers.tkinter_handler import tkinter as tk
     from intellicrack.handlers.tkinter_handler import ttk
 
+    class QWidget:
+        """Tkinter-based widget implementation for PyQt6 fallback."""
+        
+        def __init__(self, parent=None):
+            """Initialize tkinter widget."""
+            self.parent = parent
+            self.frame = tk.Frame(parent.root if parent else None)
+            self.layout_obj = None
+        
+        def setLayout(self, layout):
+            """Set layout for widget."""
+            self.layout_obj = layout
+        
+        def show(self):
+            """Show the widget."""
+            if self.frame:
+                self.frame.pack(fill=tk.BOTH, expand=True)
+        
+        def hide(self):
+            """Hide the widget."""
+            if self.frame:
+                self.frame.pack_forget()
+    
     class QMainWindow:
         """Tkinter-based main window implementation for PyQt6 fallback."""
 
@@ -196,6 +222,22 @@ except ImportError:
             self.centralWidget = widget
             if hasattr(widget, 'pack'):
                 widget.pack(fill=tk.BOTH, expand=True)
+        
+        def setGeometry(self, x, y, width, height):
+            """Set window geometry."""
+            self.root.geometry(f"{width}x{height}+{x}+{y}")
+        
+        def isVisible(self):
+            """Check if window is visible."""
+            return self.root.winfo_viewable() if hasattr(self.root, 'winfo_viewable') else False
+        
+        def windowState(self):
+            """Get window state."""
+            return 0  # Normal state
+        
+        def setWindowIcon(self, icon):
+            """Set window icon (no-op for tkinter)."""
+            pass
 
         def show(self):
             """Show the window."""
@@ -308,6 +350,7 @@ except ImportError:
 
 # Local imports
 from intellicrack.logger import logger
+from intellicrack.utils.service_health_checker import get_service_url
 
 from ..ai.ai_file_tools import get_ai_file_tools
 from ..core.app_context import get_app_context
@@ -2019,10 +2062,15 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
             )
 
         # Create and configure interceptor
+        # Get proxy server URL from configuration
+        proxy_url = get_service_url("proxy_server")
+        proxy_host = proxy_url.replace("https://", "").replace("http://", "").split(":")[0]
+        proxy_port = int(proxy_url.split(":")[-1].replace("/", "")) if ":" in proxy_url else 8443
+        
         interceptor = SSLTLSInterceptor(
             {
-                "listen_ip": "127.0.0.1",
-                "listen_port": 8443,
+                "listen_ip": proxy_host,
+                "listen_port": proxy_port,
                 "record_traffic": True,
                 "auto_respond": True,
             }
@@ -2035,7 +2083,7 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                     log_message("[SSL Interceptor] SSL/TLS interceptor started successfully")
                 )
                 app.update_output.emit(
-                    log_message("[SSL Interceptor] Proxy listening on 127.0.0.1:8443")
+                    log_message(f"[SSL Interceptor] Proxy listening on {proxy_host}:{proxy_port}")
                 )
                 app.update_output.emit(
                     log_message("[SSL Interceptor] Configure target applications to use this proxy")
@@ -2059,9 +2107,14 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
 
             # Initialize SSL interception configuration
             if not hasattr(app, "ssl_config"):
+                # Use proxy configuration
+                proxy_url = get_service_url("proxy_server")
+                proxy_host = proxy_url.replace("https://", "").replace("http://", "").split(":")[0]
+                proxy_port = int(proxy_url.split(":")[-1].replace("/", "")) if ":" in proxy_url else 8443
+                
                 app.ssl_config = {
-                    "listen_ip": "127.0.0.1",
-                    "listen_port": 8443,
+                    "listen_ip": proxy_host,
+                    "listen_port": proxy_port,
                     "ca_cert_path": get_resource_path("ssl_certificates/ca.crt"),
                     "ca_key_path": get_resource_path("ssl_certificates/ca.key"),
                     "record_traffic": True,
@@ -2189,7 +2242,7 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                 )
                 app.update_output.emit(
                     log_message(
-                        "[SSL Interceptor] Listening on 127.0.0.1:8443 for proxy connections"
+                        f"[SSL Interceptor] Listening on {proxy_host}:{proxy_port} for proxy connections"
                     )
                 )
                 app.update_output.emit(
@@ -15030,9 +15083,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
         self.logger = logging.getLogger("IntellicrackLogger.Main")
 
         # Now we can use logging
-        self.logger.debug(f"QMainWindow initialized, parent: {self.parent()}")
-        self.logger.debug(f"Initial visibility: {self.isVisible()}")
-        self.logger.debug(f"Initial window state: {self.windowState()}")
+        self.logger.debug("QMainWindow initialized")
+        # self.logger.debug(f"Initial visibility: {self.isVisible()}")
+        # self.logger.debug(f"Initial window state: {self.windowState()}")
         self.logger.info(
             "IntellicrackApp constructor called. Initializing main application window."
         )

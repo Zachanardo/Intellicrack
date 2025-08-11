@@ -31,6 +31,7 @@ from typing import Any
 from intellicrack.handlers.numpy_handler import HAS_NUMPY
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT, QFileDialog
 from intellicrack.logger import logger
+from intellicrack.utils.service_health_checker import get_service_url
 
 from ..utils.logger import setup_logger
 
@@ -1955,9 +1956,14 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
             try:
                 import psycopg2
 
+                # Get database server from configuration
+                db_url = get_service_url("database_server")
+                db_host = db_url.replace("postgresql://", "").split(":")[0]
+                db_port = int(db_url.split(":")[-1].split("/")[0]) if ":" in db_url else 5432
+                
                 conn = psycopg2.connect(
-                    host=config.get("host", "localhost"),
-                    port=config.get("port", 5432),
+                    host=config.get("host", db_host),
+                    port=config.get("port", db_port),
                     database=config.get("database", "intellicrack"),
                     user=config.get("user"),
                     password=config.get("password"),
@@ -2023,8 +2029,11 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
             try:
                 import pymongo
 
+                # Get MongoDB server from configuration
+                mongo_url = get_service_url("mongodb_server")
+                
                 client = pymongo.MongoClient(
-                    config.get("connection_string", "mongodb://localhost:27017/")
+                    config.get("connection_string", mongo_url)
                 )
                 db = client[config.get("database", "intellicrack")]
                 collection = db[config.get("collection", "analysis_reports")]

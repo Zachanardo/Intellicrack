@@ -34,6 +34,7 @@ from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE as HAS_PSUTIL
 from intellicrack.handlers.tensorflow_handler import HAS_TENSORFLOW
 from intellicrack.handlers.torch_handler import HAS_TORCH
 from intellicrack.logger import logger
+from intellicrack.utils.service_health_checker import get_service_url
 
 from ..utils.logger import setup_logger
 
@@ -2825,8 +2826,12 @@ def handle_client(client_socket, target_host, target_port):
     target_socket.close()
 
 def main():
+    # Get proxy server from configuration
+    proxy_url = get_service_url("proxy_server")
+    proxy_host = proxy_url.replace("http://", "").replace("https://", "").split(":")[0]
+    
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('127.0.0.1', LISTEN_PORT))
+    server.bind((proxy_host, LISTEN_PORT))
     server.listen(5)
     print(f"MITM proxy listening on port {{LISTEN_PORT}}")
     print(f"Forwarding to {{TARGET_HOST}}:{{TARGET_PORT}}")

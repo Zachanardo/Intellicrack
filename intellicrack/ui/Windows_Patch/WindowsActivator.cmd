@@ -12591,7 +12591,6 @@ exit /b
 ::============================================================================
 ::
 ::   Homepage: mass grave[.]dev
-::      Email: mas.help@outlook.com
 ::
 ::============================================================================
 
@@ -13200,7 +13199,6 @@ echo:
 echo   This Script is a part of MAS project.
 echo:
 echo   Homepage: mass grave[.]dev
-echo      Email: mas.help@outlook.com
 )>"%_dest%\Info.txt"
 exit /b
 

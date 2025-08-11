@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from intellicrack.logger import logger
+from intellicrack.utils.service_health_checker import get_service_url
 
 from .base_network_analyzer import BaseNetworkAnalyzer
 
@@ -88,7 +89,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     analyzes the protocols, and enables real-time response generation.
     """
 
-    def __init__(self, bind_interface: str = "127.0.0.1"):
+    def __init__(self, bind_interface: str | None = None):
         """Initialize the traffic interception engine.
 
         Args:
@@ -97,6 +98,12 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         """
         super().__init__()
         self.logger = logging.getLogger("IntellicrackLogger.TrafficEngine")
+        
+        # Use configuration for bind interface
+        if bind_interface is None:
+            proxy_url = get_service_url("proxy_server")
+            bind_interface = proxy_url.replace("http://", "").replace("https://", "").split(":")[0]
+        
         self.bind_interface = bind_interface
         self.running = False
 

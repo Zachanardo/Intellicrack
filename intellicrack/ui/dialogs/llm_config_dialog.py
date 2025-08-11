@@ -7,6 +7,7 @@ import time
 from intellicrack.logger import logger
 
 from ...utils.secrets_manager import get_secret
+from ...utils.env_file_manager import EnvFileManager
 
 """
 LLM Configuration Dialog for Intellicrack
@@ -152,6 +153,9 @@ class LLMConfigDialog(QDialog):
 
     def __init__(self, parent=None):
         """Initialize the LLMConfigDialog with default values."""
+        # Initialize EnvFileManager
+        self.env_manager = EnvFileManager()
+        
         # Initialize UI attributes
         self.anthropic_api_key = None
         self.anthropic_max_tokens = None
@@ -240,6 +244,7 @@ class LLMConfigDialog(QDialog):
 
         self.setup_ui()
         self.load_existing_configs()
+        self.load_existing_api_keys()  # Load API keys from .env file
 
         # Auto-load saved models
         if self.config_manager and self.llm_manager:
@@ -396,13 +401,16 @@ class LLMConfigDialog(QDialog):
         # Add/Test buttons
         btn_layout = QHBoxLayout()
         add_btn = QPushButton("Add OpenAI Model")
-        test_btn = QPushButton("Test Configuration")
+        test_config_btn = QPushButton("Test Configuration")
+        test_key_btn = QPushButton("Test API Key")
 
         add_btn.clicked.connect(self.add_openai_model)
-        test_btn.clicked.connect(self.test_openai_config)
+        test_config_btn.clicked.connect(self.test_openai_config)
+        test_key_btn.clicked.connect(lambda: self.test_api_key("openai", self.openai_api_key))
 
         btn_layout.addWidget(add_btn)
-        btn_layout.addWidget(test_btn)
+        btn_layout.addWidget(test_config_btn)
+        btn_layout.addWidget(test_key_btn)
         layout.addRow("", btn_layout)
 
         self.tabs.addTab(tab, "OpenAI")
@@ -452,13 +460,16 @@ class LLMConfigDialog(QDialog):
         # Add/Test buttons
         btn_layout = QHBoxLayout()
         add_btn = QPushButton("Add Anthropic Model")
-        test_btn = QPushButton("Test Configuration")
+        test_config_btn = QPushButton("Test Configuration")
+        test_key_btn = QPushButton("Test API Key")
 
         add_btn.clicked.connect(self.add_anthropic_model)
-        test_btn.clicked.connect(self.test_anthropic_config)
+        test_config_btn.clicked.connect(self.test_anthropic_config)
+        test_key_btn.clicked.connect(lambda: self.test_api_key("anthropic", self.anthropic_api_key))
 
         btn_layout.addWidget(add_btn)
-        btn_layout.addWidget(test_btn)
+        btn_layout.addWidget(test_config_btn)
+        btn_layout.addWidget(test_key_btn)
         layout.addRow("", btn_layout)
 
         self.tabs.addTab(tab, "Anthropic")
@@ -1665,13 +1676,185 @@ class LLMConfigDialog(QDialog):
                 )
 
     def save_configuration(self):
-        """Save the current configuration."""
-        # This could save to a config file for persistence
-        if self.current_configs:
-            self.status_text.append(f"✓ Configuration saved ({len(self.current_configs)} models)")
-            QMessageBox.information(self, "Success", "Model configuration saved successfully!")
+        """Save the current configuration including API keys to .env file."""
+        try:
+            # Collect all API keys from the UI
+            api_keys = {}
+            
+            # OpenAI
+            if hasattr(self, 'openai_api_key') and self.openai_api_key and self.openai_api_key.text():
+                api_keys['OPENAI_API_KEY'] = self.openai_api_key.text()
+            
+            # Anthropic
+            if hasattr(self, 'anthropic_api_key') and self.anthropic_api_key and self.anthropic_api_key.text():
+                api_keys['ANTHROPIC_API_KEY'] = self.anthropic_api_key.text()
+            
+            # Google (if there's a Google tab)
+            if hasattr(self, 'google_api_key') and self.google_api_key and self.google_api_key.text():
+                api_keys['GOOGLE_API_KEY'] = self.google_api_key.text()
+            
+            # HuggingFace (if there's a HuggingFace tab)
+            if hasattr(self, 'huggingface_api_token') and self.huggingface_api_token and self.huggingface_api_token.text():
+                api_keys['HUGGINGFACE_API_TOKEN'] = self.huggingface_api_token.text()
+            
+            # OpenRouter (if there's an OpenRouter tab)
+            if hasattr(self, 'openrouter_api_key') and self.openrouter_api_key and self.openrouter_api_key.text():
+                api_keys['OPENROUTER_API_KEY'] = self.openrouter_api_key.text()
+            
+            # Groq (if there's a Groq tab)
+            if hasattr(self, 'groq_api_key') and self.groq_api_key and self.groq_api_key.text():
+                api_keys['GROQ_API_KEY'] = self.groq_api_key.text()
+            
+            # Cohere (if there's a Cohere tab)
+            if hasattr(self, 'cohere_api_key') and self.cohere_api_key and self.cohere_api_key.text():
+                api_keys['COHERE_API_KEY'] = self.cohere_api_key.text()
+            
+            # Together (if there's a Together tab)
+            if hasattr(self, 'together_api_key') and self.together_api_key and self.together_api_key.text():
+                api_keys['TOGETHER_API_KEY'] = self.together_api_key.text()
+            
+            # Ollama URL (special case - not an API key but a URL)
+            if hasattr(self, 'ollama_url') and self.ollama_url and self.ollama_url.text():
+                api_keys['OLLAMA_API_BASE'] = self.ollama_url.text()
+            
+            # Save API keys to .env file
+            if api_keys:
+                self.env_manager.update_keys(api_keys)
+                self.status_text.append(f"✓ Saved {len(api_keys)} API keys to .env file")
+            
+            # Save model configurations
+            if self.current_configs:
+                self.status_text.append(f"✓ Configuration saved ({len(self.current_configs)} models)")
+                QMessageBox.information(
+                    self, 
+                    "Success", 
+                    f"Configuration saved successfully!\n"
+                    f"- {len(api_keys)} API keys saved to .env\n"
+                    f"- {len(self.current_configs)} models configured"
+                )
+            else:
+                if api_keys:
+                    QMessageBox.information(
+                        self,
+                        "Success",
+                        f"API keys saved successfully!\n{len(api_keys)} keys saved to .env file"
+                    )
+                else:
+                    QMessageBox.warning(self, "No Configuration", "No API keys or models to save")
+        
+        except Exception as e:
+            logger.error(f"Error saving configuration: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to save configuration: {str(e)}")
+    
+    def load_existing_api_keys(self):
+        """Load existing API keys from .env file and populate UI fields."""
+        try:
+            # Read all API keys from .env file
+            api_keys = self.env_manager.get_all_api_keys()
+            
+            # Populate OpenAI
+            if 'OPENAI_API_KEY' in api_keys and hasattr(self, 'openai_api_key'):
+                self.openai_api_key.setText(api_keys['OPENAI_API_KEY'])
+            
+            # Populate Anthropic
+            if 'ANTHROPIC_API_KEY' in api_keys and hasattr(self, 'anthropic_api_key'):
+                self.anthropic_api_key.setText(api_keys['ANTHROPIC_API_KEY'])
+            
+            # Populate Google
+            if 'GOOGLE_API_KEY' in api_keys and hasattr(self, 'google_api_key'):
+                self.google_api_key.setText(api_keys['GOOGLE_API_KEY'])
+            
+            # Populate HuggingFace
+            if 'HUGGINGFACE_API_TOKEN' in api_keys and hasattr(self, 'huggingface_api_token'):
+                self.huggingface_api_token.setText(api_keys['HUGGINGFACE_API_TOKEN'])
+            
+            # Populate OpenRouter
+            if 'OPENROUTER_API_KEY' in api_keys and hasattr(self, 'openrouter_api_key'):
+                self.openrouter_api_key.setText(api_keys['OPENROUTER_API_KEY'])
+            
+            # Populate Groq
+            if 'GROQ_API_KEY' in api_keys and hasattr(self, 'groq_api_key'):
+                self.groq_api_key.setText(api_keys['GROQ_API_KEY'])
+            
+            # Populate Cohere
+            if 'COHERE_API_KEY' in api_keys and hasattr(self, 'cohere_api_key'):
+                self.cohere_api_key.setText(api_keys['COHERE_API_KEY'])
+            
+            # Populate Together
+            if 'TOGETHER_API_KEY' in api_keys and hasattr(self, 'together_api_key'):
+                self.together_api_key.setText(api_keys['TOGETHER_API_KEY'])
+            
+            # Populate Ollama URL
+            if 'OLLAMA_API_BASE' in api_keys and hasattr(self, 'ollama_url'):
+                self.ollama_url.setText(api_keys['OLLAMA_API_BASE'])
+            
+            if api_keys:
+                self.status_text.append(f"✓ Loaded {len(api_keys)} API keys from .env file")
+        
+        except Exception as e:
+            logger.error(f"Error loading API keys from .env: {e}")
+            self.status_text.append(f"⚠ Could not load API keys: {str(e)}")
+    
+    def test_api_key(self, service: str, api_key_widget: QLineEdit):
+        """Test an API key for a specific service.
+        
+        Args:
+            service: Service name (openai, anthropic, google, etc.)
+            api_key_widget: The QLineEdit widget containing the API key
+        """
+        api_key = api_key_widget.text()
+        if not api_key:
+            QMessageBox.warning(self, "No API Key", f"Please enter an API key for {service}")
+            return
+        
+        # Use EnvFileManager's test_api_key method for validation
+        success, message = self.env_manager.test_api_key(service, api_key)
+        
+        if success:
+            QMessageBox.information(self, "API Key Valid", message)
+            self.status_text.append(f"✓ {service} API key is valid")
         else:
-            QMessageBox.warning(self, "No Models", "No models configured to save")
+            QMessageBox.warning(self, "API Key Invalid", message)
+            self.status_text.append(f"✗ {service} API key is invalid: {message}")
+    
+    def validate_all_api_keys(self):
+        """Validate all API keys before saving."""
+        valid_keys = {}
+        invalid_keys = []
+        
+        # Check OpenAI
+        if hasattr(self, 'openai_api_key') and self.openai_api_key.text():
+            api_key = self.openai_api_key.text()
+            success, _ = self.env_manager.test_api_key('openai', api_key)
+            if success:
+                valid_keys['OPENAI_API_KEY'] = api_key
+            else:
+                invalid_keys.append('OpenAI')
+        
+        # Check Anthropic
+        if hasattr(self, 'anthropic_api_key') and self.anthropic_api_key.text():
+            api_key = self.anthropic_api_key.text()
+            success, _ = self.env_manager.test_api_key('anthropic', api_key)
+            if success:
+                valid_keys['ANTHROPIC_API_KEY'] = api_key
+            else:
+                invalid_keys.append('Anthropic')
+        
+        # Check other services similarly...
+        # (Can be expanded for all services)
+        
+        if invalid_keys:
+            response = QMessageBox.question(
+                self,
+                "Invalid API Keys",
+                f"The following API keys appear to be invalid:\n"
+                f"{', '.join(invalid_keys)}\n\n"
+                f"Save anyway?",
+                QMessageBox.Yes | QMessageBox.No
+            )
+            return response == QMessageBox.Yes, valid_keys
+        
+        return True, valid_keys
 
     def refresh_lora_models(self):
         """Refresh the list of available base models for LoRA."""

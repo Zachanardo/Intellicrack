@@ -381,8 +381,8 @@ intersphinx_mapping = {
 
 # External links configuration
 extlinks = {
-    'issue': ('https://github.com/yourusername/intellicrack/issues/%s', 'issue %s'),
-    'pr': ('https://github.com/yourusername/intellicrack/pull/%s', 'PR %s'),
+    'issue': ('https://github.com/Zachanardo/Intellicrack/issues/%s', 'issue %s'),
+    'pr': ('https://github.com/Zachanardo/Intellicrack/pull/%s', 'PR %s'),
 }
 
 # TODO extension

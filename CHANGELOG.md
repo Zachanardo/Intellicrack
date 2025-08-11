@@ -8,93 +8,106 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Enhanced AI Model Selection**: Support for 16+ AI providers with dynamic model fetching
-  - Comprehensive provider support: OpenAI, Anthropic, Google Gemini, Local (Ollama), Azure OpenAI, AWS Bedrock, Cohere, Hugging Face, OpenRouter, Together AI, Perplexity, Groq, Replicate, DeepInfra, Anyscale, LM Studio
-  - Dynamic model fetching: Automatically retrieves latest available models when API key is provided
-  - Auto-refresh feature: Models update automatically 1 second after entering API key
-  - Manual refresh button for on-demand model list updates
-  - Comprehensive fallback model lists with latest models (GPT-4o, Claude 3.5, Gemini 2.0, etc.)
-- **New Documentation**:
-  - AI Assistant User Guide (docs/usage/ai_assistant.md) with comprehensive provider setup instructions
-  - AI Models Quick Reference (docs/AI_MODELS_QUICK_REFERENCE.md) with API key requirements and model recommendations
-  - Updated main documentation index to include AI guides
+- **PyQt6 GUI Framework**: Complete migration from PyQt5 to PyQt6
+  - Modern Qt6 widgets and components
+  - Updated orientation constants (Qt.Orientation.Horizontal/Vertical)
+  - Enhanced cross-platform compatibility
+- **Intel Arc B580 GPU Support**: 
+  - Automatic detection of Intel Arc B580 graphics cards
+  - GIL crash prevention via UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS detection
+  - PyTorch import safety mechanisms to prevent system hangs
+  - Graceful fallback to CPU when Intel Arc issues detected
+- **Enhanced GUI Initialization**:
+  - Fixed QMainWindow inheritance and initialization
+  - Proper widget creation and layout management
+  - Three-panel layout with tabs and output console
+  - Theme system with light/dark mode support
+- **Improved Tab System**:
+  - ExploitationTab with comprehensive exploit development tools
+  - AIAssistantTab with AI-powered analysis capabilities
+  - Proper shared context support across all tabs
+- **Advanced Handlers System**:
+  - PyQt6Handler for Qt component management
+  - TensorFlowHandler with Intel Arc compatibility
+  - TorchHandler with GIL safety measures
 
 ### Fixed
-- **Theme Manager Error**: Fixed AttributeError where `theme_manager.apply_theme()` was called instead of correct `theme_manager.set_theme()` method
-- Fixed F405 linting errors by replacing star imports with explicit imports across multiple modules
-- Resolved import resolution issues in utils/additional_runners.py
-- Fixed import resolution in utils/analysis/__init__.py
-- Fixed import resolution in utils/config.py
-- Fixed import resolution in utils/core/__init__.py
-- Fixed import resolution in utils/exploit_common.py
-- Fixed import resolution in utils/ghidra_script_manager.py
-- Fixed import resolution in utils/license_response_templates.py
-- Fixed import resolution in utils/network_api_common.py
-- Fixed syntax errors in core/patching/payload_generator.py string concatenation
-- Enhanced code quality and linting compliance across the codebase
-- Fixed high severity vulnerabilities in dependencies
-- Updated security documentation with correct project setup
-- Improved WSL/Windows virtual environment compatibility
-
-### Added
-- Comprehensive code implementation across all modules with real functionality
-- Full implementation of 33+ advanced security research functions
-- Enhanced AI integration with multiple LLM backend support
-- Advanced binary analysis capabilities with radare2 integration
-- Sophisticated protection detection and bypass mechanisms
-- ML-based vulnerability prediction and analysis
-- Enhanced C2 infrastructure with secure communication protocols
-- Advanced payload generation with polymorphic capabilities
-- Comprehensive frida script generation and management
-- Real-time network traffic analysis and interception
-- Hardware emulation for dongles and TPM bypassing
-- Advanced memory forensics and process analysis
-- Distributed analysis framework for scalability
-- GPU acceleration support for intensive computations
-- Enhanced plugin system with dynamic loading
-- Comprehensive test suite with real-world validation
-- Advanced UI components with professional three-panel layout
-- Secure secrets management system
-- Enhanced documentation and configuration management
-- Organized project structure following Python best practices
-- Created data/ directory for runtime files (database, uploads, downloads, cache)
-- Added .github/ directory structure for GitHub workflows and templates
-- Added CHANGELOG.md for tracking version history
-- Added CONTRIBUTING.md with development guidelines
-- New requirements structure in requirements/ directory
-- Enhanced virtual environment support for WSL and Windows
+- **Critical GUI Launch Issues**:
+  - Fixed AttributeError: 'IntellicrackApp' object has no attribute 'parent'
+  - Fixed missing QStackedWidget import causing PyQt6 failure
+  - Fixed ExploitationTab initialization method (setup_content vs _setup_ui)
+  - Fixed AIAssistantTab constructor to accept shared_context parameter
+  - Fixed Qt.Horizontal/Vertical constants for PyQt6 compatibility
+- **Import System Improvements**:
+  - Fixed circular import between torch_gil_safety and torch_handler
+  - Resolved PyTorch hanging issues during import
+  - Enhanced handler-based import system for better reliability
+- **Platform Compatibility**:
+  - Windows-specific path handling improvements
+  - Enhanced virtual environment support (mamba_env)
+  - Better error handling for missing dependencies
 
 ### Changed
-- Moved runtime files (c2_sessions.db, c2_uploads/, c2_downloads/, cache/) to data/ directory
-- Updated session_manager.py to use new data directory paths with migration support
-- Consolidated scripts directories - moved all scripts from root /scripts/ to /intellicrack/intellicrack/scripts/
-- Moved Sphinx documentation artifacts to docs/ directory
-- Organized scripts into subdirectories (frida/, ghidra/, fixes/, etc.)
-- Migrated from pyproject.toml to requirements.txt structure
-- Updated all module imports to use explicit imports instead of star imports
-- Enhanced error handling and fallback mechanisms across all modules
-- Improved platform compatibility and dependency management
-- Refactored AI model management with lazy loading and caching
-- Enhanced UI responsiveness and user experience
-- Streamlined configuration management system
+- **Project Structure Reorganization**:
+  - Test files moved to appropriate subdirectories (tests/unit/, tests/utils/)
+  - Enhanced documentation organization in docs/ directory
+  - Improved requirements management with requirements/ structure
+- **GUI Framework Migration**:
+  - Complete transition from PyQt5 to PyQt6
+  - Updated all UI components and widgets
+  - Enhanced theme management and styling
+- **Enhanced Security Research Focus**:
+  - Clarified defensive security research purpose
+  - Updated disclaimer with explicit focus on authorized testing
+  - Enhanced documentation on ethical usage
 
 ### Removed
-- Removed duplicate conf.py from root (kept docs/conf.py)
-- Removed empty models/ directory from root
-- Removed =2.0.0 file (pip install output)
-- Removed legacy ICP engine tools and binaries
-- Removed obsolete DLL files and Windows-specific artifacts
-- Removed old pyproject.toml in favor of requirements structure
-- Removed legacy ML model guide (superseded by implementation)
-- Cleaned up redundant signature files and test artifacts
+- **Legacy Components**:
+  - Removed outdated PyQt5 references
+  - Cleaned up obsolete installation scripts
+  - Removed incorrect documentation references
 
-## [0.1.0] - 2024-06-30
+## [0.1.0] - 2024-12-01
 
 ### Added
-- Initial release of Intellicrack
-- Binary analysis and security research framework
-- AI-powered script generation
-- Protection detection and bypass capabilities
-- C2 infrastructure support
-- Hex viewer with advanced features
-- Plugin system for extensibility
+- **Core Framework**:
+  - Binary analysis and security research platform
+  - Multi-format support (PE, ELF, Mach-O)
+  - Protection detection capabilities
+  - Vulnerability research tools
+- **AI Integration**:
+  - Multi-provider AI support (OpenAI, Anthropic, Google)
+  - Dynamic model fetching and management
+  - AI-powered script generation
+- **Advanced Features**:
+  - Symbolic execution with angr integration
+  - Dynamic analysis capabilities
+  - Network traffic analysis
+  - C2 infrastructure support
+- **User Interface**:
+  - Professional three-panel GUI layout
+  - Hex editor with advanced features
+  - Plugin system for extensibility
+  - Comprehensive logging system
+- **Security Research Tools**:
+  - Exploitation framework
+  - Protection bypass mechanisms
+  - Vulnerability identification
+  - License emulation capabilities
+
+### Technical Infrastructure
+- **Development Environment**:
+  - Python 3.11/3.12 support
+  - Cross-platform compatibility (Windows, Linux, macOS)
+  - GPU acceleration support (NVIDIA, AMD, Intel)
+  - Virtual environment management
+- **Testing Framework**:
+  - Comprehensive test suite
+  - Real-world binary fixtures
+  - Performance benchmarks
+  - Integration tests
+- **Documentation System**:
+  - Sphinx-based documentation
+  - User guides and API reference
+  - Architecture documentation
+  - Security and ethics guidelines

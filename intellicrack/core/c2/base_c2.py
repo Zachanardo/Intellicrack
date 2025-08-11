@@ -19,6 +19,9 @@ import logging
 import time
 from typing import Any
 
+from intellicrack.core.exceptions import ConfigurationError
+from intellicrack.utils.service_health_checker import get_service_url
+
 """
 Base C2 Module
 
@@ -55,26 +58,39 @@ class BaseC2:
                 if protocol_type == "https":
                     from .communication_protocols import HttpsProtocol
 
+                    server_url = proto_config.get("server_url")
+                    if not server_url:
+                        server_url = get_service_url("c2_server")
+                        
                     protocol = HttpsProtocol(
                         encryption_manager,
-                        proto_config.get("server_url", "https://localhost:8443"),
+                        server_url,
                         proto_config.get("headers", {}),
                     )
                 elif protocol_type == "dns":
                     from .communication_protocols import DnsProtocol
 
+                    domain = proto_config.get("domain")
+                    if not domain:
+                        c2_url = get_service_url("c2_server")
+                        domain = c2_url.replace("http://", "").replace("https://", "").split(":")[0]
+                        
                     protocol = DnsProtocol(
                         encryption_manager,
-                        proto_config.get("domain", "localhost"),
+                        domain,
                         proto_config.get("dns_server", "8.8.8.8"),
                     )
                 elif protocol_type == "tcp":
                     from .communication_protocols import TcpProtocol
+                    
+                    c2_url = get_service_url("c2_server")
+                    host = c2_url.replace("http://", "").replace("https://", "").split(":")[0]
+                    port = int(c2_url.split(":")[-1].replace("/", "")) if ":" in c2_url else 9999
 
                     protocol = TcpProtocol(
                         encryption_manager,
-                        proto_config.get("host", "localhost"),
-                        proto_config.get("port", 9999),
+                        proto_config.get("host", host),
+                        proto_config.get("port", port),
                     )
                 else:
                     self.logger.warning(f"Unknown protocol type: {protocol_type}")

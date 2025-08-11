@@ -22,26 +22,41 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a wel
 1. Fork the repository on GitHub
 2. Clone your fork locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/intellicrack.git
-   cd intellicrack
+   git clone https://github.com/Zachanardo/Intellicrack.git
+   cd Intellicrack
    ```
 3. Add the upstream repository as a remote:
    ```bash
-   git remote add upstream https://github.com/zacharyflint/intellicrack.git
+   git remote add upstream https://github.com/Zachanardo/Intellicrack.git
    ```
 
 ## Development Setup
 
-1. Create a virtual environment:
+### Prerequisites
+- **Python 3.11 or 3.12** (required for full functionality)
+- **Git** for version control
+- **Windows 10/11, Linux (Ubuntu 20.04+), or macOS 10.15+**
+
+### Virtual Environment Setup
+
+1. Create and activate virtual environment:
    ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   # Windows (using actual project structure)
+   python -m venv mamba_env
+   mamba_env\Scripts\activate
+
+   # Linux/macOS
+   python -m venv mamba_env
+   source mamba_env/bin/activate
    ```
 
 2. Install dependencies:
    ```bash
-   pip install -e .
-   pip install -e .[dev]  # Install development dependencies
+   # Install from requirements lock file (actual file location)
+   pip install -r requirements/requirements.lock
+   
+   # For development dependencies
+   pip install -r requirements/requirements-dev.lock
    ```
 
 3. Install pre-commit hooks:
@@ -108,7 +123,7 @@ import sys
 from typing import Dict, List
 
 import numpy as np
-from PyQt5.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget
 
 from intellicrack.core import BinaryAnalyzer
 from intellicrack.utils import logger
@@ -182,9 +197,8 @@ def test_binary_analyzer_detects_pe_format():
 
 ## Additional Resources
 
-- [Issue Tracker](https://github.com/zacharyflint/intellicrack/issues)
-- [Documentation](https://intellicrack.readthedocs.io)
-- [Project Wiki](https://github.com/zacharyflint/intellicrack/wiki)
+- [Issue Tracker](https://github.com/Zachanardo/Intellicrack/issues)
+- [Documentation](docs/) - Local documentation in project repository
 
 ## Questions?
 

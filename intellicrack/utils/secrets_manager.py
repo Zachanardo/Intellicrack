@@ -70,14 +70,12 @@ class SecretsManager:
         "HUGGINGFACE_API_TOKEN",
         "GROQ_API_KEY",
         "TOGETHER_API_KEY",
+        "OPENROUTER_API_KEY",
         # Cloud Services
         "AWS_ACCESS_KEY_ID",
         "AWS_SECRET_ACCESS_KEY",
         "AZURE_API_KEY",
         "GCP_API_KEY",
-        # Analysis Services
-        "VIRUSTOTAL_API_KEY",
-        "HYBRID_ANALYSIS_API_KEY",
         # Database
         "DATABASE_URL",
         "DB_PASSWORD",
@@ -93,7 +91,7 @@ class SecretsManager:
 
     def __init__(self, config_dir: Path | None = None):
         """Initialize the secrets manager."""
-        self.config_dir = config_dir or self._get_default_config_dir()
+        self.config_dir = config_dir or Path("C:/Intellicrack/config/secrets")
         self.secrets_file = self.config_dir / "secrets.enc"
         self.key_file = self.config_dir / ".key"
 
@@ -111,17 +109,11 @@ class SecretsManager:
         self._load_secrets()
 
     def _get_default_config_dir(self) -> Path:
-        """Get platform-specific configuration directory."""
-        system = platform.system()
-
-        if system == "Windows":
-            base = Path(os.environ.get("APPDATA", ""))
-        elif system == "Darwin":  # macOS
-            base = Path.home() / "Library" / "Application Support"
-        else:  # Linux and others
-            base = Path.home() / ".config"
-
-        return base / "intellicrack" / "secrets"
+        """Get unified configuration directory.
+        
+        Uses C:\\Intellicrack\\config\\secrets for all platforms to ensure consistency.
+        """
+        return Path("C:/Intellicrack/config/secrets")
 
     def _load_env_files(self):
         """Load environment variables from .env files."""
@@ -129,7 +121,15 @@ class SecretsManager:
             logger.warning("python-dotenv not available - .env files will not be loaded")
             return
 
-        # Look for .env files in order of precedence
+        # Priority 1: Check unified config directory first
+        unified_config_dir = Path("C:/Intellicrack/config")
+        unified_env_file = unified_config_dir / ".env"
+        if unified_env_file.exists():
+            load_dotenv(unified_env_file, override=True)
+            logger.debug(f"Loaded environment from unified config: {unified_env_file}")
+            return  # Use only the unified config if it exists
+
+        # Fallback: Look for .env files in other locations
         env_files = [
             ".env.local",  # Highest priority - user's local overrides
             ".env.production",  # Production settings
@@ -366,8 +366,7 @@ class SecretsManager:
             "huggingface": "HUGGINGFACE_API_TOKEN",
             "groq": "GROQ_API_KEY",
             "together": "TOGETHER_API_KEY",
-            "virustotal": "VIRUSTOTAL_API_KEY",
-            "hybrid_analysis": "HYBRID_ANALYSIS_API_KEY",
+            "openrouter": "OPENROUTER_API_KEY",
         }
 
         # Normalize service name

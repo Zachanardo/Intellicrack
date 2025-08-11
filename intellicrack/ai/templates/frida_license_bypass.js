@@ -31,7 +31,7 @@
         version: "1.0.0",
         description: "{{description}}",
         target: "{{target_binary}}",
-        protections: {{protection_list}},
+        protections: {{protection_list}}, // eslint-disable-line
         generated: "{{timestamp}}"
     };
 

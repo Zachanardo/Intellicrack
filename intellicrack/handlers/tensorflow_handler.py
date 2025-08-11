@@ -28,10 +28,12 @@ When TensorFlow is not available, it provides REAL, functional Python-based
 implementations for essential ML operations used in Intellicrack.
 """
 
-# TensorFlow availability detection and import handling
-# TEMPORARY FIX: Disable TensorFlow import due to Intel Arc B580 compatibility issues
-# The import causes a hang on systems with Intel Arc GPUs
-# Using fallback implementations until the issue is resolved
+# TensorFlow availability detection and import handling with universal GPU compatibility
+import threading
+import time
+from typing import Optional
+
+# Initialize variables
 HAS_TENSORFLOW = False
 TENSORFLOW_VERSION = None
 tf = None
@@ -40,24 +42,80 @@ layers = None
 models = None
 optimizers = None
 
-# Original import code (disabled):
-# try:
-#     import tensorflow as tf
-#     from tensorflow import keras
-#     from tensorflow.keras import layers, models, optimizers
-#
-#     HAS_TENSORFLOW = True
-#     TENSORFLOW_VERSION = tf.__version__
-#
-# except ImportError as e:
+# Load environment variables from .env file
+# Users can customize GPU settings in the .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # Load .env file from project root
+except ImportError:
+    pass  # dotenv not available, use system environment variables
 
-if False:  # Keep exception handling structure intact
-    pass
+def _safe_tensorflow_import(timeout: float = 15.0) -> tuple[bool, Optional[object], Optional[Exception]]:
+    """Safely import TensorFlow with timeout to handle GPU compatibility issues across NVIDIA, AMD, and Intel."""
+    import_success = False
+    import_error = None
+    tf_modules = {}
+    
+    def _import_tensorflow():
+        nonlocal import_success, import_error, tf_modules
+        try:
+            import tensorflow as tf_temp
+            tf_modules['tf'] = tf_temp
+            tf_modules['keras'] = tf_temp.keras
+            tf_modules['layers'] = tf_temp.keras.layers
+            tf_modules['models'] = tf_temp.keras.models
+            tf_modules['optimizers'] = tf_temp.keras.optimizers
+            import_success = True
+        except Exception as e:
+            import_error = e
+    
+    # Use daemon thread to prevent hanging main process
+    import_thread = threading.Thread(target=_import_tensorflow, daemon=True)
+    import_thread.start()
+    import_thread.join(timeout=timeout)
+    
+    if import_thread.is_alive():
+        # Import is hanging (GPU compatibility issue)
+        logger.warning("TensorFlow import timeout - using fallback (universal GPU compatibility)")
+        return False, None, TimeoutError("TensorFlow import timed out")
+    
+    return import_success, tf_modules, import_error
 
-# Always use fallback implementations since TensorFlow causes hang
-logger.info("Using TensorFlow fallback implementations (Intel Arc B580 compatibility mode)")
+# Attempt safe TensorFlow import
+try:
+    success, modules, error = _safe_tensorflow_import()
+    
+    if success and modules:
+        # Use the successfully imported modules WITHOUT re-importing
+        tf = modules['tf']
+        keras = modules['keras']
+        layers = modules['layers']
+        models = modules['models']
+        optimizers = modules['optimizers']
+        
+        # Configure GPU memory growth
+        try:
+            gpus = tf.config.experimental.list_physical_devices('GPU')
+            if gpus:
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+        except Exception as gpu_config_error:
+            logger.info(f"GPU configuration warning: {gpu_config_error}")
+        
+        HAS_TENSORFLOW = True
+        TENSORFLOW_VERSION = tf.__version__
+        logger.info(f"TensorFlow {TENSORFLOW_VERSION} imported successfully with universal GPU compatibility")
+    else:
+        raise error or ImportError("TensorFlow import failed")
+        
+except Exception as e:
+    logger.info(f"Using TensorFlow fallbacks due to import issue: {e}")
+    HAS_TENSORFLOW = False
+    TENSORFLOW_VERSION = None
 
-# Production-ready fallback implementations for binary analysis ML needs
+    # Set up fallback implementations when TensorFlow is not available
+    
+    # Production-ready fallback implementations for binary analysis ML needs
 
 class FallbackTensor:
     """Functional tensor implementation for ML operations."""
@@ -582,11 +640,21 @@ class FallbackConfig:
     @staticmethod
     def set_visible_devices(devices, device_type):
         logger.info("Set visible devices for %s (fallback mode)", device_type)
+    
+    @staticmethod
+    def list_physical_devices(device_type='GPU'):
+        logger.info("Listing physical devices for %s (fallback mode)", device_type)
+        return []
 
     class experimental:
         @staticmethod
         def set_memory_growth(device, enable):
             logger.info("Memory growth set to %s (fallback mode)", enable)
+        
+        @staticmethod
+        def list_physical_devices(device_type='GPU'):
+            logger.info("Listing physical devices for %s (fallback mode)", device_type)
+            return []
 
     class threading:
         @staticmethod

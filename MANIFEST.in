@@ -4,11 +4,9 @@ include LICENSE
 include CHANGELOG.md
 include CONTRIBUTING.md
 include CODE_OF_CONDUCT.md
-include requirements.txt
-include requirements-dev.txt
-include pyproject.toml
-include setup.py
-include Makefile
+include requirements/requirements.lock
+include requirements/pyproject.toml
+include justfile
 
 # Include configuration files
 include .gitignore
@@ -18,7 +16,8 @@ include .editorconfig
 recursive-include intellicrack *.py
 recursive-include intellicrack/assets *
 recursive-include intellicrack/data *
-recursive-include intellicrack/intellicrack/plugins *.py *.js *.java
+recursive-include intellicrack/scripts *.py *.js
+recursive-include intellicrack/ssl_certificates *
 
 # Include tests
 recursive-include tests *.py
@@ -28,9 +27,6 @@ recursive-include tests/fixtures *
 # Include documentation
 recursive-include docs *.rst *.md *.txt
 recursive-include docs/images *
-
-# Include scripts
-recursive-include scripts *.py
 
 # Include examples
 recursive-include examples *.py *.md
@@ -56,11 +52,15 @@ prune .mypy_cache
 prune .venv
 prune venv
 prune env
+prune mamba_env
 
 # Exclude IDE directories
 prune .idea
 prune .vscode
 
 # Exclude large binary directories
-prune ghidra
+prune tools/ghidra
+prune tools/radare2
 prune node_modules
+prune dev
+prune backups
