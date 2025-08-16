@@ -28,9 +28,8 @@ import threading
 import traceback
 from typing import Any
 
-from intellicrack.utils.service_health_checker import get_service_url
-
 from intellicrack.handlers.psutil_handler import PSUTIL_AVAILABLE
+from intellicrack.utils.service_health_checker import get_service_url
 
 from ..core.misc_utils import log_message
 
@@ -68,7 +67,7 @@ def run_network_license_server(app_instance=None, **kwargs) -> dict[str, Any]:
     try:
         # Configure server based on kwargs
         port = kwargs.get("port", 27000)
-        # Get license server URL from configuration  
+        # Get license server URL from configuration
         license_url = get_service_url("license_server")
         default_host = license_url.replace("http://", "").replace("https://", "").split(":")[0]
         host = kwargs.get("host", default_host)
@@ -879,7 +878,8 @@ def run_advanced_ghidra_analysis(
         else:
             # Use default script from centralized location
             script_source = get_resource_path(
-                "intellicrack", "intellicrack/intellicrack/scripts/ghidra/default/AdvancedAnalysis.java"
+                "intellicrack",
+                "intellicrack/intellicrack/scripts/ghidra/default/AdvancedAnalysis.java",
             )
             script_destination = os.path.join(temp_script_dir, "AdvancedAnalysis.java")
             script_name = "AdvancedAnalysis.java"
@@ -2288,6 +2288,7 @@ def run_frida_analysis(
         # Check if Frida is available
         try:
             from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+
             frida_available = HAS_FRIDA
         except ImportError as e:
             logger.error("Import error in runner_functions: %s", e)
@@ -2300,9 +2301,15 @@ def run_frida_analysis(
 
             # Try to find a suitable Frida script
             script_options = [
-                get_resource_path("intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"),
-                get_resource_path("intellicrack", "intellicrack/intellicrack/scripts/frida/anti_debugger.js"),
-                get_resource_path("intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"),
+                get_resource_path(
+                    "intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"
+                ),
+                get_resource_path(
+                    "intellicrack", "intellicrack/intellicrack/scripts/frida/anti_debugger.js"
+                ),
+                get_resource_path(
+                    "intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"
+                ),
             ]
 
             script_path = None
@@ -2500,8 +2507,12 @@ def run_dynamic_instrumentation(
         if not script_path:
             # Default to registry monitor script
             script_candidates = [
-                get_resource_path("intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"),
-                get_resource_path("intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"),
+                get_resource_path(
+                    "intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"
+                ),
+                get_resource_path(
+                    "intellicrack", "intellicrack/intellicrack/scripts/frida/registry_monitor.js"
+                ),
             ]
 
             for candidate in script_candidates:
@@ -2723,6 +2734,7 @@ def run_frida_script(
         # Import Frida
         try:
             from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+
             if not HAS_FRIDA:
                 raise ImportError("Frida not available")
 

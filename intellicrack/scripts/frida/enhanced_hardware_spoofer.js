@@ -41,7 +41,7 @@
  * License: GPL v3
  */
 
-{
+const EnhancedHardwareSpoofer = {
     name: "Enhanced Hardware Spoofer v3.0.0",
     description: "Ultra-robust hardware fingerprinting bypass with TPM, UEFI, and quantum-resistant capabilities",
     version: "3.0.0",

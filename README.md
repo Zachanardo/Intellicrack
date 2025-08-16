@@ -10,7 +10,7 @@ A comprehensive binary analysis and security research platform designed to help 
 
 ### Core Capabilities
 - **Multi-Format Binary Analysis**: PE, ELF, Mach-O support
-- **Protection Detection**: Anti-debug, packing, obfuscation identification  
+- **Protection Detection**: Anti-debug, packing, obfuscation identification
 - **Vulnerability Research**: Buffer overflows, format strings, integer overflows
 - **Exploitation Framework**: Advanced exploit development and testing
 - **Network Analysis**: Traffic capture, protocol fingerprinting, license server emulation

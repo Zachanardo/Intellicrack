@@ -28,7 +28,7 @@
  * License: GPL v3
  */
 
-{
+const DynamicScriptGenerator = {
     name: "Dynamic Script Generator",
     description: "Next-generation AI-powered Frida script generation with quantum-ready bypass techniques and real-time adaptation",
     version: "3.0.0",
@@ -1622,7 +1622,7 @@
  * Version: ${script.metadata.version}
  */
 
-{
+const DynamicScriptGenerator = {
     name: "${script.metadata.name}",
     description: "${script.metadata.description}",
     version: "${script.metadata.version}",
@@ -2783,7 +2783,7 @@
                     generated_scripts_count: Object.keys(this.generatedScripts).length
                 }
             });
-
+        }, 1000);
     },
 
     // === ULTRA-ROBUST PRODUCTION ENHANCEMENT METHODS ===
@@ -4783,12 +4783,15 @@
 
 // Auto-initialize on load
 setTimeout(function() {
-    IntellicrackDynamicScriptGenerator.run();
+    DynamicScriptGenerator.run();
     send({
-                type: "status",
-                target: "dynamic_script_generator",
-                action: "system_now_active"
-            });
-        }, 100);
-    }
+        type: "status",
+        target: "dynamic_script_generator",
+        action: "system_now_active"
+    });
+}, 100);
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = DynamicScriptGenerator;
 }

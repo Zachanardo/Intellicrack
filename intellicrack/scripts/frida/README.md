@@ -12,7 +12,7 @@ This directory contains a comprehensive collection of production-ready Frida scr
 - Registry and file system artifact masking
 - Network adapter fingerprint modification
 - Timing attack resistance
-**Use Cases:** 
+**Use Cases:**
 - License validation bypass in VM environments
 - Malware analysis evasion
 - Dynamic analysis in virtualized environments
@@ -389,7 +389,7 @@ All scripts provide structured logging with detailed information:
 
 **Message Types:**
 - 🔍 **Detection** - Protection mechanisms identified
-- ✅ **Success** - Successful bypass operations  
+- ✅ **Success** - Successful bypass operations
 - ⚠️ **Warning** - Potential issues or fallback scenarios
 - ❌ **Error** - Critical failures requiring attention
 - 📊 **Status** - Current operation progress
@@ -399,7 +399,7 @@ All scripts provide structured logging with detailed information:
 **Example Output:**
 ```
 [realtime_protection_detector] 🔍 Detection: CrowdStrike Falcon detected
-[realtime_protection_detector] ✅ Success: AMSI disabled successfully  
+[realtime_protection_detector] ✅ Success: AMSI disabled successfully
 [realtime_protection_detector] 🎯 Bypass: EDR evasion techniques active
 [realtime_protection_detector] 📊 Status: 23/25 protection mechanisms bypassed
 ```
@@ -414,24 +414,24 @@ const advancedConfig = {
     enabled: true,
     verbose: true,
     debug_mode: false,
-    
+
     // Performance settings
     hook_delay: 100,
     timeout: 10000,
     retry_count: 3,
-    
+
     // Strategy settings
     strategy: "adaptive", // "aggressive", "stealth", "adaptive"
     fallback_enabled: true,
-    
+
     // Specific protection settings
     target_protections: [
         "vm_detection",
-        "license_validation", 
+        "license_validation",
         "certificate_pinning",
         "hardware_fingerprinting"
     ],
-    
+
     // Evasion techniques
     evasion_techniques: {
         timing_randomization: true,
@@ -448,7 +448,7 @@ const advancedConfig = {
 # Adobe Creative Suite
 frida -f photoshop.exe -l adobe_bypass.js -l certificate_pinning_bypass.js -l ntp_blocker.js
 
-# Microsoft Office  
+# Microsoft Office
 frida -f winword.exe -l dotnet_bypass_suite.js -l registry_monitor.js -l telemetry_blocker.js
 ```
 
@@ -477,7 +477,7 @@ frida -U -f com.example.app -l android_bypass_suite.js -l certificate_pinner_byp
 - Success rate: 95%+ on most Creative Suite applications
 
 **Microsoft Office 365:**
-- Use `dotnet_bypass_suite.js` + `registry_monitor.js` + `websocket_interceptor.js`  
+- Use `dotnet_bypass_suite.js` + `registry_monitor.js` + `websocket_interceptor.js`
 - Bypasses .NET license validation, registry checks, and online activation
 - Compatible with Word, Excel, PowerPoint, and Outlook
 
@@ -526,7 +526,7 @@ Enhanced scripts use comprehensive structured messaging:
 send({
     type: "detection|success|bypass|warning|error|status|info",
     target: "script_name",
-    action: "specific_operation", 
+    action: "specific_operation",
     level: "low|medium|high|critical",
     protection_type: "license|drm|antivm|antidebug|etc",
     method_used: "hook|patch|spoof|intercept",
@@ -554,7 +554,7 @@ function safeHook(address, callback) {
                 } catch (innerError) {
                     send({
                         type: "warning",
-                        target: "script_name", 
+                        target: "script_name",
                         action: "hook_callback_failed",
                         error: innerError.message,
                         recovery_action: "attempting_fallback"
@@ -563,13 +563,13 @@ function safeHook(address, callback) {
                 }
             }
         });
-        
+
         return interceptor;
     } catch (hookError) {
         send({
             type: "error",
             target: "script_name",
-            action: "hook_placement_failed", 
+            action: "hook_placement_failed",
             address: address.toString(),
             error: hookError.message,
             fallback_available: true
@@ -595,14 +595,14 @@ const performanceMetrics = {
 function measurePerformance(operation, callback) {
     const startTime = Date.now();
     const startMemory = Process.getCurrentDir(); // Memory baseline
-    
+
     try {
         const result = callback();
         const endTime = Date.now();
-        
-        performanceMetrics.average_response_time = 
+
+        performanceMetrics.average_response_time =
             (performanceMetrics.average_response_time + (endTime - startTime)) / 2;
-            
+
         return result;
     } catch (e) {
         performanceMetrics.failed_attempts++;

@@ -13,7 +13,7 @@ We pledge to act and interact in ways that contribute to an open, welcoming, div
 Intellicrack is developed exclusively for **defensive security research** to help software developers:
 
 - **Identify weaknesses** in their own licensing protection mechanisms
-- **Test robustness** of their protection implementations in controlled environments  
+- **Test robustness** of their protection implementations in controlled environments
 - **Strengthen defenses** against potential attacks by understanding attack vectors
 - **Validate security** of their own software before deployment
 

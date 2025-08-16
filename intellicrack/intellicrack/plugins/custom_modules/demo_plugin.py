@@ -8,13 +8,12 @@ License: GPL v3
 Compatibility: Intellicrack 1.0+
 """
 
-import os
 import hashlib
-import struct
 import json
+import os
 import time
-from typing import Dict, List, Optional, Tuple, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # Import plugin base class
 from intellicrack.plugins.plugin_base import BasePlugin, PluginMetadata
@@ -28,6 +27,7 @@ PLUGIN_CATEGORIES = ["analysis", "packer", "entropy", "strings"]
 PLUGIN_SUPPORTED_FORMATS = ["PE", "ELF", "Mach-O", "Raw"]
 PLUGIN_REQUIRES = ["hashlib", "struct"]
 PLUGIN_OPTIONAL = ["pefile", "lief"]
+
 
 class AdvancedDemoPlugin(BasePlugin):
     """
@@ -53,18 +53,19 @@ class AdvancedDemoPlugin(BasePlugin):
             author=PLUGIN_AUTHOR,
             description=PLUGIN_DESCRIPTION,
             categories=PLUGIN_CATEGORIES,
-            supported_formats=PLUGIN_SUPPORTED_FORMATS
+            supported_formats=PLUGIN_SUPPORTED_FORMATS,
         )
 
         # Plugin configuration
         from intellicrack.utils.core.plugin_paths import get_plugin_cache_dir
+
         default_config = {
-            'max_file_size': 100 * 1024 * 1024,  # 100MB limit
-            'enable_caching': True,
-            'cache_dir': str(get_plugin_cache_dir()),
-            'detailed_analysis': True,
-            'export_results': False,
-            'timeout_seconds': 30
+            "max_file_size": 100 * 1024 * 1024,  # 100MB limit
+            "enable_caching": True,
+            "cache_dir": str(get_plugin_cache_dir()),
+            "detailed_analysis": True,
+            "export_results": False,
+            "timeout_seconds": 30,
         }
 
         # Initialize base plugin
@@ -83,8 +84,8 @@ class AdvancedDemoPlugin(BasePlugin):
 
     def _init_cache(self) -> None:
         """Initialize cache directory if caching is enabled."""
-        if self.config_manager.get('enable_caching'):
-            cache_path = Path(self.config_manager.get('cache_dir'))
+        if self.config_manager.get("enable_caching"):
+            cache_path = Path(self.config_manager.get("cache_dir"))
             cache_path.mkdir(exist_ok=True)
 
     def _check_dependencies(self) -> Dict[str, bool]:
@@ -115,12 +116,14 @@ class AdvancedDemoPlugin(BasePlugin):
         """Return comprehensive plugin metadata."""
         metadata = super().get_metadata()
         # Add plugin-specific information
-        metadata.update({
-            'requirements': PLUGIN_REQUIRES,
-            'optional_deps': PLUGIN_OPTIONAL,
-            'available_libs': self.available_libs,
-            'analysis_count': self.analysis_count
-        })
+        metadata.update(
+            {
+                "requirements": PLUGIN_REQUIRES,
+                "optional_deps": PLUGIN_OPTIONAL,
+                "available_libs": self.available_libs,
+                "analysis_count": self.analysis_count,
+            }
+        )
         return metadata
 
     def validate_binary(self, binary_path: str) -> Tuple[bool, str]:
@@ -134,7 +137,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
             # Check file size
             file_size = path.stat().st_size
-            max_file_size = self.config_manager.get('max_file_size')
+            max_file_size = self.config_manager.get("max_file_size")
             if file_size > max_file_size:
                 return False, f"File too large: {file_size} bytes (max: {max_file_size})"
 
@@ -143,7 +146,7 @@ class AdvancedDemoPlugin(BasePlugin):
                 return False, f"File not readable: {binary_path}"
 
             # Basic file format detection
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 header = f.read(4)
                 if len(header) < 4:
                     return False, "File too small to analyze"
@@ -160,39 +163,34 @@ class AdvancedDemoPlugin(BasePlugin):
 
     def _detect_packer(self, binary_path: str) -> Dict[str, Any]:
         """Detect common packers and protectors."""
-        packer_info = {
-            'detected': False,
-            'packer_name': None,
-            'confidence': 0.0,
-            'signatures': []
-        }
+        packer_info = {"detected": False, "packer_name": None, "confidence": 0.0, "signatures": []}
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 header = f.read(8192)  # Read first 8KB
 
                 # Common packer signatures
                 signatures = {
-                    b'UPX!': ('UPX', 0.9),
-                    b'ASPack': ('ASPack', 0.8),
-                    b'PECompact': ('PECompact', 0.8),
-                    b'MEW': ('MEW', 0.7),
-                    b'Themida': ('Themida', 0.9),
-                    b'VMProtect': ('VMProtect', 0.9),
-                    b'Armadillo': ('Armadillo', 0.8)
+                    b"UPX!": ("UPX", 0.9),
+                    b"ASPack": ("ASPack", 0.8),
+                    b"PECompact": ("PECompact", 0.8),
+                    b"MEW": ("MEW", 0.7),
+                    b"Themida": ("Themida", 0.9),
+                    b"VMProtect": ("VMProtect", 0.9),
+                    b"Armadillo": ("Armadillo", 0.8),
                 }
 
                 for sig, (name, confidence) in signatures.items():
                     if sig in header:
-                        packer_info['detected'] = True
-                        packer_info['packer_name'] = name
-                        packer_info['confidence'] = confidence
-                        packer_info['signatures'].append(name)
+                        packer_info["detected"] = True
+                        packer_info["packer_name"] = name
+                        packer_info["confidence"] = confidence
+                        packer_info["signatures"].append(name)
                         break
 
         except Exception as e:
             logger.error("Exception in plugin_system: %s", e)
-            packer_info['error'] = str(e)
+            packer_info["error"] = str(e)
 
         return packer_info
 
@@ -201,7 +199,7 @@ class AdvancedDemoPlugin(BasePlugin):
         from intellicrack.utils.core.string_utils import extract_ascii_strings
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
                 strings = extract_ascii_strings(data, min_length)
                 return strings[:100]  # Limit to first 100 strings
@@ -214,16 +212,16 @@ class AdvancedDemoPlugin(BasePlugin):
         hashes = {}
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
-                hashes['md5'] = hashlib.md5(data).hexdigest()
-                hashes['sha1'] = hashlib.sha1(data).hexdigest()
-                hashes['sha256'] = hashlib.sha256(data).hexdigest()
+                hashes["md5"] = hashlib.md5(data).hexdigest()
+                hashes["sha1"] = hashlib.sha1(data).hexdigest()
+                hashes["sha256"] = hashlib.sha256(data).hexdigest()
 
         except Exception as e:
             self.logger.error("Exception in plugin_system: %s", e)
-            hashes['error'] = str(e)
+            hashes["error"] = str(e)
 
         return hashes
 
@@ -274,14 +272,14 @@ class AdvancedDemoPlugin(BasePlugin):
             # Step 3: Hash calculation
             update_progress("Calculating file hashes...")
             hashes = self._get_file_hashes(binary_path)
-            if 'error' not in hashes:
+            if "error" not in hashes:
                 results.append("🔒 File Hashes:")
                 for hash_type, hash_value in hashes.items():
                     results.append(f"  {hash_type.upper()}: {hash_value}")
 
             # Step 4: Entropy analysis
             update_progress("Analyzing entropy...")
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 sample_data = f.read(min(65536, file_info.st_size))  # First 64KB
             entropy = self._calculate_entropy(sample_data)
             results.append(f"📊 Entropy: {entropy:.2f}")
@@ -293,8 +291,10 @@ class AdvancedDemoPlugin(BasePlugin):
             # Step 5: Packer detection
             update_progress("Detecting packers...")
             packer_info = self._detect_packer(binary_path)
-            if packer_info['detected']:
-                results.append(f"📦 Packer detected: {packer_info['packer_name']} (confidence: {packer_info['confidence']:.1%})")
+            if packer_info["detected"]:
+                results.append(
+                    f"📦 Packer detected: {packer_info['packer_name']} (confidence: {packer_info['confidence']:.1%})"
+                )
             else:
                 results.append("📦 No common packers detected")
 
@@ -307,12 +307,16 @@ class AdvancedDemoPlugin(BasePlugin):
 
             # Step 7: Advanced analysis (if available)
             update_progress("Performing advanced analysis...")
-            if self.available_libs.get('pefile', False) and binary_path.lower().endswith(('.exe', '.dll')):
+            if self.available_libs.get("pefile", False) and binary_path.lower().endswith(
+                (".exe", ".dll")
+            ):
                 results.append("🔍 PE analysis available (pefile installed)")
-            elif self.available_libs.get('lief', False):
+            elif self.available_libs.get("lief", False):
                 results.append("🔍 Advanced analysis available (LIEF installed)")
             else:
-                results.append("🔍 Advanced analysis unavailable (install pefile/lief for more features)")
+                results.append(
+                    "🔍 Advanced analysis unavailable (install pefile/lief for more features)"
+                )
 
             # Analysis summary
             analysis_time = time.time() - start_time
@@ -326,11 +330,11 @@ class AdvancedDemoPlugin(BasePlugin):
 
             # Store last analysis
             self.last_analysis = {
-                'timestamp': time.time(),
-                'file_path': binary_path,
-                'results': results.copy(),
-                'entropy': entropy,
-                'packer_detected': packer_info['detected']
+                "timestamp": time.time(),
+                "file_path": binary_path,
+                "results": results.copy(),
+                "entropy": entropy,
+                "packer_detected": packer_info["detected"],
             }
 
         except Exception as e:
@@ -356,11 +360,7 @@ class AdvancedDemoPlugin(BasePlugin):
         try:
             # Default patch options
             if patch_options is None:
-                patch_options = {
-                    'create_backup': True,
-                    'verify_patch': True,
-                    'dry_run': False
-                }
+                patch_options = {"create_backup": True, "verify_patch": True, "dry_run": False}
 
             results.append(f"🔧 Starting patch operation on: {os.path.basename(binary_path)}")
 
@@ -371,14 +371,15 @@ class AdvancedDemoPlugin(BasePlugin):
                 return results
 
             # Create backup if requested
-            if patch_options.get('create_backup', True):
+            if patch_options.get("create_backup", True):
                 backup_path = binary_path + f".backup_{int(time.time())}"
                 import shutil
+
                 shutil.copy2(binary_path, backup_path)
                 results.append(f"💾 Created backup: {os.path.basename(backup_path)}")
 
             # Dry run mode
-            if patch_options.get('dry_run', False):
+            if patch_options.get("dry_run", False):
                 results.append("🧪 Dry run mode - no actual changes will be made")
                 results.append("🔍 Patch simulation:")
                 results.append("  • Would modify binary header")
@@ -397,7 +398,7 @@ class AdvancedDemoPlugin(BasePlugin):
             results.append("  • Verify patch integrity")
 
             # Verification
-            if patch_options.get('verify_patch', True):
+            if patch_options.get("verify_patch", True):
                 results.append("🔍 Verifying patch integrity...")
                 results.append("✅ Patch verification completed")
 
@@ -411,56 +412,52 @@ class AdvancedDemoPlugin(BasePlugin):
 
     def run(self, *args, **kwargs) -> Dict[str, Any]:
         """Main plugin execution method required by BasePlugin.
-        
+
         Args:
             *args: Variable arguments
             **kwargs: Keyword arguments
-            
+
         Returns:
             Dictionary containing execution results
         """
-        binary_path = kwargs.get('binary_path', args[0] if args else None)
-        
+        binary_path = kwargs.get("binary_path", args[0] if args else None)
+
         if not binary_path:
-            return {
-                'success': False,
-                'error': 'No binary path provided',
-                'results': []
-            }
-            
+            return {"success": False, "error": "No binary path provided", "results": []}
+
         try:
             # Run analysis
-            results = self.analyze(binary_path, kwargs.get('progress_callback'))
-            
+            results = self.analyze(binary_path, kwargs.get("progress_callback"))
+
             return {
-                'success': True,
-                'error': None,
-                'results': results,
-                'metadata': {
-                    'plugin_name': self.name,
-                    'plugin_version': self.version,
-                    'analysis_count': self.analysis_count
-                }
+                "success": True,
+                "error": None,
+                "results": results,
+                "metadata": {
+                    "plugin_name": self.name,
+                    "plugin_version": self.version,
+                    "analysis_count": self.analysis_count,
+                },
             }
         except Exception as e:
             return {
-                'success': False,
-                'error': str(e),
-                'results': [f"Plugin execution failed: {str(e)}"]
+                "success": False,
+                "error": str(e),
+                "results": [f"Plugin execution failed: {str(e)}"],
             }
 
-    def export_results(self, output_path: str, format_type: str = 'json') -> bool:
+    def export_results(self, output_path: str, format_type: str = "json") -> bool:
         """Export analysis results to file."""
         if not self.last_analysis:
             return False
 
         try:
-            if format_type.lower() == 'json':
-                with open(output_path, 'w') as f:
+            if format_type.lower() == "json":
+                with open(output_path, "w") as f:
                     json.dump(self.last_analysis, f, indent=2)
-            elif format_type.lower() == 'txt':
-                with open(output_path, 'w') as f:
-                    f.write("\n".join(self.last_analysis['results']))
+            elif format_type.lower() == "txt":
+                with open(output_path, "w") as f:
+                    f.write("\n".join(self.last_analysis["results"]))
             else:
                 return False
 
@@ -491,8 +488,9 @@ class AdvancedDemoPlugin(BasePlugin):
             "progress_reporting",
             "configuration",
             "export",
-            "validation"
+            "validation",
         ]
+
 
 def register():
     """
@@ -503,8 +501,9 @@ def register():
     """
     return AdvancedDemoPlugin()
 
+
 # Plugin information (can be accessed without instantiating)
-from intellicrack.plugins.plugin_base import PluginMetadata, create_plugin_info
+from intellicrack.plugins.plugin_base import create_plugin_info
 
 _plugin_metadata = PluginMetadata(
     name=PLUGIN_NAME,
@@ -512,6 +511,6 @@ _plugin_metadata = PluginMetadata(
     author=PLUGIN_AUTHOR,
     description=PLUGIN_DESCRIPTION,
     categories=PLUGIN_CATEGORIES,
-    supported_formats=PLUGIN_SUPPORTED_FORMATS
+    supported_formats=PLUGIN_SUPPORTED_FORMATS,
 )
-PLUGIN_INFO = create_plugin_info(_plugin_metadata, 'register')
+PLUGIN_INFO = create_plugin_info(_plugin_metadata, "register")

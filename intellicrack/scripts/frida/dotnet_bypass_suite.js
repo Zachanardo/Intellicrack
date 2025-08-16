@@ -27,7 +27,7 @@
  * License: GPL v3
  */
 
-{
+const DotnetBypassSuite = {
     name: ".NET Bypass Suite",
     description: "Advanced .NET runtime manipulation and protection bypass",
     version: "1.0.0",
@@ -2095,4 +2095,9 @@
 
         this.stats.methodsHooked += clmPatterns.length + applockerPatterns.length;
     }
+};
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = DotnetBypassSuite;
 }

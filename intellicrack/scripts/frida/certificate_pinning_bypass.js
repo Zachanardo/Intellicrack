@@ -28,7 +28,7 @@
  * License: GPL v3
  */
 
-{
+const CertificatePinningBypass = {
     name: "Certificate Pinning Bypass",
     description: "Comprehensive SSL/TLS certificate pinning bypass for all platforms",
     version: "2.0.0",
@@ -1723,8 +1723,7 @@
             type: "info",
             target: "certificate_pinning_bypass",
             action: "statistics_separator",
-            message: "
-=========================================="
+            message: "=========================================="
         });
         send({
             type: "info",
@@ -1835,8 +1834,7 @@
             type: "info",
             target: "certificate_pinning_bypass",
             action: "statistics_separator",
-            message: "==========================================
-"
+            message: "=========================================="
         });
     },
     // Utility function to check if certificate should be trusted
@@ -1925,8 +1923,7 @@
             type: "info",
             target: "certificate_pinning_bypass",
             action: "startup_separator",
-            message: "===========================================
-"
+            message: "==========================================="
         });
 
         this.initialize();
@@ -1936,7 +1933,9 @@
             this.printStatistics();
         }, 2000);
     }
-};// Auto-run on script load
+};
+
+// Auto-run on script load
 if (typeof rpc !== 'undefined') {
     // Frida RPC exports
     rpc.exports = {
@@ -1975,7 +1974,7 @@ if (typeof rpc !== 'undefined') {
 }
 
 // Store reference for global access
-const sslBypass = certificatePinningBypass;
+const sslBypass = CertificatePinningBypass;
 
 // Auto-run immediately
 sslBypass.run();
@@ -2007,6 +2006,8 @@ if (typeof Java !== 'undefined' && Java.available) {
     }, 1000);
 }
 
+// Additional object methods for 2024-2025 enhancements
+Object.assign(CertificatePinningBypass, {
     // === NEW 2024-2025 MODERN CERTIFICATE SECURITY BYPASS ENHANCEMENTS ===
 
     // 1. Certificate Transparency (CT) Log Bypass 2.0 - Enhanced SCT validation and CT log verification bypass
@@ -3306,7 +3307,10 @@ if (typeof Java !== 'undefined' && Java.available) {
                 error: e.message
             });
         }
-    };
+    }
+});
 
-// Export the main bypass object
-const certificatePinningBypass = this;
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = CertificatePinningBypass;
+}

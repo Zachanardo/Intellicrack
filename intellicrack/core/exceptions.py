@@ -21,15 +21,18 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 class IntellicrackException(Exception):
     """Base exception for all Intellicrack-specific errors."""
+
     pass
 
 
 class ConfigurationError(IntellicrackException):
     """Raised when configuration is missing, invalid, or incomplete."""
-    
-    def __init__(self, message: str, service_name: str | None = None, config_key: str | None = None):
+
+    def __init__(
+        self, message: str, service_name: str | None = None, config_key: str | None = None
+    ):
         """Initialize configuration error.
-        
+
         Args:
             message: Error message
             service_name: Name of the service with configuration issue
@@ -42,10 +45,10 @@ class ConfigurationError(IntellicrackException):
 
 class ServiceUnavailableError(IntellicrackException):
     """Raised when a required service is unavailable."""
-    
+
     def __init__(self, message: str, service_name: str, url: str | None = None):
         """Initialize service unavailable error.
-        
+
         Args:
             message: Error message
             service_name: Name of the unavailable service
@@ -58,10 +61,10 @@ class ServiceUnavailableError(IntellicrackException):
 
 class ToolNotFoundError(IntellicrackException):
     """Raised when a required tool is not found or configured."""
-    
+
     def __init__(self, message: str, tool_name: str, search_paths: list[str] | None = None):
         """Initialize tool not found error.
-        
+
         Args:
             message: Error message
             tool_name: Name of the missing tool
@@ -74,10 +77,10 @@ class ToolNotFoundError(IntellicrackException):
 
 class ValidationError(IntellicrackException):
     """Raised when data validation fails."""
-    
+
     def __init__(self, message: str, field_name: str | None = None, value: str | None = None):
         """Initialize validation error.
-        
+
         Args:
             message: Error message
             field_name: Name of the field that failed validation
@@ -90,15 +93,18 @@ class ValidationError(IntellicrackException):
 
 class SecurityError(IntellicrackException):
     """Raised when security validation fails."""
+
     pass
 
 
 class AnalysisError(IntellicrackException):
     """Raised when binary analysis fails."""
-    
-    def __init__(self, message: str, binary_path: str | None = None, analysis_type: str | None = None):
+
+    def __init__(
+        self, message: str, binary_path: str | None = None, analysis_type: str | None = None
+    ):
         """Initialize analysis error.
-        
+
         Args:
             message: Error message
             binary_path: Path to binary that failed analysis
@@ -111,10 +117,10 @@ class AnalysisError(IntellicrackException):
 
 class ExploitationError(IntellicrackException):
     """Raised when exploitation operations fail."""
-    
+
     def __init__(self, message: str, target: str | None = None, technique: str | None = None):
         """Initialize exploitation error.
-        
+
         Args:
             message: Error message
             target: Target that failed exploitation
@@ -127,10 +133,10 @@ class ExploitationError(IntellicrackException):
 
 class NetworkError(IntellicrackException):
     """Raised when network operations fail."""
-    
+
     def __init__(self, message: str, host: str | None = None, port: int | None = None):
         """Initialize network error.
-        
+
         Args:
             message: Error message
             host: Host that failed connection

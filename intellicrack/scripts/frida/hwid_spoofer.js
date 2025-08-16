@@ -202,7 +202,7 @@ class HwidSpooferEnhanced {
                     if (retval.toInt32() !== 0 && this.buffer && !this.buffer.isNull()) {
                         const property = this.property;
                         if (property === 0 || property === 1 || property === 12) { // DeviceDesc, HardwareID, FriendlyName
-                            const spoofedValue = "Generic Hardware Device";
+                            const spoofedValue = 'Generic Hardware Device';
                             this.buffer.writeUtf16String(spoofedValue);
                             send({
                                 type: 'bypass',
@@ -390,7 +390,7 @@ class HwidSpooferEnhanced {
                 },
                 onLeave: function(retval) {
                     if (this.spoofManufacturer && retval.toInt32() === 0 && this.dataBuffer && !this.dataBuffer.isNull()) {
-                        const spoofedValue = "Generic Computer Inc.";
+                        const spoofedValue = 'Generic Computer Inc.';
                         this.dataBuffer.writeUtf16String(spoofedValue);
 
                         send({
@@ -703,7 +703,7 @@ class HwidSpooferEnhanced {
                 onLeave: function(retval) {
                     if (retval.toInt32() !== 0 && this.propertyBuffer && !this.propertyBuffer.isNull()) {
                         // Spoof USB device properties
-                        const spoofedProperty = "Generic USB Device";
+                        const spoofedProperty = 'Generic USB Device';
                         this.propertyBuffer.writeUtf16String(spoofedProperty);
 
                         send({
@@ -805,8 +805,8 @@ class HwidSpooferEnhanced {
                         const deviceNameOffset = 4;
                         const deviceStringOffset = 132;
 
-                        const spoofedName = "Generic Display Adapter";
-                        const spoofedString = "Generic PnP Monitor";
+                        const spoofedName = 'Generic Display Adapter';
+                        const spoofedString = 'Generic PnP Monitor';
 
                         this.displayDevice.add(deviceNameOffset).writeUtf16String(spoofedName);
                         this.displayDevice.add(deviceStringOffset).writeUtf16String(spoofedString);
@@ -901,10 +901,10 @@ class HwidSpooferEnhanced {
                     if (index === 12 || index === 14 || index === 88 || index === 90) { // HORZRES, VERTRES, HORZSIZE, VERTSIZE
                         let spoofedValue = 0;
                         switch (index) {
-                            case 12: spoofedValue = 1920; break; // HORZRES
-                            case 14: spoofedValue = 1080; break; // VERTRES
-                            case 88: spoofedValue = 510; break;  // HORZSIZE (mm)
-                            case 90: spoofedValue = 287; break;  // VERTSIZE (mm)
+                        case 12: spoofedValue = 1920; break; // HORZRES
+                        case 14: spoofedValue = 1080; break; // VERTRES
+                        case 88: spoofedValue = 510; break;  // HORZSIZE (mm)
+                        case 90: spoofedValue = 287; break;  // VERTSIZE (mm)
                         }
 
                         if (spoofedValue > 0) {
@@ -951,10 +951,10 @@ class HwidSpooferEnhanced {
                             const descriptionPtr = addresses.add(16).readPointer();
 
                             if (adapterNamePtr && !adapterNamePtr.isNull()) {
-                                adapterNamePtr.writeUtf16String("Generic Ethernet Adapter");
+                                adapterNamePtr.writeUtf16String('Generic Ethernet Adapter');
                             }
                             if (descriptionPtr && !descriptionPtr.isNull()) {
-                                descriptionPtr.writeUtf16String("Generic Network Adapter");
+                                descriptionPtr.writeUtf16String('Generic Network Adapter');
                             }
 
                             // Spoof physical address (MAC)

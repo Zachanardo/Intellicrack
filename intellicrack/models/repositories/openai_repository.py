@@ -19,10 +19,11 @@ import logging
 import os
 from typing import Any
 
-from .base import APIRepositoryBase, RateLimitConfig
-from .interface import ModelInfo
 from intellicrack.core.config_manager import get_config
 from intellicrack.utils.secrets_manager import SecretsManager
+
+from .base import APIRepositoryBase, RateLimitConfig
+from .interface import ModelInfo
 
 """
 OpenAI Repository Implementation
@@ -66,12 +67,12 @@ class OpenAIRepository(APIRepositoryBase):
         if api_endpoint is None:
             config = get_config()
             api_endpoint = config.get_api_endpoint("openai") or "https://api.openai.com/v1"
-        
+
         # Get API key from secrets manager if not provided
         if not api_key:
             secrets_manager = SecretsManager()
             api_key = secrets_manager.get("OPENAI_API_KEY") or ""
-        
+
         super().__init__(
             repository_name=repository_name,
             api_endpoint=api_endpoint,

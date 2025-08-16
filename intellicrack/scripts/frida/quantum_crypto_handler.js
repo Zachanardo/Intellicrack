@@ -28,7 +28,7 @@
  * License: GPL v3
  */
 
-{
+const QuantumCryptoHandler = {
     name: "Quantum Crypto Handler",
     description: "Post-quantum cryptography detection and bypass for future-proof protection",
     version: "2.0.0",
@@ -1549,7 +1549,7 @@
     detectBIKE: function() {
         // BIKE specific constants and patterns
         const bikePatterns = ["bike", "BIKE", "bit_flipping", "qc_mdpc"];
-        
+
         // BIKE uses quasi-cyclic MDPC codes
         const bikeFuncs = [
             "bike_keygen", "bike_encaps", "bike_decaps",
@@ -1696,7 +1696,7 @@
         // X25519 + Kyber hybrid KEM
         this.detectX25519Kyber();
 
-        // P-256 + Dilithium hybrid signatures  
+        // P-256 + Dilithium hybrid signatures
         this.detectP256Dilithium();
 
         // RSA + PQC composite signatures
@@ -1778,7 +1778,7 @@
                     // Scan for PQC-indicative instruction patterns
                     const instructions = [];
                     let addr = range.base;
-                    
+
                     // Sample instructions in range
                     for (let i = 0; i < Math.min(1000, range.size / 4); i++) {
                         try {
@@ -1795,7 +1795,7 @@
                     // Analyze instruction patterns
                     const features = this.extractPQCFeatures(instructions);
                     const score = this.computePQCScore(features);
-                    
+
                     if (score > 0.7) {
                         send({
                             type: "detection",
@@ -1920,12 +1920,12 @@
         // Hook key generation for timing
         const keygenHook = (funcName, args) => {
             const startTime = Date.now();
-            
+
             return {
                 onLeave: function(retval) {
                     const endTime = Date.now();
                     const duration = endTime - startTime;
-                    
+
                     if (!timingData.has(funcName)) {
                         timingData.set(funcName, []);
                     }
@@ -1975,7 +1975,7 @@
         try {
             // Scan heap regions for key patterns
             const heapRanges = Process.enumerateRanges('rw-');
-            
+
             heapRanges.forEach(range => {
                 try {
                     // Look for key-like data patterns
@@ -1986,7 +1986,7 @@
             });
 
             // Scan stack regions
-            const stackRanges = Process.enumerateRanges('rw-').filter(r => 
+            const stackRanges = Process.enumerateRanges('rw-').filter(r =>
                 r.protection.includes('rw') && r.size < 0x100000
             );
 
@@ -2035,7 +2035,7 @@
     calculateEntropy: function(data) {
         const bytes = new Uint8Array(data);
         const freq = new Array(256).fill(0);
-        
+
         // Count byte frequencies
         for (let i = 0; i < bytes.length; i++) {
             freq[bytes[i]]++;
@@ -2056,7 +2056,7 @@
     // Analyze high entropy data for key patterns
     analyzeHighEntropyData: function(address, data) {
         const bytes = new Uint8Array(data);
-        
+
         // Check for PQC key size patterns
         const commonKeySizes = [
             32, 64, 128, 256, 512, 768, 1024, 1568, 2592, 3168, 4864
@@ -2122,7 +2122,7 @@
             64: "SPHINCS+ public key",
             128: "SPHINCS+ private key",
             768: "Kyber-512 public key",
-            1568: "Kyber-768/1024 public key", 
+            1568: "Kyber-768/1024 public key",
             2592: "Dilithium public key",
             3168: "Kyber private key",
             4864: "Dilithium private key"
@@ -2164,7 +2164,7 @@
                             const size = this.prngContext.size.toInt32();
                             if (size > 0 && size <= 4096) {
                                 const randomData = this.prngContext.buffer.readByteArray(size);
-                                
+
                                 send({
                                     type: "info",
                                     target: "quantum_crypto_handler",
@@ -2188,16 +2188,16 @@
     // Analyze randomness quality
     analyzeRandomness: function(data, source) {
         const bytes = new Uint8Array(data);
-        
+
         // Simple statistical tests
         const entropy = this.calculateEntropy(data);
         const mean = bytes.reduce((a, b) => a + b, 0) / bytes.length;
-        
+
         // Chi-square test approximation
         const expected = bytes.length / 256;
         const freq = new Array(256).fill(0);
         bytes.forEach(b => freq[b]++);
-        
+
         let chiSquare = 0;
         for (let i = 0; i < 256; i++) {
             const diff = freq[i] - expected;
@@ -2246,7 +2246,7 @@
             try {
                 const constBytes = [
                     (constant >> 24) & 0xFF,
-                    (constant >> 16) & 0xFF, 
+                    (constant >> 16) & 0xFF,
                     (constant >> 8) & 0xFF,
                     constant & 0xFF
                 ];
@@ -2276,7 +2276,7 @@
         // FrodoKEM parameters
         const frodoParams = [
             { n: 640, q: 32768 },  // Frodo-640
-            { n: 976, q: 65536 },  // Frodo-976  
+            { n: 976, q: 65536 },  // Frodo-976
             { n: 1344, q: 65536 }  // Frodo-1344
         ];
 
@@ -2318,7 +2318,7 @@
         try {
             const pattern = Array.from(x25519Base.slice(0, 8))
                 .map(b => b.toString(16).padStart(2, '0')).join(' ');
-            
+
             const matches = Memory.scanSync(Process.enumerateRanges('r--'), {
                 pattern: pattern
             });
@@ -2347,7 +2347,7 @@
 
         // Kyber q = 3329
         const kyberQ = 3329;
-        
+
         try {
             const qBytes = [(kyberQ >> 8) & 0xFF, kyberQ & 0xFF];
             const ranges = [{
@@ -2961,7 +2961,7 @@ if (typeof Java !== 'undefined') {
 
         hybridCiphersuites.forEach(suite => {
             const suiteBytes = [(suite >> 8) & 0xFF, suite & 0xFF];
-            
+
             try {
                 const matches = Memory.scanSync(Process.enumerateRanges('r--'), {
                     pattern: suiteBytes.map(b => b.toString(16).padStart(2, '0')).join(' ')
@@ -3062,7 +3062,7 @@ if (typeof Java !== 'undefined') {
                         action: "polynomial_ntt_detected",
                         function: func
                     });
-                    
+
                     // Log polynomial size if available
                     if (args[1] && !args[1].isNull()) {
                         try {
@@ -3180,27 +3180,27 @@ if (typeof Java !== 'undefined') {
         const pqcSizes = {
             // Kyber sizes
             768: "Kyber-512 ciphertext",
-            1088: "Kyber-768 ciphertext", 
+            1088: "Kyber-768 ciphertext",
             1568: "Kyber-1024 ciphertext/public key",
             3168: "Kyber-1024 private key",
-            
+
             // Dilithium sizes
             2592: "Dilithium-5 public key",
             4864: "Dilithium-5 private key",
             4595: "Dilithium-5 signature",
-            
+
             // SPHINCS+ sizes
             32: "SPHINCS+-SHA256-128s seed",
-            64: "SPHINCS+-SHA256-128s public key", 
+            64: "SPHINCS+-SHA256-128s public key",
             128: "SPHINCS+-SHA256-128s private key",
             17088: "SPHINCS+-SHA256-128s signature",
-            
+
             // FALCON sizes
             897: "FALCON-512 public key",
             1793: "FALCON-1024 public key",
             666: "FALCON-512 signature",
             1280: "FALCON-1024 signature",
-            
+
             // McEliece sizes
             1357824: "Classic McEliece public key",
             14080: "Classic McEliece private key",
@@ -3227,7 +3227,7 @@ if (typeof Java !== 'undefined') {
         try {
             // Set up memory access monitoring
             Memory.protect(address, size, 'rw-');
-            
+
             // Track read/write patterns
             const accessPattern = {
                 reads: 0,
@@ -3241,7 +3241,7 @@ if (typeof Java !== 'undefined') {
 
         } catch (e) {
             send({
-                type: "error", 
+                type: "error",
                 target: "quantum_crypto_handler",
                 action: "allocation_monitoring_failed",
                 error: e.toString()
@@ -3253,7 +3253,7 @@ if (typeof Java !== 'undefined') {
     trackMemoryAccess: function(address, size, pattern, classification) {
         // This is a simplified tracking approach
         // In practice, would need hardware breakpoints or binary instrumentation
-        
+
         const monitorId = `monitor_${address.toString()}`;
         this.state.crypto_contexts.set(monitorId, {
             address: address,
@@ -3279,11 +3279,11 @@ if (typeof Java !== 'undefined') {
             // Matrix operations
             "matrix_mul", "matrix_add", "matrix_transpose",
             "vector_add", "vector_sub", "vector_dot",
-            
-            // Polynomial operations  
+
+            // Polynomial operations
             "poly_add", "poly_sub", "poly_mul",
             "poly_reduce", "poly_freeze",
-            
+
             // Lattice operations
             "lattice_reduce", "lll_reduce", "gram_schmidt",
             "shortest_vector", "closest_vector"
@@ -3293,12 +3293,12 @@ if (typeof Java !== 'undefined') {
             this.findAndHookFunction(pattern, 'structured_access', {
                 onEnter: function(args) {
                     send({
-                        type: "detection", 
+                        type: "detection",
                         target: "quantum_crypto_handler",
                         action: "structured_operation_detected",
                         operation: pattern
                     });
-                    
+
                     // Analyze argument patterns
                     this.analyzeStructuredArgs(args, pattern);
                 }.bind(this)
@@ -3316,10 +3316,10 @@ if (typeof Java !== 'undefined') {
                     const data = args[i].readByteArray(64); // Sample first 64 bytes
                     if (data) {
                         const entropy = this.calculateEntropy(data);
-                        
+
                         send({
                             type: "info",
-                            target: "quantum_crypto_handler", 
+                            target: "quantum_crypto_handler",
                             action: "structured_arg_analyzed",
                             operation: operation,
                             arg_index: i,
@@ -3356,7 +3356,7 @@ if (typeof Java !== 'undefined') {
     // Analyze function call frequencies
     analyzeFunctionFrequencies: function() {
         const callCounts = new Map();
-        
+
         // Hook common crypto functions and count calls
         const cryptoFuncs = [
             "memcpy", "memset", "malloc", "free",
@@ -3368,7 +3368,7 @@ if (typeof Java !== 'undefined') {
                 onEnter: function(args) {
                     const count = callCounts.get(func) || 0;
                     callCounts.set(func, count + 1);
-                    
+
                     if (count % 100 === 0) { // Report every 100 calls
                         send({
                             type: "info",
@@ -3387,7 +3387,7 @@ if (typeof Java !== 'undefined') {
             if (callCounts.size > 0) {
                 send({
                     type: "info",
-                    target: "quantum_crypto_handler", 
+                    target: "quantum_crypto_handler",
                     action: "frequency_analysis_report",
                     counts: Object.fromEntries(callCounts)
                 });
@@ -3395,7 +3395,7 @@ if (typeof Java !== 'undefined') {
         }, 60000);
     },
 
-    // Analyze timing pattern 
+    // Analyze timing pattern
     analyzeTimingPattern: function(funcName, timings) {
         const mean = timings.reduce((a, b) => a + b, 0) / timings.length;
         const variance = timings.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / timings.length;
@@ -3429,7 +3429,7 @@ if (typeof Java !== 'undefined') {
     simulatePowerAnalysis: function() {
         send({
             type: "info",
-            target: "quantum_crypto_handler", 
+            target: "quantum_crypto_handler",
             action: "power_analysis_simulation",
             message: "Simulating power analysis vulnerabilities..."
         });
@@ -3449,7 +3449,7 @@ if (typeof Java !== 'undefined') {
     monitorBitOperations: function() {
         // Hook common bit manipulation functions
         const bitFuncs = [
-            "bit_set", "bit_clear", "bit_test", 
+            "bit_set", "bit_clear", "bit_test",
             "popcount", "hamming_weight", "parity"
         ];
 
@@ -3468,7 +3468,7 @@ if (typeof Java !== 'undefined') {
                         try {
                             const value = args[0].toInt32();
                             const hammingWeight = this.calculateHammingWeight(value);
-                            
+
                             send({
                                 type: "info",
                                 target: "quantum_crypto_handler",
@@ -3490,22 +3490,22 @@ if (typeof Java !== 'undefined') {
     calculateHammingWeight: function(value) {
         let weight = 0;
         let n = Math.abs(value);
-        
+
         while (n > 0) {
             weight += n & 1;
             n >>= 1;
         }
-        
+
         return weight;
     },
 
     // Analyze Hamming weight patterns
     analyzeHammingWeight: function() {
         const hammingWeights = [];
-        
+
         // Hook operations that process key material
         const keyOps = ["key_expand", "key_schedule", "derive_key"];
-        
+
         keyOps.forEach(op => {
             this.findAndHookFunction(op, 'hamming_analysis', {
                 onEnter: function(args) {
@@ -3516,13 +3516,13 @@ if (typeof Java !== 'undefined') {
                             if (keyData) {
                                 const bytes = new Uint8Array(keyData);
                                 let totalWeight = 0;
-                                
+
                                 bytes.forEach(byte => {
                                     totalWeight += this.calculateHammingWeight(byte);
                                 });
-                                
+
                                 hammingWeights.push(totalWeight);
-                                
+
                                 send({
                                     type: "info",
                                     target: "quantum_crypto_handler",
@@ -3597,11 +3597,11 @@ if (typeof Java !== 'undefined') {
     // Simulate fault injection
     simulateFaultInjection: function(retval, state) {
         const originalValue = retval.toInt32();
-        
+
         // Common fault injection effects
         const faultTypes = [
             () => retval.replace(ptr(0)), // Set to zero
-            () => retval.replace(ptr(1)), // Set to one  
+            () => retval.replace(ptr(1)), // Set to one
             () => retval.replace(ptr(-1)), // Set to -1
             () => retval.replace(ptr(originalValue ^ 1)), // Flip LSB
             () => retval.replace(ptr(originalValue ^ 0x80000000)) // Flip MSB
@@ -3612,7 +3612,7 @@ if (typeof Java !== 'undefined') {
 
         send({
             type: "detection",
-            target: "quantum_crypto_handler", 
+            target: "quantum_crypto_handler",
             action: "fault_injection_simulated",
             function: state.function,
             original_value: originalValue,
@@ -3626,13 +3626,13 @@ if (typeof Java !== 'undefined') {
         send({
             type: "info",
             target: "quantum_crypto_handler",
-            action: "cache_timing_analysis", 
+            action: "cache_timing_analysis",
             message: "Analyzing cache timing side-channels..."
         });
 
         // Hook memory-intensive operations
         const memoryOps = [
-            "memcpy", "memset", "memcmp", 
+            "memcpy", "memset", "memcmp",
             "table_lookup", "array_access"
         ];
 
@@ -3644,14 +3644,14 @@ if (typeof Java !== 'undefined') {
                     this.cacheTimingStart = Date.now();
                     this.memoryArgs = {
                         dest: args[0],
-                        src: args[1], 
+                        src: args[1],
                         size: args[2] ? args[2].toInt32() : 0
                     };
                 },
                 onLeave: function(retval) {
                     if (this.cacheTimingStart) {
                         const duration = Date.now() - this.cacheTimingStart;
-                        
+
                         if (!timingData.has(op)) {
                             timingData.set(op, []);
                         }
@@ -3714,10 +3714,10 @@ if (typeof Java !== 'undefined') {
 
         // Target operations that might leak key information
         this.targetKeyLeakage();
-        
+
         // Analyze key reuse patterns
         this.analyzeKeyReuse();
-        
+
         // Attempt lattice-based key recovery
         this.attemptLatticeKeyRecovery();
     },
@@ -3759,7 +3759,7 @@ if (typeof Java !== 'undefined') {
                     const data = args[i].readByteArray(128);
                     if (data) {
                         const entropy = this.calculateEntropy(data);
-                        
+
                         if (entropy > 6.0) { // High entropy suggests key material
                             send({
                                 type: "detection",
@@ -3797,12 +3797,12 @@ if (typeof Java !== 'undefined') {
 
             // Search for key-like patterns
             const bytes = new Uint8Array(stackData);
-            
+
             // Look for high-entropy regions (potential temporary keys)
             for (let i = 0; i < bytes.length - 32; i += 16) {
                 const sample = stackData.slice(i, i + 32);
                 const entropy = this.calculateEntropy(sample);
-                
+
                 if (entropy > 7.0) {
                     send({
                         type: "detection",
@@ -3824,7 +3824,7 @@ if (typeof Java !== 'undefined') {
     // Analyze potential stack key
     analyzeStackKey: function(address, data) {
         const bytes = new Uint8Array(data);
-        
+
         // Check for common key patterns
         const patterns = {
             all_zeros: bytes.every(b => b === 0),
@@ -3835,10 +3835,10 @@ if (typeof Java !== 'undefined') {
 
         // Real keys should not have obvious patterns
         const hasPattern = Object.values(patterns).some(p => p);
-        
+
         if (!hasPattern) {
             send({
-                type: "detection", 
+                type: "detection",
                 target: "quantum_crypto_handler",
                 action: "legitimate_stack_key_candidate",
                 address: address.toString(),
@@ -3860,7 +3860,7 @@ if (typeof Java !== 'undefined') {
     performQuantumKeyDerivationAttacks: function() {
         send({
             type: "detection",
-            target: "quantum_crypto_handler", 
+            target: "quantum_crypto_handler",
             action: "performing_qkd_attacks",
             timestamp: Date.now()
         });
@@ -3875,10 +3875,10 @@ if (typeof Java !== 'undefined') {
 
         kdfFunctions.forEach(funcName => {
             try {
-                const symbols = Module.enumerateExportsSync().filter(exp => 
+                const symbols = Module.enumerateExportsSync().filter(exp =>
                     exp.name.toLowerCase().includes(funcName.toLowerCase())
                 );
-                
+
                 symbols.forEach(symbol => {
                     Interceptor.attach(symbol.address, {
                         onEnter: function(args) {
@@ -3904,7 +3904,7 @@ if (typeof Java !== 'undefined') {
 
                             // Extract derived key
                             const derivedKey = this.extractBuffer(retval, this.kdfArgs.keyLen || 32);
-                            
+
                             send({
                                 type: "detection",
                                 target: "quantum_crypto_handler",
@@ -3929,7 +3929,7 @@ if (typeof Java !== 'undefined') {
     analyzeWeakKey: function(keyData, source) {
         const bytes = new Uint8Array(keyData);
         const entropy = this.calculateEntropy(bytes);
-        
+
         // Weak key indicators
         const weaknessTests = {
             low_entropy: entropy < 6.0,
@@ -3941,7 +3941,7 @@ if (typeof Java !== 'undefined') {
         };
 
         const weaknesses = Object.keys(weaknessTests).filter(test => weaknessTests[test]);
-        
+
         if (weaknesses.length > 0) {
             send({
                 type: "vulnerability",
@@ -3960,14 +3960,14 @@ if (typeof Java !== 'undefined') {
         for (let patternLen = 1; patternLen <= Math.min(8, bytes.length / 2); patternLen++) {
             const pattern = bytes.slice(0, patternLen);
             let matches = 0;
-            
+
             for (let i = 0; i <= bytes.length - patternLen; i += patternLen) {
                 const chunk = bytes.slice(i, i + patternLen);
                 if (this.arraysEqual(pattern, chunk)) {
                     matches++;
                 }
             }
-            
+
             if (matches >= bytes.length / patternLen * 0.7) {
                 return true;
             }
@@ -3978,7 +3978,7 @@ if (typeof Java !== 'undefined') {
     // Check if sequence is predictable
     isPredictableSequence: function(bytes) {
         if (bytes.length < 3) return false;
-        
+
         // Ascending sequence
         let ascending = true;
         for (let i = 1; i < bytes.length; i++) {
@@ -3987,7 +3987,7 @@ if (typeof Java !== 'undefined') {
                 break;
             }
         }
-        
+
         // Descending sequence
         let descending = true;
         for (let i = 1; i < bytes.length; i++) {
@@ -3996,7 +3996,7 @@ if (typeof Java !== 'undefined') {
                 break;
             }
         }
-        
+
         return ascending || descending;
     },
 
@@ -4017,7 +4017,7 @@ if (typeof Java !== 'undefined') {
 
         pqSigFunctions.forEach(funcName => {
             try {
-                const symbols = Module.enumerateExportsSync().filter(exp => 
+                const symbols = Module.enumerateExportsSync().filter(exp =>
                     exp.name.toLowerCase().includes(funcName.toLowerCase())
                 );
 
@@ -4034,7 +4034,7 @@ if (typeof Java !== 'undefined') {
 
                         onLeave: function(retval) {
                             const isValid = !retval.isNull() && retval.toInt32() === 0;
-                            
+
                             if (isValid) {
                                 // Valid signature - analyze for weaknesses
                                 this.analyzePQSignature(this.signatureData, funcName);
@@ -4055,7 +4055,7 @@ if (typeof Java !== 'undefined') {
     analyzePQSignature: function(sigData, algorithm) {
         const sig = new Uint8Array(sigData.signature);
         const entropy = this.calculateEntropy(sig);
-        
+
         send({
             type: "detection",
             target: "quantum_crypto_handler",
@@ -4067,10 +4067,10 @@ if (typeof Java !== 'undefined') {
 
         // Check for signature malleability
         this.checkSignatureMalleability(sigData, algorithm);
-        
+
         // Check for biased randomness
         this.checkSignatureRandomness(sigData, algorithm);
-        
+
         // Check for side-channel vulnerabilities
         this.checkSignatureSideChannels(sigData, algorithm);
     },
@@ -4078,7 +4078,7 @@ if (typeof Java !== 'undefined') {
     // Check for signature malleability vulnerabilities
     checkSignatureMalleability: function(sigData, algorithm) {
         const sig = new Uint8Array(sigData.signature);
-        
+
         // Common malleability patterns
         const mallTests = {
             all_zeros: sig.every(b => b === 0),
@@ -4088,11 +4088,11 @@ if (typeof Java !== 'undefined') {
         };
 
         const vulnerabilities = Object.keys(mallTests).filter(test => mallTests[test]);
-        
+
         if (vulnerabilities.length > 0) {
             send({
                 type: "vulnerability",
-                target: "quantum_crypto_handler", 
+                target: "quantum_crypto_handler",
                 action: "signature_malleability_detected",
                 algorithm: algorithm,
                 vulnerabilities: vulnerabilities
@@ -4114,7 +4114,7 @@ if (typeof Java !== 'undefined') {
     checkSignatureRandomness: function(sigData, algorithm) {
         const sig = new Uint8Array(sigData.signature);
         const entropy = this.calculateEntropy(sig);
-        
+
         // Statistical tests for randomness
         const randomnessTests = {
             entropy_test: entropy < 7.0,
@@ -4124,7 +4124,7 @@ if (typeof Java !== 'undefined') {
         };
 
         const failedTests = Object.keys(randomnessTests).filter(test => randomnessTests[test]);
-        
+
         if (failedTests.length > 0) {
             send({
                 type: "vulnerability",
@@ -4145,10 +4145,10 @@ if (typeof Java !== 'undefined') {
                 if ((byte >> i) & 1) ones++;
             }
         });
-        
+
         const totalBits = data.length * 8;
         const ratio = ones / totalBits;
-        
+
         // Should be approximately 0.5 for random data
         return Math.abs(ratio - 0.5) > 0.1;
     },
@@ -4157,7 +4157,7 @@ if (typeof Java !== 'undefined') {
     runsTest: function(data) {
         let runs = 1;
         let prevBit = data[0] & 1;
-        
+
         for (let i = 0; i < data.length; i++) {
             for (let j = (i === 0 ? 1 : 0); j < 8; j++) {
                 const bit = (data[i] >> j) & 1;
@@ -4167,11 +4167,11 @@ if (typeof Java !== 'undefined') {
                 }
             }
         }
-        
+
         const totalBits = data.length * 8;
         const expectedRuns = totalBits / 2;
         const ratio = runs / expectedRuns;
-        
+
         // Should be approximately 1.0 for random data
         return Math.abs(ratio - 1.0) > 0.3;
     },
@@ -4179,21 +4179,21 @@ if (typeof Java !== 'undefined') {
     // NIST poker test (simplified)
     pokerTest: function(data) {
         const nibbleCounts = new Array(16).fill(0);
-        
+
         data.forEach(byte => {
             nibbleCounts[byte & 0xF]++;
             nibbleCounts[(byte >> 4) & 0xF]++;
         });
-        
+
         const totalNibbles = data.length * 2;
         const expected = totalNibbles / 16;
         let chiSquare = 0;
-        
+
         nibbleCounts.forEach(count => {
             const diff = count - expected;
             chiSquare += (diff * diff) / expected;
         });
-        
+
         // Chi-square critical value at 0.05 significance for 15 degrees of freedom
         return chiSquare > 24.996;
     },
@@ -4201,14 +4201,14 @@ if (typeof Java !== 'undefined') {
     // Check for side-channel vulnerabilities in signatures
     checkSignatureSideChannels: function(sigData, algorithm) {
         const sig = new Uint8Array(sigData.signature);
-        
+
         // Timing-based side channels
         const startTime = Date.now();
-        
+
         // Simulate signature verification timing
         setTimeout(() => {
             const timingVariation = Date.now() - startTime;
-            
+
             if (timingVariation > 100) { // Significant timing variation
                 send({
                     type: "vulnerability",
@@ -4222,7 +4222,7 @@ if (typeof Java !== 'undefined') {
 
         // Cache-based side channels
         this.performCacheAnalysis(sig, algorithm);
-        
+
         // Power analysis simulation
         this.simulatePowerAnalysis(sig, algorithm);
     },
@@ -4232,16 +4232,16 @@ if (typeof Java !== 'undefined') {
         // Simulate cache access patterns
         const cacheLines = 64;
         const accessPattern = [];
-        
+
         for (let i = 0; i < sigData.length; i += 64) {
             const line = Math.floor(i / 64) % cacheLines;
             accessPattern.push(line);
         }
-        
+
         // Check for predictable cache access patterns
         const uniqueLines = new Set(accessPattern);
         const coverage = uniqueLines.size / cacheLines;
-        
+
         if (coverage < 0.5) {
             send({
                 type: "vulnerability",
@@ -4257,16 +4257,16 @@ if (typeof Java !== 'undefined') {
     simulatePowerAnalysis: function(sigData, algorithm) {
         // Calculate simulated power consumption based on Hamming weight
         let powerTrace = [];
-        
+
         for (let i = 0; i < sigData.length; i++) {
             const hammingWeight = this.hammingWeight(sigData[i]);
             const powerConsumption = 100 + hammingWeight * 10 + Math.random() * 5;
             powerTrace.push(powerConsumption);
         }
-        
+
         // Analyze power trace for correlations
         const correlations = this.findPowerCorrelations(powerTrace, sigData);
-        
+
         if (correlations.length > 0) {
             send({
                 type: "vulnerability",
@@ -4282,14 +4282,14 @@ if (typeof Java !== 'undefined') {
     findPowerCorrelations: function(powerTrace, data) {
         const correlations = [];
         const threshold = 0.7;
-        
+
         for (let i = 0; i < Math.min(powerTrace.length - 1, 50); i++) {
             for (let j = i + 1; j < Math.min(powerTrace.length, i + 20); j++) {
                 const correlation = this.pearsonCorrelation(
                     powerTrace.slice(i, i + 10),
                     data.slice(i, i + 10)
                 );
-                
+
                 if (Math.abs(correlation) > threshold) {
                     correlations.push({
                         position: i,
@@ -4298,24 +4298,24 @@ if (typeof Java !== 'undefined') {
                 }
             }
         }
-        
+
         return correlations;
     },
 
     // Calculate Pearson correlation coefficient
     pearsonCorrelation: function(x, y) {
         if (x.length !== y.length) return 0;
-        
+
         const n = x.length;
         const sumX = x.reduce((a, b) => a + b, 0);
         const sumY = y.reduce((a, b) => a + b, 0);
         const sumXY = x.reduce((acc, xi, i) => acc + xi * y[i], 0);
         const sumX2 = x.reduce((acc, xi) => acc + xi * xi, 0);
         const sumY2 = y.reduce((acc, yi) => acc + yi * yi, 0);
-        
+
         const numerator = n * sumXY - sumX * sumY;
         const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-        
+
         return denominator === 0 ? 0 : numerator / denominator;
     },
 
@@ -4329,13 +4329,13 @@ if (typeof Java !== 'undefined') {
 
         // Monitor quantum random number generators
         this.monitorQRNGs();
-        
+
         // Analyze entropy sources
         this.analyzeEntropyContributors();
-        
+
         // Attempt entropy starvation attacks
         this.attemptEntropyStarvation();
-        
+
         // Monitor entropy pool manipulation
         this.monitorEntropyPoolManipulation();
     },
@@ -4350,7 +4350,7 @@ if (typeof Java !== 'undefined') {
 
         qrngFunctions.forEach(funcName => {
             try {
-                const symbols = Module.enumerateExportsSync().filter(exp => 
+                const symbols = Module.enumerateExportsSync().filter(exp =>
                     exp.name.toLowerCase().includes(funcName.toLowerCase())
                 );
 
@@ -4363,11 +4363,11 @@ if (typeof Java !== 'undefined') {
 
                         onLeave: function(retval) {
                             if (retval.isNull()) return;
-                            
+
                             const endTime = Date.now();
                             const randomData = this.extractBuffer(retval, this.requestedBytes);
                             const entropy = this.calculateEntropy(new Uint8Array(randomData));
-                            
+
                             send({
                                 type: "detection",
                                 target: "quantum_crypto_handler",
@@ -4393,7 +4393,7 @@ if (typeof Java !== 'undefined') {
     analyzeRandomnessQuality: function(randomData, source) {
         const bytes = new Uint8Array(randomData);
         const entropy = this.calculateEntropy(bytes);
-        
+
         // Comprehensive randomness tests
         const qualityTests = {
             entropy_test: entropy < 7.5,
@@ -4407,7 +4407,7 @@ if (typeof Java !== 'undefined') {
         };
 
         const failedTests = Object.keys(qualityTests).filter(test => qualityTests[test]);
-        
+
         if (failedTests.length > 0) {
             send({
                 type: "vulnerability",
@@ -4428,13 +4428,13 @@ if (typeof Java !== 'undefined') {
     frequencyTest: function(data) {
         const byteCounts = new Array(256).fill(0);
         data.forEach(byte => byteCounts[byte]++);
-        
+
         const expected = data.length / 256;
         const chiSquare = byteCounts.reduce((sum, count) => {
             const diff = count - expected;
             return sum + (diff * diff) / expected;
         }, 0);
-        
+
         // Chi-square critical value at 0.05 significance for 255 degrees of freedom
         return chiSquare > 293.25;
     },
@@ -4442,16 +4442,16 @@ if (typeof Java !== 'undefined') {
     // Serial correlation test
     serialTest: function(data) {
         if (data.length < 2) return false;
-        
+
         const pairCounts = {};
         for (let i = 0; i < data.length - 1; i++) {
             const pair = (data[i] << 8) | data[i + 1];
             pairCounts[pair] = (pairCounts[pair] || 0) + 1;
         }
-        
+
         const pairs = Object.keys(pairCounts).length;
         const expectedPairs = Math.min(65536, data.length - 1);
-        
+
         // Should have high number of unique pairs for random data
         return pairs < expectedPairs * 0.7;
     },
@@ -4461,7 +4461,7 @@ if (typeof Java !== 'undefined') {
         const target = 0x55; // Target byte value
         let gaps = [];
         let gapLength = 0;
-        
+
         for (let i = 0; i < data.length; i++) {
             if (data[i] === target) {
                 if (gapLength > 0) {
@@ -4472,34 +4472,34 @@ if (typeof Java !== 'undefined') {
                 gapLength++;
             }
         }
-        
+
         if (gaps.length < 2) return false;
-        
+
         // Calculate mean gap length
         const meanGap = gaps.reduce((a, b) => a + b) / gaps.length;
         const expectedMean = 255; // Expected for uniform distribution
-        
+
         return Math.abs(meanGap - expectedMean) > expectedMean * 0.3;
     },
 
     // Permutation test
     permutationTest: function(data) {
         if (data.length < 6) return false;
-        
+
         const windowSize = 3;
         const permutations = new Map();
-        
+
         for (let i = 0; i <= data.length - windowSize; i++) {
             const window = data.slice(i, i + windowSize);
             const sorted = [...window].sort((a, b) => a - b);
             const permKey = window.map(val => sorted.indexOf(val)).join('');
-            
+
             permutations.set(permKey, (permutations.get(permKey) || 0) + 1);
         }
-        
+
         const uniquePerms = permutations.size;
         const expectedPerms = Math.min(6, data.length - windowSize + 1); // 3! = 6 permutations
-        
+
         return uniquePerms < expectedPerms * 0.8;
     },
 
@@ -4507,7 +4507,7 @@ if (typeof Java !== 'undefined') {
     collisionTest: function(data) {
         const seen = new Set();
         let collisions = 0;
-        
+
         data.forEach(byte => {
             if (seen.has(byte)) {
                 collisions++;
@@ -4515,7 +4515,7 @@ if (typeof Java !== 'undefined') {
                 seen.add(byte);
             }
         });
-        
+
         const expectedCollisions = data.length - Math.sqrt(data.length * Math.PI / 2);
         return Math.abs(collisions - expectedCollisions) > expectedCollisions * 0.3;
     },
@@ -4525,7 +4525,7 @@ if (typeof Java !== 'undefined') {
         const blockSize = 16;
         const blocks = new Set();
         let duplicates = 0;
-        
+
         for (let i = 0; i <= data.length - blockSize; i += blockSize) {
             const block = data.slice(i, i + blockSize).join(',');
             if (blocks.has(block)) {
@@ -4534,10 +4534,10 @@ if (typeof Java !== 'undefined') {
                 blocks.add(block);
             }
         }
-        
+
         const totalBlocks = Math.floor(data.length / blockSize);
         const expectedDuplicates = totalBlocks * (totalBlocks - 1) / (2 * Math.pow(2, blockSize * 8));
-        
+
         return duplicates > expectedDuplicates * 2;
     },
 
@@ -4546,7 +4546,7 @@ if (typeof Java !== 'undefined') {
         const template = [0x01, 0x01, 0x01, 0x01]; // Pattern to look for
         const templateLen = template.length;
         let matches = 0;
-        
+
         for (let i = 0; i <= data.length - templateLen; i++) {
             let match = true;
             for (let j = 0; j < templateLen; j++) {
@@ -4557,7 +4557,7 @@ if (typeof Java !== 'undefined') {
             }
             if (match) matches++;
         }
-        
+
         const expectedMatches = (data.length - templateLen + 1) / Math.pow(256, templateLen);
         return Math.abs(matches - expectedMatches) > expectedMatches * 2;
     },
@@ -4565,18 +4565,18 @@ if (typeof Java !== 'undefined') {
     // Attempt to predict future entropy
     attemptEntropyPrediction: function(pastData, source) {
         const bytes = new Uint8Array(pastData);
-        
+
         // Look for linear patterns
         const linearPrediction = this.findLinearPattern(bytes);
-        
+
         // Look for XOR patterns
         const xorPrediction = this.findXORPattern(bytes);
-        
+
         // Look for LFSR patterns
         const lfsrPrediction = this.findLFSRPattern(bytes);
-        
+
         const predictions = [linearPrediction, xorPrediction, lfsrPrediction].filter(p => p !== null);
-        
+
         if (predictions.length > 0) {
             send({
                 type: "vulnerability",
@@ -4592,7 +4592,7 @@ if (typeof Java !== 'undefined') {
     // Find linear congruential patterns
     findLinearPattern: function(data) {
         if (data.length < 6) return null;
-        
+
         for (let a = 1; a < 256; a++) {
             for (let c = 0; c < 256; c++) {
                 let matches = 0;
@@ -4600,7 +4600,7 @@ if (typeof Java !== 'undefined') {
                     const predicted = (a * data[i-1] + c) & 0xFF;
                     if (predicted === data[i]) matches++;
                 }
-                
+
                 if (matches > data.length * 0.8) {
                     return { type: "linear", a: a, c: c, confidence: matches / data.length };
                 }
@@ -4612,14 +4612,14 @@ if (typeof Java !== 'undefined') {
     // Find XOR-based patterns
     findXORPattern: function(data) {
         if (data.length < 4) return null;
-        
+
         for (let key = 1; key < 256; key++) {
             let matches = 0;
             for (let i = 1; i < Math.min(data.length, 20); i++) {
                 const predicted = data[i-1] ^ key;
                 if (predicted === data[i]) matches++;
             }
-            
+
             if (matches > data.length * 0.8) {
                 return { type: "xor", key: key, confidence: matches / data.length };
             }
@@ -4630,14 +4630,14 @@ if (typeof Java !== 'undefined') {
     // Find Linear Feedback Shift Register patterns
     findLFSRPattern: function(data) {
         if (data.length < 8) return null;
-        
+
         // Common LFSR polynomials
         const polynomials = [0x1B, 0x39, 0x51, 0x87, 0xA6, 0xE1];
-        
+
         for (let poly of polynomials) {
             let register = data[0];
             let matches = 0;
-            
+
             for (let i = 1; i < Math.min(data.length, 20); i++) {
                 let bit = 0;
                 let temp = register & poly;
@@ -4645,15 +4645,31 @@ if (typeof Java !== 'undefined') {
                     bit ^= temp & 1;
                     temp >>= 1;
                 }
-                
+
                 register = ((register << 1) | bit) & 0xFF;
                 if (register === data[i]) matches++;
             }
-            
+
             if (matches > data.length * 0.7) {
                 return { type: "lfsr", polynomial: poly, confidence: matches / data.length };
             }
         }
         return null;
     }
+
+};
+
+// Auto-initialize on load
+setTimeout(function() {
+    QuantumCryptoHandler.run();
+    send({
+        type: "status",
+        target: "quantum_crypto_handler",
+        action: "system_now_active"
+    });
+}, 100);
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = QuantumCryptoHandler;
 }

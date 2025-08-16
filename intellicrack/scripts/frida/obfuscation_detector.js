@@ -27,7 +27,7 @@
  * License: GPL v3
  */
 
-{
+const ObfuscationDetector = {
     name: "Obfuscation Detector",
     description: "Detect and bypass advanced code obfuscation techniques",
     version: "1.0.0",
@@ -182,7 +182,7 @@
                             size: inst.size
                         });
                         offset += inst.size;
-                    } catch(e) {
+                    } catch: function(e) {
                         offset++;
                     }
                 }
@@ -402,7 +402,7 @@
         }
 
         if (result.obfuscations.length > 0) {
-            send({
+            send: function({
                 type: "warning",
                 target: "obfuscation_detector",
                 action: "obfuscation_detected",
@@ -459,7 +459,7 @@
 
             result.detected = result.confidence > 0.6;
 
-        } catch(e) {
+        } catch: function(e) {
             console.error("[Obfuscation] Error detecting control flow: " + e);
         }
 
@@ -521,7 +521,7 @@
 
             result.detected = result.predicates.length > 0 && result.confidence > 0.5;
 
-        } catch(e) {
+        } catch: function(e) {
             console.error("[Obfuscation] Error detecting opaque predicates: " + e);
         }
 
@@ -573,7 +573,7 @@
 
             result.detected = result.confidence > 0.7;
 
-        } catch(e) {
+        } catch: function(e) {
             console.error("[Obfuscation] Error detecting virtualization: " + e);
         }
 
@@ -629,7 +629,7 @@
 
             result.detected = result.methods.length > 0 && result.confidence > 0.5;
 
-        } catch(e) {
+        } catch: function(e) {
             console.error("[Obfuscation] Error detecting string encryption: " + e);
         }
 
@@ -642,7 +642,7 @@
         var bypassed = false;
 
         obfuscations.forEach(function(obfuscation) {
-            switch(obfuscation.type) {
+            switch: function(obfuscation.type) {
                 case "control_flow_flattening":
                     if (self.config.bypass.autoDeobfuscate) {
                         bypassed |= self.bypassControlFlow(address, obfuscation);
@@ -699,7 +699,7 @@
                 return true;
             }
 
-        } catch(e) {
+        } catch: function(e) {
             console.error("[Obfuscation] Error bypassing control flow: " + e);
         }
 
@@ -719,7 +719,7 @@
 
         obfuscation.predicates.forEach(function(predicate) {
             try {
-                switch(predicate.type) {
+                switch: function(predicate.type) {
                     case "always_taken":
                         // Convert conditional jump to unconditional
                         this.patchToUnconditionalJump(predicate.address);
@@ -740,7 +740,7 @@
                         patched++;
                         break;
                 }
-            } catch(e) {
+            } catch: function(e) {
                 send({
                     type: "error",
                     target: "obfuscation_detector",
@@ -773,7 +773,7 @@
         });
 
         try {
-            switch(obfuscation.vmType) {
+            switch: function(obfuscation.vmType) {
                 case "vmprotect":
                     return this.bypassVMProtect(address, obfuscation);
 
@@ -786,7 +786,7 @@
                 default:
                     return this.bypassGenericVM(address, obfuscation);
             }
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "obfuscation_detector",
@@ -811,7 +811,7 @@
 
         obfuscation.methods.forEach(function(method) {
             try {
-                switch(method) {
+                switch: function(method) {
                     case "xor_loop":
                         decrypted += this.decryptXorStrings(address);
                         break;
@@ -828,7 +828,7 @@
                         decrypted += this.hookStringDecryptor(address);
                         break;
                 }
-            } catch(e) {
+            } catch: function(e) {
                 send({
                     type: "error",
                     target: "obfuscation_detector",
@@ -952,7 +952,7 @@
         this.monitorSelfModifying();
 
         // Periodic analysis
-        setInterval(function() {
+        setInterval: function(function() {
             self.periodicAnalysis();
         }, 30000);
     },
@@ -978,7 +978,7 @@
                             });
 
                             // Delay analysis to allow code to be written
-                            setTimeout(function() {
+                            setTimeout: function(function() {
                                 self.analyzeCodeSection({
                                     base: retval,
                                     size: this.context.rdx.toInt32()
@@ -1120,7 +1120,7 @@
         module.enumerateRanges('r--').forEach(function(range) {
             try {
                 var data = range.base.readByteArray(Math.min(range.size, 4096));
-                
+
                 Object.keys(packers).forEach(function(packerName) {
                     var packer = packers[packerName];
                     packer.signatures.forEach(function(sig) {
@@ -1142,7 +1142,7 @@
                         }
                     });
                 });
-            } catch(e) {}
+            } catch: function(e) {}
         });
 
         return packers;
@@ -1151,7 +1151,7 @@
     // .NET Obfuscator Detection
     detectDotNetObfuscators: function(module) {
         var self = this;
-        
+
         if (!module.name.toLowerCase().includes('.dll') && !module.name.toLowerCase().includes('.exe')) {
             return null;
         }
@@ -1280,7 +1280,7 @@
                     obf.score += matches.length;
                 }
             });
-            
+
             if (obf.score > 10) {
                 send({
                     type: "warning",
@@ -1313,7 +1313,7 @@
                 "o0o0o0o0",
                 "iIiIiI"
             ];
-            
+
             Process.enumerateModules().forEach(function(module) {
                 if (module.name.includes("classes") && module.name.includes(".dex")) {
                     dexguardPatterns.forEach(function(pattern) {
@@ -1344,7 +1344,7 @@
                 "_ix_verify",
                 "_guard_init"
             ];
-            
+
             ixguardSymbols.forEach(function(symbol) {
                 var addr = Module.findExportByName(null, symbol);
                 if (addr) {
@@ -1359,7 +1359,7 @@
             "TransformIT",
             "GuardIT"
         ];
-        
+
         Process.enumerateModules().forEach(function(module) {
             arxanPatterns.forEach(function(pattern) {
                 if (module.name.toLowerCase().includes(pattern.toLowerCase())) {
@@ -1383,10 +1383,10 @@
 
         // Monitor for self-modification
         var originalCode = address.readByteArray(Math.min(size, 1024));
-        
+
         // Set up write watch
         Memory.protect(address, size, 'r-x');
-        
+
         Process.setExceptionHandler(function(details) {
             if (details.type === 'access-violation' && details.memory.operation === 'write') {
                 var writeAddress = details.memory.address;
@@ -1396,7 +1396,7 @@
                         address: writeAddress,
                         timestamp: Date.now()
                     });
-                    
+
                     // Allow the write
                     Memory.protect(address, size, 'rwx');
                     return true;
@@ -1406,24 +1406,24 @@
         });
 
         // Check for polymorphic patterns
-        setTimeout(function() {
+        setTimeout: function(function() {
             var currentCode = address.readByteArray(Math.min(size, 1024));
             var differences = 0;
-            
+
             for (var i = 0; i < originalCode.length && i < currentCode.length; i++) {
                 if (originalCode[i] !== currentCode[i]) {
                     differences++;
                 }
             }
-            
+
             if (differences > originalCode.length * 0.1) {
                 indicators.polymorphic = true;
             }
-            
+
             if (differences > originalCode.length * 0.3) {
                 indicators.metamorphic = true;
             }
-            
+
             if (indicators.selfModifying || indicators.polymorphic || indicators.metamorphic) {
                 send({
                     type: "warning",
@@ -1461,9 +1461,9 @@
                                 size: this.size,
                                 protection: this.newProtect
                             });
-                            
+
                             // Dump unpacked code
-                            setTimeout(function() {
+                            setTimeout: function(function() {
                                 self.dumpUnpackedCode(this.address, this.size);
                             }.bind(this), 100);
                         }
@@ -1530,7 +1530,7 @@
                     try {
                         var ptr = range.base.add(offset).readPointer();
                         var targetModule = Process.findModuleByAddress(ptr);
-                        
+
                         if (targetModule && targetModule !== module) {
                             // Found external reference
                             var symbol = DebugSymbol.fromAddress(ptr);
@@ -1544,7 +1544,7 @@
                                 iat.resolved++;
                             }
                         }
-                    } catch(e) {
+                    } catch: function(e) {
                         iat.failed++;
                     }
                 }
@@ -1592,17 +1592,17 @@
                 var offset = 0;
                 while (offset < size) {
                     var inst = Instruction.parse(current.add(offset));
-                    
+
                     if (inst.mnemonic.startsWith("j") || inst.mnemonic === "call" || inst.mnemonic === "ret") {
                         node.type = inst.mnemonic;
-                        
+
                         if (inst.mnemonic !== "ret") {
                             // Extract target
                             var target = this.extractBranchTarget(inst);
                             if (target) {
                                 node.successors.push(target);
                                 cfg.edges.push({from: current, to: target});
-                                
+
                                 if (!visited[target.toString()]) {
                                     queue.push(target);
                                 }
@@ -1610,10 +1610,10 @@
                         }
                         break;
                     }
-                    
+
                     offset += inst.size;
                 }
-            } catch(e) {}
+            } catch: function(e) {}
 
             cfg.nodes.push(node);
         }
@@ -1624,14 +1624,14 @@
             var hasIncoming = cfg.edges.some(function(edge) {
                 return edge.to.equals(node.address);
             });
-            
+
             if (!hasIncoming && !node.address.equals(address)) {
                 cfg.anomalies.push({
                     type: "unreachable_code",
                     address: node.address
                 });
             }
-            
+
             // Check for excessive branching
             if (node.successors.length > 10) {
                 cfg.anomalies.push({
@@ -1649,7 +1649,7 @@
     detectROPChains: function(address, size) {
         var self = this;
         var ropGadgets = [];
-        
+
         // Common ROP gadget patterns
         var gadgetPatterns = [
             [0xC3], // ret
@@ -1667,7 +1667,7 @@
         ];
 
         var code = address.readByteArray(size);
-        
+
         gadgetPatterns.forEach(function(pattern) {
             var offset = 0;
             while (offset < code.length) {
@@ -1703,13 +1703,13 @@
     detectCodeCaves: function(module) {
         var self = this;
         var caves = [];
-        
+
         module.enumerateRanges('r-x').forEach(function(range) {
             try {
                 var data = range.base.readByteArray(Math.min(range.size, 0x10000));
                 var caveStart = -1;
                 var minCaveSize = 32;
-                
+
                 for (var i = 0; i < data.length; i++) {
                     if (data[i] === 0x00 || data[i] === 0x90 || data[i] === 0xCC) {
                         if (caveStart === -1) {
@@ -1722,7 +1722,7 @@
                                 caves.push({
                                     address: range.base.add(caveStart),
                                     size: caveSize,
-                                    type: data[caveStart] === 0x00 ? "null" : 
+                                    type: data[caveStart] === 0x00 ? "null" :
                                           data[caveStart] === 0x90 ? "nop" : "int3"
                                 });
                             }
@@ -1730,7 +1730,7 @@
                         }
                     }
                 }
-            } catch(e) {}
+            } catch: function(e) {}
         });
 
         if (caves.length > 0) {
@@ -1775,7 +1775,7 @@
                 indicators.tlsCallbacks = true;
                 var tlsDir = base.add(tlsTableRVA);
                 var callbacksPtr = tlsDir.add(12).readPointer();
-                
+
                 if (!callbacksPtr.isNull()) {
                     var callbacks = [];
                     for (var i = 0; i < 10; i++) {
@@ -1783,7 +1783,7 @@
                         if (callback.isNull()) break;
                         callbacks.push(callback);
                     }
-                    
+
                     if (callbacks.length > 0) {
                         send({
                             type: "warning",
@@ -1798,7 +1798,7 @@
 
             // Check for fake entry point patterns
             var entryCode = base.add(entryPointRVA).readByteArray(32);
-            
+
             // Common fake entry patterns
             var fakePatterns = [
                 [0xE9], // Single jmp
@@ -1825,7 +1825,7 @@
                 }
             });
 
-        } catch(e) {}
+        } catch: function(e) {}
 
         return indicators;
     },
@@ -1851,7 +1851,7 @@
             sections.forEach(function(section) {
                 if (section.name.includes('.rsrc')) {
                     var data = base.add(section.virtualAddress).readByteArray(Math.min(section.size, 4096));
-                    
+
                     // Check entropy for encryption
                     var entropy = self.calculateEntropy(data);
                     if (entropy > 7.5) {
@@ -1881,7 +1881,7 @@
                 }
             });
 
-        } catch(e) {}
+        } catch: function(e) {}
 
         return analysis;
     },
@@ -1908,16 +1908,16 @@
 
             if (certTableRVA !== 0 && certTableSize !== 0) {
                 cert.valid = true;
-                
+
                 // Parse certificate
                 var certData = base.add(certTableRVA).readByteArray(Math.min(certTableSize, 8192));
-                
+
                 // Check for known stolen certificates
                 var stolenCertHashes = [
                     "3E5D1E3B2A1C4F8D9B7A6E5C",
                     "A9B8C7D6E5F4A3B2C1D0E9F8"
                 ];
-                
+
                 var certHash = this.hashData(certData);
                 if (stolenCertHashes.includes(certHash)) {
                     cert.stolen = true;
@@ -1929,12 +1929,12 @@
                 }
             }
 
-        } catch(e) {}
+        } catch: function(e) {}
 
         return cert;
     },
 
-    // Overlay Data Analysis  
+    // Overlay Data Analysis
     analyzeOverlayData: function(module) {
         var self = this;
         var overlay = {
@@ -1952,13 +1952,13 @@
             if (fileSize > peSize) {
                 overlay.exists = true;
                 overlay.size = fileSize - peSize;
-                
+
                 // Read overlay data
                 var overlayData = this.readFileAt(module, peSize, Math.min(overlay.size, 0x10000));
-                
+
                 // Calculate entropy
                 overlay.entropy = this.calculateEntropy(overlayData);
-                
+
                 // Check for hidden executables
                 if (overlayData[0] === 0x4D && overlayData[1] === 0x5A) {
                     overlay.hiddenPayload = true;
@@ -1974,7 +1974,7 @@
                 // Check for encrypted data
                 if (overlay.entropy > 7.8) {
                     send({
-                        type: "warning", 
+                        type: "warning",
                         target: "obfuscation_detector",
                         action: "encrypted_overlay_detected",
                         module: module.name,
@@ -1983,7 +1983,7 @@
                 }
             }
 
-        } catch(e) {}
+        } catch: function(e) {}
 
         return overlay;
     },
@@ -2046,7 +2046,7 @@
                 }
             });
 
-        } catch(e) {}
+        } catch: function(e) {}
 
         return manipulation;
     },
@@ -2090,8 +2090,8 @@
 
         // Monitor for behavior changes over time
         var initialBehavior = this.captureBehavior(address);
-        
-        setTimeout(function() {
+
+        setTimeout: function(function() {
             var laterBehavior = self.captureBehavior(address);
             if (!self.behaviorsMatch(initialBehavior, laterBehavior)) {
                 timeBased.detected = true;
@@ -2128,7 +2128,7 @@
         envAPIs.forEach(function(api) {
             var addr = Module.findExportByName("kernel32.dll", api.name) ||
                       Module.findExportByName("advapi32.dll", api.name);
-            
+
             if (addr) {
                 Interceptor.attach(addr, {
                     onEnter: function(args) {
@@ -2137,7 +2137,7 @@
                             api: api.name,
                             caller: this.returnAddress
                         });
-                        
+
                         if (keying.checks.length > 5) {
                             keying.detected = true;
                         }
@@ -2183,7 +2183,7 @@
                     var caller = this.returnAddress;
                     if (caller.compare(address) >= 0 && caller.compare(address.add(0x10000)) < 0) {
                         apiObf.dynamicResolution = true;
-                        
+
                         var procName = args[1];
                         if (procName.toInt32() < 0x10000) {
                             // Ordinal import
@@ -2242,7 +2242,7 @@
         };
 
         var code = address.readByteArray(2048);
-        
+
         // Patterns for stack string construction
         var patterns = [
             // mov byte [esp+X], char
@@ -2457,7 +2457,7 @@
                 }
             }
 
-        } catch(e) {}
+        } catch: function(e) {}
 
         return tlsAbuse;
     },
@@ -2596,7 +2596,7 @@
                     return ptr(operand.value);
                 }
             }
-        } catch(e) {}
+        } catch: function(e) {}
         return null;
     },
 
@@ -2604,31 +2604,31 @@
     disassembleGadget: function(address, maxLength) {
         var instructions = [];
         var offset = 0;
-        
+
         while (offset < maxLength) {
             try {
                 var inst = Instruction.parse(address.add(offset));
                 instructions.push(inst.mnemonic);
                 offset += inst.size;
-                
+
                 if (inst.mnemonic === "ret") break;
-            } catch(e) {
+            } catch: function(e) {
                 break;
             }
         }
-        
+
         return instructions.join("; ");
     },
 
     // Parse PE sections
     parseSections: function(base, peOffset) {
         var sections = [];
-        
+
         try {
             var fileHeader = peOffset + 4;
             var numSections = base.add(fileHeader + 2).readU16();
             var sectionTable = peOffset + 24 + base.add(fileHeader + 16).readU16();
-            
+
             for (var i = 0; i < numSections; i++) {
                 var sectionHeader = sectionTable + (i * 40);
                 sections.push({
@@ -2640,8 +2640,8 @@
                     characteristics: base.add(sectionHeader + 36).readU32()
                 });
             }
-        } catch(e) {}
-        
+        } catch: function(e) {}
+
         return sections;
     },
 
@@ -2661,7 +2661,7 @@
 
         // Start comprehensive analysis
         this.analyzeLoadedModules();
-        
+
         // Initialize advanced detection systems
         this.initializeAdvancedDetection();
 
@@ -2681,20 +2681,20 @@
     // Initialize advanced detection systems
     initializeAdvancedDetection: function() {
         var self = this;
-        
+
         // Detect environmental keying
         this.detectEnvironmentalKeying();
-        
+
         // Detect nanomite protection
         this.detectNanomiteProtection();
-        
+
         // Detect heap spraying
         this.detectHeapSpray();
-        
+
         // Analyze all loaded modules comprehensively
         Process.enumerateModules().forEach(function(module) {
             if (self.isSystemModule(module.name)) return;
-            
+
             // Comprehensive module analysis
             self.detectModernPackers(module);
             self.detectDotNetObfuscators(module);
@@ -2706,7 +2706,7 @@
             self.analyzeOverlayData(module);
             self.detectSectionManipulation(module);
             self.detectTLSAbuse(module);
-            
+
             // Per-function analysis
             module.enumerateExports().forEach(function(exp) {
                 if (exp.type === 'function') {
@@ -2720,10 +2720,10 @@
                 }
             });
         });
-        
+
         // Initialize dynamic unpacking detection
         this.detectDynamicUnpacking();
-        
+
         send({
             type: "info",
             target: "obfuscation_detector",
@@ -2747,3 +2747,20 @@
 
 // Run the detector
 ObfuscationDetector.run();
+
+};
+
+// Auto-initialize on load
+setTimeout(function() {
+    ObfuscationDetector.run();
+    send({
+        type: "status",
+        target: "obfuscation_detector",
+        action: "system_now_active"
+    });
+}, 100);
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ObfuscationDetector;
+}

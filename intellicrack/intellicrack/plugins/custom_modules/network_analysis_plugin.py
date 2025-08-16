@@ -3,11 +3,8 @@ Network Analysis Plugin Template
 Specialized template for network traffic analysis
 """
 
-import socket
-import struct
-import subprocess
 import sys
-from typing import Dict, List, Optional
+
 
 class NetworkAnalysisPlugin:
     def __init__(self):
@@ -23,19 +20,26 @@ class NetworkAnalysisPlugin:
 
         # Check for network-related strings
         network_indicators = [
-            b'http://', b'https://', b'ftp://',
-            b'socket', b'connect', b'bind', b'listen',
-            b'send', b'recv', b'WSAStartup'
+            b"http://",
+            b"https://",
+            b"ftp://",
+            b"socket",
+            b"connect",
+            b"bind",
+            b"listen",
+            b"send",
+            b"recv",
+            b"WSAStartup",
         ]
 
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
                 found_indicators = []
                 for indicator in network_indicators:
                     if indicator in data:
-                        found_indicators.append(indicator.decode('utf-8', errors='ignore'))
+                        found_indicators.append(indicator.decode("utf-8", errors="ignore"))
 
                 if found_indicators:
                     results.append("Network indicators found:")
@@ -77,7 +81,8 @@ class NetworkAnalysisPlugin:
         try:
             # Try to use pypcap or scapy if available
             try:
-                from scapy.all import sniff, IP, TCP, UDP
+                from scapy.all import IP, TCP, UDP, sniff
+
                 results.append("Using Scapy for packet capture")
 
                 # Get process connections first
@@ -124,6 +129,7 @@ class NetworkAnalysisPlugin:
         try:
             # Check if we have permissions
             import os
+
             if os.geteuid() != 0:
                 results.append("Warning: Root privileges required for packet capture")
 
@@ -138,7 +144,7 @@ class NetworkAnalysisPlugin:
                     try:
                         output = subprocess.check_output(cmd, shell=True, text=True)
                         results.append(f"Network connections for PID {pid}:")
-                        results.extend(output.strip().split('\n')[1:])  # Skip header
+                        results.extend(output.strip().split("\n")[1:])  # Skip header
                     except:
                         pass
 
@@ -147,7 +153,7 @@ class NetworkAnalysisPlugin:
                 cmd = "tcpdump -c 10 -n -i any"
                 output = subprocess.check_output(cmd, shell=True, text=True, timeout=5)
                 results.append("Captured traffic:")
-                results.extend(output.strip().split('\n'))
+                results.extend(output.strip().split("\n"))
             except subprocess.TimeoutExpired:
                 results.append("Packet capture timed out")
             except:
@@ -172,7 +178,7 @@ class NetworkAnalysisPlugin:
                 cmd = "ss -tunap 2>/dev/null || netstat -tunap 2>/dev/null"
 
             output = subprocess.check_output(cmd, shell=True, text=True)
-            lines = output.strip().split('\n')
+            lines = output.strip().split("\n")
 
             if target_process:
                 pid = self._get_process_pid(target_process)
@@ -196,23 +202,25 @@ class NetworkAnalysisPlugin:
         """Get PID from process name."""
         try:
             from intellicrack.handlers.psutil_handler import psutil
-            for proc in psutil.process_iter(['pid', 'name']):
-                if process_name.lower() in proc.info['name'].lower():
-                    return proc.info['pid']
+
+            for proc in psutil.process_iter(["pid", "name"]):
+                if process_name.lower() in proc.info["name"].lower():
+                    return proc.info["pid"]
         except:
             # Fallback method
             try:
                 import subprocess
+
                 if sys.platform == "win32":
-                    cmd = f'wmic process where "name like '%{process_name}%'" get processid'
+                    cmd = 'wmic process where "name like ' % {process_name} % '" get processid'
                     output = subprocess.check_output(cmd, shell=True, text=True)
-                    lines = output.strip().split('\n')
+                    lines = output.strip().split("\n")
                     if len(lines) > 1:
                         return int(lines[1].strip())
                 else:
                     cmd = f"pgrep -f {process_name}"
                     output = subprocess.check_output(cmd, shell=True, text=True)
-                    return int(output.strip().split('\n')[0])
+                    return int(output.strip().split("\n")[0])
             except:
                 pass
         return None
@@ -223,14 +231,15 @@ class NetworkAnalysisPlugin:
 
         try:
             from intellicrack.handlers.psutil_handler import psutil
+
             process = psutil.Process(pid)
-            connections = process.connections(kind='inet')
+            connections = process.connections(kind="inet")
 
             results.append(f"Process {pid} has {len(connections)} connections:")
             for conn in connections:
                 laddr = f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else "N/A"
                 raddr = f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else "N/A"
-                status = conn.status if hasattr(conn, 'status') else "N/A"
+                status = conn.status if hasattr(conn, "status") else "N/A"
                 results.append(f"  {conn.type.name} {laddr} -> {raddr} [{status}]")
 
         except Exception as e:
@@ -244,6 +253,7 @@ class NetworkAnalysisPlugin:
 
         try:
             import wmi
+
             c = wmi.WMI()
 
             # Get network connections
@@ -273,7 +283,7 @@ class NetworkAnalysisPlugin:
             cmd = "netstat -tunap 2>/dev/null | grep -E 'tcp|udp'"
             output = subprocess.check_output(cmd, shell=True, text=True)
 
-            lines = output.strip().split('\n')
+            lines = output.strip().split("\n")
             results.append("Active connections:")
 
             for line in lines[:20]:  # Limit output
@@ -283,6 +293,7 @@ class NetworkAnalysisPlugin:
             results.append(f"Netstat error: {e}")
 
         return results
+
 
 def register():
     return NetworkAnalysisPlugin()

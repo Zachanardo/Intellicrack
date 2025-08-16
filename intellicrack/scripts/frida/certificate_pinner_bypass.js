@@ -27,7 +27,7 @@
  * License: GPL v3
  */
 
-{
+const CertificatePinnerBypass = {
     name: "Certificate Pinner Bypass",
     description: "Universal SSL/TLS certificate pinning bypass",
     version: "1.0.0",
@@ -2389,4 +2389,9 @@
             action: "quantum_safe_validation_bypass_installed"
         });
     }
+};
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = CertificatePinnerBypass;
 }

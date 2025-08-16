@@ -27,7 +27,7 @@
  * License: GPL v3
  */
 
-{
+const MemoryIntegrityBypass = {
     name: "Memory Integrity Bypass",
     description: "Advanced memory integrity and runtime verification bypass",
     version: "2.0.0",
@@ -472,7 +472,7 @@
 
                     this.hooksInstalled[functionName + '_' + module.name] = true;
                 }
-            } catch(e) {
+            } catch: function(e) {
                 // Module doesn't have this function
             }
         }
@@ -687,7 +687,7 @@
                                 pattern: this.needle
                             });
                         }
-                    } catch(e) {
+                    } catch: function(e) {
                         // String read failed
                     }
                 },
@@ -818,7 +818,7 @@
         // Hook __stack_chk_fail (GCC stack canary)
         var stackChkFail = Module.findExportByName("msvcrt.dll", "__stack_chk_fail");
         if (stackChkFail) {
-            Interceptor.replace(stackChkFail, new NativeCallback(function() {
+            Interceptor.replace(stackChkFail, new NativeCallback: function(function() {
                 send({
                     type: "bypass",
                     target: "memory_integrity_bypass",
@@ -914,7 +914,7 @@
         // Hook __cfi_check (Clang CFI check)
         var cfiCheck = Module.findExportByName(null, "__cfi_check");
         if (cfiCheck) {
-            Interceptor.replace(cfiCheck, new NativeCallback(function(callSiteTypeId, targetAddr, diagData) {
+            Interceptor.replace(cfiCheck, new NativeCallback: function(function(callSiteTypeId, targetAddr, diagData) {
                 send({
                     type: "bypass",
                     target: "memory_integrity_bypass",
@@ -930,7 +930,7 @@
         // Hook __cfi_slowpath (CFI slow path)
         var cfiSlowpath = Module.findExportByName(null, "__cfi_slowpath");
         if (cfiSlowpath) {
-            Interceptor.replace(cfiSlowpath, new NativeCallback(function(callSiteTypeId, targetAddr) {
+            Interceptor.replace(cfiSlowpath, new NativeCallback: function(function(callSiteTypeId, targetAddr) {
                 send({
                     type: "bypass",
                     target: "memory_integrity_bypass",
@@ -1070,7 +1070,7 @@
                                 });
                             }
                         }
-                    } catch(e) {
+                    } catch: function(e) {
                         send({
                             type: "error",
                             target: "memory_integrity_bypass",
@@ -1750,7 +1750,7 @@
                         this.scanForCodeCaves(module.base.add(section.offset), section.size);
                     }
                 });
-            } catch(e) {
+            } catch: function(e) {
                 // Module sections not accessible
             }
         });
@@ -1909,7 +1909,7 @@
                 }
                 return checksum;
             }
-        } catch(e) {
+        } catch: function(e) {
             return 0;
         }
     },
@@ -1941,7 +1941,7 @@
                             });
                         }
                     });
-                } catch(e) {
+                } catch: function(e) {
                     // Module exports not accessible
                 }
             });
@@ -2070,7 +2070,7 @@
                     }
                 }
             }
-        } catch(e) {
+        } catch: function(e) {
             // Memory not readable
         }
     },
@@ -2107,7 +2107,7 @@
                 address: address,
                 size: size
             });
-        } catch(e) {
+        } catch: function(e) {
             // Failed to fill cave
         }
     },
@@ -2127,7 +2127,7 @@
                         }
                     }
                 });
-            } catch(e) {
+            } catch: function(e) {
                 // Module sections not accessible
             }
         });
@@ -2274,7 +2274,7 @@
                 mutatedBuffer.writeByteArray(mutated);
                 return mutatedBuffer;
             }
-        } catch(e) {
+        } catch: function(e) {
             return null;
         }
     },
@@ -2510,7 +2510,7 @@
                         nextSync: Date.now() + 60000
                     });
                 }
-            } catch(e) {
+            } catch: function(e) {
                 // Failed to replicate module
             }
         });
@@ -2552,7 +2552,7 @@
         // Hook vectored exception handler for guard page violations
         var addVectoredHandler = Module.findExportByName("kernel32.dll", "AddVectoredExceptionHandler");
         if (addVectoredHandler) {
-            var guardPageHandler = new NativeCallback(function(exceptionInfo) {
+            var guardPageHandler = new NativeCallback: function(function(exceptionInfo) {
                 var exceptionRecord = exceptionInfo.readPointer();
                 var exceptionCode = exceptionRecord.readU32();
 
@@ -2720,7 +2720,7 @@
                                 suspiciousPatterns++;
                             }
                         }
-                    } catch(e) {
+                    } catch: function(e) {
                         // Memory not accessible
                     }
                 }
@@ -2761,7 +2761,7 @@
                             }
                         });
                     });
-                } catch(e) {
+                } catch: function(e) {
                     // Failed to scan module
                 }
             }
@@ -2899,7 +2899,7 @@
                         type: "after",
                         protects: region.name
                     });
-                } catch(e) {
+                } catch: function(e) {
                     // Failed to create guard page
                 }
             }
@@ -2948,7 +2948,7 @@
                     action: "memory_scrubbed",
                     address: address
                 });
-            } catch(e) {
+            } catch: function(e) {
                 // Failed to scrub memory
             }
         });
@@ -2981,7 +2981,7 @@
                     replica.original.writeByteArray(bytes);
                     Memory.protect(replica.original, bytes.length, 'r-x');
                 }
-            } catch(e) {
+            } catch: function(e) {
                 // Failed to scramble
             }
         });
@@ -3001,7 +3001,7 @@
                     replica.original.writeByteArray(bytes);
                     Memory.protect(replica.original, bytes.length, 'r-x');
                 }
-            } catch(e) {
+            } catch: function(e) {
                 // Failed to unscramble
             }
         });
@@ -3026,7 +3026,7 @@
                         }
                     });
                 });
-            } catch(e) {
+            } catch: function(e) {
                 // Failed to clear artifacts
             }
         });
@@ -3114,4 +3114,20 @@
             return ptr(__readfsdword(0x18));
         }
     }
+
+};
+
+// Auto-initialize on load
+setTimeout(function() {
+    MemoryIntegrityBypass.run();
+    send({
+        type: "status",
+        target: "memory_integrity_bypass",
+        action: "system_now_active"
+    });
+}, 100);
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = MemoryIntegrityBypass;
 }

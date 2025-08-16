@@ -154,8 +154,6 @@ def browse_model(parent: Any = None) -> str | None:
         logger.warning("PyQt6 not available, cannot browse model")
         return None
 
-
-
     file_path, _ = QFileDialog.getOpenFileName(
         parent,
         "Select Model",
@@ -1215,8 +1213,6 @@ def center_on_screen(widget: Any) -> None:
     if not HAS_PYQT or not widget:
         return
 
-
-
     app = QApplication.instance()
     if app:
         primary_screen = app.primaryScreen()
@@ -1960,7 +1956,7 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
                 db_url = get_service_url("database_server")
                 db_host = db_url.replace("postgresql://", "").split(":")[0]
                 db_port = int(db_url.split(":")[-1].split("/")[0]) if ":" in db_url else 5432
-                
+
                 conn = psycopg2.connect(
                     host=config.get("host", db_host),
                     port=config.get("port", db_port),
@@ -2031,10 +2027,8 @@ def _attempt_database_storage(report_data: dict[str, Any], report_id: str) -> di
 
                 # Get MongoDB server from configuration
                 mongo_url = get_service_url("mongodb_server")
-                
-                client = pymongo.MongoClient(
-                    config.get("connection_string", mongo_url)
-                )
+
+                client = pymongo.MongoClient(config.get("connection_string", mongo_url))
                 db = client[config.get("database", "intellicrack")]
                 collection = db[config.get("collection", "analysis_reports")]
 

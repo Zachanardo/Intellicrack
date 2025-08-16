@@ -16,15 +16,15 @@ try:
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     os.environ.setdefault("MKL_NUM_THREADS", "1")
     os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
-    
+
     print("2. Importing intellicrack directly...")
     import intellicrack
-    
+
     print("✅ Intellicrack imported successfully!")
     print(f"Intellicrack version: {getattr(intellicrack, '__version__', 'unknown')}")
-    
+
     print("✅ All tests passed!")
-    
+
 except Exception as e:
     import traceback
     print(f"\n❌ Error: {e}")

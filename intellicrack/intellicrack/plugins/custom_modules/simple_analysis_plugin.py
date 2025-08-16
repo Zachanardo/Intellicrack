@@ -3,6 +3,7 @@ Simple Analysis Plugin Template
 Basic template for straightforward binary analysis tasks
 """
 
+
 class SimpleAnalysisPlugin:
     def __init__(self):
         self.name = "Simple Analysis Plugin"
@@ -16,10 +17,12 @@ class SimpleAnalysisPlugin:
 
         # Your analysis code here
         import os
+
         file_size = os.path.getsize(binary_path)
         results.append(f"File size: {file_size:,} bytes")
 
         return results
+
 
 def register():
     return SimpleAnalysisPlugin()

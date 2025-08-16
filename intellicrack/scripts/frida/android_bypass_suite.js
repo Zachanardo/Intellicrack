@@ -441,7 +441,7 @@ Java.perform(function() {
 
                     return this.$init(path);
                 };
-            } catch(e) {}
+            } catch {}
 
             send({
                 type: 'info',
@@ -645,7 +645,7 @@ Java.perform(function() {
 
                     return this.get(key, def);
                 };
-            } catch(e) {}
+            } catch {}
 
             send({
                 type: 'info',
@@ -815,7 +815,7 @@ Java.perform(function() {
                         });
                     }
                 });
-            } catch(e) {}
+            } catch {}
 
             // Hook SafetyNetApi
             try {
@@ -836,7 +836,7 @@ Java.perform(function() {
                         return self.createSpoofedSafetyNetResult();
                     };
                 }
-            } catch(e) {}
+            } catch {}
 
             // Hook response classes
             this.hookSafetyNetResponse();
@@ -866,7 +866,7 @@ Java.perform(function() {
 
                     return validJWS;
                 };
-            } catch(e) {}
+            } catch {}
 
             // Hook internal response handling
             try {
@@ -896,10 +896,10 @@ Java.perform(function() {
                                     }
                                 }
                             });
-                        } catch(e) {}
+                        } catch {}
                     }
                 });
-            } catch(e) {}
+            } catch {}
         },
 
         // Generate valid JWS token
@@ -967,7 +967,7 @@ Java.perform(function() {
 
                     return this.verify(signature);
                 };
-            } catch(e) {}
+            } catch {}
         },
 
         // Bypass licensing
@@ -1010,7 +1010,7 @@ Java.perform(function() {
                     callback.allow(0x100);
                     self.stats.licenseBypassed++;
                 };
-            } catch(e) {}
+            } catch {}
 
             // Policy classes
             try {
@@ -1025,7 +1025,7 @@ Java.perform(function() {
                     self.stats.licenseBypassed++;
                     return true;
                 };
-            } catch(e) {}
+            } catch {}
 
             try {
                 var ServerManagedPolicy = Java.use('com.google.android.vending.licensing.ServerManagedPolicy');
@@ -1039,7 +1039,7 @@ Java.perform(function() {
                     self.stats.licenseBypassed++;
                     return true;
                 };
-            } catch(e) {}
+            } catch {}
 
             // APK Expansion Policy
             try {
@@ -1054,7 +1054,7 @@ Java.perform(function() {
                     self.stats.licenseBypassed++;
                     return true;
                 };
-            } catch(e) {}
+            } catch {}
 
             // Hook response codes
             try {
@@ -1074,7 +1074,7 @@ Java.perform(function() {
 
                     return this.verify(publicKey, 0x0, signedData, signature);
                 };
-            } catch(e) {}
+            } catch {}
 
             send({
                 type: 'info',
@@ -1106,7 +1106,7 @@ Java.perform(function() {
 
                     self.stats.licenseBypassed++;
                 };
-            } catch(e) {}
+            } catch {}
         },
 
         // Bypass Samsung licensing
@@ -1127,7 +1127,7 @@ Java.perform(function() {
                     listener.onSuccess();
                     self.stats.licenseBypassed++;
                 };
-            } catch(e) {}
+            } catch {}
         },
 
         // Bypass custom LVL implementations
@@ -1167,7 +1167,7 @@ Java.perform(function() {
                                     };
                                 }
                             });
-                        } catch(e) {}
+                        } catch {}
                     }
                 },
                 onComplete: function() {}
@@ -1233,7 +1233,7 @@ Java.perform(function() {
                     self.stats.integrityBypassed++;
                     return PackageManager.SIGNATURE_MATCH.value;
                 };
-            } catch(e) {}
+            } catch {}
 
             // Hook getPackageInfo for signatures
             try {
@@ -1256,7 +1256,7 @@ Java.perform(function() {
 
                     return result;
                 };
-            } catch(e) {}
+            } catch {}
 
             send({
                 type: 'info',
@@ -1335,7 +1335,7 @@ Java.perform(function() {
                     // Return Google Play Store
                     return 'com.android.vending';
                 };
-            } catch(e) {}
+            } catch {}
         },
 
         // Bypass debuggable check
@@ -1362,7 +1362,7 @@ Java.perform(function() {
 
                     return flags;
                 };
-            } catch(e) {}
+            } catch {}
         },
 
         // Bypass anti-tamper
@@ -1409,7 +1409,7 @@ Java.perform(function() {
 
                     return this.getCrc();
                 };
-            } catch(e) {}
+            } catch {}
 
             // Hook File.lastModified for timestamp checks
             var File = Java.use('java.io.File');
@@ -1520,7 +1520,7 @@ Java.perform(function() {
                         };
                     }
                 });
-            } catch(e) {}
+            } catch {}
         },
 
         // Hook common libraries
@@ -1566,10 +1566,10 @@ Java.perform(function() {
                                     };
                                 }
                             });
-                        } catch(e) {}
+                        } catch {}
                     }
                 });
-            } catch(e) {}
+            } catch {}
         },
 
         // Hook iJiami
@@ -1593,7 +1593,7 @@ Java.perform(function() {
                         self.init();
                     }, 2000);
                 };
-            } catch(e) {}
+            } catch {}
         },
 
         // Hook Bangcle
@@ -1611,7 +1611,7 @@ Java.perform(function() {
                     });
                     return this.getACall();
                 };
-            } catch(e) {}
+            } catch {}
         },
 
         // Hook NagaGuard
@@ -1635,7 +1635,7 @@ Java.perform(function() {
                         self.init();
                     }, 2000);
                 };
-            } catch(e) {}
+            } catch {}
         },
 
         // Start monitoring
@@ -1675,7 +1675,7 @@ Java.perform(function() {
                                 };
                             }
                         });
-                    } catch(e) {}
+                    } catch {}
                 },
                 onComplete: function() {}
             });
@@ -1722,7 +1722,7 @@ Java.perform(function() {
                         };
                     }
                 });
-            } catch(e) {}
+            } catch {}
         },
 
         // === v3.0 NEW BYPASS FUNCTIONS ===
@@ -1759,7 +1759,7 @@ Java.perform(function() {
                         action: 'play_integrity_manager_bypassed'
                     });
                 }
-            } catch(e) {
+            } catch {
                 send({
                     type: 'warning',
                     target: 'play_integrity_api',
@@ -1781,7 +1781,7 @@ Java.perform(function() {
                         return true;
                     };
                 }
-            } catch(e) {}
+            } catch {}
 
             // Bypass device integrity checks
             try {
@@ -1797,7 +1797,7 @@ Java.perform(function() {
                     };
                     self.stats.playIntegrityBypassed++;
                 }
-            } catch(e) {}
+            } catch {}
 
             // Hook TEE (Trusted Execution Environment) simulation
             if (this.config.playIntegrity.teeSimulation) {
@@ -1814,7 +1814,7 @@ Java.perform(function() {
                             return true;
                         };
                     }
-                } catch(e) {}
+                } catch {}
             }
         },
 
@@ -1837,7 +1837,7 @@ Java.perform(function() {
                         };
                         self.stats.modernSecurityBypassed++;
                     }
-                } catch(e) {}
+                } catch {}
             }
 
             // Bypass PAC (Pointer Authentication Codes)
@@ -1855,7 +1855,7 @@ Java.perform(function() {
                         };
                         self.stats.modernSecurityBypassed++;
                     }
-                } catch(e) {}
+                } catch {}
             }
 
             // Bypass CFI (Control Flow Integrity)
@@ -1873,7 +1873,7 @@ Java.perform(function() {
                         };
                         self.stats.modernSecurityBypassed++;
                     }
-                } catch(e) {}
+                } catch {}
             }
 
             // Bypass HWASAN (Hardware-assisted Address Sanitizer)
@@ -1891,7 +1891,7 @@ Java.perform(function() {
                         };
                         self.stats.modernSecurityBypassed++;
                     }
-                } catch(e) {}
+                } catch {}
             }
 
             // Bypass biometric security
@@ -1909,7 +1909,7 @@ Java.perform(function() {
                         };
                         self.stats.modernSecurityBypassed++;
                     }
-                } catch(e) {}
+                } catch {}
             }
         },
 
@@ -1932,7 +1932,7 @@ Java.perform(function() {
                         };
                         self.stats.hardwareAttestationBypassed++;
                     }
-                } catch(e) {}
+                } catch {}
             }
 
             // Bypass hardware security module (HSM) checks
@@ -1951,7 +1951,7 @@ Java.perform(function() {
                         };
                         self.stats.hardwareAttestationBypassed++;
                     }
-                } catch(e) {}
+                } catch {}
             }
 
             // Hook Android Keystore attestation
@@ -1968,7 +1968,7 @@ Java.perform(function() {
                     };
                     self.stats.hardwareAttestationBypassed++;
                 }
-            } catch(e) {}
+            } catch {}
 
             // Bypass device certificate chain validation
             if (this.config.hardwareAttestation.deviceCertBypass) {
@@ -1984,7 +1984,7 @@ Java.perform(function() {
                         return;
                     };
                     self.stats.hardwareAttestationBypassed++;
-                } catch(e) {}
+                } catch {}
             }
         },
 
@@ -2049,7 +2049,7 @@ Java.perform(function() {
                         return this.onTouchEvent(event);
                     };
                 }
-            } catch(e) {}
+            } catch {}
         },
 
         // Simulate realistic app usage patterns
@@ -2079,7 +2079,7 @@ Java.perform(function() {
                     if (RunningAppProcessInfo) {
                         RunningAppProcessInfo.importance = RunningAppProcessInfo.IMPORTANCE_FOREGROUND.value;
                     }
-                } catch(e) {}
+                } catch {}
 
             }, 30000 + Math.random() * 60000); // Random intervals between 30s-90s
         },
@@ -2108,7 +2108,7 @@ Java.perform(function() {
 
                     return realTime + humanDelay;
                 };
-            } catch(e) {}
+            } catch {}
 
             // Simulate human response times for UI interactions
             try {
@@ -2130,7 +2130,7 @@ Java.perform(function() {
                         return this.postDelayed(runnable, newDelay);
                     };
                 }
-            } catch(e) {}
+            } catch {}
         },
 
         // Enhanced anti-debugging bypass for modern detection methods
@@ -2197,7 +2197,7 @@ Java.perform(function() {
                         }
                     });
                 }
-            } catch(e) {}
+            } catch {}
         },
 
         // Bypass dynamic analysis detection methods
@@ -2241,7 +2241,7 @@ Java.perform(function() {
                         }
                     });
                 }
-            } catch(e) {}
+            } catch {}
         },
 
         // Bypass Frida-specific detection methods
@@ -2308,7 +2308,7 @@ Java.perform(function() {
                         }
                     });
                 }
-            } catch(e) {}
+            } catch {}
         },
 
         // === 2024-2025 MODERN ANDROID SECURITY ENHANCEMENTS ===
@@ -2405,7 +2405,7 @@ Java.perform(function() {
                     bypassed_count: self.stats.android14PlusFeaturesBypassed
                 });
 
-            } catch(e) {
+            } catch {
                 send({
                     type: 'error',
                     target: 'android_14_plus',
@@ -2506,7 +2506,7 @@ Java.perform(function() {
                     bypassed_count: self.stats.advancedTEEBypassed
                 });
 
-            } catch(e) {
+            } catch {
                 send({
                     type: 'error',
                     target: 'advanced_tee',
@@ -2646,7 +2646,7 @@ Java.perform(function() {
                     spoofed_count: self.stats.quantumCryptographySpoofed
                 });
 
-            } catch(e) {
+            } catch {
                 send({
                     type: 'error',
                     target: 'quantum_crypto',
@@ -2763,7 +2763,7 @@ Java.perform(function() {
                     bypassed_count: self.stats.zeroTrustValidationBypassed
                 });
 
-            } catch(e) {
+            } catch {
                 send({
                     type: 'error',
                     target: 'zero_trust',
@@ -2908,7 +2908,7 @@ Java.perform(function() {
                     bypassed_count: self.stats.mlBehaviorAnalysisBypassed
                 });
 
-            } catch(e) {
+            } catch {
                 send({
                     type: 'error',
                     target: 'ml_behavior',
@@ -3031,7 +3031,7 @@ Java.perform(function() {
                     bypassed_count: self.stats.cloudSecurityBypassed
                 });
 
-            } catch(e) {
+            } catch {
                 send({
                     type: 'error',
                     target: 'cloud_security',
@@ -3153,7 +3153,7 @@ Java.perform(function() {
                     bypassed_count: self.stats.advancedMemoryTaggingBypassed
                 });
 
-            } catch(e) {
+            } catch {
                 send({
                     type: 'error',
                     target: 'memory_tagging',
@@ -3288,7 +3288,7 @@ Java.perform(function() {
                     bypassed_count: self.stats.kernelCFIBypassed
                 });
 
-            } catch(e) {
+            } catch {
                 send({
                     type: 'error',
                     target: 'kernel_cfi',
@@ -3452,7 +3452,7 @@ Java.perform(function() {
                     bypassed_count: self.stats.advancedAntiHookingBypassed
                 });
 
-            } catch(e) {
+            } catch {
                 send({
                     type: 'error',
                     target: 'anti_hooking',
@@ -3599,7 +3599,7 @@ Java.perform(function() {
                                 return result;
                             };
                         }
-                    } catch(e) {
+                    } catch {
                         // Service not available - continue
                     }
                 });
@@ -3631,7 +3631,7 @@ Java.perform(function() {
                     bypassed_count: self.stats.realTimeSecurityBypassed
                 });
 
-            } catch(e) {
+            } catch {
                 send({
                     type: 'error',
                     target: 'realtime_security',

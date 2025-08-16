@@ -13,9 +13,9 @@ try:
     print("\n1. Importing intellicrack.utils.logger directly...")
     from intellicrack.utils import logger
     print("   ✓ utils.logger imported")
-    
+
     print("\n✅ Import successful!")
-    
+
 except Exception as e:
     import traceback
     print(f"\n❌ Error: {e}")

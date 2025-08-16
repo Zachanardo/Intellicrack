@@ -19,7 +19,6 @@ import logging
 import time
 from typing import Any
 
-from intellicrack.core.exceptions import ConfigurationError
 from intellicrack.utils.service_health_checker import get_service_url
 
 """
@@ -61,7 +60,7 @@ class BaseC2:
                     server_url = proto_config.get("server_url")
                     if not server_url:
                         server_url = get_service_url("c2_server")
-                        
+
                     protocol = HttpsProtocol(
                         encryption_manager,
                         server_url,
@@ -74,7 +73,7 @@ class BaseC2:
                     if not domain:
                         c2_url = get_service_url("c2_server")
                         domain = c2_url.replace("http://", "").replace("https://", "").split(":")[0]
-                        
+
                     protocol = DnsProtocol(
                         encryption_manager,
                         domain,
@@ -82,7 +81,7 @@ class BaseC2:
                     )
                 elif protocol_type == "tcp":
                     from .communication_protocols import TcpProtocol
-                    
+
                     c2_url = get_service_url("c2_server")
                     host = c2_url.replace("http://", "").replace("https://", "").split(":")[0]
                     port = int(c2_url.split(":")[-1].replace("/", "")) if ":" in c2_url else 9999

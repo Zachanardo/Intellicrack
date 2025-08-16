@@ -23,23 +23,23 @@
 // Confidence: {{confidence}}%
 
 (function() {
-    "use strict";
+    'use strict';
 
     // Script metadata
     const scriptInfo = {
-        name: "{{script_name}}",
-        version: "1.0.0",
-        description: "{{description}}",
-        target: "{{target_binary}}",
-        protections: {{protection_list}}, // eslint-disable-line
-        generated: "{{timestamp}}"
+        name: '{{script_name}}',
+        version: '1.0.0',
+        description: '{{description}}',
+        target: '{{target_binary}}',
+        protections: [], // {{protection_list}} - Template placeholder
+        generated: '{{timestamp}}'
     };
 
     // Logger
     const logger = {
-        info: function(msg) { console.log("[+] " + msg); },
-        warn: function(msg) { console.log("[!] " + msg); },
-        error: function(msg) { console.log("[-] " + msg); }
+        info: function(msg) { console.log('[+] ' + msg); }, // eslint-disable-line no-console
+        warn: function(msg) { console.log('[!] ' + msg); }, // eslint-disable-line no-console
+        error: function(msg) { console.log('[-] ' + msg); } // eslint-disable-line no-console
     };
 
     // Hook tracking
@@ -64,26 +64,26 @@
     };
 
     // License Check Bypass Implementation
-    logger.info("Setting up license check bypass...");
+    logger.info('Setting up license check bypass...');
 
     // String comparison hooks
-    const stringFunctions = ["strcmp", "strcasecmp", "memcmp", "wcscmp", "_stricmp"];
+    const stringFunctions = ['strcmp', 'strcasecmp', 'memcmp', 'wcscmp', '_stricmp'];
     stringFunctions.forEach(function(funcName) {
         try {
             const funcAddr = Module.findExportByName(null, funcName);
             if (funcAddr) {
                 Interceptor.attach(funcAddr, {
                     onEnter: function(args) {
-                        this.str1 = "";
-                        this.str2 = "";
+                        this.str1 = '';
+                        this.str2 = '';
                         this.isLicenseCheck = false;
 
                         try {
-                            this.str1 = args[0].readCString() || "";
-                            this.str2 = args[1].readCString() || "";
+                            this.str1 = args[0].readCString() || '';
+                            this.str2 = args[1].readCString() || '';
 
                             // Detect license-related comparisons
-                            const licenseKeywords = ["license", "trial", "expire", "valid", "key", "serial"];
+                            const licenseKeywords = ['license', 'trial', 'expire', 'valid', 'key', 'serial'];
                             this.isLicenseCheck = licenseKeywords.some(keyword =>
                                 this.str1.toLowerCase().includes(keyword) ||
                                 this.str2.toLowerCase().includes(keyword)
@@ -93,7 +93,7 @@
                                 detections.license_checks++;
                                 logger.warn(`License check detected in ${funcName}: "${this.str1}" vs "${this.str2}"`);
                             }
-                        } catch (e) {
+                        } catch {
                             // Ignore memory access errors
                         }
                     },
@@ -115,7 +115,7 @@
     });
 
     // Hook license validation functions by name
-    const licenseTargets = {{license_functions}};
+    const licenseTargets = []; // {{license_functions}} - Template placeholder
     licenseTargets.forEach(function(funcName) {
         try {
             const funcAddr = Module.findExportByName(null, funcName);
@@ -141,7 +141,7 @@
     });
 
     // Hook imports that might be used for license checks
-    const targetImports = {{target_imports}};
+    const targetImports = []; // {{target_imports}} - Template placeholder
     targetImports.forEach(function(importName) {
         try {
             const importAddr = Module.findExportByName(null, importName);
@@ -159,12 +159,12 @@
     });
 
     // Bypass methods implementation
-    {{bypass_methods}}
+    // Template: bypass methods will be inserted here during script generation
 
     // Main execution
     logger.info(`Initialized ${scriptInfo.name} v${scriptInfo.version}`);
     logger.info(`Target: ${scriptInfo.target}`);
-    logger.info(`Protections detected: ${scriptInfo.protections.join(", ")}`);
+    logger.info(`Protections detected: ${scriptInfo.protections.join(', ')}`);
 
     // Periodic status reporting
     setInterval(function() {

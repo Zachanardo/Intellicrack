@@ -54,7 +54,7 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a wel
    ```bash
    # Install from requirements lock file (actual file location)
    pip install -r requirements/requirements.lock
-   
+
    # For development dependencies
    pip install -r requirements/requirements-dev.lock
    ```

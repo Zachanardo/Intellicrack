@@ -9,7 +9,6 @@ Licensed under GNU General Public License v3.0
 
 import json
 import os
-import platform
 from pathlib import Path
 from typing import Any
 
@@ -110,7 +109,7 @@ class SecretsManager:
 
     def _get_default_config_dir(self) -> Path:
         """Get unified configuration directory.
-        
+
         Uses C:\\Intellicrack\\config\\secrets for all platforms to ensure consistency.
         """
         return Path("C:/Intellicrack/config/secrets")

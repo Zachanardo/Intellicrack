@@ -58,9 +58,11 @@ class C2Client(BaseC2):
         c2_url = get_service_url("c2_server")
         default_host = c2_url.replace("http://", "").replace("https://", "").split(":")[0]
         default_port = int(c2_url.split(":")[-1].replace("/", "")) if ":" in c2_url else 8888
-        
+
         self.server_host = config.get("server_host", os.environ.get("C2_SERVER_HOST", default_host))
-        self.server_port = config.get("server_port", int(os.environ.get("C2_SERVER_PORT", str(default_port))))
+        self.server_port = config.get(
+            "server_port", int(os.environ.get("C2_SERVER_PORT", str(default_port)))
+        )
         self.protocol = config.get("protocol", "https")
         self.encryption_key = config.get("encryption_key")
         self.client_id = config.get("client_id", self._generate_client_id())
@@ -146,7 +148,9 @@ class C2Client(BaseC2):
                 {
                     "type": "tcp",
                     "host": tcp_config.get("host", os.environ.get("C2_TCP_HOST", default_host)),
-                    "port": tcp_config.get("port", int(os.environ.get("C2_TCP_PORT", str(default_port)))),
+                    "port": tcp_config.get(
+                        "port", int(os.environ.get("C2_TCP_PORT", str(default_port)))
+                    ),
                     "priority": 3,
                 }
             )

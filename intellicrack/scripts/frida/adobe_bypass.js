@@ -436,7 +436,7 @@ function bypassHardwareFingerprinting() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onEnter: function(args) {
+                    onEnter: function(_args) { // eslint-disable-line no-unused-vars
                         send({
                             type: 'bypass',
                             target: 'hardware_fingerprinting',
@@ -453,7 +453,7 @@ function bypassHardwareFingerprinting() {
                                 try {
                                     const buffer = this.context.r8;
                                     Memory.writeUtf16String(buffer, spoofedValues.hardwareId);
-                                } catch (_) {
+                                } catch (e) {
                                     // Fallback to basic spoofing
                                 }
                             }
@@ -557,7 +557,7 @@ function bypassModernCreativeCloudDesktop() {
                         }, 'int', []));
                         patchCount++;
                     }
-                } catch (_e) {
+                } catch (e) {
                     // Continue with other functions
                 }
             }
@@ -611,7 +611,7 @@ function bypassActivationService() {
                     if (addr) {
                         if (funcName.includes('Generate') || funcName.includes('Validate')) {
                             Interceptor.attach(addr, {
-                                onEnter: function(args) {
+                                onEnter: function(_args) { // eslint-disable-line no-unused-vars
                                     send({
                                         type: 'info',
                                         target: `${moduleName}!${funcName}`,
@@ -645,7 +645,7 @@ function bypassActivationService() {
                             });
                         }
                     }
-                } catch (_e) {
+                } catch (e) {
                     // Continue with other functions
                 }
             }
@@ -692,7 +692,7 @@ function bypassRealTimeProtection() {
                         }, 'int', []));
                         protectionCount++;
                     }
-                } catch (_e) {
+                } catch (e) {
                     // Continue
                 }
             }
@@ -721,7 +721,7 @@ function bypassRealTimeProtection() {
                     }, 'int', []));
                     protectionCount++;
                 }
-            } catch (_e) {
+            } catch {
                 // Continue
             }
         }
@@ -861,7 +861,7 @@ function bypassAIPoweredValidation() {
                                          Module.findExportByName(libName, 'InvokeInferenceSession');
                     if (inferenceFunc) {
                         Interceptor.attach(inferenceFunc, {
-                            onEnter: function(args) {
+                            onEnter: function(_args) { // eslint-disable-line no-unused-vars
                                 send({
                                     type: 'bypass',
                                     target: `${libName}!inference`,
@@ -882,7 +882,7 @@ function bypassAIPoweredValidation() {
                         aiBypassCount++;
                     }
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -920,14 +920,14 @@ function bypassEncryptedCommunication() {
                 const addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
                     Interceptor.attach(addr, {
-                        onEnter: function(args) {
+                        onEnter: function(_args) { // eslint-disable-line no-unused-vars
                             send({
                                 type: 'info',
                                 target: `${api.module}!${api.func}`,
                                 action: 'encryption_function_intercepted'
                             });
                         },
-                        onLeave: function(retval) {
+                        onLeave: function(_retval) { // eslint-disable-line no-unused-vars
                             if (api.func.includes('Decrypt')) {
                                 // Intercept decrypted license data
                                 send({
@@ -949,7 +949,7 @@ function bypassEncryptedCommunication() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -976,7 +976,7 @@ function bypassEncryptedCommunication() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -1012,14 +1012,14 @@ function setupAdvancedAntiDetection() {
                 const addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
                     Interceptor.attach(addr, {
-                        onEnter: function(args) {
+                        onEnter: function(args) { // eslint-disable-line no-unused-vars
                             send({
                                 type: 'bypass',
                                 target: `${api.module}!${api.func}`,
                                 action: 'memory_scan_intercepted'
                             });
                         },
-                        onLeave: function(retval) {
+                        onLeave: function(retval) { // eslint-disable-line no-unused-vars
                             // Modify memory scan results to hide our modifications
                             send({
                                 type: 'bypass',
@@ -1031,7 +1031,7 @@ function setupAdvancedAntiDetection() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -1048,7 +1048,7 @@ function setupAdvancedAntiDetection() {
                 const addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
                     Interceptor.attach(addr, {
-                        onLeave: function(retval) {
+                        onLeave: function(retval) { // eslint-disable-line no-unused-vars
                             send({
                                 type: 'bypass',
                                 target: `${api.module}!${api.func}`,
@@ -1059,7 +1059,7 @@ function setupAdvancedAntiDetection() {
                     });
                     stealthCount++;
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -1152,7 +1152,7 @@ function bypassAdvancedCertificatePinning() {
                         }
                     });
                 }
-            } catch (_e) {
+            } catch {
                 // Continue with other APIs
             }
         }
@@ -1186,7 +1186,7 @@ function bypassAdvancedCertificatePinning() {
                         return 0; // No verification
                     }, 'void', ['pointer', 'int', 'pointer']));
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -1253,7 +1253,7 @@ function spoofBehavioralAnalytics() {
                 const addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
                     Interceptor.attach(addr, {
-                        onLeave: function(retval) {
+                        onLeave: function(retval) { // eslint-disable-line no-unused-vars
                             // Inject realistic user behavior patterns
                             if (api.func === 'GetLastInputInfo') {
                                 // Spoof recent user activity
@@ -1283,7 +1283,7 @@ function spoofBehavioralAnalytics() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -1396,7 +1396,7 @@ function bypassWebAssemblyProtection() {
                                 // Hook the allocated WASM memory region
                                 try {
                                     Interceptor.attach(retval, {
-                                        onEnter: function(args) {
+                                        onEnter: function(args) { // eslint-disable-line no-unused-vars
                                             send({
                                                 type: 'bypass',
                                                 target: 'wasm_protection',
@@ -1413,7 +1413,7 @@ function bypassWebAssemblyProtection() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -1437,7 +1437,7 @@ function bypassWebAssemblyProtection() {
                 // Hook each V8 function from our list
                 for (const funcName of v8Functions) {
                     const funcPath = funcName.split('.');
-                    if (funcPath.length === 2 && typeof window[funcPath[0]] !== 'undefined' && 
+                    if (funcPath.length === 2 && typeof window[funcPath[0]] !== 'undefined' &&
                         typeof window[funcPath[0]][funcPath[1]] === 'function') {
                         send({
                             type: 'info',
@@ -1584,7 +1584,7 @@ function bypassZeroTrustArchitecture() {
                             }
                             zeroTrustBypassCount++;
                         },
-                        onLeave: function(retval) {
+                        onLeave: function(retval) { // eslint-disable-line no-unused-vars
                             if (api.func.includes('Receive')) {
                                 // Intercept responses from Adobe validation services
                                 send({
@@ -1597,7 +1597,7 @@ function bypassZeroTrustArchitecture() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -1630,7 +1630,7 @@ function bypassZeroTrustArchitecture() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -1712,14 +1712,14 @@ function handleQuantumResistantCrypto() {
                             const addr = Module.findExportByName(libName, funcName);
                             if (addr) {
                                 Interceptor.attach(addr, {
-                                    onEnter: function(args) {
+                                    onEnter: function(args) { // eslint-disable-line no-unused-vars
                                         send({
                                             type: 'bypass',
                                             target: `${libName}!${funcName}`,
                                             action: 'pqc_keygen_intercepted'
                                         });
                                     },
-                                    onLeave: function(retval) {
+                                    onLeave: function(retval) { // eslint-disable-line no-unused-vars
                                         send({
                                             type: 'bypass',
                                             target: `${libName}!${funcName}`,
@@ -1730,7 +1730,7 @@ function handleQuantumResistantCrypto() {
                                     }
                                 });
                             }
-                        } catch (e) {
+                        } catch {
                             // Continue
                         }
                     }
@@ -1752,12 +1752,12 @@ function handleQuantumResistantCrypto() {
                                 }, 'int', []));
                                 quantumBypassCount++;
                             }
-                        } catch (_e) {
+                        } catch {
                             // Continue
                         }
                     }
                 }
-            } catch (_e) {
+            } catch {
                 // Continue
             }
         }
@@ -1802,7 +1802,7 @@ function handleQuantumResistantCrypto() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -1837,7 +1837,7 @@ function blockRealTimeLicenseRevocation() {
                 const addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
                     Interceptor.attach(addr, {
-                        onEnter: function(args) {
+                        onEnter: function(args) { // eslint-disable-line no-unused-vars
                             send({
                                 type: 'bypass',
                                 target: `${api.module}!${api.func}`,
@@ -1861,13 +1861,13 @@ function blockRealTimeLicenseRevocation() {
                                     });
                                     revocationBlockCount++;
                                 }
-                            } catch (e) {
+                            } catch {
                                 // Continue
                             }
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -2006,7 +2006,7 @@ function bypassKernelLevelProtection() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -2048,7 +2048,7 @@ function bypassKernelLevelProtection() {
                         }
                     });
                 }
-            } catch (_e) {
+            } catch {
                 // Continue
             }
         }
@@ -2116,7 +2116,7 @@ function bypassAdvancedMemoryProtection() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -2143,7 +2143,7 @@ function bypassAdvancedMemoryProtection() {
                     }, 'void', ['pointer']));
                     memoryProtectionBypassCount++;
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -2169,7 +2169,7 @@ function bypassAdvancedMemoryProtection() {
                     }, 'int', []));
                     memoryProtectionBypassCount++;
                 }
-            } catch (_e) {
+            } catch {
                 // Continue
             }
         }
@@ -2221,7 +2221,7 @@ function disruptCrossPlatformLicenseSync() {
                                 }
                             }
                         },
-                        onLeave: function(retval) {
+                        onLeave: function(retval) { // eslint-disable-line no-unused-vars
                             if (api.func.includes('Read') || api.func.includes('Write')) {
                                 send({
                                     type: 'bypass',
@@ -2233,7 +2233,7 @@ function disruptCrossPlatformLicenseSync() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -2282,7 +2282,7 @@ function disruptCrossPlatformLicenseSync() {
                 const addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
                     Interceptor.attach(addr, {
-                        onLeave: function(retval) {
+                        onLeave: function(retval) { // eslint-disable-line no-unused-vars
                             // Spoof platform information to disrupt sync
                             if (api.func === 'GetVersionExW' || api.func === 'RtlGetVersion') {
                                 // Modify version info to appear as different platform
@@ -2301,7 +2301,7 @@ function disruptCrossPlatformLicenseSync() {
                         }
                     });
                 }
-            } catch (_e) {
+            } catch {
                 // Continue
             }
         }
@@ -2369,7 +2369,7 @@ function setupAdvancedPersistence() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -2401,7 +2401,7 @@ function setupAdvancedPersistence() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -2436,7 +2436,7 @@ function setupAdvancedPersistence() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -2478,7 +2478,7 @@ function setupAdvancedPersistence() {
                 const addr = Module.findExportByName(api.module, api.func);
                 if (addr) {
                     Interceptor.attach(addr, {
-                        onEnter: function(args) {
+                        onEnter: function(args) { // eslint-disable-line no-unused-vars
                             if (api.func === 'TerminateProcess') {
                                 send({
                                     type: 'info',
@@ -2488,7 +2488,7 @@ function setupAdvancedPersistence() {
                                 });
                             }
                         },
-                        onLeave: function(retval) {
+                        onLeave: function(retval) { // eslint-disable-line no-unused-vars
                             if (api.func === 'CreateProcessW') {
                                 send({
                                     type: 'bypass',
@@ -2501,7 +2501,7 @@ function setupAdvancedPersistence() {
                         }
                     });
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }

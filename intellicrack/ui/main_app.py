@@ -72,6 +72,7 @@ except ImportError:
 if os.name == "nt":
     try:
         from ctypes import byref, c_int, sizeof, windll
+
         HAS_CTYPES = True
     except ImportError:
         byref = c_int = sizeof = windll = None
@@ -179,27 +180,27 @@ except ImportError as e:
 
     class QWidget:
         """Tkinter-based widget implementation for PyQt6 fallback."""
-        
+
         def __init__(self, parent=None):
             """Initialize tkinter widget."""
             self.parent = parent
             self.frame = tk.Frame(parent.root if parent else None)
             self.layout_obj = None
-        
+
         def setLayout(self, layout):
             """Set layout for widget."""
             self.layout_obj = layout
-        
+
         def show(self):
             """Show the widget."""
             if self.frame:
                 self.frame.pack(fill=tk.BOTH, expand=True)
-        
+
         def hide(self):
             """Hide the widget."""
             if self.frame:
                 self.frame.pack_forget()
-    
+
     class QMainWindow:
         """Tkinter-based main window implementation for PyQt6 fallback."""
 
@@ -220,21 +221,21 @@ except ImportError as e:
         def setCentralWidget(self, widget):
             """Set central widget."""
             self.centralWidget = widget
-            if hasattr(widget, 'pack'):
+            if hasattr(widget, "pack"):
                 widget.pack(fill=tk.BOTH, expand=True)
-        
+
         def setGeometry(self, x, y, width, height):
             """Set window geometry."""
             self.root.geometry(f"{width}x{height}+{x}+{y}")
-        
+
         def isVisible(self):
             """Check if window is visible."""
-            return self.root.winfo_viewable() if hasattr(self.root, 'winfo_viewable') else False
-        
+            return self.root.winfo_viewable() if hasattr(self.root, "winfo_viewable") else False
+
         def windowState(self):
             """Get window state."""
             return 0  # Normal state
-        
+
         def setWindowIcon(self, icon):
             """Set window icon (no-op for tkinter)."""
             pass
@@ -283,6 +284,7 @@ except ImportError as e:
                 except Exception as err:
                     # Log error properly
                     import logging
+
                     logging.error(f"Signal callback error: {err}", exc_info=True)
 
                     # Re-raise critical errors
@@ -338,9 +340,9 @@ except ImportError as e:
     class QtNamespace:
         """Minimal Qt namespace replacement."""
 
-        AlignCenter = 'center'
-        AlignLeft = 'left'
-        AlignRight = 'right'
+        AlignCenter = "center"
+        AlignLeft = "left"
+        AlignRight = "right"
         Checked = True
         Unchecked = False
 
@@ -407,6 +409,7 @@ except ImportError:
 
             """
             from intellicrack.handlers.tkinter_handler import tkinter as tk
+
             self.root = tk.Tk()
             self.root.title(title)
             self.root.overrideredirect(True)  # Remove window decorations
@@ -421,38 +424,29 @@ except ImportError:
             self.root.geometry(f"{width}x{height}+{x}+{y}")
 
             # Set background and create widgets
-            self.root.configure(bg='#2b2b2b')
+            self.root.configure(bg="#2b2b2b")
 
             # Title label
             self.title_label = tk.Label(
                 self.root,
                 text="INTELLICRACK",
-                font=('Arial', 24, 'bold'),
-                fg='#00ff00',
-                bg='#2b2b2b'
+                font=("Arial", 24, "bold"),
+                fg="#00ff00",
+                bg="#2b2b2b",
             )
             self.title_label.pack(pady=30)
 
             # Message label
             self.message_label = tk.Label(
-                self.root,
-                text=message,
-                font=('Arial', 12),
-                fg='#ffffff',
-                bg='#2b2b2b'
+                self.root, text=message, font=("Arial", 12), fg="#ffffff", bg="#2b2b2b"
             )
             self.message_label.pack(pady=10)
 
             # Progress bar (simulated)
-            self.progress_frame = tk.Frame(self.root, bg='#1a1a1a', height=20)
+            self.progress_frame = tk.Frame(self.root, bg="#1a1a1a", height=20)
             self.progress_frame.pack(fill=tk.X, padx=50, pady=20)
 
-            self.progress_bar = tk.Frame(
-                self.progress_frame,
-                bg='#00ff00',
-                height=20,
-                width=0
-            )
+            self.progress_bar = tk.Frame(self.progress_frame, bg="#00ff00", height=20, width=0)
             self.progress_bar.place(x=0, y=0)
 
             self.progress = 0
@@ -505,39 +499,36 @@ except ImportError:
 
             """
             self.parent = parent
-            self.config = {
-                'enabled': False,
-                'workers': 4,
-                'host': 'localhost',
-                'port': 5555
-            }
+            self.config = {"enabled": False, "workers": 4, "host": "localhost", "port": 5555}
 
         def show(self):
             """Show configuration dialog."""
-            dialog = tk.Toplevel(self.parent if hasattr(self.parent, 'winfo_exists') else None)
+            dialog = tk.Toplevel(self.parent if hasattr(self.parent, "winfo_exists") else None)
             dialog.title("Distributed Processing Config")
             dialog.geometry("400x300")
 
             # Configuration fields
             tk.Label(dialog, text="Workers:").grid(row=0, column=0, pady=5)
-            workers_var = tk.IntVar(value=self.config['workers'])
+            workers_var = tk.IntVar(value=self.config["workers"])
             tk.Spinbox(dialog, from_=1, to=16, textvariable=workers_var).grid(row=0, column=1)
 
             tk.Label(dialog, text="Host:").grid(row=1, column=0, pady=5)
-            host_var = tk.StringVar(value=self.config['host'])
+            host_var = tk.StringVar(value=self.config["host"])
             tk.Entry(dialog, textvariable=host_var).grid(row=1, column=1)
 
             tk.Label(dialog, text="Port:").grid(row=2, column=0, pady=5)
-            port_var = tk.IntVar(value=self.config['port'])
+            port_var = tk.IntVar(value=self.config["port"])
             tk.Entry(dialog, textvariable=port_var).grid(row=2, column=1)
 
             def save_config():
-                self.config['workers'] = workers_var.get()
-                self.config['host'] = host_var.get()
-                self.config['port'] = port_var.get()
+                self.config["workers"] = workers_var.get()
+                self.config["host"] = host_var.get()
+                self.config["port"] = port_var.get()
                 dialog.destroy()
 
-            tk.Button(dialog, text="Save", command=save_config).grid(row=3, column=0, columnspan=2, pady=20)
+            tk.Button(dialog, text="Save", command=save_config).grid(
+                row=3, column=0, columnspan=2, pady=20
+            )
 
     class EmulatorStatusWidget(tk.Frame):
         """Real emulator status widget."""
@@ -575,12 +566,12 @@ except ImportError:
 
         """
         # Real tooltip implementation
-        if hasattr(widget, 'winfo_children'):
+        if hasattr(widget, "winfo_children"):
             for child in widget.winfo_children():
-                if hasattr(child, 'cget'):
+                if hasattr(child, "cget"):
                     try:
-                        text = child.cget('text')
-                        if 'emulator' in str(text).lower():
+                        text = child.cget("text")
+                        if "emulator" in str(text).lower():
                             # Add hover behavior
                             tooltip_text = "Emulator functionality for dynamic analysis"
                             child.bind("<Enter>", lambda e: _show_tooltip(e, tooltip_text))
@@ -594,13 +585,15 @@ except ImportError:
         _tooltip_window = tk.Toplevel()
         _tooltip_window.wm_overrideredirect(True)
         _tooltip_window.wm_geometry(f"+{event.x_root+10}+{event.y_root+10}")
-        label = tk.Label(_tooltip_window, text=text, background="yellow", relief="solid", borderwidth=1)
+        label = tk.Label(
+            _tooltip_window, text=text, background="yellow", relief="solid", borderwidth=1
+        )
         label.pack()
 
     def _hide_tooltip():
         """Hide tooltip."""
         global _tooltip_window
-        if '_tooltip_window' in globals() and _tooltip_window:
+        if "_tooltip_window" in globals() and _tooltip_window:
             _tooltip_window.destroy()
 
     class EmulatorRequiredDecorator:
@@ -619,10 +612,11 @@ except ImportError:
             """Check emulator before calling function."""
             # Check if emulator is available
             import shutil
-            if not shutil.which('qemu-system-x86_64'):
+
+            if not shutil.which("qemu-system-x86_64"):
                 messagebox.showwarning(
                     "Emulator Required",
-                    "This feature requires QEMU emulator. Please install QEMU first."
+                    "This feature requires QEMU emulator. Please install QEMU first.",
                 )
                 return None
             return self.func(*args, **kwargs)
@@ -635,11 +629,11 @@ except ImportError:
 
         """
         return {
-            'analyze': 'Perform static and dynamic analysis',
-            'exploit': 'Generate exploitation payloads',
-            'patch': 'Apply binary patches',
-            'emulate': 'Run in emulated environment',
-            'debug': 'Attach debugger to process'
+            "analyze": "Perform static and dynamic analysis",
+            "exploit": "Generate exploitation payloads",
+            "patch": "Apply binary patches",
+            "emulate": "Run in emulated environment",
+            "debug": "Attach debugger to process",
         }
 
     def apply_tooltips_to_buttons(container):
@@ -650,11 +644,11 @@ except ImportError:
 
         """
         definitions = get_tooltip_definitions()
-        if hasattr(container, 'winfo_children'):
+        if hasattr(container, "winfo_children"):
             for widget in container.winfo_children():
                 if isinstance(widget, tk.Button):
                     try:
-                        text = widget.cget('text').lower()
+                        text = widget.cget("text").lower()
                         for key, tooltip in definitions.items():
                             if key in text:
                                 widget.bind("<Enter>", lambda e, t=tooltip: _show_tooltip(e, t))
@@ -679,11 +673,11 @@ except ImportError:
             stats_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
             self.stats_labels = {}
-            stats = ['Files Analyzed: 0', 'Vulnerabilities: 0', 'Patches Applied: 0']
+            stats = ["Files Analyzed: 0", "Vulnerabilities: 0", "Patches Applied: 0"]
             for i, stat in enumerate(stats):
                 label = tk.Label(stats_frame, text=stat)
                 label.grid(row=i, column=0, sticky="w", padx=10, pady=5)
-                self.stats_labels[stat.split(':')[0]] = label
+                self.stats_labels[stat.split(":")[0]] = label
 
     class AnalysisTab(tk.Frame):
         """Real analysis tab implementation."""
@@ -757,10 +751,10 @@ except ImportError:
 
         def setup_ui(self):
             """Setup tools UI."""
-            tools = ['Hex Editor', 'Disassembler', 'Debugger', 'Patcher']
+            tools = ["Hex Editor", "Disassembler", "Debugger", "Patcher"]
             for i, tool in enumerate(tools):
                 btn = tk.Button(self, text=f"Launch {tool}", width=20)
-                btn.grid(row=i//2, column=i%2, padx=10, pady=10)
+                btn.grid(row=i // 2, column=i % 2, padx=10, pady=10)
 
     class SettingsTab(tk.Frame):
         """Real settings tab implementation."""
@@ -775,7 +769,9 @@ except ImportError:
             # Theme selection
             tk.Label(self, text="Theme:").grid(row=0, column=0, sticky="w", padx=10, pady=5)
             theme_var = tk.StringVar(value="dark")
-            ttk.Combobox(self, textvariable=theme_var, values=['dark', 'light', 'hacker']).grid(row=0, column=1, padx=10, pady=5)
+            ttk.Combobox(self, textvariable=theme_var, values=["dark", "light", "hacker"]).grid(
+                row=0, column=1, padx=10, pady=5
+            )
 
             # API Keys
             tk.Label(self, text="API Keys:").grid(row=1, column=0, sticky="w", padx=10, pady=5)
@@ -786,53 +782,52 @@ except ImportError:
     # Real theme manager fallback implementation
     def get_theme_manager():
         """Get a real theme manager with functional theming."""
+
         class RealThemeManager:
             """Real theme manager with actual theme storage and application."""
 
             def __init__(self):
                 """Initialize theme manager with default settings."""
                 import os
+
                 self.themes = {
-                    'dark': {
-                        'background': '#1e1e1e',
-                        'foreground': '#ffffff',
-                        'accent': '#00ff00',
-                        'button': '#2d2d2d',
-                        'input': '#252525',
-                        'border': '#3d3d3d',
-                        'error': '#ff4444',
-                        'warning': '#ffaa00',
-                        'success': '#44ff44'
+                    "dark": {
+                        "background": "#1e1e1e",
+                        "foreground": "#ffffff",
+                        "accent": "#00ff00",
+                        "button": "#2d2d2d",
+                        "input": "#252525",
+                        "border": "#3d3d3d",
+                        "error": "#ff4444",
+                        "warning": "#ffaa00",
+                        "success": "#44ff44",
                     },
-                    'light': {
-                        'background': '#ffffff',
-                        'foreground': '#000000',
-                        'accent': '#0066cc',
-                        'button': '#f0f0f0',
-                        'input': '#fafafa',
-                        'border': '#cccccc',
-                        'error': '#cc0000',
-                        'warning': '#ff9900',
-                        'success': '#00cc00'
+                    "light": {
+                        "background": "#ffffff",
+                        "foreground": "#000000",
+                        "accent": "#0066cc",
+                        "button": "#f0f0f0",
+                        "input": "#fafafa",
+                        "border": "#cccccc",
+                        "error": "#cc0000",
+                        "warning": "#ff9900",
+                        "success": "#00cc00",
                     },
-                    'hacker': {
-                        'background': '#000000',
-                        'foreground': '#00ff00',
-                        'accent': '#00ffff',
-                        'button': '#001100',
-                        'input': '#000500',
-                        'border': '#00ff00',
-                        'error': '#ff0000',
-                        'warning': '#ffff00',
-                        'success': '#00ff00'
-                    }
+                    "hacker": {
+                        "background": "#000000",
+                        "foreground": "#00ff00",
+                        "accent": "#00ffff",
+                        "button": "#001100",
+                        "input": "#000500",
+                        "border": "#00ff00",
+                        "error": "#ff0000",
+                        "warning": "#ffff00",
+                        "success": "#00ff00",
+                    },
                 }
 
                 # Load saved theme preference
-                self.config_file = os.path.join(
-                    os.path.expanduser('~'),
-                    '.intellicrack_theme.json'
-                )
+                self.config_file = os.path.join(os.path.expanduser("~"), ".intellicrack_theme.json")
                 self.current_theme = self._load_theme_preference()
                 self.theme_callbacks = []
 
@@ -845,21 +840,23 @@ except ImportError:
                 """
                 import json
                 import os
+
                 if os.path.exists(self.config_file):
                     try:
-                        with open(self.config_file, 'r') as f:
+                        with open(self.config_file, "r") as f:
                             data = json.load(f)
-                            return data.get('theme', 'dark')
+                            return data.get("theme", "dark")
                     except:
                         pass
-                return 'dark'
+                return "dark"
 
             def _save_theme_preference(self):
                 """Save current theme preference to disk."""
                 import json
+
                 try:
-                    with open(self.config_file, 'w') as f:
-                        json.dump({'theme': self.current_theme}, f)
+                    with open(self.config_file, "w") as f:
+                        json.dump({"theme": self.current_theme}, f)
                 except:
                     pass  # Non-critical if saving fails
 
@@ -898,7 +895,7 @@ except ImportError:
                     dict: Theme color mappings
 
                 """
-                return self.themes.get(self.current_theme, self.themes['dark'])
+                return self.themes.get(self.current_theme, self.themes["dark"])
 
             def register_callback(self, callback):
                 """Register a callback for theme changes.
@@ -920,6 +917,7 @@ except ImportError:
                 return list(self.themes.keys())
 
         return RealThemeManager()
+
 
 # Core imports (conditional)
 try:
@@ -962,7 +960,9 @@ except ImportError:
             self.paths = []
             self.constraints = {}
             self.memory = {}
-            self.registers = {reg: 0 for reg in ['eax', 'ebx', 'ecx', 'edx', 'esi', 'edi', 'esp', 'ebp']}
+            self.registers = {
+                reg: 0 for reg in ["eax", "ebx", "ecx", "edx", "esi", "edi", "esp", "ebp"]
+            }
 
         def execute(self, binary_path: str, entry_point: int = 0) -> List[Dict]:
             """Execute binary symbolically.
@@ -975,11 +975,11 @@ except ImportError:
                 List of execution paths
 
             """
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 _ = f.read()  # Read for file validation
 
             # Basic symbolic execution
-            path = {'constraints': [], 'memory': {}, 'registers': self.registers.copy()}
+            path = {"constraints": [], "memory": {}, "registers": self.registers.copy()}
             self.paths.append(path)
             return self.paths
 
@@ -1002,20 +1002,16 @@ except ImportError:
                 Taint analysis results
 
             """
-            results = {
-                'sources': self.taint_sources,
-                'sinks': self.taint_sinks,
-                'flows': []
-            }
+            results = {"sources": self.taint_sources, "sinks": self.taint_sinks, "flows": []}
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
                 # Identify potential sources (inputs)
-                if b'scanf' in data or b'gets' in data:
-                    self.taint_sources.append({'type': 'user_input', 'address': 0})
+                if b"scanf" in data or b"gets" in data:
+                    self.taint_sources.append({"type": "user_input", "address": 0})
                 # Identify potential sinks (outputs)
-                if b'system' in data or b'exec' in data:
-                    self.taint_sinks.append({'type': 'command_execution', 'address': 0})
+                if b"system" in data or b"exec" in data:
+                    self.taint_sinks.append({"type": "command_execution", "address": 0})
 
             return results
 
@@ -1052,13 +1048,13 @@ except ImportError:
 
             """
             traces = []
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 _ = f.read()  # Read for file validation
                 # Generate execution trace
                 trace = {
-                    'path': [],
-                    'constraints': self.symbolic_constraints,
-                    'inputs': inputs or {}
+                    "path": [],
+                    "constraints": self.symbolic_constraints,
+                    "inputs": inputs or {},
                 }
                 traces.append(trace)
             return traces
@@ -1082,16 +1078,14 @@ except ImportError:
 
             """
             gadgets = []
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
                 # Find ret instructions (0xC3)
                 for i, byte in enumerate(data):
                     if byte == 0xC3:
-                        gadgets.append({
-                            'address': i,
-                            'bytes': data[max(0, i-10):i+1],
-                            'type': 'ret'
-                        })
+                        gadgets.append(
+                            {"address": i, "bytes": data[max(0, i - 10) : i + 1], "type": "ret"}
+                        )
             self.gadgets = gadgets
             return gadgets
 
@@ -1107,7 +1101,7 @@ except ImportError:
             """
             chain = []
             for gadget in self.gadgets[:5]:  # Use first 5 gadgets
-                chain.append(gadget['address'])
+                chain.append(gadget["address"])
             return chain
 
     class DistributedProcessingManager:
@@ -1152,7 +1146,7 @@ except ImportError:
                 Processing result
 
             """
-            return {'task_id': task.get('id'), 'status': 'completed'}
+            return {"task_id": task.get("id"), "status": "completed"}
 
         def submit_task(self, task: Dict):
             """Submit task for processing.
@@ -1180,7 +1174,8 @@ except ImportError:
             """
             try:
                 import subprocess
-                result = subprocess.run(['nvidia-smi'], capture_output=True, text=True)
+
+                result = subprocess.run(["nvidia-smi"], capture_output=True, text=True)
                 return result.returncode == 0
             except:
                 return False
@@ -1233,7 +1228,7 @@ except ImportError:
             if cache_key in self.cache:
                 return self.cache[cache_key]
 
-            with open(path, 'rb') as f:
+            with open(path, "rb") as f:
                 f.seek(offset)
                 data = f.read(size or self.chunk_size)
                 self.cache[cache_key] = data
@@ -1254,7 +1249,7 @@ except ImportError:
                 content: Section content
 
             """
-            self.content.append({'title': title, 'content': content})
+            self.content.append({"title": title, "content": content})
 
         def generate(self, output_path: str):
             """Generate PDF report.
@@ -1264,12 +1259,12 @@ except ImportError:
 
             """
             # Generate simple text report (PDF simulation)
-            with open(output_path.replace('.pdf', '.txt'), 'w') as f:
+            with open(output_path.replace(".pdf", ".txt"), "w") as f:
                 f.write("INTELLICRACK ANALYSIS REPORT\n")
                 f.write("=" * 40 + "\n\n")
                 for section in self.content:
                     f.write(f"{section['title']}\n")
-                    f.write("-" * len(section['title']) + "\n")
+                    f.write("-" * len(section["title"]) + "\n")
                     f.write(f"{section['content']}\n\n")
 
     def run_report_generation(results: Dict, output_path: str):
@@ -1301,11 +1296,7 @@ except ImportError:
                 model_path: Path to model files
 
             """
-            self.models[model_name] = {
-                'name': model_name,
-                'path': model_path,
-                'loaded': True
-            }
+            self.models[model_name] = {"name": model_name, "path": model_path, "loaded": True}
             self.active_model = model_name
 
         def predict(self, prompt: str) -> str:
@@ -1329,10 +1320,10 @@ except ImportError:
         def __init__(self):
             """Initialize dashboard manager."""
             self.stats = {
-                'files_analyzed': 0,
-                'vulnerabilities_found': 0,
-                'patches_applied': 0,
-                'uptime': 0
+                "files_analyzed": 0,
+                "vulnerabilities_found": 0,
+                "patches_applied": 0,
+                "uptime": 0,
             }
             self.callbacks = []
 
@@ -1367,21 +1358,18 @@ except ImportError:
                 self.callbacks.append(callback)
 
     TOOL_REGISTRY = {
-        'symbolic': SymbolicExecutionEngine,
-        'taint': TaintAnalysisEngine,
-        'concolic': ConcolicExecutionEngine,
-        'rop': ROPChainGenerator
+        "symbolic": SymbolicExecutionEngine,
+        "taint": TaintAnalysisEngine,
+        "concolic": ConcolicExecutionEngine,
+        "rop": ROPChainGenerator,
     }
-    CONFIG = {
-        'debug': False,
-        'verbose': False,
-        'max_workers': 4
-    }
+    CONFIG = {"debug": False, "verbose": False, "max_workers": 4}
 
 # Protection utilities (conditional)
 try:
     from ..utils.protection_utils import inject_comprehensive_api_hooks
 except ImportError:
+
     def inject_comprehensive_api_hooks(app, *args, **kwargs):
         """Fallback function for API hook injection when protection_utils unavailable.
 
@@ -1392,6 +1380,7 @@ except ImportError:
 
         """
         pass
+
 
 # Hex viewer integration (conditional)
 try:
@@ -1455,7 +1444,6 @@ except ImportError as e:
 # - _create_ml_models() for model creation
 # - _eval_ml_model() for model evaluation
 # This reduces module import time and makes dependencies clearer
-
 
 
 # Security configuration for pickle
@@ -2066,7 +2054,7 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
         proxy_url = get_service_url("proxy_server")
         proxy_host = proxy_url.replace("https://", "").replace("http://", "").split(":")[0]
         proxy_port = int(proxy_url.split(":")[-1].replace("/", "")) if ":" in proxy_url else 8443
-        
+
         interceptor = SSLTLSInterceptor(
             {
                 "listen_ip": proxy_host,
@@ -2110,8 +2098,10 @@ def run_ssl_tls_interceptor(app, *args, **kwargs):
                 # Use proxy configuration
                 proxy_url = get_service_url("proxy_server")
                 proxy_host = proxy_url.replace("https://", "").replace("http://", "").split(":")[0]
-                proxy_port = int(proxy_url.split(":")[-1].replace("/", "")) if ":" in proxy_url else 8443
-                
+                proxy_port = (
+                    int(proxy_url.split(":")[-1].replace("/", "")) if ":" in proxy_url else 8443
+                )
+
                 app.ssl_config = {
                     "listen_ip": proxy_host,
                     "listen_port": proxy_port,
@@ -10310,6 +10300,7 @@ def _check_intercepted_traffic(proxy_server):
                 from collections import defaultdict
 
                 from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+
                 if not HAS_FRIDA:
                     raise ImportError("Frida not available")
 
@@ -13679,7 +13670,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 self,
                 "Select Memory Dump",
                 "",
-                "Memory Dumps (*.dmp *.raw *.mem *.vmem);;All Files (*)"
+                "Memory Dumps (*.dmp *.raw *.mem *.vmem);;All Files (*)",
             )
 
             if not file_path:
@@ -13700,14 +13691,16 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
             profile_label = QLabel("Profile:")
             profile_combo = QComboBox()
-            profile_combo.addItems([
-                "Auto Detect",
-                "Windows 10 x64",
-                "Windows 11 x64",
-                "Windows 7 x64",
-                "Linux x64",
-                "Custom"
-            ])
+            profile_combo.addItems(
+                [
+                    "Auto Detect",
+                    "Windows 10 x64",
+                    "Windows 11 x64",
+                    "Windows 7 x64",
+                    "Linux x64",
+                    "Custom",
+                ]
+            )
             info_layout.addWidget(profile_label)
             info_layout.addWidget(profile_combo)
 
@@ -13728,25 +13721,21 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
             # Processes tab
             processes_tree = QTreeWidget()
-            processes_tree.setHeaderLabels([
-                "PID", "PPID", "Name", "Command Line", "Hidden", "Suspicious"
-            ])
+            processes_tree.setHeaderLabels(
+                ["PID", "PPID", "Name", "Command Line", "Hidden", "Suspicious"]
+            )
             processes_tree.setAlternatingRowColors(True)
             tab_widget.addTab(processes_tree, "Processes")
 
             # Modules tab
             modules_tree = QTreeWidget()
-            modules_tree.setHeaderLabels([
-                "Base Address", "Size", "Name", "Path", "Suspicious"
-            ])
+            modules_tree.setHeaderLabels(["Base Address", "Size", "Name", "Path", "Suspicious"])
             modules_tree.setAlternatingRowColors(True)
             tab_widget.addTab(modules_tree, "Modules")
 
             # Network tab
             network_tree = QTreeWidget()
-            network_tree.setHeaderLabels([
-                "Local", "Remote", "Protocol", "State", "PID"
-            ])
+            network_tree.setHeaderLabels(["Local", "Remote", "Protocol", "State", "PID"])
             network_tree.setAlternatingRowColors(True)
             tab_widget.addTab(network_tree, "Network Connections")
 
@@ -13819,21 +13808,18 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                             "Windows 11 x64": AnalysisProfile.WINDOWS_11_X64,
                             "Windows 7 x64": AnalysisProfile.WINDOWS_7_X64,
                             "Linux x64": AnalysisProfile.LINUX_X64,
-                            "Custom": AnalysisProfile.CUSTOM
+                            "Custom": AnalysisProfile.CUSTOM,
                         }
 
                         selected_profile = profile_map.get(
-                            self.profile,
-                            AnalysisProfile.AUTO_DETECT
+                            self.profile, AnalysisProfile.AUTO_DETECT
                         )
 
                         self.progress.emit("Starting memory analysis...")
 
                         # Perform analysis
                         result = engine.analyze_memory_dump(
-                            self.dump_path,
-                            selected_profile,
-                            self.deep_analysis
+                            self.dump_path, selected_profile, self.deep_analysis
                         )
 
                         if result.error:
@@ -13843,34 +13829,40 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                         # Emit processes
                         self.progress.emit("Processing results...")
                         for proc in result.processes:
-                            self.process_found.emit({
-                                'pid': proc.pid,
-                                'ppid': proc.ppid,
-                                'name': proc.name,
-                                'command_line': proc.command_line,
-                                'is_hidden': proc.is_hidden,
-                                'suspicious': len(proc.suspicious_indicators) > 0
-                            })
+                            self.process_found.emit(
+                                {
+                                    "pid": proc.pid,
+                                    "ppid": proc.ppid,
+                                    "name": proc.name,
+                                    "command_line": proc.command_line,
+                                    "is_hidden": proc.is_hidden,
+                                    "suspicious": len(proc.suspicious_indicators) > 0,
+                                }
+                            )
 
                         # Emit modules
                         for mod in result.modules:
-                            self.module_found.emit({
-                                'base_address': hex(mod.base_address),
-                                'size': mod.size,
-                                'name': mod.name,
-                                'path': mod.path,
-                                'is_suspicious': mod.is_suspicious
-                            })
+                            self.module_found.emit(
+                                {
+                                    "base_address": hex(mod.base_address),
+                                    "size": mod.size,
+                                    "name": mod.name,
+                                    "path": mod.path,
+                                    "is_suspicious": mod.is_suspicious,
+                                }
+                            )
 
                         # Emit network connections
                         for conn in result.network_connections:
-                            self.network_found.emit({
-                                'local': f"{conn.local_addr}:{conn.local_port}",
-                                'remote': f"{conn.remote_addr}:{conn.remote_port}",
-                                'protocol': conn.protocol,
-                                'state': conn.state,
-                                'pid': conn.pid
-                            })
+                            self.network_found.emit(
+                                {
+                                    "local": f"{conn.local_addr}:{conn.local_port}",
+                                    "remote": f"{conn.remote_addr}:{conn.remote_port}",
+                                    "protocol": conn.protocol,
+                                    "state": conn.state,
+                                    "pid": conn.pid,
+                                }
+                            )
 
                         # Emit security findings
                         for finding in result.security_findings:
@@ -13902,49 +13894,53 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
                 # Create and start analyzer
                 analyzer = MemoryAnalyzer(
-                    file_path,
-                    profile_combo.currentText(),
-                    deep_analysis_check.isChecked()
+                    file_path, profile_combo.currentText(), deep_analysis_check.isChecked()
                 )
 
                 def on_progress(msg):
                     info_label.setText(f"Analyzing: {file_path} - {msg}")
 
                 def on_process(proc):
-                    item = QTreeWidgetItem([
-                        str(proc['pid']),
-                        str(proc['ppid']),
-                        proc['name'],
-                        proc['command_line'] or '',
-                        'Yes' if proc['is_hidden'] else 'No',
-                        'Yes' if proc['suspicious'] else 'No'
-                    ])
-                    if proc['suspicious']:
+                    item = QTreeWidgetItem(
+                        [
+                            str(proc["pid"]),
+                            str(proc["ppid"]),
+                            proc["name"],
+                            proc["command_line"] or "",
+                            "Yes" if proc["is_hidden"] else "No",
+                            "Yes" if proc["suspicious"] else "No",
+                        ]
+                    )
+                    if proc["suspicious"]:
                         item.setForeground(5, Qt.GlobalColor.red)
-                    if proc['is_hidden']:
+                    if proc["is_hidden"]:
                         item.setForeground(4, Qt.GlobalColor.yellow)
                     processes_tree.addTopLevelItem(item)
 
                 def on_module(mod):
-                    item = QTreeWidgetItem([
-                        mod['base_address'],
-                        str(mod['size']),
-                        mod['name'],
-                        mod['path'],
-                        'Yes' if mod['is_suspicious'] else 'No'
-                    ])
-                    if mod['is_suspicious']:
+                    item = QTreeWidgetItem(
+                        [
+                            mod["base_address"],
+                            str(mod["size"]),
+                            mod["name"],
+                            mod["path"],
+                            "Yes" if mod["is_suspicious"] else "No",
+                        ]
+                    )
+                    if mod["is_suspicious"]:
                         item.setForeground(4, Qt.GlobalColor.red)
                     modules_tree.addTopLevelItem(item)
 
                 def on_network(conn):
-                    item = QTreeWidgetItem([
-                        conn['local'],
-                        conn['remote'],
-                        conn['protocol'],
-                        conn['state'],
-                        str(conn['pid'])
-                    ])
+                    item = QTreeWidgetItem(
+                        [
+                            conn["local"],
+                            conn["remote"],
+                            conn["protocol"],
+                            conn["state"],
+                            str(conn["pid"]),
+                        ]
+                    )
                     network_tree.addTopLevelItem(item)
 
                 def on_finding(finding):
@@ -13969,9 +13965,11 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     stats.append(f"Network Connections: {len(result.network_connections)}")
                     stats.append(f"Security Findings: {len(result.security_findings)}")
                     stats.append(f"Memory Strings: {len(result.memory_strings)}")
-                    stats.append(f"Suspicious Activity: {'Yes' if result.has_suspicious_activity else 'No'}")
+                    stats.append(
+                        f"Suspicious Activity: {'Yes' if result.has_suspicious_activity else 'No'}"
+                    )
 
-                    stats_text.setPlainText('\n'.join(stats))
+                    stats_text.setPlainText("\n".join(stats))
 
                     analyze_btn.setEnabled(True)
                     export_btn.setEnabled(True)
@@ -13981,7 +13979,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     progress_bar.setRange(0, 1)
                     progress_bar.setValue(0)
                     info_label.setText(f"Error: {error_msg}")
-                    QMessageBox.critical(dialog, "Analysis Error", f"Memory analysis failed: {error_msg}")
+                    QMessageBox.critical(
+                        dialog, "Analysis Error", f"Memory analysis failed: {error_msg}"
+                    )
                     analyze_btn.setEnabled(True)
 
                 # Connect signals
@@ -14007,16 +14007,17 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     dialog,
                     "Export Memory Analysis Report",
                     f"memory_analysis_{int(time.time())}.json",
-                    "JSON Files (*.json);;HTML Files (*.html);;All Files (*)"
+                    "JSON Files (*.json);;HTML Files (*.html);;All Files (*)",
                 )
 
                 if file_path:
                     from intellicrack.core.analysis.memory_forensics_engine import (
                         MemoryForensicsEngine,
                     )
+
                     engine = MemoryForensicsEngine()
 
-                    if file_path.endswith('.html'):
+                    if file_path.endswith(".html"):
                         # Generate HTML report
                         success, msg = self._generate_html_memory_report(analysis_result, file_path)
                     else:
@@ -14059,7 +14060,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             )
 
             # Check if there are any cached analysis results
-            if not hasattr(self, '_memory_analysis_cache'):
+            if not hasattr(self, "_memory_analysis_cache"):
                 self._memory_analysis_cache = []
 
             if not self._memory_analysis_cache:
@@ -14068,7 +14069,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                     self,
                     "No Analysis Results",
                     "No memory analysis results found. Would you like to analyze a memory dump first?",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 )
 
                 if reply == QMessageBox.StandardButton.Yes:
@@ -14088,8 +14089,10 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             # List of cached results
             results_list = QListWidget()
             for idx, result in enumerate(self._memory_analysis_cache):
-                timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(result.get('timestamp', 0)))
-                dump_name = os.path.basename(result.get('dump_path', 'Unknown'))
+                timestamp = time.strftime(
+                    "%Y-%m-%d %H:%M:%S", time.localtime(result.get("timestamp", 0))
+                )
+                dump_name = os.path.basename(result.get("dump_path", "Unknown"))
                 item_text = f"{dump_name} - {timestamp}"
                 results_list.addItem(item_text)
 
@@ -14123,24 +14126,24 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
                 # Get export path
                 filters = {
-                    'json': "JSON Files (*.json)",
-                    'html': "HTML Files (*.html)",
-                    'pdf': "PDF Files (*.pdf)"
+                    "json": "JSON Files (*.json)",
+                    "html": "HTML Files (*.html)",
+                    "pdf": "PDF Files (*.pdf)",
                 }
 
                 file_path, _ = QFileDialog.getSaveFileName(
                     dialog,
                     f"Export Memory Analysis Report as {format_type.upper()}",
                     f"memory_analysis_{int(time.time())}.{format_type}",
-                    filters[format_type]
+                    filters[format_type],
                 )
 
                 if file_path:
                     engine = MemoryForensicsEngine()
 
-                    if format_type == 'html':
+                    if format_type == "html":
                         success, msg = self._generate_html_memory_report(result, file_path)
-                    elif format_type == 'pdf':
+                    elif format_type == "pdf":
                         success, msg = self._generate_pdf_memory_report(result, file_path)
                     else:
                         success, msg = engine.export_analysis_report(result, file_path)
@@ -14152,9 +14155,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                         QMessageBox.critical(dialog, "Export Error", msg)
 
             # Connect buttons
-            export_json_btn.clicked.connect(lambda: export_selected('json'))
-            export_html_btn.clicked.connect(lambda: export_selected('html'))
-            export_pdf_btn.clicked.connect(lambda: export_selected('pdf'))
+            export_json_btn.clicked.connect(lambda: export_selected("json"))
+            export_html_btn.clicked.connect(lambda: export_selected("html"))
+            export_pdf_btn.clicked.connect(lambda: export_selected("pdf"))
             cancel_btn.clicked.connect(dialog.close)
 
             dialog.setLayout(layout)
@@ -14167,7 +14170,6 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
     def capture_live_memory(self):
         """Capture memory from a running process"""
         try:
-
             from intellicrack.handlers.psutil_handler import psutil
             from intellicrack.handlers.pyqt6_handler import (
                 QDialog,
@@ -14202,10 +14204,10 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
             # Populate process list
             processes = []
-            for proc in psutil.process_iter(['pid', 'name', 'memory_info']):
+            for proc in psutil.process_iter(["pid", "name", "memory_info"]):
                 try:
                     info = proc.info
-                    mem_mb = info['memory_info'].rss / 1024 / 1024 if info.get('memory_info') else 0
+                    mem_mb = info["memory_info"].rss / 1024 / 1024 if info.get("memory_info") else 0
                     item_text = f"[{info['pid']}] {info['name']} - {mem_mb:.1f} MB"
                     process_list.addItem(item_text)
                     processes.append(info)
@@ -14244,14 +14246,14 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
                 # Extract PID from item text
                 text = current_item.text()
-                pid = int(text.split(']')[0].strip('['))
+                pid = int(text.split("]")[0].strip("["))
 
                 # Get output path
                 output_path, _ = QFileDialog.getSaveFileName(
                     dialog,
                     "Save Memory Dump",
                     f"process_{pid}_memory.dmp",
-                    "Memory Dumps (*.dmp);;All Files (*)"
+                    "Memory Dumps (*.dmp);;All Files (*)",
                 )
 
                 if output_path:
@@ -14262,9 +14264,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
                         if success:
                             QMessageBox.information(
-                                dialog,
-                                "Capture Complete",
-                                f"Memory captured to {output_path}"
+                                dialog, "Capture Complete", f"Memory captured to {output_path}"
                             )
                             dialog.close()
 
@@ -14273,7 +14273,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                                 self,
                                 "Analyze Now?",
                                 "Would you like to analyze the captured memory dump?",
-                                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                             )
 
                             if reply == QMessageBox.StandardButton.Yes:
@@ -14282,7 +14282,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                             QMessageBox.critical(
                                 dialog,
                                 "Capture Failed",
-                                "Failed to capture process memory. Admin privileges may be required."
+                                "Failed to capture process memory. Admin privileges may be required.",
                             )
 
                     except Exception as e:
@@ -14293,10 +14293,12 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 process_list.clear()
                 processes.clear()
 
-                for proc in psutil.process_iter(['pid', 'name', 'memory_info']):
+                for proc in psutil.process_iter(["pid", "name", "memory_info"]):
                     try:
                         info = proc.info
-                        mem_mb = info['memory_info'].rss / 1024 / 1024 if info.get('memory_info') else 0
+                        mem_mb = (
+                            info["memory_info"].rss / 1024 / 1024 if info.get("memory_info") else 0
+                        )
                         item_text = f"[{info['pid']}] {info['name']} - {mem_mb:.1f} MB"
                         process_list.addItem(item_text)
                         processes.append(info)
@@ -14328,9 +14330,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 try:
                     # Try using procdump if available
                     result = subprocess.run(
-                        ["procdump", "-ma", str(pid), output_path],
-                        capture_output=True,
-                        timeout=60
+                        ["procdump", "-ma", str(pid), output_path], capture_output=True, timeout=60
                     )
                     return result.returncode == 0
                 except FileNotFoundError:
@@ -14344,9 +14344,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 # Use gcore or /proc/[pid]/mem
                 try:
                     result = subprocess.run(
-                        ["gcore", "-o", output_path, str(pid)],
-                        capture_output=True,
-                        timeout=60
+                        ["gcore", "-o", output_path, str(pid)], capture_output=True, timeout=60
                     )
                     return result.returncode == 0
                 except FileNotFoundError:
@@ -14440,8 +14438,10 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             # Generate process rows
             process_rows = []
             for proc in analysis_result.processes:
-                suspicious_class = 'class="suspicious"' if len(proc.suspicious_indicators) > 0 else ''
-                hidden_class = 'class="hidden"' if proc.is_hidden else ''
+                suspicious_class = (
+                    'class="suspicious"' if len(proc.suspicious_indicators) > 0 else ""
+                )
+                hidden_class = 'class="hidden"' if proc.is_hidden else ""
                 process_rows.append(f"""
         <tr>
             <td>{proc.pid}</td>
@@ -14455,7 +14455,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             # Generate module rows
             module_rows = []
             for mod in analysis_result.modules:
-                suspicious_class = 'class="suspicious"' if mod.is_suspicious else ''
+                suspicious_class = 'class="suspicious"' if mod.is_suspicious else ""
                 module_rows.append(f"""
         <tr>
             <td>{hex(mod.base_address)}</td>
@@ -14487,17 +14487,17 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                 dump_path=analysis_result.dump_path,
                 profile=analysis_result.analysis_profile,
                 time=analysis_result.analysis_time,
-                suspicious='Yes' if analysis_result.has_suspicious_activity else 'No',
+                suspicious="Yes" if analysis_result.has_suspicious_activity else "No",
                 process_count=len(analysis_result.processes),
-                process_rows=''.join(process_rows),
+                process_rows="".join(process_rows),
                 module_count=len(analysis_result.modules),
-                module_rows=''.join(module_rows),
+                module_rows="".join(module_rows),
                 network_count=len(analysis_result.network_connections),
-                network_rows=''.join(network_rows),
-                findings=''.join(findings) if findings else '<li>No security findings</li>'
+                network_rows="".join(network_rows),
+                findings="".join(findings) if findings else "<li>No security findings</li>",
             )
 
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 f.write(html_content)
 
             return True, f"HTML report exported to {output_path}"
@@ -14513,7 +14513,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             import tempfile
 
             # Create temporary HTML file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".html", delete=False) as tmp:
                 tmp_path = tmp.name
                 success, msg = self._generate_html_memory_report(analysis_result, tmp_path)
 
@@ -14523,10 +14523,9 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             try:
                 # Try using wkhtmltopdf if available
                 import subprocess
+
                 result = subprocess.run(
-                    ["wkhtmltopdf", tmp_path, output_path],
-                    capture_output=True,
-                    timeout=30
+                    ["wkhtmltopdf", tmp_path, output_path], capture_output=True, timeout=30
                 )
 
                 if result.returncode == 0:
@@ -14549,12 +14548,19 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
                         styles = getSampleStyleSheet()
 
                         # Add title
-                        story.append(Paragraph("Memory Forensics Analysis Report", styles['Title']))
+                        story.append(Paragraph("Memory Forensics Analysis Report", styles["Title"]))
                         story.append(Spacer(1, 12))
 
                         # Add summary
-                        story.append(Paragraph(f"Dump Path: {analysis_result.dump_path}", styles['Normal']))
-                        story.append(Paragraph(f"Analysis Time: {analysis_result.analysis_time:.2f} seconds", styles['Normal']))
+                        story.append(
+                            Paragraph(f"Dump Path: {analysis_result.dump_path}", styles["Normal"])
+                        )
+                        story.append(
+                            Paragraph(
+                                f"Analysis Time: {analysis_result.analysis_time:.2f} seconds",
+                                styles["Normal"],
+                            )
+                        )
                         story.append(Spacer(1, 12))
 
                         # Build PDF
@@ -15681,22 +15687,22 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             monospace_widgets = []
 
             # Console outputs
-            if hasattr(self, 'console_output'):
+            if hasattr(self, "console_output"):
                 monospace_widgets.append(self.console_output)
 
             # Hex viewers
-            if hasattr(self, 'hex_viewer'):
+            if hasattr(self, "hex_viewer"):
                 monospace_widgets.append(self.hex_viewer)
 
             # Code editors in tabs
-            for tab_name in ['ai_assistant_tab', 'protection_analysis_tab', 'exploitation_tab']:
+            for tab_name in ["ai_assistant_tab", "protection_analysis_tab", "exploitation_tab"]:
                 if hasattr(self, tab_name):
                     tab = getattr(self, tab_name)
-                    if hasattr(tab, 'code_editor'):
+                    if hasattr(tab, "code_editor"):
                         monospace_widgets.append(tab.code_editor)
-                    if hasattr(tab, 'console_output'):
+                    if hasattr(tab, "console_output"):
                         monospace_widgets.append(tab.console_output)
-                    if hasattr(tab, 'payload_display'):
+                    if hasattr(tab, "payload_display"):
                         monospace_widgets.append(tab.payload_display)
 
             # Apply monospace font
@@ -15709,12 +15715,12 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.setFont(ui_font)
 
             # Also apply to menus and status bar
-            if hasattr(self, 'menuBar'):
+            if hasattr(self, "menuBar"):
                 menubar = self.menuBar()
                 if menubar:
                     menubar.setFont(ui_font)
 
-            if hasattr(self, 'statusBar'):
+            if hasattr(self, "statusBar"):
                 statusbar = self.statusBar()
                 if statusbar:
                     statusbar.setFont(ui_font)
@@ -19363,7 +19369,9 @@ class Plugin:
         edit_plugin_btn = QPushButton("Edit Plugin")
         edit_plugin_btn.setIcon(QIcon.fromTheme("document-edit"))
         edit_plugin_btn.clicked.connect(
-            lambda: self.edit_plugin_file("intellicrack/intellicrack/plugins/custom_modules/demo_plugin.py")
+            lambda: self.edit_plugin_file(
+                "intellicrack/intellicrack/plugins/custom_modules/demo_plugin.py"
+            )
         )
 
         uninstall_plugin_btn = QPushButton("Uninstall")
@@ -22048,7 +22056,9 @@ def register():
         memory_menu.addAction(analyze_memory_dump_action)
 
         export_memory_report_action = QAction("Export Memory Analysis Report", self)
-        export_memory_report_action.setToolTip("Export detailed memory forensics report to JSON/HTML")
+        export_memory_report_action.setToolTip(
+            "Export detailed memory forensics report to JSON/HTML"
+        )
         export_memory_report_action.triggered.connect(self.export_memory_analysis_report)
         memory_menu.addAction(export_memory_report_action)
 
@@ -22549,8 +22559,7 @@ def register():
             # Don't let logging errors interrupt the application flow
 
     def save_analysis_results(self):
-        """Save analysis results to a file.
-        """
+        """Save analysis results to a file."""
         if not hasattr(self, "analyze_results") or not self.analyze_results:
             self.update_output.emit(log_message("No analysis results to save."))
             return
@@ -24573,7 +24582,7 @@ def register():
         js_path = os.path.join(install_dir, "adobe_bypass.js")
 
         # Check if installation directory and script file exist
-        if hasattr(self, 'adobe_status_label'):
+        if hasattr(self, "adobe_status_label"):
             if os.path.exists(install_dir) and os.path.exists(js_path):
                 self.adobe_status_label.setText("Status: ✅ Installed")
             else:
@@ -26092,14 +26101,18 @@ def register():
 
                 if os.path.isdir(item_path):
                     # Directory - add folder icon
-                    tree_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon))
+                    tree_item.setIcon(
+                        0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon)
+                    )
                     # Recursively add subdirectories (limit depth)
                     if item_path.count(os.sep) - directory.count(os.sep) < 3:
                         self._populate_file_tree(item_path, tree_item)
                 else:
                     # File - add appropriate icon based on extension
                     if item.endswith((".py", ".js", ".c", ".cpp", ".h", ".java")):
-                        tree_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
+                        tree_item.setIcon(
+                            0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon)
+                        )
 
         except (
             AttributeError,
@@ -29343,8 +29356,7 @@ Focus on:
             ui_updates.append(("analysis", analysis))
 
         def queue_clear_analysis():
-            """Queue a request to clear analysis results in the UI.
-            """
+            """Queue a request to clear analysis results in the UI."""
             ui_updates.append(("clear_analysis", None))
 
         def flush_ui_updates():
@@ -30902,7 +30914,6 @@ Focus on:
                             def ask_user_confirmation(app, tool_name, parameters):
                                 """Thread-safe user confirmation dialog for sensitive AI tools"""
 
-
                                 param_text = "\n".join([f"{k}: {v}" for k, v in parameters.items()])
                                 result = QMessageBox.question(
                                     app,
@@ -31102,36 +31113,131 @@ Focus on:
             return str(result)
 
     def export_analysis_results(self):
-        """Exports the current analysis results to a file."""
-        # Use the widget if available, otherwise use the list
-        if hasattr(self, "analyze_results_widget") and self.analyze_results_widget:
+        """Exports the current analysis results to a file using AnalysisExporter for multi-format support."""
+        from ..utils.analysis.analysis_exporter import AnalysisExporter
+        import json
+        from datetime import datetime
+        
+        # Prepare analysis results data
+        analysis_data = {}
+        
+        # Check if we have structured analysis results
+        if hasattr(self, "analyze_results") and self.analyze_results:
+            if isinstance(self.analyze_results, dict):
+                analysis_data = self.analyze_results
+            elif isinstance(self.analyze_results, list):
+                # Convert list to structured dict
+                analysis_data = {
+                    "results": self.analyze_results,
+                    "timestamp": datetime.now().isoformat(),
+                    "analysis_type": "generic"
+                }
+            else:
+                # Convert plain text to structured dict
+                analysis_data = {
+                    "raw_output": str(self.analyze_results),
+                    "timestamp": datetime.now().isoformat(),
+                    "analysis_type": "generic"
+                }
+        elif hasattr(self, "analyze_results_widget") and self.analyze_results_widget:
+            # Extract text from widget and structure it
             results_text = self.analyze_results_widget.toPlainText()
+            
+            # Try to parse as JSON first
+            try:
+                analysis_data = json.loads(results_text)
+            except json.JSONDecodeError:
+                # Not JSON, treat as plain text
+                analysis_data = {
+                    "raw_output": results_text,
+                    "timestamp": datetime.now().isoformat(),
+                    "analysis_type": "generic"
+                }
         else:
-            results_text = (
-                "\n".join(self.analyze_results)
-                if isinstance(self.analyze_results, list)
-                else str(self.analyze_results)
-            )
-
-        if not results_text.strip():
             QMessageBox.warning(self, "No Results", "No analysis results to export.")
             return
 
-        path, _ = QFileDialog.getSaveFileName(
+        # Ensure we have data to export
+        if not analysis_data or (isinstance(analysis_data, dict) and 
+                                 "raw_output" in analysis_data and 
+                                 not analysis_data["raw_output"].strip()):
+            QMessageBox.warning(self, "No Results", "No analysis results to export.")
+            return
+
+        # Get file path with format selection
+        file_filter = (
+            "JSON Files (*.json);;"
+            "HTML Files (*.html);;"
+            "CSV Files (*.csv);;"
+            "Text Files (*.txt);;"
+            "All Files (*)"
+        )
+        
+        # Default filename with timestamp
+        default_filename = f"analysis_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        path, selected_filter = QFileDialog.getSaveFileName(
             self,
             "Export Analysis Results",
-            "",
-            "Text Files (*.txt);;JSON Files (*.json);;All Files (*)",
+            default_filename,
+            file_filter
         )
 
         if path:
             try:
-                with open(path, "w", encoding="utf-8") as f:
-                    f.write(results_text)
-
-                self.update_output.emit(
-                    log_message(f"[Export] Analysis results exported to {path}")
+                # Determine export format from selected filter or file extension
+                export_format = "text"  # Default
+                
+                if "JSON" in selected_filter or path.lower().endswith(".json"):
+                    export_format = "json"
+                    if not path.endswith(".json"):
+                        path += ".json"
+                elif "HTML" in selected_filter or path.lower().endswith(".html"):
+                    export_format = "html"
+                    if not path.endswith(".html"):
+                        path += ".html"
+                elif "CSV" in selected_filter or path.lower().endswith(".csv"):
+                    export_format = "csv"
+                    if not path.endswith(".csv"):
+                        path += ".csv"
+                elif "Text" in selected_filter or path.lower().endswith(".txt"):
+                    export_format = "text"
+                    if not path.endswith(".txt"):
+                        path += ".txt"
+                
+                # Determine analysis type from context
+                analysis_type = "generic"
+                if hasattr(self, "current_analysis_type"):
+                    analysis_type = self.current_analysis_type
+                elif "vulnerabilities" in analysis_data:
+                    analysis_type = "vulnerability"
+                elif "binary_diff" in analysis_data or "differences" in analysis_data:
+                    analysis_type = "binary_diff"
+                
+                # Export using AnalysisExporter
+                success = AnalysisExporter.export_analysis(
+                    result=analysis_data,
+                    output_file=path,
+                    format=export_format,
+                    analysis_type=analysis_type
                 )
+                
+                if success:
+                    self.update_output.emit(
+                        log_message(f"[Export] Analysis results exported to {path} ({export_format.upper()} format)")
+                    )
+                    QMessageBox.information(
+                        self,
+                        "Export Successful",
+                        f"Analysis results successfully exported to:\n{path}"
+                    )
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Export Warning",
+                        f"Export completed with warnings. Check the file: {path}"
+                    )
+                    
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                 self.update_output.emit(log_message(f"[Export] Error exporting results: {e}"))
@@ -33177,15 +33283,13 @@ ANALYSIS SUMMARY
             decrease_font_btn = QPushButton("Smaller Font")
 
             def increase_font():
-                """Increase the font size in the text edit widget.
-                """
+                """Increase the font size in the text edit widget."""
                 current = text_edit.font()
                 current.setPointSize(current.pointSize() + 1)
                 text_edit.setFont(current)
 
             def decrease_font():
-                """Decrease the font size in the text edit widget, with a minimum size limit.
-                """
+                """Decrease the font size in the text edit widget, with a minimum size limit."""
                 current = text_edit.font()
                 if current.pointSize() > 8:
                     current.setPointSize(current.pointSize() - 1)
@@ -34721,8 +34825,6 @@ def launch():
     try:
         print("[LAUNCH] Importing Qt modules...")
 
-
-
         print("[LAUNCH] Qt modules imported successfully")
 
         # Set attributes for better compatibility
@@ -34854,7 +34956,6 @@ def launch():
                     pass
 
             # Show a simple error dialog
-
 
             QMessageBox.critical(
                 None,
@@ -35003,7 +35104,6 @@ def launch():
     logger.info("App is about to quit: %s", app_instance.aboutToQuit)
 
     # Add a single-shot timer to log after event loop starts
-
 
     def log_after_start():
         logger.info("Qt event loop started successfully")

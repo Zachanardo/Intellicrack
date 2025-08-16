@@ -28,6 +28,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_compl
 from typing import Any
 
 from intellicrack.utils.service_health_checker import get_service_url
+
 from ..analysis.entropy_utils import calculate_byte_entropy
 
 logger = logging.getLogger(__name__)

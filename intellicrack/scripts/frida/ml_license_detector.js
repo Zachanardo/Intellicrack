@@ -27,7 +27,7 @@
  * License: GPL v3
  */
 
-{
+const MlLicenseDetector = {
     name: "ML License Function Detector",
     description: "Intelligent license function detection and automatic hook placement",
     version: "2.0.0",
@@ -322,7 +322,7 @@
                 this.processBatch();
             }
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -347,7 +347,7 @@
             }
 
             return functionCount;
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -386,7 +386,7 @@
             // Decide on hook placement based on confidence
             this.evaluateHookPlacement(detectionResult);
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -422,7 +422,7 @@
             // Combine features
             features.combined_score = this.combineFeatures(features);
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -544,7 +544,7 @@
                 is_license_function: is_license_function
             };
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -586,7 +586,7 @@
                 }
             }
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -719,7 +719,7 @@
                 module_name: moduleName
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -765,7 +765,7 @@
                 result.bypass_type = "activation_bypass";
             }
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -948,7 +948,7 @@
                 samples_count: trainingData.length
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -1212,7 +1212,7 @@
                 });
                 this.analyzeModuleFunctions(module);
             }
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -1360,4 +1360,20 @@
             });
         }, 100);
     }
+
+};
+
+// Auto-initialize on load
+setTimeout(function() {
+    MlLicenseDetector.run();
+    send({
+        type: "status",
+        target: "ml_license_detector",
+        action: "system_now_active"
+    });
+}, 100);
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = MlLicenseDetector;
 }

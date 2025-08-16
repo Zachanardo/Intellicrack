@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Modern Qt6 widgets and components
   - Updated orientation constants (Qt.Orientation.Horizontal/Vertical)
   - Enhanced cross-platform compatibility
-- **Intel Arc B580 GPU Support**: 
+- **Intel Arc B580 GPU Support**:
   - Automatic detection of Intel Arc B580 graphics cards
   - GIL crash prevention via UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS detection
   - PyTorch import safety mechanisms to prevent system hangs

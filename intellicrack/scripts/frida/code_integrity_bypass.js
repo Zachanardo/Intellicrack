@@ -27,7 +27,7 @@
  * License: GPL v3
  */
 
-{
+const CodeIntegrityBypass = {
     name: "Code Integrity Bypass",
     description: "Advanced code integrity and signature verification bypass",
     version: "3.0.0",
@@ -1701,4 +1701,9 @@
             }
         });
     }
+};
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = CodeIntegrityBypass;
 }

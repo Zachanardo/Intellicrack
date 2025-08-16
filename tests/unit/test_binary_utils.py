@@ -13,9 +13,9 @@ try:
     print("\n1. Importing intellicrack.utils.binary.binary_utils directly...")
     from intellicrack.utils.binary import binary_utils
     print("   ✓ binary_utils imported")
-    
+
     print("\n✅ Import successful!")
-    
+
 except Exception as e:
     import traceback
     print(f"\n❌ Error: {e}")

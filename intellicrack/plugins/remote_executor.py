@@ -78,7 +78,7 @@ class RemotePluginExecutor:
             ws_url = get_service_url("websocket_server")
             default_host = ws_url.replace("ws://", "").replace("wss://", "").split(":")[0]
             default_port = int(ws_url.split(":")[-1].replace("/", "")) if ":" in ws_url else 8765
-            
+
             self.remote_host = remote_host or default_host
             self.remote_port = remote_port or default_port
         else:
@@ -517,7 +517,9 @@ def _run_plugin_in_sandbox(plugin_instance: Any, method_name: str, *args, **kwar
         return [f"Plugin execution error: {e}"]
 
 
-def create_remote_executor(host: str | None = None, port: int | None = None) -> RemotePluginExecutor:
+def create_remote_executor(
+    host: str | None = None, port: int | None = None
+) -> RemotePluginExecutor:
     """Factory function to create a RemotePluginExecutor.
 
     Args:

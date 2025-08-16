@@ -28,7 +28,7 @@
  * License: GPL v3
  */
 
-{
+const BlockchainLicenseBypass = {
     name: "Blockchain License Bypass",
     description: "Web3/smart contract license validation bypass for modern DApps",
     version: "2.0.0",
@@ -892,9 +892,9 @@
         }
 
         send({
-            type: \"summary\",
-            target: \"blockchain_license_bypass\",
-            action: \"statistics_report\",
+            type: "summary",
+            target: "blockchain_license_bypass",
+            action: "statistics_report",
             stats: {
                 hooked_contracts: this.state.hooked_contracts.size,
                 hooked_providers: this.state.hooked_providers.size,
@@ -2223,16 +2223,21 @@
 rpc.exports = {
     init: function() {
         Java.performNow(function() {
-            blockchainBypass.run();
+            BlockchainLicenseBypass.run();
         });
     }
 };
 
+// Export for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = BlockchainLicenseBypass;
+}
+
 // Also run immediately if in Frida CLI
 if (typeof Java !== 'undefined') {
     Java.performNow(function() {
-        blockchainBypass.run();
+        BlockchainLicenseBypass.run();
     });
-} else {
-    blockchainBypass.run();
+} else if (typeof BlockchainLicenseBypass.run === 'function') {
+    BlockchainLicenseBypass.run();
 }

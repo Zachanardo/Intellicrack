@@ -20,6 +20,7 @@ vulnerability detection, and security assessment capabilities.
 """
 
 import os
+from datetime import datetime
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -44,6 +45,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 
 from ...core.analysis.analysis_orchestrator import AnalysisPhase
+from ...utils.analysis.analysis_exporter import AnalysisExporter
 from ..widgets.entropy_visualizer import EntropyVisualizerWidget
 from ..widgets.structure_visualizer import StructureVisualizerWidget
 from .base_tab import BaseTab
@@ -2072,8 +2074,81 @@ class AnalysisTab(BaseTab):
         self.log_activity("Configuring GPU acceleration...")
 
     def export_analysis_results(self):
-        """Export analysis results"""
-        self.log_activity("Exporting analysis results...")
+        """Export analysis results to file in user-selected format"""
+        try:
+            if not hasattr(self, 'results_display') or not self.results_display.toPlainText().strip():
+                QMessageBox.warning(self, "Warning", "No analysis results to export!")
+                return
+
+            # Let user choose export format and location
+            formats = "JSON (*.json);;HTML (*.html);;CSV (*.csv);;Text (*.txt)"
+            file_path, selected_filter = QFileDialog.getSaveFileName(
+                self, 
+                "Export Analysis Results", 
+                f"analysis_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}", 
+                formats
+            )
+            
+            if not file_path:
+                return
+
+            # Determine export format from selected filter
+            if "JSON" in selected_filter:
+                export_format = "json"
+            elif "HTML" in selected_filter:
+                export_format = "html"
+            elif "CSV" in selected_filter:
+                export_format = "csv"
+            else:
+                export_format = "text"
+
+            # Prepare analysis results for export
+            analysis_data = {
+                "timestamp": datetime.now().isoformat(),
+                "binary_path": getattr(self, 'current_binary', 'Unknown'),
+                "analysis_type": "comprehensive",
+                "results": self.results_display.toPlainText(),
+                "metadata": {
+                    "intellicrack_version": "1.0",
+                    "export_format": export_format,
+                    "analysis_date": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                }
+            }
+
+            # Add additional data if available
+            if hasattr(self, 'analysis_progress') and self.analysis_progress.isVisible():
+                analysis_data["progress"] = self.analysis_progress.value()
+            
+            if hasattr(self, 'analysis_status'):
+                analysis_data["status"] = self.analysis_status.text()
+
+            # Export using AnalysisExporter
+            success = AnalysisExporter.export_analysis(
+                result=analysis_data,
+                output_file=file_path,
+                format=export_format,
+                analysis_type="comprehensive"
+            )
+
+            if success:
+                self.log_activity(f"Analysis results exported successfully to: {file_path}")
+                QMessageBox.information(
+                    self, 
+                    "Export Successful", 
+                    f"Analysis results exported to:\n{file_path}"
+                )
+            else:
+                self.log_activity(f"Failed to export analysis results to: {file_path}")
+                QMessageBox.critical(
+                    self, 
+                    "Export Failed", 
+                    f"Failed to export analysis results to:\n{file_path}"
+                )
+
+        except Exception as e:
+            error_msg = f"Export error: {str(e)}"
+            self.log_activity(error_msg)
+            QMessageBox.critical(self, "Export Error", error_msg)
 
     def update_binary(self, binary_path):
         """Update the current binary being analyzed"""

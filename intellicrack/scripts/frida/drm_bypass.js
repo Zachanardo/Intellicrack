@@ -28,7 +28,7 @@
  * License: GPL v3
  */
 
-{
+const DrmBypass = {
     name: "Advanced DRM Bypass",
     description: "Comprehensive Digital Rights Management protection bypass",
     version: "3.0.0",
@@ -2589,4 +2589,9 @@
             });
         }
     }
+};
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = DrmBypass;
 }

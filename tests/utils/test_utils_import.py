@@ -16,20 +16,20 @@ try:
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     os.environ.setdefault("MKL_NUM_THREADS", "1")
     os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
-    
+
     print("2. Importing utils...")
     import intellicrack.utils
-    
+
     print("✅ Utils imported successfully!")
     print(f"Utils version: {intellicrack.utils.__version__}")
-    
+
     # Test basic functionality
     print("3. Testing basic utils functions...")
     print(f"Logger available: {hasattr(intellicrack.utils, 'logger')}")
     print(f"Get logger available: {hasattr(intellicrack.utils, 'get_logger')}")
-    
+
     print("✅ All tests passed!")
-    
+
 except Exception as e:
     import traceback
     print(f"\n❌ Error: {e}")

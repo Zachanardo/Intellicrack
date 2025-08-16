@@ -65,7 +65,7 @@ class LMStudioRepository(APIRepositoryBase):
         # Use service health checker to get LMStudio URL if not provided
         if api_endpoint is None:
             api_endpoint = get_service_url("lmstudio_api") + "/v1"
-        
+
         super().__init__(
             repository_name=repository_name,
             api_endpoint=api_endpoint,

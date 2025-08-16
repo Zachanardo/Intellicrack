@@ -31,11 +31,11 @@
 const credentialGenerator = {
     // Analyze intercepted requests to understand expected formats
     patterns: new Map(),
-    
+
     // Learn from observed credential patterns
     learnCredentialPattern: function(credentialType, observedValue) {
         if (!observedValue || typeof observedValue !== 'string') return;
-        
+
         const pattern = {
             length: observedValue.length,
             prefix: this.extractPrefix(observedValue),
@@ -43,9 +43,9 @@ const credentialGenerator = {
             charset: this.analyzeCharset(observedValue),
             format: this.detectFormat(observedValue)
         };
-        
+
         this.patterns.set(credentialType, pattern);
-        
+
         send({
             type: 'info',
             target: 'credential_generator',
@@ -54,26 +54,26 @@ const credentialGenerator = {
             pattern: pattern
         });
     },
-    
+
     // Extract common prefixes (sk_, ak_, bearer_, etc.)
     extractPrefix: function(value) {
         const prefixMatch = value.match(/^([a-zA-Z_]{2,8})[a-zA-Z0-9]/);
         return prefixMatch ? prefixMatch[1] : '';
     },
-    
+
     // Extract common suffixes
     extractSuffix: function(value) {
         const suffixMatch = value.match(/[a-zA-Z0-9]([a-zA-Z_]{2,8})$/);
         return suffixMatch ? suffixMatch[1] : '';
     },
-    
+
     // Analyze character set used
     analyzeCharset: function(value) {
         const hasUppercase = /[A-Z]/.test(value);
         const hasLowercase = /[a-z]/.test(value);
         const hasNumbers = /[0-9]/.test(value);
         const hasSpecial = /[^A-Za-z0-9]/.test(value);
-        
+
         return {
             uppercase: hasUppercase,
             lowercase: hasLowercase,
@@ -82,7 +82,7 @@ const credentialGenerator = {
             specialChars: value.match(/[^A-Za-z0-9]/g) || []
         };
     },
-    
+
     // Detect format (JWT, UUID, base64, hex, etc.)
     detectFormat: function(value) {
         if (value.includes('.') && value.split('.').length === 3) return 'jwt';
@@ -92,37 +92,37 @@ const credentialGenerator = {
         if (/^[A-Za-z0-9_-]+$/.test(value)) return 'alphanumeric';
         return 'custom';
     },
-    
+
     // Generate credential matching learned pattern
     generateCredential: function(credentialType, targetLength = null, targetPrefix = null) {
         const pattern = this.patterns.get(credentialType);
-        
+
         if (pattern) {
             return this.generateFromPattern(pattern, targetLength, targetPrefix);
         } else {
             return this.generateDefault(credentialType, targetLength, targetPrefix);
         }
     },
-    
+
     // Generate from learned pattern
     generateFromPattern: function(pattern, overrideLength = null, overridePrefix = null) {
         const length = overrideLength || pattern.length;
         const prefix = overridePrefix || pattern.prefix;
-        
+
         switch (pattern.format) {
-            case 'jwt':
-                return this.generateJWT();
-            case 'uuid':
-                return this.generateUUID();
-            case 'base64':
-                return this.generateBase64(length);
-            case 'hex':
-                return this.generateHex(length);
-            default:
-                return this.generateWithCharset(length, prefix, pattern.charset);
+        case 'jwt':
+            return this.generateJWT();
+        case 'uuid':
+            return this.generateUUID();
+        case 'base64':
+            return this.generateBase64(length);
+        case 'hex':
+            return this.generateHex(length);
+        default:
+            return this.generateWithCharset(length, prefix, pattern.charset);
         }
     },
-    
+
     // Generate with specific character set
     generateWithCharset: function(length, prefix, charset) {
         let chars = '';
@@ -132,24 +132,24 @@ const credentialGenerator = {
         if (charset.special && charset.specialChars.length > 0) {
             chars += charset.specialChars.join('');
         }
-        
+
         if (!chars) chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        
+
         let result = prefix;
         const remainingLength = Math.max(0, length - prefix.length);
-        
+
         for (let i = 0; i < remainingLength; i++) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        
+
         return result;
     },
-    
+
     // Generate JWT
     generateJWT: function() {
-        const header = btoa(JSON.stringify({typ: "JWT", alg: "HS256"}));
+        const header = btoa(JSON.stringify({typ: 'JWT', alg: 'HS256'}));
         const payload = btoa(JSON.stringify({
-            sub: "licensed",
+            sub: 'licensed',
             exp: Math.floor(Date.now() / 1000) + 86400,
             iat: Math.floor(Date.now() / 1000),
             jti: Math.random().toString(36)
@@ -157,7 +157,7 @@ const credentialGenerator = {
         const signature = btoa(Array.from({length: 32}, () => Math.random().toString(36)[2]).join(''));
         return `${header}.${payload}.${signature}`;
     },
-    
+
     // Generate UUID
     generateUUID: function() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -166,32 +166,32 @@ const credentialGenerator = {
             return v.toString(16);
         });
     },
-    
+
     // Generate base64
     generateBase64: function(targetLength) {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
         let result = '';
         const baseLength = Math.ceil(targetLength * 0.75); // Account for base64 padding
-        
+
         for (let i = 0; i < baseLength; i++) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        
+
         return btoa(result).substring(0, targetLength);
     },
-    
+
     // Generate hex
     generateHex: function(targetLength) {
         const chars = '0123456789abcdef';
         let result = '';
-        
+
         for (let i = 0; i < targetLength; i++) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        
+
         return result;
     },
-    
+
     // Generate default format when no pattern learned
     generateDefault: function(credentialType, targetLength = null, targetPrefix = null) {
         const commonPatterns = {
@@ -204,16 +204,16 @@ const credentialGenerator = {
             'oauth_token': {length: 72, prefix: 'oa_'},
             'client_secret': {length: 48, prefix: 'cs_'}
         };
-        
+
         const pattern = commonPatterns[credentialType] || {length: 32, prefix: ''};
-        
+
         if (pattern.format === 'jwt') {
             return this.generateJWT();
         }
-        
+
         const length = targetLength || pattern.length;
         const prefix = targetPrefix || pattern.prefix;
-        
+
         return this.generateWithCharset(length, prefix, {
             lowercase: true,
             uppercase: true,

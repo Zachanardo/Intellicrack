@@ -28,7 +28,7 @@
  * License: GPL v3
  */
 
-{
+const BypassSuccessTracker = {
     name: "Bypass Success Rate Tracker",
     description: "Comprehensive bypass success rate tracking and analytics system",
     version: "3.0.0",
@@ -2585,4 +2585,9 @@
                                      (this.mlMetrics.precision + this.mlMetrics.recall);
         }
     }
+};
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = BypassSuccessTracker;
 }

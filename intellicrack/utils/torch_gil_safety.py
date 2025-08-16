@@ -36,10 +36,12 @@ def torch_thread_safe(func: Callable) -> Callable:
     Returns:
         Thread-safe wrapped function
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs) -> Any:
         with _torch_lock:
             return func(*args, **kwargs)
+
     return wrapper
 
 
@@ -52,16 +54,17 @@ def safe_torch_import():
     # Intel Arc detection - return None immediately without ANY torch import
     if os.environ.get("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS") == "1":
         return None  # Intel Arc detected, avoid PyTorch import completely
-    
+
     with _torch_lock:
         try:
             # Set environment variables before importing torch
             os.environ.setdefault("OMP_NUM_THREADS", "1")
             os.environ.setdefault("MKL_NUM_THREADS", "1")
             os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
-            
+
             # Try to import PyTorch directly with protection
             import torch
+
             return torch
         except ImportError:
             return None
@@ -89,9 +92,11 @@ def with_torch_gil_safety(torch_func: Callable) -> Callable:
     Returns:
         Thread-safe wrapped function
     """
+
     def safe_func(*args, **kwargs):
         with TorchGILSafeContext():
             return torch_func(*args, **kwargs)
+
     return safe_func
 
 
@@ -109,22 +114,24 @@ def configure_pybind11_environment():
     os.environ.setdefault("NDEBUG", "1")
 
     # Additional pybind11 safety flags
-    os.environ.setdefault("PYBIND11_DISABLE_GIL_CHECKS", "1")  # Not standard but some builds check this
+    os.environ.setdefault(
+        "PYBIND11_DISABLE_GIL_CHECKS", "1"
+    )  # Not standard but some builds check this
 
     # Ensure single-threaded execution for critical libraries
     os.environ.setdefault("PYTORCH_DISABLE_CUDNN_BATCH_NORM", "1")
     os.environ.setdefault("CUDA_LAUNCH_BLOCKING", "1")
 
     # Force Python to use a single thread for C extensions
-    if hasattr(sys, 'setcheckinterval'):
+    if hasattr(sys, "setcheckinterval"):
         sys.setcheckinterval(1000)  # Reduce thread switching frequency
 
     # Try to override pybind11 settings programmatically
     try:
         # Try to access and modify pybind11 internal settings if possible
         import warnings
-        warnings.filterwarnings("ignore", category=RuntimeError,
-                              message=".*pybind11.*GIL.*")
+
+        warnings.filterwarnings("ignore", category=RuntimeError, message=".*pybind11.*GIL.*")
     except:
         pass
 
@@ -143,9 +150,10 @@ def initialize_gil_safety():
     # Ensure we're running in the main thread for GIL operations
     if threading.current_thread() is not threading.main_thread():
         import warnings
+
         warnings.warn(
             "GIL safety initialization called from non-main thread. "
             "This may cause pybind11 errors.",
             RuntimeWarning,
-            stacklevel=2
+            stacklevel=2,
         )

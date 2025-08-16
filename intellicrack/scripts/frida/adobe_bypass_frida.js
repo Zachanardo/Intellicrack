@@ -199,7 +199,7 @@ function bypassCoreLicenseValidation() {
 
                     // Additional hook for parameter inspection
                     Interceptor.attach(addr, {
-                        onEnter: function(args) {
+                        onEnter: function() {
                             send({
                                 type: 'info',
                                 target: `${moduleName}!${funcName}`,
@@ -207,7 +207,7 @@ function bypassCoreLicenseValidation() {
                                 args_count: args.length
                             });
                         },
-                        onLeave: function(retval) {
+                        onLeave: function() {
                             retval.replace(ptr(1)); // Force success
                         }
                     });
@@ -250,7 +250,7 @@ function bypassEnterpriseLicenseValidation() {
         const netapi32 = Module.findExportByName('netapi32.dll', 'NetUserGetInfo');
         if (netapi32) {
             Interceptor.attach(netapi32, {
-                onLeave: function(retval) {
+                onLeave: function() {
                     retval.replace(ptr(0)); // NERR_Success
                     send({
                         type: 'bypass',
@@ -276,14 +276,14 @@ function bypassSSOAuthentication() {
                 const addr = Module.findExportByName(moduleName, funcName);
                 if (addr) {
                     Interceptor.attach(addr, {
-                        onEnter: function(args) {
+                        onEnter: function() {
                             send({
                                 type: 'info',
                                 target: `${moduleName}!${funcName}`,
                                 action: 'sso_authentication_intercepted'
                             });
                         },
-                        onLeave: function(retval) {
+                        onLeave: function() {
                             // Generate fake authentication tokens
                             const fakeToken = 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.FAKE_ADOBE_SSO_TOKEN.signature';
                             retval.replace(ptr(1)); // Authentication success
@@ -310,7 +310,7 @@ function bypassSSOAuthentication() {
         const winhttp = Module.findExportByName('winhttp.dll', 'WinHttpReceiveResponse');
         if (winhttp) {
             Interceptor.attach(winhttp, {
-                onLeave: function(retval) {
+                onLeave: function() {
                     send({
                         type: 'bypass',
                         target: 'winhttp.dll!WinHttpReceiveResponse',
@@ -320,7 +320,7 @@ function bypassSSOAuthentication() {
                 }
             });
         }
-    } catch (e) {
+    } catch {
         // Continue
     }
 }
@@ -344,7 +344,7 @@ function bypassAssetManagement() {
                         return 1; // Grant full access
                     }, 'int', []));
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         }
@@ -355,7 +355,7 @@ function bypassAssetManagement() {
         const createFile = Module.findExportByName('kernel32.dll', 'CreateFileW');
         if (createFile) {
             Interceptor.attach(createFile, {
-                onEnter: function(args) {
+                onEnter: function() {
                     const fileName = args[0].readUtf16String();
                     if (fileName && fileName.includes('adobe') && fileName.includes('quota')) {
                         send({
@@ -370,7 +370,7 @@ function bypassAssetManagement() {
                 }
             });
         }
-    } catch (e) {
+    } catch {
         // Continue
     }
 }
@@ -393,7 +393,7 @@ function bypassAdvancedProtection() {
                         return 1; // Pass security checks
                     }, 'int', []));
                 }
-            } catch (e) {
+            } catch {
                 // Continue
             }
         });
@@ -411,7 +411,7 @@ function bypassAdvancedProtection() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         retval.replace(ptr(0)); // Success
                         send({
                             type: 'bypass',
@@ -441,7 +441,7 @@ function bypassNetworkValidation() {
         const getaddrinfo = Module.findExportByName('ws2_32.dll', 'getaddrinfo');
         if (getaddrinfo) {
             Interceptor.attach(getaddrinfo, {
-                onEnter: function(args) {
+                onEnter: function() {
                     const hostname = args[0].readCString();
                     if (hostname) {
                         for (const endpoint of allEndpoints) {
@@ -467,7 +467,7 @@ function bypassNetworkValidation() {
         const certVerify = Module.findExportByName('crypt32.dll', 'CertVerifyCertificateChainPolicy');
         if (certVerify) {
             Interceptor.attach(certVerify, {
-                onLeave: function(retval) {
+                onLeave: function() {
                     retval.replace(ptr(1)); // Certificate validation success
                     send({
                         type: 'bypass',
@@ -509,19 +509,39 @@ function bypassHardwareBinding() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         send({
                             type: 'info',
                             target: `${api.module}!${api.func}`,
                             action: 'hardware_fingerprinting_intercepted'
                         });
                     },
-                    onLeave: function(retval) {
+                    onLeave: function() {
+                        // Inject spoofed hardware values based on API
+                        if (api.func === 'GetVolumeInformationW' && this.context) {
+                            // Spoof volume serial number
+                            const serialPtr = this.context.r9;
+                            if (serialPtr) {
+                                Memory.writeU32(serialPtr, 0x12345678);
+                            }
+                        } else if (api.func === 'GetAdaptersInfo' && retval.toInt32() === 0) {
+                            // Spoof MAC address in adapter info
+                            const adapterInfo = this.context.rcx;
+                            if (adapterInfo) {
+                                // Inject spoofed MAC address
+                                const macBytes = [0x00, 0x50, 0x56, 0xC0, 0x00, 0x08];
+                                for (let i = 0; i < macBytes.length; i++) {
+                                    Memory.writeU8(adapterInfo.add(400 + i), macBytes[i]);
+                                }
+                            }
+                        }
+
                         send({
                             type: 'bypass',
                             target: `${api.module}!${api.func}`,
                             action: 'hardware_fingerprint_spoofed',
-                            result: 'legitimate_hardware'
+                            result: 'legitimate_hardware',
+                            spoofed_values: spoofedValues
                         });
                         BYPASS_STATS.hardware_bindings_spoofed++;
                     }
@@ -573,7 +593,7 @@ function setupEnterpriseAntiDetection() {
         const createToolhelp = Module.findExportByName('kernel32.dll', 'CreateToolhelp32Snapshot');
         if (createToolhelp) {
             Interceptor.attach(createToolhelp, {
-                onEnter: function(args) {
+                onEnter: function() {
                     send({
                         type: 'bypass',
                         target: 'anti_detection',
@@ -587,14 +607,14 @@ function setupEnterpriseAntiDetection() {
         const virtualQuery = Module.findExportByName('kernel32.dll', 'VirtualQuery');
         if (virtualQuery) {
             Interceptor.attach(virtualQuery, {
-                onEnter: function(args) {
+                onEnter: function() {
                     send({
                         type: 'bypass',
                         target: 'anti_detection',
                         action: 'memory_scan_intercepted'
                     });
                 },
-                onLeave: function(retval) {
+                onLeave: function() {
                     // Modify memory information to hide our hooks
                     send({
                         type: 'bypass',
@@ -610,7 +630,7 @@ function setupEnterpriseAntiDetection() {
         const enumProcessModules = Module.findExportByName('psapi.dll', 'EnumProcessModules');
         if (enumProcessModules) {
             Interceptor.attach(enumProcessModules, {
-                onLeave: function(retval) {
+                onLeave: function() {
                     send({
                         type: 'bypass',
                         target: 'anti_detection',
@@ -643,7 +663,7 @@ function bypassAIBasedAnomalyDetection() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         send({
                             type: 'bypass',
                             target: `${api.module}!${api.func}`,
@@ -651,7 +671,7 @@ function bypassAIBasedAnomalyDetection() {
                             result: 'ml_model_hijacked'
                         });
                     },
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         send({
                             type: 'bypass',
                             target: `${api.module}!${api.func}`,
@@ -762,14 +782,14 @@ function bypassBehavioralBiometrics() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         send({
                             type: 'info',
                             target: `${api.module}!${api.func}`,
                             action: 'biometric_data_collection_intercepted'
                         });
                     },
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         send({
                             type: 'bypass',
                             target: `${api.module}!${api.func}`,
@@ -816,23 +836,28 @@ function bypassBehavioralBiometrics() {
         });
 
         setInterval(() => {
+            // Use legitimateBehaviorPatterns for realistic behavior simulation
             const syntheticBehavior = {
                 keystroke_event: {
                     key_code: Math.floor(Math.random() * 90) + 32,
-                    dwell_time: 70 + Math.random() * 30,
-                    flight_time: 30 + Math.random() * 40,
-                    pressure: 0.6 + Math.random() * 0.3
+                    dwell_time: legitimateBehaviorPatterns.keystroke_dynamics.dwell_time_avg + (Math.random() - 0.5) * 20,
+                    flight_time: legitimateBehaviorPatterns.keystroke_dynamics.flight_time_avg + (Math.random() - 0.5) * 10,
+                    pressure: 0.5 + legitimateBehaviorPatterns.keystroke_dynamics.pressure_variance * (Math.random() - 0.5)
                 },
                 mouse_event: {
                     x_velocity: -50 + Math.random() * 100,
                     y_velocity: -50 + Math.random() * 100,
-                    acceleration: 0.8 + Math.random() * 0.4,
-                    jitter: Math.random() * 2
+                    acceleration: legitimateBehaviorPatterns.mouse_dynamics.acceleration_pattern === 'smooth_curves' ?
+                        0.8 + Math.random() * 0.4 : 1.0,
+                    jitter: legitimateBehaviorPatterns.mouse_dynamics.movement_velocity === 'human_natural' ?
+                        Math.random() * 2 : 0
                 },
                 interaction_event: {
                     element_type: ['menu', 'tool', 'canvas', 'panel'][Math.floor(Math.random() * 4)],
-                    interaction_duration: 500 + Math.random() * 2000,
-                    precision_score: 0.85 + Math.random() * 0.1
+                    interaction_duration: legitimateBehaviorPatterns.interaction_patterns.feature_discovery_rate === 'established_user' ?
+                        500 + Math.random() * 2000 : 1000 + Math.random() * 3000,
+                    precision_score: legitimateBehaviorPatterns.interaction_patterns.document_manipulation === 'professional' ?
+                        0.85 + Math.random() * 0.1 : 0.7 + Math.random() * 0.2
                 }
             };
 
@@ -866,14 +891,14 @@ function bypassZeroTrustNetworkArchitecture() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         send({
                             type: 'info',
                             target: `${api.module}!${api.func}`,
                             action: 'zero_trust_validation_intercepted'
                         });
                     },
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         retval.replace(ptr(0)); // Success code
                         send({
                             type: 'bypass',
@@ -975,7 +1000,7 @@ function bypassQuantumResistantCryptography() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         if (args[0]) {
                             const algorithmName = args[0].readUtf16String();
                             if (algorithmName) {
@@ -997,7 +1022,7 @@ function bypassQuantumResistantCryptography() {
                             }
                         }
                     },
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         retval.replace(ptr(0)); // Success
                     }
                 });
@@ -1044,7 +1069,7 @@ function bypassQuantumResistantCryptography() {
         const quantumRandomNumberGeneratorBypass = Module.findExportByName('bcrypt.dll', 'BCryptGenRandom');
         if (quantumRandomNumberGeneratorBypass) {
             Interceptor.attach(quantumRandomNumberGeneratorBypass, {
-                onEnter: function(args) {
+                onEnter: function() {
                     const bufferSize = args[2].toInt32();
                     if (bufferSize > 0) {
                         send({
@@ -1055,7 +1080,7 @@ function bypassQuantumResistantCryptography() {
                         });
                     }
                 },
-                onLeave: function(retval) {
+                onLeave: function() {
                     send({
                         type: 'bypass',
                         target: 'quantum_rng',
@@ -1087,14 +1112,14 @@ function bypassCloudNativeMicroservices() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         send({
                             type: 'info',
                             target: `${api.module}!${api.func}`,
                             action: 'microservice_communication_intercepted'
                         });
                     },
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         send({
                             type: 'bypass',
                             target: `${api.module}!${api.func}`,
@@ -1149,7 +1174,7 @@ function bypassCloudNativeMicroservices() {
         const getaddrinfo = Module.findExportByName('ws2_32.dll', 'getaddrinfo');
         if (getaddrinfo) {
             Interceptor.attach(getaddrinfo, {
-                onEnter: function(args) {
+                onEnter: function() {
                     const hostname = args[0].readCString();
                     if (hostname) {
                         for (const endpoint of microserviceEndpoints) {
@@ -1191,14 +1216,14 @@ function bypassAPTDetectionSystems() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         send({
                             type: 'bypass',
                             target: `${api.module}!${api.func}`,
                             action: 'apt_detection_system_intercepted'
                         });
                     },
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         send({
                             type: 'bypass',
                             target: `${api.module}!${api.func}`,
@@ -1289,14 +1314,14 @@ function bypassAdvancedMemoryProtection() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         send({
                             type: 'bypass',
                             target: `${api.module}!${api.func}`,
                             action: 'memory_protection_operation_intercepted'
                         });
                     },
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         retval.replace(ptr(0)); // STATUS_SUCCESS
                         send({
                             type: 'bypass',
@@ -1355,7 +1380,7 @@ function bypassAdvancedMemoryProtection() {
             const checkRemoteDebuggerPresent = Module.findExportByName('kernel32.dll', 'CheckRemoteDebuggerPresent');
             if (checkRemoteDebuggerPresent) {
                 Interceptor.attach(checkRemoteDebuggerPresent, {
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         retval.replace(ptr(0)); // No remote debugger
                     }
                 });
@@ -1364,7 +1389,7 @@ function bypassAdvancedMemoryProtection() {
             const ntQueryInformationProcess = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
             if (ntQueryInformationProcess) {
                 Interceptor.attach(ntQueryInformationProcess, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         const infoClass = args[1].toInt32();
                         if (infoClass === 7 || infoClass === 30) { // ProcessDebugPort, ProcessDebugFlags
                             send({
@@ -1375,7 +1400,7 @@ function bypassAdvancedMemoryProtection() {
                             });
                         }
                     },
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         retval.replace(ptr(0)); // STATUS_SUCCESS, no debug info
                     }
                 });
@@ -1405,14 +1430,14 @@ function bypassCodeSigningAndIntegrity() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         send({
                             type: 'bypass',
                             target: `${api.module}!${api.func}`,
                             action: 'code_signature_verification_intercepted'
                         });
                     },
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         retval.replace(ptr(0)); // Trust verification successful
                         send({
                             type: 'bypass',
@@ -1588,14 +1613,14 @@ function bypassFederatedIdentityManagement() {
             const addr = Module.findExportByName(api.module, api.func);
             if (addr) {
                 Interceptor.attach(addr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         send({
                             type: 'info',
                             target: `${api.module}!${api.func}`,
                             action: 'federated_identity_operation_intercepted'
                         });
                     },
-                    onLeave: function(retval) {
+                    onLeave: function() {
                         retval.replace(ptr(0)); // Success
                         send({
                             type: 'bypass',

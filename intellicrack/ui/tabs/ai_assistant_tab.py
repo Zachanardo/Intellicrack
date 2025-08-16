@@ -48,15 +48,9 @@ class AIAssistantTab(QWidget):
         model_selector_layout.addWidget(QLabel("Model:"))
 
         self.model_combo = QComboBox()
-        self.model_combo.addItems([
-            "GPT-4",
-            "Claude-3",
-            "Gemini Pro",
-            "Llama 3",
-            "CodeLlama",
-            "Mixtral",
-            "Local Model"
-        ])
+        self.model_combo.addItems(
+            ["GPT-4", "Claude-3", "Gemini Pro", "Llama 3", "CodeLlama", "Mixtral", "Local Model"]
+        )
         model_selector_layout.addWidget(self.model_combo)
 
         self.configure_btn = QPushButton("Configure")
@@ -75,9 +69,7 @@ class AIAssistantTab(QWidget):
         input_layout = QVBoxLayout()
 
         self.input_text = QTextEdit()
-        self.input_text.setPlaceholderText(
-            "Enter your query or paste code/binary analysis here..."
-        )
+        self.input_text.setPlaceholderText("Enter your query or paste code/binary analysis here...")
         input_layout.addWidget(self.input_text)
 
         # Action buttons
@@ -150,7 +142,7 @@ class AIAssistantTab(QWidget):
             self,
             "Model Configuration",
             f"Configuration for {model} model.\n\n"
-            "API keys and model parameters can be set in Settings."
+            "API keys and model parameters can be set in Settings.",
         )
 
         logger.info(f"Configuring model: {model}")
@@ -201,7 +193,7 @@ class AIAssistantTab(QWidget):
                 # Generate script
                 script = self.ai_assistant.generate_script(
                     input_text,
-                    script_type="frida"  # Default to Frida
+                    script_type="frida",  # Default to Frida
                 )
                 self.output_text.setPlainText(script)
                 self.status_label.setText("Script generated")
@@ -226,31 +218,22 @@ class AIAssistantTab(QWidget):
             self,
             "Export Script",
             "",
-            "JavaScript Files (*.js);;Python Files (*.py);;All Files (*.*)"
+            "JavaScript Files (*.js);;Python Files (*.py);;All Files (*.*)",
         )
 
         if file_path:
             try:
-                with open(file_path, 'w') as f:
+                with open(file_path, "w") as f:
                     f.write(self.output_text.toPlainText())
 
-                QMessageBox.information(
-                    self,
-                    "Success",
-                    f"Script exported to {file_path}"
-                )
+                QMessageBox.information(self, "Success", f"Script exported to {file_path}")
                 logger.info(f"Script exported to {file_path}")
             except Exception as e:
-                QMessageBox.critical(
-                    self,
-                    "Error",
-                    f"Failed to export script: {str(e)}"
-                )
+                QMessageBox.critical(self, "Error", f"Failed to export script: {str(e)}")
                 logger.error(f"Failed to export script: {e}")
 
     def copy_to_clipboard(self):
         """Copy output to clipboard."""
-
 
         clipboard = QApplication.clipboard()
         clipboard.setText(self.output_text.toPlainText())

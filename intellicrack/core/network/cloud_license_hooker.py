@@ -1141,9 +1141,15 @@ class CloudLicenseResponseGenerator:
 
                 # Log redirection details
                 proxy_url = get_service_url("proxy_server")
-                redirect_host = proxy_url.replace("http://", "").replace("https://", "").split(":")[0]
-                redirect_port = int(proxy_url.split(":")[-1].replace("/", "")) if ":" in proxy_url else 8080
-                self.logger.info(f"Redirecting {original_host}:{original_port} to {redirect_host}:{redirect_port}")
+                redirect_host = (
+                    proxy_url.replace("http://", "").replace("https://", "").split(":")[0]
+                )
+                redirect_port = (
+                    int(proxy_url.split(":")[-1].replace("/", "")) if ":" in proxy_url else 8080
+                )
+                self.logger.info(
+                    f"Redirecting {original_host}:{original_port} to {redirect_host}:{redirect_port}"
+                )
 
                 # Store original target for response crafting
                 self.license_targets[original_host] = {

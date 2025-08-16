@@ -98,12 +98,12 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         """
         super().__init__()
         self.logger = logging.getLogger("IntellicrackLogger.TrafficEngine")
-        
+
         # Use configuration for bind interface
         if bind_interface is None:
             proxy_url = get_service_url("proxy_server")
             bind_interface = proxy_url.replace("http://", "").replace("https://", "").split(":")[0]
-        
+
         self.bind_interface = bind_interface
         self.running = False
 

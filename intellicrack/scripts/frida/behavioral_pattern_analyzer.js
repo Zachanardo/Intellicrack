@@ -28,7 +28,7 @@
  * License: GPL v3
  */
 
-{
+const BehavioralPatternAnalyzer = {
     name: "Behavioral Pattern Analyzer",
     description: "Intelligent behavioral analysis for automatic hook placement optimization",
     version: "3.0.0",
@@ -3082,4 +3082,9 @@
             timestamp: Date.now()
         });
     }
+};
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = BehavioralPatternAnalyzer;
 }

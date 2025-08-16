@@ -3,9 +3,8 @@ Binary Patcher Plugin Template
 Specialized template for binary patching operations
 """
 
-import os
 import shutil
-from typing import Dict, List, Optional
+
 
 class BinaryPatcherPlugin:
     def __init__(self):
@@ -21,14 +20,14 @@ class BinaryPatcherPlugin:
 
         # Example: Find specific byte patterns
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
                 # Look for common patterns
-                if b'\x90\x90\x90\x90' in data:
+                if b"\x90\x90\x90\x90" in data:
                     results.append("Found NOP sled - potential patch location")
 
-                if b'\x55\x8b\xec' in data:
+                if b"\x55\x8b\xec" in data:
                     results.append("Found function prologue - patchable")
 
         except Exception as e:
@@ -54,6 +53,7 @@ class BinaryPatcherPlugin:
         results.append("- Update checksums if needed")
 
         return results
+
 
 def register():
     return BinaryPatcherPlugin()

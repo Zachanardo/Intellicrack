@@ -200,7 +200,7 @@ class IntellicrackConfig:
                 return
             except Exception as e:
                 logger.error(f"Failed to load unified config: {e}")
-        
+
         # Fall back to creating default config with auto-discovery
         logger.info("Creating default configuration with auto-discovery")
 
@@ -212,7 +212,7 @@ class IntellicrackConfig:
                 "name": "Intellicrack",
                 "version": "3.0.0",
                 "environment": "production",
-                "debug": False
+                "debug": False,
             },
             "api_endpoints": {
                 "openai": "https://api.openai.com/v1",
@@ -224,7 +224,7 @@ class IntellicrackConfig:
                 "cohere": "https://api.cohere.ai/v1",
                 "together": "https://api.together.xyz/v1",
                 "ollama": "http://localhost:11434/api",
-                "local_llm": "http://localhost:8080/v1"
+                "local_llm": "http://localhost:8080/v1",
             },
             "directories": {
                 "config": str(self.config_dir),
@@ -236,7 +236,7 @@ class IntellicrackConfig:
                 "plugins": "C:\\Intellicrack\\plugins",
                 "signatures": "C:\\Intellicrack\\signatures",
                 "reports": "C:\\Intellicrack\\reports",
-                "backups": "C:\\Intellicrack\\backups"
+                "backups": "C:\\Intellicrack\\backups",
             },
             "tools": self._auto_discover_tools(),
             "ui_preferences": {
@@ -252,7 +252,7 @@ class IntellicrackConfig:
                 "language": "en",
                 "animations_enabled": True,
                 "auto_complete": True,
-                "syntax_highlighting": True
+                "syntax_highlighting": True,
             },
             "analysis_settings": {
                 "default_timeout": 300,
@@ -270,7 +270,7 @@ class IntellicrackConfig:
                 "signature_matching": True,
                 "behavioral_analysis": True,
                 "static_analysis": True,
-                "dynamic_analysis": True
+                "dynamic_analysis": True,
             },
             "network": {
                 "proxy_enabled": False,
@@ -284,7 +284,7 @@ class IntellicrackConfig:
                 "retry_delay": 1,
                 "user_agent": "Intellicrack/3.0",
                 "follow_redirects": True,
-                "max_redirects": 5
+                "max_redirects": 5,
             },
             "logging": {
                 "level": "INFO",
@@ -297,7 +297,7 @@ class IntellicrackConfig:
                 "log_directory": str(self.logs_dir),
                 "separate_error_log": True,
                 "performance_logging": False,
-                "debug_mode": False
+                "debug_mode": False,
             },
             "security": {
                 "sandbox_analysis": True,
@@ -309,7 +309,7 @@ class IntellicrackConfig:
                 "sandbox_timeout": 60,
                 "max_sandbox_memory": "1GB",
                 "isolate_processes": True,
-                "monitor_system_calls": True
+                "monitor_system_calls": True,
             },
             "patching": {
                 "backup_original": True,
@@ -320,7 +320,7 @@ class IntellicrackConfig:
                 "validate_checksums": True,
                 "preserve_timestamps": False,
                 "compression_enabled": True,
-                "diff_algorithm": "myers"
+                "diff_algorithm": "myers",
             },
             "ai_models": {
                 "default_provider": "auto",
@@ -332,19 +332,15 @@ class IntellicrackConfig:
                     "script_generation": "gpt-4",
                     "code_analysis": "claude-3-opus",
                     "vulnerability_detection": "gpt-4-turbo",
-                    "patch_generation": "claude-3-sonnet"
+                    "patch_generation": "claude-3-sonnet",
                 },
-                "fallback_models": [
-                    "gpt-3.5-turbo",
-                    "claude-2",
-                    "llama-2-70b"
-                ],
+                "fallback_models": ["gpt-3.5-turbo", "claude-2", "llama-2-70b"],
                 "local_model_settings": {
                     "use_gpu": True,
                     "quantization": "int8",
                     "batch_size": 4,
-                    "context_window": 4096
-                }
+                    "context_window": 4096,
+                },
             },
             "service_urls": {
                 "update_check": "https://api.intellicrack.com/v1/updates",
@@ -352,7 +348,7 @@ class IntellicrackConfig:
                 "plugin_repository": "https://plugins.intellicrack.com/v1",
                 "documentation": "https://docs.intellicrack.com",
                 "telemetry": "https://telemetry.intellicrack.com/v1",
-                "license_server": "https://license.intellicrack.com/v1"
+                "license_server": "https://license.intellicrack.com/v1",
             },
             "performance": {
                 "lazy_loading": True,
@@ -364,7 +360,7 @@ class IntellicrackConfig:
                 "preload_models": False,
                 "async_operations": True,
                 "batch_processing": True,
-                "compression_level": 6
+                "compression_level": 6,
             },
             "updates": {
                 "auto_check": True,
@@ -373,7 +369,7 @@ class IntellicrackConfig:
                 "check_interval": 86400,
                 "channel": "stable",
                 "signature_verification": True,
-                "backup_before_update": True
+                "backup_before_update": True,
             },
             "plugins": {
                 "enabled": True,
@@ -382,7 +378,7 @@ class IntellicrackConfig:
                 "plugin_directory": "C:\\Intellicrack\\plugins",
                 "trusted_sources": [],
                 "sandbox_plugins": True,
-                "max_plugin_memory": "500MB"
+                "max_plugin_memory": "500MB",
             },
             "export": {
                 "default_format": "json",
@@ -392,7 +388,7 @@ class IntellicrackConfig:
                 "timestamp_format": "ISO8601",
                 "include_screenshots": True,
                 "include_logs": False,
-                "sanitize_paths": True
+                "sanitize_paths": True,
             },
             "shortcuts": {
                 "new_analysis": "Ctrl+N",
@@ -403,8 +399,8 @@ class IntellicrackConfig:
                 "toggle_theme": "Ctrl+T",
                 "refresh_tools": "F5",
                 "show_settings": "Ctrl+,",
-                "toggle_fullscreen": "F11"
-            }
+                "toggle_fullscreen": "F11",
+            },
         }
 
         with self._config_lock:
@@ -712,7 +708,7 @@ class IntellicrackConfig:
                     # but use auto-discovered paths for auto-discovered tools
                     if not tool_config.get("auto_discovered", True):
                         self._config["tools"][tool_name] = tool_config
-            
+
             # Merge user API endpoints
             if user_api_endpoints and "api_endpoints" in self._config:
                 self._config["api_endpoints"].update(user_api_endpoints)
@@ -754,28 +750,28 @@ class IntellicrackConfig:
 
     def _expand_environment_variables(self, value: Any) -> Any:
         """Expand environment variables in configuration values.
-        
+
         Supports ${VAR_NAME} and ${VAR_NAME:default_value} syntax.
-        
+
         Args:
             value: Configuration value to expand
-            
+
         Returns:
             Value with environment variables expanded
         """
         if not isinstance(value, str):
             return value
-        
+
         # Pattern to match ${VAR_NAME} or ${VAR_NAME:default}
-        env_pattern = r'\$\{([^}:]+)(?::([^}]*))?\}'
-        
+        env_pattern = r"\$\{([^}:]+)(?::([^}]*))?\}"
+
         def replace_env_var(match):
             var_name = match.group(1)
             default_value = match.group(2) if match.group(2) is not None else ""
-            
+
             # Get environment variable value
             env_value = os.environ.get(var_name)
-            
+
             if env_value is not None:
                 return env_value
             elif default_value:
@@ -784,9 +780,9 @@ class IntellicrackConfig:
                 # If no default and env var not set, raise error
                 raise ConfigurationError(
                     f"Environment variable '{var_name}' is not set and no default provided in config key '{key}'",
-                    config_key=key
+                    config_key=key,
                 )
-        
+
         return re.sub(env_pattern, replace_env_var, value)
 
     def get(self, key: str, default: Any = None) -> Any:
@@ -820,10 +816,10 @@ class IntellicrackConfig:
             try:
                 for k in keys:
                     value = value[k]
-                
+
                 # Expand environment variables in the retrieved value
                 return self._expand_environment_variables(value)
-                
+
             except (KeyError, TypeError) as e:
                 self.logger.error("Error in config_manager: %s", e)
                 return default
@@ -870,7 +866,7 @@ class IntellicrackConfig:
         # Use auto_save setting if save not specified
         if save is None:
             save = self.auto_save
-        
+
         if save:
             self._save_config()
 
@@ -895,38 +891,38 @@ class IntellicrackConfig:
         if tool_config and tool_config.get("available"):
             return tool_config.get("path")
         return None
-    
+
     def get_api_endpoint(self, service: str) -> str | None:
         """Get API endpoint for a service.
-        
+
         Retrieves the configured API endpoint URL for a service.
-        
+
         Args:
             service: Name of the service (e.g., 'openai', 'anthropic')
-            
+
         Returns:
             API endpoint URL if configured, None otherwise
-            
+
         Example:
             >>> endpoint = config.get_api_endpoint('openai')
             >>> print(endpoint)  # 'https://api.openai.com/v1'
-        
+
         """
         return self.get(f"api_endpoints.{service}")
-    
+
     def set_auto_save(self, enabled: bool):
         """Enable or disable auto-save functionality.
-        
+
         When enabled, configuration changes are automatically saved to disk.
-        
+
         Args:
             enabled: True to enable auto-save, False to disable
-            
+
         Example:
             >>> config.set_auto_save(False)  # Disable auto-save
             >>> config.set('some.key', 'value')  # Won't save automatically
             >>> config.set_auto_save(True)  # Re-enable auto-save
-        
+
         """
         self.auto_save = enabled
         logger.info(f"Auto-save {'enabled' if enabled else 'disabled'}")

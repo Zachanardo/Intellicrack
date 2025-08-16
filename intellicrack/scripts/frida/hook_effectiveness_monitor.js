@@ -28,7 +28,7 @@
  * License: GPL v3
  */
 
-{
+const HookEffectivenessMonitor = {
     name: "Hook Effectiveness Monitor",
     description: "Comprehensive hook effectiveness measurement and reporting system",
     version: "2.0.0",
@@ -1820,9 +1820,9 @@
                 message: "Hook effectiveness monitoring system is now ACTIVE!"
             });
         }, 100);
-    }
+    },
 
-    initializeModernHookDetectionEvasion() {
+    initializeModernHookDetectionEvasion: function() {
         this.hookDetectionEvasion = {
             antiDebuggerTricks: new Set(),
             memoryProtectionBypass: new Map(),
@@ -1922,9 +1922,9 @@
                 error: error.message
             });
         }
-    }
+    },
 
-    setupAdvancedSecurityBypassMonitoring() {
+    setupAdvancedSecurityBypassMonitoring: function() {
         this.securityBypassMonitoring = {
             cfgBypass: new Map(),
             cetBypass: new Map(),
@@ -2041,9 +2041,9 @@
                 error: error.message
             });
         }
-    }
+    },
 
-    initializeNeuralPatternEffectivenessAnalysis() {
+    initializeNeuralPatternEffectivenessAnalysis: function() {
         this.neuralPatternAnalysis = {
             patternRecognition: new Map(),
             behavioralModeling: new Map(),
@@ -2155,9 +2155,9 @@
                 error: error.message
             });
         }
-    }
+    },
 
-    startNeuralPatternLearning() {
+    startNeuralPatternLearning: function() {
         const learningInterval = setInterval(() => {
             try {
                 // Collect training data from hook effectiveness metrics
@@ -2198,9 +2198,9 @@
 
         // Store interval ID for cleanup
         this.neuralLearningInterval = learningInterval;
-    }
+    },
 
-    updateNeuralWeights() {
+    updateNeuralWeights: function() {
         const learningRate = 0.01;
         const batchSize = Math.min(32, this.neuralPatternAnalysis.trainingData.length);
 
@@ -2230,9 +2230,9 @@
 
         // Update validation metrics
         this.calculateValidationMetrics();
-    }
+    },
 
-    calculateValidationMetrics() {
+    calculateValidationMetrics: function() {
         if (this.neuralPatternAnalysis.trainingData.length < 10) return;
 
         const validationSamples = this.neuralPatternAnalysis.trainingData.slice(-10);
@@ -2269,9 +2269,9 @@
         this.neuralPatternAnalysis.validationMetrics.set("precision", precision);
         this.neuralPatternAnalysis.validationMetrics.set("recall", recall);
         this.neuralPatternAnalysis.validationMetrics.set("f1Score", f1Score);
-    }
+    },
 
-    setupQuantumResistantHookValidation() {
+    setupQuantumResistantHookValidation: function() {
         this.quantumResistantValidation = {
             cryptographicHashing: new Map(),
             quantumSafeSignatures: new Map(),
@@ -2392,9 +2392,9 @@
                 error: error.message
             });
         }
-    }
+    },
 
-    initializeQuantumSafePrimitives() {
+    initializeQuantumSafePrimitives: function() {
         // Implement quantum-safe primitive initialization
         // This would typically interface with post-quantum cryptography libraries
         // For this implementation, we simulate the initialization
@@ -2418,9 +2418,9 @@
                 status: "active"
             });
         });
-    }
+    },
 
-    generateQuantumRandomness() {
+    generateQuantumRandomness: function() {
         // Generate cryptographically secure random numbers
         // In a real implementation, this would use quantum random number generators
         // or high-entropy sources
@@ -2433,9 +2433,9 @@
                 this.quantumResistantValidation.quantumRandomness[i] = Math.floor(Math.random() * 256);
             }
         }
-    }
+    },
 
-    setupPostQuantumValidationProtocols() {
+    setupPostQuantumValidationProtocols: function() {
         // Setup validation protocols using post-quantum cryptography
         this.postQuantumProtocols = {
             signatureVerification: (data, signature, publicKey) => {
@@ -2451,28 +2451,28 @@
                 return this.postQuantumKeyExchange(remotePublicKey);
             }
         };
-    }
+    },
 
-    verifyPostQuantumSignature(data, signature, publicKey) {
+    verifyPostQuantumSignature: function(data, signature, publicKey) {
         // Simplified post-quantum signature verification
         // In production, this would use actual PQC libraries
         const hash = this.quantumSafeHash(data);
         return hash && signature && publicKey;
-    }
+    },
 
-    postQuantumEncryptDecrypt(data, key) {
+    postQuantumEncryptDecrypt: function(data, key) {
         // Simplified post-quantum encryption/decryption
         // In production, this would use actual PQC libraries
         return data; // Simplified return
-    }
+    },
 
-    postQuantumKeyExchange(remotePublicKey) {
+    postQuantumKeyExchange: function(remotePublicKey) {
         // Simplified post-quantum key exchange
         // In production, this would use actual PQC libraries
         return new Uint8Array(32); // Simplified shared secret
-    }
+    },
 
-    quantumSafeHash(data) {
+    quantumSafeHash: function(data) {
         // Implement quantum-safe hashing (SHA-3, BLAKE3)
         // This is a simplified implementation
         let hash = 0;
@@ -2480,9 +2480,9 @@
             hash = ((hash << 5) - hash + data.charCodeAt(i)) & 0xffffffff;
         }
         return hash;
-    }
+    },
 
-    initializeBlockchainMonitoringIntegration() {
+    initializeBlockchainMonitoringIntegration: function() {
         this.blockchainMonitoring = {
             ethereumIntegration: new Map(),
             bitcoinMonitoring: new Map(),
@@ -2615,9 +2615,9 @@
                 error: error.message
             });
         }
-    }
+    },
 
-    startBlockchainMonitoring() {
+    startBlockchainMonitoring: function() {
         // Start periodic blockchain monitoring
         this.blockchainMonitoringInterval = setInterval(() => {
             try {
@@ -2635,9 +2635,9 @@
                 });
             }
         }, 30000); // Monitor every 30 seconds
-    }
+    },
 
-    monitorEthereumTransactions() {
+    monitorEthereumTransactions: function() {
         // Simulate Ethereum transaction monitoring
         // In production, this would connect to actual blockchain RPC endpoints
         const transactionData = {
@@ -2648,9 +2648,9 @@
         };
 
         this.blockchainMonitoring.ethereumIntegration.get("mainnet").lastTransaction = transactionData;
-    }
+    },
 
-    analyzeBitcoinNetwork() {
+    analyzeBitcoinNetwork: function() {
         // Simulate Bitcoin network analysis
         const bitcoinData = {
             blockHeight: Math.floor(Math.random() * 10000) + 800000,
@@ -2660,18 +2660,18 @@
         };
 
         this.blockchainMonitoring.bitcoinMonitoring.get("mainnet").lastBlock = bitcoinData;
-    }
+    },
 
-    trackDefiProtocols() {
+    trackDefiProtocols: function() {
         // Track DeFi protocol metrics
         for (const [protocol, config] of this.blockchainMonitoring.defiProtocolTracking) {
             config.lastUpdate = Date.now();
             config.tvl = Math.floor(Math.random() * 1000000000) + 100000000; // Simulate TVL
             config.volume24h = Math.floor(Math.random() * 100000000) + 10000000; // Simulate 24h volume
         }
-    }
+    },
 
-    validateNftLicenses() {
+    validateNftLicenses: function() {
         // Validate NFT license compliance
         const validationResults = new Map();
         for (const licenseType of this.blockchainMonitoring.nftLicenseValidation) {
@@ -2681,18 +2681,18 @@
             });
         }
         return validationResults;
-    }
+    },
 
-    performCrossChainAnalysis() {
+    performCrossChainAnalysis: function() {
         // Perform cross-chain bridge analysis
         for (const [bridgeName, bridgeConfig] of this.blockchainMonitoring.crossChainAnalysis.get("bridges")) {
             bridgeConfig.lastAnalysis = Date.now();
             bridgeConfig.volume24h = Math.floor(Math.random() * 50000000) + 5000000;
             bridgeConfig.securityScore = Math.floor(Math.random() * 40) + 60; // 60-100 security score
         }
-    }
+    },
 
-    setupNextGenPerformanceOptimization() {
+    setupNextGenPerformanceOptimization: function() {
         this.performanceOptimization = {
             gpuAcceleration: new Map(),
             multiThreading: new Map(),
@@ -2849,9 +2849,9 @@
                 error: error.message
             });
         }
-    }
+    },
 
-    initializeGpuAcceleration() {
+    initializeGpuAcceleration: function() {
         // Initialize WebGL for GPU-accelerated computations
         try {
             // Note: In Frida context, WebGL might not be available
@@ -2875,9 +2875,9 @@
                 message: "GPU acceleration not available, using CPU fallback"
             });
         }
-    }
+    },
 
-    compileGpuShaders(gl) {
+    compileGpuShaders: function(gl) {
         // Compile GPU shaders for parallel processing
         const vertexShaderSource = `
             attribute vec4 position;
@@ -2912,9 +2912,9 @@
 
             this.performanceOptimization.gpuAcceleration.get("webgl").shaders.set("effectiveness", program);
         }
-    }
+    },
 
-    createShader(gl, type, source) {
+    createShader: function(gl, type, source) {
         const shader = gl.createShader(type);
         gl.shaderSource(shader, source);
         gl.compileShader(shader);
@@ -2925,9 +2925,9 @@
         }
 
         return shader;
-    }
+    },
 
-    initializeMemoryPools() {
+    initializeMemoryPools: function() {
         // Create memory pools for efficient allocation
         this.memoryPools = {
             hookDataPool: {
@@ -2946,9 +2946,9 @@
                 free: []
             }
         };
-    }
+    },
 
-    initializeAsyncQueues() {
+    initializeAsyncQueues: function() {
         // Initialize asynchronous processing queues
         this.asyncQueues = {
             priorityQueue: [],
@@ -2958,9 +2958,9 @@
 
         // Start queue processors
         this.startQueueProcessors();
-    }
+    },
 
-    startQueueProcessors() {
+    startQueueProcessors: function() {
         // Priority Queue Processor
         setInterval(() => {
             if (this.asyncQueues.priorityQueue.length > 0) {
@@ -2984,9 +2984,9 @@
                 this.processAsyncTask(task, 'immediate');
             }
         }, 0);
-    }
+    },
 
-    processAsyncTask(task, priority) {
+    processAsyncTask: function(task, priority) {
         try {
             if (typeof task === 'function') {
                 task();
@@ -3002,9 +3002,9 @@
                 priority: priority
             });
         }
-    }
+    },
 
-    checkSIMDSupport() {
+    checkSIMDSupport: function() {
         // Check for SIMD support in the environment
         try {
             // In most Frida contexts, this would be false, but provides framework
@@ -3012,9 +3012,9 @@
         } catch (error) {
             return false;
         }
-    }
+    },
 
-    startPerformanceMonitoring() {
+    startPerformanceMonitoring: function() {
         // Start comprehensive performance monitoring
         this.performanceMonitoringInterval = setInterval(() => {
             try {
@@ -3031,9 +3031,9 @@
                 });
             }
         }, 1000);
-    }
+    },
 
-    monitorCpuUsage() {
+    monitorCpuUsage: function() {
         // Monitor CPU usage and optimize accordingly
         const cpuProfiler = this.performanceOptimization.performanceProfiling.get("cpuProfiler");
         const currentTime = performance.now();
@@ -3047,9 +3047,9 @@
         if (cpuProfiler.samples.length > 1000) {
             cpuProfiler.samples.shift();
         }
-    }
+    },
 
-    monitorMemoryUsage() {
+    monitorMemoryUsage: function() {
         // Monitor memory usage and manage pools
         const memoryProfiler = this.performanceOptimization.performanceProfiling.get("memoryProfiler");
 
@@ -3067,9 +3067,9 @@
                 memoryProfiler.samples.shift();
             }
         }
-    }
+    },
 
-    monitorCacheEfficiency() {
+    monitorCacheEfficiency: function() {
         // Monitor and optimize cache efficiency
         for (const [cacheName, cacheConfig] of this.performanceOptimization.cacheOptimization) {
             const totalRequests = cacheConfig.hitRate + cacheConfig.missRate;
@@ -3083,9 +3083,9 @@
             // Clean expired entries
             this.cleanExpiredCacheEntries(cacheName);
         }
-    }
+    },
 
-    cleanExpiredCacheEntries(cacheName) {
+    cleanExpiredCacheEntries: function(cacheName) {
         const cacheConfig = this.performanceOptimization.cacheOptimization.get(cacheName);
         const now = Date.now();
 
@@ -3094,9 +3094,9 @@
                 cacheConfig.cache.delete(key);
             }
         }
-    }
+    },
 
-    optimizeResourceAllocation() {
+    optimizeResourceAllocation: function() {
         // Optimize CPU and memory resource allocation
         const cpuAllocation = this.performanceOptimization.resourceAllocation.get("cpuAllocation");
         const memoryAllocation = this.performanceOptimization.resourceAllocation.get("memoryAllocation");
@@ -3113,9 +3113,9 @@
                 this.expandMemoryPool(poolName);
             }
         }
-    }
+    },
 
-    expandMemoryPool(poolName) {
+    expandMemoryPool: function(poolName) {
         // Expand memory pool when nearing capacity
         if (this.memoryPools[poolName]) {
             const currentSize = this.memoryPools[poolName].buffer.byteLength;
@@ -3128,9 +3128,9 @@
             newView.set(oldView);
             this.memoryPools[poolName].buffer = newBuffer;
         }
-    }
+    },
 
-    initializeAdvancedAnomalyCorrelation() {
+    initializeAdvancedAnomalyCorrelation: function() {
         this.anomalyCorrelation = {
             correlationMatrix: new Float32Array(100 * 100), // 100x100 correlation matrix
             statisticalCorrelation: new Map(),
@@ -3284,9 +3284,9 @@
                 error: error.message
             });
         }
-    }
+    },
 
-    startCorrelationAnalysis() {
+    startCorrelationAnalysis: function() {
         // Start real-time correlation analysis
         this.correlationAnalysisInterval = setInterval(() => {
             try {
@@ -3304,9 +3304,9 @@
                 });
             }
         }, 2000);
-    }
+    },
 
-    calculatePearsonCorrelation() {
+    calculatePearsonCorrelation: function() {
         // Calculate Pearson correlation coefficients
         const pearsonConfig = this.anomalyCorrelation.statisticalCorrelation.get("pearson");
 
@@ -3342,9 +3342,9 @@
                 });
             }
         }
-    }
+    },
 
-    computePearsonCorrelation(x, y) {
+    computePearsonCorrelation: function(x, y) {
         const n = x.length;
         const sumX = x.reduce((a, b) => a + b, 0);
         const sumY = y.reduce((a, b) => a + b, 0);
@@ -3356,9 +3356,9 @@
         const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
 
         return denominator === 0 ? 0 : numerator / denominator;
-    }
+    },
 
-    analyzeTimeSeriesCorrelation() {
+    analyzeTimeSeriesCorrelation: function() {
         // Analyze time series correlations
         const autocorrelation = this.anomalyCorrelation.timeSeriesCorrelation.get("autocorrelation");
 
@@ -3374,9 +3374,9 @@
             const correlation = this.calculateAutocorrelation(recentMetrics, lag);
             autocorrelation.lags.set(lag, correlation);
         }
-    }
+    },
 
-    calculateAutocorrelation(series, lag) {
+    calculateAutocorrelation: function(series, lag) {
         if (series.length <= lag) return 0;
 
         const n = series.length - lag;
@@ -3394,9 +3394,9 @@
         }
 
         return denominator === 0 ? 0 : numerator / denominator;
-    }
+    },
 
-    detectAnomalyPatterns() {
+    detectAnomalyPatterns: function() {
         // Detect patterns in anomaly occurrences
         const sequentialPatterns = this.anomalyCorrelation.anomalyPatternMatching.get("sequentialPatterns");
 
@@ -3421,9 +3421,9 @@
                 frequency: currentCount
             });
         }
-    }
+    },
 
-    updateCorrelationMatrix() {
+    updateCorrelationMatrix: function() {
         // Update the correlation matrix with new data
         const metrics = [
             this.metrics.totalHooks,
@@ -3441,9 +3441,9 @@
                 this.anomalyCorrelation.correlationMatrix[j * 100 + i] = correlation;
             }
         }
-    }
+    },
 
-    performMultiDimensionalCorrelation() {
+    performMultiDimensionalCorrelation: function() {
         // Perform multi-dimensional correlation analysis
         // This would typically involve PCA, CCA, or ICA
         // For now, we implement a simplified version
@@ -3470,9 +3470,9 @@
             principalComponent: pc1,
             variance: variance
         });
-    }
+    },
 
-    setupModernThreatIntelligenceIntegration() {
+    setupModernThreatIntelligenceIntegration: function() {
         this.threatIntelligence = {
             stixTaxiiIntegration: new Map(),
             iocFeeds: new Map(),
@@ -3650,9 +3650,9 @@
                 error: error.message
             });
         }
-    }
+    },
 
-    initializeThreatFeeds() {
+    initializeThreatFeeds: function() {
         // Initialize various threat intelligence feeds
         // In production, these would connect to real threat feeds
 
@@ -3682,9 +3682,9 @@
         sampleDomains.forEach(domain => {
             this.threatIntelligence.iocFeeds.get("networkIndicators").domains.add(domain);
         });
-    }
+    },
 
-    startThreatIntelligenceProcessing() {
+    startThreatIntelligenceProcessing: function() {
         // Start continuous threat intelligence processing
         this.threatIntelligenceInterval = setInterval(() => {
             try {
@@ -3702,9 +3702,9 @@
                 });
             }
         }, 10000); // Process every 10 seconds
-    }
+    },
 
-    processThreatFeeds() {
+    processThreatFeeds: function() {
         // Process incoming threat intelligence feeds
         // This would typically involve parsing STIX objects, IOCs, etc.
 
@@ -3726,9 +3726,9 @@
         // Simulate new threat detection
         feedStats.newThreats = Math.floor(Math.random() * 5);
         feedStats.updatedThreats = Math.floor(Math.random() * 10);
-    }
+    },
 
-    analyzeThreatActors() {
+    analyzeThreatActors: function() {
         // Analyze threat actor patterns and attribution
         const actorAnalysis = new Map();
 
@@ -3752,9 +3752,9 @@
                 });
             }
         }
-    }
+    },
 
-    mapTTPs() {
+    mapTTPs: function() {
         // Map observed behaviors to MITRE ATT&CK TTPs
         const observedTechniques = new Set();
 
@@ -3780,9 +3780,9 @@
                 });
             }
         }
-    }
+    },
 
-    huntForThreats() {
+    huntForThreats: function() {
         // Perform automated threat hunting
         const huntingResults = {
             behavioralAnomalies: [],
@@ -3813,9 +3813,9 @@
                 results: huntingResults
             });
         }
-    }
+    },
 
-    detectZeroDays() {
+    detectZeroDays: function() {
         // Detect potential zero-day exploits
         const zeroDayIndicators = [];
 
@@ -3843,9 +3843,9 @@
                 signature: signature
             });
         }
-    }
+    },
 
-    generateBehaviorSignature() {
+    generateBehaviorSignature: function() {
         // Generate a behavioral signature for unknown patterns
         return {
             executionTime: this.metrics.averageExecutionTime,
@@ -3854,9 +3854,9 @@
             bypassTechnique: "unknown",
             confidence: Math.random() * 100
         };
-    }
+    },
 
-    initializeAdaptiveHookStrategies() {
+    initializeAdaptiveHookStrategies: function() {
         this.adaptiveStrategies = {
             dynamicHookPlacement: new Map(),
             adaptiveHookTiming: new Set(),
@@ -4011,9 +4011,9 @@
                 error: error.message
             });
         }
-    }
+    },
 
-    initializeGeneticAlgorithm() {
+    initializeGeneticAlgorithm: function() {
         // Initialize genetic algorithm for strategy evolution
         const gaConfig = this.adaptiveStrategies.strategyEvolution.get("geneticAlgorithm");
 
@@ -4028,9 +4028,9 @@
 
             gaConfig.population.set(i, strategy);
         }
-    }
+    },
 
-    initializeReinforcementLearning() {
+    initializeReinforcementLearning: function() {
         // Initialize Q-Learning for adaptive hook strategies
         const rlConfig = this.adaptiveStrategies.machineLearningAdaptation.get("reinforcementLearning");
 
@@ -4043,9 +4043,9 @@
                 rlConfig.qTable.set(`${state}_${action}`, Math.random());
             }
         }
-    }
+    },
 
-    initializeNeuralNetworkAdapter() {
+    initializeNeuralNetworkAdapter: function() {
         // Initialize neural network for adaptive parameter tuning
         const nnConfig = this.adaptiveStrategies.machineLearningAdaptation.get("neuralNetworkAdapter");
 
@@ -4056,9 +4056,9 @@
 
         // Initialize biases to zero
         nnConfig.biases.fill(0);
-    }
+    },
 
-    startAdaptiveStrategyProcessing() {
+    startAdaptiveStrategyProcessing: function() {
         // Start continuous adaptive strategy processing
         this.adaptiveStrategyInterval = setInterval(() => {
             try {
@@ -4076,9 +4076,9 @@
                 });
             }
         }, 5000); // Process every 5 seconds
-    }
+    },
 
-    adaptHookPlacement() {
+    adaptHookPlacement: function() {
         // Dynamically adapt hook placement based on effectiveness
         const placementConfig = this.adaptiveStrategies.dynamicHookPlacement.get("adaptivePlacement");
 
@@ -4093,9 +4093,9 @@
             // Good effectiveness - optimize for performance
             placementConfig.performanceBasedPlacement.set("optimized_placement", Date.now());
         }
-    }
+    },
 
-    evolveStrategies() {
+    evolveStrategies: function() {
         // Evolve hook strategies using genetic algorithm
         const gaConfig = this.adaptiveStrategies.strategyEvolution.get("geneticAlgorithm");
 
@@ -4110,18 +4110,18 @@
         }
 
         gaConfig.generations++;
-    }
+    },
 
-    calculateStrategyFitness(strategy) {
+    calculateStrategyFitness: function(strategy) {
         // Calculate fitness based on multiple criteria
         const successRate = this.metrics.successfulHooks / (this.metrics.totalHooks || 1);
         const performanceScore = Math.max(0, 1 - (this.metrics.averageExecutionTime / 1000));
         const memoryEfficiency = Math.max(0, 1 - (this.metrics.memoryUsage / 1000000));
 
         return (successRate * 0.5 + performanceScore * 0.3 + memoryEfficiency * 0.2) * 100;
-    }
+    },
 
-    performGeneticOperations(gaConfig) {
+    performGeneticOperations: function(gaConfig) {
         // Perform selection, crossover, and mutation
         const population = Array.from(gaConfig.population.values());
         population.sort((a, b) => b.fitness - a.fitness);
@@ -4152,9 +4152,9 @@
         }
 
         gaConfig.population = newPopulation;
-    }
+    },
 
-    crossover(parent1, parent2) {
+    crossover: function(parent1, parent2) {
         // Perform crossover between two strategies
         const offspring = {
             hookPlacements: new Set(),
@@ -4169,9 +4169,9 @@
         }
 
         return offspring;
-    }
+    },
 
-    mutate(strategy) {
+    mutate: function(strategy) {
         // Mutate strategy parameters
         if (Math.random() < 0.3) {
             strategy.timingStrategy = Math.floor(Math.random() * 4);
@@ -4183,9 +4183,9 @@
                 strategy.contextWeights[i] = Math.max(0, Math.min(1, strategy.contextWeights[i]));
             }
         }
-    }
+    },
 
-    updateReinforcementLearning() {
+    updateReinforcementLearning: function() {
         // Update Q-Learning based on current state and reward
         const rlConfig = this.adaptiveStrategies.machineLearningAdaptation.get("reinforcementLearning");
 
@@ -4235,9 +4235,9 @@
 
         // Decay exploration rate
         rlConfig.explorationRate = Math.max(0.01, rlConfig.explorationRate * 0.995);
-    }
+    },
 
-    adjustPerformanceBasedParameters() {
+    adjustPerformanceBasedParameters: function() {
         // Adjust parameters based on performance metrics
         const executionAdjustment = this.adaptiveStrategies.performanceBasedAdjustment.get("executionTimeAdjustment");
         const memoryAdjustment = this.adaptiveStrategies.performanceBasedAdjustment.get("memoryUsageAdjustment");
@@ -4255,9 +4255,9 @@
         } else if (this.metrics.memoryUsage < memoryAdjustment.thresholds.get("low")) {
             memoryAdjustment.adjustments.set("increase_detail", Date.now());
         }
-    }
+    },
 
-    trackStrategyEffectiveness() {
+    trackStrategyEffectiveness: function() {
         // Track the effectiveness of different strategies
         const tracking = this.adaptiveStrategies.strategyEffectivenessTracking;
 
@@ -4283,9 +4283,9 @@
         if (history.length > 1000) {
             history.shift();
         }
-    }
+    },
 
-    setupComprehensiveEffectivenessValidation() {
+    setupComprehensiveEffectivenessValidation: function() {
         this.effectivenessValidation = {
             multiLayeredValidation: new Map(),
             crossValidationTechniques: new Set(),
@@ -4497,9 +4497,9 @@
                 error: error.message
             });
         }
-    }
+    },
 
-    initializeValidationTests() {
+    initializeValidationTests: function() {
         // Initialize comprehensive validation test suites
         const functionalRegression = this.effectivenessValidation.regressionTesting.get("functionalRegression");
 
@@ -4516,9 +4516,9 @@
         functionalRegression.baselineResults.set("hookRemoval", { success: true, time: 30 });
         functionalRegression.baselineResults.set("errorHandling", { success: true, time: 5 });
         functionalRegression.baselineResults.set("performanceMonitoring", { success: true, time: 20 });
-    }
+    },
 
-    setupBenchmarks() {
+    setupBenchmarks: function() {
         // Setup performance benchmarks
         this.benchmarks = {
             executionTime: {
@@ -4542,9 +4542,9 @@
                 samples: []
             }
         };
-    }
+    },
 
-    initializeABTesting() {
+    initializeABTesting: function() {
         // Initialize A/B testing for hook strategies
         const hookStrategyAB = this.effectivenessValidation.abTestingFrameworks.get("hookStrategyAB");
         hookStrategyAB.startTime = Date.now();
@@ -4558,9 +4558,9 @@
                 hookStrategyAB.testGroup.participants.add(participant);
             }
         }
-    }
+    },
 
-    startComprehensiveValidation() {
+    startComprehensiveValidation: function() {
         // Start comprehensive validation monitoring
         this.comprehensiveValidationInterval = setInterval(() => {
             try {
@@ -4581,9 +4581,9 @@
                 });
             }
         }, 30000); // Validate every 30 seconds
-    }
+    },
 
-    runMultiLayeredValidation() {
+    runMultiLayeredValidation: function() {
         // Run multi-layered validation checks
         for (const [layerName, layer] of this.effectivenessValidation.multiLayeredValidation) {
             let allChecksPassed = true;
@@ -4599,9 +4599,9 @@
 
             layer.passed = allChecksPassed;
         }
-    }
+    },
 
-    executeValidationCheck(checkName) {
+    executeValidationCheck: function(checkName) {
         // Execute individual validation checks
         switch (checkName) {
             case "hook_installation":
@@ -4647,9 +4647,9 @@
                     timestamp: Date.now()
                 };
         }
-    }
+    },
 
-    performCrossValidation() {
+    performCrossValidation: function() {
         // Perform k-fold cross-validation on effectiveness data
         const k = 5; // 5-fold cross-validation
         const data = [
@@ -4686,18 +4686,18 @@
                 kFolds: k
             });
         }
-    }
+    },
 
-    validateFold(trainData, testData) {
+    validateFold: function(trainData, testData) {
         // Simplified fold validation
         const trainMean = trainData.reduce((a, b) => a + b, 0) / trainData.length;
         const testMean = testData.reduce((a, b) => a + b, 0) / testData.length;
 
         // Return accuracy based on mean difference
         return Math.max(0, 1 - Math.abs(trainMean - testMean) / Math.max(trainMean, testMean));
-    }
+    },
 
-    conductStatisticalTesting() {
+    conductStatisticalTesting: function() {
         // Conduct statistical significance testing
         const tTestConfig = this.effectivenessValidation.statisticalSignificanceTesting.get("tTest");
 
@@ -4716,23 +4716,23 @@
             tTestConfig.pValue = this.calculatePValue(tStatistic, tTestConfig.samples.length - 1);
             tTestConfig.significant = tTestConfig.pValue < 0.05;
         }
-    }
+    },
 
-    calculateTStatistic(samples, hypothesizedMean) {
+    calculateTStatistic: function(samples, hypothesizedMean) {
         const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
         const variance = samples.reduce((sum, x) => sum + (x - mean) ** 2, 0) / (samples.length - 1);
         const standardError = Math.sqrt(variance / samples.length);
 
         return (mean - hypothesizedMean) / standardError;
-    }
+    },
 
-    calculatePValue(tStatistic, degreesOfFreedom) {
+    calculatePValue: function(tStatistic, degreesOfFreedom) {
         // Simplified p-value calculation
         // In production, this would use a proper t-distribution
         return Math.min(1, Math.abs(tStatistic) / 10);
-    }
+    },
 
-    runABTests() {
+    runABTests: function() {
         // Run A/B testing for different hook strategies
         const hookStrategyAB = this.effectivenessValidation.abTestingFrameworks.get("hookStrategyAB");
 
@@ -4769,9 +4769,9 @@
             hookStrategyAB.controlGroup.results = [];
             hookStrategyAB.testGroup.results = [];
         }
-    }
+    },
 
-    executeBenchmarks() {
+    executeBenchmarks: function() {
         // Execute performance benchmarks
         this.benchmarks.executionTime.current = this.metrics.averageExecutionTime;
         this.benchmarks.executionTime.samples.push(this.metrics.averageExecutionTime);
@@ -4790,9 +4790,9 @@
                 benchmark.samples.shift();
             }
         }
-    }
+    },
 
-    performRegressionTesting() {
+    performRegressionTesting: function() {
         // Perform regression testing
         const functionalRegression = this.effectivenessValidation.regressionTesting.get("functionalRegression");
         const performanceRegression = this.effectivenessValidation.regressionTesting.get("performanceRegression");
@@ -4824,9 +4824,9 @@
         if (successRate < performanceRegression.thresholds.get("success_rate")) {
             performanceRegression.violations.add("success_rate_regression");
         }
-    }
+    },
 
-    updateValidationMetrics() {
+    updateValidationMetrics: function() {
         // Update validation metrics
         const accuracy = this.effectivenessValidation.validationMetrics.get("accuracy");
         const precision = this.effectivenessValidation.validationMetrics.get("precision");
@@ -4850,9 +4850,9 @@
 
         // Calculate F1 score
         f1Score.value = (precision.value + recall.value) > 0 ? 2 * (precision.value * recall.value) / (precision.value + recall.value) : 0;
-    }
+    },
 
-    generateValidationReports() {
+    generateValidationReports: function() {
         // Generate comprehensive validation reports
         const summaryReports = this.effectivenessValidation.validationReporting.get("summaryReports");
         const currentDate = new Date().toDateString();
@@ -4886,4 +4886,19 @@
             report: dailyReport
         });
     }
+};
+
+// Auto-initialize on load
+setTimeout(function() {
+    HookEffectivenessMonitor.run();
+    send({
+        type: "status",
+        target: "hook_effectiveness_monitor",
+        action: "system_now_active"
+    });
+}, 100);
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = HookEffectivenessMonitor;
 }

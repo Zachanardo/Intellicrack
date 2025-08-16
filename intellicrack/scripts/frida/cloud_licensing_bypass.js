@@ -28,7 +28,7 @@
  * License: GPL v3
  */
 
-{
+const CloudLicensingBypass = {
     name: "Cloud License Server Bypass",
     description: "Comprehensive cloud-based license verification bypass",
     version: "3.0.0",
@@ -446,11 +446,11 @@
                 spoofXmlResponse: function(xmlResponse) {
                     // Basic XML spoofing
                     var spoofed = xmlResponse;
-                    spoofed = spoofed.replace(/(<status[^>]*>)[^<]*(</status>)/gi, '$1valid$2');
-                    spoofed = spoofed.replace(/(<valid[^>]*>)[^<]*(</valid>)/gi, '$1true$2');
-                    spoofed = spoofed.replace(/(<licensed[^>]*>)[^<]*(</licensed>)/gi, '$1true$2');
-                    spoofed = spoofed.replace(/(<authorized[^>]*>)[^<]*(</authorized>)/gi, '$1true$2');
-                    spoofed = spoofed.replace(/(<error[^>]*>)[^<]*(</error>)/gi, '');
+                    spoofed = spoofed.replace(/(<status[^>]*>)[^<]*(<\/status>)/gi, '$1valid$2');
+                    spoofed = spoofed.replace(/(<valid[^>]*>)[^<]*(<\/valid>)/gi, '$1true$2');
+                    spoofed = spoofed.replace(/(<licensed[^>]*>)[^<]*(<\/licensed>)/gi, '$1true$2');
+                    spoofed = spoofed.replace(/(<authorized[^>]*>)[^<]*(<\/authorized>)/gi, '$1true$2');
+                    spoofed = spoofed.replace(/(<error[^>]*>)[^<]*(<\/error>)/gi, '');
                     return spoofed;
                 },
 
@@ -2198,4 +2198,9 @@
             }
         });
     }
+};
+
+// Export for use in other modules or direct execution
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = CloudLicensingBypass;
 }
