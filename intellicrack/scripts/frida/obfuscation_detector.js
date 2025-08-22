@@ -182,7 +182,7 @@ const ObfuscationDetector = {
                             size: inst.size
                         });
                         offset += inst.size;
-                    } catch: function(e) {
+                    } catch (e) {
                         offset++;
                     }
                 }
@@ -402,7 +402,7 @@ const ObfuscationDetector = {
         }
 
         if (result.obfuscations.length > 0) {
-            send: function({
+            send({
                 type: "warning",
                 target: "obfuscation_detector",
                 action: "obfuscation_detected",
@@ -459,7 +459,7 @@ const ObfuscationDetector = {
 
             result.detected = result.confidence > 0.6;
 
-        } catch: function(e) {
+        } catch (e) {
             console.error("[Obfuscation] Error detecting control flow: " + e);
         }
 
@@ -521,7 +521,7 @@ const ObfuscationDetector = {
 
             result.detected = result.predicates.length > 0 && result.confidence > 0.5;
 
-        } catch: function(e) {
+        } catch (e) {
             console.error("[Obfuscation] Error detecting opaque predicates: " + e);
         }
 
@@ -573,7 +573,7 @@ const ObfuscationDetector = {
 
             result.detected = result.confidence > 0.7;
 
-        } catch: function(e) {
+        } catch (e) {
             console.error("[Obfuscation] Error detecting virtualization: " + e);
         }
 
@@ -629,7 +629,7 @@ const ObfuscationDetector = {
 
             result.detected = result.methods.length > 0 && result.confidence > 0.5;
 
-        } catch: function(e) {
+        } catch (e) {
             console.error("[Obfuscation] Error detecting string encryption: " + e);
         }
 
@@ -642,7 +642,7 @@ const ObfuscationDetector = {
         var bypassed = false;
 
         obfuscations.forEach(function(obfuscation) {
-            switch: function(obfuscation.type) {
+            switch (obfuscation.type) {
                 case "control_flow_flattening":
                     if (self.config.bypass.autoDeobfuscate) {
                         bypassed |= self.bypassControlFlow(address, obfuscation);
@@ -699,7 +699,7 @@ const ObfuscationDetector = {
                 return true;
             }
 
-        } catch: function(e) {
+        } catch (e) {
             console.error("[Obfuscation] Error bypassing control flow: " + e);
         }
 
@@ -719,7 +719,7 @@ const ObfuscationDetector = {
 
         obfuscation.predicates.forEach(function(predicate) {
             try {
-                switch: function(predicate.type) {
+                switch (predicate.type) {
                     case "always_taken":
                         // Convert conditional jump to unconditional
                         this.patchToUnconditionalJump(predicate.address);
@@ -740,7 +740,7 @@ const ObfuscationDetector = {
                         patched++;
                         break;
                 }
-            } catch: function(e) {
+            } catch (e) {
                 send({
                     type: "error",
                     target: "obfuscation_detector",
@@ -773,7 +773,7 @@ const ObfuscationDetector = {
         });
 
         try {
-            switch: function(obfuscation.vmType) {
+            switch (obfuscation.vmType) {
                 case "vmprotect":
                     return this.bypassVMProtect(address, obfuscation);
 
@@ -786,7 +786,7 @@ const ObfuscationDetector = {
                 default:
                     return this.bypassGenericVM(address, obfuscation);
             }
-        } catch: function(e) {
+        } catch (e) {
             send({
                 type: "error",
                 target: "obfuscation_detector",
@@ -811,7 +811,7 @@ const ObfuscationDetector = {
 
         obfuscation.methods.forEach(function(method) {
             try {
-                switch: function(method) {
+                switch (method) {
                     case "xor_loop":
                         decrypted += this.decryptXorStrings(address);
                         break;
@@ -828,7 +828,7 @@ const ObfuscationDetector = {
                         decrypted += this.hookStringDecryptor(address);
                         break;
                 }
-            } catch: function(e) {
+            } catch (e) {
                 send({
                     type: "error",
                     target: "obfuscation_detector",
@@ -952,7 +952,7 @@ const ObfuscationDetector = {
         this.monitorSelfModifying();
 
         // Periodic analysis
-        setInterval: function(function() {
+        setInterval(function() {
             self.periodicAnalysis();
         }, 30000);
     },
@@ -978,7 +978,7 @@ const ObfuscationDetector = {
                             });
 
                             // Delay analysis to allow code to be written
-                            setTimeout: function(function() {
+                            setTimeout(function() {
                                 self.analyzeCodeSection({
                                     base: retval,
                                     size: this.context.rdx.toInt32()
@@ -1142,7 +1142,7 @@ const ObfuscationDetector = {
                         }
                     });
                 });
-            } catch: function(e) {}
+            } catch (e) {}
         });
 
         return packers;
@@ -1406,7 +1406,7 @@ const ObfuscationDetector = {
         });
 
         // Check for polymorphic patterns
-        setTimeout: function(function() {
+        setTimeout(function() {
             var currentCode = address.readByteArray(Math.min(size, 1024));
             var differences = 0;
 
@@ -1463,7 +1463,7 @@ const ObfuscationDetector = {
                             });
 
                             // Dump unpacked code
-                            setTimeout: function(function() {
+                            setTimeout(function() {
                                 self.dumpUnpackedCode(this.address, this.size);
                             }.bind(this), 100);
                         }
@@ -1544,7 +1544,7 @@ const ObfuscationDetector = {
                                 iat.resolved++;
                             }
                         }
-                    } catch: function(e) {
+                    } catch (e) {
                         iat.failed++;
                     }
                 }
@@ -1613,7 +1613,7 @@ const ObfuscationDetector = {
 
                     offset += inst.size;
                 }
-            } catch: function(e) {}
+            } catch (e) {}
 
             cfg.nodes.push(node);
         }
@@ -1730,7 +1730,7 @@ const ObfuscationDetector = {
                         }
                     }
                 }
-            } catch: function(e) {}
+            } catch (e) {}
         });
 
         if (caves.length > 0) {
@@ -1825,7 +1825,7 @@ const ObfuscationDetector = {
                 }
             });
 
-        } catch: function(e) {}
+        } catch (e) {}
 
         return indicators;
     },
@@ -1881,7 +1881,7 @@ const ObfuscationDetector = {
                 }
             });
 
-        } catch: function(e) {}
+        } catch (e) {}
 
         return analysis;
     },
@@ -1929,7 +1929,7 @@ const ObfuscationDetector = {
                 }
             }
 
-        } catch: function(e) {}
+        } catch (e) {}
 
         return cert;
     },
@@ -1983,7 +1983,7 @@ const ObfuscationDetector = {
                 }
             }
 
-        } catch: function(e) {}
+        } catch (e) {}
 
         return overlay;
     },
@@ -2046,7 +2046,7 @@ const ObfuscationDetector = {
                 }
             });
 
-        } catch: function(e) {}
+        } catch (e) {}
 
         return manipulation;
     },
@@ -2091,7 +2091,7 @@ const ObfuscationDetector = {
         // Monitor for behavior changes over time
         var initialBehavior = this.captureBehavior(address);
 
-        setTimeout: function(function() {
+        setTimeout(function() {
             var laterBehavior = self.captureBehavior(address);
             if (!self.behaviorsMatch(initialBehavior, laterBehavior)) {
                 timeBased.detected = true;
@@ -2457,7 +2457,7 @@ const ObfuscationDetector = {
                 }
             }
 
-        } catch: function(e) {}
+        } catch (e) {}
 
         return tlsAbuse;
     },
@@ -2596,7 +2596,7 @@ const ObfuscationDetector = {
                     return ptr(operand.value);
                 }
             }
-        } catch: function(e) {}
+        } catch (e) {}
         return null;
     },
 
@@ -2612,7 +2612,7 @@ const ObfuscationDetector = {
                 offset += inst.size;
 
                 if (inst.mnemonic === "ret") break;
-            } catch: function(e) {
+            } catch (e) {
                 break;
             }
         }
@@ -2640,7 +2640,7 @@ const ObfuscationDetector = {
                     characteristics: base.add(sectionHeader + 36).readU32()
                 });
             }
-        } catch: function(e) {}
+        } catch (e) {}
 
         return sections;
     },

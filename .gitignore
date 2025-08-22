@@ -314,10 +314,13 @@ missing_*_list.txt
 api_keys.txt
 secrets/
 credentials/
+.secrets/
 
 # Environment files
+.env
 .env.*
 !.env.example
+*.env
 
 # Security scan results
 security_scan_results.json
@@ -327,7 +330,6 @@ security_scan_results_*.json
 # AI/LLM TOOLS AND CONFIGS
 # ==============================================================================
 # Claude and AI assistants
-CLAUDE.md
 .claude/
 ClaudeCode.ps1
 claude*.ps1
@@ -609,7 +611,6 @@ mamba_env/**
 !CODE_OF_CONDUCT.md
 !CHANGELOG.md
 !LICENSE
-!CLAUDE.md
 
 # Temporary analysis files from mock/stub scanning
 mock_objects.txt
@@ -632,6 +633,10 @@ pyrightconfig.json
 eslint.config.js
 pytest.ini
 nul
+*.lock
+!requirements.lock
+config_cleanup_report.txt
+test_font_loading.py
 
 # Linting and testing reports
 bandit-report.json

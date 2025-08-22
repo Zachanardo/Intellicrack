@@ -971,11 +971,11 @@ class AIOrchestrator:
 
         try:
             # Import QEMU test manager
-            from .qemu_test_manager import QEMUTestManager
+            from .qemu_manager import QEMUManager
 
             # Create test manager
-            test_manager = QEMUTestManager()
-            components_used.append("qemu_test_manager")
+            test_manager = QEMUManager()
+            components_used.append("qemu_manager")
 
             # Extract task parameters
             script_content = task.input_data.get("script_content", "")

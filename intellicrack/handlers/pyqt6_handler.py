@@ -32,6 +32,7 @@ try:
         PYQT_VERSION_STR,
         QT_VERSION_STR,
         QAbstractItemModel,
+        QAbstractTableModel,
         QBuffer,
         QCoreApplication,
         QDateTime,
@@ -46,7 +47,6 @@ try:
         QRect,
         QRegularExpression,
         QRunnable,
-        QSettings,
         QSize,
         Qt,
         QThread,
@@ -278,7 +278,6 @@ except ImportError as e:
     QRunnable = None
     QScrollArea = None
     QScrollBar = None
-    QSettings = None
     QSize = None
     QSizePolicy = None
     QSlider = None
@@ -345,7 +344,6 @@ __all__ = [
     "QRect",
     "QRegularExpression",
     "QRunnable",
-    "QSettings",
     "QSize",
     "QT_VERSION_STR",
     "QThread",

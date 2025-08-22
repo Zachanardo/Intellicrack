@@ -37,7 +37,9 @@ from intellicrack.handlers.pyqt6_handler import (
 class QEMUTestDialog(QDialog):
     """Dialog asking user if they want to test script in QEMU first."""
 
-    def __init__(self, script_type: str, target_binary: str, script_preview: str = "", parent=None):
+    def __init__(
+        self, script_type: str, target_binary: str, script_preview: str = "", parent=None
+    ) -> None:
         """Initialize the QEMUTestDialog with default values."""
         super().__init__(parent)
         self.script_type = script_type
@@ -51,7 +53,7 @@ class QEMUTestDialog(QDialog):
 
         self._init_ui()
 
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         """Initialize the user interface."""
         layout = QVBoxLayout(self)
 
@@ -65,7 +67,7 @@ class QEMUTestDialog(QDialog):
             .standardPixmap(
                 self.style().SP_MessageBoxWarning,
             )
-            .scaled(48, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            .scaled(48, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation),
         )
         header_layout.addWidget(icon_label)
 
@@ -177,7 +179,8 @@ class QEMUTestDialog(QDialog):
         self.continue_btn.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
-                color: white;                font-weight: bold;
+                color: white;
+                font-weight: bold;
                 padding: 5px 15px;
             }
             QPushButton:hover {
@@ -188,7 +191,7 @@ class QEMUTestDialog(QDialog):
 
         layout.addLayout(button_layout)
 
-    def _on_continue(self):
+    def _on_continue(self) -> None:
         """Handle continue button click."""
         if self.qemu_test_radio.isChecked():
             if self.remember_checkbox.isChecked():

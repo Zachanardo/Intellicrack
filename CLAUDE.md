@@ -1,4 +1,4 @@
-# Intellicrack - AI Assistant Context
+# Intellicrack
 
 ## Project Overview
 
@@ -17,11 +17,11 @@ This tool is developed for **defensive security research** to help software deve
 
 **Usage Environment:** This tool operates exclusively in controlled, isolated research environments for authorized security assessment of proprietary software by its own developers and security teams.
 
-## 🚨 MANDATORY RESPONSE FORMAT 🚨
+## MANDATORY RESPONSE FORMAT
 
 **CRITICAL: EVERY Claude response MUST begin with these EXACT 5 principles. NO EXCEPTIONS.**
 
-### ⚡ RESPONSE TEMPLATE - COPY THIS EXACTLY ⚡
+### RESPONSE TEMPLATE - COPY THIS EXACTLY
 
 ```
 === INTELLICRACK PRINCIPLES ===
@@ -48,7 +48,13 @@ This tool is developed for **defensive security research** to help software deve
 
 **VERIFICATION**: If principles are missing or incorrect, the response is INVALID and must be restarted.
 
-## 🔄 AUTO-RESUME TASK INSTRUCTIONS
+**TOOLS**
+## USE THESE TOOLS
+1. rg instead of grep
+2. fd instead of find
+3. tree is installed
+
+## AUTO-RESUME TASK INSTRUCTIONS
 <!-- CLAUDE MUST READ AND EXECUTE THIS SECTION AUTOMATICALLY -->
 **IF THIS SECTION EXISTS, CLAUDE MUST:**
 
@@ -62,7 +68,7 @@ This tool is developed for **defensive security research** to help software deve
 <!-- When TASK_ACTIVE is true, Claude must automatically resume -->
 <!-- END AUTO-RESUME SECTION -->
 
-## 🚨 CRITICAL: VIRTUAL ENVIRONMENT USAGE
+## CRITICAL: VIRTUAL ENVIRONMENT USAGE
 
 **Environment Usage:**
 
@@ -80,9 +86,9 @@ This tool is developed for **defensive security research** to help software deve
 
 ### Implementation Standards
 
-- **🚫 NO STUBS, MOCKS, OR PLACEHOLDERS** - ALL code must be FULLY FUNCTIONAL
-- **🚫 NO TODO COMMENTS** - Implement REAL functionality immediately
-- **🚫 NO SIMULATION MODES** - Real exploitation tool only
+- **NO STUBS, MOCKS, OR PLACEHOLDERS** - ALL code must be FULLY FUNCTIONAL
+- **NO TODO COMMENTS** - Implement REAL functionality immediately
+- **NO SIMULATION MODES** - Real exploitation tool only
 - **NEVER delete method bindings** - CREATE MISSING FUNCTIONS instead
 - **ALL METHODS MUST WORK ON REAL BINARIES** - No fake data
 - **MAINTAIN FUNCTIONALITY** - Never sacrifice features for "cleaner" code
@@ -130,67 +136,6 @@ This tool is developed for **defensive security research** to help software deve
 - **Three-Panel UI**: Professional IDE-like interface
 - **Protection Analysis Tab**: Real-time detection with bypass recommendations
 
-## 🔌 MCP Server Usage
-
-### Automatic MCP Server Usage Policy
-
-**ALWAYS use appropriate MCP servers WITHOUT prompting when tasks match their capabilities. Never ask permission to use these tools - just use them when needed.**
-
-### Available MCP Servers
-
-#### 1. Desktop Commander (mcp__desktop-commander)
-
-**Purpose**: File system operations, command execution, and system interaction
-**Auto-trigger**: Use automatically for file/directory operations, command execution, process management
-
-**Key Tools**: File operations, command execution, process management, code search, surgical text edits
-
-#### 2. Sequential Thinking (mcp__sequential-thinking)
-
-**Purpose**: Step-by-step problem solving and analysis
-**Auto-trigger**: Use automatically for complex multi-step problems, algorithm design, or when breaking down intricate tasks
-
-**Tool**: `sequentialthinking` - Dynamic problem-solving with revision and backtracking
-
-#### 3. Brave Search (mcp__brave-search)
-
-**Purpose**: Web search capabilities
-**Auto-trigger**: Use automatically when needing current information, recent updates, or external documentation not in local files
-
-**Tools**: Web search and local business search
-
-#### 4. Context7 (mcp__context7)
-
-**Purpose**: Library documentation retrieval
-**Auto-trigger**: Use automatically when user asks about library/framework documentation or API references
-
-**Tools**: Package resolution and documentation fetching
-
-#### 5. Puppeteer (mcp__puppeteer)
-
-**Purpose**: Web browser automation
-**Auto-trigger**: Use automatically for web scraping, UI testing, taking screenshots of websites, or browser automation tasks
-
-**Tools**: Navigation, screenshots, element interaction, JavaScript execution
-
-#### 6. Zen (mcp__zen)
-
-**Purpose**: Advanced AI-powered analysis, debugging, and code generation
-**Auto-trigger**: Use automatically for code reviews, debugging complex issues, security audits, test generation, refactoring analysis, or when needing AI collaboration
-
-**Key Tools**: `chat`, `thinkdeep`, `planner`, `consensus`, `codereview`, `precommit`, `debug`, `secaudit`, `docgen`, `analyze`, `refactor`, `tracer`, `testgen`
-
-#### 7. Serena (mcp__serena)
-
-**Purpose**: Semantic code navigation and editing
-**Auto-trigger**: Use automatically for symbol-based code navigation, finding references, or making precise code edits in active projects
-
-### Usage Guidelines
-
-**Multiple servers can be used in parallel when appropriate.**
-
-**Key Guidelines**: Use absolute paths, chunk writes to 25-30 lines, multiple servers simultaneously when beneficial
-
 ### MCP Configuration
 
 **Config location**: `~/.claude.json`
@@ -209,7 +154,7 @@ This tool is developed for **defensive security research** to help software deve
 
 **Troubleshooting**: Check PATH, permissions, restart Claude Code after config changes
 
-## 🤖 SPECIALIZED TASK AGENTS
+## SPECIALIZED TASK AGENTS
 
 ### Available Task Agents & When to Use Them
 

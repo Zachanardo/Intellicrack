@@ -532,7 +532,6 @@ class ConfigurationManager:
             },
             "plugins": {
                 "directories": [
-                    "intellicrack/intellicrack/scripts/ghidra/user",
                     "intellicrack/intellicrack/scripts/frida",
                     "intellicrack/intellicrack/scripts/radare2",
                     "intellicrack/intellicrack/plugins/custom_modules",

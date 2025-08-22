@@ -19,7 +19,8 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 
-from intellicrack.handlers.pyqt6_handler import QApplication, QSettings
+from intellicrack.core.config_manager import get_config
+from intellicrack.handlers.pyqt6_handler import QApplication
 
 
 class ThemeManager:
@@ -35,8 +36,8 @@ class ThemeManager:
         # Directory for theme files
         self.styles_dir = os.path.join(os.path.dirname(__file__), "styles")
 
-        # Settings for persistence
-        self.settings = QSettings("Intellicrack", "ThemeManager")
+        # Config for persistence
+        self.config = get_config()
 
         # Initialize with saved or default theme
         self.current_theme = self.load_theme_preference()
@@ -49,12 +50,12 @@ class ThemeManager:
         return self.current_theme
 
     def load_theme_preference(self):
-        """Load theme preference from QSettings, default to light"""
-        return self.settings.value("theme", "light", type=str)
+        """Load theme preference from central config, default to dark"""
+        return self.config.get("ui_preferences.theme", "dark")
 
     def save_theme_preference(self):
-        """Save current theme preference to QSettings"""
-        self.settings.setValue("theme", self.current_theme)
+        """Save current theme preference to central config"""
+        self.config.set("ui_preferences.theme", self.current_theme)
 
     def set_theme(self, theme_name):
         """Set the application theme

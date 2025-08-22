@@ -35,14 +35,9 @@ except ImportError as e:
     logger.error("Import error in emulator_manager: %s", e)
     from PyQt6.QtCore import QObject, pyqtSignal
 
-try:
-    from .qemu_emulator import QEMUSystemEmulator as QemuEmulator
-
-    QEMU_AVAILABLE = True
-except ImportError as e:
-    logger.error("Import error in emulator_manager: %s", e)
-    QEMU_AVAILABLE = False
-    QemuEmulator = None
+# QEMU emulator temporarily disabled during VM framework consolidation
+QEMU_AVAILABLE = False
+QemuEmulator = None
 
 try:
     from .qiling_emulator import QILING_AVAILABLE, QilingEmulator
@@ -79,6 +74,14 @@ class EmulatorManager(QObject):
             "qemu_executions": 0,
             "unicorn_executions": 0,
         }
+        # Thread safety and instance tracking
+        import threading
+
+        self.lock = threading.RLock()
+        self.qemu_instance = None
+        self.qemu_running = False
+        self.qemu_starting = False
+        self.qiling_instances = {}  # Maps binary_path -> QilingEmulator instance
 
     def ensure_qemu_running(self, binary_path: str, config: dict[str, Any] | None = None) -> bool:
         """Ensure QEMU is running for the given binary.

@@ -135,6 +135,150 @@ def cli(verbose: bool, quiet: bool):
             logging.getLogger(__name__).warning("Failed to load configuration: %s", e)
 
 
+@cli.command("scan")
+@click.argument("binary_path")
+@click.option("--vulns", is_flag=True, help="Perform vulnerability scan")
+@click.option("--output", "-o", help="Save scan results")
+@click.option("--verbose", "-v", is_flag=True, help="Verbose output")
+def scan(binary_path: str, vulns: bool, output: str | None, verbose: bool):
+    """Scan binary for vulnerabilities and security issues"""
+    try:
+        click.echo(f"Scanning binary: {binary_path}")
+
+        if vulns:
+            click.echo("Performing vulnerability scan...")
+            from intellicrack.core.analysis.vulnerability_engine import run_vulnerability_scan
+
+            result = run_vulnerability_scan(binary_path)
+
+            if result.get("success"):
+                vulnerabilities = result.get("vulnerabilities", [])
+                click.echo(f"Found {len(vulnerabilities)} vulnerabilities")
+
+                # Categorize by severity
+                critical = [v for v in vulnerabilities if v.get("severity") == "critical"]
+                high = [v for v in vulnerabilities if v.get("severity") == "high"]
+                medium = [v for v in vulnerabilities if v.get("severity") == "medium"]
+                low = [v for v in vulnerabilities if v.get("severity") == "low"]
+
+                if critical:
+                    click.echo(f"\n🔴 Critical: {len(critical)}")
+                    for vuln in critical[:3]:
+                        click.echo(
+                            f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}"
+                        )
+
+                if high:
+                    click.echo(f"\n🟠 High: {len(high)}")
+                    for vuln in high[:3]:
+                        click.echo(
+                            f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}"
+                        )
+
+                if medium:
+                    click.echo(f"\n🟡 Medium: {len(medium)}")
+                    if verbose:
+                        for vuln in medium[:3]:
+                            click.echo(
+                                f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}"
+                            )
+
+                if low:
+                    click.echo(f"\n🟢 Low: {len(low)}")
+                    if verbose:
+                        for vuln in low[:3]:
+                            click.echo(
+                                f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}"
+                            )
+            else:
+                click.echo(f"Scan failed: {result.get('error', 'Unknown error')}")
+        else:
+            # Basic scan without vulnerability analysis
+            click.echo("Performing basic security scan...")
+            from intellicrack.utils.analysis.binary_analysis import analyze_binary
+
+            result = analyze_binary(binary_path, detailed=verbose)
+
+            click.echo(f"Binary Type: {result.get('file_type', 'Unknown')}")
+            click.echo(f"Architecture: {result.get('architecture', 'Unknown')}")
+
+            if result.get("protections"):
+                click.echo("\nSecurity Features:")
+                for protection, enabled in result["protections"].items():
+                    status = "✓" if enabled else "✗"
+                    click.echo(f"  {status} {protection}")
+
+        if output:
+            with open(output, "w", encoding="utf-8") as f:
+                json.dump(result, f, indent=2)
+            click.echo(f"\nResults saved to: {output}")
+
+    except Exception as e:
+        logger.error("Scan failed: %s", e, exc_info=True)
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command("strings")
+@click.argument("binary_path")
+@click.option("--min-length", "-n", default=4, help="Minimum string length")
+@click.option(
+    "--encoding",
+    "-e",
+    type=click.Choice(["ascii", "utf8", "utf16", "all"]),
+    default="all",
+    help="String encoding",
+)
+@click.option("--output", "-o", help="Save strings to file")
+@click.option("--filter", "-f", help="Filter strings by pattern")
+def strings(
+    binary_path: str, min_length: int, encoding: str, output: str | None, filter: str | None
+):
+    """Extract strings from binary file"""
+    try:
+        click.echo(f"Extracting strings from: {binary_path}")
+
+        from intellicrack.cli.analysis_cli import AnalysisCLI
+
+        cli_analyzer = AnalysisCLI()
+
+        # Extract strings using the internal method
+        strings_result = cli_analyzer._extract_strings(
+            binary_path, min_length=min_length, encoding=encoding
+        )
+
+        if strings_result:
+            extracted_strings = strings_result.get("strings", [])
+
+            # Apply filter if provided
+            if filter:
+                import re
+
+                pattern = re.compile(filter, re.IGNORECASE)
+                extracted_strings = [s for s in extracted_strings if pattern.search(s)]
+
+            click.echo(f"Found {len(extracted_strings)} strings")
+
+            if output:
+                with open(output, "w", encoding="utf-8") as f:
+                    for string in extracted_strings:
+                        f.write(string + "\n")
+                click.echo(f"Strings saved to: {output}")
+            else:
+                # Display first 20 strings to console
+                for string in extracted_strings[:20]:
+                    click.echo(f"  {string}")
+                if len(extracted_strings) > 20:
+                    click.echo(f"  ... and {len(extracted_strings) - 20} more")
+        else:
+            click.echo("No strings found or extraction failed")
+
+    except Exception as e:
+        logger.error("String extraction failed: %s", e, exc_info=True)
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
 @cli.group()
 def payload():
     """Payload generation commands"""
@@ -535,11 +679,204 @@ def client(server_host: str, port: int, protocol: str, interval: int):
 @c2.command("exec")
 @click.argument("session_id")
 @click.argument("command")
-def execute_command(session_id: str, command: str):
-    """Execute command on remote session"""
-    # This would connect to running C2 server
-    click.echo(f"Executing on {session_id}: {command}")
-    click.echo("Note: This requires a running C2 server instance")
+@click.option("--server", "-s", default="127.0.0.1", help="C2 server address")
+@click.option("--port", "-p", default=443, help="C2 server port")
+@click.option("--timeout", "-t", default=30, help="Command timeout in seconds")
+@click.option("--interactive", "-i", is_flag=True, help="Interactive shell mode")
+def execute_command(
+    session_id: str, command: str, server: str, port: int, timeout: int, interactive: bool
+):
+    """Execute command on remote session through C2 server"""
+    import json
+    import socket
+    import ssl
+
+    try:
+        # Special handling for "list" command to show active sessions
+        if session_id.lower() == "list":
+            click.echo("Querying C2 server for active sessions...")
+
+            # Connect to C2 server management port
+            management_port = port + 1000  # Management interface on different port
+
+            try:
+                # Create SSL context for secure communication
+                context = ssl.create_default_context()
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+
+                with socket.create_connection((server, management_port), timeout=5) as sock:
+                    with context.wrap_socket(sock, server_hostname=server) as ssock:
+                        # Request session list
+                        request = json.dumps({"action": "list_sessions"}).encode()
+                        ssock.send(request)
+
+                        # Receive response
+                        response = ssock.recv(4096).decode()
+                        sessions = json.loads(response)
+
+                        if sessions:
+                            click.echo("\nActive Sessions:")
+                            click.echo("-" * 60)
+                            for session in sessions:
+                                click.echo(
+                                    f"ID: {session['id']}\n"
+                                    f"  Platform: {session.get('platform', 'unknown')}\n"
+                                    f"  User: {session.get('user', 'unknown')}\n"
+                                    f"  Hostname: {session.get('hostname', 'unknown')}\n"
+                                    f"  Connected: {session.get('connected_at', 'unknown')}\n"
+                                )
+                        else:
+                            click.echo("No active sessions found.")
+
+            except (socket.timeout, ConnectionRefusedError):
+                # Fallback to file-based session listing
+                from pathlib import Path
+
+                session_file = Path("data/c2_sessions.json")
+
+                if session_file.exists():
+                    with open(session_file, "r") as f:
+                        sessions = json.load(f)
+                        if sessions.get("active"):
+                            click.echo("\nActive Sessions (from cache):")
+                            click.echo("-" * 60)
+                            for sid, info in sessions["active"].items():
+                                click.echo(
+                                    f"ID: {sid}\n"
+                                    f"  Platform: {info.get('platform', 'unknown')}\n"
+                                    f"  Last seen: {info.get('last_seen', 'unknown')}\n"
+                                )
+                        else:
+                            click.echo("No cached sessions found.")
+                else:
+                    click.echo("Unable to connect to C2 server or find cached sessions.")
+
+            return
+
+        # Execute command on specific session
+        click.echo(f"Sending command to session {session_id}...")
+
+        if interactive:
+            click.echo("Entering interactive mode. Type 'exit' to quit.")
+
+            # Interactive shell loop
+            while True:
+                try:
+                    cmd = click.prompt(f"{session_id}> ", default="", show_default=False)
+                    if cmd.lower() in ["exit", "quit"]:
+                        break
+
+                    # Send command through C2 server
+                    result = _send_c2_command(server, port, session_id, cmd, timeout)
+
+                    if result["success"]:
+                        click.echo(result.get("output", "Command executed"))
+                    else:
+                        click.echo(f"Error: {result.get('error', 'Unknown error')}", err=True)
+
+                except KeyboardInterrupt:
+                    click.echo("\nExiting interactive mode...")
+                    break
+        else:
+            # Single command execution
+            result = _send_c2_command(server, port, session_id, command, timeout)
+
+            if result["success"]:
+                click.echo("Command executed successfully!")
+                if "output" in result:
+                    click.echo("\nOutput:")
+                    click.echo(result["output"])
+                if "error_output" in result and result["error_output"]:
+                    click.echo("\nErrors:")
+                    click.echo(result["error_output"])
+            else:
+                click.echo(f"Command failed: {result.get('error', 'Unknown error')}", err=True)
+
+    except Exception as e:
+        logger.error("C2 exec command failed: %s", e, exc_info=True)
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+def _send_c2_command(
+    server: str, port: int, session_id: str, command: str, timeout: int
+) -> dict[str, Any]:
+    """Send command to C2 server for execution on remote session."""
+    import json
+    import socket
+    import ssl
+    import time
+    import uuid
+
+    try:
+        # Create command packet
+        command_id = str(uuid.uuid4())
+        packet = {
+            "command_id": command_id,
+            "session_id": session_id,
+            "command": command,
+            "timeout": timeout,
+            "timestamp": time.time(),
+        }
+
+        # Try direct socket connection first
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        with socket.create_connection((server, port), timeout=5) as sock:
+            with context.wrap_socket(sock, server_hostname=server) as ssock:
+                # Send command packet
+                ssock.send(json.dumps(packet).encode() + b"\n")
+
+                # Wait for response (with timeout)
+                sock.settimeout(timeout)
+                response = b""
+                start_time = time.time()
+
+                while time.time() - start_time < timeout:
+                    chunk = ssock.recv(4096)
+                    if not chunk:
+                        break
+                    response += chunk
+
+                    # Check for complete response
+                    if b"\n\n" in response or b"END_OF_RESPONSE" in response:
+                        break
+
+                if response:
+                    result = json.loads(response.decode())
+                    return result
+                else:
+                    return {"success": False, "error": "No response from server"}
+
+    except (socket.timeout, ConnectionRefusedError):
+        # Fallback to HTTP-based communication
+        try:
+            import requests
+
+            url = f"https://{server}:{port}/api/v1/command"
+            headers = {"Content-Type": "application/json"}
+            data = {
+                "session_id": session_id,
+                "command": command,
+                "timeout": timeout,
+            }
+
+            # Disable SSL verification for self-signed certificates
+            response = requests.post(url, json=data, headers=headers, timeout=timeout, verify=False)
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {
+                    "success": False,
+                    "error": f"HTTP {response.status_code}: {response.text}",
+                }
+
+        except Exception as e:
+            return {"success": False, "error": f"Failed to connect: {str(e)}"}
 
 
 @cli.command()
@@ -594,6 +931,260 @@ def exploit_target(target: str, exploit_type: str, payload_data: str | None, out
         TimeoutError,
     ) as e:
         logger.error("Exploitation failed: %s", e, exc_info=True)
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+
+
+@cli.command("analyze")
+@click.argument("binary_path")
+@click.option("--deep", "-d", is_flag=True, help="Perform deep analysis")
+@click.option("--output", "-o", help="Save analysis report")
+@click.option("--no-ai", is_flag=True, help="Disable AI integration")
+@click.option(
+    "--mode",
+    "-m",
+    type=click.Choice(["basic", "comprehensive", "vulnerability", "protection"]),
+    default="comprehensive",
+    help="Analysis mode",
+)
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose output")
+@click.option("--gpu-accelerate", is_flag=True, help="Enable GPU acceleration")
+@click.option("--distributed", is_flag=True, help="Enable distributed processing")
+@click.option("--symbolic-execution", is_flag=True, help="Use symbolic execution")
+@click.option("--concolic-execution", is_flag=True, help="Use concolic execution")
+def analyze(
+    binary_path: str,
+    deep: bool,
+    output: str | None,
+    no_ai: bool,
+    mode: str,
+    verbose: bool,
+    gpu_accelerate: bool,
+    distributed: bool,
+    symbolic_execution: bool,
+    concolic_execution: bool,
+):
+    """Comprehensive binary analysis with multiple modes and options"""
+    # Import and initialize ProgressManager
+    from intellicrack.cli.progress_manager import ProgressManager
+
+    progress_manager = ProgressManager()
+
+    try:
+        # Start progress display
+        analysis_types = []
+        if mode == "comprehensive":
+            analysis_types = [
+                "Basic Analysis",
+                "Protection Detection",
+                "Vulnerability Scan",
+                "String Extraction",
+                "Import Analysis",
+                "Export Analysis",
+            ]
+        elif mode == "vulnerability":
+            analysis_types = ["Vulnerability Scan", "Exploit Detection", "Security Assessment"]
+        elif mode == "protection":
+            analysis_types = ["Protection Analysis", "Packer Detection", "Anti-Debug Detection"]
+        else:
+            analysis_types = ["Basic Analysis", "File Type Detection", "Architecture Analysis"]
+
+        if gpu_accelerate:
+            analysis_types.append("GPU Acceleration")
+        if distributed:
+            analysis_types.append("Distributed Processing")
+        if symbolic_execution or concolic_execution:
+            analysis_types.append("Symbolic/Concolic Execution")
+
+        progress_manager.start_analysis(binary_path, analysis_types)
+
+        # Create progress callback
+        def progress_callback(step: str, progress: float, message: str = ""):
+            """Update progress for current analysis step"""
+            if step in progress_manager.task_ids:
+                task_id = progress_manager.task_ids[step]
+                if progress_manager.progress:
+                    progress_manager.progress.update(
+                        task_id,
+                        completed=int(progress * 100),
+                        description=f"{step}: {message}" if message else step,
+                    )
+
+        click.echo(f"Analyzing binary: {binary_path}")
+        click.echo(f"Mode: {mode}")
+
+        if deep:
+            click.echo("Performing deep analysis...")
+
+        if verbose:
+            logging.basicConfig(level=logging.DEBUG)
+
+        # Handle GPU acceleration
+        if gpu_accelerate:
+            click.echo("GPU acceleration enabled")
+            try:
+                from intellicrack.utils.gpu_benchmark import run_gpu_accelerated_analysis
+
+                gpu_result = run_gpu_accelerated_analysis(binary_path)
+                if gpu_result.get("success"):
+                    click.echo(
+                        f"GPU analysis completed in {gpu_result.get('execution_time', 0):.2f}s"
+                    )
+                else:
+                    click.echo("GPU acceleration not available, falling back to CPU")
+            except ImportError:
+                click.echo("GPU acceleration module not available")
+
+        # Handle distributed processing
+        if distributed:
+            click.echo("Distributed processing enabled")
+            try:
+                from intellicrack.utils.runtime.distributed_processing import (
+                    run_distributed_analysis,
+                )
+
+                dist_result = run_distributed_analysis(binary_path)
+                if dist_result.get("success"):
+                    click.echo(
+                        f"Distributed analysis completed with {dist_result.get('nodes', 1)} nodes"
+                    )
+            except ImportError:
+                click.echo("Distributed processing module not available")
+
+        # Handle symbolic/concolic execution
+        if symbolic_execution or concolic_execution:
+            execution_type = "symbolic" if symbolic_execution else "concolic"
+            click.echo(f"Using {execution_type} execution")
+            try:
+                from intellicrack.core.execution.symbolic_engine import SymbolicExecutionEngine
+
+                engine = SymbolicExecutionEngine()
+                exec_result = engine.analyze(binary_path, mode=execution_type)
+                if exec_result.get("success"):
+                    click.echo(f"{execution_type.capitalize()} execution completed")
+            except ImportError:
+                click.echo(f"{execution_type.capitalize()} execution engine not available")
+
+        # Perform the main analysis based on mode
+        if mode == "comprehensive":
+            from intellicrack.utils.runtime.runner_functions import run_comprehensive_analysis
+
+            result = run_comprehensive_analysis(
+                binary_path, output_dir=output, verbose=verbose, enable_ai=not no_ai
+            )
+        elif mode == "vulnerability":
+            from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
+
+            engine = AdvancedVulnerabilityEngine()
+            result = engine.run_vulnerability_scan(binary_path)
+        elif mode == "protection":
+            from intellicrack.core.protection_analyzer import ProtectionAnalyzer
+
+            analyzer = ProtectionAnalyzer()
+            result = analyzer.analyze_protections(binary_path)
+        else:
+            # Basic mode - use existing analyze_binary function
+            result = analyze_binary(binary_path, detailed=deep, enable_ai_integration=not no_ai)
+
+        if not no_ai:
+            click.echo("AI integration enabled - will suggest script generation opportunities")
+
+        # Display analysis results
+        click.echo(f"\nBinary Type: {result.get('format', result.get('file_type', 'Unknown'))}")
+        click.echo(f"Architecture: {result.get('architecture', 'Unknown')}")
+
+        # Get size from basic_info if not at top level
+        size = result.get("size", 0)
+        if size == 0 and "basic_info" in result:
+            size = result.get("basic_info", {}).get("size", 0)
+        click.echo(f"Size: {size} bytes")
+
+        # Display any errors
+        if "error" in result:
+            click.echo(f"\nWarning: {result['error']}")
+
+        if "protections" in result:
+            click.echo("\nProtections:")
+            for protection, enabled in result["protections"].items():
+                protection_status = "Enabled" if enabled else "Disabled"
+                click.echo(f"  {protection}: {protection_status}")
+
+        if result.get("vulnerabilities"):
+            click.echo("\nPotential Vulnerabilities:")
+            for vuln in result["vulnerabilities"]:
+                click.echo(f"  - {vuln}")
+
+        # Display AI integration results
+        if "ai_integration" in result and result["ai_integration"].get("enabled"):
+            ai_data = result["ai_integration"]
+            click.echo("\n🤖 AI Script Generation Suggestions:")
+
+            suggestions = ai_data.get("script_suggestions", {})
+            if suggestions.get("frida_scripts"):
+                click.echo("  Frida Scripts:")
+                for script in suggestions["frida_scripts"]:
+                    click.echo(
+                        f"    - {script['description']} (confidence: {script['confidence']:.0%})"
+                    )
+
+            if suggestions.get("ghidra_scripts"):
+                click.echo("  Ghidra Scripts:")
+                for script in suggestions["ghidra_scripts"]:
+                    click.echo(
+                        f"    - {script['description']} (confidence: {script['confidence']:.0%})"
+                    )
+
+            # Display recommended actions
+            if ai_data.get("recommended_actions"):
+                click.echo("\n  Recommended AI Actions:")
+                for action in ai_data["recommended_actions"]:
+                    click.echo(f"    • {action}")
+
+            # Display auto-generation status
+            auto_confidence = suggestions.get("auto_generate_confidence", 0)
+            if auto_confidence > 0.8:
+                click.echo(
+                    f"\n  🚀 High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!"
+                )
+            elif auto_confidence > 0.5:
+                click.echo(
+                    f"\n  ⚡ Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation"
+                )
+
+            # Display autonomous generation status
+            if ai_data.get("autonomous_generation", {}).get("started"):
+                click.echo("  🔄 Autonomous script generation started in background")
+                click.echo(
+                    f"  📋 Targets: {', '.join(ai_data['autonomous_generation']['targets'])}"
+                )
+
+        elif "ai_integration" in result and not result["ai_integration"].get("enabled"):
+            ai_error = result["ai_integration"].get("error", "Unknown error")
+            click.echo(f"\n⚠️  AI integration failed: {ai_error}")
+
+        if output:
+            with open(output, "w", encoding="utf-8") as f:
+                json.dump(result, f, indent=2)
+            click.echo(f"\nAnalysis saved to: {output}")
+
+        # Stop progress display
+        progress_manager.stop()
+
+    except (
+        OSError,
+        ValueError,
+        RuntimeError,
+        AttributeError,
+        KeyError,
+        ImportError,
+        TypeError,
+        ConnectionError,
+        TimeoutError,
+    ) as e:
+        logger.error("Analysis failed: %s", e, exc_info=True)
+        # Stop progress display on error
+        if "progress_manager" in locals():
+            progress_manager.stop()
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -1799,9 +2390,9 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
 
         # Initialize test manager
         if environment == "qemu":
-            from intellicrack.ai.qemu_test_manager import QEMUTestManager
+            from intellicrack.ai.qemu_manager import QEMUManager
 
-            test_manager = QEMUTestManager()
+            test_manager = QEMUManager()
 
             # Create snapshot
             click.echo("\n📸 Creating QEMU snapshot...")
@@ -2061,7 +2652,9 @@ def autonomous(
                         from intellicrack.ai.ai_script_generator import AIScriptGenerator
 
                         generator = AIScriptGenerator()
-                        saved_path = generator.save_script(script, "intellicrack/intellicrack/scripts/autonomous")
+                        saved_path = generator.save_script(
+                            script, "intellicrack/intellicrack/scripts/autonomous"
+                        )
                         click.echo(f"      Saved: {saved_path}")
                     except (
                         OSError,
@@ -2324,8 +2917,18 @@ def task(
 
 def main():
     """Main entry point for CLI"""
+    # Check for --gui flag in command line arguments
+    if "--gui" in sys.argv:
+        # Remove --gui from argv before passing to click
+        sys.argv.remove("--gui")
+        # Launch GUI interface
+        from intellicrack.ui.main_app import main as gui_main
+
+        return gui_main()
+
+    # Otherwise run CLI
     cli()  # pylint: disable=E1120
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

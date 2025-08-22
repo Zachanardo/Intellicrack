@@ -1262,20 +1262,70 @@ class ONNXLLMBackend(LLMBackend):
                         "attention_mask", np.ones_like(inputs["input_ids"])
                     )
 
-            # Run inference
-            outputs = self.session.run(output_names, ort_inputs)
+            # Iterative generation loop for proper text generation
+            input_ids = inputs["input_ids"].copy()
+            attention_mask = inputs.get("attention_mask", np.ones_like(input_ids))
 
-            # Simple greedy decoding (for demonstration)
-            # In practice, you'd want beam search or sampling
-            logits = outputs[0]
-            predicted_ids = np.argmax(logits, axis=-1)
+            max_new_tokens = min(self.config.max_tokens, 512)  # Reasonable limit
+            generated_tokens = []
 
-            # Decode response
-            response = self.tokenizer.decode(predicted_ids[0], skip_special_tokens=True)
+            for _ in range(max_new_tokens):
+                # Prepare current inputs
+                current_ort_inputs = {}
+                for name in input_names:
+                    if name == "input_ids":
+                        current_ort_inputs[name] = input_ids
+                    elif name == "attention_mask":
+                        current_ort_inputs[name] = attention_mask
+                    elif name == "position_ids":
+                        # Some models need position_ids
+                        current_ort_inputs[name] = np.arange(input_ids.shape[-1])[None, :]
 
-            # Extract only the generated part
-            if prompt in response:
-                response = response[len(prompt) :]
+                # Run inference to get logits for next token
+                outputs = self.session.run(output_names, current_ort_inputs)
+                logits = outputs[0]  # Shape: (batch_size, seq_len, vocab_size)
+
+                # Get logits for the last position (next token prediction)
+                next_token_logits = logits[0, -1, :]  # Shape: (vocab_size,)
+
+                # Apply temperature sampling if temperature > 0
+                if self.config.temperature > 0:
+                    # Apply temperature scaling
+                    next_token_logits = next_token_logits / self.config.temperature
+
+                    # Convert to probabilities
+                    exp_logits = np.exp(next_token_logits - np.max(next_token_logits))
+                    probabilities = exp_logits / np.sum(exp_logits)
+
+                    # Sample from probability distribution
+                    next_token_id = np.random.choice(len(probabilities), p=probabilities)
+                else:
+                    # Greedy decoding
+                    next_token_id = np.argmax(next_token_logits)
+
+                # Check for EOS token
+                if next_token_id == self.tokenizer.eos_token_id:
+                    break
+
+                # Add generated token to sequence
+                generated_tokens.append(next_token_id)
+
+                # Update input_ids and attention_mask for next iteration
+                next_token_array = np.array([[next_token_id]], dtype=input_ids.dtype)
+                input_ids = np.concatenate([input_ids, next_token_array], axis=-1)
+                attention_mask = np.concatenate(
+                    [attention_mask, np.ones((1, 1), dtype=attention_mask.dtype)], axis=-1
+                )
+
+                # Check sequence length limits
+                if input_ids.shape[-1] >= self.config.context_length:
+                    break
+
+            # Decode only the generated tokens
+            if generated_tokens:
+                response = self.tokenizer.decode(generated_tokens, skip_special_tokens=True)
+            else:
+                response = ""  # No tokens generated
 
             return LLMResponse(
                 content=response,
@@ -2694,6 +2744,19 @@ def get_llm_manager() -> LLMManager:
     if _LLM_MANAGER is None:
         _LLM_MANAGER = LLMManager()
     return _LLM_MANAGER
+
+
+def get_llm_backend() -> LLMManager:
+    """Get the global LLM manager instance for backward compatibility.
+
+    This function provides backward compatibility for code that expects
+    a get_llm_backend() function. Returns the same LLMManager instance
+    as get_llm_manager().
+
+    Returns:
+        LLMManager: The global LLM manager instance
+    """
+    return get_llm_manager()
 
 
 def shutdown_llm_manager():

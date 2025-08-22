@@ -41,7 +41,7 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
-from ...ai.qemu_test_manager import ExecutionResult, QEMUTestManager
+from ...ai.qemu_manager import ExecutionResult, QEMUManager
 from ...utils.logger import get_logger
 
 """
@@ -79,12 +79,12 @@ class QEMUExecutionThread(QThread):
 
     def __init__(
         self,
-        qemu_manager: QEMUTestManager,
+        qemu_manager: QEMUManager,
         snapshot_id: str,
         script_content: str,
         binary_path: str,
         script_type: str,
-    ):
+    ) -> None:
         """Initialize the QEMUExecutionThread with default values."""
         super().__init__()
         self.qemu_manager = qemu_manager
@@ -94,7 +94,7 @@ class QEMUExecutionThread(QThread):
         self.script_type = script_type
         self.start_time = None
 
-    def run(self):
+    def run(self) -> None:
         """Execute script in QEMU and capture real results."""
         self.start_time = time.time()
 
@@ -115,7 +115,7 @@ class QEMUExecutionThread(QThread):
             self.execution_complete.emit(test_results)
 
         except Exception as e:
-            logger.error(f"QEMU execution failed: {e}")
+            logger.error("QEMU execution failed: %s", e)
             error_results = TestResults(
                 success=False,
                 duration=time.time() - self.start_time,
@@ -132,6 +132,7 @@ class QEMUExecutionThread(QThread):
             self.execution_complete.emit(error_results)
 
     def _execute_frida_script(self) -> ExecutionResult:
+        # Type will be validated at runtime
         """Execute Frida script and capture real output."""
         self.progress_update.emit(30, "Loading target binary in VM...")
 
@@ -170,7 +171,7 @@ class QEMUExecutionThread(QThread):
                             "type": "discovery",
                             "address": addr_match.group(1),
                             "description": line,
-                        }
+                        },
                     )
 
             elif "Patched" in line or "Hooked" in line:
@@ -180,7 +181,7 @@ class QEMUExecutionThread(QThread):
                         "type": "hook",
                         "description": line,
                         "timestamp": datetime.now().isoformat(),
-                    }
+                    },
                 )
 
             elif "WARNING" in line or "Warning" in line:
@@ -211,18 +212,18 @@ class QEMUExecutionThread(QThread):
 class QEMUTestResultsDialog(QDialog):
     """Dialog showing real QEMU test execution results."""
 
-    def __init__(self, parent=None, script_info=None, qemu_manager=None):
+    def __init__(self, parent=None, script_info=None, qemu_manager=None) -> None:
         """Initialize the QEMUTestResultsDialog with default values."""
         super().__init__(parent)
         self.script_info = script_info or {}
-        self.qemu_manager = qemu_manager or QEMUTestManager()
+        self.qemu_manager = qemu_manager or QEMUManager()
         self.test_results = None
         self.execution_thread = None
 
         self.setup_ui()
         self.start_execution()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Create the UI for showing real test results."""
         self.setWindowTitle("QEMU Test Results")
         self.setMinimumSize(800, 600)
@@ -351,7 +352,7 @@ class QEMUTestResultsDialog(QDialog):
 
         return button_box
 
-    def start_execution(self):
+    def start_execution(self) -> None:
         """Start script execution in QEMU."""
         # Create snapshot for testing
         snapshot_id = self.qemu_manager.create_script_test_snapshot(
@@ -376,7 +377,7 @@ class QEMUTestResultsDialog(QDialog):
         # Start execution
         self.execution_thread.start()
 
-    def update_output(self, line: str):
+    def update_output(self, line: str) -> None:
         """Update real-time output display."""
         self.output_text.append(line)
         # Auto-scroll to bottom
@@ -384,12 +385,12 @@ class QEMUTestResultsDialog(QDialog):
         cursor.movePosition(QTextCursor.End)
         self.output_text.setTextCursor(cursor)
 
-    def update_progress(self, value: int, message: str):
+    def update_progress(self, value: int, message: str) -> None:
         """Update progress bar."""
         self.progress_bar.setValue(value)
         self.progress_bar.setFormat(f"{message} - {value}%")
 
-    def display_results(self, results: TestResults):
+    def display_results(self, results: TestResults) -> None:
         """Display the real test results."""
         self.test_results = results
 
@@ -415,7 +416,7 @@ class QEMUTestResultsDialog(QDialog):
         # Populate API calls
         self._populate_api_calls(results)
 
-    def _populate_analysis(self, results: TestResults):
+    def _populate_analysis(self, results: TestResults) -> None:
         """Populate analysis tree with real results."""
         self.analysis_tree.clear()
 
@@ -445,14 +446,14 @@ class QEMUTestResultsDialog(QDialog):
         stats_item.addChild(QTreeWidgetItem(["Memory Changes", str(len(results.memory_changes))]))
         stats_item.addChild(QTreeWidgetItem(["API Calls", str(len(results.api_calls))]))
         stats_item.addChild(
-            QTreeWidgetItem(["Network Activity", str(len(results.network_activity))])
+            QTreeWidgetItem(["Network Activity", str(len(results.network_activity))]),
         )
         stats_item.addChild(QTreeWidgetItem(["File Operations", str(len(results.file_operations))]))
         self.analysis_tree.addTopLevelItem(stats_item)
 
         self.analysis_tree.expandAll()
 
-    def _populate_memory_changes(self, results: TestResults):
+    def _populate_memory_changes(self, results: TestResults) -> None:
         """Populate memory changes with real data."""
         self.memory_tree.clear()
 
@@ -463,11 +464,11 @@ class QEMUTestResultsDialog(QDialog):
                     change.get("original", "N/A"),
                     change.get("patched", "N/A"),
                     change.get("description", ""),
-                ]
+                ],
             )
             self.memory_tree.addTopLevelItem(item)
 
-    def _populate_api_calls(self, results: TestResults):
+    def _populate_api_calls(self, results: TestResults) -> None:
         """Populate API calls with real data."""
         self.api_tree.clear()
 
@@ -478,22 +479,22 @@ class QEMUTestResultsDialog(QDialog):
                     call.get("api", "Unknown"),
                     call.get("parameters", ""),
                     call.get("result", ""),
-                ]
+                ],
             )
             self.api_tree.addTopLevelItem(item)
 
-    def run_on_host(self):
+    def run_on_host(self) -> None:
         """User chose to run the script on host after reviewing results."""
         self.accept()
         # Return indicator to run on host
         self.result_action = "run_on_host"
 
-    def modify_script(self):
+    def modify_script(self) -> None:
         """User wants to modify the script based on results."""
         self.accept()
         self.result_action = "modify_script"
 
-    def export_results(self):
+    def export_results(self) -> None:
         """Export test results to file."""
         if not self.test_results:
             return
@@ -528,4 +529,4 @@ class QEMUTestResultsDialog(QDialog):
         if filename:
             with open(filename, "w") as f:
                 json.dump(export_data, f, indent=2)
-            logger.info(f"Exported test results to {filename}")
+            logger.info("Exported test results to %s", filename)

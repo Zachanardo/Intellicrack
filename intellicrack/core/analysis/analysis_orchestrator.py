@@ -15,7 +15,7 @@ from typing import Any
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from ...ai.qemu_test_manager import QEMUTestManager
+from ...ai.qemu_manager import QEMUManager
 from ...utils.tools.ghidra_script_manager import GhidraScriptManager
 from .binary_analyzer import BinaryAnalyzer
 from .dynamic_analyzer import DynamicAnalyzer
@@ -98,10 +98,10 @@ class AnalysisOrchestrator(QObject):
         self.vulnerability_engine = VulnerabilityEngine()
         self.yara_engine = YaraPatternEngine()
         self.radare2 = Radare2EnhancedIntegration()
-        
+
         # Initialize Ghidra integration components
         self.ghidra_script_manager = GhidraScriptManager()
-        self.qemu_test_manager = None  # Initialized on demand to avoid resource overhead
+        self.qemu_manager = None  # Initialized on demand to avoid resource overhead
 
         # Analysis configuration
         self.enabled_phases = list(AnalysisPhase)
@@ -203,36 +203,36 @@ class AnalysisOrchestrator(QObject):
             analysis_result = self.radare2.run_comprehensive_analysis(
                 analysis_types=["imports", "strings", "signatures", "decompiler", "esil"]
             )
-            
+
             # Extract relevant information from the comprehensive analysis result
             if analysis_result and "components" in analysis_result:
                 components = analysis_result["components"]
-                
+
                 # Extract imports and exports from the imports component
                 if "imports" in components and components["imports"]:
                     imports_data = components["imports"]
                     result["imports"] = imports_data.get("imports", [])
                     result["exports"] = imports_data.get("exports", [])
                     result["sections"] = imports_data.get("sections", [])
-                
+
                 # Extract strings from the strings component
                 if "strings" in components and components["strings"]:
                     strings_data = components["strings"]
                     result["strings"] = strings_data.get("strings", [])
-                
+
                 # Extract functions from decompiler component
                 if "decompiler" in components and components["decompiler"]:
                     decompiler_data = components["decompiler"]
                     result["functions"] = decompiler_data.get("functions", [])
-                
+
                 # Include signatures for additional static analysis data
                 if "signatures" in components and components["signatures"]:
                     result["signatures"] = components["signatures"]
-                
+
                 # Include ESIL analysis for advanced static analysis
                 if "esil" in components and components["esil"]:
                     result["esil_analysis"] = components["esil"]
-            
+
             # Include any errors from the analysis
             if "errors" in analysis_result and analysis_result["errors"]:
                 result["analysis_errors"] = analysis_result["errors"]
@@ -243,9 +243,9 @@ class AnalysisOrchestrator(QObject):
 
     def _perform_ghidra_analysis(self, binary_path: str) -> dict[str, Any]:
         """Perform Ghidra analysis in sandboxed QEMU environment
-        
+
         This method integrates Ghidra analysis into the main pipeline by:
-        1. Initializing QEMUTestManager if not already done
+        1. Initializing QEMUManager if not already done
         2. Selecting appropriate Ghidra script based on binary characteristics
         3. Executing the script in a sandboxed environment
         4. Parsing and returning the results
@@ -255,88 +255,84 @@ class AnalysisOrchestrator(QObject):
                 "ghidra_executed": False,
                 "script_used": None,
                 "analysis_results": {},
-                "errors": []
+                "errors": [],
             }
-            
+
             # Initialize QEMU Test Manager on demand
-            if self.qemu_test_manager is None:
+            if self.qemu_manager is None:
                 try:
-                    self.qemu_test_manager = QEMUTestManager(
-                        vm_name="ghidra_analysis_vm",
-                        vm_type="ubuntu",
-                        memory="4096",
-                        cpu_cores=2
+                    self.qemu_manager = QEMUManager(
+                        vm_name="ghidra_analysis_vm", vm_type="ubuntu", memory="4096", cpu_cores=2
                     )
                     # Start the VM if not already running
-                    if not self.qemu_test_manager.is_vm_running():
-                        vm_started = self.qemu_test_manager.start_vm(timeout=120)
+                    if not self.qemu_manager.is_vm_running():
+                        vm_started = self.qemu_manager.start_vm(timeout=120)
                         if not vm_started:
                             result["errors"].append("Failed to start QEMU VM for Ghidra analysis")
                             return result
                 except Exception as vm_error:
                     result["errors"].append(f"QEMU VM initialization failed: {str(vm_error)}")
                     return result
-            
+
             # Select appropriate Ghidra script based on binary
             selected_script = self._select_ghidra_script(binary_path)
             if selected_script:
                 result["script_used"] = selected_script.name
-                
+
                 # Copy binary to VM
                 vm_binary_path = f"/tmp/analysis_{os.path.basename(binary_path)}"
-                copy_success = self.qemu_test_manager.copy_file_to_vm(
-                    binary_path, vm_binary_path
-                )
-                
+                copy_success = self.qemu_manager.copy_file_to_vm(binary_path, vm_binary_path)
+
                 if copy_success:
                     # Execute Ghidra script in VM
                     ghidra_command = self._build_ghidra_command(
                         selected_script.path, vm_binary_path
                     )
-                    
-                    execution_result = self.qemu_test_manager.execute_in_vm(
+
+                    execution_result = self.qemu_manager.execute_in_vm(
                         ghidra_command,
-                        timeout=300  # 5 minutes for Ghidra analysis
+                        timeout=300,  # 5 minutes for Ghidra analysis
                     )
-                    
+
                     if execution_result and execution_result.success:
                         result["ghidra_executed"] = True
                         # Parse Ghidra output
                         parsed_results = self._parse_ghidra_output(execution_result.output)
                         result["analysis_results"] = parsed_results
-                        
+
                         # Extract key findings
                         if "license_checks" in parsed_results:
                             result["license_validation_found"] = True
                             result["license_checks"] = parsed_results["license_checks"]
-                        
+
                         if "crypto_routines" in parsed_results:
                             result["cryptographic_analysis"] = parsed_results["crypto_routines"]
-                        
+
                         if "protection_mechanisms" in parsed_results:
                             result["detected_protections"] = parsed_results["protection_mechanisms"]
-                        
+
                         if "keygen_patterns" in parsed_results:
                             result["keygen_candidates"] = parsed_results["keygen_patterns"]
                     else:
-                        error_msg = execution_result.error if execution_result else "Unknown execution error"
+                        error_msg = (
+                            execution_result.error
+                            if execution_result
+                            else "Unknown execution error"
+                        )
                         result["errors"].append(f"Ghidra script execution failed: {error_msg}")
                 else:
                     result["errors"].append("Failed to copy binary to VM")
             else:
                 result["errors"].append("No suitable Ghidra script found for this binary type")
-            
+
             return result
-            
+
         except Exception as e:
-            return {
-                "error": str(e),
-                "ghidra_executed": False
-            }
-    
+            return {"error": str(e), "ghidra_executed": False}
+
     def _select_ghidra_script(self, binary_path: str):
         """Select the most appropriate Ghidra script for the binary
-        
+
         Analyzes binary characteristics and selects the best matching
         Ghidra script from the available scripts.
         """
@@ -344,14 +340,14 @@ class AnalysisOrchestrator(QObject):
             # Discover available scripts
             self.ghidra_script_manager.discover_scripts()
             available_scripts = self.ghidra_script_manager.list_scripts()
-            
+
             if not available_scripts:
                 return None
-            
+
             # Analyze binary to determine best script
             with open(binary_path, "rb") as f:
                 header = f.read(1024)
-            
+
             # Check for PE signature (Windows executable)
             if b"MZ" in header[:2] and b"PE\x00\x00" in header:
                 # Look for license-related scripts for Windows binaries
@@ -362,35 +358,35 @@ class AnalysisOrchestrator(QObject):
                 for script in available_scripts:
                     if "AdvancedAnalysis" in script.name:
                         return script
-            
+
             # Check for ELF signature (Linux executable)
             elif header[:4] == b"\x7fELF":
                 # Look for Linux-specific scripts
                 for script in available_scripts:
                     if "NetworkAnalysis" in script.name:
                         return script
-            
+
             # Default to most comprehensive script available
             for script in available_scripts:
                 if "AdvancedAnalysis" in script.name or "Comprehensive" in script.name:
                     return script
-            
+
             # Return first available script as last resort
             return available_scripts[0] if available_scripts else None
-            
+
         except Exception:
             return None
-    
+
     def _build_ghidra_command(self, script_path: str, binary_path: str) -> str:
         """Build the Ghidra headless analysis command
-        
+
         Constructs the command line for running Ghidra in headless mode
         with the selected script and binary.
         """
         ghidra_home = "/opt/ghidra"  # Standard Ghidra installation path in VM
         project_location = "/tmp/ghidra_projects"
         project_name = f"analysis_{os.path.basename(binary_path)}"
-        
+
         # Build headless analyzer command
         command = (
             f"{ghidra_home}/support/analyzeHeadless "
@@ -399,12 +395,12 @@ class AnalysisOrchestrator(QObject):
             f"-postScript {script_path} "
             f"-deleteProject"  # Clean up after analysis
         )
-        
+
         return command
-    
+
     def _parse_ghidra_output(self, output: str) -> dict[str, Any]:
         """Parse Ghidra script output into structured data
-        
+
         Extracts meaningful information from Ghidra analysis output
         and structures it for integration into the analysis pipeline.
         """
@@ -415,68 +411,84 @@ class AnalysisOrchestrator(QObject):
             "crypto_routines": [],
             "protection_mechanisms": [],
             "keygen_patterns": [],
-            "interesting_strings": []
+            "interesting_strings": [],
         }
-        
+
         try:
             lines = output.split("\n")
-            
+
             for line in lines:
                 # Parse license check detection
                 if "LICENSE_CHECK" in line or "license" in line.lower():
                     if "Function:" in line:
                         func_match = line.split("Function:")[1].strip()
-                        parsed["license_checks"].append({
-                            "function": func_match,
-                            "address": self._extract_address(line),
-                            "confidence": "high" if "LICENSE_CHECK" in line else "medium"
-                        })
-                
+                        parsed["license_checks"].append(
+                            {
+                                "function": func_match,
+                                "address": self._extract_address(line),
+                                "confidence": "high" if "LICENSE_CHECK" in line else "medium",
+                            }
+                        )
+
                 # Parse cryptographic routine detection
-                if any(crypto in line.lower() for crypto in ["aes", "rsa", "crypto", "hash", "md5", "sha"]):
-                    parsed["crypto_routines"].append({
-                        "type": self._identify_crypto_type(line),
-                        "location": self._extract_address(line),
-                        "details": line.strip()
-                    })
-                
+                if any(
+                    crypto in line.lower()
+                    for crypto in ["aes", "rsa", "crypto", "hash", "md5", "sha"]
+                ):
+                    parsed["crypto_routines"].append(
+                        {
+                            "type": self._identify_crypto_type(line),
+                            "location": self._extract_address(line),
+                            "details": line.strip(),
+                        }
+                    )
+
                 # Parse protection mechanism detection
-                if any(prot in line.lower() for prot in ["anti-debug", "obfuscat", "pack", "encrypt", "protect"]):
-                    parsed["protection_mechanisms"].append({
-                        "type": self._identify_protection_type(line),
-                        "details": line.strip()
-                    })
-                
+                if any(
+                    prot in line.lower()
+                    for prot in ["anti-debug", "obfuscat", "pack", "encrypt", "protect"]
+                ):
+                    parsed["protection_mechanisms"].append(
+                        {"type": self._identify_protection_type(line), "details": line.strip()}
+                    )
+
                 # Parse potential keygen patterns
-                if "keygen" in line.lower() or "serial" in line.lower() or "algorithm" in line.lower():
-                    parsed["keygen_patterns"].append({
-                        "pattern": line.strip(),
-                        "type": "algorithmic" if "algorithm" in line.lower() else "serial"
-                    })
-                
+                if (
+                    "keygen" in line.lower()
+                    or "serial" in line.lower()
+                    or "algorithm" in line.lower()
+                ):
+                    parsed["keygen_patterns"].append(
+                        {
+                            "pattern": line.strip(),
+                            "type": "algorithmic" if "algorithm" in line.lower() else "serial",
+                        }
+                    )
+
                 # Count analyzed functions
                 if "Function analyzed:" in line or "Function:" in line:
                     parsed["functions_analyzed"] += 1
-                
+
                 # Extract interesting strings
                 if "String:" in line and len(line) > 20:
                     string_val = line.split("String:")[1].strip()
                     if self._is_interesting_string(string_val):
                         parsed["interesting_strings"].append(string_val)
-            
+
         except Exception as parse_error:
             parsed["parse_error"] = str(parse_error)
-        
+
         return parsed
-    
+
     def _extract_address(self, line: str) -> str:
         """Extract memory address from Ghidra output line"""
         import re
+
         # Look for hex addresses like 0x401000 or 00401000h
         hex_pattern = r"(0x[0-9a-fA-F]+|[0-9a-fA-F]+h)"
         match = re.search(hex_pattern, line)
         return match.group(1) if match else "unknown"
-    
+
     def _identify_crypto_type(self, line: str) -> str:
         """Identify the type of cryptographic routine from output"""
         line_lower = line.lower()
@@ -494,7 +506,7 @@ class AnalysisOrchestrator(QObject):
             return "Generic Hash"
         else:
             return "Unknown Crypto"
-    
+
     def _identify_protection_type(self, line: str) -> str:
         """Identify the type of protection mechanism from output"""
         line_lower = line.lower()
@@ -510,13 +522,25 @@ class AnalysisOrchestrator(QObject):
             return "Virtualization"
         else:
             return "Generic Protection"
-    
+
     def _is_interesting_string(self, string_val: str) -> bool:
         """Determine if a string is interesting for license analysis"""
         interesting_keywords = [
-            "license", "serial", "key", "trial", "expire", "register",
-            "activation", "validate", "crack", "patch", "bypass",
-            "evaluation", "demo", "full version", "pro version"
+            "license",
+            "serial",
+            "key",
+            "trial",
+            "expire",
+            "register",
+            "activation",
+            "validate",
+            "crack",
+            "patch",
+            "bypass",
+            "evaluation",
+            "demo",
+            "full version",
+            "pro version",
         ]
         string_lower = string_val.lower()
         return any(keyword in string_lower for keyword in interesting_keywords)

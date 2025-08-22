@@ -55,10 +55,10 @@ try:
 except ImportError as e:
     logger.warning("Failed to import qiling_emulator: %s", e)
 
-try:
-    from .qemu_emulator import QEMUSystemEmulator, run_qemu_analysis
-except ImportError as e:
-    logger.warning("Failed to import qemu_emulator: %s", e)
+# QEMU emulator removed during VM framework consolidation
+# QEMUSystemEmulator and run_qemu_analysis functionality moved to QEMUManager
+QEMUSystemEmulator = None
+run_qemu_analysis = None
 
 # Define package exports
 __all__ = [

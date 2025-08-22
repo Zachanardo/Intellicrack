@@ -18,10 +18,10 @@ cd dependencies
 python scripts/intellicrack_cli.py binary.exe
 
 # Full comprehensive analysis
-python intellicrack/intellicrack/scripts/cli/main.py binary.exe --comprehensive
+python intellicrack/cli/main.py binary.exe --comprehensive
 
 # Help and all options
-python intellicrack/intellicrack/scripts/cli/main.py --help
+python intellicrack/cli/main.py --help
 ```
 
 ### Alternative Entry Points
@@ -30,7 +30,7 @@ python intellicrack/intellicrack/scripts/cli/main.py --help
 intellicrack-cli binary.exe --comprehensive
 
 # Direct script execution
-python intellicrack/intellicrack/scripts/cli/main.py binary.exe
+python intellicrack/cli/main.py binary.exe
 
 # Via wrapper
 ./intellicrack_cli binary.exe

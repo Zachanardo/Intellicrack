@@ -10,7 +10,7 @@ Scripts for radare2 setup and configuration:
 - `use_local_radare2.bat` - Launch terminal with local radare2 in PATH
 
 ### Python Scripts
-- `run_analysis_cli.py` - Command-line analysis interface
+
 
 - `test_imports.py` - Test import functionality
 - `test_integration.py` - Integration testing

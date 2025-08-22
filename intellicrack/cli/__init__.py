@@ -1,26 +1,23 @@
-"""This file is part of Intellicrack.
+"""CLI Scripts Module for Intellicrack.
+
+This module provides command-line interface components for the application.
+
 Copyright (C) 2025 Zachary Flint
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see https://www.gnu.org/licenses/.
+Licensed under GNU General Public License v3.0
 """
 
-from .cli import cli, main
-
-"""
-Intellicrack CLI Package
-
-Provides command-line interface for Intellicrack functionality.
-"""
-
-__all__ = ["cli", "main"]
+# CLI script modules are loaded on demand
+__all__ = [
+    "main",
+    "interactive_mode",
+    "config_manager",
+    "project_manager",
+    "terminal_dashboard",
+    "pipeline",
+    "advanced_export",
+    "ai_chat_interface",
+    "ai_integration",
+    "ascii_charts",
+    "hex_viewer_cli",
+    "tutorial_system",
+]

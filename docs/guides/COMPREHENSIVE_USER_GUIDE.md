@@ -12,11 +12,12 @@ Intellicrack is an advanced binary analysis and security research platform desig
 4. [Core Analysis Features](#core-analysis-features)
 5. [AI-Powered Analysis](#ai-powered-analysis)
 6. [Binary Analysis Workflow](#binary-analysis-workflow)
-7. [Protection Mechanism Testing](#protection-mechanism-testing)
-8. [Network Analysis and Emulation](#network-analysis-and-emulation)
-9. [Exploitation Framework for Testing](#exploitation-framework-for-testing)
-10. [Best Practices](#best-practices)
-11. [Troubleshooting](#troubleshooting)
+7. [VM Management](#vm-management)
+8. [Protection Mechanism Testing](#protection-mechanism-testing)
+9. [Network Analysis and Emulation](#network-analysis-and-emulation)
+10. [Exploitation Framework for Testing](#exploitation-framework-for-testing)
+11. [Best Practices](#best-practices)
+12. [Troubleshooting](#troubleshooting)
 
 ## Ethical Usage and Legal Considerations
 
@@ -358,6 +359,187 @@ if (flexlm_module) {
     }
 }
 ```
+
+## VM Management
+
+### Overview
+
+Intellicrack includes a comprehensive VM Framework for testing binaries in isolated QEMU virtual machine environments. This allows you to safely analyze and modify binaries without affecting your host system.
+
+### Accessing VM Manager
+
+1. **GUI Access:** Tools → 🖥️ VM Manager
+2. **API Access:** Use `VMWorkflowManager` class for programmatic control
+
+### VM Manager Features
+
+#### Managing Virtual Machines
+
+The VM Manager dialog provides:
+- **View VMs:** See all active and stopped VM instances
+- **Start VM:** Launch a stopped VM instance
+- **Stop VM:** Gracefully stop a running VM
+- **Delete VM:** Remove a VM instance and its resources
+- **Refresh:** Update the VM list display
+
+#### Configuring Base Images
+
+Base images are template VM images used for creating test environments:
+
+1. **Location:** Base images are configured in `config/config.json`
+2. **Supported Platforms:**
+   - Windows base images (for Windows binary testing)
+   - Linux base images (for Linux binary testing)
+
+**Configuration Example:**
+```json
+{
+  "vm_framework": {
+    "base_images": {
+      "windows": [
+        "~/vms/windows10.qcow2",
+        "~/vms/windows11.qcow2"
+      ],
+      "linux": [
+        "~/vms/ubuntu22.04.qcow2",
+        "~/vms/kali2023.qcow2"
+      ]
+    }
+  }
+}
+```
+
+### File Export Dialog Process
+
+When exporting modified binaries from VMs, Intellicrack uses a user-controlled file dialog:
+
+1. **Automatic Dialog:** After binary modification, a save dialog appears
+2. **User Selection:** You choose the exact export location
+3. **Default Location:** `~/Documents/Intellicrack_Output/` (customizable)
+4. **File Naming:** Suggested as `modified_{original_filename}`
+
+**Important:** Users ALWAYS select the output location for every export - no hardcoded paths are used.
+
+### Qiling Rootfs Configuration
+
+For lightweight emulation without full VMs, configure Qiling rootfs paths:
+
+```json
+{
+  "vm_framework": {
+    "qiling_rootfs": {
+      "windows": [
+        "~/tools/qiling/rootfs/x86_windows",
+        "~/tools/qiling/rootfs/x8664_windows"
+      ],
+      "linux": [
+        "~/tools/qiling/rootfs/x86_linux",
+        "~/tools/qiling/rootfs/x8664_linux"
+      ]
+    }
+  }
+}
+```
+
+### Binary Analysis Workflow with VMs
+
+#### Complete Analysis Roundtrip
+
+1. **Select Binary:** Choose the target binary for analysis
+2. **Create VM Snapshot:** System creates isolated VM environment
+3. **Upload Binary:** Binary is uploaded to VM via secure SFTP
+4. **Modify Binary:** Modification script runs with OUTPUT_PATH contract
+5. **Export Modified Binary:** User selects export location via dialog
+6. **Test Modified Binary:** Test script validates modifications
+7. **Cleanup:** VM snapshot is cleaned up after analysis
+
+#### OUTPUT_PATH Contract for Modification Scripts
+
+Modification scripts MUST use the `OUTPUT_PATH` environment variable:
+
+```bash
+#!/bin/bash
+# Modification script example
+
+# INPUT_PATH contains the original binary location
+echo "Original binary: $INPUT_PATH"
+
+# Your modification logic here
+modify_binary "$INPUT_PATH" "$OUTPUT_PATH"
+
+# OUTPUT_PATH must contain the modified binary
+if [ ! -f "$OUTPUT_PATH" ]; then
+    echo "ERROR: Failed to create output at $OUTPUT_PATH"
+    exit 1
+fi
+
+echo "Modified binary saved to: $OUTPUT_PATH"
+```
+
+### VM Security Considerations
+
+#### SSH Key Management
+
+- SSH keys are managed by the Secrets Manager
+- Keys are stored as environment variables:
+  - `QEMU_SSH_PRIVATE_KEY`
+  - `QEMU_SSH_PUBLIC_KEY`
+- Keys are generated automatically if not present
+- All SSH operations use key-based authentication
+
+#### Network Isolation
+
+- VMs run in isolated network environments
+- Host-only networking prevents external access
+- Port forwarding configured per-VM for SSH access
+- VNC access for GUI interaction when needed
+
+### Troubleshooting VM Issues
+
+#### Common Problems and Solutions
+
+1. **VM Won't Start**
+   - Check QEMU installation: `qemu-system-x86_64 --version`
+   - Verify base image exists and is readable
+   - Check available disk space
+   - Review logs in VM Manager dialog
+
+2. **SSH Connection Failed**
+   - Verify VM is running (check VM Manager)
+   - Check SSH port configuration in config.json
+   - Ensure SSH keys are properly configured
+   - Wait for VM to fully boot (30-60 seconds)
+
+3. **File Transfer Issues**
+   - Verify SFTP is enabled in VM
+   - Check file permissions in VM
+   - Ensure sufficient space in VM
+   - Review network configuration
+
+4. **Export Dialog Not Appearing**
+   - Ensure GUI event loop is running
+   - Check QApplication instance exists
+   - Review modification script output
+   - Verify OUTPUT_PATH was created
+
+### Best Practices for VM Usage
+
+1. **Resource Management**
+   - Limit concurrent VMs to available RAM
+   - Clean up unused snapshots regularly
+   - Monitor disk usage for VM images
+
+2. **Security**
+   - Use isolated VMs for untrusted binaries
+   - Never expose VM ports to public networks
+   - Regularly update base images
+   - Maintain separate VMs for different projects
+
+3. **Performance**
+   - Enable KVM acceleration when available
+   - Allocate sufficient RAM (2GB minimum)
+   - Use SSD storage for VM images
+   - Limit background processes in VMs
 
 ## Protection Mechanism Testing
 

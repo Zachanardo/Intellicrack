@@ -16,11 +16,13 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 Font loader utility for Intellicrack
 """
-import json
+
 import logging
 import os
 
 from PyQt6.QtGui import QFont, QFontDatabase
+
+from intellicrack.core.config_manager import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -31,18 +33,44 @@ class FontManager:
     def __init__(self):
         """Initialize the font manager with configuration and setup font directories."""
         self.fonts_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "fonts")
-        self.config_file = os.path.join(self.fonts_dir, "font_config.json")
         self.loaded_fonts = []
+        # Load configuration from central config system
+        self.central_config = get_config()
         self.config = self._load_config()
 
     def _load_config(self):
-        """Load font configuration"""
+        """Load font configuration from central config system"""
         try:
-            with open(self.config_file) as f:
-                return json.load(f)
+            # Get font configuration from central config
+            font_config = self.central_config.get("font_configuration", {})
+            if not font_config:
+                # If central config is empty, try to trigger migration
+                self.central_config.upgrade_config()
+                font_config = self.central_config.get("font_configuration", {})
+            return font_config
         except Exception as e:
-            logger.warning(f"Could not load font config: {e}")
-            return {}
+            logger.warning(f"Could not load font config from central config: {e}")
+            # Return default configuration structure
+            return {
+                "monospace_fonts": {
+                    "primary": ["JetBrains Mono", "JetBrainsMono-Regular"],
+                    "fallback": ["Consolas", "Source Code Pro", "Courier New", "monospace"],
+                },
+                "ui_fonts": {
+                    "primary": ["Segoe UI", "Roboto", "Arial"],
+                    "fallback": ["Helvetica Neue", "Helvetica", "Ubuntu", "sans-serif"],
+                },
+                "font_sizes": {
+                    "ui_default": 10,
+                    "ui_small": 9,
+                    "ui_large": 12,
+                    "code_default": 10,
+                    "code_small": 9,
+                    "code_large": 11,
+                    "hex_view": 11,
+                },
+                "available_fonts": [],
+            }
 
     def load_application_fonts(self):
         """Load custom fonts into Qt application"""
@@ -69,19 +97,19 @@ class FontManager:
         for font_name in self.config.get("monospace_fonts", {}).get("primary", []):
             font = QFont(font_name, size)
             if font.exactMatch():
-                font.setStyleHint(QFont.Monospace)
+                font.setStyleHint(QFont.StyleHint.Monospace)
                 return font
 
         # Try fallback fonts
         for font_name in self.config.get("monospace_fonts", {}).get("fallback", []):
             font = QFont(font_name, size)
-            font.setStyleHint(QFont.Monospace)
+            font.setStyleHint(QFont.StyleHint.Monospace)
             # Return first available fallback
             return font
 
         # Ultimate fallback
         font = QFont("monospace", size)
-        font.setStyleHint(QFont.Monospace)
+        font.setStyleHint(QFont.StyleHint.Monospace)
         return font
 
     def get_ui_font(self, size=None):

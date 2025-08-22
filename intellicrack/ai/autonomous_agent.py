@@ -103,7 +103,7 @@ class AutonomousAgent:
         """
         self.orchestrator = orchestrator
         self.cli_interface = cli_interface
-        self.script_generator = AIScriptGenerator(orchestrator)
+        self.script_generator = AIScriptGenerator()
 
         # State management
         self.conversation_history = []
@@ -1830,10 +1830,10 @@ class AutonomousAgent:
     def _initialize_qemu_manager(self):
         """Initialize QEMU manager with proper configuration."""
         try:
-            from .qemu_test_manager import QEMUTestManager
+            from .qemu_manager import QEMUManager
 
             # Initialize with production configuration
-            self.qemu_manager = QEMUTestManager(
+            self.qemu_manager = QEMUManager(
                 ssh_timeout=30,
                 max_connections=5,
                 enable_circuit_breaker=True,

@@ -10,6 +10,10 @@ from typing import Any
 
 from intellicrack.logger import logger
 
+from ...config import get_config
+
+# No security module needed - removed per user requirements
+
 """
 Qiling Binary Emulation Framework Integration.
 
@@ -188,7 +192,22 @@ class QilingEmulator:
 
     def _get_default_rootfs(self) -> str:
         """Get default rootfs path for the OS type."""
-        # Look for _rootfs in common locations
+        # Get config instance
+        config = get_config()
+
+        # Retrieve configured paths from vm_framework.qiling_rootfs based on ostype
+        config_key = f"vm_framework.qiling_rootfs.{self.ostype}"
+        configured_paths = config.get(config_key, [])
+
+        # Iterate through configured paths
+        for path in configured_paths:
+            # Apply os.path.expanduser to each path
+            expanded_path = os.path.expanduser(path)
+            # Check if path exists
+            if os.path.exists(expanded_path):
+                return expanded_path
+
+        # If no configured path exists, fallback to current logic
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
         rootfs_dirs = [
             os.path.join(os.path.dirname(__file__), "rootfs", self.ostype),
@@ -201,8 +220,7 @@ class QilingEmulator:
             if os.path.exists(rootfs):
                 return rootfs
 
-        # If no rootfs found, return a placeholder
-        # Qiling will work without rootfs for some basic operations
+        # Return default path for Qiling to handle
         return os.path.join(os.path.dirname(__file__), "rootfs", self.ostype)
 
     def add_api_hook(self, api_name: str, hook_func: Callable):
@@ -235,7 +253,7 @@ class QilingEmulator:
                 "host": host_path,
                 "guest": guest_path,
                 "type": "directory" if os.path.isdir(host_path) else "file",
-            }
+            },
         )
 
         self.logger.info("Mapped %s -> %s", host_path, guest_path)
@@ -270,7 +288,7 @@ class QilingEmulator:
                             "host": host,
                             "guest": guest,
                             "mapped_object": mapped_obj,
-                        }
+                        },
                     )
             except (AttributeError, OSError) as e:
                 self.logger.debug("Could not map %s: %s", host, e)
@@ -331,7 +349,7 @@ class QilingEmulator:
                 "address": hex(address),
                 "params": params,
                 "timestamp": time.time(),
-            }
+            },
         )
 
         # Check for suspicious patterns
@@ -345,7 +363,7 @@ class QilingEmulator:
                     "address": hex(address),
                     "params": params,
                     "type": "direct_check",
-                }
+                },
             )
 
         # Log potential license check
@@ -403,7 +421,7 @@ class QilingEmulator:
                 "cpu_state": cpu_state,
                 "is_stack_access": is_stack_access,
                 "timestamp": time.time(),
-            }
+            },
         )
 
     def hook_code_execution(self, ql: Qiling, address: int, size: int):
@@ -433,7 +451,8 @@ class QilingEmulator:
                 try:
                     self.ql.emu_stop()
                     self.logger.warning(
-                        "Emulation stopped due to timeout after %d seconds", timeout
+                        "Emulation stopped due to timeout after %d seconds",
+                        timeout,
                     )
                 except (RuntimeError, AttributeError) as e:
                     logger.error("Error in qiling_emulator: %s", e)
@@ -568,7 +587,7 @@ class QilingEmulator:
                     "bits": 32,
                     "instruction_set": "x86",
                     "registers": ["eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp"],
-                }
+                },
             )
         elif self.ql_arch in [QL_ARCH.X8664]:
             arch_info.update(
@@ -593,7 +612,7 @@ class QilingEmulator:
                         "r14",
                         "r15",
                     ],
-                }
+                },
             )
         elif self.ql_arch in [QL_ARCH.ARM]:
             arch_info.update(
@@ -618,7 +637,7 @@ class QilingEmulator:
                         "lr",
                         "pc",
                     ],
-                }
+                },
             )
         elif self.ql_arch in [QL_ARCH.ARM64]:
             arch_info.update(
@@ -659,7 +678,7 @@ class QilingEmulator:
                         "x30",
                         "sp",
                     ],
-                }
+                },
             )
         elif self.ql_arch in [QL_ARCH.MIPS, QL_ARCH.MIPS64]:
             arch_info.update(
@@ -701,7 +720,7 @@ class QilingEmulator:
                         "fp",
                         "ra",
                     ],
-                }
+                },
             )
 
         return arch_info
@@ -728,7 +747,7 @@ class QilingEmulator:
                     "executable_format": "PE",
                     "path_separator": "\\",
                     "common_dirs": ["C:\\Windows", "C:\\Program Files", "C:\\ProgramData"],
-                }
+                },
             )
         elif self.ql_os == QL_OS.LINUX:
             os_info.update(
@@ -738,7 +757,7 @@ class QilingEmulator:
                     "executable_format": "ELF",
                     "path_separator": "/",
                     "common_dirs": ["/usr", "/etc", "/var", "/tmp", "/home"],
-                }
+                },
             )
         elif self.ql_os == QL_OS.MACOS:
             os_info.update(
@@ -748,7 +767,7 @@ class QilingEmulator:
                     "executable_format": "Mach-O",
                     "path_separator": "/",
                     "common_dirs": ["/Applications", "/Library", "/System", "/Users"],
-                }
+                },
             )
         elif self.ql_os == QL_OS.FREEBSD:
             os_info.update(
@@ -758,7 +777,7 @@ class QilingEmulator:
                     "executable_format": "ELF",
                     "path_separator": "/",
                     "common_dirs": ["/usr", "/etc", "/var", "/tmp"],
-                }
+                },
             )
 
         return os_info
@@ -798,7 +817,7 @@ class QilingEmulator:
                     "type": "license_check",
                     "confidence": "high",
                     "reason": "Heavy registry access with cryptography",
-                }
+                },
             )
 
         if api_categories["network"] > 0 and api_categories["hardware"] > 0:
@@ -807,7 +826,7 @@ class QilingEmulator:
                     "type": "online_activation",
                     "confidence": "medium",
                     "reason": "Network communication with hardware ID access",
-                }
+                },
             )
 
         if api_categories["time"] > 3:
@@ -816,7 +835,7 @@ class QilingEmulator:
                     "type": "trial_check",
                     "confidence": "medium",
                     "reason": "Multiple time-related API calls",
-                }
+                },
             )
 
         return {
@@ -901,7 +920,7 @@ class QilingEmulator:
                         "name": section.Name.decode("utf-8").rstrip("\x00"),
                         "virtual_address": hex(section.VirtualAddress),
                         "size": section.SizeOfRawData,
-                    }
+                    },
                 )
 
             # Get imports
@@ -915,7 +934,7 @@ class QilingEmulator:
                                 imp.name.decode("utf-8") if imp.name else f"Ordinal_{imp.ordinal}"
                                 for imp in entry.imports
                             ],
-                        }
+                        },
                     )
 
         except (ImportError, pefile.PEFormatError):
@@ -938,8 +957,8 @@ class QilingEmulator:
                         b"\xfe\xed\xfa\xcf",
                     ]:
                         format_info["format"] = "Mach-O"
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Error reading binary file for format detection: %s", e)
 
         return format_info
 

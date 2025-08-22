@@ -27,7 +27,7 @@ When OpenCL is not available, it provides fallback implementations.
 # OpenCL availability detection and import handling
 try:
     import pyopencl as cl
-    
+
     # Import basic classes
     from pyopencl import (
         Buffer,
@@ -38,7 +38,7 @@ try:
         create_some_context,
         get_platforms,
     )
-    
+
     # Try to import Queue - it may be CommandQueue in some versions
     try:
         from pyopencl import Queue
@@ -48,42 +48,48 @@ try:
         except ImportError:
             # Create fallback if neither exists
             Queue = None
-    
+
     HAS_OPENCL = True
     OPENCL_AVAILABLE = True
-    OPENCL_VERSION = getattr(cl, 'VERSION_TEXT', 'unknown')
-    
+    OPENCL_VERSION = getattr(cl, "VERSION_TEXT", "unknown")
+
 except ImportError as e:
     logger.error("OpenCL not available, using fallback implementations: %s", e)
     HAS_OPENCL = False
     OPENCL_AVAILABLE = False
     OPENCL_VERSION = None
-    
+
     # Fallback implementations
     class FallbackContext:
         """Fallback OpenCL context."""
+
         pass
-    
+
     class FallbackDevice:
         """Fallback OpenCL device."""
+
         pass
-    
+
     class FallbackBuffer:
         """Fallback OpenCL buffer."""
+
         pass
-    
+
     class FallbackProgram:
         """Fallback OpenCL program."""
+
         pass
-    
+
     class FallbackQueue:
         """Fallback OpenCL command queue."""
+
         pass
-    
+
     class FallbackPlatform:
         """Fallback OpenCL platform."""
+
         pass
-    
+
     # Assign fallback objects
     cl = None
     Context = FallbackContext
@@ -92,23 +98,32 @@ except ImportError as e:
     Program = FallbackProgram
     Queue = FallbackQueue
     Platform = FallbackPlatform
-    
+
     def create_some_context():
         """Fallback context creation."""
         return FallbackContext()
-    
+
     def get_platforms():
         """Fallback platform enumeration."""
         return []
 
+
 # Export all OpenCL objects and availability flag
 __all__ = [
     # Availability flags
-    "HAS_OPENCL", "OPENCL_AVAILABLE", "OPENCL_VERSION",
+    "HAS_OPENCL",
+    "OPENCL_AVAILABLE",
+    "OPENCL_VERSION",
     # Main module
     "cl",
     # Classes
-    "Context", "Device", "Buffer", "Program", "Queue", "Platform",
+    "Context",
+    "Device",
+    "Buffer",
+    "Program",
+    "Queue",
+    "Platform",
     # Functions
-    "create_some_context", "get_platforms",
+    "create_some_context",
+    "get_platforms",
 ]

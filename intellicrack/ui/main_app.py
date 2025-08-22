@@ -24,7 +24,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import base64
 import binascii
 import datetime
-import getpass
 import hashlib
 import hmac
 import json
@@ -134,7 +133,6 @@ try:
         QPushButton,
         QRadioButton,
         QScrollArea,
-        QSettings,
         QSize,
         QSizePolicy,
         QSlider,
@@ -351,7 +349,10 @@ except ImportError as e:
     QtCore = None
 
 # Local imports
+from intellicrack.core.patching.adobe_compiler import AdobeLicenseCompiler
 from intellicrack.logger import logger
+from intellicrack.ui.dialogs.nodejs_setup_dialog import NodeJSSetupDialog
+from intellicrack.ui.dialogs.vm_manager_dialog import VMManagerDialog
 from intellicrack.utils.service_health_checker import get_service_url
 
 from ..ai.ai_file_tools import get_ai_file_tools
@@ -9755,7 +9756,9 @@ def _check_intercepted_traffic(proxy_server):
             # Use emulator manager for automatic QEMU startup
             try:
                 from ..core.processing.emulator_manager import run_with_qemu
-                from ..core.processing.qemu_emulator import QEMUSystemEmulator as QemuEmulator
+
+                # QEMU emulator removed during VM framework consolidation
+                QemuEmulator = None
 
                 def analyze_with_qemu():
                     emulator = QemuEmulator()
@@ -15151,6 +15154,27 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
             self.exploitation_orchestrator = None
             self.logger.warning("Continuing without agentic AI system")
 
+        # Initialize Adobe License Compiler and get configuration
+        try:
+            self.adobe_compiler = AdobeLicenseCompiler()
+
+            # Get Adobe configuration from unified config system
+            config = get_config()
+            adobe_config = config.get("adobe_license_compiler", {})
+            deployment_config = adobe_config.get("deployment", {})
+
+            # Store configurable service name and display elements
+            self.adobe_service_name = deployment_config.get("service_name", "AdobeLicenseX")
+            self.adobe_display_name = f"Adobe {self.adobe_service_name}"
+
+            self.logger.info("Adobe License Compiler initialized successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Adobe License Compiler: {e}")
+            self.adobe_compiler = None
+            # Fallback to default names if config unavailable
+            self.adobe_service_name = "AdobeLicenseX"
+            self.adobe_display_name = "Adobe AdobeLicenseX"
+
         # Connect signals
         self.update_output.connect(self.append_output)
         self.update_status.connect(self.set_status_message)
@@ -15176,7 +15200,10 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
         # Set up main window
         self.setWindowTitle("Intellicrack")
+        # Set default geometry (will be overridden by restore_window_state if config exists)
         self.setGeometry(100, 100, 1200, 800)
+        # Restore window state from config
+        self.restore_window_state()
 
         # Initialize and load custom fonts
         self._initialize_font_manager()
@@ -18126,24 +18153,22 @@ class Plugin:
         adobe_layout = QVBoxLayout(adobe_group)
 
         adobe_status_layout = QHBoxLayout()
-        adobe_status_layout.addWidget(QLabel("AdobeLicenseX Status:"))
-        self.adobe_status_label = QLabel("Not Active")
+        adobe_status_layout.addWidget(QLabel(f"{self.adobe_service_name} Status:"))
+        self.adobe_status_label = QLabel("Not Installed")
         adobe_status_layout.addWidget(self.adobe_status_label)
 
         adobe_action_layout = QHBoxLayout()
-        adobe_action_layout.addWidget(QLabel("Select Adobe Action:"))
-        self.adobe_action_combo = QComboBox()
-        self.adobe_action_combo.addItems(
-            ["Deploy AdobeLicenseX", "Patch Adobe Licensing", "Reset Adobe Trial"]
-        )
-        adobe_action_layout.addWidget(self.adobe_action_combo)
+        self.adobe_install_btn = QPushButton(f"Install {self.adobe_service_name}")
+        self.adobe_install_btn.clicked.connect(self.install_adobe_licensex)
 
-        execute_adobe_btn = QPushButton("Execute Adobe Action")
-        execute_adobe_btn.clicked.connect(self.execute_adobe_action)
+        self.adobe_uninstall_btn = QPushButton(f"Uninstall {self.adobe_service_name}")
+        self.adobe_uninstall_btn.clicked.connect(self.uninstall_adobe_licensex)
+
+        adobe_action_layout.addWidget(self.adobe_install_btn)
+        adobe_action_layout.addWidget(self.adobe_uninstall_btn)
 
         adobe_layout.addLayout(adobe_status_layout)
         adobe_layout.addLayout(adobe_action_layout)
-        adobe_layout.addWidget(execute_adobe_btn)
 
         utils_layout.addWidget(adobe_group)
 
@@ -21740,7 +21765,7 @@ def register():
 
             # If plugin_path is just a name, find the full path
             if not os.path.exists(plugin_path):
-                ghidra_dir = get_resource_path("plugins/ghidra_scripts")
+                ghidra_dir = get_resource_path("scripts/ghidra")
                 if not plugin_path.endswith(".java"):
                     plugin_path += ".java"
                 full_path = os.path.join(ghidra_dir, plugin_path)
@@ -22166,6 +22191,11 @@ def register():
         ai_config_action = QAction("🤖 AI Model Configuration", self)
         ai_config_action.triggered.connect(self.open_llm_config_dialog)
         tools_menu.addAction(ai_config_action)
+
+        # VM Manager
+        vm_manager_action = QAction("🖥️ VM Manager", self)
+        vm_manager_action.triggered.connect(self._open_vm_manager)
+        tools_menu.addAction(vm_manager_action)
 
         # Help menu
         help_menu = menubar.addMenu("Help")
@@ -23118,10 +23148,12 @@ def register():
     def on_preferences_changed(self):
         """Handle preferences changes."""
         # Reload any settings that affect the UI
-        settings = QSettings("Intellicrack", "Preferences")
+        from intellicrack.core.config_manager import get_config
+
+        config = get_config()
 
         # Apply theme if changed
-        theme = settings.value("general/theme", "Dark")
+        theme = config.get("general_preferences.theme", "Dark")
         if theme == "Dark" and hasattr(self, "apply_dark_theme"):
             self.apply_dark_theme()
         elif theme == "Light" and hasattr(self, "apply_light_theme"):
@@ -23158,9 +23190,9 @@ def register():
     def create_qemu_snapshot(self):
         """Create a QEMU VM snapshot."""
         try:
-            from intellicrack.core.processing.qemu_emulator import QEMUSystemEmulator
-
-            emulator = QEMUSystemEmulator(self.binary_path or "")
+            # QEMU emulator removed during VM framework consolidation
+            # Functionality moved to QEMUManager
+            emulator = None
             snapshot_name = f"snapshot_{int(time.time())}"
             result = emulator.create_snapshot(snapshot_name)
             self.update_output.emit(f"[QEMU] Snapshot '{snapshot_name}' created: {result}")
@@ -23173,9 +23205,9 @@ def register():
         try:
             # Get snapshot name from user (for now use a default)
             snapshot_name = "snapshot_latest"
-            from intellicrack.core.processing.qemu_emulator import QEMUSystemEmulator
-
-            emulator = QEMUSystemEmulator(self.binary_path or "")
+            # QEMU emulator removed during VM framework consolidation
+            # Functionality moved to QEMUManager
+            emulator = None
             result = emulator.restore_snapshot(snapshot_name)
             self.update_output.emit(f"[QEMU] Snapshot '{snapshot_name}' restored: {result}")
         except (OSError, ValueError, RuntimeError) as e:
@@ -23196,12 +23228,9 @@ def register():
 
             self.update_output.emit(f"[QEMU] Executing command: {command}")
 
-            from intellicrack.core.processing.qemu_emulator import QEMUSystemEmulator
-
-            # Use existing binary path if available
-            binary_path = getattr(self, "binary_path", None) or "dummy.exe"
-
-            emulator = QEMUSystemEmulator(binary_path)
+            # QEMU emulator removed during VM framework consolidation
+            # Functionality moved to QEMUManager
+            emulator = None
             result = emulator.execute_command(command)
 
             if result:
@@ -23216,9 +23245,9 @@ def register():
     def compare_qemu_snapshots(self):
         """Compare QEMU VM snapshots."""
         try:
-            from intellicrack.core.processing.qemu_emulator import QEMUSystemEmulator
-
-            emulator = QEMUSystemEmulator(self.binary_path or "")
+            # QEMU emulator removed during VM framework consolidation
+            # Functionality moved to QEMUManager
+            emulator = None
             result = emulator.compare_snapshots("before", "after")
             self.update_output.emit(
                 f"[QEMU] Snapshot comparison completed: {len(result.get('differences', []))} differences found"
@@ -23227,8 +23256,85 @@ def register():
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(f"[QEMU] Error comparing snapshots: {e}")
 
+    def save_window_state(self):
+        """Save window geometry and state to central config."""
+        from intellicrack.core.config_manager import get_config
+
+        config = get_config()
+
+        # Save window geometry
+        geometry = self.geometry()
+        config.set(
+            "ui_preferences.window_geometry",
+            {
+                "x": geometry.x(),
+                "y": geometry.y(),
+                "width": geometry.width(),
+                "height": geometry.height(),
+            },
+        )
+
+        # Save window state
+        config.set(
+            "ui_preferences.window_state",
+            {
+                "maximized": self.isMaximized(),
+                "minimized": self.isMinimized(),
+                "fullscreen": self.isFullScreen(),
+            },
+        )
+
+        # Save splitter states
+        if hasattr(self, "main_splitter"):
+            config.set("ui_preferences.splitter_states.main_splitter", self.main_splitter.sizes())
+
+        # Save toolbar visibility
+        if hasattr(self, "toolbar"):
+            config.set("ui_preferences.toolbar_positions.visible", self.toolbar.isVisible())
+
+        config.save()
+
+    def restore_window_state(self):
+        """Restore window geometry and state from central config."""
+        from intellicrack.core.config_manager import get_config
+
+        config = get_config()
+
+        # Restore window geometry if remember position is enabled
+        if config.get("ui_preferences.remember_window_position", True):
+            geometry = config.get("ui_preferences.window_geometry", {})
+            if geometry:
+                self.setGeometry(
+                    geometry.get("x", 100),
+                    geometry.get("y", 100),
+                    geometry.get("width", 1200),
+                    geometry.get("height", 800),
+                )
+
+            # Restore window state
+            window_state = config.get("ui_preferences.window_state", {})
+            if window_state.get("maximized", False):
+                self.showMaximized()
+            elif window_state.get("minimized", False):
+                self.showMinimized()
+            elif window_state.get("fullscreen", False):
+                self.showFullScreen()
+
+        # Restore splitter states
+        if hasattr(self, "main_splitter"):
+            sizes = config.get("ui_preferences.splitter_states.main_splitter", [700, 500])
+            self.main_splitter.setSizes(sizes)
+
+        # Restore toolbar visibility
+        if hasattr(self, "toolbar"):
+            visible = config.get("ui_preferences.toolbar_positions.visible", True)
+            self.toolbar.setVisible(visible)
+
     def closeEvent(self, event):
         """Handle window close event."""
+        # Save window state to config
+        self.save_window_state()
+
         # Save config including theme settings
         if hasattr(self, "config"):
             self.config["theme"] = self.current_theme
@@ -24279,259 +24385,31 @@ def register():
         elif text == "Load Ghidra Results":
             self.load_ghidra_results()
 
-    def deploy_adobe_licensex(self):
-        """Build and install the AdobeLicenseX injector with Frida hooker."""
-        self.update_output.emit("[*] Building AdobeLicenseX stealth injector...")
-
-        source_dir = os.path.join(os.path.dirname(__file__), "adobe_injector_src")
-        injector_py = os.path.join(source_dir, "adobe_full_auto_injector.py")
-        js_file = os.path.join(source_dir, "adobe_bypass.js")  # Corrected filename
-        # Use user's Documents folder instead of system directories to avoid permission issues
-        user_docs = os.path.join(os.path.expanduser("~"), "Documents", "Intellicrack")
-        install_dir = os.path.join(user_docs, "Adobe")
-        exe_path = os.path.join(install_dir, "AdobeLicenseX.exe")
-        log_path = os.path.join(install_dir, "adobe_injection.log")
-
-        self.update_output.emit(f"[*] Using installation directory: {install_dir}")
-
-        try:
-            # Create installation directory if it doesn't exist
-            os.makedirs(install_dir, exist_ok=True)
-            self.update_output.emit("✅ Installation directory created/verified")
-
-            # Copy JS file
-            try:
-                shutil.copy(js_file, install_dir)
-                self.update_output.emit("✅ Copied Adobe bypass script")
-
-                # Write installation log
-                with open(log_path, "w", encoding="utf-8") as log_file:
-                    log_file.write(f"Adobe Injection Log - {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-                    log_file.write(f"Installation directory: {install_dir}\n")
-                    log_file.write(f"Script file: {js_file}\n")
-                    log_file.write(f"Executable path: {exe_path}\n")
-
-            except (
-                AttributeError,
-                ValueError,
-                TypeError,
-                RuntimeError,
-                KeyError,
-                OSError,
-                IOError,
-            ) as copy_error:
-                logger.error(
-                    "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
-                    copy_error,
-                )
-                self.update_output.emit(f"❌ Failed to copy script file: {copy_error}")
-                return
-        except PermissionError as e:
-            logger.error("PermissionError in main_app.py: %s", e)
-            self.update_output.emit("❌ Permission denied. Try running as administrator.")
-            return
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(f"❌ Failed to create installation directory: {e}")
-            return
-
-        # Always rebuild if already exists
-        if os.path.exists(exe_path):
-            try:
-                os.remove(exe_path)
-                self.update_output.emit("⚠️ Old AdobeLicenseX.exe removed for rebuild.")
-            except (OSError, ValueError, RuntimeError) as e:
-                logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-                self.update_output.emit(f"❌ Failed to remove old EXE: {e}")
-                return
-
-        build_cmd = [
-            "pyinstaller",
-            "--onefile",
-            "--noconsole",
-            "--name",
-            "AdobeLicenseX",
-            "--add-data",
-            f"{js_file};.",
-            injector_py,
-        ]
-
-        try:
-            subprocess.run(build_cmd, cwd=source_dir, check=True)
-            built_exe = os.path.join(source_dir, "dist", "AdobeLicenseX.exe")
-            shutil.move(built_exe, exe_path)
-            self.update_output.emit("✅ AdobeLicenseX built and installed to ProgramData.")
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(f"❌ PyInstaller build failed: {e}")
-            return
-
-        try:
-            # Get startup directory dynamically
-            try:
-                from ..utils.core.path_discovery import get_system_path
-
-                startup = get_system_path("startup")
-                if not startup:
-                    raise ImportError
-            except ImportError as e:
-                logger.error("Import error in main_app.py: %s", e)
-                # Fallback
-                user = getpass.getuser()
-                startup = rf"C:\\Users\\{user}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
-
-            os.makedirs(startup, exist_ok=True)
-            shortcut_path = os.path.join(startup, "AdobeLicenseX.lnk")
-
-            shell = win32com.client.Dispatch("WScript.Shell")
-            shortcut = shell.CreateShortcut(shortcut_path)
-            shortcut.TargetPath = exe_path
-            shortcut.WorkingDirectory = install_dir
-            shortcut.WindowStyle = 7
-            shortcut.Save()
-            self.update_output.emit("✅ AdobeLicenseX added to Windows Startup.")
-            self.adobe_status_label.setText("Status: ✅ Installed")
-
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(f"❌ Failed to create startup shortcut: {e}")
-            self.adobe_status_label.setText("Status: ⚠️ Partial Install")
-
     def uninstall_adobe_licensex(self):
-        """Remove the AdobeLicenseX EXE and startup shortcut."""
-        try:
-            exe_path = r"C:\ProgramData\Microsoft\WindowsUpdate\AdobeLicenseX.exe"
-            shortcut_path = os.path.join(
-                os.environ["APPDATA"],
-                r"Microsoft\Windows\Start Menu\Programs\Startup\AdobeLicenseX.lnk",
-            )
+        """Remove AdobeLicenseX using the new compiler."""
+        if not self.adobe_compiler:
+            self.update_output.emit("❌ Adobe License Compiler not available")
+            return
 
-            if os.path.exists(exe_path):
-                os.remove(exe_path)
-                self.update_output.emit("✅ Removed AdobeLicenseX.exe")
-
-            if os.path.exists(shortcut_path):
-                os.remove(shortcut_path)
-                self.update_output.emit("✅ Removed AdobeLicenseX startup shortcut")
-
-            self.adobe_status_label.setText("Status: ❌ Not Installed")
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(f"❌ Failed to uninstall AdobeLicenseX: {e}")
-
-    def run_adobe_licensex_manually(self):
-        """Manually launch the AdobeLicenseX executable."""
-        # Use user-accessible directory instead of system folders
-        user_docs = os.path.join(os.path.expanduser("~"), "Documents", "Intellicrack")
-        install_dir = os.path.join(user_docs, "Adobe")
-        js_path = os.path.join(install_dir, "adobe_bypass.js")
+        self.update_output.emit("[*] Uninstalling AdobeLicenseX...")
+        self.adobe_uninstall_btn.setEnabled(False)
 
         try:
-            # Check if script exists
-            if os.path.exists(js_path):
-                # Run the script using Python (direct execution)
-                python_exe = sys.executable
-                cmd = [
-                    python_exe,
-                    "-c",
-                    f"import frida; import os; script_path = r'{js_path}'; script = open(script_path, 'r', encoding='utf-8').read(); sys.stdout = open(os.path.join(r'{install_dir}', 'adobe_injection.log'), 'w'); print('[*] Starting Adobe bypass...'); session = frida.attach('adobe'); session.create_script(script).load()",
-                ]
+            success, message = self.adobe_compiler.uninstall()
 
-                subprocess.Popen(cmd, creationflags=subprocess.CREATE_NO_WINDOW)
-                self.update_output.emit("✅ Adobe bypass script launched manually.")
+            if success:
+                self.update_output.emit(f"✅ {message}")
+                self.adobe_status_label.setText("Not Installed")
+                self.adobe_status_label.setStyleSheet("color: red;")
+                self.update_adobe_button_states()
             else:
-                self.update_output.emit(f"❌ Adobe bypass script not found at: {js_path}")
-                self.update_output.emit("ℹ️ Try deploying AdobeLicenseX first.")
-        except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(f"❌ Failed to launch Adobe bypass: {e}")
+                self.update_output.emit(f"❌ Uninstall failed: {message}")
 
-    def view_adobe_licensex_log(self):
-        """Open the injection log if it exists."""
-        # Use user's Documents folder for log file
-        user_docs = os.path.join(os.path.expanduser("~"), "Documents", "Intellicrack")
-        install_dir = os.path.join(user_docs, "Adobe")
-        log_path = os.path.join(install_dir, "adobe_injection.log")
-
-        self.update_output.emit(f"Looking for Adobe log at: {log_path}")
-
-        # Record log path for future reference
-        self.last_log_accessed = log_path
-
-        # Check if there's a custom log path override in config
-        if hasattr(self, "config") and "adobe_log_path" in self.config:
-            log_path = self.config["adobe_log_path"]
-            self.update_output.emit(f"Using custom log path from config: {log_path}")
-
-        try:
-            if os.path.exists(log_path):
-                # Log before opening
-                self.update_output.emit(
-                    f"✅ Found log file ({os.path.getsize(log_path)} bytes), opening..."
-                )
-
-                # Open the log file (with fallbacks for different platforms)
-                try:
-                    if hasattr(os, "startfile"):  # Windows only
-                        if hasattr(os, "startfile"):
-                            os.startfile(log_path)
-                    else:
-                        import subprocess
-
-                        subprocess.run(["open", log_path])  # macOS/Linux alternative
-                except AttributeError as e:
-                    logger.error("Attribute error in main_app.py: %s", e)
-                    try:
-                        subprocess.call(["open", log_path])  # macOS
-                    except (
-                        AttributeError,
-                        ValueError,
-                        TypeError,
-                        RuntimeError,
-                        KeyError,
-                        OSError,
-                        IOError,
-                    ) as e:
-                        logger.error(
-                            "(AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError, IOError) in main_app.py: %s",
-                            e,
-                        )
-                        subprocess.call(["xdg-open", log_path])  # Linux
-
-                # Record successful log access in history
-                if self.log_access_history is None:
-                    self.log_access_history = []
-                self.log_access_history.append(
-                    {
-                        "path": log_path,
-                        "time": time.strftime("%Y-%m-%d %H:%M:%S"),
-                        "size": os.path.getsize(log_path),
-                    }
-                )
-            else:
-                self.update_output.emit("❌ No injection log found at new location.")
-                self.update_output.emit(
-                    "ℹ️ Try deploying AdobeLicenseX first, or run it manually to generate logs."
-                )
-
-                # Try alternate locations
-                alternate_paths = [
-                    # Include original locations as fallbacks
-                    r"C:\ProgramData\Microsoft\WindowsUpdate\adobe_injection.log",
-                    os.path.join(os.environ.get("TEMP", ""), "adobe_injection.log"),
-                    os.path.join(os.environ.get("LOCALAPPDATA", ""), "adobe_injection.log"),
-                ]
-
-                for alt_path in alternate_paths:
-                    if os.path.exists(alt_path):
-                        self.update_output.emit(f"✅ Found log at alternate location: {alt_path}")
-                        if hasattr(os, "startfile"):
-                            os.startfile(alt_path)
-                        break
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            self.update_output.emit(f"❌ Failed to open log: {e}")
-            self.update_output.emit(f"Error details: {traceback.format_exc()}")
+        except Exception as e:
+            self.update_output.emit(f"❌ Uninstall error: {e}")
+            self.logger.error(f"Adobe uninstall error: {e}")
+        finally:
+            self.adobe_uninstall_btn.setEnabled(True)
 
     def run_windows_activator(self):
         """Launch the Windows Activator batch script."""
@@ -24551,42 +24429,90 @@ def register():
             self.logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
             self.update_output.emit(f"❌ Failed to launch Windows Activator: {e}")
 
-    def execute_adobe_action(self):
-        """Execute the selected Adobe action from the dropdown."""
-        selected_action = self.adobe_action_combo.currentText()
-
-        if selected_action == "-- Select Action --":
-            self.update_output.emit("⚠️ Please select an Adobe action to execute")
+    def install_adobe_licensex(self):
+        """Install AdobeLicenseX using the new compiler."""
+        if not self.adobe_compiler:
+            self.update_output.emit("❌ Adobe License Compiler not available")
             return
 
-        elif selected_action == "Deploy AdobeLicenseX":
-            self.deploy_adobe_licensex()
+        # Check Node.js first
+        if not self.adobe_compiler.check_nodejs():
+            self.update_output.emit("⚠️  Node.js not found - setup required")
 
-        elif selected_action == "Run AdobeLicenseX Manually":
-            self.run_adobe_licensex_manually()
+            # Show Node.js setup dialog
+            dialog = NodeJSSetupDialog(self)
+            if dialog.exec() != dialog.DialogCode.Accepted:
+                self.update_output.emit("❌ Node.js setup cancelled")
+                return
 
-        elif selected_action == "View Injection Log":
-            self.view_adobe_licensex_log()
+            # Verify Node.js is now available
+            if not self.adobe_compiler.check_nodejs():
+                self.update_output.emit("❌ Node.js still not available after setup")
+                return
 
-        elif selected_action == "Uninstall AdobeLicenseX":
-            self.uninstall_adobe_licensex()
+        self.update_output.emit("[*] Starting AdobeLicenseX installation...")
+        self.update_output.emit("✅ Node.js detected - proceeding with compilation...")
+        self.adobe_install_btn.setEnabled(False)
+        self.adobe_status_label.setText("Installing...")
+        self.adobe_status_label.setStyleSheet("color: orange; font-weight: bold;")
 
-        # Reset the combo box after execution
-        self.adobe_action_combo.setCurrentIndex(0)
+        try:
+            success, message = self.adobe_compiler.compile_and_deploy()
+
+            if success:
+                self.update_output.emit(f"✅ {message}")
+                self.adobe_status_label.setText("Installed & Running")
+                self.adobe_status_label.setStyleSheet("color: green; font-weight: bold;")
+                self.update_adobe_button_states()
+            else:
+                # Reset status on failure
+                self.adobe_status_label.setText("Not Installed")
+                self.adobe_status_label.setStyleSheet("color: red;")
+
+                # Provide specific guidance for common failure cases
+                if "npm packages" in message:
+                    self.update_output.emit("❌ npm package installation failed")
+                    self.update_output.emit("📋 Possible solutions:")
+                    self.update_output.emit("   1. Check internet connection")
+                    self.update_output.emit("   2. Run as administrator")
+                    self.update_output.emit("   3. Clear npm cache: npm cache clean --force")
+                else:
+                    self.update_output.emit(f"❌ Installation failed: {message}")
+
+        except Exception as e:
+            # Reset status on error
+            self.adobe_status_label.setText("Not Installed")
+            self.adobe_status_label.setStyleSheet("color: red;")
+            self.update_output.emit(f"❌ Installation error: {e}")
+            self.logger.error(f"Adobe installation error: {e}")
+        finally:
+            self.adobe_install_btn.setEnabled(True)
+
+    def update_adobe_button_states(self):
+        """Update Adobe button states based on installation status."""
+        if not self.adobe_compiler:
+            return
+
+        is_installed = self.adobe_compiler.is_installed()
+        is_running = self.adobe_compiler.is_running()
+
+        self.adobe_install_btn.setEnabled(not is_installed)
+        self.adobe_uninstall_btn.setEnabled(is_installed)
+
+        if is_installed:
+            if is_running:
+                self.adobe_status_label.setText("Installed & Running")
+                self.adobe_status_label.setStyleSheet("color: green; font-weight: bold;")
+            else:
+                self.adobe_status_label.setText("Installed (Not Running)")
+                self.adobe_status_label.setStyleSheet("color: orange; font-weight: bold;")
+        else:
+            self.adobe_status_label.setText("Not Installed")
+            self.adobe_status_label.setStyleSheet("color: red;")
 
     def check_adobe_licensex_status(self):
-        """Check if AdobeLicenseX is installed and update label."""
-        # Use user-accessible directory instead of system folders
-        user_docs = os.path.join(os.path.expanduser("~"), "Documents", "Intellicrack")
-        install_dir = os.path.join(user_docs, "Adobe")
-        js_path = os.path.join(install_dir, "adobe_bypass.js")
-
-        # Check if installation directory and script file exist
-        if hasattr(self, "adobe_status_label"):
-            if os.path.exists(install_dir) and os.path.exists(js_path):
-                self.adobe_status_label.setText("Status: ✅ Installed")
-            else:
-                self.adobe_status_label.setText("Status: ❌ Not Installed")
+        """Check if AdobeLicenseX is installed and update UI accordingly."""
+        self.update_adobe_button_states()
 
     def setup_assistant_tab(self):
         """Sets up the Assistant tab with improved UI."""
@@ -31114,13 +31040,14 @@ Focus on:
 
     def export_analysis_results(self):
         """Exports the current analysis results to a file using AnalysisExporter for multi-format support."""
-        from ..utils.analysis.analysis_exporter import AnalysisExporter
         import json
         from datetime import datetime
-        
+
+        from ..utils.analysis.analysis_exporter import AnalysisExporter
+
         # Prepare analysis results data
         analysis_data = {}
-        
+
         # Check if we have structured analysis results
         if hasattr(self, "analyze_results") and self.analyze_results:
             if isinstance(self.analyze_results, dict):
@@ -31130,19 +31057,19 @@ Focus on:
                 analysis_data = {
                     "results": self.analyze_results,
                     "timestamp": datetime.now().isoformat(),
-                    "analysis_type": "generic"
+                    "analysis_type": "generic",
                 }
             else:
                 # Convert plain text to structured dict
                 analysis_data = {
                     "raw_output": str(self.analyze_results),
                     "timestamp": datetime.now().isoformat(),
-                    "analysis_type": "generic"
+                    "analysis_type": "generic",
                 }
         elif hasattr(self, "analyze_results_widget") and self.analyze_results_widget:
             # Extract text from widget and structure it
             results_text = self.analyze_results_widget.toPlainText()
-            
+
             # Try to parse as JSON first
             try:
                 analysis_data = json.loads(results_text)
@@ -31151,16 +31078,18 @@ Focus on:
                 analysis_data = {
                     "raw_output": results_text,
                     "timestamp": datetime.now().isoformat(),
-                    "analysis_type": "generic"
+                    "analysis_type": "generic",
                 }
         else:
             QMessageBox.warning(self, "No Results", "No analysis results to export.")
             return
 
         # Ensure we have data to export
-        if not analysis_data or (isinstance(analysis_data, dict) and 
-                                 "raw_output" in analysis_data and 
-                                 not analysis_data["raw_output"].strip()):
+        if not analysis_data or (
+            isinstance(analysis_data, dict)
+            and "raw_output" in analysis_data
+            and not analysis_data["raw_output"].strip()
+        ):
             QMessageBox.warning(self, "No Results", "No analysis results to export.")
             return
 
@@ -31172,22 +31101,19 @@ Focus on:
             "Text Files (*.txt);;"
             "All Files (*)"
         )
-        
+
         # Default filename with timestamp
         default_filename = f"analysis_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
+
         path, selected_filter = QFileDialog.getSaveFileName(
-            self,
-            "Export Analysis Results",
-            default_filename,
-            file_filter
+            self, "Export Analysis Results", default_filename, file_filter
         )
 
         if path:
             try:
                 # Determine export format from selected filter or file extension
                 export_format = "text"  # Default
-                
+
                 if "JSON" in selected_filter or path.lower().endswith(".json"):
                     export_format = "json"
                     if not path.endswith(".json"):
@@ -31204,7 +31130,7 @@ Focus on:
                     export_format = "text"
                     if not path.endswith(".txt"):
                         path += ".txt"
-                
+
                 # Determine analysis type from context
                 analysis_type = "generic"
                 if hasattr(self, "current_analysis_type"):
@@ -31213,31 +31139,33 @@ Focus on:
                     analysis_type = "vulnerability"
                 elif "binary_diff" in analysis_data or "differences" in analysis_data:
                     analysis_type = "binary_diff"
-                
+
                 # Export using AnalysisExporter
                 success = AnalysisExporter.export_analysis(
                     result=analysis_data,
                     output_file=path,
                     format=export_format,
-                    analysis_type=analysis_type
+                    analysis_type=analysis_type,
                 )
-                
+
                 if success:
                     self.update_output.emit(
-                        log_message(f"[Export] Analysis results exported to {path} ({export_format.upper()} format)")
+                        log_message(
+                            f"[Export] Analysis results exported to {path} ({export_format.upper()} format)"
+                        )
                     )
                     QMessageBox.information(
                         self,
                         "Export Successful",
-                        f"Analysis results successfully exported to:\n{path}"
+                        f"Analysis results successfully exported to:\n{path}",
                     )
                 else:
                     QMessageBox.warning(
                         self,
                         "Export Warning",
-                        f"Export completed with warnings. Check the file: {path}"
+                        f"Export completed with warnings. Check the file: {path}",
                     )
-                    
+
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
                 self.update_output.emit(log_message(f"[Export] Error exporting results: {e}"))
@@ -34810,6 +34738,15 @@ To configure LLMs, set the appropriate environment variables and restart Intelli
 
             QMessageBox.information(self, "LLM Configuration", config_text)
             self.update_output.emit(log_message("[LLM] Configuration dialog shown"))
+
+    def _open_vm_manager(self):
+        """Open VM Manager dialog."""
+        try:
+            dialog = VMManagerDialog(self)
+            dialog.exec()
+        except Exception as e:
+            self.logger.error(f"Error opening VM Manager dialog: {e}")
+            QMessageBox.critical(self, "VM Manager Error", f"Failed to open VM Manager: {e}")
 
 
 # -------------------------------

@@ -585,37 +585,45 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             logger.warning("pefile not available, using fallback import hash calculation")
             # Fallback implementation that analyzes PE structure manually
             return self._calculate_import_hash_manual(file_path)
-        
+
         try:
             pe = pefile.PE(file_path)
-            
+
             # Calculate standard imphash
             imphash = pe.get_imphash()
-            
+
             # Calculate sorted imphash for comparison
             import_list = []
-            if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = entry.dll.decode('utf-8').lower() if isinstance(entry.dll, bytes) else entry.dll.lower()
+                    dll_name = (
+                        entry.dll.decode("utf-8").lower()
+                        if isinstance(entry.dll, bytes)
+                        else entry.dll.lower()
+                    )
                     for imp in entry.imports:
                         if imp.name:
-                            func_name = imp.name.decode('utf-8') if isinstance(imp.name, bytes) else imp.name
+                            func_name = (
+                                imp.name.decode("utf-8")
+                                if isinstance(imp.name, bytes)
+                                else imp.name
+                            )
                             import_list.append(f"{dll_name}.{func_name}")
-            
+
             # Create sorted imphash
             sorted_imports = sorted(import_list)
-            sorted_string = ','.join(sorted_imports)
+            sorted_string = ",".join(sorted_imports)
             import_hash_sorted = hashlib.md5(sorted_string.encode()).hexdigest()
-            
+
             # Calculate Rich header hash if present
             rich_header_hash = None
-            if hasattr(pe, 'RICH_HEADER') and pe.RICH_HEADER:
+            if hasattr(pe, "RICH_HEADER") and pe.RICH_HEADER:
                 # Hash the Rich header data
                 rich_data = pe.get_data(pe.RICH_HEADER.start_offset, pe.RICH_HEADER.sizeof())
                 rich_header_hash = hashlib.sha256(rich_data).hexdigest()
-            
+
             pe.close()
-            
+
             return ImportHash(
                 imphash=imphash,
                 imphash_sorted=import_hash_sorted,
@@ -625,75 +633,87 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             logger.error(f"Error calculating import hash with pefile: {e}")
             # Try manual fallback
             return self._calculate_import_hash_manual(file_path)
-    
+
     def _calculate_import_hash_manual(self, file_path: str) -> ImportHash | None:
         """Manual PE import hash calculation without pefile library"""
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
-            
+
             # Check for MZ header
-            if len(data) < 2 or data[:2] != b'MZ':
+            if len(data) < 2 or data[:2] != b"MZ":
                 return None
-            
+
             # Get PE header offset
-            pe_offset = int.from_bytes(data[0x3C:0x40], 'little')
-            if pe_offset + 4 > len(data) or data[pe_offset:pe_offset+4] != b'PE\x00\x00':
+            pe_offset = int.from_bytes(data[0x3C:0x40], "little")
+            if pe_offset + 4 > len(data) or data[pe_offset : pe_offset + 4] != b"PE\x00\x00":
                 return None
-            
+
             # Parse PE header to find import directory
-            machine = int.from_bytes(data[pe_offset+4:pe_offset+6], 'little')
+            machine = int.from_bytes(data[pe_offset + 4 : pe_offset + 6], "little")
             optional_header_offset = pe_offset + 24
-            
+
             # Determine if PE32 or PE32+
-            magic = int.from_bytes(data[optional_header_offset:optional_header_offset+2], 'little')
-            is_pe32plus = (magic == 0x20b)
-            
+            magic = int.from_bytes(
+                data[optional_header_offset : optional_header_offset + 2], "little"
+            )
+            is_pe32plus = magic == 0x20B
+
             # Get import directory RVA
             if is_pe32plus:
                 import_dir_offset = optional_header_offset + 112
             else:
                 import_dir_offset = optional_header_offset + 104
-            
+
             if import_dir_offset + 8 > len(data):
                 return None
-            
-            import_rva = int.from_bytes(data[import_dir_offset:import_dir_offset+4], 'little')
-            import_size = int.from_bytes(data[import_dir_offset+4:import_dir_offset+8], 'little')
-            
+
+            import_rva = int.from_bytes(data[import_dir_offset : import_dir_offset + 4], "little")
+            import_size = int.from_bytes(
+                data[import_dir_offset + 4 : import_dir_offset + 8], "little"
+            )
+
             # Build import string for hashing
             import_strings = []
             if import_rva > 0 and import_size > 0:
                 # This is a simplified version - real implementation would need RVA to file offset conversion
                 # and proper import descriptor parsing
-                
+
                 # Extract strings from import section area
                 import_area_start = min(import_rva, len(data) - 1000)
-                import_area = data[import_area_start:import_area_start+10000]
-                
+                import_area = data[import_area_start : import_area_start + 10000]
+
                 # Look for common DLL names and function names
-                common_dlls = [b'kernel32.dll', b'user32.dll', b'ntdll.dll', b'advapi32.dll', 
-                              b'shell32.dll', b'ole32.dll', b'oleaut32.dll', b'ws2_32.dll']
-                
+                common_dlls = [
+                    b"kernel32.dll",
+                    b"user32.dll",
+                    b"ntdll.dll",
+                    b"advapi32.dll",
+                    b"shell32.dll",
+                    b"ole32.dll",
+                    b"oleaut32.dll",
+                    b"ws2_32.dll",
+                ]
+
                 for dll in common_dlls:
                     if dll in import_area:
-                        dll_name = dll.decode('utf-8', errors='ignore').lower()
+                        dll_name = dll.decode("utf-8", errors="ignore").lower()
                         import_strings.append(dll_name)
-            
+
             # Generate hash from whatever imports we found
             if import_strings:
-                import_string = ','.join(import_strings)
+                import_string = ",".join(import_strings)
                 imphash = hashlib.md5(import_string.encode()).hexdigest()
             else:
                 # Fallback to hashing first 4KB of file if no imports found
                 imphash = hashlib.md5(data[:4096]).hexdigest()
-            
+
             return ImportHash(
                 imphash=imphash,
                 imphash_sorted=imphash,
                 rich_header_hash=None,
             )
-            
+
         except Exception as e:
             logger.error(f"Error in manual import hash calculation: {e}")
             return None
@@ -703,6 +723,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         # Try ssdeep first
         try:
             import ssdeep
+
             with open(file_path, "rb") as f:
                 file_data = f.read()
             return ssdeep.hash(file_data)
@@ -710,10 +731,11 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             logger.debug("ssdeep not available, trying TLSH")
         except Exception as e:
             logger.error(f"Error calculating ssdeep hash: {e}")
-        
+
         # Try TLSH as alternative
         try:
             import tlsh
+
             with open(file_path, "rb") as f:
                 file_data = f.read()
             # TLSH requires at least 50 bytes of data
@@ -725,47 +747,47 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             logger.debug("TLSH not available, using custom fuzzy hash")
         except Exception as e:
             logger.error(f"Error calculating TLSH hash: {e}")
-        
+
         # Fallback: Custom rolling hash implementation for similarity
         try:
             return self._calculate_custom_fuzzy_hash(file_path)
         except Exception as e:
             logger.error(f"Error calculating custom fuzzy hash: {e}")
             return None
-    
+
     def _calculate_custom_fuzzy_hash(self, file_path: str) -> str:
         """Custom fuzzy hash implementation using rolling hash and context triggering"""
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
-            
+
             if len(data) == 0:
                 return "0::"
-            
+
             # Determine block size based on file size
             file_size = len(data)
             block_size = 3
             while block_size * 64 < file_size:
                 block_size *= 2
-            
+
             # Calculate rolling hash using Adler-32 style algorithm
             window_size = 7  # Rolling window size
             threshold = block_size * 64
-            
+
             # Build hash signatures
             hash_string = []
             block_hash = 0
             window_data = bytearray(window_size)
-            
+
             for i in range(len(data)):
                 # Update rolling window
                 window_data[i % window_size] = data[i]
-                
+
                 # Calculate rolling hash
                 if i >= window_size - 1:
                     # Simple rolling hash: sum of bytes in window
                     window_hash = sum(window_data)
-                    
+
                     # Check if we hit a reset point
                     if window_hash % threshold == threshold - 1:
                         # Generate block signature
@@ -775,52 +797,52 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                             sig = 0
                             for j, byte in enumerate(block_data[:64]):  # Use first 64 bytes max
                                 sig = (sig + byte * (j + 1)) % 256
-                            
+
                             # Convert to base64-like character
                             if sig < 26:
-                                hash_char = chr(ord('A') + sig)
+                                hash_char = chr(ord("A") + sig)
                             elif sig < 52:
-                                hash_char = chr(ord('a') + sig - 26)
+                                hash_char = chr(ord("a") + sig - 26)
                             elif sig < 62:
-                                hash_char = chr(ord('0') + sig - 52)
+                                hash_char = chr(ord("0") + sig - 52)
                             elif sig == 62:
-                                hash_char = '+'
+                                hash_char = "+"
                             else:
-                                hash_char = '/'
-                            
+                                hash_char = "/"
+
                             hash_string.append(hash_char)
                             block_hash = i
-            
+
             # Generate final block signature if needed
             if block_hash < len(data) - window_size:
                 remaining_data = data[block_hash:]
                 sig = 0
                 for j, byte in enumerate(remaining_data[:64]):
                     sig = (sig + byte * (j + 1)) % 256
-                
+
                 if sig < 26:
-                    hash_char = chr(ord('A') + sig)
+                    hash_char = chr(ord("A") + sig)
                 elif sig < 52:
-                    hash_char = chr(ord('a') + sig - 26)
+                    hash_char = chr(ord("a") + sig - 26)
                 elif sig < 62:
-                    hash_char = chr(ord('0') + sig - 52)
+                    hash_char = chr(ord("0") + sig - 52)
                 elif sig == 62:
-                    hash_char = '+'
+                    hash_char = "+"
                 else:
-                    hash_char = '/'
-                
+                    hash_char = "/"
+
                 hash_string.append(hash_char)
-            
+
             # Format: blocksize:hash1:hash2
             # Where hash1 is the main hash and hash2 is a doubled block size hash
-            main_hash = ''.join(hash_string[:64]) if hash_string else ''
-            
+            main_hash = "".join(hash_string[:64]) if hash_string else ""
+
             # Calculate second hash with doubled block size
             double_block_size = block_size * 2
             double_threshold = double_block_size * 64
             hash_string_2 = []
             block_hash = 0
-            
+
             for i in range(len(data)):
                 window_data[i % window_size] = data[i]
                 if i >= window_size - 1:
@@ -831,26 +853,26 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                             sig = 0
                             for j, byte in enumerate(block_data[:64]):
                                 sig = (sig + byte * (j + 1)) % 256
-                            
+
                             if sig < 26:
-                                hash_char = chr(ord('A') + sig)
+                                hash_char = chr(ord("A") + sig)
                             elif sig < 52:
-                                hash_char = chr(ord('a') + sig - 26)
+                                hash_char = chr(ord("a") + sig - 26)
                             elif sig < 62:
-                                hash_char = chr(ord('0') + sig - 52)
+                                hash_char = chr(ord("0") + sig - 52)
                             elif sig == 62:
-                                hash_char = '+'
+                                hash_char = "+"
                             else:
-                                hash_char = '/'
-                            
+                                hash_char = "/"
+
                             hash_string_2.append(hash_char)
                             block_hash = i
-            
-            secondary_hash = ''.join(hash_string_2[:64]) if hash_string_2 else ''
-            
+
+            secondary_hash = "".join(hash_string_2[:64]) if hash_string_2 else ""
+
             # Return formatted fuzzy hash
             return f"{block_size}:{main_hash}:{secondary_hash}"
-            
+
         except Exception as e:
             logger.error(f"Error in custom fuzzy hash calculation: {e}")
             # Last resort: return a simple hash
@@ -966,14 +988,14 @@ function detect(bShowType, bShowVersion, bShowOptions)
 
         """
         yara_rules = []
-        
+
         # Generate main detection rule
         main_rule_name = Path(analysis.file_path).stem.replace(" ", "_").replace("-", "_")
-        
+
         # Build comprehensive strings section
         strings_section = []
         conditions_list = []
-        
+
         # Add file format specific patterns
         if "PE" in analysis.file_type:
             strings_section.append("        $mz = { 4D 5A }  // MZ header")
@@ -982,39 +1004,41 @@ function detect(bShowType, bShowVersion, bShowOptions)
         elif "ELF" in analysis.file_type:
             strings_section.append("        $elf = { 7F 45 4C 46 }  // ELF header")
             conditions_list.append("$elf at 0")
-        
+
         # Add protection-specific patterns based on detections
         for idx, detection in enumerate(analysis.detections):
             detection_strings = self._generate_detection_patterns(detection)
             for pattern in detection_strings:
                 strings_section.append(f"        {pattern}")
-            
+
             # Add detection-specific conditions
             if detection.type == ProtectionType.PACKER:
                 conditions_list.append(f"// Packer detection: {detection.name}")
             elif detection.type == ProtectionType.PROTECTOR:
                 conditions_list.append(f"// Protector detection: {detection.name}")
-        
+
         # Add suspicious strings if found
         if analysis.suspicious_strings:
             for idx, sus_string in enumerate(analysis.suspicious_strings[:10]):  # Limit to 10
                 # Escape special characters in string
                 escaped_string = sus_string.value.replace("\\", "\\\\").replace('"', '\\"')
                 strings_section.append(f'        $sus_str_{idx} = "{escaped_string}" nocase')
-                conditions_list.append(f"any of ($sus_str_*)")
-        
+                conditions_list.append("any of ($sus_str_*)")
+
         # Add entropy-based detection
         if analysis.entropy_info:
             high_entropy_sections = [e for e in analysis.entropy_info if e.entropy > 7.0]
             if high_entropy_sections:
                 strings_section.append("        // High entropy sections detected")
                 for section in high_entropy_sections[:3]:  # Limit to 3
-                    strings_section.append(f'        // Section {section.section_name}: entropy={section.entropy:.2f}')
-        
+                    strings_section.append(
+                        f"        // Section {section.section_name}: entropy={section.entropy:.2f}"
+                    )
+
         # Add import hash if available
         if analysis.import_hash:
-            strings_section.append(f'        // Import hash: {analysis.import_hash.imphash}')
-        
+            strings_section.append(f"        // Import hash: {analysis.import_hash.imphash}")
+
         # Generate main rule
         main_rule = f"""
 import "pe"
@@ -1029,23 +1053,23 @@ rule {main_rule_name}_Protection_Detection {{
         is_protected = {str(analysis.is_protected).lower()}
         detections_count = {len(analysis.detections)}
         generated_by = "Intellicrack Advanced Protection Analysis"
-        
+
     strings:
 {chr(10).join(strings_section) if strings_section else '        // No specific strings patterns'}
-        
+
     condition:
         {' and '.join(conditions_list[:3]) if conditions_list else 'uint32(0) == 0x00'}
 }}"""
-        
+
         yara_rules.append(main_rule)
-        
+
         # Generate individual rules for each detection
         for detection in analysis.detections:
             rule_name = detection.name.replace(" ", "_").replace("-", "_").replace(".", "_")
-            
+
             # Generate detection-specific patterns
             detection_patterns = self._generate_detection_patterns(detection)
-            
+
             # Build detection-specific rule
             detection_rule = f"""
 rule {rule_name}_Specific {{
@@ -1054,69 +1078,81 @@ rule {rule_name}_Specific {{
         type = "{detection.type.value}"
         confidence = {detection.confidence}
         version = "{detection.version if detection.version else 'unknown'}"
-        
+
     strings:
 {chr(10).join(['        ' + p for p in detection_patterns]) if detection_patterns else '        // Detection-specific patterns'}
-        
+
     condition:
         {self._generate_detection_condition(detection)}
 }}"""
-            
+
             yara_rules.append(detection_rule)
-        
+
         # Generate heuristic detection rules if available
         if analysis.heuristic_detections:
             heuristic_rule = self._generate_heuristic_yara_rule(analysis.heuristic_detections)
             yara_rules.append(heuristic_rule)
-        
+
         return "\n".join(yara_rules)
-    
+
     def _generate_detection_patterns(self, detection: DetectionResult) -> list[str]:
         """Generate YARA patterns for specific detection"""
         patterns = []
-        
+
         # Common packer/protector patterns
         packer_patterns = {
-            "UPX": ["$upx1 = { 55 50 58 21 }  // UPX signature", 
-                   "$upx2 = { 55 50 58 30 }  // UPX0 section"],
+            "UPX": [
+                "$upx1 = { 55 50 58 21 }  // UPX signature",
+                "$upx2 = { 55 50 58 30 }  // UPX0 section",
+            ],
             "ASPack": ["$aspack = { 60 E8 00 00 00 00 5D 81 ED }  // ASPack entry"],
             "PECompact": ["$pecompact = { 50 45 43 6F 6D 70 61 63 74 }  // PECompact"],
-            "Themida": ["$themida1 = { 8B C5 8B D4 60 E8 00 00 00 00 }  // Themida",
-                       "$themida2 = { B8 ?? ?? ?? ?? 60 0B C0 74 }"],
-            "VMProtect": ["$vmp1 = { 68 ?? ?? ?? ?? E9 ?? ?? ?? ?? }  // VMProtect",
-                         "$vmp2 = { 9C 60 68 00 00 00 00 8B 74 24 }"],
+            "Themida": [
+                "$themida1 = { 8B C5 8B D4 60 E8 00 00 00 00 }  // Themida",
+                "$themida2 = { B8 ?? ?? ?? ?? 60 0B C0 74 }",
+            ],
+            "VMProtect": [
+                "$vmp1 = { 68 ?? ?? ?? ?? E9 ?? ?? ?? ?? }  // VMProtect",
+                "$vmp2 = { 9C 60 68 00 00 00 00 8B 74 24 }",
+            ],
             "Obsidium": ["$obsidium = { EB 02 ?? ?? E8 25 00 00 00 }  // Obsidium"],
             "Armadillo": ["$armadillo = { 60 E8 00 00 00 00 5D 50 51 }  // Armadillo"],
         }
-        
+
         # Check if detection name matches known patterns
         for packer_name, packer_sigs in packer_patterns.items():
             if packer_name.lower() in detection.name.lower():
                 patterns.extend(packer_sigs)
                 break
-        
+
         # Add generic patterns if no specific match
         if not patterns:
             if detection.type == ProtectionType.PACKER:
-                patterns.append("$generic_packer = { [4-8] E8 ?? ?? ?? ?? [4-8] }  // Generic packer pattern")
+                patterns.append(
+                    "$generic_packer = { [4-8] E8 ?? ?? ?? ?? [4-8] }  // Generic packer pattern"
+                )
             elif detection.type == ProtectionType.PROTECTOR:
                 patterns.append("$anti_debug = { 64 A1 30 00 00 00 }  // Check PEB for debugging")
                 patterns.append("$is_debugger = { FF 15 ?? ?? ?? ?? 85 C0 }  // IsDebuggerPresent")
             elif detection.type == ProtectionType.OBFUSCATOR:
-                patterns.append("$obfuscated = { [10-20] ( E9 | E8 | EB ) ?? ?? ?? ?? }  // Jump obfuscation")
+                patterns.append(
+                    "$obfuscated = { [10-20] ( E9 | E8 | EB ) ?? ?? ?? ?? }  // Jump obfuscation"
+                )
             elif detection.type == ProtectionType.CRYPTOR:
-                patterns.append("$xor_loop = { 80 34 ?? ?? 40 3D ?? ?? ?? ?? }  // XOR decryption loop")
-        
+                patterns.append(
+                    "$xor_loop = { 80 34 ?? ?? 40 3D ?? ?? ?? ?? }  // XOR decryption loop"
+                )
+
         return patterns
-    
+
     def _generate_detection_condition(self, detection: DetectionResult) -> str:
         """Generate YARA condition for specific detection"""
         base_conditions = []
-        
+
         # File type conditions
         if detection.type in [ProtectionType.PACKER, ProtectionType.PROTECTOR]:
             base_conditions.append("(uint16(0) == 0x5A4D or uint32(0) == 0x464c457f)")
-        
+
         # Pattern matching conditions
         if detection.confidence >= 90:
             base_conditions.append("all of them")
@@ -1124,21 +1160,24 @@ rule {rule_name}_Specific {{
             base_conditions.append("any of them")
         else:
             base_conditions.append("1 of them")
-        
+
         # File size conditions for certain protections
         if detection.type == ProtectionType.PACKER:
             base_conditions.append("filesize < 10MB")
-        
+
         return " and ".join(base_conditions) if base_conditions else "any of them"
-    
+
     def _generate_heuristic_yara_rule(self, heuristic_detections: list[DetectionResult]) -> str:
         """Generate YARA rule for heuristic detections"""
-        rule = """
+        rule = (
+            """
 rule Heuristic_Protection_Detection {
     meta:
         description = "Heuristic detection patterns"
-        detection_count = """ + str(len(heuristic_detections)) + """
-        
+        detection_count = """
+            + str(len(heuristic_detections))
+            + """
+
     strings:
         // Anti-debugging techniques
         $anti_dbg1 = { 64 A1 30 00 00 00 }  // PEB access
@@ -1146,24 +1185,25 @@ rule Heuristic_Protection_Detection {
         $anti_dbg3 = "IsDebuggerPresent"
         $anti_dbg4 = "CheckRemoteDebuggerPresent"
         $anti_dbg5 = "NtQueryInformationProcess"
-        
+
         // Anti-VM techniques
         $anti_vm1 = "VMware"
         $anti_vm2 = "VirtualBox"
         $anti_vm3 = "QEMU"
         $anti_vm4 = { 0F 3F 07 0B }  // SIDT instruction
-        
+
         // Suspicious API combinations
         $api1 = "VirtualProtect"
         $api2 = "VirtualAlloc"
         $api3 = "WriteProcessMemory"
         $api4 = "CreateRemoteThread"
-        
+
     condition:
-        2 of ($anti_dbg*) or 
-        2 of ($anti_vm*) or 
+        2 of ($anti_dbg*) or
+        2 of ($anti_vm*) or
         3 of ($api*)
 }"""
+        )
         return rule
 
     def get_format_capabilities(self, file_path: str) -> dict[str, bool]:

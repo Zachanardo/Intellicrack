@@ -22,10 +22,11 @@ import os
 import subprocess
 from typing import Any
 
-from PyQt6.QtCore import QObject, QSettings, pyqtSignal
+from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QDialog, QMessageBox
 
 from ...utils.logger import get_logger
+from ..config_manager import get_config
 
 """Central script execution manager with QEMU testing options."""
 
@@ -53,7 +54,7 @@ class ScriptExecutionManager(QObject):
         self.script_queue = []
         self.logger = get_logger(__name__)
         self.max_concurrent_scripts = 5
-        self.settings = QSettings()
+        self.config = get_config()
         self.qemu_manager = None
         self.QEMUTestDialog = None
         self.QEMUTestResultsDialog = None
@@ -61,11 +62,11 @@ class ScriptExecutionManager(QObject):
 
     def _initialize_managers(self):
         try:
-            from intellicrack.ai.qemu_test_manager_enhanced import EnhancedQEMUTestManager
+            from intellicrack.ai.qemu_manager import QEMUManager as EnhancedQEMUManager
             from intellicrack.ui.dialogs.qemu_test_dialog import QEMUTestDialog
             from intellicrack.ui.dialogs.qemu_test_results_dialog import QEMUTestResultsDialog
 
-            self.qemu_manager = EnhancedQEMUTestManager()
+            self.qemu_manager = EnhancedQEMUManager()
             self.QEMUTestDialog = QEMUTestDialog
             self.QEMUTestResultsDialog = QEMUTestResultsDialog
         except ImportError as e:
@@ -160,13 +161,12 @@ class ScriptExecutionManager(QObject):
 
         # Check saved preferences
         # First check general preference from preferences dialog
-        general_pref = self.settings.value("execution/qemu_preference", "ask")
+        general_pref = self.config.get("qemu_testing.default_preference", "ask")
         if general_pref in ["always", "never"]:
             return False  # Don't ask, use general preference
 
         # Then check script-specific preference
-        pref_key = f"qemu_preference_{script_type}"
-        saved_pref = self.settings.value(pref_key, "ask")
+        saved_pref = self.config.get(f"qemu_testing.script_type_preferences.{script_type}", "ask")
 
         if saved_pref in ["always", "never"]:
             return False  # Don't ask, use saved preference
@@ -183,22 +183,20 @@ class ScriptExecutionManager(QObject):
             return True
 
         # Check general preference first
-        general_pref = self.settings.value("execution/qemu_preference", "ask")
+        general_pref = self.config.get("qemu_testing.default_preference", "ask")
         if general_pref == "always":
             return True
         if general_pref == "never":
             return False
 
         # Then check script-specific preference
-        pref_key = f"qemu_preference_{script_type}"
-        saved_pref = self.settings.value(pref_key, "ask")
+        saved_pref = self.config.get(f"qemu_testing.script_type_preferences.{script_type}", "ask")
 
         return saved_pref == "always"
 
     def _is_trusted_binary(self, binary_path: str) -> bool:
         """Check if a binary is in the trusted list."""
-        trusted_list_key = "trusted_binaries"
-        trusted_binaries = self.settings.value(trusted_list_key, [])
+        trusted_binaries = self.config.get("qemu_testing.trusted_binaries", [])
 
         if not isinstance(trusted_binaries, list):
             trusted_binaries = []
@@ -567,42 +565,35 @@ class ScriptExecutionManager(QObject):
 
     def _save_qemu_preference(self, preference: str, script_type: str):
         """Save QEMU testing preference."""
-        pref_key = f"qemu_preference_{script_type}"
-        self.settings.setValue(pref_key, preference)
-        self.settings.sync()
+        self.config.set(f"qemu_testing.script_type_preferences.{script_type}", preference)
 
     def add_trusted_binary(self, binary_path: str):
         """Add binary to trusted list."""
         binary_path = os.path.abspath(binary_path)
-        trusted_list_key = "trusted_binaries"
-        trusted_binaries = self.settings.value(trusted_list_key, [])
+        trusted_binaries = self.config.get("qemu_testing.trusted_binaries", [])
 
         if not isinstance(trusted_binaries, list):
             trusted_binaries = []
 
         if binary_path not in trusted_binaries:
             trusted_binaries.append(binary_path)
-            self.settings.setValue(trusted_list_key, trusted_binaries)
-            self.settings.sync()
+            self.config.set("qemu_testing.trusted_binaries", trusted_binaries)
 
     def remove_trusted_binary(self, binary_path: str):
         """Remove binary from trusted list."""
         binary_path = os.path.abspath(binary_path)
-        trusted_list_key = "trusted_binaries"
-        trusted_binaries = self.settings.value(trusted_list_key, [])
+        trusted_binaries = self.config.get("qemu_testing.trusted_binaries", [])
 
         if not isinstance(trusted_binaries, list):
             trusted_binaries = []
 
         if binary_path in trusted_binaries:
             trusted_binaries.remove(binary_path)
-            self.settings.setValue(trusted_list_key, trusted_binaries)
-            self.settings.sync()
+            self.config.set("qemu_testing.trusted_binaries", trusted_binaries)
 
     def get_execution_history(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get recent execution history."""
-        history_key = "execution_history"
-        history = self.settings.value(history_key, [])
+        history = self.config.get("qemu_testing.execution_history", [])
 
         if not isinstance(history, list):
             history = []
@@ -613,8 +604,7 @@ class ScriptExecutionManager(QObject):
         self, script_type: str, target_binary: str, success: bool, timestamp: datetime.datetime
     ):
         """Add execution to history."""
-        history_key = "execution_history"
-        history = self.settings.value(history_key, [])
+        history = self.config.get("qemu_testing.execution_history", [])
 
         if not isinstance(history, list):
             history = []
@@ -631,5 +621,4 @@ class ScriptExecutionManager(QObject):
         # Keep only last 100 entries
         history = history[:100]
 
-        self.settings.setValue(history_key, history)
-        self.settings.sync()
+        self.config.set("qemu_testing.execution_history", history)

@@ -10,12 +10,13 @@ This guide provides comprehensive information for developers working with, exten
 2. [Architecture and Design Patterns](#architecture-and-design-patterns)
 3. [Plugin Development](#plugin-development)
 4. [API Integration](#api-integration)
-5. [Testing Framework](#testing-framework)
-6. [Code Quality and Standards](#code-quality-and-standards)
-7. [Contribution Guidelines](#contribution-guidelines)
-8. [Performance Optimization](#performance-optimization)
-9. [Security Development Practices](#security-development-practices)
-10. [Deployment and Distribution](#deployment-and-distribution)
+5. [VM Framework and Binary Emulation](#vm-framework-and-binary-emulation)
+6. [Testing Framework](#testing-framework)
+7. [Code Quality and Standards](#code-quality-and-standards)
+8. [Contribution Guidelines](#contribution-guidelines)
+9. [Performance Optimization](#performance-optimization)
+10. [Security Development Practices](#security-development-practices)
+11. [Deployment and Distribution](#deployment-and-distribution)
 
 ## Development Environment Setup
 
@@ -967,6 +968,540 @@ def handle_subscribe_analysis(data):
     else:
         emit('error', {'message': 'Access denied'})
 ```
+
+## VM Framework and Binary Emulation
+
+### Overview
+
+The VM Framework provides comprehensive virtual machine management and binary emulation capabilities for controlled security research and analysis. It integrates QEMU for full system emulation and Qiling for lightweight binary-level emulation, enabling safe testing and modification of binaries in isolated environments.
+
+### Architecture Components
+
+#### 1. QEMUManager Architecture
+
+The `QEMUManager` (located in `intellicrack/ai/qemu_manager.py`) serves as the central controller for all VM operations:
+
+```python
+from intellicrack.ai.qemu_manager import QEMUManager
+
+class QEMUManager:
+    """Unified QEMU VM management and orchestration.
+
+    Responsibilities:
+    - VM lifecycle management (create, start, stop, delete)
+    - SSH connection pooling with circuit breaker pattern
+    - SFTP file transfer for binary upload/download
+    - Snapshot management for testing isolation
+    - Configuration integration with centralized config system
+    """
+
+    def __init__(self):
+        self.config = get_config()
+        self.snapshots: Dict[str, QEMUSnapshot] = {}
+        self.ssh_pool: Dict[str, SSHClient] = {}
+        self.circuit_breaker = CircuitBreaker(
+            failure_threshold=self.config.get("vm_framework.ssh.circuit_breaker_threshold", 5),
+            timeout=self.config.get("vm_framework.ssh.circuit_breaker_timeout", 60)
+        )
+```
+
+**Key Features:**
+- **Unified Management**: Single point of control for all QEMU operations
+- **Connection Pooling**: Reuses SSH connections for efficiency
+- **Circuit Breaker**: Prevents cascading failures in SSH connections
+- **Snapshot Isolation**: Each test runs in isolated VM snapshot
+- **Production-Ready**: Full error handling and recovery mechanisms
+
+#### 2. VMWorkflowManager Design
+
+The `VMWorkflowManager` (located in `intellicrack/core/processing/vm_workflow_manager.py`) orchestrates complete binary analysis workflows:
+
+```python
+class VMWorkflowManager:
+    """High-level VM workflow orchestration for binary analysis.
+
+    Provides:
+    - Complete analysis roundtrip workflow
+    - User-controlled file export via dialogs
+    - Script execution with OUTPUT_PATH contract
+    - Test validation of modifications
+    """
+
+    def run_full_analysis_roundtrip(
+        self,
+        binary_path: str,
+        modification_script: str,
+        test_script: str,
+        platform: str = "windows"
+    ) -> Dict[str, Any]:
+        """Execute complete binary modification and testing workflow.
+
+        Steps:
+        1. Create VM snapshot for isolation
+        2. Upload binary to VM
+        3. Execute modification script with OUTPUT_PATH
+        4. Open file dialog for user to select export location
+        5. Download modified binary to user-selected path
+        6. Execute test script for validation
+        7. Cleanup VM resources
+        """
+```
+
+### Configuration System Integration
+
+All VM Framework configuration is stored in `config/config.json` under the `vm_framework` section:
+
+```json
+{
+  "vm_framework": {
+    "base_images": {
+      "windows": [
+        "~/vms/windows10.qcow2",
+        "~/vms/windows11.qcow2"
+      ],
+      "linux": [
+        "~/vms/ubuntu22.04.qcow2",
+        "~/vms/kali2023.qcow2"
+      ],
+      "default_windows_size_gb": 2,
+      "default_linux_size_gb": 1
+    },
+    "ssh": {
+      "timeout": 30,
+      "retry_count": 3,
+      "retry_delay": 2,
+      "circuit_breaker_threshold": 5,
+      "circuit_breaker_timeout": 60
+    },
+    "qemu_defaults": {
+      "memory_mb": 2048,
+      "cpu_cores": 2,
+      "enable_kvm": true,
+      "network_enabled": true,
+      "graphics_enabled": false,
+      "monitor_port": 55555,
+      "ssh_port_start": 22222,
+      "vnc_port_start": 5900,
+      "timeout": 300,
+      "shared_folder_name": "intellicrack_shared_folder"
+    },
+    "qiling_rootfs": {
+      "windows": [
+        "~/tools/qiling/rootfs/x86_windows",
+        "~/tools/qiling/rootfs/x8664_windows"
+      ],
+      "linux": [
+        "~/tools/qiling/rootfs/x86_linux",
+        "~/tools/qiling/rootfs/x8664_linux"
+      ]
+    }
+  }
+}
+```
+
+**Configuration Usage in Code:**
+```python
+# QEMUManager uses unified config system
+def __init__(self):
+    self.config = get_config()
+
+    # Load SSH configuration
+    self.ssh_timeout = self.config.get("vm_framework.ssh.timeout", 30)
+    self.ssh_retry_count = self.config.get("vm_framework.ssh.retry_count", 3)
+
+    # Load QEMU defaults
+    self.default_memory = self.config.get("vm_framework.qemu_defaults.memory_mb", 2048)
+    self.default_cores = self.config.get("vm_framework.qemu_defaults.cpu_cores", 2)
+```
+
+### SSH Connection Pooling
+
+The framework implements sophisticated SSH connection management:
+
+```python
+class SSHConnectionPool:
+    """Thread-safe SSH connection pooling with circuit breaker.
+
+    Features:
+    - Connection reuse for efficiency
+    - Automatic retry with exponential backoff
+    - Circuit breaker to prevent cascade failures
+    - Connection health checks
+    - Automatic cleanup of stale connections
+    """
+
+    def get_connection(self, vm_id: str) -> SSHClient:
+        """Get or create SSH connection for VM.
+
+        1. Check if connection exists in pool
+        2. Validate connection health
+        3. Create new connection if needed
+        4. Apply circuit breaker logic
+        5. Return healthy connection
+        """
+
+    def release_connection(self, vm_id: str):
+        """Return connection to pool for reuse."""
+
+    def cleanup_stale_connections(self):
+        """Remove connections idle > timeout."""
+```
+
+**Circuit Breaker Pattern:**
+```python
+class CircuitBreaker:
+    """Prevents repeated connection attempts to failing VMs.
+
+    States:
+    - CLOSED: Normal operation, connections allowed
+    - OPEN: Too many failures, connections blocked
+    - HALF_OPEN: Testing if service recovered
+    """
+
+    def call(self, func, *args, **kwargs):
+        """Execute function with circuit breaker protection."""
+        if self.state == CircuitBreakerState.OPEN:
+            if self._timeout_expired():
+                self.state = CircuitBreakerState.HALF_OPEN
+            else:
+                raise CircuitBreakerOpenError("Circuit breaker is OPEN")
+
+        try:
+            result = func(*args, **kwargs)
+            self._on_success()
+            return result
+        except Exception as e:
+            self._on_failure()
+            raise
+```
+
+### File Dialog Integration
+
+The framework ensures users always control where modified binaries are saved:
+
+```python
+def export_modified_binary(self, remote_path: str) -> str:
+    """Export modified binary with user-controlled file dialog.
+
+    NO hardcoded paths - user selects location every time.
+    """
+    from PyQt6.QtWidgets import QFileDialog, QApplication
+
+    # Ensure QApplication exists
+    app = QApplication.instance()
+    if not app:
+        raise RuntimeError("No QApplication for file dialog")
+
+    # Prepare suggested filename
+    original_name = Path(remote_path).name
+    suggested_name = f"modified_{original_name}"
+
+    # Create default directory (user can change)
+    default_dir = Path.home() / "Documents" / "Intellicrack_Output"
+    default_dir.mkdir(parents=True, exist_ok=True)
+
+    # Open file dialog - user selects location
+    file_path, _ = QFileDialog.getSaveFileName(
+        None,
+        "Select Output Location for Modified Binary",
+        str(default_dir / suggested_name),
+        "Binary Files (*.exe *.bin *.elf *.so *.dll);;All Files (*.*)"
+    )
+
+    if not file_path:
+        # User cancelled
+        return None
+
+    # Download to user-selected location
+    success = self.download_file_from_vm(
+        snapshot=self.current_snapshot,
+        remote_path=remote_path,
+        local_path=file_path
+    )
+
+    return file_path if success else None
+```
+
+### OUTPUT_PATH Contract
+
+Modification scripts MUST follow the OUTPUT_PATH contract:
+
+```bash
+#!/bin/bash
+# Modification script template
+
+# CRITICAL: The framework sets OUTPUT_PATH environment variable
+# Scripts MUST write the modified binary to this location
+
+echo "Input binary: $INPUT_PATH"
+echo "Output location: $OUTPUT_PATH"
+
+# Perform modifications
+cp "$INPUT_PATH" "$OUTPUT_PATH"
+
+# Apply patches/modifications to OUTPUT_PATH
+patch_binary "$OUTPUT_PATH" --remove-checks
+
+# REQUIRED: Verify output was created
+if [ ! -f "$OUTPUT_PATH" ]; then
+    echo "ERROR: Failed to create output at $OUTPUT_PATH"
+    exit 1
+fi
+
+echo "Modified binary saved to: $OUTPUT_PATH"
+exit 0
+```
+
+**Python Script Example:**
+```python
+#!/usr/bin/env python3
+import os
+import sys
+from pathlib import Path
+
+# Get paths from environment
+input_path = os.environ.get('INPUT_PATH')
+output_path = os.environ.get('OUTPUT_PATH')
+
+if not input_path or not output_path:
+    print("ERROR: INPUT_PATH and OUTPUT_PATH must be set")
+    sys.exit(1)
+
+# Read original binary
+with open(input_path, 'rb') as f:
+    binary_data = f.read()
+
+# Apply modifications
+modified_data = apply_patches(binary_data)
+
+# Write to OUTPUT_PATH
+with open(output_path, 'wb') as f:
+    f.write(modified_data)
+
+print(f"Modified binary written to: {output_path}")
+```
+
+### Adding New Base Images
+
+To add new VM base images for testing:
+
+#### 1. Update Configuration
+Edit `config/config.json`:
+```json
+{
+  "vm_framework": {
+    "base_images": {
+      "windows": [
+        "~/vms/windows10.qcow2",
+        "~/vms/windows11.qcow2",
+        "~/vms/windows_server_2022.qcow2"  // New image
+      ],
+      "linux": [
+        "~/vms/ubuntu22.04.qcow2",
+        "~/vms/kali2023.qcow2",
+        "~/vms/debian12.qcow2"  // New image
+      ]
+    }
+  }
+}
+```
+
+#### 2. Prepare Base Image
+```bash
+# Create QEMU image
+qemu-img create -f qcow2 debian12.qcow2 20G
+
+# Install OS with SSH enabled
+qemu-system-x86_64 \
+  -hda debian12.qcow2 \
+  -cdrom debian-12.iso \
+  -m 2048 \
+  -enable-kvm \
+  -boot d
+
+# Configure SSH in guest OS
+# 1. Install openssh-server
+# 2. Enable root login or create user
+# 3. Configure SSH keys
+```
+
+#### 3. Image Requirements
+Base images must have:
+- **SSH Server**: OpenSSH installed and enabled
+- **Python 3**: For script execution
+- **Network**: Configured for host-only networking
+- **Tools**: Basic development tools (gcc, make, etc.)
+
+### Snapshot Management
+
+The framework uses QEMU snapshots for test isolation:
+
+```python
+class SnapshotManager:
+    """Manages QEMU VM snapshots for test isolation.
+
+    Each test runs in isolated snapshot that's deleted after use.
+    """
+
+    def create_snapshot(self, vm_id: str, binary_path: str) -> QEMUSnapshot:
+        """Create snapshot for binary testing.
+
+        1. Clone base image
+        2. Start VM
+        3. Configure networking
+        4. Setup SSH access
+        5. Return snapshot handle
+        """
+
+    def cleanup_snapshot(self, snapshot_id: str):
+        """Clean up snapshot after testing.
+
+        1. Stop VM if running
+        2. Close SSH connections
+        3. Delete snapshot disk
+        4. Release resources
+        """
+```
+
+**Snapshot Lifecycle:**
+```python
+# Create snapshot for test
+snapshot = qemu_manager.create_script_test_snapshot(
+    binary_path="malware.exe",
+    modification_script="remove_trial.sh",
+    test_script="verify_unlimited.py",
+    platform="windows"
+)
+
+try:
+    # Use snapshot for testing
+    result = qemu_manager.test_script_in_vm(
+        snapshot=snapshot,
+        script_content=modification_script,
+        remote_binary_path="/tmp/malware.exe"
+    )
+finally:
+    # Always cleanup
+    qemu_manager.cleanup_snapshot(snapshot.snapshot_id)
+```
+
+### Qiling Integration
+
+For lightweight emulation without full VMs:
+
+```python
+from intellicrack.core.processing.qiling_emulator import QilingEmulator
+
+class QilingIntegration:
+    """Lightweight binary emulation using Qiling framework.
+
+    Use cases:
+    - Quick API behavior analysis
+    - Memory access monitoring
+    - License check detection
+    - Faster than full VM for simple cases
+    """
+
+    def __init__(self):
+        self.config = get_config()
+        # Load Qiling rootfs paths from config
+        self.rootfs_paths = self.config.get("vm_framework.qiling_rootfs", {})
+
+    def emulate_binary(self, binary_path: str, options: Dict):
+        """Run lightweight emulation.
+
+        Automatically detects architecture and OS,
+        selects appropriate rootfs from config.
+        """
+        emulator = QilingEmulator(
+            binary_path=binary_path,
+            rootfs=self._get_rootfs(binary_path),
+            verbose=options.get("verbose", False)
+        )
+
+        # Add hooks for analysis
+        emulator.add_license_detection_hooks()
+
+        # Run emulation
+        return emulator.run(timeout=60)
+```
+
+### Error Handling and Recovery
+
+The framework implements comprehensive error handling:
+
+```python
+class VMErrorHandler:
+    """Centralized error handling for VM operations.
+
+    Handles:
+    - VM startup failures
+    - SSH connection errors
+    - File transfer failures
+    - Script execution errors
+    - Resource exhaustion
+    """
+
+    def handle_vm_error(self, error: Exception, context: Dict):
+        """Handle VM-related errors with recovery.
+
+        Recovery strategies:
+        1. Retry with exponential backoff
+        2. Fallback to alternative VM
+        3. Clean up and report failure
+        """
+
+        if isinstance(error, SSHConnectionError):
+            return self._handle_ssh_error(error, context)
+        elif isinstance(error, VMStartupError):
+            return self._handle_startup_error(error, context)
+        elif isinstance(error, ResourceExhaustedError):
+            return self._handle_resource_error(error, context)
+        else:
+            # Log and cleanup
+            logger.error(f"Unhandled VM error: {error}")
+            self._cleanup_failed_vm(context)
+            raise
+```
+
+### Performance Considerations
+
+#### Connection Pooling Benefits
+- **Reduced Overhead**: Reuse SSH connections instead of creating new ones
+- **Lower Latency**: Pre-established connections ready for use
+- **Resource Efficiency**: Fewer system resources consumed
+
+#### Snapshot Optimization
+- **Copy-on-Write**: QEMU qcow2 format only stores changes
+- **Parallel Testing**: Run multiple snapshots simultaneously
+- **Fast Cleanup**: Delete snapshot = delete diff file
+
+#### Best Practices
+1. **Limit Concurrent VMs**: Based on available RAM
+2. **Use Qiling for Simple Cases**: Faster than full VM
+3. **Cache Base Images**: Store on SSD for fast cloning
+4. **Monitor Resources**: Track CPU/RAM usage
+5. **Implement Timeouts**: Prevent hanging operations
+
+### Security Considerations
+
+#### SSH Key Management
+- Keys stored in environment variables via Secrets Manager
+- Never hardcoded in source code
+- Rotated regularly
+- Unique per VM instance
+
+#### Network Isolation
+- Host-only networking by default
+- No internet access for test VMs
+- Port forwarding only for SSH/VNC
+- Firewall rules to restrict access
+
+#### Resource Limits
+- Memory limits per VM
+- CPU core restrictions
+- Disk quota enforcement
+- Concurrent VM limits
 
 ## Testing Framework
 

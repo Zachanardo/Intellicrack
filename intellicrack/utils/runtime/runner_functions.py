@@ -1426,8 +1426,9 @@ def run_qemu_analysis(
 
         logger.info("Running QEMU analysis on %s", binary_path)
 
-        # Use the working implementation from qemu_emulator.py
-        from intellicrack.core.processing.qemu_emulator import run_qemu_analysis as qemu_run
+        # QEMU emulator removed during VM framework consolidation
+        # Functionality moved to QEMUManager - temporarily disabled
+        qemu_run = None
 
         # Get architecture from kwargs or detect from binary
         architecture = kwargs.get("architecture", "x86_64")

@@ -51,6 +51,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
 )
 
+from intellicrack.core.config_manager import get_config
 from .file_handler import VirtualFileAccess
 from .hex_highlighter import HexHighlight, HexHighlighter, HighlightType
 from .hex_renderer import HexViewRenderer, ViewMode, parse_hex_view
@@ -94,12 +95,15 @@ class HexViewerWidget(QAbstractScrollArea):
         """
         super().__init__(parent)
 
+        # Get configuration instance
+        self.config = get_config()
+
         # Initialize members
         self.file_handler = None
         self.file_path = ""
         self.view_mode = ViewMode.HEX
-        self.bytes_per_row = 16
-        self.group_size = 1
+        self.bytes_per_row = self.config.get("hex_viewer.ui.bytes_per_row", 16)
+        self.group_size = self.config.get("hex_viewer.ui.group_size", 1)
         self.renderer = HexViewRenderer(bytes_per_row=self.bytes_per_row)
         self.highlighter = HexHighlighter()
         self.current_offset = 0
@@ -120,16 +124,18 @@ class HexViewerWidget(QAbstractScrollArea):
         self.hex_offset_x = self.address_width + self.gutter_width
         self.ascii_offset_x = 0  # Will be calculated when drawing
 
-        # Colors - Ensuring high contrast for visibility
-        self.bg_color = QColor(245, 245, 245)  # Light gray background
-        self.text_color = QColor(20, 20, 20)  # Near black text
-        self.header_bg_color = QColor(220, 220, 220)  # Slightly darker header
-        self.header_text_color = QColor(0, 0, 0)  # Black header text
-        self.address_bg_color = QColor(220, 220, 220)
-        self.address_text_color = QColor(40, 40, 40)  # Darker address text
-        self.selection_color = QColor(173, 214, 255, 160)  # Increased opacity
-        self.highlight_selection_color = QColor(255, 255, 0, 160)
-        self.modified_color = QColor(255, 180, 180)  # Slightly more intense
+        # Colors - Load from configuration with fallbacks
+        self.bg_color = QColor(self.config.get("hex_viewer.ui.bg_color", "#1E1E1E"))
+        self.text_color = QColor(self.config.get("hex_viewer.ui.text_color", "#D4D4D4"))
+        self.header_bg_color = QColor(self.config.get("hex_viewer.ui.bg_color", "#1E1E1E"))
+        self.header_text_color = QColor(self.config.get("hex_viewer.ui.text_color", "#D4D4D4"))
+        self.address_bg_color = QColor(self.config.get("hex_viewer.ui.bg_color", "#1E1E1E"))
+        self.address_text_color = QColor(self.config.get("hex_viewer.ui.address_color", "#608B4E"))
+        self.selection_color = QColor(self.config.get("hex_viewer.ui.selection_bg_color", "#264F78"))
+        self.selection_color.setAlpha(160)  # Maintain transparency
+        self.highlight_selection_color = QColor(self.config.get("hex_viewer.ui.highlight_color", "#FFD700"))
+        self.highlight_selection_color.setAlpha(160)  # Maintain transparency
+        self.modified_color = QColor(self.config.get("hex_viewer.ui.modified_color", "#D16969"))
 
         # Setup the widget
         self.setup_ui()
@@ -139,10 +145,15 @@ class HexViewerWidget(QAbstractScrollArea):
 
     def setup_ui(self):
         """Set up the UI components."""
-        # Set up font with better visibility
-        font = QFont("Courier New", 11)  # Slightly larger font
+        # Set up font with configuration values
+        font_family = self.config.get("hex_viewer.ui.font_family", "Consolas")
+        font_size = self.config.get("hex_viewer.ui.font_size", 11)
+        font_weight = self.config.get("hex_viewer.ui.font_weight", "normal")
+        
+        font = QFont(font_family, font_size)
         font.setFixedPitch(True)
-        font.setBold(True)  # Make font bold for better visibility
+        if font_weight == "bold":
+            font.setBold(True)
         font.setStyleStrategy(QFont.PreferAntialias)  # Enable anti-aliasing for smoother text
         self.setFont(font)
 

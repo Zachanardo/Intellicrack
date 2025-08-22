@@ -32,19 +32,33 @@ from pathlib import Path
 from typing import Any
 
 from intellicrack.core.exceptions import ConfigurationError
+from intellicrack.hexview.config_defaults import HEX_VIEWER_DEFAULTS
 
 logger = logging.getLogger(__name__)
 
 
 class IntellicrackConfig:
-    """Platform-aware configuration manager that auto-configures Intellicrack.
+    """Central configuration manager for all Intellicrack components.
+
+    This is the single source of truth for all configuration in Intellicrack.
+    All scattered configuration systems (QSettings, LLM configs, CLI configs)
+    have been consolidated into this central system.
 
     Features:
+    - Single config.json file for all settings
     - Platform-specific config directories (Windows/Linux/macOS)
     - Auto-discovery of tools (Ghidra, radare2, etc.)
     - Dynamic config creation on first run
     - Thread-safe configuration access
     - Version-aware config upgrades
+    - Automatic migration from legacy configuration systems
+    - Comprehensive schema with all application settings
+
+    Migration Support:
+    - QSettings (Qt registry) → ui_preferences, qemu_testing sections
+    - LLM configuration files → llm_configuration section
+    - CLI configuration → cli_configuration section
+    - Legacy config files → appropriate central sections
     """
 
     _instance = None
@@ -253,6 +267,32 @@ class IntellicrackConfig:
                 "animations_enabled": True,
                 "auto_complete": True,
                 "syntax_highlighting": True,
+                "window_geometry": {
+                    "x": 100,
+                    "y": 100,
+                    "width": 1200,
+                    "height": 800,
+                },
+                "window_state": {
+                    "maximized": False,
+                    "minimized": False,
+                    "fullscreen": False,
+                },
+                "dialog_positions": {},
+                "splitter_states": {
+                    "main_splitter": [700, 500],
+                    "disasm_splitter": [300, 700],
+                    "plugin_splitter": [300, 500],
+                    "assistant_splitter": [600, 400],
+                    "dashboard_splitter": [600, 600],
+                },
+                "dock_states": {},
+                "toolbar_positions": {
+                    "main_toolbar": "top",
+                    "visible": True,
+                },
+                "recent_files": [],
+                "max_recent_files": 10,
             },
             "analysis_settings": {
                 "default_timeout": 300,
@@ -401,6 +441,205 @@ class IntellicrackConfig:
                 "show_settings": "Ctrl+,",
                 "toggle_fullscreen": "F11",
             },
+            "qemu_testing": {
+                "default_preference": "ask",
+                "script_type_preferences": {},
+                "trusted_binaries": [],
+                "execution_history": [],
+                "max_history_size": 100,
+                "auto_trust_signed": False,
+                "sandbox_timeout": 300,
+                "enable_logging": True,
+                "qemu_timeout": 60,
+                "qemu_memory": 2048,
+            },
+            "general_preferences": {
+                "theme": "Dark",
+                "auto_save": True,
+                "auto_save_projects": True,
+                "create_backups": True,
+                "default_analysis_timeout": 300,
+                "execution_timeout": 60,
+                "show_advanced_options": False,
+                "confirm_exit": True,
+                "auto_load_last_project": False,
+                "check_for_updates": True,
+                "telemetry_enabled": False,
+                "backup_before_operations": True,
+                "max_backup_count": 5,
+                "enable_experimental_features": False,
+                "default_export_format": "json",
+                "preserve_analysis_history": True,
+                "max_history_items": 100,
+                "security_checks_enabled": True,
+                "allow_unsigned_scripts": False,
+                "auto_detect_protections": True,
+                "use_ml_analysis": True,
+                "ai_auto_refine": False,
+                "ai_explain_scripts": True,
+            },
+            "llm_configuration": {
+                "models": {},
+                "profiles": {
+                    "code_generation": {
+                        "settings": {
+                            "temperature": 0.3,
+                            "max_tokens": 4096,
+                            "top_p": 0.9,
+                            "frequency_penalty": 0.0,
+                            "presence_penalty": 0.0,
+                        },
+                        "recommended_models": ["gpt-4", "claude-3-opus", "codellama-70b"],
+                    },
+                    "analysis": {
+                        "settings": {
+                            "temperature": 0.5,
+                            "max_tokens": 2048,
+                            "top_p": 0.95,
+                            "frequency_penalty": 0.0,
+                            "presence_penalty": 0.0,
+                        },
+                        "recommended_models": ["gpt-4-turbo", "claude-3-sonnet", "mixtral-8x7b"],
+                    },
+                    "creative": {
+                        "settings": {
+                            "temperature": 0.9,
+                            "max_tokens": 2048,
+                            "top_p": 0.95,
+                            "frequency_penalty": 0.5,
+                            "presence_penalty": 0.5,
+                        },
+                        "recommended_models": ["gpt-4", "claude-3-opus", "llama-2-70b"],
+                    },
+                    "fast_inference": {
+                        "settings": {
+                            "temperature": 0.7,
+                            "max_tokens": 1024,
+                            "top_p": 0.9,
+                            "frequency_penalty": 0.0,
+                            "presence_penalty": 0.0,
+                        },
+                        "recommended_models": ["gpt-3.5-turbo", "claude-instant", "mistral-7b"],
+                    },
+                },
+                "metrics": {
+                    "total_requests": 0,
+                    "total_tokens": 0,
+                    "total_cost": 0.0,
+                    "model_usage": {},
+                    "error_count": 0,
+                    "average_response_time": 0.0,
+                },
+                "default_provider": "auto",
+                "auto_load_models": True,
+                "enable_fallback": True,
+                "fallback_chain": [],
+                "cache_enabled": True,
+                "cache_ttl": 3600,
+                "retry_on_error": True,
+                "max_retries": 3,
+                "timeout_seconds": 60,
+                "rate_limiting": {
+                    "enabled": False,
+                    "requests_per_minute": 60,
+                    "tokens_per_minute": 90000,
+                },
+            },
+            "cli_configuration": {
+                "profiles": {
+                    "default": {
+                        "output_format": "json",
+                        "verbosity": "info",
+                        "color_output": True,
+                        "progress_bars": True,
+                        "auto_save": True,
+                        "confirm_actions": True,
+                    },
+                },
+                "default_profile": "default",
+                "output_format": "json",
+                "verbosity": "info",
+                "auto_save": True,
+                "history_file": "~/.intellicrack/cli_history",
+                "max_history": 1000,
+                "autocomplete": True,
+                "show_hints": True,
+                "interactive_mode": False,
+                "batch_mode": False,
+                "quiet_mode": False,
+                "log_to_file": False,
+                "log_file": "~/.intellicrack/cli.log",
+                "aliases": {},
+                "custom_commands": {},
+                "startup_commands": [],
+            },
+            "font_configuration": {
+                "monospace_fonts": {
+                    "primary": ["JetBrains Mono", "JetBrainsMono-Regular"],
+                    "fallback": [
+                        "Consolas",
+                        "Source Code Pro",
+                        "Courier New",
+                        "Courier",
+                        "DejaVu Sans Mono",
+                        "Liberation Mono",
+                        "Monaco",
+                        "Menlo",
+                        "Ubuntu Mono",
+                        "Lucida Console",
+                        "monospace",
+                    ],
+                },
+                "ui_fonts": {
+                    "primary": ["Segoe UI", "Roboto", "Arial"],
+                    "fallback": [
+                        "Helvetica Neue",
+                        "Helvetica",
+                        "Ubuntu",
+                        "Cantarell",
+                        "DejaVu Sans",
+                        "Liberation Sans",
+                        "sans-serif",
+                    ],
+                },
+                "font_sizes": {
+                    "ui_default": 10,
+                    "ui_small": 9,
+                    "ui_large": 12,
+                    "code_default": 10,
+                    "code_small": 9,
+                    "code_large": 11,
+                    "hex_view": 11,
+                },
+                "available_fonts": ["JetBrainsMono-Regular.ttf", "JetBrainsMono-Bold.ttf"],
+                "custom_fonts": {},
+                "font_discovery_enabled": True,
+                "font_cache_enabled": True,
+            },
+            "environment": {
+                "variables": {},
+                "env_files": [".env", ".env.local"],
+                "auto_load_env": True,
+                "override_system_env": False,
+                "expand_variables": True,
+                "case_sensitive": False,
+                "backup_original": True,
+                "env_file_encoding": "utf-8",
+            },
+            "secrets": {
+                "encryption_enabled": False,
+                "keyring_backend": "auto",
+                "encrypted_keys": [],
+                "use_system_keyring": True,
+                "fallback_to_env": True,
+                "mask_in_logs": True,
+                "rotation_enabled": False,
+                "rotation_days": 90,
+                "audit_access": False,
+                "allowed_keys": [],
+                "denied_keys": [],
+            },
+            "hex_viewer": HEX_VIEWER_DEFAULTS,
         }
 
         with self._config_lock:
@@ -714,7 +953,393 @@ class IntellicrackConfig:
                 self._config["api_endpoints"].update(user_api_endpoints)
 
         self._save_config()
+
+        # Call migration methods for scattered configs
+        self._migrate_qsettings_data()
+        self._migrate_llm_configs()
+        self._migrate_legacy_configs()
+        self._migrate_font_configs()
+
         logger.info("Configuration upgrade completed")
+
+    def _migrate_qsettings_data(self):
+        """Migrate QSettings data to central config."""
+        try:
+            from PyQt6.QtCore import QSettings
+
+            logger.info("Migrating QSettings data to central config")
+
+            # Migrate script execution manager settings
+            settings = QSettings()
+
+            # Migrate QEMU testing preferences
+            qemu_pref = settings.value("execution/qemu_preference", "ask")
+            if qemu_pref:
+                self.set("qemu_testing.default_preference", qemu_pref)
+
+            # Migrate trusted binaries
+            trusted_binaries = settings.value("trusted_binaries", [])
+            if trusted_binaries:
+                self.set("qemu_testing.trusted_binaries", trusted_binaries)
+
+            # Migrate script type preferences
+            all_keys = settings.allKeys()
+            script_prefs = {}
+            for key in all_keys:
+                if key.startswith("qemu_preference_"):
+                    script_type = key.replace("qemu_preference_", "")
+                    script_prefs[script_type] = settings.value(key)
+            if script_prefs:
+                self.set("qemu_testing.script_type_preferences", script_prefs)
+
+            # Migrate theme manager settings
+            theme_settings = QSettings("Intellicrack", "ThemeManager")
+            theme = theme_settings.value("theme", None)
+            if theme:
+                self.set("ui_preferences.theme", theme)
+
+            # Migrate window geometry and state from main app
+            window_geometry = settings.value("window/geometry", None)
+            if window_geometry:
+                self.set(
+                    "ui_preferences.window_geometry",
+                    {"main": window_geometry.toHex().data().decode()},
+                )
+
+            window_state = settings.value("window/state", None)
+            if window_state:
+                self.set(
+                    "ui_preferences.window_state", {"main": window_state.toHex().data().decode()}
+                )
+
+            # Migrate splitter states
+            splitter_states = {}
+            for key in all_keys:
+                if "splitter" in key.lower():
+                    value = settings.value(key)
+                    if value:
+                        splitter_states[key] = (
+                            value.toHex().data().decode() if hasattr(value, "toHex") else str(value)
+                        )
+            if splitter_states:
+                self.set("ui_preferences.splitter_states", splitter_states)
+
+            logger.info("QSettings migration completed successfully")
+
+        except ImportError:
+            logger.debug("PyQt6 not available, skipping QSettings migration")
+        except Exception as e:
+            logger.error(f"Error migrating QSettings data: {e}")
+
+    def _migrate_llm_configs(self):
+        """Migrate LLM configuration from separate files to central config."""
+        try:
+            logger.info("Migrating LLM configurations to central config")
+            llm_config_dir = Path.home() / ".intellicrack" / "llm_configs"
+
+            if not llm_config_dir.exists():
+                logger.debug("No LLM config directory found, skipping migration")
+                return
+
+            # Migrate models.json
+            models_file = llm_config_dir / "models.json"
+            if models_file.exists():
+                try:
+                    models_data = json.loads(models_file.read_text())
+                    for model_id, model_config in models_data.items():
+                        self.set(f"llm_configuration.models.{model_id}", model_config)
+                    logger.info(f"Migrated {len(models_data)} model configurations")
+                except Exception as e:
+                    logger.error(f"Error migrating models.json: {e}")
+
+            # Migrate profiles.json
+            profiles_file = llm_config_dir / "profiles.json"
+            if profiles_file.exists():
+                try:
+                    profiles_data = json.loads(profiles_file.read_text())
+                    for profile_id, profile_config in profiles_data.items():
+                        self.set(f"llm_configuration.profiles.{profile_id}", profile_config)
+                    logger.info(f"Migrated {len(profiles_data)} profile configurations")
+                except Exception as e:
+                    logger.error(f"Error migrating profiles.json: {e}")
+
+            # Migrate metrics.json
+            metrics_file = llm_config_dir / "metrics.json"
+            if metrics_file.exists():
+                try:
+                    metrics_data = json.loads(metrics_file.read_text())
+                    self.set("llm_configuration.metrics", metrics_data)
+                    logger.info("Migrated LLM metrics data")
+                except Exception as e:
+                    logger.error(f"Error migrating metrics.json: {e}")
+
+            # Create backup of original files
+            backup_dir = llm_config_dir / "backup_pre_migration"
+            backup_dir.mkdir(exist_ok=True)
+            for file in [models_file, profiles_file, metrics_file]:
+                if file.exists():
+                    backup_file = backup_dir / file.name
+                    shutil.copy2(file, backup_file)
+                    logger.debug(f"Backed up {file.name} to {backup_file}")
+
+        except Exception as e:
+            logger.error(f"Error during LLM config migration: {e}")
+
+    def _migrate_legacy_configs(self):
+        """Migrate legacy configuration files to central config."""
+        try:
+            logger.info("Migrating legacy configuration files")
+
+            # Check for legacy config files
+            legacy_paths = [
+                Path("C:\\Intellicrack\\config\\config.json"),
+                Path("C:\\Intellicrack\\data\\config\\intellicrack_config.json"),
+                Path("C:\\Intellicrack\\config\\intellicrack_config.json"),
+            ]
+
+            for legacy_path in legacy_paths:
+                if legacy_path.exists():
+                    try:
+                        legacy_data = json.loads(legacy_path.read_text())
+                        logger.info(
+                            f"Found legacy config at {legacy_path}: {len(legacy_data)} keys"
+                        )
+
+                        # Handle specific legacy fields that need special migration
+                        self._migrate_specific_legacy_fields(legacy_data, legacy_path)
+
+                        # Backup legacy file
+                        backup_path = legacy_path.with_suffix(".json.backup")
+                        if not backup_path.exists():
+                            shutil.copy2(legacy_path, backup_path)
+                            logger.info(f"Backed up legacy config to {backup_path}")
+
+                    except Exception as e:
+                        logger.error(f"Error migrating {legacy_path}: {e}")
+
+        except Exception as e:
+            logger.error(f"Error during legacy config migration: {e}")
+
+    def _migrate_specific_legacy_fields(self, legacy_data: dict, legacy_path: Path):
+        """Migrate specific fields from legacy configuration."""
+
+        # Migrate VM framework settings (unique to legacy configs)
+        if "vm_framework" in legacy_data:
+            vm_config = legacy_data["vm_framework"]
+            # Add VM framework configuration if not present
+            current_vm = self.get("vm_framework", {})
+            if not current_vm:
+                self.set("vm_framework", vm_config)
+                logger.info("Migrated VM framework configuration")
+            else:
+                # Merge VM settings
+                merged_vm = {**current_vm, **vm_config}
+                self.set("vm_framework", merged_vm)
+                logger.info("Merged VM framework configuration")
+
+        # Migrate emergency mode flag
+        if "emergency_mode" in legacy_data:
+            self.set("emergency_mode", legacy_data["emergency_mode"])
+            logger.debug("Migrated emergency_mode flag")
+
+        # Migrate initialized flag
+        if "initialized" in legacy_data:
+            self.set("initialized", legacy_data["initialized"])
+            logger.debug("Migrated initialized flag")
+
+        # Migrate migration timestamp
+        if "migration_timestamp" in legacy_data:
+            self.set("migration_timestamp", legacy_data["migration_timestamp"])
+            logger.debug("Migrated migration_timestamp")
+
+        # Migrate ML model path
+        if "ml_model_path" in legacy_data:
+            self.set("ml_model_path", legacy_data["ml_model_path"])
+            logger.debug("Migrated ML model path")
+
+        # Migrate CLI configuration if present
+        if "cli" in legacy_data:
+            cli_config = legacy_data["cli"]
+            current_cli = self.get("cli_configuration", {})
+            # Merge CLI settings
+            if "profiles" in cli_config:
+                current_cli["profiles"] = {
+                    **current_cli.get("profiles", {}),
+                    **cli_config["profiles"],
+                }
+            if "output" in cli_config:
+                current_cli["output_format"] = cli_config["output"].get("format", "json")
+                current_cli["color_output"] = cli_config["output"].get("colors", True)
+                current_cli["verbosity"] = (
+                    "info" if cli_config["output"].get("verbosity", 1) == 1 else "debug"
+                )
+            if "default_profile" in cli_config:
+                current_cli["default_profile"] = cli_config["default_profile"]
+            self.set("cli_configuration", current_cli)
+            logger.info("Migrated CLI configuration")
+
+        # Migrate runtime settings with more details
+        if "runtime" in legacy_data:
+            runtime = legacy_data["runtime"]
+            current_runtime = self.get("runtime", {})
+            if not current_runtime:
+                self.set("runtime", runtime)
+                logger.info("Migrated runtime configuration")
+            else:
+                # Merge runtime settings
+                merged_runtime = {**current_runtime, **runtime}
+                self.set("runtime", merged_runtime)
+                logger.info("Merged runtime configuration")
+
+        # Migrate model repositories
+        if "model_repositories" in legacy_data:
+            repos = legacy_data["model_repositories"]
+            # Map to AI models section
+            current_ai = self.get("ai_models", {})
+            if "repositories" not in current_ai:
+                current_ai["repositories"] = repos
+            else:
+                current_ai["repositories"].update(repos)
+            self.set("ai_models", current_ai)
+            logger.info("Migrated model repositories")
+
+        # Migrate API cache settings
+        if "api_cache" in legacy_data:
+            cache_config = legacy_data["api_cache"]
+            self.set("api_cache", cache_config)
+            logger.debug("Migrated API cache configuration")
+
+        # Migrate tool paths that may be different
+        tool_paths = {
+            "ghidra_path": "tools.ghidra.path",
+            "radare2_path": "tools.radare2.path",
+            "ida_path": "tools.ida.path",
+            "frida_path": "tools.frida.path",
+        }
+
+        for old_key, new_key in tool_paths.items():
+            if old_key in legacy_data:
+                tool_name = old_key.replace("_path", "")
+                current_tool = self.get(f"tools.{tool_name}", {})
+                if not current_tool.get("path"):
+                    # Only update if not already set
+                    current_tool["path"] = legacy_data[old_key]
+                    current_tool["available"] = bool(legacy_data[old_key])
+                    current_tool["auto_discovered"] = False
+                    self.set(f"tools.{tool_name}", current_tool)
+                    logger.debug(f"Migrated {tool_name} path")
+
+        # Migrate directory paths with user-specific values
+        if "directories" in legacy_data:
+            dirs = legacy_data["directories"]
+            current_dirs = self.get("directories", {})
+            # Only update if paths look like user directories
+            for dir_key, dir_path in dirs.items():
+                if dir_path and ("Users" in dir_path or "home" in dir_path):
+                    # This is a user-specific path, preserve it
+                    current_dirs[dir_key] = dir_path
+            self.set("directories", current_dirs)
+            logger.debug("Migrated user-specific directory paths")
+
+        # Migrate download and plugin directories
+        if "download_directory" in legacy_data:
+            self.set("directories.downloads", legacy_data["download_directory"])
+            logger.debug("Migrated download directory")
+
+        if "plugin_directory" in legacy_data:
+            self.set("directories.plugins", legacy_data["plugin_directory"])
+            logger.debug("Migrated plugin directory")
+
+        # Migrate verify_checksums flag
+        if "verify_checksums" in legacy_data:
+            self.set("security.verify_checksums", legacy_data["verify_checksums"])
+            logger.debug("Migrated verify_checksums flag")
+
+        # Migrate detailed security settings (from third config)
+        if "security" in legacy_data:
+            security = legacy_data["security"]
+            current_security = self.get("security", {})
+
+            # Migrate hashing settings
+            if "hashing" in security:
+                current_security["hashing"] = security["hashing"]
+                logger.debug("Migrated security hashing settings")
+
+            # Migrate subprocess settings
+            if "subprocess" in security:
+                current_security["subprocess"] = security["subprocess"]
+                logger.debug("Migrated security subprocess settings")
+
+            # Migrate serialization settings
+            if "serialization" in security:
+                current_security["serialization"] = security["serialization"]
+                logger.debug("Migrated security serialization settings")
+
+            # Migrate input validation settings
+            if "input_validation" in security:
+                current_security["input_validation"] = security["input_validation"]
+                logger.debug("Migrated security input_validation settings")
+
+            self.set("security", current_security)
+
+        # Migrate UI theme/scale fields (separate from ui section)
+        if "ui_theme" in legacy_data:
+            self.set("ui_preferences.theme", legacy_data["ui_theme"])
+            logger.debug("Migrated ui_theme")
+
+        if "ui_scale" in legacy_data:
+            self.set("ui_preferences.scale", legacy_data["ui_scale"])
+            logger.debug("Migrated ui_scale")
+
+        if "font_size" in legacy_data and isinstance(legacy_data["font_size"], str):
+            # Map string font sizes to numeric values
+            font_size_map = {"Small": 9, "Medium": 10, "Large": 12}
+            numeric_size = font_size_map.get(legacy_data["font_size"], 10)
+            self.set("ui_preferences.font_size", numeric_size)
+            logger.debug("Migrated font_size string to numeric")
+
+        # Migrate plugin timeout
+        if "plugin_timeout" in legacy_data:
+            self.set("plugins.timeout", legacy_data["plugin_timeout"])
+            logger.debug("Migrated plugin_timeout")
+
+        # Migrate c2 settings if present
+        if "c2" in legacy_data and legacy_data["c2"]:
+            self.set("c2", legacy_data["c2"])
+            logger.debug("Migrated c2 configuration")
+
+        # Migrate external_services if present
+        if "external_services" in legacy_data and legacy_data["external_services"]:
+            self.set("external_services", legacy_data["external_services"])
+            logger.debug("Migrated external_services configuration")
+
+        # Migrate api section if present
+        if "api" in legacy_data and legacy_data["api"]:
+            self.set("api", legacy_data["api"])
+            logger.debug("Migrated api configuration")
+
+        # Log summary of migration from this file
+        logger.info(f"Completed migration of settings from {legacy_path.name}")
+
+    def _migrate_font_configs(self):
+        """Migrate font configuration from assets to central config."""
+        try:
+            font_config_path = Path(
+                "C:\\Intellicrack\\intellicrack\\assets\\fonts\\font_config.json"
+            )
+
+            if font_config_path.exists():
+                logger.info("Migrating font configuration to central config")
+                font_data = json.loads(font_config_path.read_text())
+
+                # Merge with existing font configuration
+                current_font_config = self.get("font_configuration", {})
+                merged_config = {**current_font_config, **font_data}
+                self.set("font_configuration", merged_config)
+
+                logger.info("Font configuration migration completed")
+        except Exception as e:
+            logger.error(f"Error migrating font configuration: {e}")
 
     def _create_emergency_config(self):
         """Create minimal emergency configuration."""

@@ -348,10 +348,10 @@ intellicrack.ai.protection\_aware\_script\_gen module
    :show-inheritance:
    :undoc-members:
 
-intellicrack.ai.qemu\_test\_manager module
-------------------------------------------
+intellicrack.ai.qemu\_manager module
+--------------------------------------
 
-.. automodule:: intellicrack.ai.qemu_test_manager
+.. automodule:: intellicrack.ai.qemu_manager
    :members:
    :show-inheritance:
    :undoc-members:
@@ -359,7 +359,7 @@ intellicrack.ai.qemu\_test\_manager module
 intellicrack.ai.qemu\_test\_manager\_enhanced module
 ----------------------------------------------------
 
-.. automodule:: intellicrack.ai.qemu_test_manager_enhanced
+.. automodule:: intellicrack.ai.qemu_manager
    :members:
    :show-inheritance:
    :undoc-members:

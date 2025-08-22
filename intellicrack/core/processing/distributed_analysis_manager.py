@@ -36,13 +36,9 @@ except ImportError as e:
     logger.error("Import error in distributed_analysis_manager: %s", e)
     HAS_DOCKER = False
 
-try:
-    from ..processing.qemu_emulator import QEMUSystemEmulator
-
-    HAS_QEMU = True
-except ImportError as e:
-    logger.error("Import error in distributed_analysis_manager: %s", e)
-    HAS_QEMU = False
+# QEMU emulator removed during VM framework consolidation
+QEMUSystemEmulator = None
+HAS_QEMU = False
 
 __all__ = ["DistributedAnalysisManager"]
 

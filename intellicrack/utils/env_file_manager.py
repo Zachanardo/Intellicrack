@@ -25,6 +25,8 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from intellicrack.core.config_manager import get_config
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,12 +37,24 @@ class EnvFileManager:
         """Initialize the EnvFileManager.
 
         Args:
-            env_file_path: Path to the .env file. If None, uses default location.
+            env_file_path: Path to the .env file. If None, uses default location from central config.
         """
+        # Get central configuration
+        self.central_config = get_config()
+
         if env_file_path is None:
-            self.env_path = Path("C:/Intellicrack/config/.env")
+            # Get .env file path from central config
+            env_path_str = self.central_config.get("environment.env_file_path")
+            if not env_path_str:
+                # Fall back to default path if not configured
+                env_path_str = "C:/Intellicrack/config/.env"
+                # Store the default in central config for future use
+                self.central_config.set("environment.env_file_path", env_path_str)
+            self.env_path = Path(env_path_str)
         else:
             self.env_path = Path(env_file_path)
+            # Update central config with the provided path
+            self.central_config.set("environment.env_file_path", str(self.env_path))
 
         # Ensure the directory exists
         self.env_path.parent.mkdir(parents=True, exist_ok=True)
@@ -49,6 +63,9 @@ class EnvFileManager:
         if not self.env_path.exists():
             self.env_path.touch()
             logger.info(f"Created new .env file at {self.env_path}")
+
+        # Load environment variables into central config on initialization
+        self._sync_to_central_config()
 
     def read_env(self) -> dict[str, str]:
         """Read all key-value pairs from the .env file.
@@ -188,6 +205,8 @@ class EnvFileManager:
         env_vars = self.read_env()
         env_vars[key] = value
         self.write_env(env_vars)
+        # Sync to central config after updating
+        self._sync_to_central_config()
 
     def update_keys(self, updates: dict[str, str]):
         """Update multiple keys in the .env file.
@@ -198,6 +217,8 @@ class EnvFileManager:
         env_vars = self.read_env()
         env_vars.update(updates)
         self.write_env(env_vars)
+        # Sync to central config after updating
+        self._sync_to_central_config()
 
     def delete_key(self, key: str) -> bool:
         """Delete a key from the .env file.
@@ -212,6 +233,8 @@ class EnvFileManager:
         if key in env_vars:
             del env_vars[key]
             self.write_env(env_vars)
+            # Sync to central config after deleting
+            self._sync_to_central_config()
             return True
         return False
 
@@ -323,3 +346,44 @@ class EnvFileManager:
             key = f"{service.upper()}_API_KEY"
 
         self.set_key(key, api_key)
+
+    def _sync_to_central_config(self):
+        """Sync environment variables from .env file to central config."""
+        try:
+            env_vars = self.read_env()
+            # Store all environment variables in central config
+            self.central_config.set("environment.variables", env_vars)
+            logger.debug(f"Synced {len(env_vars)} environment variables to central config")
+        except Exception as e:
+            logger.warning(f"Could not sync environment variables to central config: {e}")
+
+    def _sync_from_central_config(self):
+        """Sync environment variables from central config to .env file."""
+        try:
+            # Get environment variables from central config
+            env_vars = self.central_config.get("environment.variables", {})
+            if env_vars:
+                self.write_env(env_vars)
+                logger.debug(f"Synced {len(env_vars)} environment variables from central config")
+        except Exception as e:
+            logger.warning(f"Could not sync environment variables from central config: {e}")
+
+    def load_into_environment(self, override: bool = False):
+        """Load all variables from .env file into the actual environment.
+
+        Args:
+            override: Whether to override existing environment variables
+        """
+        env_vars = self.read_env()
+        for key, value in env_vars.items():
+            if override or key not in os.environ:
+                os.environ[key] = value
+                logger.debug(f"Loaded {key} into environment")
+        logger.info(f"Loaded {len(env_vars)} environment variables")
+
+    def auto_load(self):
+        """Automatically load .env file if configured to do so in central config."""
+        auto_load = self.central_config.get("environment.auto_load_env", True)
+        if auto_load:
+            self.load_into_environment(override=False)
+            logger.info("Auto-loaded environment variables from .env file")

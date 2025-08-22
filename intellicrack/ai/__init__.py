@@ -306,12 +306,12 @@ except ImportError as e:
     ModificationType = ChangeStatus = None
 
 try:
-    from .qemu_test_manager import QEMUTestManager
+    from .qemu_manager import QEMUManager
 
-    QemuTestManager = QEMUTestManager  # For backward compatibility
+    QemuTestManager = QEMUManager  # For backward compatibility
 except ImportError as e:
-    logger.warning("Failed to import qemu_test_manager: %s", e)
-    QemuTestManager = QEMUTestManager = None
+    logger.warning("Failed to import qemu_manager: %s", e)
+    QemuTestManager = QEMUManager = None
 
 try:
     from .integration_manager import IntegrationManager, IntegrationTask, WorkflowResult

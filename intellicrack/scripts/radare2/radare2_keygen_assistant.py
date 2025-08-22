@@ -26,10 +26,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-# Third-party imports
-from intellicrack.handlers.capstone_handler import capstone
 import keystone
 import r2pipe
+
+# Third-party imports
+from intellicrack.handlers.capstone_handler import capstone
 
 """
 Radare2 Keygen Assistant Module

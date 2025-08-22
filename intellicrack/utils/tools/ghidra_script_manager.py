@@ -178,7 +178,7 @@ class GhidraScriptManager:
     """Manages Ghidra script discovery, validation, and execution."""
 
     # Centralized script directory
-    DEFAULT_SCRIPT_DIRS = [get_resource_path("plugins/ghidra_scripts")]
+    DEFAULT_SCRIPT_DIRS = [get_resource_path("scripts/ghidra")]
 
     # Script metadata cache file
     CACHE_FILE = "ghidra_scripts_cache.json"
@@ -207,7 +207,7 @@ class GhidraScriptManager:
     def _create_default_directories(self):
         """Create default script directories if they don't exist."""
         # Create main directory and subdirectories
-        base_dir = get_resource_path("plugins/ghidra_scripts")
+        base_dir = get_resource_path("scripts/ghidra")
         subdirs = ["default", "user", "examples", "community"]
 
         # Create base directory
@@ -411,7 +411,7 @@ class GhidraScriptManager:
         Returns:
             GhidraScript object if successful
         """
-        base_dir = get_resource_path("plugins/ghidra_scripts")
+        base_dir = get_resource_path("scripts/ghidra")
         user_dir = os.path.join(base_dir, "user")
         os.makedirs(user_dir, exist_ok=True)
 

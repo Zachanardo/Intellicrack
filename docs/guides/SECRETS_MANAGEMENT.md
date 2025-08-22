@@ -63,7 +63,7 @@ set_secret('MY_API_KEY', 'secret-value-here')
 Run the migration script to move existing API keys to secure storage:
 
 ```bash
-python intellicrack/intellicrack/scripts/migrate_secrets.py
+python dev/migration/migrate_secrets.py
 ```
 
 ## Storage Hierarchy
@@ -222,4 +222,4 @@ The new system:
 - Uses OS keychains when available
 - Maintains backward compatibility
 
-Run `python intellicrack/intellicrack/scripts/migrate_secrets.py` to automatically migrate.
+Run `python dev/migration/migrate_secrets.py` to automatically migrate.

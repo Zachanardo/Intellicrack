@@ -521,7 +521,7 @@ class GhidraScriptSelector(QDialog):
 
     def _open_scripts_folder(self):
         """Open the user scripts folder."""
-        user_scripts_dir = "intellicrack/intellicrack/scripts/ghidra/user"
+        user_scripts_dir = "intellicrack/intellicrack/scripts/ghidra"
         os.makedirs(user_scripts_dir, exist_ok=True)
 
         # Platform-specific file manager opening

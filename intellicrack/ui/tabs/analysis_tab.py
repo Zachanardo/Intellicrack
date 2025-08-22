@@ -142,13 +142,17 @@ class AnalysisTab(BaseTab):
         # Artifact Extraction
         extract_artifacts_btn = QPushButton("Extract Artifacts")
         extract_artifacts_btn.clicked.connect(self.extract_network_artifacts)
-        extract_artifacts_btn.setToolTip("Extract URLs, IPs, credentials, and other artifacts from binary or network data")
+        extract_artifacts_btn.setToolTip(
+            "Extract URLs, IPs, credentials, and other artifacts from binary or network data"
+        )
         quick_actions_layout.addWidget(extract_artifacts_btn)
 
         # Protocol Detection
         detect_protocols_btn = QPushButton("Detect Protocols")
         detect_protocols_btn.clicked.connect(self.detect_network_protocols)
-        detect_protocols_btn.setToolTip("Detect network protocols and license communication patterns")
+        detect_protocols_btn.setToolTip(
+            "Detect network protocols and license communication patterns"
+        )
         quick_actions_layout.addWidget(detect_protocols_btn)
 
         layout.addWidget(quick_actions_group)
@@ -560,8 +564,6 @@ class AnalysisTab(BaseTab):
     def start_static_analysis(self):
         """Start static analysis only"""
         if not self.current_binary:
-
-
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
 
@@ -717,8 +719,6 @@ class AnalysisTab(BaseTab):
     def detect_protections(self):
         """Detect binary protections"""
         if not self.current_binary:
-
-
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
 
@@ -811,8 +811,6 @@ class AnalysisTab(BaseTab):
     def start_dynamic_monitoring(self):
         """Start dynamic monitoring"""
         if not self.current_binary:
-
-
             QMessageBox.warning(self, "Warning", "No binary loaded for analysis!")
             return
 
@@ -943,8 +941,6 @@ class AnalysisTab(BaseTab):
     def open_hex_viewer(self):
         """Open hex viewer for current binary"""
         if not self.current_binary:
-
-
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return
 
@@ -969,21 +965,17 @@ class AnalysisTab(BaseTab):
         except ImportError as e:
             self.log_activity(f"Hex viewer not available: {e!s}")
 
-
             QMessageBox.warning(
                 self, "Error", "Hex viewer module not available. Please check installation."
             )
         except Exception as e:
             self.log_activity(f"Error opening hex viewer: {e!s}")
 
-
             QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {e!s}")
 
     def embed_hex_viewer(self):
         """Embed hex viewer in the results panel"""
         if not self.current_binary:
-
-
             QMessageBox.warning(self, "Warning", "No binary loaded!")
             return
 
@@ -1126,7 +1118,7 @@ class AnalysisTab(BaseTab):
                 self,
                 "Take System Snapshot",
                 "Enter snapshot name:",
-                text=f"snapshot_{int(time.time())}"
+                text=f"snapshot_{int(time.time())}",
             )
 
             if not ok or not snapshot_name:
@@ -1137,26 +1129,24 @@ class AnalysisTab(BaseTab):
             snapshot = create_system_snapshot()
 
             # Store snapshot
-            if not hasattr(self, 'snapshots'):
+            if not hasattr(self, "snapshots"):
                 self.snapshots = {}
 
-            self.snapshots[snapshot_name] = {
-                'timestamp': time.time(),
-                'data': snapshot
-            }
+            self.snapshots[snapshot_name] = {"timestamp": time.time(), "data": snapshot}
 
             # Save to file
             snapshot_file = f"snapshots/{snapshot_name}.json"
             import os
+
             os.makedirs("snapshots", exist_ok=True)
 
-            with open(snapshot_file, 'w') as f:
+            with open(snapshot_file, "w") as f:
                 json.dump(snapshot, f, indent=2)
 
             self.log_message(f"Snapshot '{snapshot_name}' saved successfully", "success")
 
             # Update snapshot list if exists
-            if hasattr(self, 'snapshot_list'):
+            if hasattr(self, "snapshot_list"):
                 self.snapshot_list.addItem(snapshot_name)
 
         except Exception as e:
@@ -1165,7 +1155,6 @@ class AnalysisTab(BaseTab):
     def compare_system_snapshots(self):
         """Compare two system snapshots to identify changes"""
         try:
-
             from PyQt6.QtWidgets import (
                 QComboBox,
                 QDialog,
@@ -1178,7 +1167,7 @@ class AnalysisTab(BaseTab):
 
             from ...utils.system.snapshot_utils import compare_snapshots
 
-            if not hasattr(self, 'snapshots') or len(self.snapshots) < 2:
+            if not hasattr(self, "snapshots") or len(self.snapshots) < 2:
                 self.log_message("Need at least 2 snapshots to compare", "warning")
                 return
 
@@ -1221,8 +1210,8 @@ class AnalysisTab(BaseTab):
                     return
 
                 # Get snapshots
-                baseline = self.snapshots[baseline_name]['data']
-                current = self.snapshots[current_name]['data']
+                baseline = self.snapshots[baseline_name]["data"]
+                current = self.snapshots[current_name]["data"]
 
                 # Compare
                 differences = compare_snapshots(baseline, current)
@@ -1232,77 +1221,93 @@ class AnalysisTab(BaseTab):
                 result_text += "=" * 60 + "\n\n"
 
                 # Files
-                if differences['files']['added']:
+                if differences["files"]["added"]:
                     result_text += f"📄 Files Added ({len(differences['files']['added'])}):\n"
-                    for file in differences['files']['added'][:10]:
+                    for file in differences["files"]["added"][:10]:
                         result_text += f"  + {file}\n"
-                    if len(differences['files']['added']) > 10:
+                    if len(differences["files"]["added"]) > 10:
                         result_text += f"  ... and {len(differences['files']['added']) - 10} more\n"
                     result_text += "\n"
 
-                if differences['files']['removed']:
+                if differences["files"]["removed"]:
                     result_text += f"📄 Files Removed ({len(differences['files']['removed'])}):\n"
-                    for file in differences['files']['removed'][:10]:
+                    for file in differences["files"]["removed"][:10]:
                         result_text += f"  - {file}\n"
-                    if len(differences['files']['removed']) > 10:
-                        result_text += f"  ... and {len(differences['files']['removed']) - 10} more\n"
+                    if len(differences["files"]["removed"]) > 10:
+                        result_text += (
+                            f"  ... and {len(differences['files']['removed']) - 10} more\n"
+                        )
                     result_text += "\n"
 
-                if differences['files']['modified']:
+                if differences["files"]["modified"]:
                     result_text += f"📄 Files Modified ({len(differences['files']['modified'])}):\n"
-                    for file in differences['files']['modified'][:10]:
+                    for file in differences["files"]["modified"][:10]:
                         result_text += f"  * {file}\n"
-                    if len(differences['files']['modified']) > 10:
-                        result_text += f"  ... and {len(differences['files']['modified']) - 10} more\n"
+                    if len(differences["files"]["modified"]) > 10:
+                        result_text += (
+                            f"  ... and {len(differences['files']['modified']) - 10} more\n"
+                        )
                     result_text += "\n"
 
                 # Registry (Windows)
-                if differences['registry']['added']:
-                    result_text += f"🔧 Registry Keys Added ({len(differences['registry']['added'])}):\n"
-                    for key in differences['registry']['added'][:10]:
+                if differences["registry"]["added"]:
+                    result_text += (
+                        f"🔧 Registry Keys Added ({len(differences['registry']['added'])}):\n"
+                    )
+                    for key in differences["registry"]["added"][:10]:
                         result_text += f"  + {key}\n"
-                    if len(differences['registry']['added']) > 10:
-                        result_text += f"  ... and {len(differences['registry']['added']) - 10} more\n"
+                    if len(differences["registry"]["added"]) > 10:
+                        result_text += (
+                            f"  ... and {len(differences['registry']['added']) - 10} more\n"
+                        )
                     result_text += "\n"
 
                 # Network
-                if differences['network']['new_connections']:
+                if differences["network"]["new_connections"]:
                     result_text += f"🌐 New Network Connections ({len(differences['network']['new_connections'])}):\n"
-                    for conn in differences['network']['new_connections'][:10]:
+                    for conn in differences["network"]["new_connections"][:10]:
                         result_text += f"  + {conn}\n"
-                    if len(differences['network']['new_connections']) > 10:
+                    if len(differences["network"]["new_connections"]) > 10:
                         result_text += f"  ... and {len(differences['network']['new_connections']) - 10} more\n"
                     result_text += "\n"
 
                 # Processes
-                if differences['processes']['started']:
-                    result_text += f"⚙️ Processes Started ({len(differences['processes']['started'])}):\n"
-                    for proc in differences['processes']['started'][:10]:
+                if differences["processes"]["started"]:
+                    result_text += (
+                        f"⚙️ Processes Started ({len(differences['processes']['started'])}):\n"
+                    )
+                    for proc in differences["processes"]["started"][:10]:
                         result_text += f"  + {proc}\n"
-                    if len(differences['processes']['started']) > 10:
-                        result_text += f"  ... and {len(differences['processes']['started']) - 10} more\n"
+                    if len(differences["processes"]["started"]) > 10:
+                        result_text += (
+                            f"  ... and {len(differences['processes']['started']) - 10} more\n"
+                        )
                     result_text += "\n"
 
-                if differences['processes']['terminated']:
-                    result_text += f"⚙️ Processes Terminated ({len(differences['processes']['terminated'])}):\n"
-                    for proc in differences['processes']['terminated'][:10]:
+                if differences["processes"]["terminated"]:
+                    result_text += (
+                        f"⚙️ Processes Terminated ({len(differences['processes']['terminated'])}):\n"
+                    )
+                    for proc in differences["processes"]["terminated"][:10]:
                         result_text += f"  - {proc}\n"
-                    if len(differences['processes']['terminated']) > 10:
-                        result_text += f"  ... and {len(differences['processes']['terminated']) - 10} more\n"
+                    if len(differences["processes"]["terminated"]) > 10:
+                        result_text += (
+                            f"  ... and {len(differences['processes']['terminated']) - 10} more\n"
+                        )
                     result_text += "\n"
 
                 # Summary
                 total_changes = (
-                    len(differences['files']['added']) +
-                    len(differences['files']['removed']) +
-                    len(differences['files']['modified']) +
-                    len(differences['registry']['added']) +
-                    len(differences['registry']['removed']) +
-                    len(differences['registry']['modified']) +
-                    len(differences['network']['new_connections']) +
-                    len(differences['network']['closed_connections']) +
-                    len(differences['processes']['started']) +
-                    len(differences['processes']['terminated'])
+                    len(differences["files"]["added"])
+                    + len(differences["files"]["removed"])
+                    + len(differences["files"]["modified"])
+                    + len(differences["registry"]["added"])
+                    + len(differences["registry"]["removed"])
+                    + len(differences["registry"]["modified"])
+                    + len(differences["network"]["new_connections"])
+                    + len(differences["network"]["closed_connections"])
+                    + len(differences["processes"]["started"])
+                    + len(differences["processes"]["terminated"])
                 )
 
                 result_text += "\n" + "=" * 60 + "\n"
@@ -1311,23 +1316,29 @@ class AnalysisTab(BaseTab):
                 results_display.setPlainText(result_text)
 
                 # Store comparison results
-                if not hasattr(self, 'comparison_results'):
+                if not hasattr(self, "comparison_results"):
                     self.comparison_results = []
 
-                self.comparison_results.append({
-                    'baseline': baseline_name,
-                    'current': current_name,
-                    'differences': differences,
-                    'total_changes': total_changes
-                })
+                self.comparison_results.append(
+                    {
+                        "baseline": baseline_name,
+                        "current": current_name,
+                        "differences": differences,
+                        "total_changes": total_changes,
+                    }
+                )
 
-                self.log_message(f"Snapshot comparison complete: {total_changes} changes detected", "info")
+                self.log_message(
+                    f"Snapshot comparison complete: {total_changes} changes detected", "info"
+                )
 
             compare_btn.clicked.connect(perform_comparison)
 
             # Export button
             export_btn = QPushButton("Export Comparison")
-            export_btn.clicked.connect(lambda: self._export_comparison(results_display.toPlainText()))
+            export_btn.clicked.connect(
+                lambda: self._export_comparison(results_display.toPlainText())
+            )
             layout.addWidget(export_btn)
 
             dialog.setLayout(layout)
@@ -1339,22 +1350,21 @@ class AnalysisTab(BaseTab):
     def _export_comparison(self, comparison_text):
         """Export comparison results to file"""
         try:
-
-
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
                 "Export Comparison Results",
                 "snapshot_comparison.txt",
-                "Text Files (*.txt);;JSON Files (*.json);;All Files (*)"
+                "Text Files (*.txt);;JSON Files (*.json);;All Files (*)",
             )
 
             if file_path:
-                if file_path.endswith('.json') and hasattr(self, 'comparison_results'):
+                if file_path.endswith(".json") and hasattr(self, "comparison_results"):
                     import json
-                    with open(file_path, 'w') as f:
+
+                    with open(file_path, "w") as f:
                         json.dump(self.comparison_results[-1], f, indent=2)
                 else:
-                    with open(file_path, 'w') as f:
+                    with open(file_path, "w") as f:
                         f.write(comparison_text)
 
                 self.log_message(f"Comparison exported to {file_path}", "success")
@@ -1365,16 +1375,11 @@ class AnalysisTab(BaseTab):
     def analyze_network_capture(self):
         """Analyze PCAP files using NetworkForensicsEngine"""
         try:
-
-
             from ...core.analysis.network_forensics_engine import NetworkForensicsEngine
 
             # Get PCAP file from user
             pcap_file, _ = QFileDialog.getOpenFileName(
-                self,
-                "Select PCAP File",
-                "",
-                "PCAP Files (*.pcap *.pcapng);;All Files (*)"
+                self, "Select PCAP File", "", "PCAP Files (*.pcap *.pcapng);;All Files (*)"
             )
 
             if not pcap_file:
@@ -1395,39 +1400,41 @@ class AnalysisTab(BaseTab):
             result_text += f"Duration: {results.get('duration', 'N/A')}\n\n"
 
             # Protocol breakdown
-            if 'protocols' in results:
+            if "protocols" in results:
                 result_text += "Protocol Distribution:\n"
-                for proto, count in results['protocols'].items():
+                for proto, count in results["protocols"].items():
                     result_text += f"  • {proto}: {count} packets\n"
                 result_text += "\n"
 
             # License-related traffic
-            if 'license_traffic' in results:
+            if "license_traffic" in results:
                 result_text += "License Communication Detected:\n"
-                for item in results['license_traffic'][:10]:
+                for item in results["license_traffic"][:10]:
                     result_text += f"  • {item['timestamp']}: {item['src']} → {item['dst']}\n"
-                    result_text += f"    Protocol: {item['protocol']}, Data: {item.get('summary', 'N/A')}\n"
+                    result_text += (
+                        f"    Protocol: {item['protocol']}, Data: {item.get('summary', 'N/A')}\n"
+                    )
                 result_text += "\n"
 
             # Suspicious patterns
-            if 'suspicious_patterns' in results:
+            if "suspicious_patterns" in results:
                 result_text += "Suspicious Patterns:\n"
-                for pattern in results['suspicious_patterns']:
+                for pattern in results["suspicious_patterns"]:
                     result_text += f"  ⚠️ {pattern}\n"
                 result_text += "\n"
 
             # Extract artifacts if any
-            if 'artifacts' in results:
-                artifacts = engine.extract_artifacts(results['raw_data'])
-                if artifacts.get('credentials'):
+            if "artifacts" in results:
+                artifacts = engine.extract_artifacts(results["raw_data"])
+                if artifacts.get("credentials"):
                     result_text += "Extracted Credentials:\n"
-                    for cred in artifacts['credentials'][:5]:
+                    for cred in artifacts["credentials"][:5]:
                         result_text += f"  • {cred['type']}: {cred['value']}\n"
                     result_text += "\n"
 
-                if artifacts.get('urls'):
+                if artifacts.get("urls"):
                     result_text += "Extracted URLs:\n"
-                    for url in artifacts['urls'][:10]:
+                    for url in artifacts["urls"][:10]:
                         result_text += f"  • {url}\n"
                     result_text += "\n"
 
@@ -1435,7 +1442,10 @@ class AnalysisTab(BaseTab):
             self.results_display.setText(result_text)
             self.results_tabs.setCurrentWidget(self.results_display.parent())
 
-            self.log_message(f"Network analysis complete: {results.get('total_packets', 0)} packets analyzed", "success")
+            self.log_message(
+                f"Network analysis complete: {results.get('total_packets', 0)} packets analyzed",
+                "success",
+            )
 
         except Exception as e:
             self.log_message(f"Error analyzing network capture: {e}", "error")
@@ -1473,6 +1483,7 @@ class AnalysisTab(BaseTab):
             # Get available interfaces
             try:
                 from intellicrack.handlers.psutil_handler import psutil
+
                 interfaces = list(psutil.net_if_addrs().keys())
                 interface_combo.addItems(interfaces)
             except:
@@ -1512,7 +1523,7 @@ class AnalysisTab(BaseTab):
             layout.addLayout(button_layout)
 
             # Monitoring state
-            monitoring_active = {'value': False}
+            monitoring_active = {"value": False}
             captured_packets = []
 
             def monitor_thread():
@@ -1522,7 +1533,7 @@ class AnalysisTab(BaseTab):
 
                 def packet_callback(packet_info):
                     """Handle each captured packet"""
-                    if not monitoring_active['value']:
+                    if not monitoring_active["value"]:
                         return False
 
                     captured_packets.append(packet_info)
@@ -1531,48 +1542,56 @@ class AnalysisTab(BaseTab):
                     show = True
                     if filter_license.isChecked():
                         # Check if packet is license-related
-                        if not any(keyword in str(packet_info).lower()
-                                 for keyword in ['license', 'activation', 'serial', 'key']):
+                        if not any(
+                            keyword in str(packet_info).lower()
+                            for keyword in ["license", "activation", "serial", "key"]
+                        ):
                             show = False
 
                     if show:
                         # Format packet info
                         packet_text = f"[{packet_info.get('timestamp', 'N/A')}] "
-                        packet_text += f"{packet_info.get('src', 'N/A')} → {packet_info.get('dst', 'N/A')} "
+                        packet_text += (
+                            f"{packet_info.get('src', 'N/A')} → {packet_info.get('dst', 'N/A')} "
+                        )
                         packet_text += f"[{packet_info.get('protocol', 'N/A')}] "
 
-                        if 'data' in packet_info:
+                        if "data" in packet_info:
                             packet_text += f"\n  Data: {packet_info['data'][:100]}..."
 
                         # Add to display (thread-safe)
                         traffic_display.append(packet_text)
 
-                    return monitoring_active['value']
+                    return monitoring_active["value"]
 
                 # Start live monitoring
                 try:
                     _ = engine.analyze_live_traffic(
                         interface=interface,
                         duration=0,  # Continuous
-                        packet_callback=packet_callback
+                        packet_callback=packet_callback,
                     )
 
                     # Final summary
-                    traffic_display.append("\n" + "="*60)
-                    traffic_display.append(f"Monitoring stopped. Captured {len(captured_packets)} packets")
+                    traffic_display.append("\n" + "=" * 60)
+                    traffic_display.append(
+                        f"Monitoring stopped. Captured {len(captured_packets)} packets"
+                    )
 
                 except Exception as e:
                     traffic_display.append(f"\nError: {e}")
 
             def start_monitoring():
                 """Start monitoring in background thread"""
-                monitoring_active['value'] = True
+                monitoring_active["value"] = True
                 start_btn.setEnabled(False)
                 stop_btn.setEnabled(True)
 
                 traffic_display.clear()
-                traffic_display.append(f"Starting live traffic monitoring on {interface_combo.currentText()}...\n")
-                traffic_display.append("="*60 + "\n")
+                traffic_display.append(
+                    f"Starting live traffic monitoring on {interface_combo.currentText()}...\n"
+                )
+                traffic_display.append("=" * 60 + "\n")
 
                 # Start monitoring thread
                 monitor = threading.Thread(target=monitor_thread, daemon=True)
@@ -1580,7 +1599,7 @@ class AnalysisTab(BaseTab):
 
             def stop_monitoring():
                 """Stop monitoring"""
-                monitoring_active['value'] = False
+                monitoring_active["value"] = False
                 start_btn.setEnabled(True)
                 stop_btn.setEnabled(False)
                 traffic_display.append("\nStopping monitor...")
@@ -1593,19 +1612,19 @@ class AnalysisTab(BaseTab):
 
                 import json
 
-
-
                 file_path, _ = QFileDialog.getSaveFileName(
                     dialog,
                     "Export Network Capture",
                     "network_capture.json",
-                    "JSON Files (*.json);;All Files (*)"
+                    "JSON Files (*.json);;All Files (*)",
                 )
 
                 if file_path:
-                    with open(file_path, 'w') as f:
+                    with open(file_path, "w") as f:
                         json.dump(captured_packets, f, indent=2, default=str)
-                    traffic_display.append(f"\nExported {len(captured_packets)} packets to {file_path}")
+                    traffic_display.append(
+                        f"\nExported {len(captured_packets)} packets to {file_path}"
+                    )
 
             start_btn.clicked.connect(start_monitoring)
             stop_btn.clicked.connect(stop_monitoring)
@@ -1615,7 +1634,7 @@ class AnalysisTab(BaseTab):
             dialog.exec()
 
             # Ensure monitoring stops when dialog closes
-            monitoring_active['value'] = False
+            monitoring_active["value"] = False
 
         except Exception as e:
             self.log_message(f"Error in live traffic monitoring: {e}", "error")
@@ -1646,7 +1665,7 @@ class AnalysisTab(BaseTab):
                 self,
                 "Select File for Artifact Extraction",
                 "",
-                "All Files (*);;PCAP Files (*.pcap *.pcapng);;Binary Files (*.exe *.dll *.bin);;Memory Dumps (*.dmp *.raw *.mem)"
+                "All Files (*);;PCAP Files (*.pcap *.pcapng);;Binary Files (*.exe *.dll *.bin);;Memory Dumps (*.dmp *.raw *.mem)",
             )
 
             if not file_path:
@@ -1757,7 +1776,7 @@ class AnalysisTab(BaseTab):
                         self.progress.emit("Reading file...")
 
                         # Read file data
-                        with open(self.file_path, 'rb') as f:
+                        with open(self.file_path, "rb") as f:
                             data = f.read()
 
                         self.progress.emit(f"Loaded {len(data):,} bytes")
@@ -1774,7 +1793,10 @@ class AnalysisTab(BaseTab):
                         license_patterns = [
                             (rb"license[_-]?key[=:]?\s*([A-Za-z0-9\-]{10,})", "License Key"),
                             (rb"serial[_-]?number[=:]?\s*([A-Za-z0-9\-]{10,})", "Serial Number"),
-                            (rb"activation[_-]?code[=:]?\s*([A-Za-z0-9\-]{10,})", "Activation Code"),
+                            (
+                                rb"activation[_-]?code[=:]?\s*([A-Za-z0-9\-]{10,})",
+                                "Activation Code",
+                            ),
                             (rb"product[_-]?key[=:]?\s*([A-Za-z0-9\-]{10,})", "Product Key"),
                             (rb"hwid[=:]?\s*([A-Fa-f0-9\-]{10,})", "Hardware ID"),
                             (rb"machine[_-]?id[=:]?\s*([A-Fa-f0-9\-]{10,})", "Machine ID"),
@@ -1784,13 +1806,13 @@ class AnalysisTab(BaseTab):
                             matches = re.findall(pattern, data, re.IGNORECASE)
                             for match in matches:
                                 try:
-                                    value = match.decode('utf-8', errors='ignore')
+                                    value = match.decode("utf-8", errors="ignore")
                                     artifact = {
-                                        'type': 'License_' + artifact_type.replace(' ', '_'),
-                                        'value': value,
-                                        'offset': data.find(match),
-                                        'length': len(match),
-                                        'category': 'license'
+                                        "type": "License_" + artifact_type.replace(" ", "_"),
+                                        "value": value,
+                                        "offset": data.find(match),
+                                        "length": len(match),
+                                        "category": "license",
                                     }
                                     artifacts.append(artifact)
                                     self.artifact_found.emit(artifact)
@@ -1812,33 +1834,33 @@ class AnalysisTab(BaseTab):
 
             def on_artifact_found(artifact):
                 """Add artifact to appropriate tree"""
-                artifact_type = artifact.get('type', '')
-                value = artifact.get('value', '')
-                offset = str(artifact.get('offset', 0))
-                length = str(artifact.get('length', 0))
+                artifact_type = artifact.get("type", "")
+                value = artifact.get("value", "")
+                offset = str(artifact.get("offset", 0))
+                length = str(artifact.get("length", 0))
 
-                if artifact_type == 'URL':
+                if artifact_type == "URL":
                     item = QTreeWidgetItem([value, offset, length])
                     urls_tree.addTopLevelItem(item)
-                elif artifact_type == 'IP_Address':
+                elif artifact_type == "IP_Address":
                     item = QTreeWidgetItem([value, offset, artifact_type])
                     ips_tree.addTopLevelItem(item)
-                elif artifact_type == 'Email':
+                elif artifact_type == "Email":
                     item = QTreeWidgetItem([value, offset, length])
                     emails_tree.addTopLevelItem(item)
-                elif artifact_type in ['Password', 'Username', 'Token', 'API_Key']:
+                elif artifact_type in ["Password", "Username", "Token", "API_Key"]:
                     item = QTreeWidgetItem([artifact_type, value, offset])
                     creds_tree.addTopLevelItem(item)
-                elif artifact_type in ['Filename', 'File_Extension']:
+                elif artifact_type in ["Filename", "File_Extension"]:
                     item = QTreeWidgetItem([value, artifact_type, offset])
                     files_tree.addTopLevelItem(item)
-                elif artifact_type == 'Base64_Data':
-                    full_length = str(artifact.get('full_length', length))
+                elif artifact_type == "Base64_Data":
+                    full_length = str(artifact.get("full_length", length))
                     item = QTreeWidgetItem([value, full_length, offset])
                     base64_tree.addTopLevelItem(item)
-                elif 'License' in artifact_type or artifact.get('category') == 'license':
+                elif "License" in artifact_type or artifact.get("category") == "license":
                     details = f"Length: {length}"
-                    item = QTreeWidgetItem([artifact_type.replace('License_', ''), value, details])
+                    item = QTreeWidgetItem([artifact_type.replace("License_", ""), value, details])
                     license_tree.addTopLevelItem(item)
 
             def on_progress(msg):
@@ -1857,7 +1879,7 @@ class AnalysisTab(BaseTab):
                 # Count by type
                 type_counts = {}
                 for artifact in artifacts:
-                    artifact_type = artifact.get('type', 'Unknown')
+                    artifact_type = artifact.get("type", "Unknown")
                     type_counts[artifact_type] = type_counts.get(artifact_type, 0) + 1
 
                 stats.append("\nArtifacts by type:")
@@ -1869,7 +1891,7 @@ class AnalysisTab(BaseTab):
                 stats.append(f"\nFile size: {file_size:,} bytes")
                 stats.append(f"File type: {os.path.splitext(file_path)[1]}")
 
-                stats_text.setPlainText('\n'.join(stats))
+                stats_text.setPlainText("\n".join(stats))
 
                 # Enable export button
                 export_btn.setEnabled(True)
@@ -1879,7 +1901,9 @@ class AnalysisTab(BaseTab):
                 progress_bar.setRange(0, 1)
                 progress_bar.setValue(0)
                 info_label.setText(f"Error: {error_msg}")
-                self.show_message("Extraction Error", f"Failed to extract artifacts: {error_msg}", error=True)
+                self.show_message(
+                    "Extraction Error", f"Failed to extract artifacts: {error_msg}", error=True
+                )
 
             def export_artifacts():
                 """Export artifacts to file"""
@@ -1887,7 +1911,7 @@ class AnalysisTab(BaseTab):
                     dialog,
                     "Export Artifacts",
                     f"{os.path.splitext(file_path)[0]}_artifacts.json",
-                    "JSON Files (*.json);;CSV Files (*.csv);;Text Files (*.txt)"
+                    "JSON Files (*.json);;CSV Files (*.csv);;Text Files (*.txt)",
                 )
 
                 if export_path:
@@ -1899,48 +1923,50 @@ class AnalysisTab(BaseTab):
 
                         # Iterate through all trees
                         trees = {
-                            'URLs': urls_tree,
-                            'IPs': ips_tree,
-                            'Emails': emails_tree,
-                            'Credentials': creds_tree,
-                            'Files': files_tree,
-                            'Base64': base64_tree,
-                            'License': license_tree
+                            "URLs": urls_tree,
+                            "IPs": ips_tree,
+                            "Emails": emails_tree,
+                            "Credentials": creds_tree,
+                            "Files": files_tree,
+                            "Base64": base64_tree,
+                            "License": license_tree,
                         }
 
                         for category, tree in trees.items():
                             root = tree.invisibleRootItem()
                             for i in range(root.childCount()):
                                 item = root.child(i)
-                                artifact_data = {
-                                    'category': category,
-                                    'values': []
-                                }
+                                artifact_data = {"category": category, "values": []}
                                 for col in range(tree.columnCount()):
-                                    artifact_data['values'].append(item.text(col))
+                                    artifact_data["values"].append(item.text(col))
                                 all_artifacts.append(artifact_data)
 
                         # Export based on format
-                        if export_path.endswith('.json'):
-                            with open(export_path, 'w') as f:
+                        if export_path.endswith(".json"):
+                            with open(export_path, "w") as f:
                                 json.dump(all_artifacts, f, indent=2)
-                        elif export_path.endswith('.csv'):
+                        elif export_path.endswith(".csv"):
                             import csv
-                            with open(export_path, 'w', newline='') as f:
+
+                            with open(export_path, "w", newline="") as f:
                                 writer = csv.writer(f)
-                                writer.writerow(['Category', 'Value1', 'Value2', 'Value3'])
+                                writer.writerow(["Category", "Value1", "Value2", "Value3"])
                                 for artifact in all_artifacts:
-                                    row = [artifact['category']] + artifact['values']
+                                    row = [artifact["category"]] + artifact["values"]
                                     writer.writerow(row)
                         else:  # Text format
-                            with open(export_path, 'w') as f:
+                            with open(export_path, "w") as f:
                                 for artifact in all_artifacts:
-                                    f.write(f"{artifact['category']}: {' | '.join(artifact['values'])}\n")
+                                    f.write(
+                                        f"{artifact['category']}: {' | '.join(artifact['values'])}\n"
+                                    )
 
                         self.show_message("Export Complete", f"Artifacts exported to {export_path}")
 
                     except Exception as e:
-                        self.show_message("Export Error", f"Failed to export artifacts: {str(e)}", error=True)
+                        self.show_message(
+                            "Export Error", f"Failed to export artifacts: {str(e)}", error=True
+                        )
 
             def deep_analysis():
                 """Perform deep analysis on selected artifacts"""
@@ -1977,6 +2003,7 @@ class AnalysisTab(BaseTab):
                     if current_tab == "URLs":
                         # Analyze URL structure
                         from urllib.parse import urlparse
+
                         try:
                             parsed = urlparse(values[0])
                             analysis_results.append(f"  Domain: {parsed.netloc}")
@@ -1990,10 +2017,14 @@ class AnalysisTab(BaseTab):
                     elif current_tab == "IP Addresses":
                         # Check IP type and range
                         ip = values[0]
-                        parts = ip.split('.')
+                        parts = ip.split(".")
                         if len(parts) == 4:
                             first_octet = int(parts[0])
-                            if first_octet == 10 or (first_octet == 172 and 16 <= int(parts[1]) <= 31) or (first_octet == 192 and int(parts[1]) == 168):
+                            if (
+                                first_octet == 10
+                                or (first_octet == 172 and 16 <= int(parts[1]) <= 31)
+                                or (first_octet == 192 and int(parts[1]) == 168)
+                            ):
                                 analysis_results.append("  Type: Private IP (RFC 1918)")
                             elif first_octet == 127:
                                 analysis_results.append("  Type: Loopback")
@@ -2003,15 +2034,18 @@ class AnalysisTab(BaseTab):
                     elif current_tab == "Base64 Data":
                         # Try to decode base64
                         import base64
+
                         try:
                             decoded = base64.b64decode(values[0][:100])
-                            analysis_results.append(f"  Decoded preview (hex): {decoded[:20].hex()}")
+                            analysis_results.append(
+                                f"  Decoded preview (hex): {decoded[:20].hex()}"
+                            )
                             # Check if it might be a file
-                            if decoded.startswith(b'MZ'):
+                            if decoded.startswith(b"MZ"):
                                 analysis_results.append("  Possible PE executable")
-                            elif decoded.startswith(b'PK'):
+                            elif decoded.startswith(b"PK"):
                                 analysis_results.append("  Possible ZIP archive")
-                            elif decoded.startswith(b'%PDF'):
+                            elif decoded.startswith(b"%PDF"):
                                 analysis_results.append("  Possible PDF document")
                         except:
                             analysis_results.append("  Failed to decode")
@@ -2020,17 +2054,17 @@ class AnalysisTab(BaseTab):
                         # Analyze license format
                         value = values[1]
                         analysis_results.append(f"  Length: {len(value)} characters")
-                        if '-' in value:
-                            parts = value.split('-')
+                        if "-" in value:
+                            parts = value.split("-")
                             analysis_results.append(f"  Format: {len(parts)} segments")
                             analysis_results.append(f"  Segment lengths: {[len(p) for p in parts]}")
                         # Check for common patterns
-                        if all(c in '0123456789ABCDEF' for c in value.replace('-', '')):
+                        if all(c in "0123456789ABCDEF" for c in value.replace("-", "")):
                             analysis_results.append("  Type: Hexadecimal")
-                        elif value.replace('-', '').isalnum():
+                        elif value.replace("-", "").isalnum():
                             analysis_results.append("  Type: Alphanumeric")
 
-                analysis_text.setPlainText('\n'.join(analysis_results))
+                analysis_text.setPlainText("\n".join(analysis_results))
                 analysis_layout.addWidget(analysis_text)
 
                 close_analysis_btn = QPushButton("Close")
@@ -2060,7 +2094,9 @@ class AnalysisTab(BaseTab):
 
         except Exception as e:
             self.logger.error(f"Failed to extract artifacts: {str(e)}")
-            self.show_message("Extraction Error", f"Failed to extract artifacts: {str(e)}", error=True)
+            self.show_message(
+                "Extraction Error", f"Failed to extract artifacts: {str(e)}", error=True
+            )
 
         except Exception as e:
             self.log_message(f"Error starting traffic monitor: {e}", "error")
@@ -2076,19 +2112,22 @@ class AnalysisTab(BaseTab):
     def export_analysis_results(self):
         """Export analysis results to file in user-selected format"""
         try:
-            if not hasattr(self, 'results_display') or not self.results_display.toPlainText().strip():
+            if (
+                not hasattr(self, "results_display")
+                or not self.results_display.toPlainText().strip()
+            ):
                 QMessageBox.warning(self, "Warning", "No analysis results to export!")
                 return
 
             # Let user choose export format and location
             formats = "JSON (*.json);;HTML (*.html);;CSV (*.csv);;Text (*.txt)"
             file_path, selected_filter = QFileDialog.getSaveFileName(
-                self, 
-                "Export Analysis Results", 
-                f"analysis_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}", 
-                formats
+                self,
+                "Export Analysis Results",
+                f"analysis_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                formats,
             )
-            
+
             if not file_path:
                 return
 
@@ -2105,21 +2144,21 @@ class AnalysisTab(BaseTab):
             # Prepare analysis results for export
             analysis_data = {
                 "timestamp": datetime.now().isoformat(),
-                "binary_path": getattr(self, 'current_binary', 'Unknown'),
+                "binary_path": getattr(self, "current_binary", "Unknown"),
                 "analysis_type": "comprehensive",
                 "results": self.results_display.toPlainText(),
                 "metadata": {
                     "intellicrack_version": "1.0",
                     "export_format": export_format,
-                    "analysis_date": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                }
+                    "analysis_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                },
             }
 
             # Add additional data if available
-            if hasattr(self, 'analysis_progress') and self.analysis_progress.isVisible():
+            if hasattr(self, "analysis_progress") and self.analysis_progress.isVisible():
                 analysis_data["progress"] = self.analysis_progress.value()
-            
-            if hasattr(self, 'analysis_status'):
+
+            if hasattr(self, "analysis_status"):
                 analysis_data["status"] = self.analysis_status.text()
 
             # Export using AnalysisExporter
@@ -2127,22 +2166,18 @@ class AnalysisTab(BaseTab):
                 result=analysis_data,
                 output_file=file_path,
                 format=export_format,
-                analysis_type="comprehensive"
+                analysis_type="comprehensive",
             )
 
             if success:
                 self.log_activity(f"Analysis results exported successfully to: {file_path}")
                 QMessageBox.information(
-                    self, 
-                    "Export Successful", 
-                    f"Analysis results exported to:\n{file_path}"
+                    self, "Export Successful", f"Analysis results exported to:\n{file_path}"
                 )
             else:
                 self.log_activity(f"Failed to export analysis results to: {file_path}")
                 QMessageBox.critical(
-                    self, 
-                    "Export Failed", 
-                    f"Failed to export analysis results to:\n{file_path}"
+                    self, "Export Failed", f"Failed to export analysis results to:\n{file_path}"
                 )
 
         except Exception as e:
@@ -2474,7 +2509,7 @@ class AnalysisTab(BaseTab):
                 self,
                 "Select File for Protocol Detection",
                 "",
-                "PCAP Files (*.pcap *.pcapng);;Binary Files (*.exe *.dll *.bin);;Memory Dumps (*.dmp *.raw *.mem);;All Files (*)"
+                "PCAP Files (*.pcap *.pcapng);;Binary Files (*.exe *.dll *.bin);;Memory Dumps (*.dmp *.raw *.mem);;All Files (*)",
             )
 
             if not file_path:
@@ -2583,14 +2618,16 @@ class AnalysisTab(BaseTab):
                         file_size = os.path.getsize(self.file_path)
                         chunks_processed = 0
 
-                        with open(self.file_path, 'rb') as f:
+                        with open(self.file_path, "rb") as f:
                             while True:
                                 chunk = f.read(chunk_size)
                                 if not chunk:
                                     break
 
                                 chunks_processed += 1
-                                self.progress.emit(f"Processing chunk {chunks_processed} ({chunks_processed * chunk_size / file_size * 100:.1f}%)")
+                                self.progress.emit(
+                                    f"Processing chunk {chunks_processed} ({chunks_processed * chunk_size / file_size * 100:.1f}%)"
+                                )
 
                                 # Detect protocols in chunk
                                 detected = engine.detect_protocols(chunk)
@@ -2598,12 +2635,12 @@ class AnalysisTab(BaseTab):
                                 for protocol in detected:
                                     if protocol not in protocols_found:
                                         protocols_found[protocol] = {
-                                            'count': 0,
-                                            'confidence': 'High',
-                                            'license_related': False,
-                                            'details': []
+                                            "count": 0,
+                                            "confidence": "High",
+                                            "license_related": False,
+                                            "details": [],
                                         }
-                                    protocols_found[protocol]['count'] += 1
+                                    protocols_found[protocol]["count"] += 1
 
                                 # Look for license-specific patterns
                                 license_patterns = [
@@ -2622,58 +2659,61 @@ class AnalysisTab(BaseTab):
                                 for pattern, description in license_patterns:
                                     if re.search(pattern, chunk, re.IGNORECASE):
                                         indicator = {
-                                            'description': description,
-                                            'offset': chunks_processed * chunk_size,
-                                            'chunk': chunks_processed
+                                            "description": description,
+                                            "offset": chunks_processed * chunk_size,
+                                            "chunk": chunks_processed,
                                         }
                                         license_indicators.append(indicator)
-                                        self.protocol_found.emit({
-                                            'type': 'license_indicator',
-                                            'data': indicator
-                                        })
+                                        self.protocol_found.emit(
+                                            {"type": "license_indicator", "data": indicator}
+                                        )
 
                                 # Check for specific license protocols
-                                if b'HTTP' in str(detected).encode():
+                                if b"HTTP" in str(detected).encode():
                                     # Check for license-related HTTP endpoints
                                     license_endpoints = [
-                                        b'/license',
-                                        b'/activate',
-                                        b'/validate',
-                                        b'/api/license',
-                                        b'/api/auth',
-                                        b'/check',
-                                        b'/verify'
+                                        b"/license",
+                                        b"/activate",
+                                        b"/validate",
+                                        b"/api/license",
+                                        b"/api/auth",
+                                        b"/check",
+                                        b"/verify",
                                     ]
 
                                     for endpoint in license_endpoints:
                                         if endpoint in chunk:
-                                            protocols_found.get('HTTP', {})['license_related'] = True
-                                            protocols_found.get('HTTP', {})['details'].append(
+                                            protocols_found.get("HTTP", {})["license_related"] = (
+                                                True
+                                            )
+                                            protocols_found.get("HTTP", {})["details"].append(
                                                 f"License endpoint detected: {endpoint.decode('utf-8', errors='ignore')}"
                                             )
 
                                 # Emit protocol updates
                                 for protocol, data in protocols_found.items():
-                                    self.protocol_found.emit({
-                                        'type': 'protocol',
-                                        'name': protocol,
-                                        'data': data
-                                    })
+                                    self.protocol_found.emit(
+                                        {"type": "protocol", "name": protocol, "data": data}
+                                    )
 
                         # Analyze protocol combinations for license detection
-                        if 'HTTP' in protocols_found or 'HTTPS/TLS' in protocols_found:
-                            if 'DNS' in protocols_found:
-                                license_indicators.append({
-                                    'description': 'DNS + HTTP/HTTPS: Possible online license validation',
-                                    'confidence': 'Medium'
-                                })
+                        if "HTTP" in protocols_found or "HTTPS/TLS" in protocols_found:
+                            if "DNS" in protocols_found:
+                                license_indicators.append(
+                                    {
+                                        "description": "DNS + HTTP/HTTPS: Possible online license validation",
+                                        "confidence": "Medium",
+                                    }
+                                )
 
-                        if 'TCP' in protocols_found and len(license_indicators) > 0:
+                        if "TCP" in protocols_found and len(license_indicators) > 0:
                             for protocol in protocols_found:
-                                if 'license' in protocol.lower():
-                                    protocols_found[protocol]['license_related'] = True
+                                if "license" in protocol.lower():
+                                    protocols_found[protocol]["license_related"] = True
 
-                        self.progress.emit(f"Detection complete: {len(protocols_found)} protocols found")
+                        self.progress.emit(
+                            f"Detection complete: {len(protocols_found)} protocols found"
+                        )
                         self.finished_detection.emit(list(protocols_found.items()))
 
                     except Exception as e:
@@ -2686,29 +2726,31 @@ class AnalysisTab(BaseTab):
 
             def on_protocol_found(data):
                 """Handle protocol detection results"""
-                if data['type'] == 'protocol':
-                    protocol_name = data['name']
-                    protocol_data = data['data']
+                if data["type"] == "protocol":
+                    protocol_name = data["name"]
+                    protocol_data = data["data"]
 
                     if protocol_name not in protocol_items:
-                        item = QTreeWidgetItem([
-                            protocol_name,
-                            str(protocol_data['count']),
-                            protocol_data['confidence'],
-                            'Yes' if protocol_data['license_related'] else 'No'
-                        ])
+                        item = QTreeWidgetItem(
+                            [
+                                protocol_name,
+                                str(protocol_data["count"]),
+                                protocol_data["confidence"],
+                                "Yes" if protocol_data["license_related"] else "No",
+                            ]
+                        )
                         protocols_tree.addTopLevelItem(item)
                         protocol_items[protocol_name] = item
                     else:
                         # Update existing item
                         item = protocol_items[protocol_name]
-                        item.setText(1, str(protocol_data['count']))
-                        if protocol_data['license_related']:
-                            item.setText(3, 'Yes')
+                        item.setText(1, str(protocol_data["count"]))
+                        if protocol_data["license_related"]:
+                            item.setText(3, "Yes")
                             item.setForeground(3, Qt.GlobalColor.red)
 
-                elif data['type'] == 'license_indicator':
-                    indicator = data['data']
+                elif data["type"] == "license_indicator":
+                    indicator = data["data"]
                     license_list.addItem(f"[Chunk {indicator['chunk']}] {indicator['description']}")
 
             def on_progress(msg):
@@ -2728,7 +2770,7 @@ class AnalysisTab(BaseTab):
                 summary.append(f"Protocols detected: {len(protocols)}\n")
 
                 # License-related protocols
-                license_protocols = [p[0] for p in protocols if p[1].get('license_related', False)]
+                license_protocols = [p[0] for p in protocols if p[1].get("license_related", False)]
                 if license_protocols:
                     summary.append("LICENSE-RELATED PROTOCOLS:")
                     for protocol in license_protocols:
@@ -2737,16 +2779,16 @@ class AnalysisTab(BaseTab):
 
                 # Communication patterns
                 summary.append("COMMUNICATION PATTERNS:")
-                if 'HTTP' in dict(protocols) or 'HTTPS/TLS' in dict(protocols):
+                if "HTTP" in dict(protocols) or "HTTPS/TLS" in dict(protocols):
                     summary.append("  • Web-based communication detected")
                     summary.append("    - Likely uses online license validation")
                     summary.append("    - May require internet connection for activation")
 
-                if 'DNS' in dict(protocols):
+                if "DNS" in dict(protocols):
                     summary.append("  • DNS queries detected")
                     summary.append("    - Resolves license server addresses")
 
-                if 'TCP' in dict(protocols) or 'UDP' in dict(protocols):
+                if "TCP" in dict(protocols) or "UDP" in dict(protocols):
                     summary.append("  • Direct socket communication")
                     summary.append("    - May use custom license protocol")
 
@@ -2757,7 +2799,7 @@ class AnalysisTab(BaseTab):
                 summary.append("  3. Check for certificate pinning if HTTPS is used")
                 summary.append("  4. Analyze DNS queries for license server domains")
 
-                details_text.setPlainText('\n'.join(summary))
+                details_text.setPlainText("\n".join(summary))
 
                 # Enable export button
                 export_btn.setEnabled(True)
@@ -2767,7 +2809,9 @@ class AnalysisTab(BaseTab):
                 progress_bar.setRange(0, 1)
                 progress_bar.setValue(0)
                 info_label.setText(f"Error: {error_msg}")
-                self.show_message("Detection Error", f"Failed to detect protocols: {error_msg}", error=True)
+                self.show_message(
+                    "Detection Error", f"Failed to detect protocols: {error_msg}", error=True
+                )
 
             def on_tree_selection():
                 """Show details for selected protocol"""
@@ -2783,26 +2827,26 @@ class AnalysisTab(BaseTab):
                     details.append(f"License Related: {item.text(3)}\n")
 
                     # Protocol-specific details
-                    if protocol_name == 'HTTP':
+                    if protocol_name == "HTTP":
                         details.append("HTTP Protocol Details:")
                         details.append("  • Clear text communication")
                         details.append("  • Easy to intercept and modify")
                         details.append("  • Look for: License keys in headers/body")
                         details.append("  • Check: API endpoints, authentication tokens")
-                    elif protocol_name == 'HTTPS/TLS':
+                    elif protocol_name == "HTTPS/TLS":
                         details.append("HTTPS/TLS Protocol Details:")
                         details.append("  • Encrypted communication")
                         details.append("  • May use certificate pinning")
                         details.append("  • Requires: TLS interception proxy")
                         details.append("  • Check: Certificate validation logic")
-                    elif protocol_name == 'DNS':
+                    elif protocol_name == "DNS":
                         details.append("DNS Protocol Details:")
                         details.append("  • Domain name resolution")
                         details.append("  • Can be redirected/spoofed")
                         details.append("  • Check: License server domains")
                         details.append("  • Consider: DNS poisoning for offline bypass")
 
-                    details_text.setPlainText('\n'.join(details))
+                    details_text.setPlainText("\n".join(details))
 
             def analyze_patterns():
                 """Deep analysis of communication patterns"""
@@ -2827,7 +2871,7 @@ class AnalysisTab(BaseTab):
                     detected_protocols.append(item.text(0))
 
                 # Analyze patterns
-                if 'HTTP' in detected_protocols or 'HTTPS/TLS' in detected_protocols:
+                if "HTTP" in detected_protocols or "HTTPS/TLS" in detected_protocols:
                     analysis_results.append("WEB-BASED LICENSE VALIDATION PATTERN:")
                     analysis_results.append("  • Application uses HTTP/HTTPS for license checks")
                     analysis_results.append("  • Bypass strategies:")
@@ -2837,7 +2881,7 @@ class AnalysisTab(BaseTab):
                     analysis_results.append("    4. Certificate unpinning for HTTPS")
                     analysis_results.append("")
 
-                if 'DNS' in detected_protocols:
+                if "DNS" in detected_protocols:
                     analysis_results.append("DNS RESOLUTION PATTERN:")
                     analysis_results.append("  • Application resolves license server domains")
                     analysis_results.append("  • Bypass strategies:")
@@ -2862,7 +2906,7 @@ class AnalysisTab(BaseTab):
                     analysis_results.append("  4. Analyze request/response formats")
                     analysis_results.append("  5. Test response modification")
 
-                analysis_text.setPlainText('\n'.join(analysis_results))
+                analysis_text.setPlainText("\n".join(analysis_results))
                 analysis_layout.addWidget(analysis_text)
 
                 close_analysis_btn = QPushButton("Close")
@@ -2878,7 +2922,7 @@ class AnalysisTab(BaseTab):
                     dialog,
                     "Export Protocol Detection Results",
                     f"{os.path.splitext(file_path)[0]}_protocols.txt",
-                    "Text Files (*.txt);;JSON Files (*.json)"
+                    "Text Files (*.txt);;JSON Files (*.json)",
                 )
 
                 if export_path:
@@ -2887,52 +2931,54 @@ class AnalysisTab(BaseTab):
 
                         # Collect results
                         results = {
-                            'file': file_path,
-                            'file_size': os.path.getsize(file_path),
-                            'protocols': {},
-                            'license_indicators': []
+                            "file": file_path,
+                            "file_size": os.path.getsize(file_path),
+                            "protocols": {},
+                            "license_indicators": [],
                         }
 
                         # Get protocols
                         for i in range(protocols_tree.topLevelItemCount()):
                             item = protocols_tree.topLevelItem(i)
                             protocol_name = item.text(0)
-                            results['protocols'][protocol_name] = {
-                                'count': item.text(1),
-                                'confidence': item.text(2),
-                                'license_related': item.text(3) == 'Yes'
+                            results["protocols"][protocol_name] = {
+                                "count": item.text(1),
+                                "confidence": item.text(2),
+                                "license_related": item.text(3) == "Yes",
                             }
 
                         # Get license indicators
                         for i in range(license_list.count()):
-                            results['license_indicators'].append(license_list.item(i).text())
+                            results["license_indicators"].append(license_list.item(i).text())
 
                         # Export based on format
-                        if export_path.endswith('.json'):
-                            with open(export_path, 'w') as f:
+                        if export_path.endswith(".json"):
+                            with open(export_path, "w") as f:
                                 json.dump(results, f, indent=2)
                         else:
-                            with open(export_path, 'w') as f:
+                            with open(export_path, "w") as f:
                                 f.write("=== PROTOCOL DETECTION RESULTS ===\n\n")
                                 f.write(f"File: {results['file']}\n")
                                 f.write(f"Size: {results['file_size']:,} bytes\n\n")
 
                                 f.write("DETECTED PROTOCOLS:\n")
-                                for protocol, data in results['protocols'].items():
+                                for protocol, data in results["protocols"].items():
                                     f.write(f"  {protocol}:\n")
                                     f.write(f"    Count: {data['count']}\n")
                                     f.write(f"    Confidence: {data['confidence']}\n")
                                     f.write(f"    License Related: {data['license_related']}\n")
 
-                                if results['license_indicators']:
+                                if results["license_indicators"]:
                                     f.write("\nLICENSE INDICATORS:\n")
-                                    for indicator in results['license_indicators']:
+                                    for indicator in results["license_indicators"]:
                                         f.write(f"  • {indicator}\n")
 
                         self.show_message("Export Complete", f"Results exported to {export_path}")
 
                     except Exception as e:
-                        self.show_message("Export Error", f"Failed to export results: {str(e)}", error=True)
+                        self.show_message(
+                            "Export Error", f"Failed to export results: {str(e)}", error=True
+                        )
 
             # Connect signals
             detector.protocol_found.connect(on_protocol_found)
@@ -2957,4 +3003,6 @@ class AnalysisTab(BaseTab):
 
         except Exception as e:
             self.logger.error(f"Failed to detect protocols: {str(e)}")
-            self.show_message("Detection Error", f"Failed to detect protocols: {str(e)}", error=True)
+            self.show_message(
+                "Detection Error", f"Failed to detect protocols: {str(e)}", error=True
+            )

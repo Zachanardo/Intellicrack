@@ -1,5 +1,14 @@
 """LLM Configuration Manager for Intellicrack
 
+This module provides a compatibility layer for LLM configuration management,
+delegating all storage to the central IntellicrackConfig system. Legacy JSON
+files in ~/.intellicrack/llm_configs/ are automatically migrated on first use.
+
+IMPORTANT: This is now a wrapper around IntellicrackConfig. All configuration
+is stored in the central config.json file under the 'llm_configuration' section.
+The separate JSON files (models.json, profiles.json, metrics.json) are no longer
+used except for one-time migration.
+
 Copyright (C) 2025 Zachary Flint
 
 This file is part of Intellicrack.
@@ -23,6 +32,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ..utils.deprecation_warnings import deprecated_config_method
 from ..utils.logger import get_logger
 from .llm_backends import LLMConfig, LLMProvider, get_llm_manager
 
@@ -30,7 +40,19 @@ logger = get_logger(__name__)
 
 
 class LLMConfigManager:
-    """Manages saving, loading, and organizing LLM configurations."""
+    """Production-ready LLM configuration manager using central IntellicrackConfig.
+
+    This class provides a clean API for managing LLM configurations while storing
+    all data in the central config.json file. Legacy JSON files are only read
+    during migration, never written to. Single source of truth: central config.
+
+    Features:
+    - Model configuration management
+    - Profile management for different use cases
+    - Metrics tracking and aggregation
+    - Automatic migration from legacy JSON files
+    - Thread-safe operations through central config
+    """
 
     def __init__(self, config_dir: str | None = None):
         """Initialize the LLM configuration manager.
@@ -58,12 +80,37 @@ class LLMConfigManager:
 
     def _load_all_configs(self):
         """Load all configuration files."""
+        from intellicrack.core.config_manager import get_config
+
+        # Load from files first
         self.configs = self._load_json_file(self.config_file, {})
         self.profiles = self._load_json_file(self.profiles_file, self._get_default_profiles())
         self.metrics = self._load_json_file(self.metrics_file, {})
 
+        # Then check central config and merge (central config takes precedence)
+        try:
+            central_config = get_config()
+
+            # Load models from central config
+            central_models = central_config.get("llm_configuration.models", {})
+            if central_models:
+                self.configs.update(central_models)
+
+            # Load profiles from central config
+            central_profiles = central_config.get("llm_configuration.profiles", {})
+            if central_profiles:
+                self.profiles.update(central_profiles)
+
+            # Load metrics from central config
+            central_metrics = central_config.get("llm_configuration.metrics", {})
+            if central_metrics:
+                self.metrics.update(central_metrics)
+
+        except Exception as e:
+            logger.warning(f"Could not load from central config: {e}")
+
     def _load_json_file(self, file_path: Path, default: Any) -> Any:
-        """Load a JSON file with error handling."""
+        """Load a JSON file with error handling - ONLY for migration purposes."""
         if not file_path.exists():
             return default
 
@@ -74,14 +121,9 @@ class LLMConfigManager:
             logger.error(f"Failed to load {file_path}: {e}")
             return default
 
-    def _save_json_file(self, file_path: Path, data: Any):
-        """Save data to a JSON file."""
-        try:
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, default=str)
-            logger.info(f"Saved configuration to {file_path}")
-        except Exception as e:
-            logger.error(f"Failed to save {file_path}: {e}")
+    # NOTE: _save_json_file method has been REMOVED
+    # All saves now go directly to central config only
+    # No dual storage - production-ready single source of truth
 
     def _get_default_profiles(self) -> dict[str, dict[str, Any]]:
         """Get default model profiles for different use cases."""
@@ -154,6 +196,9 @@ class LLMConfigManager:
             },
         }
 
+    @deprecated_config_method(
+        "IntellicrackConfig.set('llm_configuration.models.{model_id}', config)"
+    )
     def save_model_config(self, model_id: str, config: LLMConfig, metadata: dict | None = None):
         """Save a model configuration.
 
@@ -163,6 +208,8 @@ class LLMConfigManager:
             metadata: Optional metadata (description, tags, etc.)
 
         """
+        from intellicrack.core.config_manager import get_config
+
         config_data = {
             "provider": config.provider.value,
             "model_name": config.model_name,
@@ -178,9 +225,15 @@ class LLMConfigManager:
             "metadata": metadata or {},
         }
 
+        # Save to internal cache
         self.configs[model_id] = config_data
-        self._save_json_file(self.config_file, self.configs)
 
+        # Save to central config
+        central_config = get_config()
+        central_config.set(f"llm_configuration.models.{model_id}", config_data)
+        central_config.save()  # Ensure it's persisted immediately
+
+    @deprecated_config_method("IntellicrackConfig.get('llm_configuration.models.{model_id}')")
     def load_model_config(self, model_id: str) -> LLMConfig | None:
         """Load a model configuration by ID.
 
@@ -191,10 +244,17 @@ class LLMConfigManager:
             LLMConfig object or None if not found
 
         """
-        if model_id not in self.configs:
-            return None
+        from intellicrack.core.config_manager import get_config
 
-        config_data = self.configs[model_id]
+        # Try loading from central config first
+        central_config = get_config()
+        config_data = central_config.get(f"llm_configuration.models.{model_id}")
+
+        # Fall back to internal cache if not in central config
+        if config_data is None:
+            if model_id not in self.configs:
+                return None
+            config_data = self.configs[model_id]
 
         try:
             provider = LLMProvider(config_data["provider"])
@@ -228,14 +288,23 @@ class LLMConfigManager:
             True if deleted, False otherwise
 
         """
-        if model_id in self.configs:
-            del self.configs[model_id]
-            self._save_json_file(self.config_file, self.configs)
+        from intellicrack.core.config_manager import get_config
 
-            # Also remove metrics
+        if model_id in self.configs:
+            # Delete from internal cache
+            del self.configs[model_id]
+
+            # Delete from central config
+            central_config = get_config()
+            central_config.set(f"llm_configuration.models.{model_id}", None)
+
+            # No longer saving to JSON files - central config is the single source of truth
+
+            # Also remove metrics from both central config and internal cache
             if model_id in self.metrics:
                 del self.metrics[model_id]
-                self._save_json_file(self.metrics_file, self.metrics)
+                central_config.set(f"llm_configuration.metrics.{model_id}", None)
+                central_config.save()  # Persist the deletion immediately
 
             return True
         return False
@@ -247,6 +316,19 @@ class LLMConfigManager:
             Dictionary of model_id -> config data
 
         """
+        from intellicrack.core.config_manager import get_config
+
+        # Get configs from central config
+        central_config = get_config()
+        central_configs = central_config.get("llm_configuration.models", {})
+
+        # Merge with internal cache (prefer central config)
+        if central_configs:
+            # Update internal cache with central config data
+            self.configs.update(central_configs)
+            return central_configs.copy()
+
+        # Fall back to internal cache if central config is empty
         return self.configs.copy()
 
     def auto_load_models(self, llm_manager=None):
@@ -282,6 +364,9 @@ class LLMConfigManager:
         logger.info(f"Auto-load complete: {loaded} loaded, {failed} failed")
         return loaded, failed
 
+    @deprecated_config_method(
+        "IntellicrackConfig.set('llm_configuration.profiles.{profile_id}', data)"
+    )
     def save_profile(self, profile_id: str, profile_data: dict[str, Any]):
         """Save a model profile.
 
@@ -290,8 +375,17 @@ class LLMConfigManager:
             profile_data: Profile configuration
 
         """
+        from intellicrack.core.config_manager import get_config
+
+        # Save to internal cache
         self.profiles[profile_id] = profile_data
-        self._save_json_file(self.profiles_file, self.profiles)
+
+        # Save to central config
+        central_config = get_config()
+        central_config.set(f"llm_configuration.profiles.{profile_id}", profile_data)
+
+        # No longer saving to JSON files - central config is the single source of truth
+        central_config.save()  # Persist immediately
 
     def get_profile(self, profile_id: str) -> dict[str, Any] | None:
         """Get a model profile by ID.
@@ -303,7 +397,17 @@ class LLMConfigManager:
             Profile data or None
 
         """
-        return self.profiles.get(profile_id)
+        from intellicrack.core.config_manager import get_config
+
+        # Try loading from central config first
+        central_config = get_config()
+        profile_data = central_config.get(f"llm_configuration.profiles.{profile_id}")
+
+        # Fall back to internal cache if not in central config
+        if profile_data is None:
+            profile_data = self.profiles.get(profile_id)
+
+        return profile_data
 
     def list_profiles(self) -> dict[str, dict[str, Any]]:
         """List all available profiles.
@@ -312,6 +416,19 @@ class LLMConfigManager:
             Dictionary of profile_id -> profile data
 
         """
+        from intellicrack.core.config_manager import get_config
+
+        # Get profiles from central config
+        central_config = get_config()
+        central_profiles = central_config.get("llm_configuration.profiles", {})
+
+        # Merge with internal cache (prefer central config)
+        if central_profiles:
+            # Update internal cache with central config data
+            self.profiles.update(central_profiles)
+            return central_profiles.copy()
+
+        # Fall back to internal cache if central config is empty
         return self.profiles.copy()
 
     def apply_profile(self, config: LLMConfig, profile_id: str) -> LLMConfig:
@@ -356,6 +473,8 @@ class LLMConfigManager:
             metrics: Performance metrics (speed, memory, etc.)
 
         """
+        from intellicrack.core.config_manager import get_config
+
         if model_id not in self.metrics:
             self.metrics[model_id] = {
                 "history": [],
@@ -375,7 +494,10 @@ class LLMConfigManager:
         # Update aggregates
         self._update_aggregate_metrics(model_id)
 
-        self._save_json_file(self.metrics_file, self.metrics)
+        # Save to central config
+        central_config = get_config()
+        central_config.set(f"llm_configuration.metrics.{model_id}", self.metrics[model_id])
+        central_config.save()  # Persist immediately to central config
 
     def _update_aggregate_metrics(self, model_id: str):
         """Update aggregate metrics for a model."""
@@ -411,7 +533,17 @@ class LLMConfigManager:
             Metrics data or None
 
         """
-        return self.metrics.get(model_id)
+        from intellicrack.core.config_manager import get_config
+
+        # Try loading from central config first
+        central_config = get_config()
+        metrics_data = central_config.get(f"llm_configuration.metrics.{model_id}")
+
+        # Fall back to internal cache if not in central config
+        if metrics_data is None:
+            metrics_data = self.metrics.get(model_id)
+
+        return metrics_data
 
     def export_config(self, export_path: str, include_api_keys: bool = False):
         """Export all configurations to a file.
@@ -473,10 +605,24 @@ class LLMConfigManager:
             # Import metrics
             self.metrics.update(import_data.get("metrics", {}))
 
-            # Save all
-            self._save_json_file(self.config_file, self.configs)
-            self._save_json_file(self.profiles_file, self.profiles)
-            self._save_json_file(self.metrics_file, self.metrics)
+            # Save all to central config
+            from intellicrack.core.config_manager import get_config
+
+            central_config = get_config()
+
+            # Save models
+            for model_id, config_data in self.configs.items():
+                central_config.set(f"llm_configuration.models.{model_id}", config_data)
+
+            # Save profiles
+            for profile_id, profile_data in self.profiles.items():
+                central_config.set(f"llm_configuration.profiles.{profile_id}", profile_data)
+
+            # Save metrics
+            central_config.set("llm_configuration.metrics", self.metrics)
+
+            # Persist all changes
+            central_config.save()
 
             logger.info(f"Imported configuration from {import_path}")
 

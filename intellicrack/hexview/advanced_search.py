@@ -25,6 +25,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from intellicrack.core.config_manager import get_config
+
 from ..handlers.pyqt6_handler import (
     PYQT6_AVAILABLE,
     QButtonGroup,
@@ -114,9 +116,16 @@ class SearchResult:
 class SearchHistory:
     """Manages search history persistence."""
 
-    def __init__(self, max_entries: int = 50):
+    def __init__(self, max_entries: int = None):
         """Initialize the SearchHistory with maximum entries limit."""
-        self.max_entries = max_entries
+        # Get configuration instance
+        config = get_config()
+        
+        # Use provided max_entries or get from config
+        if max_entries is None:
+            self.max_entries = config.get("hex_viewer.search.history_max_entries", 50)
+        else:
+            self.max_entries = max_entries
         self.history_file = Path.home() / ".intellicrack" / "hex_search_history.json"
         self.entries: list[dict[str, Any]] = []
         self.load_history()
@@ -181,7 +190,13 @@ class SearchEngine:
     def __init__(self, file_handler):
         """Initialize the SearchEngine with file handler and chunk size."""
         self.file_handler = file_handler
-        self.chunk_size = 1024 * 1024  # 1MB chunks  # 1MB chunks  # 1MB chunks
+        
+        # Get configuration instance
+        config = get_config()
+        
+        # Get chunk size from config (convert KB to bytes)
+        chunk_size_kb = config.get("hex_viewer.search.search_chunk_size_kb", 256)
+        self.chunk_size = chunk_size_kb * 1024
 
     def search(
         self,
