@@ -273,19 +273,181 @@ class ROPBasedBypass(MitigationBypassBase):
             List of found gadgets
 
         """
-        # Placeholder implementation
         gadgets = []
 
-        # In a real implementation, this would analyze the binary for gadgets
-        if binary_info.get("has_executable_sections", True):
-            gadgets.append(
-                {"address": "0x401000", "instruction": "pop rdi; ret", "type": "pop_register"},
-            )
-            gadgets.append(
-                {"address": "0x401005", "instruction": "pop rsi; ret", "type": "pop_register"},
-            )
+        # Get binary data and architecture
+        binary_data = binary_info.get("data", b"")
+        arch = binary_info.get("architecture", "x64")
+        sections = binary_info.get("sections", [])
 
-        return gadgets
+        if not binary_data:
+            return gadgets
+
+        # Common ROP instruction patterns for x86/x64
+        gadget_patterns = {
+            "x86": [
+                # ret instructions
+                (b"\xc3", "ret"),
+                (b"\xc2[\x00-\xff][\x00-\xff]", "ret imm16"),
+                # pop register + ret
+                (b"\x58\xc3", "pop eax; ret"),
+                (b"\x59\xc3", "pop ecx; ret"),
+                (b"\x5a\xc3", "pop edx; ret"),
+                (b"\x5b\xc3", "pop ebx; ret"),
+                (b"\x5c\xc3", "pop esp; ret"),
+                (b"\x5d\xc3", "pop ebp; ret"),
+                (b"\x5e\xc3", "pop esi; ret"),
+                (b"\x5f\xc3", "pop edi; ret"),
+                # xchg + ret
+                (b"\x94\xc3", "xchg eax, esp; ret"),
+                (b"\x87[\xe0-\xe7]\xc3", "xchg esp, reg; ret"),
+                # leave + ret
+                (b"\xc9\xc3", "leave; ret"),
+                # add/sub esp + ret
+                (b"\x83\xc4[\x00-\xff]\xc3", "add esp, imm8; ret"),
+                (b"\x83\xec[\x00-\xff]\xc3", "sub esp, imm8; ret"),
+                # jmp/call register
+                (b"\xff[\xe0-\xe7]", "jmp reg"),
+                (b"\xff[\xd0-\xd7]", "call reg"),
+            ],
+            "x64": [
+                # ret instructions
+                (b"\xc3", "ret"),
+                (b"\xc2[\x00-\xff][\x00-\xff]", "ret imm16"),
+                # pop register + ret (with REX prefix)
+                (b"\x58\xc3", "pop rax; ret"),
+                (b"\x59\xc3", "pop rcx; ret"),
+                (b"\x5a\xc3", "pop rdx; ret"),
+                (b"\x5b\xc3", "pop rbx; ret"),
+                (b"\x5c\xc3", "pop rsp; ret"),
+                (b"\x5d\xc3", "pop rbp; ret"),
+                (b"\x5e\xc3", "pop rsi; ret"),
+                (b"\x5f\xc3", "pop rdi; ret"),
+                (b"\x41[\x58-\x5f]\xc3", "pop r8-r15; ret"),
+                # xchg + ret
+                (b"\x48\x94\xc3", "xchg rax, rsp; ret"),
+                (b"\x48\x87[\xe0-\xe7]\xc3", "xchg rsp, reg; ret"),
+                # leave + ret
+                (b"\xc9\xc3", "leave; ret"),
+                # add/sub rsp + ret
+                (b"\x48\x83\xc4[\x00-\xff]\xc3", "add rsp, imm8; ret"),
+                (b"\x48\x83\xec[\x00-\xff]\xc3", "sub rsp, imm8; ret"),
+                # syscall + ret
+                (b"\x0f\x05\xc3", "syscall; ret"),
+                # jmp/call register
+                (b"\xff[\xe0-\xe7]", "jmp reg"),
+                (b"\xff[\xd0-\xd7]", "call reg"),
+            ]
+        }
+
+        patterns = gadget_patterns.get(arch, gadget_patterns["x64"])
+
+        # Search for gadgets in executable sections
+        for section in sections:
+            if not section.get("executable", False):
+                continue
+
+            section_start = section.get("virtual_address", 0)
+            section_data = section.get("data", b"")
+
+            if not section_data:
+                continue
+
+            # Search for each gadget pattern
+            for pattern_bytes, description in patterns:
+                # Simple pattern matching (would use regex in production)
+                if isinstance(pattern_bytes, bytes):
+                    # Find all occurrences of the pattern
+                    offset = 0
+                    while offset < len(section_data) - len(pattern_bytes):
+                        index = section_data.find(pattern_bytes, offset)
+                        if index == -1:
+                            break
+
+                        # Verify this is a valid gadget location
+                        # Check for preceding instructions that form a valid gadget
+                        gadget_addr = section_start + index
+
+                        # Look back up to 15 bytes for valid instruction sequences
+                        lookback = min(index, 15)
+                        if lookback > 0:
+                            gadget_bytes = section_data[index-lookback:index+len(pattern_bytes)]
+
+                            # Disassemble to verify (simplified)
+                            if self._is_valid_gadget_sequence(gadget_bytes, arch):
+                                gadgets.append({
+                                    "address": hex(gadget_addr),
+                                    "instruction": description,
+                                    "type": self._classify_gadget(description),
+                                    "bytes": gadget_bytes.hex(),
+                                    "section": section.get("name", ".text")
+                                })
+
+                        offset = index + 1
+
+                        # Limit gadgets per pattern
+                        if len(gadgets) >= 100:
+                            break
+
+        # Sort gadgets by address
+        gadgets.sort(key=lambda x: int(x["address"], 16))
+
+        # Remove duplicates
+        seen = set()
+        unique_gadgets = []
+        for gadget in gadgets:
+            key = (gadget["address"], gadget["instruction"])
+            if key not in seen:
+                seen.add(key)
+                unique_gadgets.append(gadget)
+
+        return unique_gadgets
+
+    def _is_valid_gadget_sequence(self, gadget_bytes: bytes, arch: str) -> bool:
+        """Check if bytes form a valid gadget sequence."""
+        # Simplified validation - check for common invalid patterns
+        invalid_patterns = [
+            b"\x00\x00\x00\x00",  # Null bytes
+            b"\xff\xff\xff\xff",  # All 0xFF
+            b"\xcc",  # INT3 breakpoint
+            b"\xcd\x80",  # INT 0x80 (old syscall)
+        ]
+
+        for pattern in invalid_patterns:
+            if pattern in gadget_bytes:
+                return False
+
+        # Must end with ret or jmp/call
+        valid_endings = [b"\xc3", b"\xc2", b"\xff\xe4", b"\xff\xd4"]
+        for ending in valid_endings:
+            if any(gadget_bytes.endswith(ending + bytes([b])) or gadget_bytes.endswith(ending)
+                   for b in range(256)):
+                return True
+
+        return gadget_bytes.endswith(b"\xc3")  # At least must end with ret
+
+    def _classify_gadget(self, instruction: str) -> str:
+        """Classify gadget type based on instruction."""
+        instruction_lower = instruction.lower()
+
+        if "pop" in instruction_lower:
+            return "pop_register"
+        elif "xchg" in instruction_lower:
+            return "stack_pivot"
+        elif "leave" in instruction_lower:
+            return "leave_ret"
+        elif "add" in instruction_lower or "sub" in instruction_lower:
+            return "stack_adjust"
+        elif "syscall" in instruction_lower:
+            return "syscall"
+        elif "jmp" in instruction_lower:
+            return "jmp_register"
+        elif "call" in instruction_lower:
+            return "call_register"
+        elif "ret" in instruction_lower:
+            return "ret"
+        else:
+            return "other"
 
     def assess_rop_viability(self, binary_info: dict[str, Any]) -> dict[str, Any]:
         """Assess the viability of ROP-based attacks.

@@ -93,15 +93,7 @@ class QEMUTestDialog(QDialog):
             preview_text.setPlainText(self.script_preview)
             preview_text.setReadOnly(True)
             preview_text.setMaximumHeight(150)
-            preview_text.setStyleSheet("""
-                QTextEdit {
-                    font-family: 'Consolas', 'Monaco', monospace;
-                    font-size: 10pt;
-                    background-color: #2b2b2b;
-                    color: #e0e0e0;
-                    border: 1px solid #555;
-                }
-            """)
+            preview_text.setObjectName("previewText")
             preview_layout.addWidget(preview_text)
 
             layout.addWidget(preview_group)
@@ -116,23 +108,23 @@ class QEMUTestDialog(QDialog):
         # Option 1: Test in QEMU first (recommended)
         self.qemu_test_radio = QRadioButton("Test in QEMU first (Recommended)")
         self.qemu_test_radio.setChecked(True)
-        self.qemu_test_radio.setStyleSheet("QRadioButton { font-weight: bold; color: #4CAF50; }")
+        self.qemu_test_radio.setObjectName("qemuTestOption")
         self.button_group.addButton(self.qemu_test_radio, 0)
         options_layout.addWidget(self.qemu_test_radio)
 
         qemu_desc = QLabel("    Safe environment to test script behavior before host execution")
-        qemu_desc.setStyleSheet("color: #888;")
+        qemu_desc.setObjectName("optionDescription")
         options_layout.addWidget(qemu_desc)
         options_layout.addSpacing(5)
 
         # Option 2: Run directly on host
         self.host_run_radio = QRadioButton("Run directly on host system")
-        self.host_run_radio.setStyleSheet("QRadioButton { color: #ff9800; }")
+        self.host_run_radio.setObjectName("hostRunOption")
         self.button_group.addButton(self.host_run_radio, 1)
         options_layout.addWidget(self.host_run_radio)
 
         host_desc = QLabel("    Execute immediately without testing (experienced users)")
-        host_desc.setStyleSheet("color: #888;")
+        host_desc.setObjectName("optionDescription")
         options_layout.addWidget(host_desc)
 
         layout.addWidget(options_group)
@@ -150,14 +142,7 @@ class QEMUTestDialog(QDialog):
             "• Prevents potential system damage<br>"
             "• Allows safe experimentation",
         )
-        benefits_text.setStyleSheet("""
-            QLabel {
-                background-color: #e3f2fd;
-                padding: 10px;
-                border: 1px solid #2196f3;
-                border-radius: 4px;
-            }
-        """)
+        benefits_text.setObjectName("benefitsText")
         benefits_text.setWordWrap(True)
         layout.addWidget(benefits_text)
 
@@ -176,17 +161,7 @@ class QEMUTestDialog(QDialog):
         self.continue_btn = QPushButton("Continue")
         self.continue_btn.clicked.connect(self._on_continue)
         self.continue_btn.setDefault(True)
-        self.continue_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                font-weight: bold;
-                padding: 5px 15px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
+        self.continue_btn.setObjectName("generateButton")
         button_layout.addWidget(self.continue_btn)
 
         layout.addLayout(button_layout)

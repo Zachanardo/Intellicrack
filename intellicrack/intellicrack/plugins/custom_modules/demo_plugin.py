@@ -10,10 +10,13 @@ Compatibility: Intellicrack 1.0+
 
 import hashlib
 import json
+import logging
 import os
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 # Import plugin base class
 from intellicrack.plugins.plugin_base import BasePlugin, PluginMetadata
@@ -159,7 +162,24 @@ class AdvancedDemoPlugin(BasePlugin):
 
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy of binary data."""
-        return calculate_byte_entropy(data)
+        import math
+        if not data:
+            return 0.0
+
+        # Count frequency of each byte value
+        freq = [0] * 256
+        for byte in data:
+            freq[byte] += 1
+
+        # Calculate entropy
+        entropy = 0.0
+        data_len = len(data)
+        for count in freq:
+            if count > 0:
+                prob = count / data_len
+                entropy -= prob * math.log2(prob)
+
+        return entropy
 
     def _detect_packer(self, binary_path: str) -> Dict[str, Any]:
         """Detect common packers and protectors."""

@@ -246,8 +246,8 @@ class NetworkForensicsEngine:
                                 "length": len(url),
                             }
                         )
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error during data extraction: {e}")
 
             # Extract email addresses
             email_pattern = rb"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
@@ -263,8 +263,8 @@ class NetworkForensicsEngine:
                             "length": len(email),
                         }
                     )
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error during data extraction: {e}")
 
             # Extract IP addresses
             ip_pattern = rb"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
@@ -283,8 +283,8 @@ class NetworkForensicsEngine:
                                 "length": len(ip),
                             }
                         )
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error during data extraction: {e}")
 
             # Extract base64 encoded data (potential file transfers)
             b64_pattern = rb"[A-Za-z0-9+/]{20,}={0,2}"
@@ -302,8 +302,8 @@ class NetworkForensicsEngine:
                                 "full_length": len(b64_str),
                             }
                         )
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Error during data extraction: {e}")
 
             # Extract potential credentials (basic patterns)
             cred_patterns = [
@@ -327,8 +327,8 @@ class NetworkForensicsEngine:
                                     "length": len(match),
                                 }
                             )
-                    except:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"Error during nested extraction: {e}")
 
             # Look for file transfer indicators
             file_patterns = [
@@ -349,8 +349,8 @@ class NetworkForensicsEngine:
                                 "length": len(match),
                             }
                         )
-                    except:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"Error during nested extraction: {e}")
 
             # Remove duplicates and limit results
             seen = set()

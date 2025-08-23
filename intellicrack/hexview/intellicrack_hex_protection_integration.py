@@ -38,6 +38,12 @@ class IntellicrackHexProtectionIntegration(QObject):
         self.protection_detector = IntellicrackProtectionCore()
         self.engine_process = None
 
+        # Setup two-way synchronization monitoring
+        self.sync_timer = QTimer()
+        self.sync_timer.timeout.connect(self._monitor_protection_viewer_offset)
+        self.last_synced_offset = -1
+        self.sync_timer.start(500)  # Check every 500ms
+
     def open_in_protection_viewer(self, file_path: str, offset: int | None = None):
         """Open file in protection analysis hex viewer
 
@@ -105,6 +111,10 @@ class IntellicrackHexProtectionIntegration(QObject):
 
     def _cleanup_sync_files(self):
         """Clean up temporary sync files after protection viewer closes."""
+        # Stop the sync timer
+        if hasattr(self, 'sync_timer') and self.sync_timer:
+            self.sync_timer.stop()
+
         try:
             protection_viewer_path = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
@@ -139,9 +149,55 @@ class IntellicrackHexProtectionIntegration(QObject):
             offset: Offset to sync
 
         """
-        # protection viewer doesn't have an API for external control
-        # This would require protection viewer modification or automation
-        logger.debug(f"Cannot sync offset {offset} to protection viewer (no API)")
+        # Implement file-based two-way synchronization
+        sync_dir = os.path.join(os.path.expanduser("~"), ".intellicrack", "hex_sync")
+
+        # Ensure sync directory exists
+        os.makedirs(sync_dir, exist_ok=True)
+
+        # Write offset to a sync file that protection viewer can monitor
+        outgoing_sync_file = os.path.join(sync_dir, "hex_to_protection_offset.txt")
+        try:
+            with open(outgoing_sync_file, "w") as f:
+                f.write(str(offset))
+            logger.debug(f"Synced offset {offset:#x} to protection viewer via {outgoing_sync_file}")
+        except Exception as e:
+            logger.error(f"Failed to sync offset to protection viewer: {e}")
+
+        # If we have a running process, try to send via stdin as well
+        if self.engine_process and self.engine_process.state() == QProcess.ProcessState.Running:
+            try:
+                # Send offset command through stdin
+                command = f"goto:{offset}\n"
+                self.engine_process.write(command.encode())
+                logger.debug(f"Sent goto command to protection viewer process: {command.strip()}")
+            except Exception as e:
+                logger.error(f"Failed to send command to protection viewer process: {e}")
+
+    def _monitor_protection_viewer_offset(self):
+        """Monitor for offset changes from protection viewer."""
+        sync_dir = os.path.join(os.path.expanduser("~"), ".intellicrack", "hex_sync")
+        incoming_sync_file = os.path.join(sync_dir, "protection_to_hex_offset.txt")
+
+        if not os.path.exists(incoming_sync_file):
+            return
+
+        try:
+            with open(incoming_sync_file, "r") as f:
+                offset_str = f.read().strip()
+                if offset_str:
+                    offset = int(offset_str, 0)  # Support both decimal and hex (0x prefix)
+
+                    # Only sync if this is a new offset
+                    if offset != self.last_synced_offset:
+                        self.last_synced_offset = offset
+                        self.sync_offset_from_protection_viewer(offset)
+
+                        # Clear the file after reading
+                        with open(incoming_sync_file, "w") as f:
+                            f.write("")
+        except Exception as e:
+            logger.debug(f"Error monitoring protection viewer offset: {e}")
 
     def get_section_offsets(self, file_path: str) -> dict[str, int]:
         """Get section offsets from protection viewer analysis
@@ -177,42 +233,181 @@ class IntellicrackHexProtectionIntegration(QObject):
             Feature comparison dictionary
 
         """
-        return {
-            "protection viewer Hex Viewer": {
-                "Basic Viewing": True,
-                "Text Search": True,
-                "ANSI/Unicode Search": True,
-                "Data Export": True,
-                "Integrated with Analysis": True,
-                "Hotkey Access": True,
-                "Section Navigation": False,
-                "Hex Editing": False,
-                "Bookmarks": False,
-                "Pattern Matching": False,
-                "Multi-View": False,
-                "Performance Monitoring": False,
-                "Advanced Search": False,
-                "Highlighting": False,
-                "Templates": False,
-            },
-            "Intellicrack Hex Viewer": {
-                "Basic Viewing": True,
-                "Text Search": True,
-                "ANSI/Unicode Search": True,
-                "Data Export": True,
-                "Integrated with Analysis": True,
-                "Hotkey Access": True,
-                "Section Navigation": True,
-                "Hex Editing": True,
-                "Bookmarks": True,
-                "Pattern Matching": True,
-                "Multi-View": True,
-                "Performance Monitoring": True,
-                "Advanced Search": True,
-                "Highlighting": True,
-                "Templates": False,  # We could add this
-            },
+        # Dynamically check for Intellicrack hex viewer features
+        intellicrack_features = self._detect_intellicrack_features()
+
+        # Protection viewer features (these are known/documented)
+        protection_viewer_features = {
+            "Basic Viewing": True,
+            "Text Search": True,
+            "ANSI/Unicode Search": True,
+            "Data Export": True,
+            "Integrated with Analysis": True,
+            "Hotkey Access": True,
+            "Section Navigation": False,
+            "Hex Editing": False,
+            "Bookmarks": False,
+            "Pattern Matching": False,
+            "Multi-View": False,
+            "Performance Monitoring": False,
+            "Advanced Search": False,
+            "Highlighting": False,
+            "Templates": False,
         }
+
+        return {
+            "protection viewer Hex Viewer": protection_viewer_features,
+            "Intellicrack Hex Viewer": intellicrack_features,
+        }
+
+    def _detect_intellicrack_features(self) -> dict[str, bool]:
+        """Dynamically detect features available in Intellicrack hex viewer
+        
+        Returns:
+            Dictionary of feature availability
+        """
+        features = {
+            "Basic Viewing": False,
+            "Text Search": False,
+            "ANSI/Unicode Search": False,
+            "Data Export": False,
+            "Integrated with Analysis": False,
+            "Hotkey Access": False,
+            "Section Navigation": False,
+            "Hex Editing": False,
+            "Bookmarks": False,
+            "Pattern Matching": False,
+            "Multi-View": False,
+            "Performance Monitoring": False,
+            "Advanced Search": False,
+            "Highlighting": False,
+            "Templates": False,
+            "File Comparison": False,
+            "Printing": False,
+            "Unlimited Undo/Redo": False,
+        }
+
+        # Check if we have a hex widget reference
+        if not self.hex_widget:
+            # Try to import and check the hex widget class
+            try:
+                from .hex_widget import HexViewerWidget
+                widget_class = HexViewerWidget
+            except ImportError:
+                return features
+        else:
+            widget_class = self.hex_widget.__class__
+
+        # Check for basic viewing (always present if widget exists)
+        features["Basic Viewing"] = True
+
+        # Check for search capabilities
+        if hasattr(widget_class, 'search') or hasattr(widget_class, 'find_text'):
+            features["Text Search"] = True
+
+        # Check for advanced search module
+        try:
+            from .advanced_search import AdvancedSearchEngine
+            features["Advanced Search"] = True
+            features["ANSI/Unicode Search"] = True
+            features["Pattern Matching"] = True
+        except ImportError:
+            pass
+
+        # Check for export capabilities
+        try:
+            from .export_dialog import ExportDialog
+            features["Data Export"] = True
+        except ImportError:
+            pass
+
+        # Check for hex editing
+        if hasattr(widget_class, 'set_read_only') or hasattr(widget_class, 'edit_mode'):
+            features["Hex Editing"] = True
+
+        # Check for bookmarks
+        if hasattr(widget_class, 'add_bookmark') or hasattr(widget_class, 'bookmarks'):
+            features["Bookmarks"] = True
+
+        # Check for highlighting
+        try:
+            from .hex_highlighter import HexHighlighter
+            features["Highlighting"] = True
+        except ImportError:
+            pass
+
+        # Check for multi-view capabilities
+        if self.hex_widget:
+            parent = self.hex_widget.parent()
+            if parent and hasattr(parent, 'split_view_horizontal'):
+                features["Multi-View"] = True
+        else:
+            # Check if split view methods exist in dialog
+            try:
+                from .hex_dialog import HexViewerDialog
+                if hasattr(HexViewerDialog, 'split_view_horizontal'):
+                    features["Multi-View"] = True
+            except ImportError:
+                pass
+
+        # Check for performance monitoring
+        try:
+            from .performance_monitor import PerformanceMonitor
+            features["Performance Monitoring"] = True
+        except ImportError:
+            pass
+
+        # Check for templates
+        try:
+            from .templates import TemplateEngine
+            features["Templates"] = True
+        except ImportError:
+            pass
+
+        # Check for file comparison
+        try:
+            from .file_compare import BinaryComparer
+            features["File Comparison"] = True
+        except ImportError:
+            pass
+
+        # Check for printing
+        try:
+            from .print_dialog import PrintOptionsDialog
+            features["Printing"] = True
+        except ImportError:
+            pass
+
+        # Check for unlimited undo/redo
+        try:
+            # Check if the CommandManager has sys.maxsize as default
+            import inspect
+            import sys
+
+            from .hex_commands import CommandManager
+            sig = inspect.signature(CommandManager.__init__)
+            if 'max_history' in sig.parameters:
+                default_value = sig.parameters['max_history'].default
+                if default_value == sys.maxsize:
+                    features["Unlimited Undo/Redo"] = True
+        except ImportError:
+            pass
+
+        # Check for hotkey access
+        if self.hex_widget:
+            if hasattr(self.hex_widget, 'keyPressEvent'):
+                features["Hotkey Access"] = True
+        else:
+            features["Hotkey Access"] = True  # Usually present in Qt widgets
+
+        # Check for section navigation
+        if hasattr(widget_class, 'goto_offset') or hasattr(widget_class, 'jump_to_offset'):
+            features["Section Navigation"] = True
+
+        # Integration with analysis is present through this module
+        features["Integrated with Analysis"] = True
+
+        return features
 
 
 class ProtectionIntegrationWidget(QWidget):

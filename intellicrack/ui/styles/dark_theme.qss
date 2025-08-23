@@ -1,0 +1,1085 @@
+/* Intellicrack Dark Theme - Centralized Stylesheet */
+
+/* Main Window Styling */
+QMainWindow {
+    background-color: #1E1E1E;
+    color: #FFFFFF;
+}
+
+/* Status Labels with Semantic Colors */
+QLabel#statusSuccess {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+QLabel#statusError {
+    color: #F44336;
+    font-weight: bold;
+}
+
+QLabel#statusWarning {
+    color: #FF9800;
+    font-weight: bold;
+}
+
+QLabel#statusInfo {
+    color: #2196F3;
+    font-weight: bold;
+}
+
+QLabel#statusNeutral {
+    color: #666;
+    padding: 5px;
+}
+
+/* Headers and Titles */
+QLabel#headerBold {
+    font-weight: bold;
+    padding: 5px;
+}
+
+QLabel#titleLarge {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin: 10px;
+}
+
+QLabel#titleMedium {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+QLabel#headerMedium {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+QLabel#subtitle {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* Descriptive Text */
+QLabel#descriptionText {
+    color: #666;
+    font-style: italic;
+    margin: 10px;
+}
+
+QLabel#hintText {
+    font-style: italic;
+    color: #666;
+}
+
+QLabel#mutedText {
+    color: #888;
+}
+
+QLabel#smallMutedText {
+    color: #888;
+    font-size: 11px;
+}
+
+QLabel#infoText {
+    color: blue;
+    font-size: 10px;
+}
+
+/* Buttons with Semantic Colors */
+QPushButton#primaryButton {
+    font-weight: bold;
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+}
+
+QPushButton#primaryButton:hover {
+    background-color: #45a049;
+}
+
+QPushButton#secondaryButton {
+    font-weight: bold;
+    background-color: #2196F3;
+    color: white;
+}
+
+QPushButton#dangerButton {
+    color: red;
+    font-weight: bold;
+}
+
+QPushButton#warningButton {
+    color: orange;
+}
+
+QPushButton#accentButton {
+    font-weight: bold;
+    color: #0078d4;
+}
+
+QPushButton#loadModelButton {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    padding: 10px;
+}
+
+QPushButton#loadModelButton:hover {
+    background-color: #45a049;
+}
+
+QPushButton#generateButton {
+    font-weight: bold;
+    background-color: #0d7377;
+}
+
+QPushButton#continueButton {
+    QPushButton {
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                    stop:0 #4CAF50, stop:1 #45a049);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    QPushButton:hover {
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                    stop:0 #5CBEFF, stop:1 #2196F3);
+    }
+    QPushButton:pressed {
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                    stop:0 #45a049, stop:1 #4CAF50);
+    }
+}
+
+/* Specialized Buttons */
+QPushButton#runAnalysisButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #4CAF50, stop:1 #45a049);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+QPushButton#runAnalysisButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #5CBFF5, stop:1 #66BB6A);
+}
+
+QPushButton#generateScriptButton {
+    font-weight: bold;
+    background-color: #0d7377;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+}
+
+QPushButton#generateScriptButton:hover {
+    background-color: #0a5d61;
+}
+
+/* Progress Bars */
+QProgressBar#modelLoadingProgress {
+    border: 2px solid #555;
+    border-radius: 8px;
+    text-align: center;
+    background-color: #2b2b2b;
+    color: white;
+    font-weight: bold;
+}
+
+QProgressBar#modelLoadingProgress::chunk {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                stop:0 #4CAF50, stop:1 #66BB6A);
+    border-radius: 6px;
+    margin: 2px;
+}
+
+QProgressBar#loadingProgress::chunk {
+    background-color: #4CAF50;
+}
+
+QProgressBar#failedProgress::chunk {
+    background-color: #F44336;
+}
+
+QProgressBar#pendingProgress::chunk {
+    background-color: #FF9800;
+}
+
+QProgressBar#completedProgress::chunk {
+    background-color: #4CAF50;
+}
+
+QProgressBar#initializing::chunk {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                stop:0 #2196F3, stop:1 #64B5F6);
+}
+
+QProgressBar#splashProgress {
+    border: 2px solid #333;
+    border-radius: 8px;
+    background-color: #1a1a1a;
+    text-align: center;
+    color: #fff;
+    font-weight: bold;
+    font-size: 12px;
+    min-height: 20px;
+}
+
+QProgressBar#splashProgress::chunk {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                stop:0 #0078d4, stop:1 #106ebe);
+    border-radius: 6px;
+    margin: 2px;
+}
+
+/* System Monitor Progress Bars */
+QProgressBar#cpuHigh::chunk {
+    background-color: #dc3545;
+}
+
+QProgressBar#cpuMedium::chunk {
+    background-color: #ffc107;
+}
+
+QProgressBar#cpuNormal::chunk {
+    background-color: #28a745;
+}
+
+QProgressBar#memoryHigh::chunk {
+    background-color: #ff6666;
+}
+
+QProgressBar#gpuHigh::chunk {
+    background-color: #dc3545;
+}
+
+QProgressBar#gpuMedium::chunk {
+    background-color: #ffc107;
+}
+
+QProgressBar#gpuNormal::chunk {
+    background-color: #28a745;
+}
+
+/* Panels and Containers */
+QFrame#welcomePanel {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 10px;
+}
+
+QFrame#quickStartPanel {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #ffffff, stop:1 #f8f9fa);
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 15px;
+}
+
+QWidget#stageWidget {
+    background-color: #f8f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 8px;
+}
+
+QGroupBox#placeholderPanel {
+    color: #666;
+    font-style: italic;
+    border: 1px solid #ccc;
+    padding: 20px;
+}
+
+QTextEdit#previewText {
+    background-color: #f5f5f5;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #333;
+}
+
+/* Console and Output Widgets */
+QTextEdit#consoleOutput {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    font-family: 'Courier New', monospace;
+    border: 1px solid #555;
+    border-radius: 4px;
+}
+
+QTextEdit#outputConsole {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    font-family: 'Consolas', 'Courier New', monospace;
+    selection-background-color: #3399ff;
+    border: 1px solid #444;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+/* Specialized Widgets */
+QWidget#dropZoneActive {
+    background-color: rgba(76, 175, 80, 0.1);
+    border: 2px dashed #4CAF50;
+    border-radius: 8px;
+}
+
+QWidget#dropZoneInactive {
+    background-color: rgba(200, 200, 200, 0.1);
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+}
+
+QWidget#advancedTransparent {
+    background-color: transparent;
+}
+
+QLabel#filePathDisplay {
+    font-weight: bold;
+    color: #333;
+    padding: 5px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+}
+
+/* Cache Management Widget */
+QLabel#cacheStatsLabel {
+    font-weight: bold;
+    font-size: 14px;
+    color: #2c3e50;
+}
+
+QLabel#cacheHeaderLabel {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+QLabel#cacheTitleLabel {
+    font-weight: bold;
+    font-size: 16px;
+    color: #2c3e50;
+}
+
+QPushButton#clearCacheButton {
+    background-color: #e74c3c;
+    color: white;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+}
+
+QPushButton#clearCacheButton:hover {
+    background-color: #c0392b;
+}
+
+/* Hex Viewer */
+QWidget#hexViewer {
+    background-color: #2b2b2b;
+    color: #ffffff;
+    font-family: 'Courier New', monospace;
+    border: 1px solid #555;
+}
+
+/* Analysis Tab Specific */
+QLabel#profileDescription {
+    color: #666;
+    font-style: italic;
+    margin: 10px;
+}
+
+QPushButton#stopAnalysisButton {
+    color: red;
+    font-weight: bold;
+}
+
+/* Entropy Graph */
+QLabel#entropyTitle {
+    font-weight: bold;
+    font-size: 12pt;
+}
+
+QLabel#entropyLowColor {
+    color: #4CAF50;
+}
+
+QLabel#entropyMediumColor {
+    color: #FF9800;
+}
+
+QLabel#entropyHighColor {
+    color: #F44336;
+}
+
+QLabel#entropySummary {
+    color: #666;
+    padding: 5px;
+}
+
+/* Plugin Development */
+QLabel#pluginDescriptionLabel {
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+/* Model Loading Dialog */
+QLabel#statusLabelGray {
+    color: #666;
+}
+
+QLabel#splashStatusLabel {
+    color: white;
+    background-color: transparent;
+}
+
+/* Tab Styling */
+QTabWidget#pluginSubtabs::pane {
+    border: 1px solid #ddd;
+    background-color: #fff;
+}
+
+QTabWidget#pluginSubtabs::tab-bar {
+    alignment: left;
+}
+
+QTabWidget#pluginSubtabs QTabBar::tab {
+    background-color: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    border-bottom-color: transparent;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    padding: 8px 16px;
+    margin-right: 2px;
+    font-weight: bold;
+}
+
+QTabWidget#pluginSubtabs QTabBar::tab:selected {
+    background-color: #fff;
+    border-bottom-color: #fff;
+}
+
+QTabBar::tab#mainAppTabs {
+    padding: 8px 16px;
+    font-weight: bold;
+}
+
+/* Protection Widget */
+QWidget#protectionWidget {
+    QWidget {
+        background-color: #f8f9fa;
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 10px;
+    }
+}
+
+QPushButton#deepScanButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #007bff, stop:1 #0056b3);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+QPushButton#deepScanButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #0056b3, stop:1 #004085);
+}
+
+QScrollArea#protectionScroll {
+    border: none;
+}
+
+QTextEdit#protectionSummary {
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Color System for Protection Confidence */
+QLabel#confidenceHigh {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+QLabel#confidenceMedium {
+    color: #FF9800;
+}
+
+QLabel#confidenceLow {
+    color: #F44336;
+}
+
+/* Difficulty Colors */
+QLabel#difficultyEasy {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+QLabel#difficultyMedium {
+    color: #FF9800;
+    font-weight: bold;
+}
+
+QLabel#difficultyHard {
+    color: #F44336;
+    font-weight: bold;
+}
+
+/* Icon Labels */
+QLabel#iconLabel {
+    font-size: 18px;
+}
+
+QLabel#versionLabel {
+    color: #666;
+}
+
+/* Binary Icon Border */
+QLabel#binaryIconBorder {
+    border: 1px solid gray;
+}
+
+/* Analysis Integration Status */
+QLabel#analysisStatus {
+    background-color: #f8f9fa;
+    color: #495057;
+    padding: 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+/* Validation Labels */
+QLabel#validationSuccess {
+    color: green;
+}
+
+QLabel#validationError {
+    color: red;
+}
+
+/* Color Buttons */
+QPushButton#primaryColorButton {
+    background-color: #007BFF;
+}
+
+QPushButton#secondaryColorButton {
+    background-color: #6C757D;
+}
+
+QPushButton#backgroundColorButton {
+    background-color: #121212;
+}
+
+/* Settings Tab */
+QPushButton#saveButton {
+    font-weight: bold;
+    color: green;
+}
+
+QPushButton#resetButton {
+    color: red;
+}
+
+/* Radio Button Styling */
+QRadioButton#qemuTestRadio {
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+QRadioButton#hostRunRadio {
+    color: #ff9800;
+}
+
+/* Benefits Text */
+QLabel#benefitsText {
+    color: #2c3e50;
+    background-color: #ecf0f1;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Thread Label */
+QLabel#threadLabel {
+    font-size: 24px;
+    color: #0d7377;
+}
+
+/* QEMU Description */
+QLabel#qemuDescription {
+    color: #888;
+}
+
+QLabel#hostDescription {
+    color: #888;
+}
+
+/* No Data Labels */
+QLabel#noDataError {
+    color: #e74c3c;
+    font-weight: bold;
+    padding: 20px;
+}
+
+QLabel#noStrategies {
+    color: #666;
+    padding: 20px;
+}
+
+/* Info Labels */
+QLabel#infoLabelBold {
+    font-weight: bold;
+    color: #0d7377;
+    padding: 10px;
+}
+
+QLabel#fallbackLabel {
+    color: #666;
+    font-style: italic;
+}
+
+QLabel#currentProjectLabel {
+    font-size: 14px;
+    font-weight: bold;
+    color: #007acc;
+    padding: 8px;
+    background-color: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 4px;
+    margin: 5px 0px;
+}
+
+/* Visualization Label */
+QLabel#visualizationLabel {
+    background-color: #f0f0f0;
+    padding: 20px;
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* File Label Bold */
+QLabel#fileLabelBold {
+    font-weight: bold;
+}
+
+/* Auto Install Description */
+QLabel#autoInstallDesc {
+    color: gray;
+    margin-left: 20px;
+}
+
+/* Plugin Label Bold */
+QLabel#pluginLabelBold {
+    font-weight: bold;
+}
+
+/* DropZone Info */
+QLabel#dropZoneInfo {
+    color: #666;
+}
+
+/* Summary Labels */
+QLabel#summaryLabel {
+    font-size: 14px;
+    padding: 10px;
+}
+
+QLabel#coverageSummary {
+    font-size: 14px;
+    padding: 10px;
+}
+
+QLabel#summarySuccess {
+    color: green;
+    font-size: 14px;
+    padding: 10px;
+}
+
+QLabel#summaryError {
+    color: red;
+    font-size: 14px;
+    padding: 10px;
+}
+
+/* Coverage Colors */
+QLabel#coverageGood {
+    color: #4CAF50;
+    font-size: 14px;
+    padding: 10px;
+}
+
+QLabel#coverageFair {
+    color: #FF9800;
+    font-size: 14px;
+    padding: 10px;
+}
+
+QLabel#coveragePoor {
+    color: #F44336;
+    font-size: 14px;
+    padding: 10px;
+}
+
+/* Test Summary Label */
+QLabel#testSummaryLabel {
+    color: #666;
+    padding: 5px;
+}
+
+/* Main App Welcome */
+QLabel#mainAppWelcome {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+QLabel#mainAppVersion {
+    font-size: 12px;
+    color: #666;
+}
+
+QLabel#quickActionsLabel {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+QPushButton#loadButton {
+    font-weight: bold;
+    background-color: #4CAF50;
+    color: white;
+}
+
+QPushButton#analyzeButton {
+    font-weight: bold;
+    background-color: #2196F3;
+    color: white;
+}
+
+/* Adobe Status */
+QLabel#adobeStatusLabel {
+    font-weight: bold;
+}
+
+QLabel#adobeStatusSuccess {
+    color: green;
+    font-weight: bold;
+}
+
+QLabel#adobeStatusWarning {
+    color: orange;
+    font-weight: bold;
+}
+
+QLabel#adobeStatusError {
+    color: red;
+    font-weight: bold;
+}
+
+/* Extract Icon Button */
+QPushButton#extractIconButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #4CAF50, stop:1 #45a049);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+QPushButton#extractIconButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #66BB6A, stop:1 #4CAF50);
+}
+
+/* Icon Preview */
+QLabel#iconPreview {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    padding: 10px;
+    min-width: 64px;
+    min-height: 64px;
+    alignment: center;
+}
+
+/* Optimize Memory Button */
+QPushButton#optimizeMemoryButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #2196F3, stop:1 #1976D2);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+QPushButton#optimizeMemoryButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #42A5F5, stop:1 #2196F3);
+}
+
+/* Source Labels */
+QLabel#sourceLabel {
+    color: #999;
+    font-size: 9px;
+}
+
+QLabel#toolsLabel {
+    color: #666;
+}
+
+/* Vulnerability Score Progress Bar */
+QProgressBar#vulnerabilityScore {
+    border: 1px solid #666;
+    border-radius: 3px;
+    text-align: center;
+    background-color: #f0f0f0;
+}
+
+QProgressBar#vulnerabilityScore::chunk {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #ff0000, stop:0.4 #ff8800,
+        stop:0.6 #ffff00, stop:0.8 #88ff00, stop:1.0 #00ff00);
+    border-radius: 2px;
+}
+
+/* Splash Screen Status Label */
+QLabel#splashStatusLabel {
+    color: white;
+    background-color: transparent;
+}
+
+/* CI/CD Pipeline Stage Widgets */
+QWidget#pipelineStageIdle {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+QWidget#pipelineStageRunning {
+    background-color: #fffacd;
+    border: 1px solid #ffd700;
+    border-radius: 5px;
+}
+
+QWidget#pipelineStageSuccess {
+    background-color: #90ee90;
+    border: 1px solid #228b22;
+    border-radius: 5px;
+}
+
+QWidget#pipelineStageError {
+    background-color: #ffcccb;
+    border: 1px solid #dc143c;
+    border-radius: 5px;
+}
+
+/* CI/CD Stage Name Label */
+QLabel#stageName {
+    font-weight: bold;
+}
+
+/* Descriptive/Helper Text Label */
+QLabel#descriptionLabel {
+    color: gray;
+    margin-left: 20px;
+}
+
+/* Generate Button (Green) */
+QPushButton#generateButton {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    padding: 10px;
+}
+
+QPushButton#generateButton:hover {
+    background-color: #45a049;
+}
+
+/* Batch Generate Button (Orange) */
+QPushButton#batchGenerateButton {
+    background-color: #FF9800;
+    color: white;
+    font-weight: bold;
+}
+
+/* QEMU Test Dialog Styles */
+QRadioButton#qemuTestOption {
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+QRadioButton#hostRunOption {
+    color: #ff9800;
+}
+
+QLabel#optionDescription {
+    color: #888;
+}
+
+QTextEdit#previewText {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 10pt;
+    background-color: #2b2b2b;
+    color: #e0e0e0;
+    border: 1px solid #555;
+}
+
+QLabel#benefitsText {
+    background-color: #e3f2fd;
+    padding: 10px;
+    border: 1px solid #2196f3;
+    border-radius: 4px;
+}
+
+/* Frida Manager Dialog Styles */
+QLabel#aiStatusReady {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+QLabel#threadCounter {
+    font-size: 24px;
+    color: #0d7377;
+}
+
+QPushButton#aiGenerateButton {
+    font-weight: bold;
+    background-color: #0d7377;
+}
+
+QPushButton#fridaGenerateButton {
+    background-color: #0d7377;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+QPushButton#fridaGenerateButton:hover {
+    background-color: #14868c;
+}
+
+QPushButton#fridaGenerateButton:pressed {
+    background-color: #0a5a5e;
+}
+
+QLabel#fridaInfoLabel {
+    font-weight: bold;
+    color: #0d7377;
+    padding: 10px;
+}
+
+/* System Utilities Dialog Styles */
+QPushButton#extractIconButton {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+}
+
+QLabel#iconPreview {
+    border: 1px solid gray;
+    background-color: white;
+}
+
+QPushButton#optimizeMemoryButton {
+    background-color: #2196F3;
+    color: white;
+    font-weight: bold;
+}
+
+QLabel#readyStatus {
+    color: #666;
+}
+
+/* Test Generator Dialog Styles */
+QLabel#testSummaryLabel {
+    font-size: 14px;
+    padding: 10px;
+}
+
+QLabel#coverageSummaryLabel {
+    font-size: 14px;
+    padding: 10px;
+}
+
+QLabel#testSummarySuccess {
+    color: green;
+    font-size: 14px;
+    padding: 10px;
+}
+
+QLabel#testSummaryFailed {
+    color: red;
+    font-size: 14px;
+    padding: 10px;
+}
+
+QLabel#coverageHigh {
+    color: green;
+    font-size: 14px;
+    padding: 10px;
+}
+
+QLabel#coverageMedium {
+    color: orange;
+    font-size: 14px;
+    padding: 10px;
+}
+
+QLabel#coverageLow {
+    color: red;
+    font-size: 14px;
+    padding: 10px;
+}
+
+/* Splash Screen Styles */
+QProgressBar#splashProgressBar {
+    border: 2px solid grey;
+    border-radius: 5px;
+    background-color: #2b2b2b;
+    text-align: center;
+}
+
+QProgressBar#splashProgressBar::chunk {
+    background-color: #4CAF50;
+    border-radius: 3px;
+}

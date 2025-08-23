@@ -23,7 +23,6 @@ from pathlib import Path
 from intellicrack.handlers.pyqt6_handler import (
     QAbstractItemView,
     QCheckBox,
-    QDialog,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
@@ -47,6 +46,7 @@ from intellicrack.handlers.pyqt6_handler import (
 
 from ...ai.local_gguf_server import gguf_manager
 from ...utils.logger import get_logger
+from .base_dialog import BaseDialog
 
 logger = get_logger(__name__)
 
@@ -153,31 +153,31 @@ class ModelDownloadThread(QThread):
         self.is_cancelled = True
 
 
-class ModelManagerDialog(QDialog):
+class ModelManagerDialog(BaseDialog):
     """Dialog for managing local GGUF models."""
 
     def __init__(self, parent=None):
         """Initialize the ModelManagerDialog with default values."""
-        super().__init__(parent)
-        self.setWindowTitle("Local GGUF Model Manager")
+        super().__init__(parent, "Local GGUF Model Manager")
         self.setMinimumSize(900, 700)
         self.resize(1000, 800)
 
         self.download_threads = {}
         self.current_model = None
 
-        self.setup_ui()
+        self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
         self.refresh_models()
         self.update_server_status()
 
         # Setup timer for server status updates
         self.status_timer = QTimer()
         self.status_timer.timeout.connect(self.update_server_status)
-        self.status_timer.start(5000)  # Update every 5 seconds  # Update every 5 seconds
+        self.status_timer.start(5000)  # Update every 5 seconds
 
-    def setup_ui(self):
-        """Setup the user interface."""
-        layout = QVBoxLayout(self)
+    def setup_content(self, layout):
+        """Setup the user interface content."""
+        if layout is None:
+            layout = QVBoxLayout(self.content_widget)
 
         # Main tabs
         tabs = QTabWidget()

@@ -27,7 +27,6 @@ from urllib.parse import urlparse
 
 import aiohttp
 
-from intellicrack.core.config_manager import get_config
 from intellicrack.core.exceptions import ConfigurationError
 
 logger = logging.getLogger(__name__)
@@ -38,10 +37,22 @@ class ServiceHealthChecker:
 
     def __init__(self):
         """Initialize the service health checker."""
-        self.config = get_config()
+        self._config = None
         self.health_cache = {}
         self.cache_duration = 300  # 5 minutes
         self.last_check_times = {}
+
+    @property
+    def config(self):
+        """Lazy loading of config to avoid circular import."""
+        if self._config is None:
+            try:
+                from intellicrack.core.config_manager import get_config
+                self._config = get_config()
+            except ImportError as e:
+                logger.warning(f"Could not import config manager: {e}")
+                self._config = {}
+        return self._config
 
     def get_service_url(self, service_name: str) -> str | None:
         """Get the URL for a service from configuration.

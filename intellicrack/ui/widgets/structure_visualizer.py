@@ -51,9 +51,11 @@ class StructureVisualizerWidget(QWidget):
         super().__init__(parent)
         self.current_binary = None
         self.structures = {}
+        self.structure_data = {}
+        self.binary_format = "Unknown"
         self._setup_ui()
 
-    def setup_ui(self):
+    def _setup_ui(self):
         """Setup the UI components"""
         layout = QVBoxLayout(self)
 
@@ -181,6 +183,10 @@ class StructureVisualizerWidget(QWidget):
         # Update all views
         self.update_view()
         self.update_details()
+
+    def load_structure(self, data: dict[str, Any]):
+        """Load structure data for visualization (alias for set_structure_data)"""
+        self.set_structure_data(data)
 
     def update_view(self):
         """Update the current view"""

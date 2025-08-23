@@ -26,6 +26,7 @@ from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QAbstractTableModel,
+    QAbstractTableView,
     QDialog,
     QHBoxLayout,
     QHeaderView,

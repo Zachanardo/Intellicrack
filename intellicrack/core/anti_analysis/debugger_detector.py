@@ -186,36 +186,240 @@ class DebuggerDetector(BaseDetector):
         details = {"being_debugged": False, "nt_global_flag": 0}
 
         try:
-            # This requires inline assembly or ctypes manipulation
-            # Simplified version using ctypes
+            # Real PEB flags detection implementation
+            if platform.system() != "Windows":
+                # Non-Windows platforms - check for ptrace or similar debugging indicators
+                return self._check_non_windows_debug_indicators(details)
 
-            # Get PEB address (simplified, platform-specific)
-            # In real implementation, would use proper PEB traversal
+            # Windows PEB manipulation using ctypes
+            kernel32 = ctypes.windll.kernel32
+            ntdll = ctypes.windll.ntdll
 
-            # Check BeingDebugged flag at PEB+2
-            # Check NtGlobalFlag at PEB+0x68 (x86) or PEB+0xBC (x64)
+            # Get current process handle
+            current_process = kernel32.GetCurrentProcess()
 
-            # For now, return false as this requires complex implementation
-            pass
+            # Structure definitions for PEB access
+            class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+                _fields_ = [
+                    ("Reserved1", ctypes.c_void_p),
+                    ("PebBaseAddress", ctypes.c_void_p),
+                    ("Reserved2", ctypes.c_void_p * 2),
+                    ("UniqueProcessId", ctypes.POINTER(ctypes.c_ulong)),
+                    ("Reserved3", ctypes.c_void_p)
+                ]
+
+            # Get PEB base address
+            pbi = PROCESS_BASIC_INFORMATION()
+            status = ntdll.NtQueryInformationProcess(
+                current_process,
+                0,  # ProcessBasicInformation
+                ctypes.byref(pbi),
+                ctypes.sizeof(pbi),
+                None
+            )
+
+            if status != 0:
+                self.logger.debug(f"NtQueryInformationProcess failed: {status}")
+                return False, 0.0, details
+
+            peb_address = pbi.PebBaseAddress
+            if not peb_address:
+                return False, 0.0, details
+
+            # Read BeingDebugged flag at PEB+2
+            being_debugged_addr = ctypes.c_void_p(peb_address.value + 2)
+            being_debugged = ctypes.c_ubyte()
+            bytes_read = ctypes.c_size_t()
+
+            success = kernel32.ReadProcessMemory(
+                current_process,
+                being_debugged_addr,
+                ctypes.byref(being_debugged),
+                1,
+                ctypes.byref(bytes_read)
+            )
+
+            if success and bytes_read.value == 1:
+                details["being_debugged"] = bool(being_debugged.value)
+
+            # Read NtGlobalFlag - different offsets for x86/x64
+            is_64bit = platform.machine().endswith('64')
+            nt_global_flag_offset = 0xBC if is_64bit else 0x68
+
+            nt_global_flag_addr = ctypes.c_void_p(peb_address.value + nt_global_flag_offset)
+            nt_global_flag = ctypes.c_ulong()
+
+            success = kernel32.ReadProcessMemory(
+                current_process,
+                nt_global_flag_addr,
+                ctypes.byref(nt_global_flag),
+                4,
+                ctypes.byref(bytes_read)
+            )
+
+            if success and bytes_read.value == 4:
+                details["nt_global_flag"] = nt_global_flag.value
+
+                # Check for debug heap flags
+                debug_flags = [
+                    0x10,  # FLG_HEAP_ENABLE_TAIL_CHECK
+                    0x20,  # FLG_HEAP_ENABLE_FREE_CHECK
+                    0x40,  # FLG_HEAP_VALIDATE_PARAMETERS
+                ]
+
+                debug_detected = any(nt_global_flag.value & flag for flag in debug_flags)
+                details["debug_heap_flags"] = debug_detected
+
+                if debug_detected or details.get("being_debugged", False):
+                    confidence = 0.9 if details.get("being_debugged", False) else 0.7
+                    return True, confidence, details
+
+            return False, 0.0, details
 
         except Exception as e:
             self.logger.debug(f"PEB flags check failed: {e}")
 
         return False, 0.0, details
 
+    def _check_non_windows_debug_indicators(self, details: dict) -> tuple[bool, float, dict]:
+        """Check for debugging indicators on non-Windows platforms."""
+        try:
+            debug_detected = False
+            confidence = 0.0
+
+            # Check for ptrace detection on Linux/Unix
+            if platform.system() in ["Linux", "Darwin"]:
+                try:
+                    # Check /proc/self/status for TracerPid on Linux
+                    if platform.system() == "Linux":
+                        with open('/proc/self/status', 'r') as f:
+                            for line in f:
+                                if line.startswith('TracerPid:'):
+                                    tracer_pid = int(line.split()[1])
+                                    if tracer_pid != 0:
+                                        debug_detected = True
+                                        confidence = 0.8
+                                        details["tracer_pid"] = tracer_pid
+                                        break
+
+                    # Check for common debugger processes
+                    import subprocess
+                    try:
+                        ps_output = subprocess.check_output(['ps', 'aux'], text=True)
+                        debugger_patterns = ['gdb', 'lldb', 'strace', 'ltrace', 'x64dbg']
+                        for pattern in debugger_patterns:
+                            if pattern in ps_output:
+                                debug_detected = True
+                                confidence = max(confidence, 0.6)
+                                details["debugger_process"] = pattern
+                                break
+                    except subprocess.SubprocessError:
+                        pass
+
+                except (OSError, ValueError, IOError):
+                    pass
+
+            return debug_detected, confidence, details
+
+        except Exception as e:
+            self.logger.debug(f"Non-Windows debug check failed: {e}")
+            return False, 0.0, details
+
     def _check_ntglobalflag(self) -> tuple[bool, float, dict]:
         """Check NtGlobalFlag for debug heap flags."""
         details = {"flags": 0}
 
         try:
-            # Check for FLG_HEAP_ENABLE_TAIL_CHECK (0x10)
-            # FLG_HEAP_ENABLE_FREE_CHECK (0x20)
-            # FLG_HEAP_VALIDATE_PARAMETERS (0x40)
+            # Real NtGlobalFlag analysis implementation
+            if platform.system() != "Windows":
+                # Non-Windows systems don't have NtGlobalFlag
+                return False, 0.0, details
 
-            # These flags are set when process is created under debugger
-            # Implementation would check PEB->NtGlobalFlag
+            # Windows-specific NtGlobalFlag detection
+            kernel32 = ctypes.windll.kernel32
+            ntdll = ctypes.windll.ntdll
 
-            pass
+            # Get current process handle
+            current_process = kernel32.GetCurrentProcess()
+
+            # Use same PEB access method as _check_peb_flags
+            class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+                _fields_ = [
+                    ("Reserved1", ctypes.c_void_p),
+                    ("PebBaseAddress", ctypes.c_void_p),
+                    ("Reserved2", ctypes.c_void_p * 2),
+                    ("UniqueProcessId", ctypes.POINTER(ctypes.c_ulong)),
+                    ("Reserved3", ctypes.c_void_p)
+                ]
+
+            # Get PEB base address
+            pbi = PROCESS_BASIC_INFORMATION()
+            status = ntdll.NtQueryInformationProcess(
+                current_process,
+                0,  # ProcessBasicInformation
+                ctypes.byref(pbi),
+                ctypes.sizeof(pbi),
+                None
+            )
+
+            if status != 0:
+                self.logger.debug(f"NtQueryInformationProcess failed: {status}")
+                return False, 0.0, details
+
+            peb_address = pbi.PebBaseAddress
+            if not peb_address:
+                return False, 0.0, details
+
+            # Read NtGlobalFlag - different offsets for x86/x64
+            is_64bit = platform.machine().endswith('64')
+            nt_global_flag_offset = 0xBC if is_64bit else 0x68
+
+            nt_global_flag_addr = ctypes.c_void_p(peb_address.value + nt_global_flag_offset)
+            nt_global_flag = ctypes.c_ulong()
+            bytes_read = ctypes.c_size_t()
+
+            success = kernel32.ReadProcessMemory(
+                current_process,
+                nt_global_flag_addr,
+                ctypes.byref(nt_global_flag),
+                4,
+                ctypes.byref(bytes_read)
+            )
+
+            if success and bytes_read.value == 4:
+                flag_value = nt_global_flag.value
+                details["flags"] = flag_value
+
+                # Define debug heap flags
+                debug_flags = {
+                    0x10: "FLG_HEAP_ENABLE_TAIL_CHECK",
+                    0x20: "FLG_HEAP_ENABLE_FREE_CHECK",
+                    0x40: "FLG_HEAP_VALIDATE_PARAMETERS",
+                    0x01: "FLG_STOP_ON_EXCEPTION",
+                    0x02: "FLG_SHOW_LDR_SNAPS",
+                    0x04: "FLG_DEBUG_INITIAL_COMMAND",
+                }
+
+                # Check which debug flags are set
+                active_flags = []
+                debug_detected = False
+
+                for flag_bit, flag_name in debug_flags.items():
+                    if flag_value & flag_bit:
+                        active_flags.append(flag_name)
+                        debug_detected = True
+
+                details["active_debug_flags"] = active_flags
+
+                if debug_detected:
+                    # Higher confidence for heap debugging flags
+                    heap_flags = [0x10, 0x20, 0x40]
+                    heap_debug_count = sum(1 for flag in heap_flags if flag_value & flag)
+                    confidence = min(0.9, 0.3 + (heap_debug_count * 0.2))
+
+                    return True, confidence, details
+
+            return False, 0.0, details
 
         except Exception as e:
             self.logger.debug(f"NtGlobalFlag check failed: {e}")
@@ -281,52 +485,427 @@ class DebuggerDetector(BaseDetector):
 
     def _check_hardware_breakpoints(self) -> tuple[bool, float, dict]:
         """Check for hardware breakpoints in debug registers."""
-        details = {"dr_registers": []}
+        details = {"dr_registers": [], "breakpoints_found": 0, "active_registers": []}
+        start_time = time.time()
 
         try:
-            # Would need to check DR0-DR3 for breakpoint addresses
-            # and DR7 for enabled breakpoints
-            # This requires kernel mode or special privileges
-
-            # Simplified check using exception handling
-            def trigger_breakpoint():
-                try:
-                    # Try to cause an exception that would trigger
-                    # if hardware breakpoints are set
-                    ctypes.c_int.from_address(0)
-                except:
-                    return True
-                return False
-
-            # Log the breakpoint check capability and test it
-            self.logger.debug("Hardware breakpoint detection function available")
-            _ = trigger_breakpoint()  # Test the function
-            details["breakpoint_check_available"] = True
+            if platform.system() == "Windows":
+                return self._check_hardware_breakpoints_windows(details)
+            else:
+                return self._check_hardware_breakpoints_linux(details)
 
         except Exception as e:
             self.logger.debug(f"Hardware breakpoint check failed: {e}")
+            details["error"] = str(e)
 
-        return False, 0.0, details
+        elapsed = time.time() - start_time
+        return False, elapsed, details
+
+    def _check_hardware_breakpoints_windows(self, details: dict) -> tuple[bool, float, dict]:
+        """Check for hardware breakpoints on Windows using debug registers."""
+        start_time = time.time()
+
+        try:
+            # Get current thread handle
+            kernel32 = ctypes.windll.kernel32
+            current_thread = kernel32.GetCurrentThread()
+
+            # Define CONTEXT structure for debug register access
+            class CONTEXT(ctypes.Structure):
+                _fields_ = [
+                    ("ContextFlags", ctypes.c_uint32),
+                    ("Dr0", ctypes.c_uint32),  # Hardware breakpoint address 0
+                    ("Dr1", ctypes.c_uint32),  # Hardware breakpoint address 1
+                    ("Dr2", ctypes.c_uint32),  # Hardware breakpoint address 2
+                    ("Dr3", ctypes.c_uint32),  # Hardware breakpoint address 3
+                    ("Dr6", ctypes.c_uint32),  # Debug status register
+                    ("Dr7", ctypes.c_uint32),  # Debug control register
+                    # Other context fields omitted for brevity
+                    ("_reserved", ctypes.c_ubyte * 512)  # Reserve space
+                ]
+
+            # Context flags for debug registers
+            CONTEXT_DEBUG_REGISTERS = 0x00000010
+
+            context = CONTEXT()
+            context.ContextFlags = CONTEXT_DEBUG_REGISTERS
+
+            # Get thread context with debug registers
+            success = kernel32.GetThreadContext(current_thread, ctypes.byref(context))
+
+            if success:
+                # Check debug registers DR0-DR3 for addresses
+                debug_addresses = [context.Dr0, context.Dr1, context.Dr2, context.Dr3]
+                dr6_status = context.Dr6
+                dr7_control = context.Dr7
+
+                details["dr_registers"] = {
+                    "DR0": hex(context.Dr0) if context.Dr0 else "0x0",
+                    "DR1": hex(context.Dr1) if context.Dr1 else "0x0",
+                    "DR2": hex(context.Dr2) if context.Dr2 else "0x0",
+                    "DR3": hex(context.Dr3) if context.Dr3 else "0x0",
+                    "DR6": hex(dr6_status),
+                    "DR7": hex(dr7_control)
+                }
+
+                # Check DR7 control register for enabled breakpoints
+                # DR7 bits: L0,G0,L1,G1,L2,G2,L3,G3 (local/global enable bits)
+                breakpoint_enables = []
+                for i in range(4):
+                    local_enable = (dr7_control >> (i * 2)) & 1
+                    global_enable = (dr7_control >> (i * 2 + 1)) & 1
+                    if local_enable or global_enable:
+                        breakpoint_enables.append(i)
+                        details["active_registers"].append(f"DR{i}")
+
+                # Count active breakpoints
+                active_breakpoints = 0
+                for i, addr in enumerate(debug_addresses):
+                    if addr != 0 and i in breakpoint_enables:
+                        active_breakpoints += 1
+                        self.logger.debug(f"Active hardware breakpoint at DR{i}: {hex(addr)}")
+
+                details["breakpoints_found"] = active_breakpoints
+                details["dr7_analysis"] = {
+                    "enabled_breakpoints": breakpoint_enables,
+                    "exact_instruction": bool(dr7_control & 0x00000300),
+                    "data_writes": bool(dr7_control & 0x00030000),
+                    "data_reads_writes": bool(dr7_control & 0x00300000)
+                }
+
+                # Check DR6 status for triggered breakpoints
+                if dr6_status & 0x0000000F:  # B0-B3 bits indicate triggered breakpoints
+                    details["triggered_breakpoints"] = []
+                    for i in range(4):
+                        if dr6_status & (1 << i):
+                            details["triggered_breakpoints"].append(f"DR{i}")
+
+                elapsed = time.time() - start_time
+                if active_breakpoints > 0:
+                    return True, elapsed, details
+
+            else:
+                details["error"] = "Failed to get thread context"
+
+        except Exception as e:
+            self.logger.debug(f"Windows hardware breakpoint check failed: {e}")
+            details["error"] = str(e)
+
+        elapsed = time.time() - start_time
+        return False, elapsed, details
+
+    def _check_hardware_breakpoints_linux(self, details: dict) -> tuple[bool, float, dict]:
+        """Check for hardware breakpoints on Linux using ptrace."""
+        start_time = time.time()
+
+        try:
+            # Check if ptrace is available and accessible
+            import os
+            pid = os.getpid()
+
+            # Check /proc/self/stat for tracer information
+            try:
+                with open(f"/proc/{pid}/status", "r", encoding="utf-8") as f:
+                    status_content = f.read()
+
+                # Look for TracerPid field
+                for line in status_content.split('\n'):
+                    if line.startswith('TracerPid:'):
+                        tracer_pid = int(line.split()[1])
+                        if tracer_pid != 0:
+                            details["tracer_pid"] = tracer_pid
+                            details["being_traced"] = True
+                            elapsed = time.time() - start_time
+                            return True, elapsed, details
+
+            except (FileNotFoundError, PermissionError, ValueError) as e:
+                details["proc_status_error"] = str(e)
+
+            # Alternative: Check for debug register access via system calls
+            try:
+                # Use ptrace to attempt reading debug registers
+                import ctypes.util
+                libc_path = ctypes.util.find_library("c")
+                if libc_path:
+                    libc = ctypes.CDLL(libc_path)
+
+                    # Define ptrace constants
+                    PTRACE_PEEKUSER = 3
+                    PTRACE_ATTACH = 16
+                    PTRACE_DETACH = 17
+
+                    # Debug register offsets (x86_64)
+                    DR_OFFSETS = {
+                        "DR0": 0x350,
+                        "DR1": 0x358,
+                        "DR2": 0x360,
+                        "DR3": 0x368,
+                        "DR6": 0x370,
+                        "DR7": 0x378
+                    }
+
+                    # Try to read debug registers (requires permissions)
+                    debug_regs = {}
+                    for reg_name, offset in DR_OFFSETS.items():
+                        try:
+                            # This will fail without proper permissions, but attempt shows capability
+                            result = libc.ptrace(PTRACE_PEEKUSER, pid, offset, 0)
+                            debug_regs[reg_name] = hex(result) if result else "0x0"
+                        except:
+                            debug_regs[reg_name] = "inaccessible"
+
+                    details["dr_registers"] = debug_regs
+                    details["ptrace_available"] = True
+
+                    # Count potentially active registers
+                    accessible_count = sum(1 for v in debug_regs.values() if v != "inaccessible" and v != "0x0")
+                    if accessible_count > 0:
+                        details["accessible_registers"] = accessible_count
+
+            except Exception as e:
+                details["ptrace_error"] = str(e)
+
+            # Check for debugger environment indicators
+            debugger_env = os.environ.get('_', '')
+            if 'gdb' in debugger_env.lower() or 'lldb' in debugger_env.lower():
+                details["debugger_env"] = debugger_env
+                elapsed = time.time() - start_time
+                return True, elapsed, details
+
+            # Check process tree for debugger parents
+            try:
+                with open(f"/proc/{pid}/stat", "r", encoding="utf-8") as f:
+                    stat_line = f.read().strip()
+
+                # Extract parent PID (field 4)
+                fields = stat_line.split()
+                if len(fields) > 3:
+                    ppid = int(fields[3])
+                    details["parent_pid"] = ppid
+
+                    # Check parent process name
+                    try:
+                        with open(f"/proc/{ppid}/comm", "r", encoding="utf-8") as f:
+                            parent_name = f.read().strip()
+
+                        details["parent_name"] = parent_name
+                        debugger_names = ['gdb', 'lldb', 'strace', 'ltrace', 'ddd', 'kgdb']
+                        if any(debugger in parent_name.lower() for debugger in debugger_names):
+                            details["debugger_parent"] = parent_name
+                            elapsed = time.time() - start_time
+                            return True, elapsed, details
+
+                    except (FileNotFoundError, PermissionError):
+                        pass
+
+            except (FileNotFoundError, ValueError):
+                pass
+
+        except Exception as e:
+            self.logger.debug(f"Linux hardware breakpoint check failed: {e}")
+            details["error"] = str(e)
+
+        elapsed = time.time() - start_time
+        return False, elapsed, details
 
     def _check_int3_scan(self) -> tuple[bool, float, dict]:
         """Scan for INT3 (0xCC) breakpoints in code."""
         details = {"int3_count": 0, "locations": []}
 
         try:
-            # Would scan executable memory for 0xCC bytes
-            # that shouldn't be there normally
-
-            # This is complex as it requires:
-            # 1. Getting module base and size
-            # 2. Reading executable sections
-            # 3. Comparing against original file
-
-            pass
+            # Real INT3 breakpoint scanning implementation
+            if platform.system() == "Windows":
+                return self._scan_int3_windows(details)
+            else:
+                return self._scan_int3_linux(details)
 
         except Exception as e:
             self.logger.debug(f"INT3 scan failed: {e}")
 
         return False, 0.0, details
+
+    def _scan_int3_windows(self, details: dict) -> tuple[bool, float, dict]:
+        """Scan for INT3 breakpoints on Windows systems."""
+        try:
+            kernel32 = ctypes.windll.kernel32
+
+            # Get current process handle
+            current_process = kernel32.GetCurrentProcess()
+
+            # Structure for MEMORY_BASIC_INFORMATION
+            class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+                _fields_ = [
+                    ("BaseAddress", ctypes.c_void_p),
+                    ("AllocationBase", ctypes.c_void_p),
+                    ("AllocationProtect", ctypes.c_ulong),
+                    ("RegionSize", ctypes.c_size_t),
+                    ("State", ctypes.c_ulong),
+                    ("Protect", ctypes.c_ulong),
+                    ("Type", ctypes.c_ulong)
+                ]
+
+            # Constants
+            MEM_COMMIT = 0x1000
+            PAGE_EXECUTE = 0x10
+            PAGE_EXECUTE_READ = 0x20
+            PAGE_EXECUTE_READWRITE = 0x40
+            PAGE_EXECUTE_WRITECOPY = 0x80
+
+            executable_pages = [PAGE_EXECUTE, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE, PAGE_EXECUTE_WRITECOPY]
+
+            int3_count = 0
+            locations = []
+            address = 0
+            max_address = 0x7FFFFFFF if platform.machine().endswith('64') else 0x7FFFFFFF
+
+            # Scan memory regions
+            while address < max_address:
+                mbi = MEMORY_BASIC_INFORMATION()
+                result = kernel32.VirtualQueryEx(
+                    current_process,
+                    ctypes.c_void_p(address),
+                    ctypes.byref(mbi),
+                    ctypes.sizeof(mbi)
+                )
+
+                if result == 0:
+                    break
+
+                # Check if this is executable memory
+                if (mbi.State == MEM_COMMIT and
+                    mbi.Protect in executable_pages and
+                    mbi.RegionSize > 0):
+
+                    # Read memory region
+                    buffer_size = min(mbi.RegionSize, 0x10000)  # Limit to 64KB chunks
+                    buffer = ctypes.create_string_buffer(buffer_size)
+                    bytes_read = ctypes.c_size_t()
+
+                    success = kernel32.ReadProcessMemory(
+                        current_process,
+                        mbi.BaseAddress,
+                        buffer,
+                        buffer_size,
+                        ctypes.byref(bytes_read)
+                    )
+
+                    if success and bytes_read.value > 0:
+                        # Scan for INT3 (0xCC) instructions
+                        memory_data = buffer.raw[:bytes_read.value]
+                        for i, byte in enumerate(memory_data):
+                            if byte == 0xCC:  # INT3 instruction
+                                int3_address = mbi.BaseAddress.value + i
+                                locations.append(hex(int3_address))
+                                int3_count += 1
+
+                                # Limit results to prevent excessive memory usage
+                                if int3_count >= 50:
+                                    break
+
+                # Move to next region
+                address = mbi.BaseAddress.value + mbi.RegionSize
+
+                # Safety break to prevent infinite loops
+                if int3_count >= 50:
+                    break
+
+            details["int3_count"] = int3_count
+            details["locations"] = locations[:10]  # Limit locations in output
+
+            if int3_count > 0:
+                # Confidence based on number of INT3 instructions found
+                # Normal executables may have some INT3 for padding, but debuggers add many
+                confidence = min(0.9, 0.2 + (int3_count * 0.05))
+                return True, confidence, details
+
+            return False, 0.0, details
+
+        except Exception as e:
+            self.logger.debug(f"Windows INT3 scan error: {e}")
+            return False, 0.0, details
+
+    def _scan_int3_linux(self, details: dict) -> tuple[bool, float, dict]:
+        """Scan for INT3 breakpoints on Linux systems."""
+        try:
+
+            int3_count = 0
+            locations = []
+
+            # Read process memory maps
+            try:
+                with open('/proc/self/maps', 'r') as maps_file:
+                    for line in maps_file:
+                        parts = line.split()
+                        if len(parts) < 6:
+                            continue
+
+                        # Check if this is executable memory
+                        permissions = parts[1]
+                        if 'x' not in permissions:
+                            continue
+
+                        # Parse address range
+                        addr_range = parts[0]
+                        start_addr, end_addr = addr_range.split('-')
+                        start_addr = int(start_addr, 16)
+                        end_addr = int(end_addr, 16)
+                        size = end_addr - start_addr
+
+                        # Skip if region too large (probably not code)
+                        if size > 0x1000000:  # 16MB limit
+                            continue
+
+                        try:
+                            # Try to read the memory region
+                            with open('/proc/self/mem', 'rb') as mem_file:
+                                mem_file.seek(start_addr)
+                                memory_data = mem_file.read(min(size, 0x10000))  # Read up to 64KB
+
+                                # Scan for INT3 (0xCC) instructions
+                                for i, byte in enumerate(memory_data):
+                                    if byte == 0xCC:
+                                        int3_address = start_addr + i
+                                        locations.append(hex(int3_address))
+                                        int3_count += 1
+
+                                        # Limit results
+                                        if int3_count >= 50:
+                                            break
+
+                        except (OSError, IOError):
+                            # Memory region not readable, skip
+                            continue
+
+                        # Safety break
+                        if int3_count >= 50:
+                            break
+
+            except (OSError, IOError):
+                # Fallback: check for common debugger artifacts in /proc
+                try:
+                    # Check if being traced
+                    with open('/proc/self/status', 'r') as f:
+                        for line in f:
+                            if line.startswith('TracerPid:'):
+                                tracer_pid = int(line.split()[1])
+                                if tracer_pid != 0:
+                                    details["tracer_detected"] = True
+                                    return True, 0.6, details
+                except (OSError, IOError):
+                    pass
+
+            details["int3_count"] = int3_count
+            details["locations"] = locations[:10]
+
+            if int3_count > 0:
+                confidence = min(0.9, 0.2 + (int3_count * 0.05))
+                return True, confidence, details
+
+            return False, 0.0, details
+
+        except Exception as e:
+            self.logger.debug(f"Linux INT3 scan error: {e}")
+            return False, 0.0, details
 
     def _check_timing(self) -> tuple[bool, float, dict]:
         """Use timing checks to detect debuggers."""

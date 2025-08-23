@@ -37,7 +37,6 @@ from PyQt6.QtWidgets import (
     QAbstractScrollArea,
     QApplication,
     QCheckBox,
-    QComboBox,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
@@ -52,12 +51,54 @@ from PyQt6.QtWidgets import (
 )
 
 from intellicrack.core.config_manager import get_config
+
+from .advanced_search import AdvancedSearchDialog, SearchEngine
 from .file_handler import VirtualFileAccess
 from .hex_highlighter import HexHighlight, HexHighlighter, HighlightType
 from .hex_renderer import HexViewRenderer, ViewMode, parse_hex_view
 from .performance_monitor import PerformanceMonitor
 
 logger = logging.getLogger("Intellicrack.HexView")
+
+
+class FoldedRegion:
+    """Represents a folded region in the hex view."""
+
+    def __init__(self, start: int, end: int, name: str = ""):
+        """Initialize a folded region.
+        
+        Args:
+            start: Start offset of the region
+            end: End offset of the region
+            name: Optional name for the region
+        """
+        self.start = start
+        self.end = end
+        self.name = name
+        self.size = end - start
+
+    def contains(self, offset: int) -> bool:
+        """Check if an offset is within this folded region.
+        
+        Args:
+            offset: Offset to check
+            
+        Returns:
+            True if offset is within the region
+        """
+        return self.start <= offset < self.end
+
+    def overlaps(self, start: int, end: int) -> bool:
+        """Check if a range overlaps with this folded region.
+        
+        Args:
+            start: Start of range
+            end: End of range
+            
+        Returns:
+            True if there's an overlap
+        """
+        return not (end <= self.start or start >= self.end)
 
 
 class HexViewerWidget(QAbstractScrollArea):
@@ -106,6 +147,7 @@ class HexViewerWidget(QAbstractScrollArea):
         self.group_size = self.config.get("hex_viewer.ui.group_size", 1)
         self.renderer = HexViewRenderer(bytes_per_row=self.bytes_per_row)
         self.highlighter = HexHighlighter()
+        self.search_engine = None  # Will be initialized when file is loaded
         self.current_offset = 0
         self.selection_start = -1
         self.selection_end = -1
@@ -114,6 +156,9 @@ class HexViewerWidget(QAbstractScrollArea):
 
         # Performance monitoring
         self.performance_monitor = PerformanceMonitor()
+
+        # Folded regions tracking
+        self.folded_regions = []
 
         # UI settings
         self.header_height = 30
@@ -131,9 +176,13 @@ class HexViewerWidget(QAbstractScrollArea):
         self.header_text_color = QColor(self.config.get("hex_viewer.ui.text_color", "#D4D4D4"))
         self.address_bg_color = QColor(self.config.get("hex_viewer.ui.bg_color", "#1E1E1E"))
         self.address_text_color = QColor(self.config.get("hex_viewer.ui.address_color", "#608B4E"))
-        self.selection_color = QColor(self.config.get("hex_viewer.ui.selection_bg_color", "#264F78"))
+        self.selection_color = QColor(
+            self.config.get("hex_viewer.ui.selection_bg_color", "#264F78")
+        )
         self.selection_color.setAlpha(160)  # Maintain transparency
-        self.highlight_selection_color = QColor(self.config.get("hex_viewer.ui.highlight_color", "#FFD700"))
+        self.highlight_selection_color = QColor(
+            self.config.get("hex_viewer.ui.highlight_color", "#FFD700")
+        )
         self.highlight_selection_color.setAlpha(160)  # Maintain transparency
         self.modified_color = QColor(self.config.get("hex_viewer.ui.modified_color", "#D16969"))
 
@@ -149,7 +198,7 @@ class HexViewerWidget(QAbstractScrollArea):
         font_family = self.config.get("hex_viewer.ui.font_family", "Consolas")
         font_size = self.config.get("hex_viewer.ui.font_size", 11)
         font_weight = self.config.get("hex_viewer.ui.font_weight", "normal")
-        
+
         font = QFont(font_family, font_size)
         font.setFixedPitch(True)
         if font_weight == "bold":
@@ -247,6 +296,9 @@ class HexViewerWidget(QAbstractScrollArea):
             self.selection_end = -1
             self.editing_offset = -1
             self.highlighter.clear_highlights()
+
+            # Initialize search engine with the file handler
+            self.search_engine = SearchEngine(self.file_handler)
 
             # Set up performance monitoring for large files
             self.performance_monitor.set_file_handler(self.file_handler)
@@ -557,6 +609,33 @@ class HexViewerWidget(QAbstractScrollArea):
                 if row_size <= 0:
                     break
 
+                # Check if this row is within a folded region
+                is_folded = False
+                folded_region = None
+                for region in self.folded_regions:
+                    if region.contains(row_offset):
+                        is_folded = True
+                        folded_region = region
+                        break
+
+                # If folded, draw placeholder and skip to next visible row
+                if is_folded and folded_region:
+                    # Draw folded region indicator only for the first row of the fold
+                    if row_offset == folded_region.start or (row > start_row and
+                        row_offset - self.bytes_per_row < folded_region.start):
+                        painter.setPen(self.text_color)
+                        painter.fillRect(0, y, self.viewport().width(), self.char_height,
+                                       QColor(100, 100, 100, 50))
+                        fold_text = f"[Folded: {folded_region.size} bytes"
+                        if folded_region.name:
+                            fold_text += f" - {folded_region.name}"
+                        fold_text += "]"
+                        painter.drawText(self.address_width + 10, y + self.char_height - 3, fold_text)
+                        y += self.char_height
+
+                    # Skip to end of folded region
+                    continue
+
                 # Get data for this row - add safety checks
                 try:
                     start_idx = row_offset - start_offset
@@ -603,7 +682,7 @@ class HexViewerWidget(QAbstractScrollArea):
         # Set text color
         painter.setPen(self.header_text_color)
 
-        # EMERGENCY FIX: Draw address header with maximum visibility
+        # Draw address header
         address_header_rect = QRect(0, 0, self.address_width, self.header_height)
 
         # Draw white background for header
@@ -624,7 +703,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         # Draw data column headers based on view mode
         if self.view_mode == ViewMode.HEX:
-            # EMERGENCY FIX: Draw hex column headers with maximum visibility
+            # Draw hex column headers
             x = self.hex_offset_x
             for i in range(self.bytes_per_row):
                 header_text = f"{i:X}"
@@ -644,7 +723,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 painter.setPen(QPen(QColor(0, 128, 0), 1, Qt.SolidLine))
                 painter.drawRect(header_rect)
 
-            # EMERGENCY FIX: Draw ASCII column header with maximum visibility
+            # Draw ASCII column header
             ascii_header_rect = QRect(
                 self.ascii_offset_x, 0, self.bytes_per_row * self.char_width, self.header_height
             )
@@ -694,9 +773,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 logger.warning("Empty data passed to draw_hex_row at offset %s", offset)
 
             # Force QT to show the widget is active and receiving paint events
-            logger.debug(f"Drawing hex row at y={y}, offset={offset:X}, data_len={len(data)}")
-
-            # EMERGENCY FIX: Draw address with white background and black text
+            # Draw address with background
             addr_rect = QRect(0, y, self.address_width, self.char_height)
 
             # Fill with white background
@@ -737,7 +814,7 @@ class HexViewerWidget(QAbstractScrollArea):
             # Draw selection and highlights
             self.draw_byte_highlights(painter, byte_offset, x, y, 3 * self.char_width, highlights)
 
-            # EMERGENCY FIX: Draw hex values with forced white background and black text
+            # Draw hex values
             byte_rect = QRect(x, y, 2 * self.char_width, self.char_height)
 
             # Draw white background rect
@@ -764,7 +841,7 @@ class HexViewerWidget(QAbstractScrollArea):
             # Draw selection and highlights
             self.draw_byte_highlights(painter, byte_offset, x, y, self.char_width, highlights)
 
-            # EMERGENCY FIX: Draw ASCII character with forced white background and black text
+            # Draw ASCII character
             char_rect = QRect(x, y, self.char_width, self.char_height)
             c = chr(b) if 32 <= b <= 126 else "."
 
@@ -920,6 +997,113 @@ class HexViewerWidget(QAbstractScrollArea):
             self.group_size = group_size
             self.renderer.set_group_size(group_size)
             self.viewport().update()
+
+    def fold_region(self, start: int, end: int, name: str = ""):
+        """Fold a region of data.
+        
+        Args:
+            start: Start offset of region to fold
+            end: End offset of region to fold
+            name: Optional name for the folded region
+        """
+        if start >= end or not self.file_handler:
+            return
+
+        # Check for overlapping regions
+        for region in self.folded_regions:
+            if region.overlaps(start, end):
+                return  # Don't allow overlapping folds
+
+        # Add the folded region
+        folded = FoldedRegion(start, end, name)
+        self.folded_regions.append(folded)
+        self.folded_regions.sort(key=lambda r: r.start)
+
+        # Update display
+        self.calculate_scroll_range()
+        self.viewport().update()
+
+    def unfold_region(self, offset: int):
+        """Unfold a region containing the given offset.
+        
+        Args:
+            offset: Offset within the region to unfold
+        """
+        for i, region in enumerate(self.folded_regions):
+            if region.contains(offset):
+                del self.folded_regions[i]
+                self.calculate_scroll_range()
+                self.viewport().update()
+                break
+
+    def unfold_all(self):
+        """Unfold all folded regions."""
+        if self.folded_regions:
+            self.folded_regions.clear()
+            self.calculate_scroll_range()
+            self.viewport().update()
+
+    def fold_selection(self):
+        """Fold the currently selected region."""
+        if self.selection_start >= 0 and self.selection_end > self.selection_start:
+            # Create a default name based on the selection
+            name = f"Offset {self.selection_start:#x} - {self.selection_end:#x}"
+            self.fold_region(self.selection_start, self.selection_end, name)
+            # Clear selection after folding
+            self.selection_start = -1
+            self.selection_end = -1
+            self.viewport().update()
+
+    def is_offset_folded(self, offset: int) -> bool:
+        """Check if an offset is within a folded region.
+        
+        Args:
+            offset: Offset to check
+            
+        Returns:
+            True if offset is folded
+        """
+        for region in self.folded_regions:
+            if region.contains(offset):
+                return True
+        return False
+
+    def get_visible_offset(self, file_offset: int) -> int:
+        """Convert file offset to visible offset accounting for folded regions.
+        
+        Args:
+            file_offset: Actual file offset
+            
+        Returns:
+            Visible offset after accounting for folded regions
+        """
+        visible_offset = file_offset
+        for region in self.folded_regions:
+            if region.end <= file_offset:
+                # Region is completely before this offset
+                visible_offset -= region.size
+            elif region.start < file_offset:
+                # Offset is within a folded region
+                visible_offset = region.start
+                break
+        return visible_offset
+
+    def get_file_offset(self, visible_offset: int) -> int:
+        """Convert visible offset to file offset accounting for folded regions.
+        
+        Args:
+            visible_offset: Visible offset in the display
+            
+        Returns:
+            Actual file offset
+        """
+        file_offset = visible_offset
+        for region in self.folded_regions:
+            if region.start <= visible_offset:
+                file_offset += region.size
+            else:
+                break
+        return file_offset
 
     def jump_to_offset(self, offset: int):
         """Jump to a specific offset in the file.
@@ -1310,6 +1494,30 @@ class HexViewerWidget(QAbstractScrollArea):
         # Selection-dependent actions
         has_selection = self.selection_start >= 0 and self.selection_end > self.selection_start
 
+        # Folding actions
+        fold_menu = menu.addMenu("Folding")
+
+        if has_selection:
+            fold_selection_action = fold_menu.addAction("Fold Selection")
+            fold_selection_action.triggered.connect(self.fold_selection)
+
+        # Get current position for unfold
+        pos_in_widget = self.mapFromGlobal(self.mapToGlobal(pos))
+        clicked_offset = self.get_offset_at_position(pos_in_widget)
+
+        if clicked_offset >= 0:
+            # Check if click is on a folded region
+            for region in self.folded_regions:
+                if region.contains(clicked_offset):
+                    unfold_action = fold_menu.addAction("Unfold Region")
+                    unfold_action.triggered.connect(lambda: self.unfold_region(clicked_offset))
+                    break
+
+        if self.folded_regions:
+            fold_menu.addSeparator()
+            unfold_all_action = fold_menu.addAction("Unfold All")
+            unfold_all_action.triggered.connect(self.unfold_all)
+
         # Copy actions
         copy_menu = menu.addMenu("Copy")
         copy_menu.setEnabled(has_selection)
@@ -1323,6 +1531,21 @@ class HexViewerWidget(QAbstractScrollArea):
 
             copy_c_array_action = copy_menu.addAction("Copy as C Array")
             copy_c_array_action.triggered.connect(self.copy_selection_as_c_array)
+
+            copy_java_array_action = copy_menu.addAction("Copy as Java Array")
+            copy_java_array_action.triggered.connect(self.copy_selection_as_java_array)
+
+            copy_python_bytes_action = copy_menu.addAction("Copy as Python Bytes")
+            copy_python_bytes_action.triggered.connect(self.copy_selection_as_python_bytes)
+
+            copy_base64_action = copy_menu.addAction("Copy as Base64")
+            copy_base64_action.triggered.connect(self.copy_selection_as_base64)
+
+            copy_uri_data_action = copy_menu.addAction("Copy as Data URI")
+            copy_uri_data_action.triggered.connect(self.copy_selection_as_data_uri)
+
+            copy_formatted_hex_action = copy_menu.addAction("Copy as Formatted Hex...")
+            copy_formatted_hex_action.triggered.connect(self.copy_selection_as_formatted_hex)
 
         # Edit actions
         edit_menu = menu.addMenu("Edit")
@@ -1389,83 +1612,28 @@ class HexViewerWidget(QAbstractScrollArea):
                 )
 
     def show_search_dialog(self):
-        """Show dialog for searching for a pattern."""
-        if not self.file_handler:
+        """Show advanced search dialog for searching patterns."""
+        if not self.file_handler or not self.search_engine:
+            QMessageBox.warning(
+                self,
+                "Search Unavailable",
+                "Please load a file before searching."
+            )
             return
 
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Search")
-        dialog.setMinimumWidth(400)
+        # Create and show the advanced search dialog
+        dialog = AdvancedSearchDialog(self, self.search_engine)
 
-        # Create layout
-        layout = QVBoxLayout(dialog)
+        # Connect search result signals to handle navigation
+        if hasattr(dialog, 'search_result_selected'):
+            dialog.search_result_selected.connect(self.goto_offset)
 
-        # Pattern input
-        form_layout = QFormLayout()
-        pattern_edit = QLineEdit()
-        form_layout.addRow("Search pattern:", pattern_edit)
+        # Set the current offset as the starting point for searches
+        if hasattr(self.search_engine, 'set_current_offset'):
+            self.search_engine.set_current_offset(self.current_offset)
 
-        # Search type
-        search_type_combo = QComboBox()
-        search_type_combo.addItems(["Hex", "Text", "ASCII"])
-        form_layout.addRow("Search type:", search_type_combo)
-
-        # Case sensitivity
-        case_check = QCheckBox("Case sensitive")
-        case_check.setChecked(True)
-        form_layout.addRow("", case_check)
-
-        # Direction
-        direction_combo = QComboBox()
-        direction_combo.addItems(["Forward", "Backward"])
-        form_layout.addRow("Direction:", direction_combo)
-
-        layout.addLayout(form_layout)
-
-        # Buttons
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        buttons.accepted.connect(dialog.accept)
-        buttons.rejected.connect(dialog.reject)
-        layout.addWidget(buttons)
-
-        # Show dialog
-        if dialog.exec() == QDialog.Accepted:
-            pattern = pattern_edit.text()
-            search_type = search_type_combo.currentText().lower()
-            case_sensitive = case_check.isChecked()
-            direction = direction_combo.currentText().lower()
-
-            if not pattern:
-                return
-
-            # Convert pattern based on search type
-            if search_type == "hex":
-                try:
-                    pattern_bytes = bytes.fromhex(pattern.replace(" ", ""))
-                except ValueError as e:
-                    logger.error("Value error in hex_widget: %s", e)
-                    QMessageBox.warning(
-                        self,
-                        "Invalid Hex Pattern",
-                        "Please enter a valid hex pattern (e.g., 'FF 00 AB').",
-                    )
-                    return
-            else:  # Text or ASCII
-                pattern_bytes = pattern.encode("utf-8")
-
-            # Start search from current selection or offset
-            if self.selection_end > self.selection_start:
-                start_offset = (
-                    self.selection_end if direction == "forward" else self.selection_start
-                )
-            else:
-                start_offset = self.current_offset
-
-            # Perform search
-            result = self.search(pattern_bytes, start_offset, case_sensitive, direction)
-
-            if result is None:
-                QMessageBox.information(self, "Search Result", f"Pattern '{pattern}' not found.")
+        # Show the dialog (non-modal so users can interact with both)
+        dialog.show()
 
     def add_bookmark_dialog(self):
         """Show dialog for adding a bookmark."""
@@ -1582,6 +1750,203 @@ class HexViewerWidget(QAbstractScrollArea):
         # Copy to clipboard
         clipboard = QApplication.clipboard()
         clipboard.setText(array_str)
+
+    def copy_selection_as_java_array(self):
+        """Copy the selected data as a Java byte array."""
+        data = self.get_selected_data()
+        if not data:
+            return
+
+        # Format as Java array
+        # Java bytes are signed (-128 to 127)
+        hex_values = []
+        for b in data:
+            if b > 127:
+                hex_values.append(f"(byte)0x{b:02X}")
+            else:
+                hex_values.append(f"0x{b:02X}")
+
+        array_str = "byte[] data = {\n    "
+        array_str += ",\n    ".join(
+            ", ".join(hex_values[i : i + 8]) for i in range(0, len(hex_values), 8)
+        )
+        array_str += "\n};"
+
+        # Copy to clipboard
+        clipboard = QApplication.clipboard()
+        clipboard.setText(array_str)
+
+    def copy_selection_as_python_bytes(self):
+        """Copy the selected data as Python bytes literal."""
+        data = self.get_selected_data()
+        if not data:
+            return
+
+        # Format as Python bytes
+        hex_str = "".join(f"\\x{b:02x}" for b in data)
+
+        # Split into lines for readability if long
+        if len(hex_str) > 60:
+            lines = []
+            for i in range(0, len(hex_str), 60):
+                lines.append(hex_str[i:i+60])
+            python_str = 'data = b"' + '"\\\n       b"'.join(lines) + '"'
+        else:
+            python_str = f'data = b"{hex_str}"'
+
+        # Copy to clipboard
+        clipboard = QApplication.clipboard()
+        clipboard.setText(python_str)
+
+    def copy_selection_as_base64(self):
+        """Copy the selected data as Base64 encoded string."""
+        import base64
+
+        data = self.get_selected_data()
+        if not data:
+            return
+
+        # Encode as Base64
+        b64_str = base64.b64encode(data).decode('ascii')
+
+        # Copy to clipboard
+        clipboard = QApplication.clipboard()
+        clipboard.setText(b64_str)
+
+    def copy_selection_as_data_uri(self):
+        """Copy the selected data as a data URI."""
+        import base64
+
+        data = self.get_selected_data()
+        if not data:
+            return
+
+        # Try to detect MIME type from magic bytes
+        mime_type = "application/octet-stream"  # Default
+
+        if len(data) >= 4:
+            if data[:4] == b'\x89PNG':
+                mime_type = "image/png"
+            elif data[:3] == b'\xff\xd8\xff':
+                mime_type = "image/jpeg"
+            elif data[:6] in (b'GIF87a', b'GIF89a'):
+                mime_type = "image/gif"
+            elif data[:4] == b'%PDF':
+                mime_type = "application/pdf"
+            elif data[:2] == b'MZ':
+                mime_type = "application/x-msdownload"
+
+        # Create data URI
+        b64_str = base64.b64encode(data).decode('ascii')
+        data_uri = f"data:{mime_type};base64,{b64_str}"
+
+        # Copy to clipboard
+        clipboard = QApplication.clipboard()
+        clipboard.setText(data_uri)
+
+    def copy_selection_as_formatted_hex(self):
+        """Copy the selected data as formatted hex with custom options."""
+        from PyQt6.QtWidgets import (
+            QDialog,
+            QHBoxLayout,
+            QLabel,
+            QLineEdit,
+            QPushButton,
+            QSpinBox,
+            QVBoxLayout,
+        )
+
+        data = self.get_selected_data()
+        if not data:
+            return
+
+        # Create dialog for formatting options
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Formatted Hex Options")
+        dialog.setFixedSize(350, 200)
+
+        layout = QVBoxLayout()
+
+        # Prefix option
+        prefix_layout = QHBoxLayout()
+        prefix_layout.addWidget(QLabel("Prefix:"))
+        prefix_input = QLineEdit("0x")
+        prefix_layout.addWidget(prefix_input)
+        layout.addLayout(prefix_layout)
+
+        # Separator option
+        sep_layout = QHBoxLayout()
+        sep_layout.addWidget(QLabel("Separator:"))
+        sep_input = QLineEdit(" ")
+        sep_layout.addWidget(sep_input)
+        layout.addLayout(sep_layout)
+
+        # Bytes per line option
+        bpl_layout = QHBoxLayout()
+        bpl_layout.addWidget(QLabel("Bytes per line:"))
+        bpl_input = QSpinBox()
+        bpl_input.setMinimum(1)
+        bpl_input.setMaximum(32)
+        bpl_input.setValue(16)
+        bpl_layout.addWidget(bpl_input)
+        layout.addLayout(bpl_layout)
+
+        # Uppercase option
+        uppercase_check = QCheckBox("Uppercase")
+        uppercase_check.setChecked(True)
+        layout.addWidget(uppercase_check)
+
+        # Include addresses option
+        addresses_check = QCheckBox("Include addresses")
+        addresses_check.setChecked(False)
+        layout.addWidget(addresses_check)
+
+        # Buttons
+        button_layout = QHBoxLayout()
+        ok_button = QPushButton("OK")
+        cancel_button = QPushButton("Cancel")
+        button_layout.addWidget(ok_button)
+        button_layout.addWidget(cancel_button)
+        layout.addLayout(button_layout)
+
+        dialog.setLayout(layout)
+
+        def format_and_copy():
+            prefix = prefix_input.text()
+            separator = sep_input.text()
+            bytes_per_line = bpl_input.value()
+            uppercase = uppercase_check.isChecked()
+            include_addresses = addresses_check.isChecked()
+
+            # Format the data
+            result = []
+            for i in range(0, len(data), bytes_per_line):
+                line_data = data[i:i+bytes_per_line]
+                if uppercase:
+                    hex_values = [f"{prefix}{b:02X}" for b in line_data]
+                else:
+                    hex_values = [f"{prefix}{b:02x}" for b in line_data]
+
+                if include_addresses:
+                    if self.selection_start >= 0:
+                        addr = self.selection_start + i
+                    else:
+                        addr = i
+                    line = f"{addr:08X}: {separator.join(hex_values)}"
+                else:
+                    line = separator.join(hex_values)
+
+                result.append(line)
+
+            # Copy to clipboard
+            clipboard = QApplication.clipboard()
+            clipboard.setText("\n".join(result))
+            dialog.accept()
+
+        ok_button.clicked.connect(format_and_copy)
+        cancel_button.clicked.connect(dialog.reject)
+
+        dialog.exec()
 
     def fill_selection(self):
         """Fill the selected range with a repeated value."""

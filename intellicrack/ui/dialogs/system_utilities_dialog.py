@@ -303,9 +303,7 @@ class SystemUtilitiesDialog(QDialog):
         # Extract button
         self.extract_icon_btn = QPushButton("Extract Icon")
         self.extract_icon_btn.clicked.connect(self.extract_icon)
-        self.extract_icon_btn.setStyleSheet(
-            "QPushButton { background-color: #4CAF50; color: white; font-weight: bold; }"
-        )
+        self.extract_icon_btn.setObjectName("extractIconButton")
         layout.addWidget(self.extract_icon_btn)
 
         # Preview area
@@ -315,9 +313,7 @@ class SystemUtilitiesDialog(QDialog):
         self.icon_preview = QLabel()
         self.icon_preview.setMinimumHeight(150)
         self.icon_preview.setAlignment(Qt.AlignCenter)
-        self.icon_preview.setStyleSheet(
-            "QLabel { border: 1px solid gray; background-color: white; }"
-        )
+        self.icon_preview.setObjectName("iconPreview")
         self.icon_preview.setText("Icon preview will appear here")
 
         preview_layout.addWidget(self.icon_preview)
@@ -493,9 +489,7 @@ class SystemUtilitiesDialog(QDialog):
         # Optimize button
         self.optimize_memory_btn = QPushButton("Optimize Memory")
         self.optimize_memory_btn.clicked.connect(self.optimize_memory)
-        self.optimize_memory_btn.setStyleSheet(
-            "QPushButton { background-color: #2196F3; color: white; font-weight: bold; }"
-        )
+        self.optimize_memory_btn.setObjectName("optimizeMemoryButton")
         layout.addWidget(self.optimize_memory_btn)
 
         # Results
@@ -521,7 +515,7 @@ class SystemUtilitiesDialog(QDialog):
         status_layout = QHBoxLayout()
 
         self.status_label = QLabel("Ready")
-        self.status_label.setStyleSheet("QLabel { color: #666; }")
+        self.status_label.setObjectName("readyStatus")
 
         self.close_btn = QPushButton("Close")
         self.close_btn.clicked.connect(self.close)

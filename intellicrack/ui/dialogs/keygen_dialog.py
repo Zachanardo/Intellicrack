@@ -33,6 +33,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.logger import logger
 
+from ..icon_manager import set_button_icon
 from .base_dialog import BinarySelectionDialog
 
 """
@@ -295,9 +296,8 @@ class KeygenDialog(BinarySelectionDialog):
         # Generate button
         self.generate_btn = QPushButton("Generate License Key")
         self.generate_btn.clicked.connect(self.generate_single_key)
-        self.generate_btn.setStyleSheet(
-            "QPushButton { background-color: #4CAF50; color: white; font-weight: bold; padding: 10px; }"
-        )
+        self.generate_btn.setObjectName("generateButton")
+        set_button_icon(self.generate_btn, "action_generate")
         gen_layout.addWidget(self.generate_btn)
 
         # Generated key display
@@ -387,19 +387,21 @@ class KeygenDialog(BinarySelectionDialog):
 
         self.batch_generate_btn = QPushButton("Generate Batch")
         self.batch_generate_btn.clicked.connect(self.generate_batch_keys)
-        self.batch_generate_btn.setStyleSheet(
-            "QPushButton { background-color: #FF9800; color: white; font-weight: bold; }"
-        )
+        self.batch_generate_btn.setObjectName("batchGenerateButton")
+        set_button_icon(self.batch_generate_btn, "action_generate")
 
         self.batch_stop_btn = QPushButton("Stop")
         self.batch_stop_btn.clicked.connect(self.stop_batch_generation)
         self.batch_stop_btn.setEnabled(False)
+        set_button_icon(self.batch_stop_btn, "action_stop")
 
         self.batch_clear_btn = QPushButton("Clear Results")
         self.batch_clear_btn.clicked.connect(self.clear_batch_results)
+        set_button_icon(self.batch_clear_btn, "edit_delete")
 
         self.batch_export_btn = QPushButton("Export Keys")
         self.batch_export_btn.clicked.connect(self.export_batch_keys)
+        set_button_icon(self.batch_export_btn, "file_export")
 
         controls_layout.addWidget(self.batch_generate_btn)
         controls_layout.addWidget(self.batch_stop_btn)

@@ -321,7 +321,7 @@ class HelpDocumentationWidget(QWidget):
         )
         self.add_feature(network, "Traffic Capture", "✓", "Packet sniffing")
         self.add_feature(network, "Protocol Fingerprinting", "✓", "License protocol detection")
-        self.add_feature(network, "License Server Emulation", "✓", "Mock server responses")
+        self.add_feature(network, "License Server Emulation", "✓", "Server response simulation")
         self.add_feature(network, "Cloud License Interception", "✓", "Online verification bypass")
         self.add_feature(network, "SSL/TLS Interception", "✓", "Encrypted traffic analysis")
         self.add_feature(network, "Network API Hooking", "✓", "Winsock, WinINet hooks")
@@ -409,7 +409,7 @@ class HelpDocumentationWidget(QWidget):
         advanced = QTreeWidgetItem(self.features_tree, ["Advanced", "", "Research capabilities"])
         self.add_feature(advanced, "Dongle Emulation", "✓", "Hardware bypass")
         self.add_feature(advanced, "TPM Bypass", "✓", "Security chip bypass")
-        self.add_feature(advanced, "HWID Spoofing", "✓", "Hardware ID faker")
+        self.add_feature(advanced, "HWID Spoofing", "✓", "Hardware ID manipulation")
         self.add_feature(advanced, "Time Bomb Defuser", "✓", "Expiration bypass")
 
         self.features_tree.expandAll()

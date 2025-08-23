@@ -202,6 +202,13 @@ class PythonHighlighter(QSyntaxHighlighter):
             pattern = QRegularExpression(f"\\b{builtin}\\b")
             self.highlighting_rules.append((pattern, builtin_format))
 
+        # Multi-line string formats
+        self.triple_double_quote_format = QTextCharFormat()
+        self.triple_double_quote_format.setForeground(QColor("#CE9178"))  # Orange
+
+        self.triple_single_quote_format = QTextCharFormat()
+        self.triple_single_quote_format.setForeground(QColor("#CE9178"))  # Orange
+
     def highlightBlock(self, text):
         """Apply syntax highlighting to block"""
         # Single line rules
@@ -453,6 +460,11 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
         self.highlighting_rules.append((QRegularExpression("\\[.*?\\]\\s*="), destructure_format))
         self.highlighting_rules.append((QRegularExpression("\\{.*?\\}\\s*="), destructure_format))
 
+        # Multi-line comment format
+        self.multiline_comment_format = QTextCharFormat()
+        self.multiline_comment_format.setForeground(QColor("#6A9955"))  # Green
+        self.multiline_comment_format.setFontItalic(True)
+
     def highlightBlock(self, text):
         """Apply syntax highlighting to block"""
         # Single line rules
@@ -473,16 +485,23 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
             start = 0
             add = 0
         else:
-            start = start_expression.indexIn(text)
-            add = start_expression.matchedLength()
+            match = start_expression.match(text)
+            if match.hasMatch():
+                start = match.capturedStart()
+                add = match.capturedLength()
+            else:
+                start = -1
+                add = 0
 
         while start >= 0:
-            end = end_expression.indexIn(text, start + add)
-            if end == -1:
+            match = end_expression.match(text, start + add)
+            if match.hasMatch():
+                end = match.capturedStart()
+                comment_length = end - start + match.capturedLength()
+            else:
                 self.setCurrentBlockState(1)
                 comment_length = len(text) - start
-            else:
-                comment_length = end - start + end_expression.matchedLength()
 
             self.setFormat(start, comment_length, self.multiline_comment_format)
-            start = start_expression.indexIn(text, start + comment_length)
+            match = start_expression.match(text, start + comment_length)
+            start = match.capturedStart() if match.hasMatch() else -1

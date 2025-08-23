@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from intellicrack.logger import logger
 
-from .ai_script_generator import LLMScriptInterface, PromptEngineer
+from .ai_script_generator import LLMScriptInterface, PromptEngineer, ScriptType
 
 
 class EditType(Enum):

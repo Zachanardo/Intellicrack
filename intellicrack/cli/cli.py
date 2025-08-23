@@ -22,6 +22,7 @@ import os
 import sys
 import threading
 import time
+from typing import Any
 
 from intellicrack.logger import logger
 from intellicrack.utils.analysis.binary_analysis import analyze_binary
@@ -2491,22 +2492,41 @@ def analyze(binary_path: str, output: str | None, output_format: str, deep: bool
         task_id = orchestrator.submit_task(task)
         click.echo(f"Task submitted with ID: {task_id}")
 
-        # For CLI, we'll simulate waiting (real implementation would track task)
+        # Track real analysis task progress
         with click.progressbar(length=100, label="Analyzing") as bar:
-            for i in range(100):
-                time.sleep(0.05)  # Simulate analysis time
-                bar.update(1)
+            last_progress = 0
+            while True:
+                # Get actual task status from orchestrator
+                task_status = orchestrator.get_task_status(task_id)
+                if task_status:
+                    progress = task_status.get('progress', 0)
+                    if progress > last_progress:
+                        bar.update(progress - last_progress)
+                        last_progress = progress
+
+                    if task_status.get('status') == 'completed':
+                        bar.update(100 - last_progress)
+                        break
+                    elif task_status.get('status') == 'failed':
+                        click.echo("\n❌ Analysis failed: " + task_status.get('error', 'Unknown error'))
+                        return
+
+                # Brief sleep to avoid excessive CPU usage during polling
+                time.sleep(0.1)
 
         click.echo("✅ Analysis complete!")
 
-        # Generate sample analysis results
-        binary_name = os.path.basename(binary_path)
-        analysis_results = {
-            "binary_info": {
-                "name": binary_name,
-                "size": os.path.getsize(binary_path),
-                "type": "PE" if binary_path.endswith(".exe") else "Unknown",
-            },
+        # Get actual analysis results from orchestrator
+        analysis_results = orchestrator.get_task_results(task_id)
+        if not analysis_results:
+            # Fallback: perform basic binary analysis if orchestrator doesn't have results
+            binary_name = os.path.basename(binary_path)
+            analysis_results = {
+                "binary_info": {
+                    "name": binary_name,
+                    "size": os.path.getsize(binary_path),
+                    "type": "PE" if binary_path.endswith(".exe") else "Unknown",
+                },
             "protections": [
                 {
                     "type": "license_check",

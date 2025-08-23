@@ -51,7 +51,7 @@ try:
     if security_status.get("initialized"):
         print(f"Security enforcement initialized: {security_status.get('patches_applied', {})}")
 except ImportError:
-    pass  # Security enforcement is optional
+    print("Warning: Security enforcement module not available - running without enhanced protections")
 
 from .main import main
 

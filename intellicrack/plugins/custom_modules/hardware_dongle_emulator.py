@@ -574,8 +574,8 @@ class USBDongleDriver:
                 try:
                     if self.usb_backend == "pyusb":
                         self.usb.util.dispose_resources(dongle._usb_device)
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Failed to dispose USB resources: {e}")
 
             del self.dongles[device_id]
             self.logger.info(f"Unregistered USB dongle {device_id}")
@@ -894,8 +894,8 @@ class ParallelPortEmulator:
                     with open("/dev/parport0", "rb") as f:
                         f.seek(port - self.port_address)
                         return ord(f.read(1))
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Failed to read from parport: {e}")
 
         except Exception as e:
             self.logger.debug(f"Hardware read failed: {e}")
@@ -919,8 +919,8 @@ class ParallelPortEmulator:
                     with open("/dev/parport0", "wb") as f:
                         f.seek(port - self.port_address)
                         f.write(bytes([value]))
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"Failed to write to parport: {e}")
 
         except Exception as e:
             self.logger.debug(f"Hardware write failed: {e}")

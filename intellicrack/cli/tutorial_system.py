@@ -690,9 +690,10 @@ class TutorialSystem:
                         False,
                         "Command executed but validation failed. Check the output and try again.",
                     )
-            except Exception:
+            except Exception as e:
                 # Validation function error - continue anyway
-                pass
+                if hasattr(self, 'debug') and self.debug:
+                    print(f"Debug: Validation function error: {e}")
 
         # Check expected output if provided
         if step.expected_output:

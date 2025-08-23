@@ -41,6 +41,9 @@ class NetworkAnalysisPlugin:
         self.filter_expression = ""
         self.logger = logging.getLogger(__name__)
         self.is_capturing = False
+        self.monitoring = False
+        self.active_sockets = {}
+        self.socket_monitor_thread = None
 
     def analyze(self, binary_path):
         """Analyze binary for network-related functionality."""

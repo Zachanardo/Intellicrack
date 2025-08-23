@@ -42,9 +42,12 @@ class EntropyVisualizer(QWidget):
         self.setMinimumHeight(200)
         self.setMinimumWidth(400)
         self.current_data = None
+        self.file_data = None
+        self.entropy_data = []
+        self.block_positions = []
         self._setup_ui()
 
-    def setup_ui(self):
+    def _setup_ui(self):
         """Set up the entropy visualization UI."""
         layout = QVBoxLayout(self)
 

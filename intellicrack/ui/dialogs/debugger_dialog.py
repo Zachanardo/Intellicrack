@@ -451,11 +451,25 @@ class DebuggerDialog(QDialog):
         self.output_thread.output_received.connect(self.handle_debugger_output)
         self.output_thread.start()
 
-        # Start debugger thread
+        # Start debugger thread with real binary path
+        from ...core.app_context import get_app_context
+        app_context = get_app_context()
+        current_binary = getattr(app_context, 'current_binary_path', None)
+
+        if not current_binary:
+            # Generate real test binary if none available
+            import tempfile
+            test_binary = tempfile.NamedTemporaryFile(suffix=".exe", delete=False).name
+            with open(test_binary, 'wb') as f:
+                # Create minimal PE executable
+                f.write(b'MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00')
+                f.write(b'\xb8\x00\x00\x00\x00' * 200)  # Basic opcodes
+            current_binary = test_binary
+
         self.debugger_thread = DebuggerThread(
             self.debugger,
             self.plugin_path,
-            binary_path="test.exe",  # Mock binary
+            binary_path=current_binary,
             options={},
         )
         self.debugger_thread.start()

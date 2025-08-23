@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+import sys
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any
@@ -236,6 +237,47 @@ class InsertCommand(HexCommand):
         """Get the affected byte range."""
         return (self.offset, self.offset + len(self.data))
 
+    def can_merge_with(self, other: "HexCommand") -> bool:
+        """Check if this command can be merged with another insert command.
+        
+        Two InsertCommands can be merged if:
+        - They are both InsertCommands
+        - The second command's offset is at the end of the first command's insertion
+        
+        Args:
+            other: Another command
+            
+        Returns:
+            True if commands can be merged
+        """
+        if not isinstance(other, InsertCommand):
+            return False
+
+        # Can merge if insertions are consecutive
+        # When we insert at offset X with N bytes, the next insertion point is X + N
+        return other.offset == self.offset + len(self.data)
+
+    def merge_with(self, other: "HexCommand") -> "HexCommand":
+        """Merge with another insert command.
+        
+        Args:
+            other: Another InsertCommand to merge with
+            
+        Returns:
+            New merged InsertCommand
+            
+        Raises:
+            ValueError: If commands cannot be merged
+        """
+        if not self.can_merge_with(other):
+            raise ValueError("Cannot merge non-consecutive insert commands")
+
+        # Combine the data
+        combined_data = self.data + other.data
+
+        # Create new merged command
+        return InsertCommand(self.offset, combined_data)
+
 
 class DeleteCommand(HexCommand):
     """Command for deleting bytes at a specific offset."""
@@ -281,6 +323,96 @@ class DeleteCommand(HexCommand):
     def get_affected_range(self) -> tuple:
         """Get the affected byte range."""
         return (self.offset, self.offset + self.length)
+
+    def can_merge_with(self, other: "HexCommand") -> bool:
+        """Check if this command can be merged with another delete command.
+        
+        Two DeleteCommands can be merged if:
+        - They are both DeleteCommands
+        - They are adjacent (either consecutive or overlapping)
+        
+        Args:
+            other: Another command
+            
+        Returns:
+            True if commands can be merged
+        """
+        if not isinstance(other, DeleteCommand):
+            return False
+
+        # Can merge if deletions are adjacent or overlapping
+        # Check if the other deletion starts where this one ends
+        if other.offset == self.offset + self.length:
+            return True
+
+        # Check if this deletion ends where the other one starts
+        if self.offset == other.offset + other.length:
+            return True
+
+        # Check for overlap
+        if (self.offset <= other.offset < self.offset + self.length or
+            other.offset <= self.offset < other.offset + other.length):
+            return True
+
+        return False
+
+    def merge_with(self, other: "HexCommand") -> "HexCommand":
+        """Merge with another delete command.
+        
+        Args:
+            other: Another DeleteCommand to merge with
+            
+        Returns:
+            New merged DeleteCommand
+            
+        Raises:
+            ValueError: If commands cannot be merged
+        """
+        if not self.can_merge_with(other):
+            raise ValueError("Cannot merge non-adjacent delete commands")
+
+        # Determine the range of the merged deletion
+        min_offset = min(self.offset, other.offset)
+        max_end = max(self.offset + self.length, other.offset + other.length)
+        combined_length = max_end - min_offset
+
+        # Combine deleted data if available
+        combined_deleted_data = None
+        if self.deleted_data and other.deleted_data:
+            # Need to properly combine the deleted data based on offsets
+            if self.offset <= other.offset:
+                # This command comes first
+                if self.offset + self.length >= other.offset:
+                    # Overlapping or adjacent
+                    overlap_start = other.offset - self.offset
+                    overlap_length = min(self.length - overlap_start, other.length)
+                    # Take self.deleted_data and append non-overlapping part of other
+                    if other.offset + other.length > self.offset + self.length:
+                        extra_data = other.deleted_data[overlap_length:]
+                        combined_deleted_data = self.deleted_data + extra_data
+                    else:
+                        combined_deleted_data = self.deleted_data
+                else:
+                    # Gap between deletions - shouldn't happen if can_merge_with is correct
+                    combined_deleted_data = None
+            else:
+                # Other command comes first
+                if other.offset + other.length >= self.offset:
+                    # Overlapping or adjacent
+                    overlap_start = self.offset - other.offset
+                    overlap_length = min(other.length - overlap_start, self.length)
+                    # Take other.deleted_data and append non-overlapping part of self
+                    if self.offset + self.length > other.offset + other.length:
+                        extra_data = self.deleted_data[overlap_length:]
+                        combined_deleted_data = other.deleted_data + extra_data
+                    else:
+                        combined_deleted_data = other.deleted_data
+                else:
+                    # Gap between deletions - shouldn't happen if can_merge_with is correct
+                    combined_deleted_data = None
+
+        # Create new merged command
+        return DeleteCommand(min_offset, combined_length, combined_deleted_data)
 
 
 class FillCommand(HexCommand):
@@ -411,8 +543,13 @@ class PasteCommand(HexCommand):
 class CommandManager:
     """Manages command execution and undo/redo functionality."""
 
-    def __init__(self, max_history: int = 100):
-        """Initialize the CommandManager with maximum history size."""
+    def __init__(self, max_history: int = sys.maxsize):
+        """Initialize the CommandManager with maximum history size.
+        
+        Args:
+            max_history: Maximum number of commands to keep in history.
+                        Defaults to sys.maxsize for virtually unlimited undo/redo.
+        """
         self.max_history = max_history
         self.command_history: list[HexCommand] = []
         self.current_index = -1

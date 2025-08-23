@@ -593,6 +593,12 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             elif in_cert:
                 cert_data += line.strip()
 
+        # Decode base64
+        cert_bytes = base64.b64decode(cert_data)
+
+        # Return mock certificate object
+        return FallbackX509Certificate(cert_bytes)
+
     def load_pem_private_key(data, password=None, backend=None):
         """Load PEM private key."""
         # Parse PEM format (simplified)
@@ -615,12 +621,6 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
             'public_key': lambda self: type('PublicKey', (), {})(),
             'key_size': 2048,
         })()
-
-        # Decode base64
-        cert_bytes = base64.b64decode(cert_data)
-
-        # Return mock certificate object
-        return FallbackX509Certificate(cert_bytes)
 
     class FallbackX509Certificate:
         """X.509 certificate."""

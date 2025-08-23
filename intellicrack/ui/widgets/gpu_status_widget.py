@@ -50,6 +50,7 @@ class GPUMonitorWorker(QObject):
         """Initialize GPU monitor worker with performance tracking capabilities."""
         super().__init__()
         self.running = True
+        self.update_interval = 1000  # Default 1 second
 
     def start_monitoring(self):
         """Start the monitoring process"""
@@ -71,7 +72,7 @@ class GPUMonitorWorker(QObject):
 
             # Sleep for update interval
             if self.running:
-                self.thread().msleep(1000)  # 1 second update
+                self.thread().msleep(self.update_interval)
 
     def _collect_gpu_data(self) -> dict[str, Any]:
         """Collect GPU data based on platform"""
@@ -172,8 +173,8 @@ class GPUMonitorWorker(QObject):
                             "power": 0,
                         }
                     )
-        except:
-            pass
+        except (ImportError, AttributeError, Exception) as e:
+            logger.debug(f"Failed to get GPU info: {e}")
 
         return gpus
 
@@ -306,6 +307,11 @@ class GPUStatusWidget(QWidget):
             self.monitor_worker.stop_monitoring()
             self.monitor_thread.quit()
             self.monitor_thread.wait()
+
+    def set_refresh_interval(self, interval_ms: int):
+        """Set the refresh interval for GPU monitoring"""
+        if hasattr(self, 'monitor_worker'):
+            self.monitor_worker.update_interval = interval_ms
 
     def update_gpu_data(self, data: dict[str, Any]):
         """Update GPU data from monitor"""

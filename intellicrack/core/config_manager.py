@@ -32,7 +32,6 @@ from pathlib import Path
 from typing import Any
 
 from intellicrack.core.exceptions import ConfigurationError
-from intellicrack.hexview.config_defaults import HEX_VIEWER_DEFAULTS
 
 logger = logging.getLogger(__name__)
 
@@ -639,7 +638,7 @@ class IntellicrackConfig:
                 "allowed_keys": [],
                 "denied_keys": [],
             },
-            "hex_viewer": HEX_VIEWER_DEFAULTS,
+            "hex_viewer": self._get_hex_viewer_defaults(),
         }
 
         with self._config_lock:
@@ -912,6 +911,33 @@ class IntellicrackConfig:
             )
 
         return paths
+
+    def _get_hex_viewer_defaults(self) -> dict[str, Any]:
+        """Get hex viewer defaults with lazy import to avoid circular dependency.
+
+        Returns:
+            Dict with hex viewer default configuration
+
+        """
+        try:
+            from intellicrack.hexview.config_defaults import HEX_VIEWER_DEFAULTS
+            return HEX_VIEWER_DEFAULTS
+        except ImportError as e:
+            logger.warning(f"Could not import hex viewer defaults: {e}")
+            # Return minimal fallback configuration
+            return {
+                "ui": {
+                    "bg_color": "#1E1E1E",
+                    "text_color": "#D4D4D4",
+                    "font_family": "Consolas",
+                    "font_size": 11,
+                    "bytes_per_row": 16,
+                },
+                "performance": {
+                    "max_memory_mb": 500,
+                    "chunk_size_kb": 64,
+                },
+            }
 
     def _upgrade_config_if_needed(self):
         """Upgrade configuration if version changed."""
@@ -1373,13 +1399,14 @@ class IntellicrackConfig:
 
     # Public API methods
 
-    def _expand_environment_variables(self, value: Any) -> Any:
+    def _expand_environment_variables(self, value: Any, key: str = "<unknown>") -> Any:
         """Expand environment variables in configuration values.
 
         Supports ${VAR_NAME} and ${VAR_NAME:default_value} syntax.
 
         Args:
             value: Configuration value to expand
+            key: Configuration key for error context
 
         Returns:
             Value with environment variables expanded

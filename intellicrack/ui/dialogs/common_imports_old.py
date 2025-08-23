@@ -427,8 +427,8 @@ except ImportError as e:
                 if self._root:
                     try:
                         self._root.destroy()
-                    except:
-                        pass
+                    except (AttributeError, RuntimeError, Exception) as e:
+                        logger.debug(f"Failed to destroy root window: {e}")
 
         slider = HorizontalSlider()
         slider.setMinimum(min_val)

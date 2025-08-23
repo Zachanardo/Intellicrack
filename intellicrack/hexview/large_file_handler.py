@@ -29,9 +29,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from intellicrack.core.config_manager import get_config
+
 # Import from common import checks
 from ..utils.core.import_checks import PSUTIL_AVAILABLE, psutil
-from intellicrack.core.config_manager import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -370,19 +371,22 @@ class LargeFileHandler:
         """Initialize the LargeFileHandler with file path, read-only mode, and configuration."""
         self.file_path = file_path
         self.read_only = read_only
-        
+
         # Get configuration instance
         app_config = get_config()
-        
+
         # Create MemoryConfig with values from configuration system
         if config is None:
             self.config = MemoryConfig(
                 max_memory_mb=app_config.get("hex_viewer.performance.max_memory_mb", 500),
-                chunk_size_mb=app_config.get("hex_viewer.performance.chunk_size_kb", 64) // 1024 or 1,  # Convert KB to MB
+                chunk_size_mb=app_config.get("hex_viewer.performance.chunk_size_kb", 64) // 1024
+                or 1,  # Convert KB to MB
                 cache_size_mb=app_config.get("hex_viewer.performance.cache_size_mb", 100),
                 memory_threshold=0.8,  # Not in config, keeping default
-                enable_compression=app_config.get("hex_viewer.performance.compress_undo_data", True),
-                prefetch_chunks=app_config.get("hex_viewer.performance.prefetch_chunks", 3)
+                enable_compression=app_config.get(
+                    "hex_viewer.performance.compress_undo_data", True
+                ),
+                prefetch_chunks=app_config.get("hex_viewer.performance.prefetch_chunks", 3),
             )
         else:
             self.config = config

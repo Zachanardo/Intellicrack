@@ -87,22 +87,40 @@ except ImportError as e:
         logger.error("Import error in plugin_system: %s", e)
     RESOURCE_AVAILABLE = False
 
-    # Create dummy resource module for Windows
-    class DummyResource:
-        RLIMIT_CPU = 0
-        RLIMIT_FSIZE = 1
-        RLIMIT_DATA = 2
-        RLIMIT_STACK = 3
+    # Create Windows-compatible resource module implementation
+    # Windows doesn't have Unix-style resource limits, so we provide
+    # a compatibility layer that returns sensible defaults
+    class WindowsResourceCompat:
+        """Windows compatibility layer for Unix resource module."""
+        RLIMIT_CPU = 0      # CPU time limit
+        RLIMIT_FSIZE = 1    # File size limit
+        RLIMIT_DATA = 2     # Data segment size limit
+        RLIMIT_STACK = 3    # Stack size limit
 
         @staticmethod
         def getrlimit(resource_type):
-            return (1024 * 1024, 1024 * 1024)  # 1MB soft, 1MB hard
+            """Get resource limits (returns Windows defaults)."""
+            # Windows doesn't have hard limits like Unix, return practical defaults
+            # These values represent typical Windows process limits
+            if resource_type == WindowsResourceCompat.RLIMIT_CPU:
+                return (float('inf'), float('inf'))  # No CPU time limit on Windows
+            elif resource_type == WindowsResourceCompat.RLIMIT_FSIZE:
+                return (2**63 - 1, 2**63 - 1)  # Max file size on NTFS
+            elif resource_type == WindowsResourceCompat.RLIMIT_DATA:
+                return (2**31 - 1, 2**31 - 1)  # 2GB for 32-bit processes
+            elif resource_type == WindowsResourceCompat.RLIMIT_STACK:
+                return (1024 * 1024, 1024 * 1024)  # 1MB default stack size
+            else:
+                return (1024 * 1024, 1024 * 1024)  # Default 1MB
 
         @staticmethod
         def setrlimit(resource_type, limits):
-            pass  # No-op on Windows
+            """Set resource limits (no-op on Windows)."""
+            # Windows doesn't support Unix-style resource limits
+            # Process limits are controlled through Job Objects API instead
+            logger.debug("Resource limits not applicable on Windows (would use Job Objects API)")
 
-    resource = DummyResource()
+    resource = WindowsResourceCompat()
 
 
 def log_message(msg: str) -> str:

@@ -22,6 +22,7 @@ import logging
 import os
 
 from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -32,15 +33,21 @@ from PyQt6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QMenu,
+    QMenuBar,
     QMessageBox,
+    QProgressDialog,
+    QPushButton,
     QSplitter,
     QStatusBar,
     QToolBar,
     QVBoxLayout,
+    QWidget,
 )
 
 from intellicrack.handlers.pyqt6_handler import QAction
 
+from .compare_dialog import CompareDialog, ComparisonWorker
+from .file_compare import BinaryComparer
 from .hex_highlighter import HighlightType
 from .hex_renderer import ViewMode
 from .hex_widget import HexViewerWidget
@@ -84,26 +91,45 @@ class HexViewerDialog(QDialog):
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(2)
 
-        # Create the hex viewer widget
-        self.hex_viewer = HexViewerWidget(self)
+        # Create menu bar
+        self.menu_bar = self.create_menus()
+        layout.setMenuBar(self.menu_bar)
 
         # Create toolbar
         self.toolbar = self.create_toolbar()
         layout.addWidget(self.toolbar)
 
-        # Create splitter for main content
-        self.splitter = QSplitter(Qt.Horizontal)
-        layout.addWidget(self.splitter)
+        # Create main horizontal splitter for sidebar and content
+        self.main_splitter = QSplitter(Qt.Horizontal)
+        layout.addWidget(self.main_splitter)
 
         # Add sidebar
         self.sidebar = self.create_sidebar()
-        self.splitter.addWidget(self.sidebar)
+        self.main_splitter.addWidget(self.sidebar)
 
-        # Add hex viewer
-        self.splitter.addWidget(self.hex_viewer)
+        # Create container for hex viewers
+        self.viewer_container = QWidget()
+        self.viewer_layout = QVBoxLayout(self.viewer_container)
+        self.viewer_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Create splitter for hex viewers (initially contains one)
+        self.viewer_splitter = QSplitter(Qt.Vertical)
+        self.viewer_layout.addWidget(self.viewer_splitter)
+
+        # Create the primary hex viewer widget
+        self.hex_viewer = HexViewerWidget(self)
+        self.hex_viewer.setProperty("primary", True)
+        self.viewer_splitter.addWidget(self.hex_viewer)
+
+        # Keep track of all viewers
+        self.viewers = [self.hex_viewer]
+        self.active_viewer = self.hex_viewer
+
+        # Add viewer container to main splitter
+        self.main_splitter.addWidget(self.viewer_container)
 
         # Set split sizes (20% sidebar, 80% hex viewer)
-        self.splitter.setSizes([200, 800])
+        self.main_splitter.setSizes([200, 800])
 
         # Set background colors for better contrast
         sidebar_palette = self.sidebar.palette()
@@ -171,6 +197,11 @@ class HexViewerDialog(QDialog):
         save_action.triggered.connect(self.save_file)
         toolbar.addAction(save_action)
 
+        export_action = QAction("Export...", self)
+        export_action.setStatusTip("Export file or selection")
+        export_action.triggered.connect(self.show_export_dialog)
+        toolbar.addAction(export_action)
+
         # Toggle edit mode
         self.edit_mode_action = QAction("Enable Editing", self)
         self.edit_mode_action.setStatusTip("Toggle between read-only and editable mode")
@@ -196,6 +227,19 @@ class HexViewerDialog(QDialog):
         perf_action.setStatusTip("Show performance statistics")
         perf_action.triggered.connect(self.hex_viewer.show_performance_dialog)
         toolbar.addAction(perf_action)
+
+        toolbar.addSeparator()
+
+        # Tools menu
+        checksum_action = QAction("Checksums", self)
+        checksum_action.setStatusTip("Calculate checksums and hashes")
+        checksum_action.triggered.connect(self.show_checksum_dialog)
+        toolbar.addAction(checksum_action)
+
+        statistics_action = QAction("Statistics", self)
+        statistics_action.setStatusTip("Analyze statistical properties of data")
+        statistics_action.triggered.connect(self.show_statistics_dialog)
+        toolbar.addAction(statistics_action)
 
         toolbar.addSeparator()
 
@@ -236,6 +280,289 @@ class HexViewerDialog(QDialog):
         toolbar.addAction(bookmark_action)
 
         return toolbar
+
+    def create_menus(self) -> QMenuBar:
+        """Create the menu bar with menus.
+        
+        Returns:
+            Configured menu bar
+        """
+        menu_bar = QMenuBar()
+
+        # File menu
+        file_menu = menu_bar.addMenu("File")
+
+        open_action = QAction("Open...", self)
+        open_action.setShortcut("Ctrl+O")
+        open_action.triggered.connect(self.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("Save", self)
+        save_action.setShortcut("Ctrl+S")
+        save_action.triggered.connect(self.save_file)
+        file_menu.addAction(save_action)
+
+        file_menu.addSeparator()
+
+        export_action = QAction("Export...", self)
+        export_action.triggered.connect(self.show_export_dialog)
+        file_menu.addAction(export_action)
+
+        file_menu.addSeparator()
+
+        compare_action = QAction("Compare...", self)
+        compare_action.setShortcut("Ctrl+Shift+C")
+        compare_action.triggered.connect(self.show_compare_dialog)
+        file_menu.addAction(compare_action)
+
+        file_menu.addSeparator()
+
+        print_action = QAction("Print...", self)
+        print_action.setShortcut("Ctrl+P")
+        print_action.triggered.connect(self.show_print_dialog)
+        file_menu.addAction(print_action)
+
+        print_preview_action = QAction("Print Preview...", self)
+        print_preview_action.triggered.connect(self.show_print_preview)
+        file_menu.addAction(print_preview_action)
+
+        # View menu
+        view_menu = menu_bar.addMenu("View")
+
+        split_vertical_action = QAction("Split Vertical", self)
+        split_vertical_action.setShortcut("Ctrl+Shift+V")
+        split_vertical_action.triggered.connect(self.split_view_vertical)
+        view_menu.addAction(split_vertical_action)
+
+        split_horizontal_action = QAction("Split Horizontal", self)
+        split_horizontal_action.setShortcut("Ctrl+Shift+H")
+        split_horizontal_action.triggered.connect(self.split_view_horizontal)
+        view_menu.addAction(split_horizontal_action)
+
+        view_menu.addSeparator()
+
+        close_split_action = QAction("Close Active Split", self)
+        close_split_action.setShortcut("Ctrl+W")
+        close_split_action.triggered.connect(self.close_active_split)
+        view_menu.addAction(close_split_action)
+
+        close_all_splits_action = QAction("Close All Splits", self)
+        close_all_splits_action.triggered.connect(self.close_all_splits)
+        view_menu.addAction(close_all_splits_action)
+
+        view_menu.addSeparator()
+
+        sync_scrolling_action = QAction("Synchronize Scrolling", self)
+        sync_scrolling_action.setCheckable(True)
+        sync_scrolling_action.setChecked(True)
+        sync_scrolling_action.triggered.connect(self.toggle_sync_scrolling)
+        view_menu.addAction(sync_scrolling_action)
+        self.sync_scrolling_action = sync_scrolling_action
+
+        # Tools menu
+        tools_menu = menu_bar.addMenu("Tools")
+
+        checksum_action = QAction("Checksums...", self)
+        checksum_action.triggered.connect(self.show_checksum_dialog)
+        tools_menu.addAction(checksum_action)
+
+        statistics_action = QAction("Statistics...", self)
+        statistics_action.triggered.connect(self.show_statistics_dialog)
+        tools_menu.addAction(statistics_action)
+
+        return menu_bar
+
+    def split_view_vertical(self):
+        """Split the view vertically."""
+        self.split_view(Qt.Orientation.Vertical)
+
+    def split_view_horizontal(self):
+        """Split the view horizontally."""
+        self.split_view(Qt.Orientation.Horizontal)
+
+    def split_view(self, orientation: Qt.Orientation):
+        """Split the current view.
+        
+        Args:
+            orientation: Split orientation (Vertical or Horizontal)
+        """
+        if len(self.viewers) >= 4:
+            QMessageBox.warning(self, "Maximum Splits", "Maximum of 4 views is already reached.")
+            return
+
+        # Create new hex viewer
+        new_viewer = HexViewerWidget(self)
+
+        # Copy file from active viewer if one is loaded
+        if self.active_viewer and hasattr(self.active_viewer, 'file_handler'):
+            if self.active_viewer.file_handler and hasattr(self.active_viewer.file_handler, 'file_path'):
+                file_path = self.active_viewer.file_handler.file_path
+                read_only = self.active_viewer.file_handler.read_only
+                new_viewer.load_file(file_path, read_only)
+
+                # Sync position
+                if self.sync_scrolling_action.isChecked():
+                    new_viewer.vertical_scroll_bar.setValue(
+                        self.active_viewer.vertical_scroll_bar.value()
+                    )
+
+        # Set up synchronization if enabled
+        if self.sync_scrolling_action.isChecked():
+            self.setup_viewer_sync(new_viewer)
+
+        # Track focus changes
+        new_viewer.focusInEvent = lambda event: self.set_active_viewer(new_viewer)
+
+        # Add to tracking
+        self.viewers.append(new_viewer)
+
+        # Handle layout based on current state
+        if len(self.viewers) == 2:
+            # First split - set orientation and add
+            self.viewer_splitter.setOrientation(orientation)
+            self.viewer_splitter.addWidget(new_viewer)
+        else:
+            # Multiple splits - need nested splitters
+            # Remove all widgets from main splitter
+            widgets = []
+            for i in range(self.viewer_splitter.count()):
+                widgets.append(self.viewer_splitter.widget(i))
+
+            # Clear the splitter
+            for widget in widgets:
+                widget.setParent(None)
+
+            # Create new nested layout
+            if orientation == Qt.Orientation.Vertical:
+                # Create horizontal splitter containing vertical splits
+                new_splitter = QSplitter(Qt.Orientation.Horizontal)
+
+                # Add existing viewers to left split
+                left_split = QSplitter(Qt.Orientation.Vertical)
+                for widget in widgets:
+                    left_split.addWidget(widget)
+                new_splitter.addWidget(left_split)
+
+                # Add new viewer to right
+                new_splitter.addWidget(new_viewer)
+            else:
+                # Create vertical splitter containing horizontal splits
+                new_splitter = QSplitter(Qt.Orientation.Vertical)
+
+                # Add existing viewers to top split
+                top_split = QSplitter(Qt.Orientation.Horizontal)
+                for widget in widgets:
+                    top_split.addWidget(widget)
+                new_splitter.addWidget(top_split)
+
+                # Add new viewer to bottom
+                new_splitter.addWidget(new_viewer)
+
+            # Replace the viewer splitter
+            self.viewer_layout.removeWidget(self.viewer_splitter)
+            self.viewer_splitter.deleteLater()
+            self.viewer_splitter = new_splitter
+            self.viewer_layout.addWidget(self.viewer_splitter)
+
+        # Set equal sizes
+        sizes = [100] * self.viewer_splitter.count()
+        self.viewer_splitter.setSizes(sizes)
+
+    def close_active_split(self):
+        """Close the active split view."""
+        if len(self.viewers) <= 1:
+            return
+
+        if self.active_viewer and self.active_viewer != self.hex_viewer:
+            # Remove from list
+            self.viewers.remove(self.active_viewer)
+
+            # Remove widget
+            self.active_viewer.setParent(None)
+            self.active_viewer.deleteLater()
+
+            # Set new active viewer
+            self.active_viewer = self.viewers[0] if self.viewers else self.hex_viewer
+
+            # Reorganize splitter if needed
+            if len(self.viewers) == 1:
+                # Back to single view
+                self.viewer_splitter.setOrientation(Qt.Orientation.Vertical)
+
+    def close_all_splits(self):
+        """Close all split views except the primary."""
+        for viewer in self.viewers[:]:
+            if viewer != self.hex_viewer:
+                viewer.setParent(None)
+                viewer.deleteLater()
+                self.viewers.remove(viewer)
+
+        self.viewers = [self.hex_viewer]
+        self.active_viewer = self.hex_viewer
+
+        # Reset splitter
+        self.viewer_splitter.setOrientation(Qt.Orientation.Vertical)
+
+    def toggle_sync_scrolling(self, checked: bool):
+        """Toggle synchronized scrolling between views.
+        
+        Args:
+            checked: Whether sync is enabled
+        """
+        if checked:
+            # Set up synchronization for all viewers
+            for viewer in self.viewers:
+                self.setup_viewer_sync(viewer)
+        else:
+            # Remove synchronization
+            for viewer in self.viewers:
+                try:
+                    viewer.vertical_scroll_bar.valueChanged.disconnect()
+                    viewer.horizontal_scroll_bar.valueChanged.disconnect()
+                except:
+                    pass
+
+    def setup_viewer_sync(self, viewer: HexViewerWidget):
+        """Set up scrolling synchronization for a viewer.
+        
+        Args:
+            viewer: Viewer to set up sync for
+        """
+        def sync_vertical(value):
+            if not self.sync_scrolling_action.isChecked():
+                return
+            for other in self.viewers:
+                if other != viewer and hasattr(other, 'vertical_scroll_bar'):
+                    other.vertical_scroll_bar.blockSignals(True)
+                    other.vertical_scroll_bar.setValue(value)
+                    other.vertical_scroll_bar.blockSignals(False)
+
+        def sync_horizontal(value):
+            if not self.sync_scrolling_action.isChecked():
+                return
+            for other in self.viewers:
+                if other != viewer and hasattr(other, 'horizontal_scroll_bar'):
+                    other.horizontal_scroll_bar.blockSignals(True)
+                    other.horizontal_scroll_bar.setValue(value)
+                    other.horizontal_scroll_bar.blockSignals(False)
+
+        viewer.vertical_scroll_bar.valueChanged.connect(sync_vertical)
+        viewer.horizontal_scroll_bar.valueChanged.connect(sync_horizontal)
+
+    def set_active_viewer(self, viewer: HexViewerWidget):
+        """Set the active viewer.
+        
+        Args:
+            viewer: Viewer to make active
+        """
+        self.active_viewer = viewer
+
+        # Update UI to reflect active viewer
+        for v in self.viewers:
+            if v == viewer:
+                v.setStyleSheet("border: 2px solid #4080ff;")
+            else:
+                v.setStyleSheet("border: 1px solid #808080;")
 
     def create_sidebar(self) -> QFrame:
         """Create the sidebar with bookmark list and other panels.
@@ -428,6 +755,418 @@ class HexViewerDialog(QDialog):
 
         # Force UI update
         self.hex_viewer.viewport().update()
+
+    def show_checksum_dialog(self):
+        """Show the checksum calculation dialog."""
+        from .checksum_dialog import ChecksumDialog
+
+        if not hasattr(self.hex_viewer, "file_handler") or not self.hex_viewer.file_handler:
+            QMessageBox.warning(self, "No File", "Please open a file first.")
+            return
+
+        dialog = ChecksumDialog(self, self.hex_viewer)
+        dialog.exec()
+
+    def show_statistics_dialog(self):
+        """Show the statistical analysis dialog."""
+        from .statistics_dialog import StatisticsDialog
+
+        if not hasattr(self.hex_viewer, "file_handler") or not self.hex_viewer.file_handler:
+            QMessageBox.warning(self, "No File", "Please open a file first.")
+            return
+
+        dialog = StatisticsDialog(self, self.hex_viewer)
+        dialog.exec()
+
+    def show_export_dialog(self):
+        """Show the export dialog."""
+        from .export_dialog import ExportDialog
+
+        if not hasattr(self.hex_viewer, "file_handler") or not self.hex_viewer.file_handler:
+            QMessageBox.warning(self, "No File", "Please open a file first.")
+            return
+
+        dialog = ExportDialog(self, self.hex_viewer)
+        dialog.exec()
+
+    def show_print_dialog(self):
+        """Show the print dialog."""
+        from .print_dialog import PrintOptionsDialog
+
+        if not hasattr(self.hex_viewer, "file_handler") or not self.hex_viewer.file_handler:
+            QMessageBox.warning(self, "No File", "Please open a file first.")
+            return
+
+        # Use the active viewer if in split view
+        viewer = self.active_viewer if hasattr(self, 'active_viewer') else self.hex_viewer
+        dialog = PrintOptionsDialog(self, viewer)
+        dialog.exec()
+
+    def show_print_preview(self):
+        """Show print preview directly."""
+        from .print_dialog import PrintOptionsDialog
+
+        if not hasattr(self.hex_viewer, "file_handler") or not self.hex_viewer.file_handler:
+            QMessageBox.warning(self, "No File", "Please open a file first.")
+            return
+
+        # Use the active viewer if in split view
+        viewer = self.active_viewer if hasattr(self, 'active_viewer') else self.hex_viewer
+        dialog = PrintOptionsDialog(self, viewer)
+        dialog.show_preview()
+
+    def show_compare_dialog(self):
+        """Show the file comparison dialog."""
+        # Get current file as initial file if one is open
+        initial_file = None
+        if hasattr(self.hex_viewer, "file_handler") and self.hex_viewer.file_handler:
+            initial_file = self.hex_viewer.file_path
+
+        # Show comparison dialog
+        dialog = CompareDialog(self, initial_file)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            settings = dialog.get_settings()
+            self.perform_comparison(settings)
+
+    def perform_comparison(self, settings: dict):
+        """Perform file comparison and display results.
+        
+        Args:
+            settings: Dictionary with comparison settings
+        """
+        file1 = settings['file1']
+        file2 = settings['file2']
+        mode = settings['mode']
+
+        # Create progress dialog
+        progress = QProgressDialog("Comparing files...", "Cancel", 0, 100, self)
+        progress.setWindowModality(Qt.WindowModality.WindowModal)
+        progress.setAutoClose(False)
+        progress.show()
+
+        # Create comparer
+        comparer = BinaryComparer()
+
+        # Create worker thread
+        worker = ComparisonWorker(comparer, file1, file2)
+
+        # Connect signals
+        def update_progress(current, total):
+            if total > 0:
+                progress.setValue(int(current * 100 / total))
+
+        def on_finished(differences):
+            progress.close()
+
+            if mode == "visual":
+                self.show_visual_comparison(file1, file2, differences, settings)
+            elif mode == "byte":
+                self.show_byte_comparison(differences, settings)
+            else:  # structural
+                self.show_structural_comparison(differences, settings)
+
+        def on_error(error_msg):
+            progress.close()
+            QMessageBox.critical(self, "Comparison Error", f"Error comparing files: {error_msg}")
+
+        worker.progress.connect(update_progress)
+        worker.finished.connect(on_finished)
+        worker.error.connect(on_error)
+
+        # Connect cancel button
+        progress.canceled.connect(worker.quit)
+
+        # Start comparison
+        worker.start()
+
+    def show_visual_comparison(self, file1: str, file2: str, differences: list, settings: dict):
+        """Show visual side-by-side comparison.
+        
+        Args:
+            file1: Path to first file
+            file2: Path to second file
+            differences: List of DifferenceBlock objects
+            settings: Comparison settings
+        """
+        # Clear existing viewers if in split view
+        if hasattr(self, 'viewers') and len(self.viewers) > 1:
+            # Remove extra viewers
+            while len(self.viewers) > 1:
+                viewer = self.viewers.pop()
+                viewer.deleteLater()
+
+        # Set up side-by-side view
+        self.split_view_horizontal()
+
+        # Load files into viewers
+        self.viewers[0].open_file(file1)
+        self.viewers[1].open_file(file2)
+
+        # Apply difference highlighting if enabled
+        if settings['highlight_differences']:
+            self.highlight_comparison_differences(differences)
+
+        # Set up synchronized scrolling if enabled
+        if settings['sync_scrolling']:
+            self.sync_scrolling = True
+            self.setup_synchronized_scrolling()
+
+        # Update window title
+        self.setWindowTitle(f"Hex Compare: {os.path.basename(file1)} vs {os.path.basename(file2)}")
+
+        # Show statistics in status bar
+        self.show_comparison_stats(differences)
+
+    def highlight_comparison_differences(self, differences: list):
+        """Highlight differences in both viewers.
+        
+        Args:
+            differences: List of DifferenceBlock objects
+        """
+        from .hex_highlighter import Highlight, HighlightType
+
+        # Define colors for different types
+        colors = {
+            "modified": "#FFE5B4",  # Peach
+            "inserted": "#C1FFC1",  # Light green
+            "deleted": "#FFB6C1",   # Light pink
+        }
+
+        # Highlight in first viewer
+        for diff in differences:
+            if diff.length1 > 0:
+                # Determine color based on type
+                diff_type_str = str(diff.diff_type).split('.')[-1].lower()
+                color = colors.get(diff_type_str, "#FFFF00")
+
+                # Create highlight
+                highlight = Highlight(
+                    start=diff.offset1,
+                    end=diff.offset1 + diff.length1,
+                    color=color,
+                    highlight_type=HighlightType.CUSTOM,
+                    description=f"{diff_type_str.capitalize()} block"
+                )
+
+                # Add to first viewer
+                if len(self.viewers) > 0:
+                    self.viewers[0].highlighter.add_highlight(highlight)
+
+        # Highlight in second viewer
+        for diff in differences:
+            if diff.length2 > 0:
+                # Determine color based on type
+                diff_type_str = str(diff.diff_type).split('.')[-1].lower()
+                color = colors.get(diff_type_str, "#FFFF00")
+
+                # Create highlight
+                highlight = Highlight(
+                    start=diff.offset2,
+                    end=diff.offset2 + diff.length2,
+                    color=color,
+                    highlight_type=HighlightType.CUSTOM,
+                    description=f"{diff_type_str.capitalize()} block"
+                )
+
+                # Add to second viewer
+                if len(self.viewers) > 1:
+                    self.viewers[1].highlighter.add_highlight(highlight)
+
+        # Refresh both viewers
+        for viewer in self.viewers:
+            viewer.viewport().update()
+
+    def show_comparison_stats(self, differences: list):
+        """Show comparison statistics in status bar.
+        
+        Args:
+            differences: List of DifferenceBlock objects
+        """
+        if not differences:
+            self.statusBar().showMessage("Files are identical")
+        else:
+            # Count difference types
+            modified = sum(1 for d in differences if "modified" in str(d.diff_type).lower())
+            inserted = sum(1 for d in differences if "inserted" in str(d.diff_type).lower())
+            deleted = sum(1 for d in differences if "deleted" in str(d.diff_type).lower())
+
+            # Build message
+            msg = f"Found {len(differences)} difference blocks: "
+            parts = []
+            if modified:
+                parts.append(f"{modified} modified")
+            if inserted:
+                parts.append(f"{inserted} inserted")
+            if deleted:
+                parts.append(f"{deleted} deleted")
+
+            msg += ", ".join(parts)
+            self.statusBar().showMessage(msg)
+
+    def show_byte_comparison(self, differences: list, settings: dict):
+        """Show detailed byte-by-byte comparison results.
+        
+        Args:
+            differences: List of DifferenceBlock objects
+            settings: Comparison settings
+        """
+        from PyQt6.QtWidgets import QTextEdit
+
+        # Create text view for differences
+        text_widget = QTextEdit()
+        text_widget.setReadOnly(True)
+        text_widget.setFont(QFont("Courier", 10))
+
+        # Format differences
+        html = "<html><body>"
+        html += "<h2>File Comparison Results</h2>"
+
+        if not differences:
+            html += "<p style='color: green;'><b>Files are identical</b></p>"
+        else:
+            html += f"<p>Found <b>{len(differences)}</b> difference blocks:</p>"
+            html += "<table border='1' cellpadding='5'>"
+            html += "<tr><th>Type</th><th>File 1 Offset</th><th>File 1 Size</th>"
+            html += "<th>File 2 Offset</th><th>File 2 Size</th></tr>"
+
+            for diff in differences:
+                diff_type = str(diff.diff_type).split('.')[-1]
+                color = {"MODIFIED": "orange", "INSERTED": "green", "DELETED": "red"}.get(diff_type, "black")
+
+                html += f"<tr style='color: {color};'>"
+                html += f"<td>{diff_type}</td>"
+                html += f"<td>0x{diff.offset1:08X}</td>"
+                html += f"<td>{diff.length1}</td>"
+                html += f"<td>0x{diff.offset2:08X}</td>"
+                html += f"<td>{diff.length2}</td>"
+                html += "</tr>"
+
+            html += "</table>"
+
+        html += "</body></html>"
+        text_widget.setHtml(html)
+
+        # Create dialog to show results
+        result_dialog = QDialog(self)
+        result_dialog.setWindowTitle("Comparison Results")
+        result_dialog.resize(600, 400)
+
+        layout = QVBoxLayout(result_dialog)
+        layout.addWidget(text_widget)
+
+        # Add close button
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(result_dialog.close)
+        layout.addWidget(close_button)
+
+        result_dialog.exec()
+
+    def show_structural_comparison(self, differences: list, settings: dict):
+        """Show structural block-level comparison.
+        
+        Args:
+            differences: List of DifferenceBlock objects
+            settings: Comparison settings
+        """
+        from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
+
+        # Create tree widget for structural view
+        tree = QTreeWidget()
+        tree.setHeaderLabels(["Block", "Type", "File 1", "File 2", "Size Change"])
+
+        # Group differences by proximity
+        grouped = []
+        current_group = []
+        last_end = -1
+
+        for diff in differences:
+            # Check if this difference is close to the last one
+            if last_end >= 0 and diff.offset1 - last_end < 256:
+                # Add to current group
+                current_group.append(diff)
+            else:
+                # Start new group
+                if current_group:
+                    grouped.append(current_group)
+                current_group = [diff]
+
+            last_end = diff.offset1 + diff.length1
+
+        if current_group:
+            grouped.append(current_group)
+
+        # Add groups to tree
+        for i, group in enumerate(grouped):
+            # Create group item
+            group_item = QTreeWidgetItem(tree)
+            group_item.setText(0, f"Block {i+1}")
+
+            # Calculate group statistics
+            total_modified = sum(d.length1 for d in group if "modified" in str(d.diff_type).lower())
+            total_inserted = sum(d.length2 for d in group if "inserted" in str(d.diff_type).lower())
+            total_deleted = sum(d.length1 for d in group if "deleted" in str(d.diff_type).lower())
+
+            # Set group type
+            if total_modified > total_inserted + total_deleted:
+                group_item.setText(1, "Modified")
+            elif total_inserted > total_deleted:
+                group_item.setText(1, "Expanded")
+            elif total_deleted > total_inserted:
+                group_item.setText(1, "Reduced")
+            else:
+                group_item.setText(1, "Changed")
+
+            # Set offsets
+            start_offset = group[0].offset1
+            end_offset = group[-1].offset1 + group[-1].length1
+            group_item.setText(2, f"0x{start_offset:08X}-0x{end_offset:08X}")
+
+            start_offset2 = group[0].offset2
+            end_offset2 = group[-1].offset2 + group[-1].length2
+            group_item.setText(3, f"0x{start_offset2:08X}-0x{end_offset2:08X}")
+
+            # Set size change
+            size_change = (total_inserted - total_deleted)
+            if size_change > 0:
+                group_item.setText(4, f"+{size_change} bytes")
+            elif size_change < 0:
+                group_item.setText(4, f"{size_change} bytes")
+            else:
+                group_item.setText(4, "No change")
+
+            # Add individual differences as children
+            for diff in group:
+                diff_item = QTreeWidgetItem(group_item)
+                diff_type = str(diff.diff_type).split('.')[-1]
+                diff_item.setText(1, diff_type)
+                diff_item.setText(2, f"0x{diff.offset1:08X} ({diff.length1} bytes)")
+                diff_item.setText(3, f"0x{diff.offset2:08X} ({diff.length2} bytes)")
+
+                size_diff = diff.length2 - diff.length1
+                if size_diff > 0:
+                    diff_item.setText(4, f"+{size_diff}")
+                elif size_diff < 0:
+                    diff_item.setText(4, f"{size_diff}")
+                else:
+                    diff_item.setText(4, "0")
+
+        # Expand all items
+        tree.expandAll()
+
+        # Create dialog to show results
+        result_dialog = QDialog(self)
+        result_dialog.setWindowTitle("Structural Comparison")
+        result_dialog.resize(700, 500)
+
+        layout = QVBoxLayout(result_dialog)
+        layout.addWidget(tree)
+
+        # Add close button
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(result_dialog.close)
+        layout.addWidget(close_button)
+
+        result_dialog.exec()
 
     def update_status_bar(self, start: int = 0, end: int = None):
         """Update the status bar with current selection and offset information.

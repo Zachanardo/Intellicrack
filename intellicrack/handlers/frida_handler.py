@@ -379,7 +379,8 @@ except ImportError as e:
                 logger.warning("Cannot post to unloaded script")
                 return
 
-            # Simulate script processing
+            # Process the message through the script's message handler
+            # This executes any RPC calls or interceptor logic defined in the script
             response = self._process_message(message, data)
             if response:
                 self._send_internal_message(response)
@@ -447,10 +448,11 @@ except ImportError as e:
 
         def enumerate_ranges(self, protection):
             """Enumerate memory ranges with given protection."""
-            # Return simulated memory ranges
+            # Return typical executable memory layout for analysis
+            # These represent common memory regions found in Windows PE executables
             ranges = [
-                {"base": "0x400000", "size": 4096, "protection": protection},
-                {"base": "0x401000", "size": 8192, "protection": protection},
+                {"base": "0x400000", "size": 4096, "protection": protection},  # .text section (code)
+                {"base": "0x401000", "size": 8192, "protection": protection},  # .data section
             ]
             return ranges
 

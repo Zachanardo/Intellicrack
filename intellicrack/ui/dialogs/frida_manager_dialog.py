@@ -555,7 +555,7 @@ class FridaManagerDialog(QDialog):
         ai_status_layout = QHBoxLayout()
 
         self.ai_status_label = QLabel("AI Ready")
-        self.ai_status_label.setStyleSheet("color: #00ff00; font-weight: bold;")
+        self.ai_status_label.setObjectName("aiStatusReady")
         ai_status_layout.addWidget(self.ai_status_label)
 
         ai_status_layout.addStretch()
@@ -631,23 +631,7 @@ class FridaManagerDialog(QDialog):
 
         self.generate_btn = QPushButton("🤖 Generate AI Scripts")
         self.generate_btn.setMinimumHeight(40)
-        self.generate_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #0d7377;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 8px;
-                font-weight: bold;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #14868c;
-            }
-            QPushButton:pressed {
-                background-color: #0a5a5e;
-            }
-        """)
+        self.generate_btn.setObjectName("fridaGenerateButton")
         self.generate_btn.clicked.connect(self.generate_ai_scripts)
         gen_button_layout.addWidget(self.generate_btn)
 
@@ -807,7 +791,7 @@ class FridaManagerDialog(QDialog):
         thread_layout.addWidget(QLabel("Threads"))
         self.thread_label = QLabel("0")
         self.thread_label.setAlignment(Qt.AlignCenter)
-        self.thread_label.setStyleSheet("font-size: 24px; color: #0d7377;")
+        self.thread_label.setObjectName("threadCounter")
         thread_layout.addWidget(self.thread_label)
         thread_widget.setLayout(thread_layout)
         metrics_layout.addWidget(thread_widget)
@@ -1898,7 +1882,7 @@ class FridaManagerDialog(QDialog):
         gen_layout = QHBoxLayout()
         self.ai_generate_btn = QPushButton("🚀 Generate Script")
         self.ai_generate_btn.clicked.connect(self.generate_ai_script)
-        self.ai_generate_btn.setStyleSheet("font-weight: bold; background-color: #0d7377;")
+        self.ai_generate_btn.setObjectName("aiGenerateButton")
         gen_layout.addWidget(self.ai_generate_btn)
 
         self.ai_analyze_btn = QPushButton("🔍 Analyze Only")
@@ -1913,7 +1897,7 @@ class FridaManagerDialog(QDialog):
         ai_layout.addWidget(self.ai_progress)
 
         self.ai_status = QLabel("Ready for AI script generation")
-        self.ai_status.setStyleSheet("color: #0d7377; font-weight: bold;")
+        self.ai_status.setObjectName("fridaInfoLabel")
         ai_layout.addWidget(self.ai_status)
 
         # Results area
@@ -2162,7 +2146,7 @@ class FridaManagerDialog(QDialog):
                     f"Success Probability: {script.metadata.success_probability:.0%} | "
                     f"Target: {script.metadata.target_binary}"
                 )
-                info_label.setStyleSheet("font-weight: bold; color: #0d7377; padding: 10px;")
+                info_label.setObjectName("fridaInfoLabel")
                 layout.addWidget(info_label)
 
             # Script content

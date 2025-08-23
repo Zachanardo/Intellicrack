@@ -1394,7 +1394,7 @@ def _get_filesystem_state() -> dict[str, Any]:
         "timestamp": time.time(),
     }
 
-    # Get files in current directory as example
+    # Get files in current directory for state tracking
     try:
         for root, dirs, files in os.walk(".", topdown=True):
             # Limit depth

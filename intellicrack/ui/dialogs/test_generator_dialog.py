@@ -103,7 +103,7 @@ class TestGeneratorDialog(PluginDialogBase):
     def __init__(self, parent=None, plugin_path=None):
         """Initialize the TestGeneratorDialog with default values."""
         self.generator = PluginTestGenerator()
-        self.mock_generator = MockDataGenerator()
+        self.test_data_generator = MockDataGenerator()
         self.generation_thread = None
         super().__init__(parent, plugin_path)
 
@@ -144,9 +144,9 @@ class TestGeneratorDialog(PluginDialogBase):
         self.coverage_widget = self.create_coverage_widget()
         self.tab_widget.addTab(self.coverage_widget, "Coverage Report")
 
-        # Mock data tab
-        self.mock_widget = self.create_mock_widget()
-        self.tab_widget.addTab(self.mock_widget, "Mock Data")
+        # Test data tab
+        self.test_data_widget = self.create_test_data_widget()
+        self.tab_widget.addTab(self.test_data_widget, "Test Data")
 
         splitter.addWidget(self.tab_widget)
         splitter.setSizes([300, 600])
@@ -196,9 +196,9 @@ class TestGeneratorDialog(PluginDialogBase):
         self.include_invalid_input_cb.setChecked(True)
         gen_layout.addWidget(self.include_invalid_input_cb)
 
-        self.include_mocks_cb = QCheckBox("Generate mock objects")
-        self.include_mocks_cb.setChecked(True)
-        gen_layout.addWidget(self.include_mocks_cb)
+        self.include_test_data_cb = QCheckBox("Generate test data objects")
+        self.include_test_data_cb.setChecked(True)
+        gen_layout.addWidget(self.include_test_data_cb)
 
         self.include_fixtures_cb = QCheckBox("Generate test fixtures")
         self.include_fixtures_cb.setChecked(True)
@@ -258,7 +258,7 @@ class TestGeneratorDialog(PluginDialogBase):
 
         # Summary
         self.summary_label = QLabel("No tests run yet")
-        self.summary_label.setStyleSheet("font-size: 14px; padding: 10px;")
+        self.summary_label.setObjectName("testSummaryLabel")
         layout.addWidget(self.summary_label)
 
         # Test output
@@ -276,7 +276,7 @@ class TestGeneratorDialog(PluginDialogBase):
 
         # Coverage summary
         self.coverage_summary = QLabel("No coverage data available")
-        self.coverage_summary.setStyleSheet("font-size: 14px; padding: 10px;")
+        self.coverage_summary.setObjectName("coverageSummaryLabel")
         layout.addWidget(self.coverage_summary)
 
         # Coverage details
@@ -296,41 +296,41 @@ class TestGeneratorDialog(PluginDialogBase):
 
         return widget
 
-    def create_mock_widget(self) -> QWidget:
-        """Create mock data widget"""
+    def create_test_data_widget(self) -> QWidget:
+        """Create test data widget"""
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        # Mock data types
-        mock_group = QGroupBox("Available Mock Data")
-        mock_layout = QVBoxLayout(mock_group)
+        # Test data types
+        test_group = QGroupBox("Available Test Data")
+        test_layout = QVBoxLayout(test_group)
 
-        # Binary mock
-        binary_btn = QPushButton("Generate Mock Binary")
-        binary_btn.clicked.connect(self.generate_mock_binary)
-        mock_layout.addWidget(binary_btn)
+        # Binary test data
+        binary_btn = QPushButton("Generate Test Binary")
+        binary_btn.clicked.connect(self.generate_test_binary)
+        test_layout.addWidget(binary_btn)
 
-        # Network mock
-        network_btn = QPushButton("Generate Mock Network Data")
-        network_btn.clicked.connect(self.generate_mock_network)
-        mock_layout.addWidget(network_btn)
+        # Network test data
+        network_btn = QPushButton("Generate Test Network Data")
+        network_btn.clicked.connect(self.generate_test_network)
+        test_layout.addWidget(network_btn)
 
-        # Registry mock
-        registry_btn = QPushButton("Generate Mock Registry Data")
-        registry_btn.clicked.connect(self.generate_mock_registry)
-        mock_layout.addWidget(registry_btn)
+        # Registry test data
+        registry_btn = QPushButton("Generate Test Registry Data")
+        registry_btn.clicked.connect(self.generate_test_registry)
+        test_layout.addWidget(registry_btn)
 
-        layout.addWidget(mock_group)
+        layout.addWidget(test_group)
 
-        # Mock data viewer
-        self.mock_viewer = QTextEdit()
-        self.mock_viewer.setFont(QFont("Consolas", 9))
-        layout.addWidget(self.mock_viewer)
+        # Test data viewer
+        self.test_data_viewer = QTextEdit()
+        self.test_data_viewer.setFont(QFont("Consolas", 9))
+        layout.addWidget(self.test_data_viewer)
 
-        # Save mock data button
-        save_mock_btn = QPushButton("Save Mock Data")
-        save_mock_btn.clicked.connect(self.save_mock_data)
-        layout.addWidget(save_mock_btn)
+        # Save test data button
+        save_test_btn = QPushButton("Save Test Data")
+        save_test_btn.clicked.connect(self.save_test_data)
+        layout.addWidget(save_test_btn)
 
         return widget
 
@@ -433,10 +433,10 @@ class TestGeneratorDialog(PluginDialogBase):
         # Update summary
         if results.get('test_passed'):
             self.summary_label.setText("✅ All tests passed!")
-            self.summary_label.setStyleSheet("color: green; font-size: 14px; padding: 10px;")
+            self.summary_label.setObjectName("testSummarySuccess")
         else:
             self.summary_label.setText("❌ Some tests failed")
-            self.summary_label.setStyleSheet("color: red; font-size: 14px; padding: 10px;")
+            self.summary_label.setObjectName("testSummaryFailed")
 
         # Switch to results tab
         self.tab_widget.setCurrentIndex(1)
@@ -459,14 +459,13 @@ class TestGeneratorDialog(PluginDialogBase):
         total = coverage.get('total_coverage', 0)
         self.coverage_summary.setText(f"Total Coverage: {total}%")
 
+        # Set object name based on coverage level
         if total >= 80:
-            color = "green"
+            self.coverage_summary.setObjectName("coverageHigh")
         elif total >= 60:
-            color = "orange"
+            self.coverage_summary.setObjectName("coverageMedium")
         else:
-            color = "red"
-
-        self.coverage_summary.setStyleSheet(f"color: {color}; font-size: 14px; padding: 10px;")
+            self.coverage_summary.setObjectName("coverageLow")
 
         # Update uncovered lines
         self.uncovered_list.clear()
@@ -497,9 +496,9 @@ class TestGeneratorDialog(PluginDialogBase):
                 self.logger.error("Exception in test_generator_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to save tests:\n{str(e)}")
 
-    def generate_mock_binary(self):
-        """Generate mock binary data"""
-        binary_data = self.mock_generator.create_mock_binary('pe')
+    def generate_test_binary(self):
+        """Generate test binary data"""
+        binary_data = self.test_data_generator.create_test_binary('pe')
 
         # Display hex view
         hex_view = []
@@ -508,33 +507,33 @@ class TestGeneratorDialog(PluginDialogBase):
             ascii_line = ''.join(chr(b) if 32 <= b < 127 else '.' for b in binary_data[i:i+16])
             hex_view.append(f"{i:08x}: {hex_line:<48} {ascii_line}")
 
-        self.mock_viewer.setPlainText('\n'.join(hex_view))
-        self.mock_viewer.append(f"\n\nTotal size: {len(binary_data)} bytes")
+        self.test_data_viewer.setPlainText('\n'.join(hex_view))
+        self.test_data_viewer.append(f"\n\nTotal size: {len(binary_data)} bytes")
 
-    def generate_mock_network(self):
-        """Generate mock network data"""
-        network_data = self.mock_generator.create_mock_network_data()
-
-        import json
-        self.mock_viewer.setPlainText(json.dumps(network_data, indent=2))
-
-    def generate_mock_registry(self):
-        """Generate mock registry data"""
-        registry_data = self.mock_generator.create_mock_registry_data()
+    def generate_test_network(self):
+        """Generate test network data"""
+        network_data = self.test_data_generator.create_test_network_data()
 
         import json
-        self.mock_viewer.setPlainText(json.dumps(registry_data, indent=2))
+        self.test_data_viewer.setPlainText(json.dumps(network_data, indent=2))
 
-    def save_mock_data(self):
-        """Save mock data to file"""
-        content = self.mock_viewer.toPlainText()
+    def generate_test_registry(self):
+        """Generate test registry data"""
+        registry_data = self.test_data_generator.create_test_registry_data()
+
+        import json
+        self.test_data_viewer.setPlainText(json.dumps(registry_data, indent=2))
+
+    def save_test_data(self):
+        """Save test data to file"""
+        content = self.test_data_viewer.toPlainText()
         if not content:
-            QMessageBox.warning(self, "No Data", "No mock data to save.")
+            QMessageBox.warning(self, "No Data", "No test data to save.")
             return
 
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Save Mock Data",
-            "mock_data.txt",
+            self, "Save Test Data",
+            "test_data.txt",
             "Text Files (*.txt);;JSON Files (*.json);;All Files (*.*)"
         )
 
@@ -543,8 +542,8 @@ class TestGeneratorDialog(PluginDialogBase):
                 with open(file_path, 'w') as f:
                     f.write(content)
 
-                QMessageBox.information(self, "Saved", f"Mock data saved to:\n{file_path}")
+                QMessageBox.information(self, "Saved", f"Test data saved to:\n{file_path}")
 
             except Exception as e:
                 self.logger.error("Exception in test_generator_dialog: %s", e)
-                QMessageBox.critical(self, "Error", f"Failed to save mock data:\n{str(e)}")
+                QMessageBox.critical(self, "Error", f"Failed to save test data:\n{str(e)}")

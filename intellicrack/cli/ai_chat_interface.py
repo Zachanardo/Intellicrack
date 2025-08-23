@@ -73,7 +73,7 @@ class AITerminalChat:
 
         # Chat configuration
         self.max_history = 50
-        self.typing_delay = 0.02  # Simulated typing speed
+        self.response_buffer_size = 4096  # Response streaming buffer size
         self.auto_save = True
 
         # Available commands
@@ -95,25 +95,57 @@ class AITerminalChat:
 
     def _initialize_ai_backend(self):
         """Initialize AI backend connection."""
+        self.ai_backend = None
+        self.llm_manager = None
+        self.orchestrator = None
+
         try:
-            # Try to import and initialize AI coordination layer
-            from intellicrack.ai.coordination_layer import CoordinationLayer
+            # Initialize LLM configuration manager
+            from intellicrack.ai.llm_config_manager import LLMConfigManager
+            self.llm_manager = LLMConfigManager()
 
-            self.ai_backend = CoordinationLayer()
+            # Initialize AI orchestrator for complex tasks
+            from intellicrack.ai.orchestrator import AIOrchestrator
+            self.orchestrator = AIOrchestrator(llm_config_manager=self.llm_manager)
+
+            # Try to initialize the coordination layer as primary backend
+            try:
+                from intellicrack.ai.coordination_layer import CoordinationLayer
+                self.ai_backend = CoordinationLayer(llm_config_manager=self.llm_manager)
+            except ImportError:
+                # Use orchestrator as fallback
+                self.ai_backend = self.orchestrator
+
+            # Verify backend functionality
+            if hasattr(self.ai_backend, 'health_check'):
+                health_status = self.ai_backend.health_check()
+                if not health_status.get('healthy', False):
+                    raise Exception(f"Backend health check failed: {health_status.get('error', 'Unknown error')}")
 
             if self.console:
-                self.console.print("[green]AI backend initialized successfully[/green]")
+                backend_name = type(self.ai_backend).__name__
+                self.console.print(f"[green]AI backend ({backend_name}) initialized successfully[/green]")
             else:
-                print("AI backend initialized successfully")
+                backend_name = type(self.ai_backend).__name__
+                print(f"AI backend ({backend_name}) initialized successfully")
 
-        except ImportError:
-            if self.console:
-                self.console.print(
-                    "[yellow]AI backend not available - using mock responses[/yellow]"
-                )
-            else:
-                print("AI backend not available - using mock responses")
-            self.ai_backend = None
+        except Exception as e:
+            # Initialize minimal AI tools as final fallback
+            try:
+                from intellicrack.ai.ai_tools import AIAssistant
+                self.ai_backend = AIAssistant()
+
+                if self.console:
+                    self.console.print(f"[yellow]Using AI tools fallback: {e}[/yellow]")
+                else:
+                    print(f"Using AI tools fallback: {e}")
+
+            except Exception as fallback_error:
+                if self.console:
+                    self.console.print(f"[red]All AI backends failed: {fallback_error}[/red]")
+                else:
+                    print(f"All AI backends failed: {fallback_error}")
+                self.ai_backend = None
 
     def start_chat_session(self):
         """Start interactive chat session."""
@@ -286,198 +318,210 @@ class AITerminalChat:
         )
 
     def _get_ai_response(self, user_input: str) -> str:
-        """Get AI response from backend or mock."""
+        """Get AI response from backend."""
         context = self._build_context()
 
-        # Try using AI tools ask_question method first
+        if not self.ai_backend:
+            return "AI backend not available. Please check your AI configuration and ensure required dependencies are installed."
+
         try:
-            from intellicrack.ai.ai_tools import AIAssistant
+            # Prepare enriched context for AI
+            enriched_context = self._prepare_enriched_context(user_input, context)
 
-            ai_tools = AIAssistant()
-
-            # Build contextual question with binary and analysis info
-            contextual_question = user_input
-            if self.binary_path:
-                contextual_question = f"Binary: {os.path.basename(self.binary_path)}\n{user_input}"
-
-            if self.analysis_results:
-                # Add key analysis findings to context
-                vuln_count = len(
-                    self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])
+            # Try using the primary AI backend (orchestrator/coordination layer)
+            if hasattr(self.ai_backend, 'chat_with_context'):
+                response = self.ai_backend.chat_with_context(
+                    user_input=user_input,
+                    context=enriched_context,
+                    session_history=self.conversation_history[-10:],  # Last 10 exchanges for context
                 )
-                if vuln_count > 0:
-                    contextual_question = (
-                        f"Context: Found {vuln_count} vulnerabilities\n{contextual_question}"
-                    )
 
-            response = ai_tools.ask_question(contextual_question)
-            return response
+                if isinstance(response, dict):
+                    return response.get("response", response.get("analysis", str(response)))
+                return str(response)
 
-        except Exception:
-            # Log the error but continue to fallback methods
-            pass
-
-        if self.ai_backend:
-            try:
-                # Use real AI backend
+            # Try using analyze_with_llm method
+            elif hasattr(self.ai_backend, 'analyze_with_llm'):
                 response = self.ai_backend.analyze_with_llm(
                     user_input,
-                    context=context,
-                    analysis_type="chat",
+                    context=enriched_context,
+                    analysis_type="conversational_analysis",
                 )
 
                 if isinstance(response, dict):
                     return response.get("analysis", response.get("response", str(response)))
                 return str(response)
 
-            except Exception as e:
-                return f"AI backend error: {e}. Using fallback response."
+            # Try using ask_question method (AIAssistant fallback)
+            elif hasattr(self.ai_backend, 'ask_question'):
+                # Build contextual question with binary and analysis info
+                contextual_question = user_input
+                if self.binary_path:
+                    contextual_question = f"Binary: {os.path.basename(self.binary_path)}\n{user_input}"
 
-        # Fallback to offline responses
-        return self._get_fallback_response(user_input, context)
-
-    def _get_fallback_response(self, user_input: str, context: dict[str, Any]) -> str:
-        """Generate intelligent fallback AI responses when backend is unavailable."""
-        user_lower = user_input.lower()
-
-        # Binary analysis questions
-        if any(word in user_lower for word in ["analyze", "analysis", "binary", "file"]):
-            if self.binary_path:
-                # Generate detailed analysis response based on actual results
-                binary_name = os.path.basename(self.binary_path)
-                file_type = self.analysis_results.get("file_type", "Unknown")
-                arch = self.analysis_results.get("architecture", "Unknown")
-                size = self.analysis_results.get("size", 0)
-
-                response = f"""Analyzing {binary_name}:
-
-📊 File Information:
-• Type: {file_type}
-• Architecture: {arch}
-• Size: {size:,} bytes
-
-🔍 Analysis Results:"""
-
-                # Add protection information if available
-                protections = self.analysis_results.get("protections", {})
-                if protections:
-                    enabled_protections = [p for p, enabled in protections.items() if enabled]
-                    disabled_protections = [p for p, enabled in protections.items() if not enabled]
-
-                    if enabled_protections:
-                        response += f"\n• Enabled Protections: {', '.join(enabled_protections)}"
-                    if disabled_protections:
-                        response += f"\n• Missing Protections: {', '.join(disabled_protections)}"
-
-                # Add vulnerability summary
-                vulns = self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])
-                if vulns:
-                    critical = sum(1 for v in vulns if v.get("severity") == "critical")
-                    high = sum(1 for v in vulns if v.get("severity") == "high")
-                    response += f"\n• Vulnerabilities: {critical} critical, {high} high severity"
-
-                response += "\n\nWhat specific aspect would you like me to explain further?"
-                return response
-
-            return "Please load a binary file first. Use the main interface to select a file for analysis."
-
-        # Vulnerability questions with detailed responses
-        if any(word in user_lower for word in ["vulnerability", "vuln", "security", "exploit"]):
-            vulns = self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])
-
-            if vulns:
-                # Group vulnerabilities by severity
-                critical_vulns = [v for v in vulns if v.get("severity") == "critical"]
-                high_vulns = [v for v in vulns if v.get("severity") == "high"]
-                medium_vulns = [v for v in vulns if v.get("severity") == "medium"]
-
-                response = f"""Security Analysis Results - {len(vulns)} vulnerabilities detected:
-
-🔴 Critical ({len(critical_vulns)}):"""
-                for vuln in critical_vulns[:3]:
-                    response += f"\n• {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}"
-
-                if high_vulns:
-                    response += f"\n\n🟠 High ({len(high_vulns)}):"
-                    for vuln in high_vulns[:3]:
-                        response += (
-                            f"\n• {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}"
+                if self.analysis_results:
+                    # Add key analysis findings to context
+                    vuln_count = len(
+                        self.analysis_results.get("vulnerabilities", {}).get("vulnerabilities", [])
+                    )
+                    if vuln_count > 0:
+                        contextual_question = (
+                            f"Context: Found {vuln_count} vulnerabilities\n{contextual_question}"
                         )
 
-                response += "\n\n💡 Recommendations:\n1. Address critical vulnerabilities immediately\n2. Implement missing security protections\n3. Consider code review for affected components"
+                response = self.ai_backend.ask_question(contextual_question)
+                return str(response)
 
-                return response
-
-            return "✅ No critical vulnerabilities detected. The binary implements standard security protections."
-
-        # Protection questions
-        if any(
-            word in user_lower for word in ["protection", "aslr", "dep", "canary", "mitigation"]
-        ):
-            protections = self.analysis_results.get("protections", {})
-            if protections:
-                enabled = [k for k, v in protections.items() if v]
-                disabled = [k for k, v in protections.items() if not v]
-
-                response = "Security protections analysis:\n\n"
-                if enabled:
-                    response += f"✅ Enabled: {', '.join(enabled)}\n"
-                if disabled:
-                    response += f"❌ Disabled: {', '.join(disabled)}\n"
-
-                response += "\nI recommend enabling all available protections for better security."
-                return response
-            return "No protection information available. Run a comprehensive analysis to check security mitigations."
-
-        # String analysis questions
-        if any(word in user_lower for word in ["string", "text", "password", "key"]):
-            strings = self.analysis_results.get("strings", [])
-            if strings:
-                interesting_strings = [
-                    s
-                    for s in strings
-                    if any(
-                        keyword in s.lower()
-                        for keyword in ["password", "key", "license", "admin", "secret"]
-                    )
-                ]
-
-                if interesting_strings:
-                    return f"""Found {len(interesting_strings)} potentially interesting strings:
-
-{chr(10).join(['• ' + s[:50] + ('...' if len(s) > 50 else '') for s in interesting_strings[:5]])}
-
-These strings might indicate authentication mechanisms or sensitive data."""
-                return (
-                    f"Found {len(strings)} strings total, but none appear particularly sensitive."
+            # Try generic query method
+            elif hasattr(self.ai_backend, 'query'):
+                response = self.ai_backend.query(
+                    prompt=user_input,
+                    context=enriched_context
                 )
-            return "No string analysis data available. Run string extraction first."
+                return str(response)
 
-        # Help questions
-        if any(word in user_lower for word in ["help", "what", "how", "explain"]):
-            return """I'm here to help you understand your binary analysis results!
+            # Direct LLM manager usage as final attempt
+            elif self.llm_manager:
+                response = self.llm_manager.generate_response(
+                    prompt=user_input,
+                    context=enriched_context.get("binary_analysis", {}),
+                    max_tokens=1500
+                )
 
-I can assist with:
-• Explaining vulnerability findings
-• Recommending security improvements
-• Interpreting analysis data
-• Suggesting next steps
+                if isinstance(response, dict):
+                    return response.get("content", response.get("text", str(response)))
+                return str(response)
 
-Just ask me about any aspect of your analysis, or use commands like:
-/analyze - Quick analysis overview
-/context - Show current analysis context
-/help - Show all available commands"""
+            else:
+                return "AI backend is available but doesn't support the required methods for chat functionality."
 
-        # General conversation
-        return f"""I understand you're asking about: "{user_input}"
+        except Exception as e:
+            # Attempt direct LLM call as last resort
+            if self.llm_manager:
+                try:
+                    fallback_response = self.llm_manager.generate_response(
+                        prompt=f"Binary Analysis Chat - User Question: {user_input}",
+                        context={"error": str(e), "fallback": True},
+                        max_tokens=800
+                    )
 
-I'm specialized in binary analysis and security research. I can help you:
-• Understand analysis results
-• Identify security issues
-• Recommend improvements
-• Explain technical findings
+                    if isinstance(fallback_response, dict):
+                        content = fallback_response.get("content", fallback_response.get("text", str(fallback_response)))
+                        return f"{content}\n\n[Note: Primary AI backend encountered an error, using fallback response]"
 
-Could you be more specific about what aspect of the analysis you'd like to explore?"""
+                    return f"{str(fallback_response)}\n\n[Note: Primary AI backend encountered an error, using fallback response]"
+
+                except Exception as fallback_error:
+                    return f"AI backend error: {e}\nFallback error: {fallback_error}\n\nPlease check your AI configuration and ensure all required services are running."
+
+            return f"AI backend error: {e}\n\nPlease check your AI configuration and try again."
+
+    def _prepare_enriched_context(self, user_input: str, base_context: dict) -> dict:
+        """Prepare enriched context for AI responses."""
+        enriched_context = base_context.copy()
+
+        # Add binary analysis context
+        if self.binary_path and self.analysis_results:
+            enriched_context["binary_analysis"] = {
+                "binary_name": os.path.basename(self.binary_path),
+                "binary_path": self.binary_path,
+                "file_type": self.analysis_results.get("file_type", "Unknown"),
+                "architecture": self.analysis_results.get("architecture", "Unknown"),
+                "size": self.analysis_results.get("size", 0)
+            }
+
+            # Add security analysis summary
+            if "vulnerabilities" in self.analysis_results:
+                vulns = self.analysis_results.get("vulnerabilities", {})
+                if isinstance(vulns, dict):
+                    vuln_list = vulns.get("vulnerabilities", [])
+                else:
+                    vuln_list = vulns if isinstance(vulns, list) else []
+
+                severity_counts = {}
+                for vuln in vuln_list:
+                    severity = vuln.get("severity", "unknown")
+                    severity_counts[severity] = severity_counts.get(severity, 0) + 1
+
+                enriched_context["security_analysis"] = {
+                    "total_vulnerabilities": len(vuln_list),
+                    "severity_breakdown": severity_counts,
+                    "has_critical": severity_counts.get("critical", 0) > 0,
+                    "has_high": severity_counts.get("high", 0) > 0
+                }
+
+            # Add protection status
+            if "protections" in self.analysis_results:
+                protections = self.analysis_results["protections"]
+                if isinstance(protections, dict):
+                    enabled_protections = [name for name, enabled in protections.items() if enabled]
+                    disabled_protections = [name for name, enabled in protections.items() if not enabled]
+
+                    enriched_context["protection_analysis"] = {
+                        "enabled_protections": enabled_protections,
+                        "disabled_protections": disabled_protections,
+                        "protection_score": len(enabled_protections) / len(protections) if protections else 0
+                    }
+
+            # Add interesting strings context
+            if "strings" in self.analysis_results:
+                strings = self.analysis_results["strings"]
+                if isinstance(strings, list) and len(strings) > 0:
+                    # Identify potentially interesting strings
+                    interesting_keywords = ["password", "key", "license", "admin", "secret", "token", "api"]
+                    interesting_strings = [
+                        s for s in strings[:100]  # Limit to first 100 strings
+                        if any(keyword in s.lower() for keyword in interesting_keywords)
+                    ]
+
+                    enriched_context["string_analysis"] = {
+                        "total_strings": len(strings),
+                        "interesting_strings_found": len(interesting_strings),
+                        "sample_interesting": interesting_strings[:5]  # First 5 interesting strings
+                    }
+
+        # Add conversation context
+        if self.conversation_history:
+            recent_topics = []
+            for entry in self.conversation_history[-5:]:  # Last 5 exchanges
+                if entry.get("type") == "user":
+                    content = entry.get("content", "").lower()
+                    if any(topic in content for topic in ["vulnerability", "security", "exploit", "protection"]):
+                        recent_topics.append("security_analysis")
+                    elif any(topic in content for topic in ["string", "text", "data"]):
+                        recent_topics.append("string_analysis")
+                    elif any(topic in content for topic in ["analyze", "analysis", "report"]):
+                        recent_topics.append("general_analysis")
+
+            enriched_context["conversation_context"] = {
+                "recent_topics": list(set(recent_topics)),
+                "conversation_length": len(self.conversation_history),
+                "user_expertise_level": self._infer_user_expertise()
+            }
+
+        return enriched_context
+
+    def _infer_user_expertise(self) -> str:
+        """Infer user expertise level from conversation history."""
+        if not self.conversation_history:
+            return "beginner"
+
+        user_messages = [entry.get("content", "").lower() for entry in self.conversation_history if entry.get("type") == "user"]
+
+        # Count technical terms
+        advanced_terms = ["rop", "gadget", "shellcode", "heap", "stack", "assembly", "disassembly", "reverse engineering"]
+        intermediate_terms = ["vulnerability", "exploit", "buffer overflow", "injection", "authentication", "encryption"]
+
+        advanced_count = sum(1 for msg in user_messages for term in advanced_terms if term in msg)
+        intermediate_count = sum(1 for msg in user_messages for term in intermediate_terms if term in msg)
+
+        if advanced_count > 2:
+            return "advanced"
+        elif intermediate_count > 1 or advanced_count > 0:
+            return "intermediate"
+        else:
+            return "beginner"
+
 
     def _build_context(self) -> dict[str, Any]:
         """Build context for AI responses."""
@@ -551,14 +595,15 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         footer_content = Align.center(f"Generated at {datetime.now().strftime('%H:%M:%S')}")
         layout["footer"].update(footer_content)
 
-        # Display with live update for typing effect
+        # Display with streaming update for real-time response rendering
         with Live(layout, refresh_per_second=10, console=self.console) as live:
             import time
 
-            # Simulate typing effect by updating the display
-            for _i in range(5):  # 5 refresh cycles
-                live.update(layout)
-                time.sleep(0.1)  # Brief display effect
+            # Stream response chunks as they arrive from the AI backend
+            # This provides real-time display of AI processing results
+            live.update(layout)
+            # Allow brief time for console to render complex layouts
+            time.sleep(0.05)
 
         self.console.print()
 
@@ -745,11 +790,15 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         else:
             overview += "No analysis results available. Run analysis first."
 
-        # Simulate AI response
+        # Generate structured AI response with analysis metadata
         response = {
             "timestamp": datetime.now().isoformat(),
             "type": "ai",
             "content": overview,
+            "metadata": {
+                "source": "analysis_context",
+                "results_included": bool(self.analysis_results),
+            }
         }
 
         self.conversation_history.append(response)
@@ -781,81 +830,88 @@ Could you be more specific about what aspect of the analysis you'd like to explo
 
     def _switch_backend(self, args: list[str]) -> str | None:
         """Switch AI backend."""
-        # Try to get available backends from AI assistant if available
         try:
-            if hasattr(self, "ai_assistant") and hasattr(self.ai_assistant, "llm_manager"):
-                available_backends = self.ai_assistant.llm_manager.list_backends()
-                current_backend = self.ai_assistant.llm_manager.current_backend
+            # Get available backends from LLM manager
+            if self.llm_manager:
+                available_backends = self.llm_manager.list_available_backends()
+                current_backend = self.llm_manager.get_current_backend()
             else:
-                # Fallback list of backends
                 available_backends = ["openai", "anthropic", "google", "local", "ollama"]
-                current_backend = getattr(self, "current_backend", "openai")
-        except AttributeError:
-            available_backends = ["openai", "anthropic", "google", "local", "ollama"]
-            current_backend = "openai"
+                current_backend = "openai"
 
-        if not args:
-            # Show available backends
-            if self.console:
-                self.console.print("\n[bold cyan]Available AI Backends:[/bold cyan]")
-                for backend in available_backends:
-                    if backend == current_backend:
-                        self.console.print(f"  • {backend} [green](current)[/green]")
-                    else:
-                        self.console.print(f"  • {backend}")
-                self.console.print("\n[dim]Usage: /backend <name>[/dim]")
-            else:
-                print("\nAvailable AI Backends:")
-                for backend in available_backends:
-                    if backend == current_backend:
-                        print(f"  • {backend} (current)")
-                    else:
-                        print(f"  • {backend}")
-                print("\nUsage: /backend <name>")
+            if not args:
+                # Show available backends with their status
+                if self.console:
+                    self.console.print("\n[bold cyan]Available AI Backends:[/bold cyan]")
+                    for backend in available_backends:
+                        status = ""
+                        if backend == current_backend:
+                            status = " [green](current)[/green]"
 
-            return None
+                        # Check backend configuration status
+                        if self.llm_manager and hasattr(self.llm_manager, 'is_backend_configured'):
+                            if self.llm_manager.is_backend_configured(backend):
+                                status += " [blue](configured)[/blue]"
+                            else:
+                                status += " [yellow](not configured)[/yellow]"
 
-        # Switch to specified backend
-        backend_name = args[0].lower()
+                        self.console.print(f"  • {backend}{status}")
+                    self.console.print("\n[dim]Usage: /backend <name>[/dim]")
+                else:
+                    print("\nAvailable AI Backends:")
+                    for backend in available_backends:
+                        status = " (current)" if backend == current_backend else ""
+                        print(f"  • {backend}{status}")
+                    print("\nUsage: /backend <name>")
 
-        try:
-            # Attempt to switch backend
-            if hasattr(self, "ai_assistant") and hasattr(self.ai_assistant, "llm_manager"):
-                success = self.ai_assistant.llm_manager.switch_backend(backend_name)
-            else:
-                # Direct backend switching for production use
-                from intellicrack.ai.llm_config_manager import LLMConfigManager
+                return None
 
-                llm_manager = LLMConfigManager()
-                success = llm_manager.switch_backend(backend_name)
+            # Switch to specified backend
+            backend_name = args[0].lower()
+
+            if backend_name not in available_backends:
+                error_msg = f"Backend '{backend_name}' not available. Available backends: {', '.join(available_backends)}"
+                if self.console:
+                    self.console.print(f"[red]{error_msg}[/red]")
+                else:
+                    print(error_msg)
+                return None
+
+            try:
+                # Switch backend using LLM manager
+                if self.llm_manager:
+                    success = self.llm_manager.switch_backend(backend_name)
+                else:
+                    # Reinitialize LLM manager if not available
+                    from intellicrack.ai.llm_config_manager import LLMConfigManager
+                    self.llm_manager = LLMConfigManager()
+                    success = self.llm_manager.switch_backend(backend_name)
 
                 if success:
-                    self.current_backend = backend_name
-                    # Re-initialize AI with new backend
+                    # Reinitialize AI backends with new LLM manager
                     self._reinitialize_ai_with_backend(backend_name)
 
-            if success:
-                msg = f"Switched to {backend_name} backend successfully!"
-                if self.console:
-                    self.console.print(f"[green]{msg}[/green]")
+                    msg = f"Successfully switched to {backend_name} backend!"
+                    if self.console:
+                        self.console.print(f"[green]{msg}[/green]")
+                    else:
+                        print(msg)
                 else:
-                    print(msg)
+                    msg = f"Failed to switch to {backend_name} backend. Check configuration and API keys."
+                    if self.console:
+                        self.console.print(f"[red]{msg}[/red]")
+                    else:
+                        print(msg)
 
-                # Update context with new backend info
-                self.context["ai_backend"] = backend_name
-                self.context["backend_capabilities"] = (
-                    self.ai_assistant.llm_manager.get_backend_capabilities(backend_name)
-                )
-
-            else:
-                msg = f"Failed to switch to {backend_name} backend. Check configuration."
+            except Exception as e:
+                error_msg = f"Error switching to {backend_name}: {e}"
                 if self.console:
-                    self.console.print(f"[red]{msg}[/red]")
+                    self.console.print(f"[red]{error_msg}[/red]")
                 else:
-                    print(msg)
+                    print(error_msg)
 
         except Exception as e:
-            error_msg = f"Error switching backend: {e!s}"
+            error_msg = f"Error in backend switching: {e}"
             if self.console:
                 self.console.print(f"[red]{error_msg}[/red]")
             else:
@@ -864,32 +920,50 @@ Could you be more specific about what aspect of the analysis you'd like to explo
         return None
 
     def _reinitialize_ai_with_backend(self, backend_name: str):
-        """Reinitialize AI assistant with new backend."""
+        """Reinitialize AI backend systems with new backend configuration."""
         try:
-            from intellicrack.ai.ai_assistant import AIAssistant
-            from intellicrack.ai.llm_config_manager import LLMConfigManager
+            # Reinitialize orchestrator with new LLM manager
+            from intellicrack.ai.orchestrator import AIOrchestrator
+            self.orchestrator = AIOrchestrator(llm_config_manager=self.llm_manager)
 
-            # Create new LLM manager with specified backend
-            llm_manager = LLMConfigManager()
-            llm_manager.switch_backend(backend_name)
+            # Try to reinitialize coordination layer
+            try:
+                from intellicrack.ai.coordination_layer import CoordinationLayer
+                self.ai_backend = CoordinationLayer(llm_config_manager=self.llm_manager)
+            except ImportError:
+                # Use orchestrator as backend
+                self.ai_backend = self.orchestrator
 
-            # Initialize new AI assistant
-            self.ai_assistant = AIAssistant(llm_manager=llm_manager)
-
-            # Update context
-            self.context = {
-                "ai_backend": backend_name,
-                "backend_capabilities": llm_manager.get_backend_capabilities(backend_name),
-            }
+            # Verify new backend functionality
+            if hasattr(self.ai_backend, 'health_check'):
+                health_status = self.ai_backend.health_check()
+                if not health_status.get('healthy', False):
+                    raise Exception(f"New backend health check failed: {health_status.get('error', 'Unknown error')}")
 
             if self.console:
-                self.console.print(
-                    f"[green]AI assistant reinitialized with {backend_name} backend[/green]"
-                )
+                backend_class_name = type(self.ai_backend).__name__
+                self.console.print(f"[green]AI backend ({backend_class_name}) reinitialized with {backend_name}[/green]")
+            else:
+                backend_class_name = type(self.ai_backend).__name__
+                print(f"AI backend ({backend_class_name}) reinitialized with {backend_name}")
+
         except Exception as e:
-            if self.console:
-                self.console.print(f"[yellow]Failed to reinitialize AI: {e}[/yellow]")
-            self.ai_assistant = None
+            # Fall back to AIAssistant if available
+            try:
+                from intellicrack.ai.ai_tools import AIAssistant
+                self.ai_backend = AIAssistant()
+
+                if self.console:
+                    self.console.print(f"[yellow]Fell back to AIAssistant due to: {e}[/yellow]")
+                else:
+                    print(f"Fell back to AIAssistant due to: {e}")
+
+            except Exception as fallback_error:
+                if self.console:
+                    self.console.print(f"[red]Failed to reinitialize AI backend: {fallback_error}[/red]")
+                else:
+                    print(f"Failed to reinitialize AI backend: {fallback_error}")
+                self.ai_backend = None
 
     def _quit_chat(self, args: list[str]) -> str:
         """Exit chat session."""

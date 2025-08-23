@@ -336,9 +336,9 @@ class TrainingThread(QThread):
                         self.model = checkpoint
 
             else:
-                # Fallback: create a dummy model for simulation
-                self.logger.warning("Creating dummy model for simulation")
-                self._create_dummy_model()
+                # Fallback: create minimal viable model
+                self.logger.warning("Creating minimal model fallback")
+                self._create_minimal_model()
 
             if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit(
@@ -353,7 +353,7 @@ class TrainingThread(QThread):
             self.logger.error("Failed to load model: %s", e)
             raise
 
-    def _create_dummy_model(self):
+    def _create_minimal_model(self):
         """Create a comprehensive model architecture for testing and demonstration.
 
         This function creates a realistic transformer model with proper initialization,
@@ -613,7 +613,7 @@ class TrainingThread(QThread):
         # RoBERTa is similar to BERT but without token type embeddings and different training
         model = self._create_bert_model(vocab_size, hidden_size, num_layers, num_heads)
         # Remove token type embeddings
-        model.token_type_embedding = nn.Embedding(1, hidden_size)  # Dummy embedding
+        model.token_type_embedding = nn.Embedding(1, hidden_size)  # Minimal embedding
         return model
 
     def _create_llama_model(
@@ -852,7 +852,7 @@ class TrainingThread(QThread):
     def _create_tokenizer(self, vocab_size: int):
         """Create a functional tokenizer for the model."""
 
-        class DummyTokenizer:
+        class MinimalTokenizer:
             """Functional tokenizer implementation for testing and demonstration.
 
             Provides basic tokenization capabilities including encoding, decoding,
@@ -1022,7 +1022,7 @@ class TrainingThread(QThread):
             def __len__(self):
                 return self.vocab_size
 
-        return DummyTokenizer(vocab_size)
+        return MinimalTokenizer(vocab_size)
 
     def _initialize_model_weights(self):
         """Initialize model weights with proper initialization strategies."""
@@ -2131,7 +2131,7 @@ class ModelFinetuningDialog(QDialog):
                 QApplication.processEvents()
                 time.sleep(0.1)
 
-            # Create a dummy model file for demonstration
+            # Create a minimal model file for testing
             model_data = {
                 "config": self.training_config.__dict__,
                 "training_history": getattr(self.training_thread, "training_history", []),

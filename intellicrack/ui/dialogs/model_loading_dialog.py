@@ -11,7 +11,6 @@ import logging
 
 from intellicrack.handlers.pyqt6_handler import (
     QComboBox,
-    QDialog,
     QDialogButtonBox,
     QFont,
     QFormLayout,
@@ -33,11 +32,12 @@ from ...ai.background_loader import LoadingState
 from ...ai.llm_backends import get_llm_manager
 from ...ai.llm_config_manager import LLMConfig, LLMProvider
 from ..widgets.model_loading_progress_widget import ModelLoadingProgressWidget
+from .base_dialog import BaseDialog
 
 logger = logging.getLogger(__name__)
 
 
-class ModelLoadingDialog(QDialog):
+class ModelLoadingDialog(BaseDialog):
     """Dialog for managing model loading with progress tracking."""
 
     #: model_id (type: str)
@@ -45,16 +45,16 @@ class ModelLoadingDialog(QDialog):
 
     def __init__(self, parent=None):
         """Initialize the ModelLoadingDialog with default values."""
-        super().__init__(parent)
-        self.llm_manager = get_llm_manager()
-        self.setWindowTitle("Model Loading Manager")
+        super().__init__(parent, "Model Loading Manager")
         self.setMinimumSize(800, 600)
 
-        self.init_ui()
+        self.llm_manager = get_llm_manager()
+        self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
 
-    def init_ui(self):
-        """Initialize the UI."""
-        layout = QVBoxLayout()
+    def setup_content(self, layout):
+        """Setup the UI content."""
+        if layout is None:
+            layout = QVBoxLayout(self.content_widget)
 
         # Title
         title = QLabel("Background Model Loading Manager")
@@ -143,17 +143,7 @@ class ModelLoadingDialog(QDialog):
         # Load button
         load_btn = QPushButton("Load Model in Background")
         load_btn.clicked.connect(self.load_new_model)
-        load_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                font-weight: bold;
-                padding: 10px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """)
+        load_btn.setObjectName("primaryButton")
         layout.addWidget(load_btn)
 
         layout.addStretch()

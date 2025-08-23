@@ -47,6 +47,7 @@ from intellicrack.handlers.pyqt6_handler import (
 from intellicrack.logger import logger
 
 from ...tools.plugin_ci_cd import CICDPipeline, GitHubActionsGenerator
+from ..icon_manager import set_button_icon
 from .plugin_dialog_base import PluginDialogBase
 
 """
@@ -167,13 +168,15 @@ class CICDDialog(PluginDialogBase):
         # Bottom controls
         control_layout = QHBoxLayout()
 
-        self.run_btn = QPushButton("▶️ Run Pipeline")
+        self.run_btn = QPushButton("Run Pipeline")
         self.run_btn.clicked.connect(self.run_pipeline)
+        set_button_icon(self.run_btn, "action_run")
         self.run_btn.setEnabled(False)
         control_layout.addWidget(self.run_btn)
 
-        self.stop_btn = QPushButton("⏹️ Stop")
+        self.stop_btn = QPushButton("Stop")
         self.stop_btn.clicked.connect(self.stop_pipeline)
+        set_button_icon(self.stop_btn, "action_stop")
         self.stop_btn.setEnabled(False)
         control_layout.addWidget(self.stop_btn)
 
@@ -229,7 +232,7 @@ class CICDDialog(PluginDialogBase):
 
         # Stage name
         name_label = QLabel(stage.capitalize())
-        name_label.setStyleSheet("font-weight: bold;")
+        name_label.setObjectName("stageName")
         layout.addWidget(name_label)
 
         # Progress
@@ -249,13 +252,7 @@ class CICDDialog(PluginDialogBase):
         widget.result_label = result_label
 
         # Style
-        widget.setStyleSheet("""
-            QWidget {
-                background-color: #f0f0f0;
-                border: 1px solid #ddd;
-                border-radius: 5px;
-            }
-        """)
+        widget.setObjectName("pipelineStageIdle")
 
         return widget
 
@@ -274,12 +271,14 @@ class CICDDialog(PluginDialogBase):
         # Buttons
         btn_layout = QHBoxLayout()
 
-        save_config_btn = QPushButton("💾 Save Configuration")
+        save_config_btn = QPushButton("Save Configuration")
         save_config_btn.clicked.connect(self.save_configuration)
+        set_button_icon(save_config_btn, "file_save")
         btn_layout.addWidget(save_config_btn)
 
-        reset_btn = QPushButton("🔄 Reset to Defaults")
+        reset_btn = QPushButton("Reset to Defaults")
         reset_btn.clicked.connect(self.reset_configuration)
+        set_button_icon(reset_btn, "nav_refresh")
         btn_layout.addWidget(reset_btn)
 
         btn_layout.addStretch()
@@ -311,8 +310,9 @@ class CICDDialog(PluginDialogBase):
         viewer_layout.addWidget(self.report_viewer)
 
         # Export button
-        export_btn = QPushButton("📤 Export Report")
+        export_btn = QPushButton("Export Report")
         export_btn.clicked.connect(self.export_report)
+        set_button_icon(export_btn, "file_export")
         viewer_layout.addWidget(export_btn)
 
         layout.addWidget(viewer_group)
@@ -372,8 +372,9 @@ class CICDDialog(PluginDialogBase):
         layout.addWidget(preview_group)
 
         # Generate button
-        generate_btn = QPushButton("🔧 Generate Workflow")
+        generate_btn = QPushButton("Generate Workflow")
         generate_btn.clicked.connect(self.generate_workflow)
+        set_button_icon(generate_btn, "action_generate")
         layout.addWidget(generate_btn)
 
         return widget
@@ -642,13 +643,7 @@ class CICDDialog(PluginDialogBase):
             stage_widget.status_label.setText("⏸️")
             stage_widget.progress.setVisible(False)
             stage_widget.result_label.setText("")
-            stage_widget.setStyleSheet("""
-                QWidget {
-                    background-color: #f0f0f0;
-                    border: 1px solid #ddd;
-                    border-radius: 5px;
-                }
-            """)
+            stage_widget.setObjectName("pipelineStageIdle")
 
         # Update UI
         self.run_btn.setEnabled(False)
@@ -683,13 +678,7 @@ class CICDDialog(PluginDialogBase):
             widget.status_label.setText("⏳")
             widget.progress.setVisible(True)
             widget.progress.setRange(0, 0)  # Indeterminate
-            widget.setStyleSheet("""
-                QWidget {
-                    background-color: #fffacd;
-                    border: 1px solid #ffd700;
-                    border-radius: 5px;
-                }
-            """)
+            widget.setObjectName("pipelineStageRunning")
 
     def on_stage_completed(self, stage: str, result: dict[str, Any]):
         """Handle stage completed"""
@@ -712,21 +701,9 @@ class CICDDialog(PluginDialogBase):
 
             # Update style
             if success:
-                widget.setStyleSheet("""
-                    QWidget {
-                        background-color: #90ee90;
-                        border: 1px solid #228b22;
-                        border-radius: 5px;
-                    }
-                """)
+                widget.setObjectName("pipelineStageSuccess")
             else:
-                widget.setStyleSheet("""
-                    QWidget {
-                        background-color: #ffcccb;
-                        border: 1px solid #dc143c;
-                        border-radius: 5px;
-                    }
-                """)
+                widget.setObjectName("pipelineStageError")
 
         # Update progress
         completed = sum(

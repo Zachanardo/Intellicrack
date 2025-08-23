@@ -227,7 +227,7 @@ class AIEventBus:
                             logger.error("Error in subscriber %s: %s", sub["component"], e)
 
                     threading.Thread(
-                        target=lambda: call_subscriber(_subscriber), daemon=True
+                        target=lambda sub=_subscriber: call_subscriber(sub), daemon=True
                     ).start()
 
                 except (OSError, ValueError, RuntimeError) as e:

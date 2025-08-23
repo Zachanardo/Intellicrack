@@ -2,7 +2,6 @@
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
-    QDialog,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
@@ -17,6 +16,8 @@ from PyQt6.QtWidgets import (
 )
 
 from intellicrack.core.patching.adobe_compiler import AdobeLicenseCompiler
+
+from .base_dialog import BaseDialog
 
 
 class NodeJSInstallWorker(QThread):
@@ -44,21 +45,26 @@ class NodeJSInstallWorker(QThread):
             self.finished.emit(False, f"Installation error: {e}")
 
 
-class NodeJSSetupDialog(QDialog):
+class NodeJSSetupDialog(BaseDialog):
     """Dialog for Node.js installation setup."""
 
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__(
+            parent=parent,
+            title="Node.js Setup Required",
+            width=600,
+            height=500,
+            resizable=False
+        )
         self.compiler = AdobeLicenseCompiler()
-        self.setup_ui()
         self.install_worker = None
+        self.setup_content(self.content_layout)
 
-    def setup_ui(self):
-        """Initialize the dialog UI."""
-        self.setWindowTitle("Node.js Setup Required")
-        self.setFixedSize(600, 500)
+        # Customize button text
+        self.set_ok_text("Proceed")
 
-        layout = QVBoxLayout(self)
+    def setup_content(self, layout):
+        """Initialize the dialog UI content."""
 
         # Explanation header
         header_label = QLabel(
@@ -84,7 +90,7 @@ class NodeJSSetupDialog(QDialog):
         auto_install_desc = QLabel(
             "  • Downloads and installs Node.js v20.15.1 LTS\n  • Uses winget, chocolatey, or direct download\n  • Requires administrator privileges"
         )
-        auto_install_desc.setStyleSheet("color: gray; margin-left: 20px;")
+        auto_install_desc.setObjectName("descriptionLabel")
         options_layout.addWidget(auto_install_desc)
 
         # Option 2: Custom path
@@ -121,20 +127,8 @@ class NodeJSSetupDialog(QDialog):
         self.progress_text.setVisible(False)
         layout.addWidget(self.progress_text)
 
-        # Buttons
-        button_layout = QHBoxLayout()
-
-        self.proceed_btn = QPushButton("Proceed")
-        self.proceed_btn.clicked.connect(self.on_proceed)
-
-        self.cancel_btn = QPushButton("Cancel")
-        self.cancel_btn.clicked.connect(self.reject)
-
-        button_layout.addStretch()
-        button_layout.addWidget(self.proceed_btn)
-        button_layout.addWidget(self.cancel_btn)
-
-        layout.addLayout(button_layout)
+        # The base dialog provides OK/Cancel buttons automatically
+        # We just need to override validate_input for the OK button behavior
 
     def on_option_changed(self):
         """Handle option radio button changes."""
@@ -151,26 +145,30 @@ class NodeJSSetupDialog(QDialog):
         if directory:
             self.path_input.setText(directory)
 
-    def on_proceed(self):
-        """Handle proceed button click."""
+    def validate_input(self) -> bool:
+        """Validate input before accepting the dialog.
+        
+        This is called when the OK/Proceed button is clicked.
+        
+        Returns:
+            True if input is valid and dialog should close, False otherwise
+        """
         if self.auto_install_radio.isChecked():
             self.start_installation()
+            return False  # Don't close dialog yet, wait for installation
         else:
             # Test custom path
             custom_path = self.path_input.text().strip()
             if not custom_path:
-                QMessageBox.warning(self, "Error", "Please provide a Node.js installation path.")
-                return
+                self.show_error("Please provide a Node.js installation path.")
+                return False
 
             if self.compiler.check_nodejs(custom_path):
                 QMessageBox.information(self, "Success", "Node.js found at the specified path!")
-                self.accept()
+                return True
             else:
-                QMessageBox.critical(
-                    self,
-                    "Error",
-                    "Node.js not found at the specified path.\nPlease check the path and try again.",
-                )
+                self.show_error("Node.js not found at the specified path.\nPlease check the path and try again.")
+                return False
 
     def start_installation(self):
         """Start the Node.js installation process."""
@@ -181,7 +179,7 @@ class NodeJSSetupDialog(QDialog):
         self.progress_text.clear()
 
         # Disable controls
-        self.proceed_btn.setEnabled(False)
+        self.set_ok_enabled(False)
         self.auto_install_radio.setEnabled(False)
         self.custom_path_radio.setEnabled(False)
         self.path_input.setEnabled(False)
@@ -203,17 +201,13 @@ class NodeJSSetupDialog(QDialog):
         self.progress_text.append(f"\n{message}")
 
         # Re-enable controls
-        self.proceed_btn.setEnabled(True)
+        self.set_ok_enabled(True)
         self.auto_install_radio.setEnabled(True)
         self.custom_path_radio.setEnabled(True)
         self.on_option_changed()  # Update enabled state
 
         if success:
-            QMessageBox.information(self, "Success", message)
+            self.show_success(message)
             self.accept()
         else:
-            QMessageBox.critical(
-                self,
-                "Installation Failed",
-                f"{message}\n\nPlease try manual installation or specify a custom path.",
-            )
+            self.show_error(f"{message}\n\nPlease try manual installation or specify a custom path.")

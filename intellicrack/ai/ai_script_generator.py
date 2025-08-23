@@ -16,6 +16,7 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -32,6 +33,12 @@ except ImportError:
     AIScriptEditor = None
     EditType = None
     ValidationResult = None
+
+
+class ScriptType(Enum):
+    """Enumeration of supported script types for AI generation."""
+    FRIDA = "frida"
+    GHIDRA = "ghidra"
 
 
 @dataclass
@@ -406,11 +413,11 @@ class LLMScriptInterface:
 
                 # Try common client initialization patterns
                 client_attempts = [
-                    lambda: module.Client(api_key=api_key),
-                    lambda: getattr(module, f"{provider_name.title()}Client")(api_key=api_key),
-                    lambda: module.APIClient(api_key=api_key),
-                    lambda: module.create_client(api_key),
-                    lambda: module.init(api_key),
+                    lambda m=module: m.Client(api_key=api_key),
+                    lambda m=module: getattr(m, f"{provider_name.title()}Client")(api_key=api_key),
+                    lambda m=module: m.APIClient(api_key=api_key),
+                    lambda m=module: m.create_client(api_key),
+                    lambda m=module: m.init(api_key),
                 ]
 
                 for attempt in client_attempts:
@@ -478,7 +485,8 @@ class LLMScriptInterface:
                     self.llm_backend = {"type": "local", "provider": name, "base_url": endpoint}
                     logger.info(f"Connected to local model at {endpoint}")
                     return
-            except:
+            except (ConnectionError, TimeoutError, OSError, ValueError) as e:
+                logger.debug(f"Failed to connect to local model at {endpoint}: {e}")
                 continue
 
     def _discover_local_model_files(self) -> str | None:
@@ -782,9 +790,11 @@ class LLMScriptInterface:
                         result = method(prompt)
                         if result:
                             return str(result)
-                    except:
+                    except Exception as e:
+                        logger.debug(f"Method {method.__name__} failed with prompt only: {e}")
                         continue
-                except:
+                except Exception as e:
+                    logger.debug(f"Method {method.__name__} failed: {e}")
                     continue
 
         raise RuntimeError("Could not find valid method to generate response")
@@ -1036,7 +1046,8 @@ class DynamicScriptGenerator:
             try:
                 detailed = self.binary_analyzer.analyze(binary_path)
                 analysis.update(detailed)
-            except:
+            except Exception as e:
+                logger.debug(f"Binary analyzer failed: {e}")
                 pass
 
         # Basic analysis fallback
@@ -1048,7 +1059,8 @@ class DynamicScriptGenerator:
             analysis["platform"] = "windows"
             analysis["entry_point"] = hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
             analysis["sections"] = [s.Name.decode().rstrip("\x00") for s in pe.sections]
-        except:
+        except (ImportError, OSError, pefile.PEFormatError) as e:
+            logger.debug(f"PE analysis failed: {e}")
             pass
 
         return analysis

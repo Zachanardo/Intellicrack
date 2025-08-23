@@ -420,7 +420,8 @@ def validate_llama_cpp() -> dict[str, any]:
                     params.n_ctx = 1024  # Test modification
                     params.n_ctx = original_ctx  # Restore
                     llama_info["params_modifiable"] = True
-                except:
+                except Exception as e:
+                    logger.debug(f"Cannot modify llama params: {e}")
                     llama_info["params_modifiable"] = False
             else:
                 llama_info["default_params_available"] = False
@@ -531,7 +532,8 @@ def get_system_health_report() -> dict[str, any]:
                 "cors_enabled": True,
                 "debug_mode": test_app.debug,
             }
-    except:
+    except Exception as e:
+        logger.debug(f"Web UI check failed: {e}")
         report["services"]["web_ui"] = {"available": False}
 
     # Check ML service health
@@ -558,8 +560,8 @@ def get_system_health_report() -> dict[str, any]:
             try:
                 gpu = tf.config.list_physical_devices("GPU")[0]
                 memory_info["gpu_memory_growth"] = tf.config.experimental.get_memory_growth(gpu)
-            except:
-                pass
+            except Exception as e:
+                logger.debug(f"GPU memory check failed: {e}")
 
         report["services"]["ml_engine"] = {
             "available": True,
@@ -568,7 +570,8 @@ def get_system_health_report() -> dict[str, any]:
             "gpu_support": len(tf.config.list_physical_devices("GPU")) > 0,
             "memory_info": memory_info,
         }
-    except:
+    except Exception as e:
+        logger.debug(f"ML engine check failed: {e}")
         report["services"]["ml_engine"] = {"available": False}
 
     # Check LLM service health
@@ -581,7 +584,8 @@ def get_system_health_report() -> dict[str, any]:
             "version": getattr(llama_cpp, "__version__", "Unknown"),
             "gpu_support": hasattr(llama_cpp, "llama_backend_init"),
         }
-    except:
+    except Exception as e:
+        logger.debug(f"LLM engine check failed: {e}")
         report["services"]["llm_engine"] = {"available": False}
 
     # Add disk space info for data directories
@@ -600,7 +604,8 @@ def get_system_health_report() -> dict[str, any]:
             "free_gb": round(disk_usage.free / (1024**3), 2),
             "percent_used": round((disk_usage.used / disk_usage.total) * 100, 1),
         }
-    except:
+    except Exception as e:
+        logger.debug(f"Disk space check failed: {e}")
         report["disk_space"] = {"available": False}
 
     return report

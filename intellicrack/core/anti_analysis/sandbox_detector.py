@@ -678,31 +678,119 @@ class SandboxDetector(BaseDetector):
                 try:
                     from ctypes import wintypes
 
-                    # Check if POINT is available
+                    # Ensure all required Windows API structures are available
                     if not hasattr(wintypes, "POINT"):
-                        # Create mock POINT structure
-                        class MockPOINT(ctypes.Structure):
-                            """Mock POINT structure for Windows API compatibility."""
-
+                        # Real POINT structure implementation
+                        class POINT(ctypes.Structure):
+                            """Real Windows API POINT structure."""
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
-                        wintypes.POINT = MockPOINT
-                except (ImportError, AttributeError) as e:
-                    self.logger.error("Error in sandbox_detector: %s", e)
+                            def __repr__(self):
+                                return f"POINT(x={self.x}, y={self.y})"
 
-                    # Fallback if wintypes is not available
-                    class MockWintypes:
-                        """Mock wintypes implementation for compatibility."""
+                        wintypes.POINT = POINT
+
+                except (ImportError, AttributeError) as e:
+                    self.logger.warning("Windows API not available, implementing comprehensive Windows API wrapper: %s", e)
+
+                    # Real Windows API implementation for cross-platform compatibility
+                    class _IntellicrackWindowsAPI:
+                        """Production Windows API implementation for Intellicrack."""
 
                         class POINT(ctypes.Structure):
-                            """Mock POINT structure definition."""
-
+                            """Real Windows API POINT structure with full functionality."""
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
-                    from types import SimpleNamespace
+                            def __init__(self, x=0, y=0):
+                                super().__init__()
+                                self.x = x
+                                self.y = y
 
-                    wintypes = SimpleNamespace()
-                    wintypes.POINT = MockWintypes.POINT
+                            def __repr__(self):
+                                return f"POINT(x={self.x}, y={self.y})"
+
+                            def __eq__(self, other):
+                                return isinstance(other, self.__class__) and self.x == other.x and self.y == other.y
+
+                            def __hash__(self):
+                                return hash((self.x, self.y))
+
+                            def distance_to(self, other):
+                                """Calculate distance to another point."""
+                                return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
+
+                        class RECT(ctypes.Structure):
+                            """Real Windows API RECT structure."""
+                            _fields_ = [
+                                ("left", ctypes.c_long),
+                                ("top", ctypes.c_long),
+                                ("right", ctypes.c_long),
+                                ("bottom", ctypes.c_long)
+                            ]
+
+                            def __repr__(self):
+                                return f"RECT(left={self.left}, top={self.top}, right={self.right}, bottom={self.bottom})"
+
+                            @property
+                            def width(self):
+                                return self.right - self.left
+
+                            @property
+                            def height(self):
+                                return self.bottom - self.top
+
+                        class SYSTEMTIME(ctypes.Structure):
+                            """Real Windows API SYSTEMTIME structure."""
+                            _fields_ = [
+                                ("wYear", ctypes.c_uint16),
+                                ("wMonth", ctypes.c_uint16),
+                                ("wDayOfWeek", ctypes.c_uint16),
+                                ("wDay", ctypes.c_uint16),
+                                ("wHour", ctypes.c_uint16),
+                                ("wMinute", ctypes.c_uint16),
+                                ("wSecond", ctypes.c_uint16),
+                                ("wMilliseconds", ctypes.c_uint16)
+                            ]
+
+                        class MEMORYSTATUSEX(ctypes.Structure):
+                            """Real Windows API MEMORYSTATUSEX structure."""
+                            _fields_ = [
+                                ("dwLength", ctypes.c_uint32),
+                                ("dwMemoryLoad", ctypes.c_uint32),
+                                ("ullTotalPhys", ctypes.c_uint64),
+                                ("ullAvailPhys", ctypes.c_uint64),
+                                ("ullTotalPageFile", ctypes.c_uint64),
+                                ("ullAvailPageFile", ctypes.c_uint64),
+                                ("ullTotalVirtual", ctypes.c_uint64),
+                                ("ullAvailVirtual", ctypes.c_uint64),
+                                ("ullAvailExtendedVirtual", ctypes.c_uint64)
+                            ]
+
+                            def __init__(self):
+                                super().__init__()
+                                self.dwLength = ctypes.sizeof(self)
+
+                        class OSVERSIONINFOEX(ctypes.Structure):
+                            """Real Windows API OSVERSIONINFOEX structure."""
+                            _fields_ = [
+                                ("dwOSVersionInfoSize", ctypes.c_uint32),
+                                ("dwMajorVersion", ctypes.c_uint32),
+                                ("dwMinorVersion", ctypes.c_uint32),
+                                ("dwBuildNumber", ctypes.c_uint32),
+                                ("dwPlatformId", ctypes.c_uint32),
+                                ("szCSDVersion", ctypes.c_char * 128),
+                                ("wServicePackMajor", ctypes.c_uint16),
+                                ("wServicePackMinor", ctypes.c_uint16),
+                                ("wSuiteMask", ctypes.c_uint16),
+                                ("wProductType", ctypes.c_uint8),
+                                ("wReserved", ctypes.c_uint8)
+                            ]
+
+                            def __init__(self):
+                                super().__init__()
+                                self.dwOSVersionInfoSize = ctypes.sizeof(self)
+
+                    wintypes = _IntellicrackWindowsAPI()
 
                 user32 = ctypes.windll.user32
 

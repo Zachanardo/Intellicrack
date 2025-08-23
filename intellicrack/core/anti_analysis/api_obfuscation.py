@@ -955,6 +955,88 @@ if (p{api_name}) {{
             self.logger.error(f"Failed to generate trampoline calls: {e}")
             return code, {"error": str(e)}
 
+    def _generate_decryption_stub(self, offset: int, size: int, key: int) -> bytearray:
+        """Generate x86/x64 assembly decryption stub for runtime decryption.
+        
+        Args:
+            offset: Offset of encrypted section
+            size: Size of encrypted section  
+            key: XOR encryption key
+            
+        Returns:
+            Assembly stub bytes for runtime decryption
+        """
+        stub = bytearray()
+
+        # Save registers
+        stub.extend([
+            0x50,               # PUSH EAX
+            0x53,               # PUSH EBX
+            0x51,               # PUSH ECX
+            0x52,               # PUSH EDX
+            0x56,               # PUSH ESI
+            0x57,               # PUSH EDI
+        ])
+
+        # Set up decryption loop
+        # Load address of encrypted section
+        stub.extend([
+            0xE8, 0x00, 0x00, 0x00, 0x00,  # CALL $+5 (get EIP)
+            0x5E,                           # POP ESI (ESI = current EIP)
+        ])
+
+        # Calculate actual address of encrypted section
+        # Offset from current position to encrypted section
+        relative_offset = offset + 15  # Account for stub instructions so far
+
+        # ADD ESI, relative_offset to point to encrypted section
+        stub.extend([
+            0x81, 0xC6,         # ADD ESI, imm32
+        ])
+        stub.extend(struct.pack('<I', relative_offset))
+
+        # Set up loop counter
+        stub.extend([
+            0xB9,               # MOV ECX, imm32 (size)
+        ])
+        stub.extend(struct.pack('<I', size))
+
+        # Load XOR key
+        stub.extend([
+            0xB0,               # MOV AL, imm8 (key)
+            key & 0xFF
+        ])
+
+        # Decryption loop label
+        loop_start = len(stub)
+
+        # XOR byte at [ESI] with key
+        stub.extend([
+            0x30, 0x06,         # XOR [ESI], AL
+            0x46,               # INC ESI
+            0xE2, 0xFC,         # LOOP -4 (back to XOR instruction)
+        ])
+
+        # Restore registers
+        stub.extend([
+            0x5F,               # POP EDI
+            0x5E,               # POP ESI
+            0x5A,               # POP EDX
+            0x59,               # POP ECX
+            0x5B,               # POP EBX
+            0x58,               # POP EAX
+        ])
+
+        # Jump to decrypted code
+        stub.extend([
+            0xE9,               # JMP rel32
+        ])
+        # Calculate jump offset to skip the stub and execute decrypted code
+        jmp_offset = -(len(stub) + 4)  # Jump back to original position
+        stub.extend(struct.pack('<i', jmp_offset))
+
+        return stub
+
     def _generate_encrypted_payloads(self, code: bytes, params: dict) -> tuple[bytes, dict]:
         """Generate encrypted API call payloads.
 
@@ -983,13 +1065,20 @@ if (p{api_name}) {{
                     for j in range(section_size):
                         modified_code[i + j] ^= key
 
-                    # Add decryption stub before the encrypted section
-                    # This would need runtime decryption
+                    # Generate runtime decryption stub
+                    decrypt_stub = self._generate_decryption_stub(i, section_size, key)
+
+                    # Insert decryption stub before encrypted section
+                    # The stub will decrypt the code at runtime before execution
+                    modified_code = bytearray(modified_code[:i]) + decrypt_stub + bytearray(modified_code[i:])
+
                     encrypted_sections.append({
-                        "offset": i,
+                        "offset": i + len(decrypt_stub),  # Adjust offset for inserted stub
                         "size": section_size,
                         "key": key,
-                        "needs_runtime_decrypt": True
+                        "stub_size": len(decrypt_stub),
+                        "stub_offset": i,
+                        "decryption_type": "xor_inline"
                     })
 
             return bytes(modified_code), {

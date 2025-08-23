@@ -8,6 +8,7 @@ from intellicrack.logger import logger
 
 from ...utils.env_file_manager import EnvFileManager
 from ...utils.secrets_manager import get_secret
+from .base_dialog import BaseDialog
 
 """
 LLM Configuration Dialog for Intellicrack
@@ -35,7 +36,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QApplication,
     QCheckBox,
     QComboBox,
-    QDialog,
     QDoubleSpinBox,
     QFileDialog,
     QFont,
@@ -148,7 +148,7 @@ class ModelTestThread(QThread):
             self.test_complete.emit(False, f"Test failed: {e!s}")
 
 
-class LLMConfigDialog(QDialog):
+class LLMConfigDialog(BaseDialog):
     """Dialog for configuring LLM models in Intellicrack."""
 
     def __init__(self, parent=None):
@@ -233,8 +233,7 @@ class LLMConfigDialog(QDialog):
         self.lora_alpha = None
         self.lora_dropout = None
 
-        super().__init__(parent)
-        self.setWindowTitle("LLM Model Configuration - Intellicrack Agentic AI")
+        super().__init__(parent, "LLM Model Configuration - Intellicrack Agentic AI")
         self.setFixedSize(800, 600)
 
         self.llm_manager = get_llm_manager() if get_llm_manager else None
@@ -242,7 +241,7 @@ class LLMConfigDialog(QDialog):
         self.current_configs = {}
         self.test_thread = None
 
-        self.setup_ui()
+        self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
         self.load_existing_configs()
         self.load_existing_api_keys()  # Load API keys from .env file
 
@@ -254,9 +253,10 @@ class LLMConfigDialog(QDialog):
             if failed > 0:
                 self.status_text.append(f"⚠ Failed to load {failed} models")
 
-    def setup_ui(self):
-        """Set up the user interface."""
-        layout = QVBoxLayout(self)
+    def setup_content(self, layout):
+        """Set up the user interface content."""
+        if layout is None:
+            layout = QVBoxLayout(self.content_widget)
 
         # Title and description
         title_label = QLabel("🤖 Agentic AI Model Configuration")
@@ -268,7 +268,7 @@ class LLMConfigDialog(QDialog):
             "Configure LLM models for intelligent analysis and reasoning in Intellicrack"
         )
         desc_label.setAlignment(Qt.AlignCenter)
-        desc_label.setStyleSheet("color: gray; margin-bottom: 10px;")
+        desc_label.setObjectName("descriptionText")
         layout.addWidget(desc_label)
 
         # Main content
@@ -533,7 +533,7 @@ class LLMConfigDialog(QDialog):
 
         # Requirements info
         info_text = QLabel("Requires: pip install llama-cpp-python")
-        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        info_text.setObjectName("infoText")
         layout.addRow("", info_text)
 
         self.tabs.addTab(tab, "GGUF Models")
@@ -579,7 +579,7 @@ class LLMConfigDialog(QDialog):
 
         # Requirements info
         info_text = QLabel("Requires: Ollama server running locally")
-        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        info_text.setObjectName("infoText")
         layout.addRow("", info_text)
 
         self.tabs.addTab(tab, "Ollama")
@@ -637,7 +637,7 @@ class LLMConfigDialog(QDialog):
 
         # Requirements info
         info_text = QLabel("Supports: .pth, .pt, .bin files or Hugging Face model directories")
-        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        info_text.setObjectName("infoText")
         layout.addRow("", info_text)
 
         self.tabs.addTab(tab, "PyTorch")
@@ -697,7 +697,7 @@ class LLMConfigDialog(QDialog):
 
         # Requirements info
         info_text = QLabel("Supports: .h5 files or SavedModel directories")
-        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        info_text.setObjectName("infoText")
         layout.addRow("", info_text)
 
         self.tabs.addTab(tab, "TensorFlow")
@@ -757,7 +757,7 @@ class LLMConfigDialog(QDialog):
 
         # Requirements info
         info_text = QLabel("Requires: onnxruntime or onnxruntime-gpu")
-        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        info_text.setObjectName("infoText")
         layout.addRow("", info_text)
 
         self.tabs.addTab(tab, "ONNX")
@@ -817,7 +817,7 @@ class LLMConfigDialog(QDialog):
 
         # Requirements info
         info_text = QLabel("Supports: .safetensors files with model configs")
-        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        info_text.setObjectName("infoText")
         layout.addRow("", info_text)
 
         self.tabs.addTab(tab, "Safetensors")
@@ -875,7 +875,7 @@ class LLMConfigDialog(QDialog):
 
         # Requirements info
         info_text = QLabel("Requires: auto-gptq and CUDA GPU")
-        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        info_text.setObjectName("infoText")
         layout.addRow("", info_text)
 
         self.tabs.addTab(tab, "GPTQ")
@@ -933,7 +933,7 @@ class LLMConfigDialog(QDialog):
 
         # Requirements info
         info_text = QLabel("Supports: Local Hugging Face model directories with config.json")
-        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        info_text.setObjectName("infoText")
         layout.addRow("", info_text)
 
         self.tabs.addTab(tab, "HF Local")
@@ -1021,7 +1021,7 @@ class LLMConfigDialog(QDialog):
 
         # Requirements info
         info_text = QLabel("Requires: PEFT library and a compatible base model")
-        info_text.setStyleSheet("color: blue; font-size: 10px;")
+        info_text.setObjectName("infoText")
         layout.addRow("", info_text)
 
         self.tabs.addTab(tab, "LoRA Adapters")

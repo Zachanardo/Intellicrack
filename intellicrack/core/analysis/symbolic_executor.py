@@ -2051,12 +2051,12 @@ int main() {{
                 # Move states that hit find addresses to found stash
                 for state in list(simgr.active):
                     if state.addr in find_addresses:
-                        simgr.move("active", "found", lambda s: s.addr == state.addr)
+                        simgr.move("active", "found", lambda s, addr=state.addr: s.addr == addr)
 
                 # Avoid specified addresses
                 for state in list(simgr.active):
                     if state.addr in avoid_addresses:
-                        simgr.move("active", "avoided", lambda s: s.addr == state.addr)
+                        simgr.move("active", "avoided", lambda s, addr=state.addr: s.addr == addr)
 
                 # Check for vulnerabilities in active states
                 if steps % 10 == 0:  # Check every 10 steps for performance
@@ -2795,8 +2795,8 @@ int main() {{
                         "description": f"Potential buffer overflow - unchecked stack operations (path depth: {path_depth})",
                         "evidence": f"Stack operations at {hex(addr)} in {path_depth}-step execution path",
                     }
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Buffer overflow detection failed at {hex(addr)}: {e}")
         return None
 
     def _check_integer_overflow_path(
@@ -2829,8 +2829,8 @@ int main() {{
                     "description": f"Arithmetic operations without overflow checks (path contains {arithmetic_ops_in_path} potential arithmetic ops)",
                     "evidence": f"Unchecked arithmetic at {hex(addr)} in {path_depth}-step path",
                 }
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Integer overflow detection failed at {hex(addr)}: {e}")
         return None
 
     def _check_use_after_free_path(
@@ -2861,8 +2861,8 @@ int main() {{
                         "description": f"Potential use-after-free pattern detected (path distance: {path_distance}, potential frees: {potential_frees})",
                         "evidence": f"Memory access after call at {hex(addr)} in execution path",
                     }
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Use-after-free detection failed at {hex(addr)}: {e}")
         return None
 
     def _check_format_string_path(
@@ -2890,8 +2890,8 @@ int main() {{
                     "description": f"Potential format string vulnerability (path depth: {path_depth}, input likelihood: {user_input_likelihood:.2f})",
                     "evidence": f"Format string pattern at {hex(addr)} in execution path",
                 }
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Format string detection failed at {hex(addr)}: {e}")
         return None
 
     def _check_null_deref_path(
@@ -2922,8 +2922,8 @@ int main() {{
                     "description": f"Potential null pointer dereference (complexity: {path_complexity}, null checks: {null_check_candidates})",
                     "evidence": f"Unchecked memory access at {hex(addr)} in {path_complexity}-unique-address path",
                 }
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Null dereference detection failed at {hex(addr)}: {e}")
         return None
 
     def _check_race_condition_path(
@@ -2955,8 +2955,8 @@ int main() {{
                     "description": f"Potential race condition - unsynchronized access (branches: {path_branches}, concurrent likelihood: {concurrent_likelihood:.2f})",
                     "evidence": f"Unsynchronized memory operation at {hex(addr)} in branching execution path",
                 }
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Race condition detection failed at {hex(addr)}: {e}")
         return None
 
     def _analyze_path_loops(self, path: list[int]) -> dict[str, Any] | None:
@@ -2974,8 +2974,8 @@ int main() {{
                         "evidence": f"Address {hex(addr)} revisited in execution path",
                     }
                 seen_addrs.add(addr)
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Loop analysis failed: {e}")
         return None
 
     def _analyze_path_memory_access(
@@ -3053,8 +3053,8 @@ int main() {{
                         "max_jump": max_jump,
                         "avg_jump": avg_jump,
                     }
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Memory access analysis failed: {e}")
         return None
 
     def _analyze_path_control_flow(self, path: list[int]) -> dict[str, Any] | None:
@@ -3074,8 +3074,8 @@ int main() {{
                                 "description": "Potential control flow hijacking detected",
                                 "evidence": f"Jump to potential library function at {hex(addr)}",
                             }
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Control flow analysis failed: {e}")
         return None
 
     def _extract_path_constraints(self, path: list[int], disasm_info: dict) -> list[str]:

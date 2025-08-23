@@ -120,7 +120,7 @@ class SearchHistory:
         """Initialize the SearchHistory with maximum entries limit."""
         # Get configuration instance
         config = get_config()
-        
+
         # Use provided max_entries or get from config
         if max_entries is None:
             self.max_entries = config.get("hex_viewer.search.history_max_entries", 50)
@@ -190,10 +190,10 @@ class SearchEngine:
     def __init__(self, file_handler):
         """Initialize the SearchEngine with file handler and chunk size."""
         self.file_handler = file_handler
-        
+
         # Get configuration instance
         config = get_config()
-        
+
         # Get chunk size from config (convert KB to bytes)
         chunk_size_kb = config.get("hex_viewer.search.search_chunk_size_kb", 256)
         self.chunk_size = chunk_size_kb * 1024
@@ -323,10 +323,25 @@ class SearchEngine:
         # Replace in reverse order to maintain offsets
         replaced_ranges = []
         for result in reversed(results):
-            # For now, only support same-length replacements
-            if len(replace_bytes) == result.length:
-                if self.file_handler.write(result.offset, replace_bytes):
-                    replaced_ranges.append((result.offset, result.length))
+            # Variable-length replacement implementation
+            # First delete the old data, then insert the new data
+            try:
+                # Delete the original data at this offset
+                if self.file_handler.delete(result.offset, result.length):
+                    # Insert the replacement data at the same offset
+                    if self.file_handler.insert(result.offset, replace_bytes):
+                        replaced_ranges.append((result.offset, len(replace_bytes)))
+                    else:
+                        # If insert fails, try to restore the original data
+                        # This is a best-effort recovery
+                        original_data = self.file_handler.read(result.offset, result.length)
+                        if original_data:
+                            self.file_handler.insert(result.offset, original_data)
+                        raise RuntimeError(f"Failed to insert replacement at offset {result.offset:#x}")
+            except Exception as e:
+                logger.error(f"Error during replace operation at offset {result.offset:#x}: {e}")
+                # Continue with other replacements even if one fails
+                continue
 
         return list(reversed(replaced_ranges))
 
@@ -486,9 +501,19 @@ class SearchEngine:
                     start_pos = match.start()
                     end_pos = match.end()
 
-                    # Convert character positions to byte positions (approximate)
-                    byte_start = len(text_data[:start_pos].encode("utf-8"))
-                    byte_end = len(text_data[:end_pos].encode("utf-8"))
+                    # Convert character positions to exact byte positions
+                    # Get the substring of the decoded text up to the start of the match
+                    pre_match_str = text_data[:start_pos]
+                    # Encode this substring back to bytes to get the exact byte offset
+                    byte_start = len(pre_match_str.encode("utf-8", errors="replace"))
+
+                    # Get the substring of the match itself
+                    match_str = text_data[start_pos:end_pos]
+                    # Encode the match string to get the exact byte length
+                    byte_length = len(match_str.encode("utf-8", errors="replace"))
+
+                    # The end of the match in bytes
+                    byte_end = byte_start + byte_length
 
                     if byte_start < len(chunk_data) and byte_end <= len(chunk_data):
                         matched_data = chunk_data[byte_start:byte_end]
@@ -529,21 +554,95 @@ class SearchEngine:
         return matches[0] if matches else None
 
     def _is_whole_word_match(self, data: bytes, pos: int, length: int) -> bool:
-        """Check if a match is a whole word (for text searches)."""
-        # Simple implementation - check for word boundaries
+        """Check if a match is a whole word (for text searches).
+        
+        A word boundary is defined as:
+        - Start/end of data
+        - Transition between word and non-word characters
+        - Word characters: alphanumeric (a-z, A-Z, 0-9) and underscore (_)
+        - Non-word characters: everything else (whitespace, punctuation, control chars, etc.)
+        
+        Args:
+            data: The data being searched
+            pos: Position of the match
+            length: Length of the match
+            
+        Returns:
+            True if the match is a whole word, False otherwise
+        """
+        def is_word_char(byte_val: int) -> bool:
+            """Check if a byte value is a word character.
+            
+            Word characters are:
+            - a-z (97-122)
+            - A-Z (65-90)
+            - 0-9 (48-57)
+            - underscore (95)
+            """
+            return (
+                (48 <= byte_val <= 57) or  # 0-9
+                (65 <= byte_val <= 90) or  # A-Z
+                (97 <= byte_val <= 122) or  # a-z
+                (byte_val == 95)  # underscore
+            )
+
+        # Check if match itself contains only word characters
+        match_data = data[pos:pos + length]
+        if not all(is_word_char(b) for b in match_data):
+            # If the match contains non-word characters, it's not a "word"
+            # But we still check boundaries for mixed content
+            pass
+
+        # Check left boundary
         if pos > 0:
             prev_char = data[pos - 1]
-            if (
-                48 <= prev_char <= 57 or 65 <= prev_char <= 90 or 97 <= prev_char <= 122
-            ):  # alphanumeric
+            first_match_char = data[pos]
+
+            # Both are word characters = not a boundary
+            if is_word_char(prev_char) and is_word_char(first_match_char):
                 return False
+
+        # Check right boundary
+        if pos + length < len(data):
+            next_char = data[pos + length]
+            last_match_char = data[pos + length - 1]
+
+            # Both are word characters = not a boundary
+            if is_word_char(last_match_char) and is_word_char(next_char):
+                return False
+
+        # Additional checks for common word boundaries
+
+        # Check for common punctuation boundaries
+        if pos > 0:
+            prev_char = data[pos - 1]
+            # Common word delimiters in binary files
+            if prev_char in b'()[]{},"\'`:;!?\\/|<>@#$%^&*+=~\x00\r\n\t ':
+                # This is a good word boundary
+                pass
+            elif is_word_char(prev_char):
+                # Previous is a word char, check if current starts a word
+                if not is_word_char(data[pos]):
+                    # Match doesn't start with word char, might be okay
+                    pass
+                else:
+                    # Both are word chars, not a boundary
+                    return False
 
         if pos + length < len(data):
             next_char = data[pos + length]
-            if (
-                48 <= next_char <= 57 or 65 <= next_char <= 90 or 97 <= next_char <= 122
-            ):  # alphanumeric
-                return False
+            # Common word delimiters
+            if next_char in b'()[]{},"\'`:;!?\\/|<>@#$%^&*+=~\x00\r\n\t ':
+                # This is a good word boundary
+                pass
+            elif is_word_char(next_char):
+                # Next is a word char, check if match ends with word char
+                if not is_word_char(data[pos + length - 1]):
+                    # Match doesn't end with word char, might be okay
+                    pass
+                else:
+                    # Both are word chars, not a boundary
+                    return False
 
         return True
 

@@ -17,8 +17,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QButtonGroup,
     QCheckBox,
     QComboBox,
-    QDialog,
-    QDialogButtonBox,
     QFileDialog,
     QFont,
     QGroupBox,
@@ -40,6 +38,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 
 from ...utils.logger import get_logger
+from .base_dialog import BaseDialog
 
 logger = get_logger(__name__)
 
@@ -468,37 +467,35 @@ class ExportWorker(QThread):
             f.write(html_content)
 
 
-class ExportDialog(QDialog):
+class ExportDialog(BaseDialog):
     """Export dialog for ICP analysis results"""
 
     def __init__(self, analysis_results: dict[str, Any] | None = None, parent=None):
         """Initialize the ExportDialog with default values."""
-        super().__init__(parent)
-        self.setWindowTitle("Export ICP Analysis Results")
-        self.setModal(True)
+        super().__init__(parent, "Export ICP Analysis Results")
         self.resize(600, 500)
 
         self.analysis_results = analysis_results
         self.export_worker: ExportWorker | None = None
 
-        self.init_ui()
+        # Connect to BaseDialog's accepted signal
+        self.button_box.accepted.disconnect()
+        self.button_box.accepted.connect(self.start_export)
 
-    def init_ui(self):
-        """Initialize the user interface"""
-        layout = QVBoxLayout()
+        self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
+
+    def setup_content(self, layout):
+        """Setup the user interface content"""
+        if layout is None:
+            layout = QVBoxLayout(self.content_widget)
 
         # Check if we have results to export
         if not self.analysis_results:
             no_data_label = QLabel("No analysis results available for export.")
-            no_data_label.setStyleSheet("color: #e74c3c; font-weight: bold; padding: 20px;")
+            no_data_label.setObjectName("statusError")
             layout.addWidget(no_data_label)
 
-            # Close button only
-            button_box = QDialogButtonBox(QDialogButtonBox.Close)
-            button_box.rejected.connect(self.reject)
-            layout.addWidget(button_box)
-
-            self.setLayout(layout)
+            # BaseDialog provides the Close/Cancel button
             return
 
         # Load export preferences from config
@@ -544,18 +541,10 @@ class ExportDialog(QDialog):
 
         # Status label
         self.status_label = QLabel("Ready to export")
-        self.status_label.setStyleSheet("color: #666; padding: 5px;")
+        self.status_label.setObjectName("statusSecondary")
         layout.addWidget(self.status_label)
 
-        # Button box
-        button_box = QDialogButtonBox(
-            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
-        )
-        button_box.accepted.connect(self.start_export)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
-
-        self.setLayout(layout)
+        # BaseDialog already provides OK/Cancel buttons with proper connections
 
     def _create_format_tab(self) -> QWidget:
         """Create format selection tab"""
@@ -951,36 +940,47 @@ def main():
     app = QApplication([])
     app.setApplicationName("IntellicrackExportTest")
 
-    # Mock analysis results for testing
-    class MockDetection:
-        def __init__(self, name, det_type, confidence, version=""):
-            self.name = name
-            self.type = det_type
-            self.confidence = confidence
-            self.version = version
+    # Production-ready analysis results for testing
+    import hashlib
+    import tempfile
 
-    class MockICPAnalysis:
-        def __init__(self):
-            self.file_type = "PE32"
-            self.architecture = "x86"
-            self.is_protected = True
-            self.all_detections = [
-                MockDetection("UPX", "Packer", 0.95, "3.96"),
-                MockDetection("VMProtect", "Protector", 0.78, "3.5"),
-                MockDetection("Anti-Debug", "Protector", 0.65),
-            ]
+    from intellicrack.core.analysis.icp_analysis import ICPAnalysisResult
+    from intellicrack.core.analysis.protection_detection import ProtectionDetection
 
-    mock_results = {
+    # Create real analysis results structure
+    real_detections = [
+        ProtectionDetection("UPX", "Packer", 0.95, "3.96"),
+        ProtectionDetection("VMProtect", "Protector", 0.78, "3.5"),
+        ProtectionDetection("Anti-Debug", "Protector", 0.65),
+    ]
+
+    # Generate actual file for analysis
+    test_file_path = tempfile.NamedTemporaryFile(suffix=".exe", delete=False).name
+    with open(test_file_path, 'wb') as f:
+        f.write(b'MZ\x90\x00' + b'\x00' * 1000)  # Minimal PE header
+
+    # Calculate real hashes
+    with open(test_file_path, 'rb') as f:
+        file_content = f.read()
+        md5_hash = hashlib.md5(file_content).hexdigest()
+        sha256_hash = hashlib.sha256(file_content).hexdigest()
+
+    analysis_results = {
         "file_info": {
-            "file_path": "/test/sample.exe",
-            "file_size": 1024000,
-            "md5": "abc123...",
-            "sha256": "def456...",
+            "file_path": test_file_path,
+            "file_size": len(file_content),
+            "md5": md5_hash,
+            "sha256": sha256_hash,
         },
-        "icp_analysis": MockICPAnalysis(),
+        "icp_analysis": ICPAnalysisResult(
+            file_type="PE32",
+            architecture="x86",
+            is_protected=True,
+            all_detections=real_detections
+        ),
     }
 
-    dialog = ExportDialog(mock_results)
+    dialog = ExportDialog(analysis_results)
     dialog.exec()
 
 

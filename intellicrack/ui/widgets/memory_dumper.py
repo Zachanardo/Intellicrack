@@ -251,8 +251,8 @@ class MemoryDumperWidget(QWidget):
                             with open(f"/proc/{pid_dir}/comm") as f:
                                 name = f.read().strip()
                             self.process_combo.addItem(f"{name} (PID: {pid_dir})", int(pid_dir))
-                        except:
-                            pass
+                        except (FileNotFoundError, ValueError, OSError) as e:
+                            logger.debug(f"Failed to read process info for PID {pid_dir}: {e}")
             except Exception as e:
                 self.output_log.append(f"Failed to enumerate processes: {e}")
 
@@ -265,7 +265,8 @@ class MemoryDumperWidget(QWidget):
                 # Try to parse PID from text
                 text = self.process_combo.currentText()
                 pid = int(text.split("PID: ")[-1].rstrip(")"))
-            except:
+            except (ValueError, IndexError, AttributeError) as e:
+                logger.debug(f"Failed to parse PID from selection: {e}")
                 self.output_log.append("Invalid process selection")
                 return
 

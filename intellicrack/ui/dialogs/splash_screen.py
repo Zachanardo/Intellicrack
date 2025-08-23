@@ -82,15 +82,13 @@ class SplashScreen(QSplashScreen):
         # Setup progress bar
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setGeometry(50, pixmap.height() - 50, pixmap.width() - 100, 20)
-        from ..style_utils import get_splash_progress_bar_style
-
-        self.progress_bar.setStyleSheet(get_splash_progress_bar_style())
+        self.progress_bar.setObjectName("splashProgressBar")
 
         # Status label
         self.status_label = QLabel(self)
         self.status_label.setGeometry(50, pixmap.height() - 80, pixmap.width() - 100, 20)
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.status_label.setStyleSheet("color: white; background-color: transparent;")
+        self.status_label.setObjectName("splashStatusLabel")
 
         # Connect signal
         self.progress_updated.connect(self.update_progress)

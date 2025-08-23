@@ -233,16 +233,16 @@ except ImportError as e:
                         lines = result.stdout.strip().split('\n')
                         if len(lines) > 1:
                             return lines[1].strip() or ""
-                except:
-                    pass
+                except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as e:
+                    logger.debug(f"Failed to get process exe path: {e}")
             else:
                 # Try readlink on /proc/pid/exe (Linux)
                 proc_exe = f"/proc/{self._pid}/exe"
                 if os.path.exists(proc_exe):
                     try:
                         return os.readlink(proc_exe)
-                    except:
-                        pass
+                    except (OSError, FileNotFoundError) as e:
+                        logger.debug(f"Failed to read exe link for PID {self._pid}: {e}")
 
             return ""
 
@@ -265,8 +265,8 @@ except ImportError as e:
                         if len(lines) > 1:
                             cmdline = lines[1].strip()
                             return cmdline.split() if cmdline else []
-                except:
-                    pass
+                except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as e:
+                    logger.debug(f"Failed to get process cmdline: {e}")
             else:
                 # Try reading /proc/pid/cmdline (Linux)
                 proc_cmdline = f"/proc/{self._pid}/cmdline"
@@ -274,8 +274,8 @@ except ImportError as e:
                     try:
                         with open(proc_cmdline, 'r') as f:
                             return f.read().strip('\x00').split('\x00')
-                    except:
-                        pass
+                    except (IOError, OSError, FileNotFoundError) as e:
+                        logger.debug(f"Failed to read cmdline for PID {self._pid}: {e}")
 
             return []
 
@@ -335,8 +335,8 @@ except ImportError as e:
                                 'I': STATUS_IDLE
                             }
                             return status_map.get(status_char, STATUS_RUNNING)
-                    except:
-                        pass
+                    except (IOError, OSError, FileNotFoundError, IndexError) as e:
+                        logger.debug(f"Failed to read process status: {e}")
 
             return STATUS_RUNNING
 
@@ -457,21 +457,47 @@ except ImportError as e:
                                 return [percent]  # Simplified
                             return percent
                         except ValueError:
-                            pass
-            except:
-                pass
+                            logger.debug("Invalid CPU time value")
+            except (IOError, OSError, FileNotFoundError) as e:
+                logger.debug(f"Failed to read CPU times: {e}")
         else:
             # Read /proc/stat on Linux
             try:
                 with open('/proc/stat', 'r') as f:
-                    line = f.readline()
-                    if line.startswith('cpu'):
-                        # Very simplified CPU calculation
-                        if percpu:
-                            return [10.0]  # Placeholder
-                        return 10.0  # Placeholder
-            except:
-                pass
+                    lines = f.readlines()
+
+                    # Parse CPU usage from /proc/stat
+                    cpu_times = []
+                    for line in lines:
+                        if line.startswith('cpu'):
+                            parts = line.split()
+                            if len(parts) >= 5:
+                                # Calculate CPU usage percentage
+                                # Format: cpu user nice system idle ...
+                                user = int(parts[1])
+                                nice = int(parts[2])
+                                system = int(parts[3])
+                                idle = int(parts[4])
+
+                                total = user + nice + system + idle
+                                if total > 0:
+                                    usage = ((user + nice + system) / total) * 100.0
+
+                                    if line.startswith('cpu ') and not percpu:
+                                        # Overall CPU usage
+                                        return min(100.0, usage)
+                                    elif not line.startswith('cpu '):
+                                        # Per-CPU usage
+                                        cpu_times.append(min(100.0, usage))
+
+                    if percpu and cpu_times:
+                        return cpu_times
+                    elif percpu:
+                        # Return single CPU if no per-cpu data
+                        return [0.0]
+                    return 0.0
+            except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as e:
+                logger.debug(f"Failed to get CPU percent: {e}")
 
         if percpu:
             return [0.0]
@@ -485,7 +511,8 @@ except ImportError as e:
             else:
                 # Physical cores harder to detect, use logical / 2 as estimate
                 return max(1, (os.cpu_count() or 2) // 2)
-        except:
+        except (OSError, AttributeError) as e:
+            logger.debug(f"Failed to get CPU count: {e}")
             return 1
 
     def cpu_freq(percpu=False):
@@ -567,8 +594,8 @@ except ImportError as e:
                     mem.used = mem.total - mem.available
                     mem.percent = (mem.used / mem.total) * 100 if mem.total > 0 else 0
                     return mem
-            except:
-                pass
+            except (IOError, OSError, FileNotFoundError) as e:
+                logger.debug(f"Failed to get virtual memory: {e}")
 
         return VirtualMemory()
 
@@ -604,7 +631,8 @@ except ImportError as e:
             disk.free = usage.free
             disk.percent = (usage.used / usage.total) * 100 if usage.total > 0 else 0
             return disk
-        except:
+        except (OSError, FileNotFoundError, PermissionError) as e:
+            logger.debug(f"Failed to get disk usage for {path}: {e}")
             return DiskUsage()
 
     def disk_partitions(all=False):
@@ -705,8 +733,8 @@ except ImportError as e:
                             processes.append(FallbackProcess(pid))
                         except ValueError:
                             continue
-            except:
-                pass
+            except (IOError, OSError, FileNotFoundError) as e:
+                logger.debug(f"Failed to read network counters: {e}")
         else:
             # Try reading /proc on Linux
             proc_dir = "/proc"
@@ -732,7 +760,8 @@ except ImportError as e:
                     timeout=2
                 )
                 return result.returncode == 0 and str(pid) in result.stdout
-            except:
+            except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as e:
+                logger.debug(f"Failed to check if process {pid} exists: {e}")
                 return False
         else:
             try:

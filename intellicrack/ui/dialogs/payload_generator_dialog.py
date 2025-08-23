@@ -47,7 +47,7 @@ from ...core.exploitation import (
     PayloadType,
 )
 from ...utils.analysis.entropy_utils import calculate_byte_entropy
-from .base_dialog import BaseTemplateDialog
+from .base_dialog import BaseDialog
 
 """
 Payload Generator Dialog
@@ -92,7 +92,7 @@ class PayloadGenerationThread(QThread):
             self.error.emit(str(e))
 
 
-class PayloadGeneratorDialog(BaseTemplateDialog):
+class PayloadGeneratorDialog(BaseDialog):
     """Advanced payload generator dialog with comprehensive options
     for creating custom exploitation payloads.
     """

@@ -1256,8 +1256,8 @@ class HexViewerWidget(QWidget):
                             matched_text = match.group(0).decode('utf-8', errors='ignore')
                             item_text = f"0x{offset:08X}: {description} - '{matched_text}'"
                             results_list.addItem(item_text)
-                except:
-                    pass
+                except (struct.error, ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse signature match: {e}")
 
             info_label.setText(f"Found {found_count} license-related patterns:")
 

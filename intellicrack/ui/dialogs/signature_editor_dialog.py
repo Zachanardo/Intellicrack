@@ -1160,7 +1160,8 @@ ep:
         try:
             size = os.path.getsize(file_path)
             size_str = f"{size:,} bytes"
-        except:
+        except (OSError, FileNotFoundError) as e:
+            logger.debug(f"Failed to get file size for {file_path}: {e}")
             size_str = "Unknown"
 
         size_item = QStandardItem(size_str)

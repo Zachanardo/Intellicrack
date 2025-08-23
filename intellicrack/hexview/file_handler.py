@@ -642,7 +642,7 @@ class VirtualFileAccess:
         """Insert data at the specified offset.
 
         This operation increases the file size by the length of the inserted data.
-        All subsequent data is shifted right.
+        All subsequent data is shifted right. Uses temporary file for memory efficiency.
 
         Args:
             offset: Offset where to insert the data
@@ -666,37 +666,60 @@ class VirtualFileAccess:
             logger.warning("Insert called with empty data")
             return True
 
+        import shutil
+        import tempfile
+
         try:
-            # For insert operations, we need to:
-            # 1. Read all data from offset to end of file
-            # 2. Write the new data at offset
-            # 3. Write the shifted data after the new data
+            # Create a temporary file in the same directory as the original file
+            temp_fd, temp_path = tempfile.mkstemp(
+                dir=os.path.dirname(self.file_path),
+                prefix="intellicrack_insert_"
+            )
 
-            if offset < self.file_size:
-                # Read data from insertion point to end of file
-                remaining_data = self.chunk_manager.read_data(offset, self.file_size - offset)
-                if remaining_data is None:
-                    logger.error("Failed to read data for insert operation at offset %s", offset)
-                    return False
-            else:
-                remaining_data = b""
+            with os.fdopen(temp_fd, 'wb') as temp_file:
+                # Copy data up to insertion point
+                if offset > 0:
+                    self.read_file.seek(0)
+                    chunk_size = 1024 * 1024  # 1MB chunks
+                    bytes_copied = 0
+                    while bytes_copied < offset:
+                        to_read = min(chunk_size, offset - bytes_copied)
+                        chunk = self.read_file.read(to_read)
+                        if not chunk:
+                            break
+                        temp_file.write(chunk)
+                        bytes_copied += len(chunk)
 
-            # Seek to insertion point and write new data
-            self.write_file.seek(offset)
-            self.write_file.write(data)
+                # Write the new data
+                temp_file.write(data)
 
-            # Write the shifted data
-            if remaining_data:
-                self.write_file.write(remaining_data)
+                # Copy remaining data after insertion point
+                if offset < self.file_size:
+                    self.read_file.seek(offset)
+                    chunk_size = 1024 * 1024  # 1MB chunks
+                    while True:
+                        chunk = self.read_file.read(chunk_size)
+                        if not chunk:
+                            break
+                        temp_file.write(chunk)
+
+            # Close the original write file
+            if self.write_file:
+                self.write_file.close()
+
+            # Replace original file with temporary file
+            shutil.move(temp_path, self.file_path)
+
+            # Reopen the file for writing
+            self.write_file = open(self.file_path, 'r+b')
+            self.read_file = self.write_file
 
             # Update file size
             self.file_size += len(data)
 
-            # Flush changes
-            self.write_file.flush()
-
             # Update chunk manager for new file size
             self.chunk_manager.file_size = self.file_size
+            self.chunk_manager.file_obj = self.write_file
 
             logger.info(
                 f"Inserted {len(data)} bytes at offset {offset}, new file size: {self.file_size}"
@@ -705,13 +728,19 @@ class VirtualFileAccess:
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error inserting data at offset %s: %s", offset, e)
+            # Clean up temp file if it exists
+            if 'temp_path' in locals() and os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except OSError:
+                    pass
             return False
 
     def delete(self, offset: int, length: int) -> bool:
         """Delete data at the specified offset.
 
         This operation decreases the file size by the length of the deleted data.
-        All subsequent data is shifted left.
+        All subsequent data is shifted left. Uses temporary file for memory efficiency.
 
         Args:
             offset: Starting offset to delete from
@@ -740,43 +769,58 @@ class VirtualFileAccess:
             length = self.file_size - offset
             logger.warning("Delete length clamped to %s to fit file bounds", length)
 
+        import shutil
+        import tempfile
+
         try:
-            # For delete operations, we need to:
-            # 1. Read all data after the deletion range
-            # 2. Write that data starting at the deletion offset
-            # 3. Truncate the file to the new size
+            # Create a temporary file in the same directory as the original file
+            temp_fd, temp_path = tempfile.mkstemp(
+                dir=os.path.dirname(self.file_path),
+                prefix="intellicrack_delete_"
+            )
 
-            end_offset = offset + length
-            if end_offset < self.file_size:
-                # Read data after the deletion range
-                remaining_data = self.chunk_manager.read_data(
-                    end_offset, self.file_size - end_offset
-                )
-                if remaining_data is None:
-                    logger.error(
-                        "Failed to read data for delete operation at offset %s", end_offset
-                    )
-                    return False
-            else:
-                remaining_data = b""
+            with os.fdopen(temp_fd, 'wb') as temp_file:
+                # Copy data up to deletion point
+                if offset > 0:
+                    self.read_file.seek(0)
+                    chunk_size = 1024 * 1024  # 1MB chunks
+                    bytes_copied = 0
+                    while bytes_copied < offset:
+                        to_read = min(chunk_size, offset - bytes_copied)
+                        chunk = self.read_file.read(to_read)
+                        if not chunk:
+                            break
+                        temp_file.write(chunk)
+                        bytes_copied += len(chunk)
 
-            # Seek to deletion start and write the remaining data
-            self.write_file.seek(offset)
-            if remaining_data:
-                self.write_file.write(remaining_data)
+                # Skip the deleted portion and copy remaining data
+                end_offset = offset + length
+                if end_offset < self.file_size:
+                    self.read_file.seek(end_offset)
+                    chunk_size = 1024 * 1024  # 1MB chunks
+                    while True:
+                        chunk = self.read_file.read(chunk_size)
+                        if not chunk:
+                            break
+                        temp_file.write(chunk)
+
+            # Close the original write file
+            if self.write_file:
+                self.write_file.close()
+
+            # Replace original file with temporary file
+            shutil.move(temp_path, self.file_path)
+
+            # Reopen the file for writing
+            self.write_file = open(self.file_path, 'r+b')
+            self.read_file = self.write_file
 
             # Update file size
-            new_file_size = self.file_size - length
-
-            # Truncate the file to new size
-            self.write_file.truncate(new_file_size)
-            self.file_size = new_file_size
-
-            # Flush changes
-            self.write_file.flush()
+            self.file_size -= length
 
             # Update chunk manager for new file size
             self.chunk_manager.file_size = self.file_size
+            self.chunk_manager.file_obj = self.write_file
 
             logger.info(
                 "Deleted %s bytes at offset %s, new file size: %s", length, offset, self.file_size
@@ -785,6 +829,12 @@ class VirtualFileAccess:
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error deleting data at offset %s: %s", offset, e)
+            # Clean up temp file if it exists
+            if 'temp_path' in locals() and os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except OSError:
+                    pass
             return False
 
     def get_modification_time(self) -> float:

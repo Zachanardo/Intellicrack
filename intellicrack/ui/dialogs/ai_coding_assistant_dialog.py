@@ -19,7 +19,6 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
-import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -28,7 +27,6 @@ from typing import Any
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
     QCheckBox,
-    QColor,
     QComboBox,
     QDialog,
     QFileDialog,
@@ -44,10 +42,8 @@ from intellicrack.handlers.pyqt6_handler import (
     QPushButton,
     QSplitter,
     QStatusBar,
-    QSyntaxHighlighter,
     Qt,
     QTabWidget,
-    QTextCharFormat,
     QTextEdit,
     QToolBar,
     QTreeWidget,
@@ -58,163 +54,13 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 
 from ...utils.logger import get_logger
+from ..widgets.syntax_highlighters import JavaScriptHighlighter, PythonHighlighter
 
 logger = get_logger(__name__)
 
 
-class PythonSyntaxHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for Python code."""
-
-    def __init__(self, parent=None):
-        """Initialize the PythonSyntaxHighlighter with default values."""
-        super().__init__(parent)
-        self.highlighting_rules = []
-
-        # Keywords
-        keyword_format = QTextCharFormat()
-        keyword_format.setColor(QColor(255, 165, 0))  # Orange
-        keyword_format.setFontWeight(QFont.Bold)
-        keywords = [
-            "def",
-            "class",
-            "if",
-            "elif",
-            "else",
-            "for",
-            "while",
-            "try",
-            "except",
-            "finally",
-            "import",
-            "from",
-            "return",
-            "yield",
-            "lambda",
-            "with",
-            "as",
-            "pass",
-            "break",
-            "continue",
-            "and",
-            "or",
-            "not",
-            "in",
-            "is",
-            "None",
-            "True",
-            "False",
-        ]
-        for keyword in keywords:
-            pattern = f"\\b{keyword}\\b"
-            self.highlighting_rules.append((re.compile(pattern), keyword_format))
-
-        # Strings
-        string_format = QTextCharFormat()
-        string_format.setColor(QColor(144, 238, 144))  # Light green
-        self.highlighting_rules.append((re.compile(r'".*?"'), string_format))
-        self.highlighting_rules.append((re.compile(r"'.*?'"), string_format))
-
-        # Comments
-        comment_format = QTextCharFormat()
-        comment_format.setColor(QColor(128, 128, 128))  # Gray
-        self.highlighting_rules.append((re.compile(r"#.*"), comment_format))
-
-        # Functions
-        function_format = QTextCharFormat()
-        function_format.setColor(QColor(100, 149, 237))  # Cornflower blue
-        self.highlighting_rules.append(
-            (re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*(?=\()"), function_format)
-        )
-
-        # Numbers
-        number_format = QTextCharFormat()
-        number_format.setColor(QColor(255, 182, 193))  # Light pink
-        self.highlighting_rules.append((re.compile(r"\b\d+(\.\d+)?\b"), number_format))
-
-    def highlightBlock(self, text):
-        """Apply Python syntax highlighting to a block of text."""
-        for pattern, format in self.highlighting_rules:
-            for match in pattern.finditer(text):
-                start, end = match.span()
-                self.setFormat(start, end - start, format)
 
 
-class JavaScriptSyntaxHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for JavaScript code."""
-
-    def __init__(self, parent=None):
-        """Initialize the JavaScriptSyntaxHighlighter with default values."""
-        super().__init__(parent)
-        self.highlighting_rules = []
-
-        # Keywords
-        keyword_format = QTextCharFormat()
-        keyword_format.setColor(QColor(255, 165, 0))  # Orange
-        keyword_format.setFontWeight(QFont.Bold)
-        keywords = [
-            "function",
-            "var",
-            "let",
-            "const",
-            "if",
-            "else",
-            "for",
-            "while",
-            "do",
-            "switch",
-            "case",
-            "default",
-            "break",
-            "continue",
-            "return",
-            "try",
-            "catch",
-            "finally",
-            "throw",
-            "new",
-            "this",
-            "typeof",
-            "instanceof",
-            "true",
-            "false",
-            "null",
-            "undefined",
-        ]
-        for keyword in keywords:
-            pattern = f"\\b{keyword}\\b"
-            self.highlighting_rules.append((re.compile(pattern), keyword_format))
-
-        # Strings
-        string_format = QTextCharFormat()
-        string_format.setColor(QColor(144, 238, 144))  # Light green
-        self.highlighting_rules.append((re.compile(r'".*?"'), string_format))
-        self.highlighting_rules.append((re.compile(r"'.*?'"), string_format))
-        self.highlighting_rules.append((re.compile(r"`.*?`"), string_format))
-
-        # Comments
-        comment_format = QTextCharFormat()
-        comment_format.setColor(QColor(128, 128, 128))  # Gray
-        self.highlighting_rules.append((re.compile(r"//.*"), comment_format))
-        self.highlighting_rules.append((re.compile(r"/\*.*?\*/"), comment_format))
-
-        # Functions
-        function_format = QTextCharFormat()
-        function_format.setColor(QColor(100, 149, 237))  # Cornflower blue
-        self.highlighting_rules.append(
-            (re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*(?=\()"), function_format)
-        )
-
-        # Numbers
-        number_format = QTextCharFormat()
-        number_format.setColor(QColor(255, 182, 193))  # Light pink
-        self.highlighting_rules.append((re.compile(r"\b\d+(\.\d+)?\b"), number_format))
-
-    def highlightBlock(self, text):
-        """Apply JavaScript syntax highlighting to a block of text."""
-        for pattern, format in self.highlighting_rules:
-            for match in pattern.finditer(text):
-                start, end = match.span()
-                self.setFormat(start, end - start, format)
 
 
 class FileTreeWidget(QTreeWidget):
@@ -433,9 +279,9 @@ class CodeEditor(QPlainTextEdit):
         file_ext = Path(file_path).suffix.lower()
 
         if file_ext == ".py":
-            self.syntax_highlighter = PythonSyntaxHighlighter(self.document())
+            self.syntax_highlighter = PythonHighlighter(self.document())
         elif file_ext == ".js":
-            self.syntax_highlighter = JavaScriptSyntaxHighlighter(self.document())
+            self.syntax_highlighter = JavaScriptHighlighter(self.document())
         # Add more syntax highlighters as needed
 
     def on_text_changed(self):
@@ -562,15 +408,12 @@ class ChatWidget(QWidget):
         self.conversation_history.clear()
 
 
-class AICodingAssistantDialog(QDialog):
-    """AI Coding Assistant with three-panel layout similar to Claude Code."""
+class AICodingAssistantWidget(QWidget):
+    """AI Coding Assistant Widget with three-panel layout - extracted from dialog for reuse."""
 
     def __init__(self, parent=None):
-        """Initialize the AICodingAssistantDialog with development environment features."""
+        """Initialize the AICodingAssistantWidget with development environment features."""
         super().__init__(parent)
-        self.setWindowTitle("AI Coding Assistant")
-        self.setMinimumSize(1200, 800)
-        self.resize(1400, 900)
 
         # Main state
         self.current_project_dir = None
@@ -589,7 +432,113 @@ class AICodingAssistantDialog(QDialog):
         # Load initial state
         self.load_initial_project()
 
-        logger.info("AI Coding Assistant Dialog initialized")
+    def setup_ui(self):
+        """Set up the three-panel UI layout."""
+        layout = QVBoxLayout(self)
+
+        # Menu bar
+        self.setup_menu_bar(layout)
+
+        # Main content area with three panels
+        main_splitter = QSplitter(Qt.Horizontal)
+
+        # Left panel: File tree
+        left_panel = self.create_file_panel()
+        main_splitter.addWidget(left_panel)
+
+        # Center panel: Code editor with tabs
+        center_panel = self.create_editor_panel()
+        main_splitter.addWidget(center_panel)
+
+        # Right panel: AI chat and tools
+        right_panel = self.create_ai_panel()
+        main_splitter.addWidget(right_panel)
+
+        # Set splitter proportions (25%, 50%, 25%)
+        main_splitter.setStretchFactor(0, 1)
+        main_splitter.setStretchFactor(1, 2)
+        main_splitter.setStretchFactor(2, 1)
+
+        layout.addWidget(main_splitter)
+
+        # Status bar
+        self.setup_status_bar(layout)
+
+    def setup_menu_bar(self, layout):
+        """Set up the menu bar."""
+        # Simplified menu bar for widget - full implementation when needed
+        pass
+
+    def create_file_panel(self) -> QWidget:
+        """Create the left file navigation panel."""
+        panel = QLabel("File Explorer\n(Coming in Phase 4)")
+        panel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        panel.setObjectName("placeholderPanel")
+        return panel
+
+    def create_editor_panel(self) -> QWidget:
+        """Create the center code editor panel."""
+        panel = QLabel("Code Editor\n(Coming in Phase 4)")
+        panel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        panel.setObjectName("placeholderPanel")
+        return panel
+
+    def create_ai_panel(self) -> QWidget:
+        """Create the right AI assistant panel."""
+        panel = QLabel("AI Assistant\n(Coming in Phase 4)")
+        panel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        panel.setObjectName("placeholderPanel")
+        return panel
+
+    def setup_status_bar(self, layout):
+        """Set up the status bar."""
+        # Simplified status bar for widget
+        pass
+
+    def setup_connections(self):
+        """Set up signal connections."""
+        # Simplified connections for widget
+        pass
+
+    def setup_shortcuts(self):
+        """Set up keyboard shortcuts."""
+        # Simplified shortcuts for widget
+        pass
+
+    def load_initial_project(self):
+        """Load initial project state."""
+        # Simplified initial loading for widget
+        pass
+
+
+class AICodingAssistantDialog(QDialog):
+    """AI Coding Assistant with three-panel layout similar to Claude Code."""
+
+    def __init__(self, parent=None):
+        """Initialize the AICodingAssistantDialog as a container for the widget."""
+        super().__init__(parent)
+        self.setWindowTitle("AI Coding Assistant")
+        self.setMinimumSize(1200, 800)
+        self.resize(1400, 900)
+
+        # Create layout and add the widget
+        layout = QVBoxLayout(self)
+
+        # Create the AI Coding Assistant widget
+        self.ai_widget = AICodingAssistantWidget(self)
+        layout.addWidget(self.ai_widget)
+
+        # Set layout with no margins for seamless integration
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # Delegate properties to widget for backward compatibility
+        self.current_project_dir = self.ai_widget.current_project_dir
+        self.current_file = self.ai_widget.current_file
+        self.llm_enabled = self.ai_widget.llm_enabled
+        self.worker_thread = self.ai_widget.worker_thread
+        self.generation_thread = self.ai_widget.generation_thread
+
+        logger.info("AI Coding Assistant Dialog initialized with widget")
 
     def setup_ui(self):
         """Set up the three-panel UI layout."""
@@ -675,7 +624,7 @@ class AICodingAssistantDialog(QDialog):
 
         # Panel header
         header = QLabel("Project Explorer")
-        header.setStyleSheet("font-weight: bold; padding: 5px;")
+        header.setObjectName("headerBold")
         layout.addWidget(header)
 
         # File tree
@@ -745,7 +694,7 @@ class AICodingAssistantDialog(QDialog):
 
         # Panel header
         header = QLabel("AI Assistant")
-        header.setStyleSheet("font-weight: bold; padding: 5px;")
+        header.setObjectName("headerBold")
         layout.addWidget(header)
 
         # Chat widget

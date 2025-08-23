@@ -121,8 +121,8 @@ class SystemMonitorWorker(QObject):
                     gpu_percent = gpu.load * 100
                     gpu_memory_percent = gpu.memoryUtil * 100
                     gpu_temp = gpu.temperature
-            except:
-                pass
+            except (ImportError, AttributeError, Exception) as e:
+                logger.debug(f"Failed to get GPU metrics: {e}")
 
         # Network I/O
         net_io = psutil.net_io_counters()
@@ -503,6 +503,14 @@ class SystemMonitorWidget(QWidget):
             self.memory_threshold = memory
         if gpu is not None:
             self.gpu_threshold = gpu
+
+    def set_refresh_interval(self, interval_ms: int):
+        """Set the refresh interval for monitoring"""
+        self.update_interval = interval_ms
+        if hasattr(self, 'interval_spin'):
+            self.interval_spin.setValue(interval_ms)
+        if hasattr(self, 'monitor_worker'):
+            self.monitor_worker.update_interval = interval_ms
 
     def export_metrics(self, filepath: str):
         """Export metrics history to file"""

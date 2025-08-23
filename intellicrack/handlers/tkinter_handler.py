@@ -270,6 +270,7 @@ except ImportError as e:
             self.title_text = "Tk"
             self.geometry_string = "200x200+100+100"
             self.protocol_bindings = {}
+            self._pending_protocols = []
             self.withdrawn = False
             self.iconified = False
             logger.info("Fallback Tk window created: %s", self.widget_id)
@@ -336,14 +337,30 @@ except ImportError as e:
         def protocol(self, name, func):
             """Set protocol handler."""
             self.protocol_bindings[name] = func
+            # For WM_DELETE_WINDOW and similar, queue for immediate processing
+            if name in ["WM_DELETE_WINDOW", "WM_SAVE_YOURSELF", "WM_TAKE_FOCUS"]:
+                if not hasattr(self, '_pending_protocols'):
+                    self._pending_protocols = []
+                self._pending_protocols.append((name, func))
             logger.debug("Window %s: Protocol '%s' bound", self.widget_id, name)
 
         def mainloop(self):
             """Start event loop."""
             logger.info("Window %s: Entering mainloop (fallback mode)", self.widget_id)
-            # Simulate event loop
+            # Headless event loop - processes window lifecycle without GUI rendering
             try:
                 while not self.destroyed:
+                    # Process any pending protocol callbacks
+                    if hasattr(self, '_pending_protocols'):
+                        for protocol, func in self._pending_protocols:
+                            if callable(func):
+                                try:
+                                    func()
+                                except Exception as e:
+                                    logger.error("Protocol callback error: %s", e)
+                        self._pending_protocols.clear()
+
+                    # Minimal event processing delay
                     time.sleep(0.1)
             except KeyboardInterrupt:
                 logger.info("Mainloop interrupted")

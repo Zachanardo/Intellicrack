@@ -842,9 +842,9 @@ class MemoryForensicsEngine:
                             f"Suspicious file extension for system process: {image_path}"
                         )
 
-            except Exception:
+            except Exception as e:
                 # Continue analysis if path checking fails
-                pass
+                logger.debug(f"Error checking process path: {e}")
             if process.ppid == 0 and process.name.lower() != "system":
                 indicators.append("Suspicious parent process ID")
 
@@ -1101,7 +1101,8 @@ class MemoryForensicsEngine:
                             "path": module_name,
                         }
                     )
-                except:
+                except (OSError, WindowsError, Exception) as e:
+                    logger.debug(f"Failed to get module info for {hex(module)}: {e}")
                     continue
 
             # Memory regions analysis
@@ -1231,8 +1232,14 @@ class MemoryForensicsEngine:
                             "status": conn.status,
                         }
                     )
-            except:
-                pass
+            except (ImportError, AttributeError) as e:
+                logger.debug(f"psutil not available for network connections: {e}")
+            except psutil.NoSuchProcess:
+                logger.debug(f"Process {process_id} no longer exists")
+            except psutil.AccessDenied:
+                logger.debug(f"Access denied to process {process_id} network connections")
+            except Exception as e:
+                logger.debug(f"Failed to get network connections for process {process_id}: {e}")
 
             # Close handle
             win32api.CloseHandle(h_process)
@@ -1353,8 +1360,12 @@ class MemoryForensicsEngine:
                                             "size": end - start,
                                         }
                                     )
-                        except:
+                        except (IOError, OSError, PermissionError) as e:
                             region_info["read_error"] = True
+                            logger.debug(f"Failed to read memory region {hex(start)}-{hex(end)}: {e}")
+                        except ValueError as e:
+                            region_info["read_error"] = True
+                            logger.debug(f"Invalid memory region values: {e}")
 
                         memory_regions.append(region_info)
 
@@ -1366,8 +1377,10 @@ class MemoryForensicsEngine:
                         if ":" in line:
                             key, value = line.split(":", 1)
                             status_info[key.strip()] = value.strip()
-            except:
-                pass
+            except (FileNotFoundError, IOError, OSError) as e:
+                logger.debug(f"Failed to read process status for PID {process_id}: {e}")
+            except ValueError as e:
+                logger.debug(f"Error parsing process status line: {e}")
 
             # Get network connections
             connections = []
@@ -1398,10 +1411,17 @@ class MemoryForensicsEngine:
                                                             "state": fields[3],
                                                         }
                                                     )
-                                            except:
+                                            except (OSError, FileNotFoundError) as e:
+                                                # File descriptor might have closed
+                                                logger.debug(f"Failed to read fd {fd}: {e}")
                                                 continue
-            except:
-                pass
+                                            except Exception as e:
+                                                logger.debug(f"Error processing fd {fd}: {e}")
+                                                continue
+            except (FileNotFoundError, IOError, OSError) as e:
+                logger.debug(f"Failed to read network connections from /proc/net: {e}")
+            except Exception as e:
+                logger.debug(f"Error parsing network connections: {e}")
 
             # Look for injected code
             injected_regions = []
@@ -1470,7 +1490,11 @@ class MemoryForensicsEngine:
                 host_ip = ":".join(host[i : i + 4] for i in range(0, len(host), 4))
             port_num = int(port, 16)
             return f"{host_ip}:{port_num}"
-        except:
+        except ValueError as e:
+            logger.debug(f"Invalid address format '{addr_str}': {e}")
+            return addr_str
+        except AttributeError as e:
+            logger.debug(f"Error parsing address '{addr_str}': {e}")
             return addr_str
 
     def extract_strings(self, memory_data: bytes, min_length: int = 4) -> list[str]:

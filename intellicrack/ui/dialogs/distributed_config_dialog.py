@@ -24,8 +24,6 @@ from typing import Any
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QComboBox,
-    QDialog,
-    QDialogButtonBox,
     QFormLayout,
     QGroupBox,
     QLabel,
@@ -34,10 +32,12 @@ from intellicrack.handlers.pyqt6_handler import (
     QVBoxLayout,
 )
 
+from .base_dialog import BaseDialog
+
 __all__ = ["DistributedProcessingConfigDialog"]
 
 
-class DistributedProcessingConfigDialog(QDialog):
+class DistributedProcessingConfigDialog(BaseDialog):
     """Configuration dialog for distributed processing setup.
 
     Provides a user interface for configuring distributed processing parameters
@@ -52,15 +52,15 @@ class DistributedProcessingConfigDialog(QDialog):
             parent: Optional parent widget
 
         """
-        super().__init__(parent)
+        super().__init__(parent, "Distributed Processing Configuration")
         self.binary_path = binary_path
-        self.setWindowTitle("Distributed Processing Configuration")
-        self.setModal(True)
-        self.setup_ui()
+        self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
 
-    def setup_ui(self) -> None:
+    def setup_content(self, layout) -> None:
         """Set up the dialog user interface."""
-        layout = QVBoxLayout()
+        if not layout:
+            layout = QVBoxLayout()
+            self.content_widget.setLayout(layout)
 
         # Header
         header_label = QLabel(f"<b>Configure distributed processing for:</b><br>{self.binary_path}")
@@ -185,14 +185,6 @@ class DistributedProcessingConfigDialog(QDialog):
         )
         perf_hint.setWordWrap(True)
         layout.addWidget(perf_hint)
-
-        # Buttons
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        buttons.accepted.connect(self.accept)
-        buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
-
-        self.setLayout(layout)
 
     def get_config(self) -> dict[str, Any]:
         """Get the configuration from the dialog.

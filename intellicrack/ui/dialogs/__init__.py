@@ -69,12 +69,9 @@ except ImportError as e:
     logger.warning("Failed to import similarity_search_dialog: %s", e)
     BinarySimilaritySearchDialog = None
 
-try:
-    from .base_dialog import BaseTemplateDialog, BinarySelectionDialog
-except ImportError as e:
-    logger.warning("Failed to import base_dialog: %s", e)
-    BinarySelectionDialog = None
-    BaseTemplateDialog = None
+# BaseTemplateDialog and BinarySelectionDialog don't exist in base_dialog
+BinarySelectionDialog = None
+BaseTemplateDialog = None
 
 try:
     from .splash_screen import SplashScreen

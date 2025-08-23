@@ -364,7 +364,7 @@ class DemoPlugin(BasePlugin):
 
         # Extract configuration from options
         create_backup = options.get("create_backup", True)
-        patch_mode = options.get("mode", "analysis")  # 'analysis', 'apply', 'simulate'
+        patch_mode = options.get("mode", "analysis")  # 'analysis', 'apply', 'test'
         target_offset = options.get("target_offset")
         patch_bytes = options.get("patch_bytes")
         patch_type = options.get("patch_type", "auto")  # 'nop', 'jmp', 'call', 'custom'
@@ -434,9 +434,50 @@ class DemoPlugin(BasePlugin):
                         results.append("✅ Patch applied successfully at target offset")
                     else:
                         results.append("❌ Failed to apply patch at target offset")
-                elif patch_mode == "simulate":
-                    results.append("🔄 Simulating patch at target offset...")
-                    results.append(f"   Would write {len(patch_bytes) if patch_bytes else 0} bytes")
+                elif patch_mode == "test":
+                    results.append("🧪 Testing patch at target offset in safe environment...")
+
+                    # Create in-memory copy for testing
+                    try:
+                        import shutil
+                        import tempfile
+
+                        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                            # Copy original file to temp
+                            shutil.copy2(file_path, temp_file.name)
+
+                            # Apply patch to temp file
+                            with open(temp_file.name, "rb+") as f:
+                                f.seek(target_offset)
+                                original_bytes = f.read(len(patch_bytes) if patch_bytes else 1)
+                                f.seek(target_offset)
+                                f.write(patch_bytes)
+
+                            # Validate patched file
+                            with open(temp_file.name, "rb") as f:
+                                f.seek(target_offset)
+                                written_bytes = f.read(len(patch_bytes) if patch_bytes else 1)
+
+                            if written_bytes == patch_bytes:
+                                results.append("✅ Test patch applied successfully")
+                                results.append(f"   Original bytes: {original_bytes.hex()}")
+                                results.append(f"   New bytes: {written_bytes.hex()}")
+
+                                # Basic integrity check
+                                file_size = Path(temp_file.name).stat().st_size
+                                if file_size > 0:
+                                    results.append("✅ File integrity maintained")
+                                else:
+                                    results.append("⚠️ File integrity check failed")
+                            else:
+                                results.append("❌ Test patch verification failed")
+
+                            # Clean up temp file
+                            os.unlink(temp_file.name)
+
+                    except Exception as test_error:
+                        results.append(f"❌ Test patch failed: {test_error}")
+                        results.append(f"   Patch size: {len(patch_bytes) if patch_bytes else 0} bytes")
 
             # Demonstrate various patch scenarios based on patch_type
             patch_opportunities = []
@@ -742,7 +783,70 @@ class DemoPlugin(BasePlugin):
 
     def _update_pe_checksum(self, binary_path: str):
         """Update PE file checksum after patching."""
-        # This is a placeholder - real implementation would calculate proper PE checksum
+        import struct
+
+        try:
+            with open(binary_path, "rb+") as f:
+                # Read DOS header to get PE header offset
+                f.seek(0x3C)
+                pe_offset = struct.unpack("<I", f.read(4))[0]
+
+                # Verify PE signature
+                f.seek(pe_offset)
+                signature = f.read(4)
+                if signature != b"PE\x00\x00":
+                    self.logger.error(f"Not a valid PE file: {binary_path}")
+                    return False
+
+                # Get checksum offset in Optional Header
+                # PE header (4) + COFF header (20) + Optional header offset (64)
+                checksum_offset = pe_offset + 4 + 20 + 64
+
+                # Calculate new checksum
+                f.seek(0)
+                file_data = f.read()
+                file_size = len(file_data)
+
+                # Calculate checksum (sum of all WORDs in file)
+                checksum = 0
+                limit = file_size & ~1  # Round down to even number
+
+                # Process file as array of 16-bit values
+                for i in range(0, limit, 2):
+                    # Skip the checksum field itself
+                    if i == checksum_offset or i == checksum_offset + 1:
+                        continue
+
+                    word = struct.unpack("<H", file_data[i:i+2])[0]
+                    checksum = (checksum + word) & 0xFFFFFFFF
+
+                    # Handle carry
+                    if checksum > 0xFFFF:
+                        checksum = (checksum & 0xFFFF) + (checksum >> 16)
+
+                # Add remaining byte if file size is odd
+                if file_size & 1:
+                    checksum = (checksum + file_data[-1]) & 0xFFFFFFFF
+                    if checksum > 0xFFFF:
+                        checksum = (checksum & 0xFFFF) + (checksum >> 16)
+
+                # Fold final carries
+                checksum = (checksum & 0xFFFF) + (checksum >> 16)
+                checksum = (checksum & 0xFFFF) + (checksum >> 16)
+
+                # Add file size
+                checksum = (checksum + file_size) & 0xFFFFFFFF
+
+                # Write new checksum to file
+                f.seek(checksum_offset)
+                f.write(struct.pack("<I", checksum))
+
+                self.logger.debug(f"Updated PE checksum to 0x{checksum:08X}")
+                return True
+
+        except Exception as e:
+            self.logger.error(f"Failed to update PE checksum: {e}")
+            return False
 
     def configure(self, new_config: dict[str, Any]) -> bool:
         """Update plugin configuration."""

@@ -665,14 +665,12 @@ def create_simple_fallback_chain(
                 logger.warning(f"Model {model_id} not found in LLM manager")
                 continue
 
-            # We'll use a placeholder config - the actual config is already registered
-            from .llm_backends import LLMConfig, LLMProvider
-
-            placeholder_config = LLMConfig(
-                provider=LLMProvider.OPENAI,  # Placeholder
-                model_name=model_id,
-            )
-            model_configs.append((model_id, placeholder_config))
+            # Use the actual config from the LLM manager
+            actual_config = llm_manager.configs.get(model_id)
+            if actual_config:
+                model_configs.append((model_id, actual_config))
+            else:
+                logger.warning(f"Config for model {model_id} not found in LLM manager configs")
         else:
             logger.warning(
                 f"Model {model_id} not found in LLM manager and use_existing_configs=False not supported"

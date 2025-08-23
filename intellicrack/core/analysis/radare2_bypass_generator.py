@@ -19,6 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+import re
 from typing import Any
 
 from ...utils.tools.radare2_utils import R2Exception, r2_session
@@ -1036,8 +1037,8 @@ if __name__ == "__main__":
                     ivs.append(potential_iv)
                     if len(ivs) >= 3:  # Limit to first 3 potential IVs
                         break
-        except:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to find initialization vectors: {e}")
         return ivs
 
     def _find_salts(self, r2, func_addr: int) -> list[str]:
@@ -1051,8 +1052,8 @@ if __name__ == "__main__":
                     string_val = s.get("string", "")
                     if 8 <= len(string_val) <= 32:  # Typical salt size
                         salts.append(string_val)
-        except:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to find salts: {e}")
         return salts
 
     def _extract_validation_logic(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
@@ -2760,7 +2761,7 @@ def generate_key():
         elif condition_analysis["type"] == "memory_comparison":
             return "patch_memory_value"
         elif condition_analysis["type"] == "function_return_check":
-            return "fake_return_value"
+            return "return_value_injection"
         elif condition_analysis["type"] == "bitwise_test":
             return "clear_test_bits"
         else:

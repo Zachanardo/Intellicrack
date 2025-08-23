@@ -28,7 +28,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QColor,
     QComboBox,
-    QDialog,
     QFileDialog,
     QFont,
     QGroupBox,
@@ -53,6 +52,7 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 
 from ...core.c2 import C2Server
+from .base_dialog import BaseDialog
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +131,7 @@ class C2ServerThread(QThread):
         )
 
 
-class C2ManagementDialog(QDialog):
+class C2ManagementDialog(BaseDialog):
     """Comprehensive C2 management interface for controlling
     remote sessions and infrastructure.
     """
@@ -141,17 +141,18 @@ class C2ManagementDialog(QDialog):
 
     def __init__(self, parent=None):
         """Initialize C2 management dialog with command and control server management capabilities."""
-        super().__init__(parent)
-        self.setWindowTitle("C2 Server Management")
+        super().__init__(parent, "C2 Infrastructure Management")
         self.setMinimumSize(900, 600)
 
         # Server management
         self.server_thread = None
         self.servers = {}
         self.active_connections = []
+        self.active_sessions = {}
+        self.selected_session = None
 
         # Setup UI
-        self.setup_ui()
+        self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
         self.setup_connections()
 
         # Load server configurations
@@ -166,12 +167,13 @@ class C2ManagementDialog(QDialog):
         widget.setLayout(layout)
         return widget
 
-    def setup_ui(self):
+    def setup_content(self, layout):
         """Setup the user interface."""
-        self.setWindowTitle("C2 Infrastructure Management")
-        self.setMinimumSize(1200, 800)
+        if not layout:
+            layout = QVBoxLayout()
+            self.content_widget.setLayout(layout)
 
-        layout = QVBoxLayout()
+        self.setMinimumSize(1200, 800)
 
         # Create main tabs
         self.tab_widget = QTabWidget()
@@ -200,10 +202,8 @@ class C2ManagementDialog(QDialog):
 
         # Status bar
         self.status_label = QLabel("C2 Server: Stopped")
-        self.status_label.setStyleSheet("QLabel { padding: 5px; }")
+        self.status_label.setObjectName("statusLabel")
         layout.addWidget(self.status_label)
-
-        self.setLayout(layout)
 
     def create_server_tab(self):
         """Create server control tab."""
@@ -661,9 +661,9 @@ class C2ManagementDialog(QDialog):
         self.log_message(f"Server: {status}", "info")
 
         if "started successfully" in status.lower():
-            self.status_label.setStyleSheet("QLabel { padding: 5px; background-color: #90EE90; }")
+            self.status_label.setObjectName("statusSuccess")
         elif "stopped" in status.lower():
-            self.status_label.setStyleSheet("QLabel { padding: 5px; background-color: #FFB6C1; }")
+            self.status_label.setObjectName("statusWarning")
 
     def on_session_update(self, update: dict[str, Any]):
         """Handle session updates from server."""
@@ -692,7 +692,7 @@ class C2ManagementDialog(QDialog):
     def on_server_error(self, error: str):
         """Handle server errors."""
         self.status_label.setText("C2 Server: Error")
-        self.status_label.setStyleSheet("QLabel { padding: 5px; background-color: #FF6B6B; }")
+        self.status_label.setObjectName("statusError")
         self.log_message(f"Server error: {error}", "error")
         QMessageBox.critical(self, "Server Error", f"C2 server error: {error}")
 
@@ -1340,9 +1340,71 @@ class C2ManagementDialog(QDialog):
         self.log_display.clear()
 
     def export_logs(self):
-        """Export activity logs."""
-        # Placeholder for log export functionality
-        QMessageBox.information(self, "Export", "Log export functionality to be implemented")
+        """Export activity logs to file."""
+        import json
+
+        from PyQt6.QtWidgets import QFileDialog
+
+        # Get export file path from user
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Activity Logs",
+            f"c2_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+            "Text Files (*.txt);;JSON Files (*.json);;All Files (*.*)"
+        )
+
+        if not file_path:
+            return
+
+        try:
+            # Get all log content
+            log_content = self.log_display.toPlainText()
+
+            if file_path.endswith('.json'):
+                # Export as structured JSON
+                log_lines = log_content.split('\n')
+                log_entries = []
+
+                for line in log_lines:
+                    if line.strip():
+                        # Parse log line format: [timestamp] [level] message
+                        import re
+                        match = re.match(r'\[([\d-\s:]+)\]\s+\[(\w+)\]\s+(.*)', line)
+                        if match:
+                            log_entries.append({
+                                'timestamp': match.group(1),
+                                'level': match.group(2),
+                                'message': match.group(3)
+                            })
+
+                # Write JSON log file
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump({
+                        'export_time': datetime.now().isoformat(),
+                        'session_count': len(self.session_tabs.keys()) if hasattr(self, 'session_tabs') else 0,
+                        'total_entries': len(log_entries),
+                        'logs': log_entries
+                    }, f, indent=2)
+            else:
+                # Export as plain text
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write("C2 Management Activity Logs\n")
+                    f.write(f"Exported: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    f.write("=" * 60 + "\n\n")
+                    f.write(log_content)
+
+            QMessageBox.information(
+                self,
+                "Export Successful",
+                f"Logs exported successfully to:\n{file_path}"
+            )
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Export Failed",
+                f"Failed to export logs:\n{str(e)}"
+            )
 
     def log_message(self, message: str, level: str = "info"):
         """Add message to activity log."""
@@ -1384,7 +1446,8 @@ class C2ManagementDialog(QDialog):
             if size_bytes < 1024 * 1024 * 1024:
                 return f"{size_bytes / (1024 * 1024):.1f} MB"
             return f"{size_bytes / (1024 * 1024 * 1024):.1f} GB"
-        except:
+        except (TypeError, ValueError, ZeroDivisionError) as e:
+            logger.debug(f"Error formatting size: {e}")
             return f"{size_bytes} B"
 
     def send_command_to_session(self, session_id: str, command: dict[str, Any]) -> bool:
@@ -1416,6 +1479,14 @@ class C2ManagementDialog(QDialog):
             self.logger.error(f"Failed to send command to session: {e}")
             self.log_message(f"Command send error: {e!s}", "error")
             return False
+
+    def setup_connections(self):
+        """Setup signal connections for dialog components."""
+        pass
+
+    def load_server_configs(self):
+        """Load saved server configurations."""
+        pass
 
     def closeEvent(self, event):
         """Handle dialog close event."""

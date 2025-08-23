@@ -1129,20 +1129,94 @@ Memory.writeByteArray(patch_addr, {bytes});"""
         if hasattr(model, "detect_vulnerabilities"):
             vulnerabilities = model.detect_vulnerabilities(features)
         else:
-            # Fallback prediction
+            # Real vulnerability detection based on binary analysis
             vulnerabilities = []
-            vuln_types = ["buffer_overflow", "format_string", "integer_overflow",
-                         "use_after_free", "null_dereference", "race_condition"]
 
-            # Simulate vulnerability detection based on features
-            for i, vuln_type in enumerate(vuln_types):
-                confidence = np.random.random() * 0.9
-                if confidence > 0.3:
+            # Analyze binary for actual vulnerability patterns
+            if isinstance(input_data, bytes):
+                binary = input_data
+            else:
+                binary = b""
+
+            # Buffer overflow detection - look for unsafe function calls
+            buffer_overflow_indicators = [
+                b"strcpy", b"strcat", b"gets", b"sprintf", b"scanf",
+                b"vsprintf", b"realpath", b"getopt", b"getpass", b"streadd",
+                b"strecpy", b"strtrns", b"getwd"
+            ]
+            unsafe_func_count = sum(1 for func in buffer_overflow_indicators if func in binary)
+            if unsafe_func_count > 0:
+                confidence = min(0.95, 0.3 + (unsafe_func_count * 0.15))
+                vulnerabilities.append({
+                    "type": "buffer_overflow",
+                    "confidence": confidence,
+                    "severity": self._calculate_severity("buffer_overflow", confidence),
+                    "cve_similar": self._find_similar_cves("buffer_overflow"),
+                })
+
+            # Format string detection - look for format string functions without proper validation
+            format_string_indicators = [b"printf", b"fprintf", b"sprintf", b"snprintf", b"vprintf"]
+            format_funcs = sum(1 for func in format_string_indicators if func in binary)
+            if format_funcs > 0 and b"%s" in binary and b"%n" in binary:
+                confidence = min(0.85, 0.4 + (format_funcs * 0.1))
+                vulnerabilities.append({
+                    "type": "format_string",
+                    "confidence": confidence,
+                    "severity": self._calculate_severity("format_string", confidence),
+                    "cve_similar": self._find_similar_cves("format_string"),
+                })
+
+            # Integer overflow detection - look for arithmetic operations without bounds checking
+            if b"malloc" in binary or b"calloc" in binary or b"realloc" in binary:
+                # Check for multiplication operations near memory allocation
+                alloc_patterns = [b"imul", b"mul", b"shl"]  # x86 assembly patterns
+                overflow_risk = sum(1 for pattern in alloc_patterns if pattern in binary)
+                if overflow_risk > 0:
+                    confidence = min(0.7, 0.3 + (overflow_risk * 0.1))
                     vulnerabilities.append({
-                        "type": vuln_type,
+                        "type": "integer_overflow",
                         "confidence": confidence,
-                        "severity": self._calculate_severity(vuln_type, confidence),
-                        "cve_similar": self._find_similar_cves(vuln_type),
+                        "severity": self._calculate_severity("integer_overflow", confidence),
+                        "cve_similar": self._find_similar_cves("integer_overflow"),
+                    })
+
+            # Use-after-free detection - look for free() followed by dereference patterns
+            if b"free" in binary:
+                # Check for potential use after free patterns
+                uaf_patterns = [b"mov", b"call", b"jmp"]  # Operations after free
+                if any(pattern in binary for pattern in uaf_patterns):
+                    # Conservative detection since static analysis is limited
+                    confidence = 0.4
+                    vulnerabilities.append({
+                        "type": "use_after_free",
+                        "confidence": confidence,
+                        "severity": self._calculate_severity("use_after_free", confidence),
+                        "cve_similar": self._find_similar_cves("use_after_free"),
+                    })
+
+            # Null dereference detection - check for pointer operations without validation
+            if b"mov" in binary and (b"NULL" in binary or b"\x00\x00\x00\x00" in binary):
+                confidence = 0.35
+                vulnerabilities.append({
+                    "type": "null_dereference",
+                    "confidence": confidence,
+                    "severity": self._calculate_severity("null_dereference", confidence),
+                    "cve_similar": self._find_similar_cves("null_dereference"),
+                })
+
+            # Race condition detection - look for threading/locking issues
+            thread_indicators = [b"pthread", b"mutex", b"lock", b"thread", b"atomic"]
+            if any(indicator in binary for indicator in thread_indicators):
+                # Check for missing synchronization
+                sync_patterns = [b"pthread_mutex_lock", b"EnterCriticalSection", b"lock"]
+                has_sync = any(pattern in binary for pattern in sync_patterns)
+                if not has_sync:
+                    confidence = 0.5
+                    vulnerabilities.append({
+                        "type": "race_condition",
+                        "confidence": confidence,
+                        "severity": self._calculate_severity("race_condition", confidence),
+                        "cve_similar": self._find_similar_cves("race_condition"),
                     })
 
         # Calculate overall security score
@@ -1767,16 +1841,20 @@ Interceptor.attach(IsDebuggerPresent, {
                     # Handle different data formats
                     if hasattr(training_data, "shape"):
                         # NumPy array or similar
-                        X = training_data[:, :-1] if training_data.shape[1] > 1 else training_data
-                        y = (
-                            training_data[:, -1]
-                            if training_data.shape[1] > 1
-                            else np.zeros(len(training_data))
-                        )
+                        if training_data.shape[1] > 1:
+                            # Last column is labels
+                            X = training_data[:, :-1]
+                            y = training_data[:, -1]
+                        else:
+                            # Single column data without labels - cannot train supervised model
+                            logger.error("Training data has only features without labels")
+                            logger.info("For supervised learning, provide data with labels in the last column")
+                            return False
                     elif isinstance(training_data, (list, tuple)):
-                        # Convert to numpy arrays
-                        X = np.array(training_data)
-                        y = np.zeros(len(training_data))  # Dummy labels
+                        # Cannot perform supervised learning without labels
+                        logger.error("Training data provided without labels - cannot train supervised model")
+                        logger.info("Consider using unsupervised learning or provide labeled data")
+                        return False
                     else:
                         logger.warning("Unsupported training data format for sklearn")
                         return False

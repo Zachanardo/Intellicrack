@@ -21,12 +21,9 @@ from intellicrack.core.config_manager import get_config
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QComboBox,
-    QDialog,
     QFormLayout,
     QGroupBox,
-    QHBoxLayout,
     QLineEdit,
-    QPushButton,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -34,30 +31,39 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
+from .base_dialog import BaseDialog
+
 """Preferences dialog for Intellicrack settings."""
 
 logger = logging.getLogger(__name__)
 
 
-class PreferencesDialog(QDialog):
+class PreferencesDialog(BaseDialog):
     """Dialog for managing application preferences."""
 
     preferences_changed = pyqtSignal()
 
     def __init__(self, parent=None):
         """Initialize the PreferencesDialog with default values."""
-        super().__init__(parent)
+        super().__init__(parent, "Preferences")
         self.config = get_config()
-        self.setup_ui()
+        self.resize(600, 500)
+        self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
         self.load_preferences()
 
-    def setup_ui(self):
-        """Set up the preferences UI."""
-        self.setWindowTitle("Preferences")
-        self.setModal(True)
-        self.resize(600, 500)
+        # Connect BaseDialog buttons to custom handlers
+        self.button_box.button(self.button_box.StandardButton.Ok).clicked.disconnect()
+        self.button_box.button(self.button_box.StandardButton.Ok).clicked.connect(self.accept_preferences)
 
-        layout = QVBoxLayout(self)
+        # Add Apply button
+        self.apply_btn = self.button_box.addButton("Apply", self.button_box.ButtonRole.ApplyRole)
+        self.apply_btn.clicked.connect(self.apply_preferences)
+
+    def setup_content(self, layout):
+        """Set up the preferences UI."""
+        if not layout:
+            layout = QVBoxLayout()
+            self.content_widget.setLayout(layout)
 
         # Tab widget for different preference categories
         self.tab_widget = QTabWidget()
@@ -70,25 +76,7 @@ class PreferencesDialog(QDialog):
         self.tab_widget.addTab(self.create_ai_tab(), "AI Settings")
         self.tab_widget.addTab(self.create_hex_viewer_tab(), "Hex Viewer")
 
-        # Buttons
-        button_layout = QHBoxLayout()
 
-        self.apply_btn = QPushButton("Apply")
-        self.apply_btn.clicked.connect(self.apply_preferences)
-
-        self.ok_btn = QPushButton("OK")
-        self.ok_btn.clicked.connect(self.accept_preferences)
-        self.ok_btn.setDefault(True)
-
-        self.cancel_btn = QPushButton("Cancel")
-        self.cancel_btn.clicked.connect(self.reject)
-
-        button_layout.addStretch()
-        button_layout.addWidget(self.apply_btn)
-        button_layout.addWidget(self.ok_btn)
-        button_layout.addWidget(self.cancel_btn)
-
-        layout.addLayout(button_layout)
 
     def create_general_tab(self):
         """Create the general preferences tab."""
@@ -275,128 +263,177 @@ class PreferencesDialog(QDialog):
         """Create the Hex Viewer preferences tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
-        
+
         # Display settings
         display_group = QGroupBox("Display Settings")
         display_layout = QFormLayout()
-        
+
         self.hex_bytes_per_row = QSpinBox()
         self.hex_bytes_per_row.setRange(8, 32)
         self.hex_bytes_per_row.setSingleStep(8)
         self.hex_bytes_per_row.setValue(self.config.get("hex_viewer.ui.bytes_per_row", 16))
         self.hex_bytes_per_row.valueChanged.connect(self.on_hex_viewer_setting_changed)
         display_layout.addRow("Bytes per row:", self.hex_bytes_per_row)
-        
+
         self.hex_group_size = QComboBox()
         self.hex_group_size.addItems(["1", "2", "4", "8"])
         current_group_size = str(self.config.get("hex_viewer.ui.group_size", 1))
         self.hex_group_size.setCurrentText(current_group_size)
         self.hex_group_size.currentTextChanged.connect(self.on_hex_viewer_setting_changed)
         display_layout.addRow("Group size:", self.hex_group_size)
-        
+
         self.hex_uppercase = QCheckBox("Use uppercase hex")
         self.hex_uppercase.setChecked(self.config.get("hex_viewer.ui.uppercase_hex", True))
         self.hex_uppercase.toggled.connect(self.on_hex_viewer_setting_changed)
         display_layout.addRow(self.hex_uppercase)
-        
+
         self.hex_show_address = QCheckBox("Show address column")
         self.hex_show_address.setChecked(self.config.get("hex_viewer.ui.show_address", True))
         self.hex_show_address.toggled.connect(self.on_hex_viewer_setting_changed)
         display_layout.addRow(self.hex_show_address)
-        
+
         self.hex_show_ascii = QCheckBox("Show ASCII column")
         self.hex_show_ascii.setChecked(self.config.get("hex_viewer.ui.show_ascii", True))
         self.hex_show_ascii.toggled.connect(self.on_hex_viewer_setting_changed)
         display_layout.addRow(self.hex_show_ascii)
-        
+
         display_group.setLayout(display_layout)
         layout.addWidget(display_group)
-        
+
         # Font settings
         font_group = QGroupBox("Font Settings")
         font_layout = QFormLayout()
-        
+
         self.hex_font_family = QComboBox()
-        self.hex_font_family.addItems(["Consolas", "Courier New", "Monaco", "Menlo", "DejaVu Sans Mono"])
+        self.hex_font_family.addItems(
+            ["Consolas", "Courier New", "Monaco", "Menlo", "DejaVu Sans Mono"]
+        )
         current_font = self.config.get("hex_viewer.ui.font_family", "Consolas")
         self.hex_font_family.setCurrentText(current_font)
         self.hex_font_family.currentTextChanged.connect(self.on_hex_viewer_setting_changed)
         font_layout.addRow("Font family:", self.hex_font_family)
-        
+
         self.hex_font_size = QSpinBox()
         self.hex_font_size.setRange(8, 24)
         self.hex_font_size.setValue(self.config.get("hex_viewer.ui.font_size", 11))
         self.hex_font_size.valueChanged.connect(self.on_hex_viewer_setting_changed)
         font_layout.addRow("Font size:", self.hex_font_size)
-        
+
         font_group.setLayout(font_layout)
         layout.addWidget(font_group)
-        
+
         # Performance settings
         performance_group = QGroupBox("Performance Settings")
         performance_layout = QFormLayout()
-        
+
         self.hex_max_memory = QSpinBox()
         self.hex_max_memory.setRange(50, 2000)
         self.hex_max_memory.setSuffix(" MB")
         self.hex_max_memory.setValue(self.config.get("hex_viewer.performance.max_memory_mb", 500))
         self.hex_max_memory.valueChanged.connect(self.on_hex_viewer_setting_changed)
         performance_layout.addRow("Max memory usage:", self.hex_max_memory)
-        
+
         self.hex_cache_size = QSpinBox()
         self.hex_cache_size.setRange(10, 500)
         self.hex_cache_size.setSuffix(" MB")
         self.hex_cache_size.setValue(self.config.get("hex_viewer.performance.cache_size_mb", 100))
         self.hex_cache_size.valueChanged.connect(self.on_hex_viewer_setting_changed)
         performance_layout.addRow("Cache size:", self.hex_cache_size)
-        
+
         self.hex_chunk_size = QSpinBox()
         self.hex_chunk_size.setRange(16, 512)
         self.hex_chunk_size.setSuffix(" KB")
         self.hex_chunk_size.setValue(self.config.get("hex_viewer.performance.chunk_size_kb", 64))
         self.hex_chunk_size.valueChanged.connect(self.on_hex_viewer_setting_changed)
         performance_layout.addRow("Chunk size:", self.hex_chunk_size)
-        
+
         self.hex_lazy_load = QCheckBox("Enable lazy loading for large files")
         self.hex_lazy_load.setChecked(self.config.get("hex_viewer.performance.lazy_load", True))
         self.hex_lazy_load.toggled.connect(self.on_hex_viewer_setting_changed)
         performance_layout.addRow(self.hex_lazy_load)
-        
+
         performance_group.setLayout(performance_layout)
         layout.addWidget(performance_group)
-        
+
         # Search settings
         search_group = QGroupBox("Search Settings")
         search_layout = QFormLayout()
-        
+
         self.hex_search_history = QSpinBox()
         self.hex_search_history.setRange(10, 200)
-        self.hex_search_history.setValue(self.config.get("hex_viewer.search.history_max_entries", 50))
+        self.hex_search_history.setValue(
+            self.config.get("hex_viewer.search.history_max_entries", 50)
+        )
         self.hex_search_history.valueChanged.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow("Search history size:", self.hex_search_history)
-        
+
         self.hex_search_chunk = QSpinBox()
         self.hex_search_chunk.setRange(64, 1024)
         self.hex_search_chunk.setSuffix(" KB")
-        self.hex_search_chunk.setValue(self.config.get("hex_viewer.search.search_chunk_size_kb", 256))
+        self.hex_search_chunk.setValue(
+            self.config.get("hex_viewer.search.search_chunk_size_kb", 256)
+        )
         self.hex_search_chunk.valueChanged.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow("Search chunk size:", self.hex_search_chunk)
-        
+
         self.hex_incremental_search = QCheckBox("Enable incremental search")
-        self.hex_incremental_search.setChecked(self.config.get("hex_viewer.search.incremental_search", True))
+        self.hex_incremental_search.setChecked(
+            self.config.get("hex_viewer.search.incremental_search", True)
+        )
         self.hex_incremental_search.toggled.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow(self.hex_incremental_search)
-        
+
         self.hex_highlight_all = QCheckBox("Highlight all matches")
-        self.hex_highlight_all.setChecked(self.config.get("hex_viewer.search.highlight_all_matches", True))
+        self.hex_highlight_all.setChecked(
+            self.config.get("hex_viewer.search.highlight_all_matches", True)
+        )
         self.hex_highlight_all.toggled.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow(self.hex_highlight_all)
-        
+
         search_group.setLayout(search_layout)
         layout.addWidget(search_group)
-        
+
         layout.addStretch()
         return widget
+
+    def on_hex_viewer_setting_changed(self):
+        """Handle immediate saving of hex viewer settings when auto-save is enabled."""
+        if self.config.get("general_preferences.auto_save", True):
+            self.save_hex_viewer_settings()
+
+    def save_hex_viewer_settings(self):
+        """Save hex viewer settings to configuration."""
+        # Display settings
+        self.config.set("hex_viewer.ui.bytes_per_row", self.hex_bytes_per_row.value())
+        self.config.set("hex_viewer.ui.group_size", int(self.hex_group_size.currentText()))
+        self.config.set("hex_viewer.ui.uppercase_hex", self.hex_uppercase.isChecked())
+        self.config.set("hex_viewer.ui.show_address", self.hex_show_address.isChecked())
+        self.config.set("hex_viewer.ui.show_ascii", self.hex_show_ascii.isChecked())
+
+        # Font settings
+        self.config.set("hex_viewer.ui.font_family", self.hex_font_family.currentText())
+        self.config.set("hex_viewer.ui.font_size", self.hex_font_size.value())
+
+        # Performance settings
+        self.config.set("hex_viewer.performance.max_memory_mb", self.hex_max_memory.value())
+        self.config.set("hex_viewer.performance.cache_size_mb", self.hex_cache_size.value())
+        self.config.set("hex_viewer.performance.chunk_size_kb", self.hex_chunk_size.value())
+        self.config.set("hex_viewer.performance.lazy_load", self.hex_lazy_load.isChecked())
+
+        # Search settings
+        self.config.set("hex_viewer.search.history_max_entries", self.hex_search_history.value())
+        self.config.set("hex_viewer.search.search_chunk_size_kb", self.hex_search_chunk.value())
+        self.config.set(
+            "hex_viewer.search.incremental_search", self.hex_incremental_search.isChecked()
+        )
+        self.config.set(
+            "hex_viewer.search.highlight_all_matches", self.hex_highlight_all.isChecked()
+        )
+
+        # Save to disk if auto-save is enabled
+        if self.config.get("general_preferences.auto_save", True):
+            self.config.save()
+            self.preferences_changed.emit()
 
     def load_preferences(self):
         """Load preferences from central config."""
@@ -569,6 +606,9 @@ class PreferencesDialog(QDialog):
         self.config.set(
             "general_preferences.ai_explain_scripts", self.explain_scripts_checkbox.isChecked()
         )
+
+        # Hex Viewer settings
+        self.save_hex_viewer_settings()
 
         # Save config to disk
         self.config.save()

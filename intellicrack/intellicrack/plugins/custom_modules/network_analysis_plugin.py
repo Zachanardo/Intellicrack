@@ -3,7 +3,10 @@ Network Analysis Plugin Template
 Specialized template for network traffic analysis
 """
 
+import logging
 import sys
+
+logger = logging.getLogger(__name__)
 
 
 class NetworkAnalysisPlugin:
