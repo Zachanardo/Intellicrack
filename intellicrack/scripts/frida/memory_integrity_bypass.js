@@ -472,7 +472,7 @@ const MemoryIntegrityBypass = {
 
                     this.hooksInstalled[functionName + '_' + module.name] = true;
                 }
-            } catch: function(e) {
+            } catch(e) {
                 // Module doesn't have this function
             }
         }
@@ -687,7 +687,7 @@ const MemoryIntegrityBypass = {
                                 pattern: this.needle
                             });
                         }
-                    } catch: function(e) {
+                    } catch(e) {
                         // String read failed
                     }
                 },
@@ -1070,7 +1070,7 @@ const MemoryIntegrityBypass = {
                                 });
                             }
                         }
-                    } catch: function(e) {
+                    } catch(e) {
                         send({
                             type: "error",
                             target: "memory_integrity_bypass",
@@ -1750,7 +1750,7 @@ const MemoryIntegrityBypass = {
                         this.scanForCodeCaves(module.base.add(section.offset), section.size);
                     }
                 });
-            } catch: function(e) {
+            } catch(e) {
                 // Module sections not accessible
             }
         });
@@ -1909,7 +1909,7 @@ const MemoryIntegrityBypass = {
                 }
                 return checksum;
             }
-        } catch: function(e) {
+        } catch(e) {
             return 0;
         }
     },
@@ -1941,7 +1941,7 @@ const MemoryIntegrityBypass = {
                             });
                         }
                     });
-                } catch: function(e) {
+                } catch(e) {
                     // Module exports not accessible
                 }
             });
@@ -2070,7 +2070,7 @@ const MemoryIntegrityBypass = {
                     }
                 }
             }
-        } catch: function(e) {
+        } catch(e) {
             // Memory not readable
         }
     },
@@ -2107,7 +2107,7 @@ const MemoryIntegrityBypass = {
                 address: address,
                 size: size
             });
-        } catch: function(e) {
+        } catch(e) {
             // Failed to fill cave
         }
     },
@@ -2127,7 +2127,7 @@ const MemoryIntegrityBypass = {
                         }
                     }
                 });
-            } catch: function(e) {
+            } catch(e) {
                 // Module sections not accessible
             }
         });
@@ -2274,7 +2274,7 @@ const MemoryIntegrityBypass = {
                 mutatedBuffer.writeByteArray(mutated);
                 return mutatedBuffer;
             }
-        } catch: function(e) {
+        } catch(e) {
             return null;
         }
     },
@@ -2510,7 +2510,7 @@ const MemoryIntegrityBypass = {
                         nextSync: Date.now() + 60000
                     });
                 }
-            } catch: function(e) {
+            } catch(e) {
                 // Failed to replicate module
             }
         });
@@ -2720,7 +2720,7 @@ const MemoryIntegrityBypass = {
                                 suspiciousPatterns++;
                             }
                         }
-                    } catch: function(e) {
+                    } catch(e) {
                         // Memory not accessible
                     }
                 }
@@ -2761,7 +2761,7 @@ const MemoryIntegrityBypass = {
                             }
                         });
                     });
-                } catch: function(e) {
+                } catch(e) {
                     // Failed to scan module
                 }
             }
@@ -2899,7 +2899,7 @@ const MemoryIntegrityBypass = {
                         type: "after",
                         protects: region.name
                     });
-                } catch: function(e) {
+                } catch(e) {
                     // Failed to create guard page
                 }
             }
@@ -2948,7 +2948,7 @@ const MemoryIntegrityBypass = {
                     action: "memory_scrubbed",
                     address: address
                 });
-            } catch: function(e) {
+            } catch(e) {
                 // Failed to scrub memory
             }
         });
@@ -2981,7 +2981,7 @@ const MemoryIntegrityBypass = {
                     replica.original.writeByteArray(bytes);
                     Memory.protect(replica.original, bytes.length, 'r-x');
                 }
-            } catch: function(e) {
+            } catch(e) {
                 // Failed to scramble
             }
         });
@@ -3001,7 +3001,7 @@ const MemoryIntegrityBypass = {
                     replica.original.writeByteArray(bytes);
                     Memory.protect(replica.original, bytes.length, 'r-x');
                 }
-            } catch: function(e) {
+            } catch(e) {
                 // Failed to unscramble
             }
         });
@@ -3026,7 +3026,7 @@ const MemoryIntegrityBypass = {
                         }
                     });
                 });
-            } catch: function(e) {
+            } catch(e) {
                 // Failed to clear artifacts
             }
         });

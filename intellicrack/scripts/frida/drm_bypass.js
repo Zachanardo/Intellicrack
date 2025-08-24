@@ -2331,7 +2331,7 @@ const DrmBypass = {
             edgeComputingDRM: {
                 enabled: true,
                 edge_device_bypass: true,
-                5g_network_drm_bypass: true,
+                '5g_network_drm_bypass': true,
                 satellite_drm_bypass: true,
                 mesh_network_bypass: true,
                 fog_computing_bypass: true,

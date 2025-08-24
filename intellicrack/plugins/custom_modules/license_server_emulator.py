@@ -1136,310 +1136,471 @@ class HardwareFingerprintGenerator:
         """Initialize hardware fingerprint generator for license binding."""
         self.logger = logging.getLogger(f"{__name__}.Fingerprint")
 
-    def generate_fingerprint(self) -> HardwareFingerprint:
-        """Generate hardware fingerprint from system."""
-        try:
-            import hashlib
-            import platform
-            import shutil
-            import socket
-            import subprocess
-            import uuid
 
+    # Platform-specific CPU ID handlers
+    def _get_cpu_id_windows(self) -> str:
+        """Get CPU ID on Windows."""
+        import hashlib
+        import platform
+        import subprocess
+
+        try:
+            result = subprocess.run(
+                ["wmic", "cpu", "get", "ProcessorId", "/format:value"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            for line in result.stdout.split("\n"):
+                if line.startswith("ProcessorId="):
+                    cpu_id = line.split("=")[1].strip()
+                    if cpu_id:
+                        return cpu_id
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        # Fallback to hashed processor info
+        return hashlib.sha256(platform.processor().encode()).hexdigest()[:16]
+
+    def _get_cpu_id_linux(self) -> str:
+        """Get CPU ID on Linux."""
+        import hashlib
+
+        try:
+            with open("/proc/cpuinfo") as f:
+                for line in f:
+                    if "Serial" in line:
+                        return line.split(":")[1].strip()
+                    if "model name" in line:
+                        model = line.split(":")[1].strip()
+                        return hashlib.sha256(model.encode()).hexdigest()[:16]
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        import platform
+        return hashlib.sha256(
+            f"{platform.processor()}{platform.machine()}{platform.node()}".encode()
+        ).hexdigest()[:16]
+
+    def _get_cpu_id_darwin(self) -> str:
+        """Get CPU ID on macOS."""
+        import hashlib
+        import subprocess
+
+        try:
+            result = subprocess.run(
+                ["sysctl", "-n", "machdep.cpu.brand_string"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if result.stdout:
+                return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:16]
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        import platform
+        return hashlib.sha256(
+            f"{platform.processor()}{platform.machine()}".encode()
+        ).hexdigest()[:16]
+
+    def _get_cpu_id_default(self) -> str:
+        """Get CPU ID for other systems."""
+        import hashlib
+        import platform
+
+        return hashlib.sha256(
+            f"{platform.processor()}{platform.machine()}{platform.node()}".encode()
+        ).hexdigest()[:16]
+
+    # Platform-specific motherboard ID handlers
+    def _get_motherboard_id_windows(self) -> str:
+        """Get motherboard ID on Windows."""
+        import hashlib
+        import subprocess
+
+        try:
+            result = subprocess.run(
+                ["wmic", "baseboard", "get", "SerialNumber", "/format:value"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            for line in result.stdout.split("\n"):
+                if line.startswith("SerialNumber="):
+                    board_id = line.split("=")[1].strip()
+                    if board_id:
+                        return board_id
+
+            # Try alternative method
+            result = subprocess.run(
+                ["wmic", "baseboard", "get", "Product,Manufacturer", "/format:value"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if result.stdout:
+                return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:16]
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        import platform
+        return hashlib.sha256(
+            f"{platform.node()}{platform.platform()}".encode()
+        ).hexdigest()[:16]
+
+    def _get_motherboard_id_linux(self) -> str:
+        """Get motherboard ID on Linux."""
+        import hashlib
+
+        try:
+            with open("/sys/class/dmi/id/board_serial") as f:
+                return f.read().strip()
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        # Fallback to board name + vendor
+        board_info = ""
+        try:
+            with open("/sys/class/dmi/id/board_vendor") as f:
+                board_info += f.read().strip()
+            with open("/sys/class/dmi/id/board_name") as f:
+                board_info += f.read().strip()
+            if board_info:
+                return hashlib.sha256(board_info.encode()).hexdigest()[:16]
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        import platform
+        return hashlib.sha256(
+            f"{platform.node()}{platform.platform()}".encode()
+        ).hexdigest()[:16]
+
+    def _get_motherboard_id_darwin(self) -> str:
+        """Get motherboard ID on macOS."""
+        import hashlib
+        import subprocess
+
+        try:
+            result = subprocess.run(
+                ["system_profiler", "SPHardwareDataType"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            for line in result.stdout.split("\n"):
+                if "Serial Number" in line:
+                    serial = line.split(":")[1].strip()
+                    if serial:
+                        return serial
+
+            if result.stdout:
+                return hashlib.sha256(result.stdout.encode()).hexdigest()[:16]
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        import platform
+        return hashlib.sha256(
+            f"{platform.node()}{platform.version()}".encode()
+        ).hexdigest()[:16]
+
+    def _get_motherboard_id_default(self) -> str:
+        """Get motherboard ID for other systems."""
+        import hashlib
+        import platform
+
+        return hashlib.sha256(
+            f"{platform.node()}{platform.platform()}".encode()
+        ).hexdigest()[:16]
+
+    # Platform-specific disk serial handlers
+    def _get_disk_serial_windows(self) -> str:
+        """Get disk serial on Windows."""
+        import hashlib
+        import os
+        import subprocess
+
+        try:
+            result = subprocess.run(
+                ["wmic", "logicaldisk", "where", "drivetype=3", "get", "VolumeSerialNumber", "/format:value"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            for line in result.stdout.split("\n"):
+                if line.startswith("VolumeSerialNumber="):
+                    serial = line.split("=")[1].strip()
+                    if serial:
+                        return serial
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        # Fallback to filesystem stats
+        try:
+            stat_info = os.statvfs("C:\\")
+            return hashlib.sha256(
+                f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
+            ).hexdigest()[:16]
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        import platform
+        return hashlib.sha256(
+            f"{platform.node()}{platform.system()}disk".encode()
+        ).hexdigest()[:16]
+
+    def _get_disk_serial_linux(self) -> str:
+        """Get disk serial on Linux."""
+        import hashlib
+        import os
+        import subprocess
+
+        try:
+            result = subprocess.run(
+                ["lsblk", "-no", "SERIAL", "/dev/sda"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            serial = result.stdout.strip()
+            if serial:
+                return serial
+
+            # Fallback to disk ID
+            result = subprocess.run(
+                ["ls", "-l", "/dev/disk/by-id/"],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            for line in result.stdout.split("\n"):
+                if "ata-" in line and "part" not in line:
+                    parts = line.split("ata-")[1].split()[0]
+                    return hashlib.sha256(parts.encode()).hexdigest()[:16]
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        # Fallback to filesystem stats
+        try:
+            stat_info = os.statvfs("/")
+            return hashlib.sha256(
+                f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
+            ).hexdigest()[:16]
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        import platform
+        return hashlib.sha256(
+            f"{platform.node()}{platform.system()}disk".encode()
+        ).hexdigest()[:16]
+
+    def _get_disk_serial_darwin(self) -> str:
+        """Get disk serial on macOS."""
+        import hashlib
+        import os
+        import shutil
+        import subprocess
+
+        try:
+            diskutil_path = shutil.which("diskutil")
+            if diskutil_path:
+                result = subprocess.run(
+                    [diskutil_path, "info", "disk0"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    shell=False
+                )
+                for line in result.stdout.split("\n"):
+                    if "Volume UUID" in line or "Disk / Partition UUID" in line:
+                        serial = line.split(":")[1].strip()
+                        if serial:
+                            return serial
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        # Fallback to filesystem stats
+        try:
+            stat_info = os.statvfs("/")
+            return hashlib.sha256(
+                f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
+            ).hexdigest()[:16]
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        import platform
+        return hashlib.sha256(
+            f"{platform.node()}{platform.system()}disk".encode()
+        ).hexdigest()[:16]
+
+    def _get_disk_serial_default(self) -> str:
+        """Get disk serial for other systems."""
+        import hashlib
+        import os
+        import platform
+
+        try:
+            stat_info = os.statvfs("/")
+            return hashlib.sha256(
+                f"{stat_info.f_blocks}{stat_info.f_bsize}".encode()
+            ).hexdigest()[:16]
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        return hashlib.sha256(
+            f"{platform.node()}{platform.system()}disk".encode()
+        ).hexdigest()[:16]
+
+    # MAC address handler
+    def _get_mac_address(self) -> str:
+        """Get MAC address cross-platform."""
+        import platform
+        import random
+        import uuid
+
+        try:
+            mac_num = uuid.getnode()
+            # Check if it's a real MAC (not random)
+            if not ((mac_num >> 40) % 2):
+                # Real MAC address
+                return ":".join(
+                    [f"{(mac_num >> ele) & 0xff:02X}" for ele in range(0, 8 * 6, 8)][::-1]
+                )
+
+            # Try to get real one using netifaces
+            try:
+                import netifaces
+                interfaces = netifaces.interfaces()
+                for iface in interfaces:
+                    if iface == "lo" or iface.startswith("vir"):
+                        continue
+                    addrs = netifaces.ifaddresses(iface)
+                    if netifaces.AF_LINK in addrs:
+                        mac = addrs[netifaces.AF_LINK][0]["addr"]
+                        if mac and mac != "00:00:00:00:00:00":
+                            return mac.upper()
+            except ImportError:
+                
+                logger.debug('Exception caught in fallback path', exc_info=False)
+        except Exception:
+                        logger.debug('Exception caught in fallback path', exc_info=False)
+
+        # Generate deterministic MAC
+        random.seed(platform.node() + platform.processor())
+        mac_bytes = [random.randint(0, 255) for _ in range(6)]
+        mac_bytes[0] = (mac_bytes[0] & 0xFC) | 0x02  # Set locally administered bit
+        return ":".join(f"{b:02X}" for b in mac_bytes)
+
+    # RAM size handler
+    def _get_ram_size(self) -> int:
+        """Get RAM size in GB cross-platform."""
+        import platform
+        import subprocess
+
+        # Try psutil first
+        try:
+            from intellicrack.handlers.psutil_handler import psutil
+            return int(psutil.virtual_memory().total / (1024**3))
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        # Platform-specific fallbacks
+        try:
+            if platform.system() == "Windows":
+                result = subprocess.run(
+                    ["wmic", "computersystem", "get", "TotalPhysicalMemory", "/format:value"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+                for line in result.stdout.split("\n"):
+                    if line.startswith("TotalPhysicalMemory="):
+                        mem_bytes = int(line.split("=")[1].strip())
+                        return int(mem_bytes / (1024**3))
+            elif platform.system() == "Linux":
+                with open("/proc/meminfo") as f:
+                    for line in f:
+                        if line.startswith("MemTotal:"):
+                            mem_kb = int(line.split()[1])
+                            return int(mem_kb / (1024**2))
+            elif platform.system() == "Darwin":
+                result = subprocess.run(
+                    ["sysctl", "-n", "hw.memsize"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+                mem_bytes = int(result.stdout.strip())
+                return int(mem_bytes / (1024**3))
+        except Exception:
+            
+            logger.debug('Exception caught in fallback path', exc_info=False)
+
+        # Default to common size
+        return 8
+
+    # Main refactored method
+    def generate_fingerprint(self) -> HardwareFingerprint:
+        """Generate hardware fingerprint from system with reduced complexity."""
+        import platform
+        import socket
+
+        try:
             fingerprint = HardwareFingerprint()
 
-            # Get CPU info - cross-platform implementation
-            try:
-                if platform.system() == "Windows":
-                    # Windows - use wmic command
-                    result = subprocess.run(
-                        ["wmic", "cpu", "get", "ProcessorId", "/format:value"],  # noqa: S607
-                        check=False,
-                        capture_output=True,
-                        text=True,
-                    )
-                    for line in result.stdout.split("\n"):
-                        if line.startswith("ProcessorId="):
-                            fingerprint.cpu_id = line.split("=")[1].strip()
-                            break
-                    if not fingerprint.cpu_id:
-                        # Fallback to CPUID using platform info
-                        fingerprint.cpu_id = hashlib.sha256(platform.processor().encode()).hexdigest()[
-                            :16
-                        ]
-                elif platform.system() == "Linux":
-                    # Linux - read from cpuinfo
-                    with open("/proc/cpuinfo") as f:
-                        for line in f:
-                            if "Serial" in line:
-                                fingerprint.cpu_id = line.split(":")[1].strip()
-                                break
-                            if "model name" in line:
-                                # Fallback to hashed model name
-                                model = line.split(":")[1].strip()
-                                fingerprint.cpu_id = hashlib.sha256(model.encode()).hexdigest()[:16]
-                                break
-                elif platform.system() == "Darwin":
-                    # macOS - use sysctl
-                    result = subprocess.run(
-                        ["sysctl", "-n", "machdep.cpu.brand_string"],  # noqa: S607
-                        check=False,
-                        capture_output=True,
-                        text=True,
-                    )
-                    fingerprint.cpu_id = hashlib.sha256(result.stdout.strip().encode()).hexdigest()[
-                        :16
-                    ]
-                else:
-                    # Other systems - generate from platform info
-                    fingerprint.cpu_id = hashlib.sha256(
-                        f"{platform.processor()}{platform.machine()}".encode(),
-                    ).hexdigest()[:16]
-            except Exception:
-                # Generate deterministic CPU ID from available info
-                fingerprint.cpu_id = hashlib.sha256(
-                    f"{platform.processor()}{platform.machine()}{platform.node()}".encode(),
-                ).hexdigest()[:16]
+            # Platform-specific handler mappings
+            cpu_handlers = {
+                "Windows": self._get_cpu_id_windows,
+                "Linux": self._get_cpu_id_linux,
+                "Darwin": self._get_cpu_id_darwin,
+            }
 
-            # Get motherboard info - cross-platform
-            try:
-                if platform.system() == "Windows":
-                    result = subprocess.run(
-                        ["wmic", "baseboard", "get", "SerialNumber", "/format:value"],  # noqa: S607
-                        check=False,
-                        capture_output=True,
-                        text=True,
-                    )
-                    for line in result.stdout.split("\n"):
-                        if line.startswith("SerialNumber="):
-                            fingerprint.motherboard_id = line.split("=")[1].strip()
-                            break
-                    if not fingerprint.motherboard_id:
-                        # Try alternative method
-                        result = subprocess.run(
-                            ["wmic", "baseboard", "get", "Product,Manufacturer", "/format:value"],  # noqa: S607
-                            check=False,
-                            capture_output=True,
-                            text=True,
-                        )
-                        board_info = result.stdout.strip()
-                        fingerprint.motherboard_id = hashlib.sha256(board_info.encode()).hexdigest()[
-                            :16
-                        ]
-                elif platform.system() == "Linux":
-                    # Linux - read DMI info
-                    try:
-                        with open("/sys/class/dmi/id/board_serial") as f:
-                            fingerprint.motherboard_id = f.read().strip()
-                    except Exception:
-                        # Fallback to board name + vendor
-                        board_info = ""
-                        try:
-                            with open("/sys/class/dmi/id/board_vendor") as f:
-                                board_info += f.read().strip()
-                            with open("/sys/class/dmi/id/board_name") as f:
-                                board_info += f.read().strip()
-                        except OSError as e:
-                            self.logger.debug("Could not read motherboard info: %s", e)
-                        fingerprint.motherboard_id = hashlib.sha256(board_info.encode()).hexdigest()[
-                            :16
-                        ]
-                elif platform.system() == "Darwin":
-                    # macOS - use system_profiler
-                    result = subprocess.run(
-                        ["system_profiler", "SPHardwareDataType"],  # noqa: S607
-                        check=False,
-                        capture_output=True,
-                        text=True,
-                    )
-                    lines = result.stdout.split("\n")
-                    for line in lines:
-                        if "Serial Number" in line:
-                            fingerprint.motherboard_id = line.split(":")[1].strip()
-                            break
-                    if not fingerprint.motherboard_id:
-                        fingerprint.motherboard_id = hashlib.sha256(
-                            result.stdout.encode()
-                        ).hexdigest()[:16]
-                else:
-                    # Generate from platform info
-                    fingerprint.motherboard_id = hashlib.sha256(
-                        f"{platform.node()}{platform.version()}".encode(),
-                    ).hexdigest()[:16]
-            except Exception:
-                # Generate deterministic board ID
-                fingerprint.motherboard_id = hashlib.sha256(
-                    f"{platform.node()}{platform.platform()}".encode(),
-                ).hexdigest()[:16]
+            motherboard_handlers = {
+                "Windows": self._get_motherboard_id_windows,
+                "Linux": self._get_motherboard_id_linux,
+                "Darwin": self._get_motherboard_id_darwin,
+            }
 
-            # Get disk serial - cross-platform
-            try:
-                if platform.system() == "Windows":
-                    result = subprocess.run(
-                        [  # noqa: S607
-                            "wmic",
-                            "logicaldisk",
-                            "where",
-                            "drivetype=3",
-                            "get",
-                            "VolumeSerialNumber",
-                            "/format:value",
-                        ],
-                        check=False,
-                        capture_output=True,
-                        text=True,
-                    )
-                    for line in result.stdout.split("\n"):
-                        if line.startswith("VolumeSerialNumber="):
-                            serial = line.split("=")[1].strip()
-                            if serial:
-                                fingerprint.disk_serial = serial
-                                break
-                elif platform.system() == "Linux":
-                    # Try to get disk serial using lsblk
-                    result = subprocess.run(
-                        ["lsblk", "-no", "SERIAL", "/dev/sda"],  # noqa: S607
-                        check=False,
-                        capture_output=True,
-                        text=True,
-                    )
-                    serial = result.stdout.strip()
-                    if serial:
-                        fingerprint.disk_serial = serial
-                    else:
-                        # Fallback to disk ID
-                        result = subprocess.run(
-                            ["ls", "-l", "/dev/disk/by-id/"],  # noqa: S607
-                            check=False,
-                            capture_output=True,
-                            text=True,
-                        )
-                        lines = result.stdout.split("\n")
-                        for line in lines:
-                            if "ata-" in line and "part" not in line:
-                                parts = line.split("ata-")[1].split()[0]
-                                fingerprint.disk_serial = hashlib.sha256(parts.encode()).hexdigest()[
-                                    :16
-                                ]
-                                break
-                elif platform.system() == "Darwin":
-                    # macOS - use diskutil
-                    diskutil_path = shutil.which("diskutil")
-                    if diskutil_path:
-                        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                            [diskutil_path, "info", "disk0"],
-                            check=False,
-                            capture_output=True,
-                            text=True,
-                            shell=False
-                        )
-                    else:
-                        result = type('obj', (object,), {'stdout': '', 'returncode': 1})()
-                    lines = result.stdout.split("\n")
-                    for line in lines:
-                        if "Volume UUID" in line or "Disk / Partition UUID" in line:
-                            fingerprint.disk_serial = line.split(":")[1].strip()
-                            break
-                if not fingerprint.disk_serial:
-                    # Generate from available info
-                    import os
+            disk_handlers = {
+                "Windows": self._get_disk_serial_windows,
+                "Linux": self._get_disk_serial_linux,
+                "Darwin": self._get_disk_serial_darwin,
+            }
 
-                    stat_info = os.statvfs("/" if platform.system() != "Windows" else "C:\\")
-                    fingerprint.disk_serial = hashlib.sha256(
-                        f"{stat_info.f_blocks}{stat_info.f_bsize}".encode(),
-                    ).hexdigest()[:16]
-            except Exception:
-                # Generate deterministic disk ID
-                fingerprint.disk_serial = hashlib.sha256(
-                    f"{platform.node()}{platform.system()}disk".encode(),
-                ).hexdigest()[:16]
+            system = platform.system()
 
-            # Get MAC address - reliable cross-platform method
-            try:
-                # Get the actual MAC address of the primary network interface
-                mac_num = uuid.getnode()
-                # Check if it's a real MAC (not random)
-                if (mac_num >> 40) % 2:
-                    # Random MAC, try to get real one
-                    import netifaces
+            # Get CPU ID
+            handler = cpu_handlers.get(system, self._get_cpu_id_default)
+            fingerprint.cpu_id = handler()
 
-                    interfaces = netifaces.interfaces()
-                    for iface in interfaces:
-                        if iface == "lo" or iface.startswith("vir"):
-                            continue
-                        addrs = netifaces.ifaddresses(iface)
-                        if netifaces.AF_LINK in addrs:
-                            mac = addrs[netifaces.AF_LINK][0]["addr"]
-                            if mac and mac != "00:00:00:00:00:00":
-                                fingerprint.mac_address = mac.upper()
-                                break
-                else:
-                    # Real MAC address
-                    fingerprint.mac_address = ":".join(
-                        [f"{(mac_num >> ele) & 0xff:02X}" for ele in range(0, 8 * 6, 8)][::-1]
-                    )
+            # Get motherboard ID
+            handler = motherboard_handlers.get(system, self._get_motherboard_id_default)
+            fingerprint.motherboard_id = handler()
 
-                if not fingerprint.mac_address or fingerprint.mac_address == "00:00:00:00:00:00":
-                    # Fallback to generated but consistent MAC
-                    import random
+            # Get disk serial
+            handler = disk_handlers.get(system, self._get_disk_serial_default)
+            fingerprint.disk_serial = handler()
 
-                    random.seed(platform.node() + platform.processor())
-                    mac_bytes = [random.randint(0, 255) for _ in range(6)]  # noqa: S311 - License emulation MAC address generation (seeded)
-                    mac_bytes[0] = (mac_bytes[0] & 0xFC) | 0x02  # Set locally administered bit
-                    fingerprint.mac_address = ":".join(f"{b:02X}" for b in mac_bytes)
-            except Exception:
-                # Generate deterministic MAC
-                import random
+            # Get MAC address
+            fingerprint.mac_address = self._get_mac_address()
 
-                random.seed(platform.node() + platform.machine())
-                mac_bytes = [random.randint(0, 255) for _ in range(6)]  # noqa: S311 - License emulation MAC address generation (seeded)
-                mac_bytes[0] = (mac_bytes[0] & 0xFC) | 0x02  # Set locally administered bit
-                fingerprint.mac_address = ":".join(f"{b:02X}" for b in mac_bytes)
-
-            # Get RAM size - cross-platform
-            try:
-                from intellicrack.handlers.psutil_handler import psutil
-
-                fingerprint.ram_size = int(psutil.virtual_memory().total / (1024**3))  # GB
-            except Exception:
-                try:
-                    if platform.system() == "Windows":
-                        result = subprocess.run(
-                            [  # noqa: S607
-                                "wmic",
-                                "computersystem",
-                                "get",
-                                "TotalPhysicalMemory",
-                                "/format:value",
-                            ],
-                            check=False,
-                            capture_output=True,
-                            text=True,
-                        )
-                        for line in result.stdout.split("\n"):
-                            if line.startswith("TotalPhysicalMemory="):
-                                mem_bytes = int(line.split("=")[1].strip())
-                                fingerprint.ram_size = int(mem_bytes / (1024**3))
-                                break
-                    elif platform.system() == "Linux":
-                        with open("/proc/meminfo") as f:
-                            for line in f:
-                                if line.startswith("MemTotal:"):
-                                    mem_kb = int(line.split()[1])
-                                    fingerprint.ram_size = int(mem_kb / (1024**2))
-                                    break
-                    elif platform.system() == "Darwin":
-                        result = subprocess.run(
-                            ["sysctl", "-n", "hw.memsize"],  # noqa: S607
-                            check=False,
-                            capture_output=True,
-                            text=True,
-                        )
-                        mem_bytes = int(result.stdout.strip())
-                        fingerprint.ram_size = int(mem_bytes / (1024**3))
-                except Exception:
-                    # Default to common size
-                    fingerprint.ram_size = 8
+            # Get RAM size
+            fingerprint.ram_size = self._get_ram_size()
 
             # Get OS version
             try:
@@ -1457,32 +1618,36 @@ class HardwareFingerprintGenerator:
 
         except Exception as e:
             self.logger.error(f"Fingerprint generation failed: {e}")
-            # Return real hardware-based fingerprint even on error
-            import random
+            return self._generate_fallback_fingerprint()
 
-            # Generate consistent values based on available info
-            seed = f"{platform.node()}{platform.system()}{platform.processor()}"
-            random.seed(seed)
+    def _generate_fallback_fingerprint(self) -> HardwareFingerprint:
+        """Generate fallback fingerprint when normal generation fails."""
+        import platform
+        import random
 
-            # Generate realistic hardware IDs
-            cpu_id = "".join(random.choice("0123456789ABCDEF") for _ in range(16))  # noqa: S311 - License emulation hardware ID generation (seeded)
-            board_id = "".join(random.choice("0123456789ABCDEF") for _ in range(12))  # noqa: S311 - License emulation hardware ID generation (seeded)
-            disk_serial = "".join(random.choice("0123456789ABCDEF") for _ in range(8))  # noqa: S311 - License emulation hardware ID generation (seeded)
+        # Generate consistent values based on available info
+        seed = f"{platform.node()}{platform.system()}{platform.processor()}"
+        random.seed(seed)
 
-            # Generate valid MAC address
-            mac_bytes = [random.randint(0, 255) for _ in range(6)]  # noqa: S311 - License emulation MAC address generation (seeded)
-            mac_bytes[0] = (mac_bytes[0] & 0xFC) | 0x02  # Set locally administered bit
-            mac_address = ":".join(f"{b:02X}" for b in mac_bytes)
+        # Generate realistic hardware IDs
+        cpu_id = "".join(random.choice("0123456789ABCDEF") for _ in range(16))
+        board_id = "".join(random.choice("0123456789ABCDEF") for _ in range(12))
+        disk_serial = "".join(random.choice("0123456789ABCDEF") for _ in range(8))
 
-            return HardwareFingerprint(
-                cpu_id=f"CPU{cpu_id}",
-                motherboard_id=f"MB{board_id}",
-                disk_serial=f"DSK{disk_serial}",
-                mac_address=mac_address,
-                ram_size=random.choice([4, 8, 16, 32, 64]),  # noqa: S311 - License emulation hardware spec selection (seeded)
-                os_version=platform.platform() if platform.platform() else "Windows 10 Pro",
-                hostname=platform.node() if platform.node() else f"PC-{random.randint(1000, 9999)}",  # noqa: S311 - License emulation hostname generation (seeded)
-            )
+        # Generate valid MAC address
+        mac_bytes = [random.randint(0, 255) for _ in range(6)]
+        mac_bytes[0] = (mac_bytes[0] & 0xFC) | 0x02  # Set locally administered bit
+        mac_address = ":".join(f"{b:02X}" for b in mac_bytes)
+
+        return HardwareFingerprint(
+            cpu_id=f"CPU{cpu_id}",
+            motherboard_id=f"MB{board_id}",
+            disk_serial=f"DSK{disk_serial}",
+            mac_address=mac_address,
+            ram_size=random.choice([4, 8, 16, 32, 64]),
+            os_version=platform.platform() if platform.platform() else "Windows 10 Pro",
+            hostname=platform.node() if platform.node() else f"PC-{random.randint(1000, 9999)}",
+        )
 
 
 class LicenseServerEmulator:

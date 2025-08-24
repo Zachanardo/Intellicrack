@@ -179,7 +179,7 @@ const KernelModeBypass = {
 
                 spoofSsdtInformation: function() {
                     try {
-                        switch: function(this.systemInformationClass) {
+                        switch(this.systemInformationClass) {
                             case 11: // SystemModuleInformation
                                 this.spoofModuleInformation();
                                 break;
@@ -203,7 +203,7 @@ const KernelModeBypass = {
                                 });
                                 break;
                         }
-                    } catch: function(e) {
+                    } catch(e) {
                         send({
                             type: "error",
                             target: "kernel_mode_bypass",
@@ -257,7 +257,7 @@ const KernelModeBypass = {
 
                                 filteredCount++;
 
-                            } catch: function(e) {
+                            } catch(e) {
                                 // Module name read failed - include it anyway
                                 filteredCount++;
                             }
@@ -654,7 +654,7 @@ const KernelModeBypass = {
                                         unicode_string: unicodeString
                                     });
                                 }
-                            } catch: function(e) {
+                            } catch(e) {
                                 // Unicode string read failed
                             }
                         }
@@ -1460,7 +1460,7 @@ const KernelModeBypass = {
                                     });
                                     this.blockAccess = true;
                                 }
-                            } catch: function(e) {
+                            } catch(e) {
                                 // Directory name read failed
                             }
                         }

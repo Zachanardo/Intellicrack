@@ -144,6 +144,103 @@ def safe_import_pyelftools():
 
 
 # Fallback implementations
+def _create_randn_fallback(shape):
+    """Generate random normal distribution for given shape."""
+    import random
+
+    if len(shape) == 0:
+        return random.gauss(0, 1)
+    if len(shape) == 1:
+        return [random.gauss(0, 1) for _ in range(shape[0])]
+    if len(shape) == 2:
+        return [[random.gauss(0, 1) for _ in range(shape[1])] for _ in range(shape[0])]
+    if len(shape) == 3:
+        return [
+            [[random.gauss(0, 1) for _ in range(shape[2])] for _ in range(shape[1])]
+            for _ in range(shape[0])
+        ]
+    if len(shape) == 4:
+        return [
+            [
+                [[random.gauss(0, 1) for _ in range(shape[3])] for _ in range(shape[2])]
+                for _ in range(shape[1])
+            ]
+            for _ in range(shape[0])
+        ]
+    raise ValueError("Too many dimensions for fallback randn")
+
+
+def _create_rand_fallback(shape):
+    """Generate random uniform distribution [0, 1) for given shape."""
+    import random
+
+    if len(shape) == 0:
+        return random.random()  # noqa: S311
+    if len(shape) == 1:
+        return [random.random() for _ in range(shape[0])]  # noqa: S311
+    if len(shape) == 2:
+        return [[random.random() for _ in range(shape[1])] for _ in range(shape[0])]  # noqa: S311
+    raise ValueError("Too many dimensions for fallback rand")
+
+
+def _create_random_int_fallback(low, high, size):
+    """Generate random integers."""
+    import random
+
+    if size is None:
+        return random.randint(low, high - 1)  # noqa: S311
+    if isinstance(size, int):
+        return [random.randint(low, high - 1) for _ in range(size)]  # noqa: S311
+    raise ValueError("Complex sizes not supported in fallback")
+
+
+def _create_random_uniform_fallback(low, high, size):
+    """Generate uniform random values."""
+    import random
+
+    if size is None:
+        return random.uniform(low, high)  # noqa: S311
+    if isinstance(size, int):
+        return [random.uniform(low, high) for _ in range(size)]  # noqa: S311
+    raise ValueError("Complex sizes not supported in fallback")
+
+
+def _create_random_normal_fallback(loc, scale, size):
+    """Generate normal distribution."""
+    import random
+
+    if size is None:
+        return random.gauss(loc, scale)
+    if isinstance(size, int):
+        return [random.gauss(loc, scale) for _ in range(size)]
+    raise ValueError("Complex sizes not supported in fallback")
+
+
+def _create_random_choice_fallback(a, size, p):
+    """Random choice from array."""
+    import random
+
+    if p is not None:
+        # Weighted choice
+        if size is None:
+            return random.choices(a, weights=p, k=1)[0]  # noqa: S311
+        return random.choices(a, weights=p, k=size)  # noqa: S311
+    if size is None:
+        return random.choice(a)  # noqa: S311
+    return [random.choice(a) for _ in range(size)]  # noqa: S311
+
+
+def _create_random_float_fallback(size):
+    """Generate random floats [0, 1)."""
+    import random
+
+    if size is None:
+        return random.random()  # noqa: S311
+    if isinstance(size, int):
+        return [random.random() for _ in range(size)]  # noqa: S311
+    raise ValueError("Complex sizes not supported in fallback")
+
+
 def create_numpy_fallback():
     """Create a minimal numpy fallback."""
 
@@ -194,99 +291,37 @@ def create_numpy_fallback():
             @staticmethod
             def randn(*shape):
                 """Generate random normal distribution."""
-                import random
-
-                if len(shape) == 0:
-                    return random.gauss(0, 1)
-                if len(shape) == 1:
-                    return [random.gauss(0, 1) for _ in range(shape[0])]
-                if len(shape) == 2:
-                    return [[random.gauss(0, 1) for _ in range(shape[1])] for _ in range(shape[0])]
-                if len(shape) == 3:
-                    return [
-                        [[random.gauss(0, 1) for _ in range(shape[2])] for _ in range(shape[1])]
-                        for _ in range(shape[0])
-                    ]
-                if len(shape) == 4:
-                    return [
-                        [
-                            [[random.gauss(0, 1) for _ in range(shape[3])] for _ in range(shape[2])]
-                            for _ in range(shape[1])
-                        ]
-                        for _ in range(shape[0])
-                    ]
-                raise ValueError("Too many dimensions for fallback randn")
+                return _create_randn_fallback(shape)
 
             @staticmethod
             def rand(*shape):
                 """Generate random uniform distribution [0, 1)."""
-                import random
-
-                if len(shape) == 0:
-                    return random.random()  # noqa: S311
-                if len(shape) == 1:
-                    return [random.random() for _ in range(shape[0])]  # noqa: S311
-                if len(shape) == 2:
-                    return [[random.random() for _ in range(shape[1])] for _ in range(shape[0])]  # noqa: S311
-                raise ValueError("Too many dimensions for fallback rand")
+                return _create_rand_fallback(shape)
 
             @staticmethod
             def randint(low, high, size=None):
                 """Generate random integers."""
-                import random
-
-                if size is None:
-                    return random.randint(low, high - 1)  # noqa: S311
-                if isinstance(size, int):
-                    return [random.randint(low, high - 1) for _ in range(size)]  # noqa: S311
-                raise ValueError("Complex sizes not supported in fallback")
+                return _create_random_int_fallback(low, high, size)
 
             @staticmethod
             def uniform(low, high, size=None):
                 """Generate uniform random values."""
-                import random
-
-                if size is None:
-                    return random.uniform(low, high)  # noqa: S311
-                if isinstance(size, int):
-                    return [random.uniform(low, high) for _ in range(size)]  # noqa: S311
-                raise ValueError("Complex sizes not supported in fallback")
+                return _create_random_uniform_fallback(low, high, size)
 
             @staticmethod
             def normal(loc=0.0, scale=1.0, size=None):
                 """Generate normal distribution."""
-                import random
-
-                if size is None:
-                    return random.gauss(loc, scale)
-                if isinstance(size, int):
-                    return [random.gauss(loc, scale) for _ in range(size)]
-                raise ValueError("Complex sizes not supported in fallback")
+                return _create_random_normal_fallback(loc, scale, size)
 
             @staticmethod
             def choice(a, size=None, p=None):
                 """Random choice from array."""
-                import random
-
-                if p is not None:
-                    # Weighted choice
-                    if size is None:
-                        return random.choices(a, weights=p, k=1)[0]  # noqa: S311
-                    return random.choices(a, weights=p, k=size)  # noqa: S311
-                if size is None:
-                    return random.choice(a)  # noqa: S311
-                return [random.choice(a) for _ in range(size)]  # noqa: S311
+                return _create_random_choice_fallback(a, size, p)
 
             @staticmethod
             def random(size=None):
                 """Generate random floats [0, 1)."""
-                import random
-
-                if size is None:
-                    return random.random()  # noqa: S311
-                if isinstance(size, int):
-                    return [random.random() for _ in range(size)]  # noqa: S311
-                raise ValueError("Complex sizes not supported in fallback")
+                return _create_random_float_fallback(size)
 
     return NumpyFallback()
 

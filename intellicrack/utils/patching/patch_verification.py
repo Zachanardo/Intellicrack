@@ -604,26 +604,27 @@ def apply_parsed_patch_instructions_with_validation(
     return False
 
 
-def rewrite_license_functions_with_parsing(app: Any) -> None:
-    """Attempts to find and rewrite license checking functions using various methods.
-    Includes enhanced logging and basic safety checks for code size.
+def _validate_binary_selection(app: Any) -> bool:
+    """Validate that a binary is selected.
 
-    Args:
-        app: Application instance with binary_path and UI elements
-
+    Returns:
+        True if binary is selected, False otherwise
     """
     if not app.binary_path:
         app.update_output.emit(log_message("[License Rewrite] No binary selected."))
-        return
+        return False
+    return True
 
-    app.update_output.emit(
-        log_message("[License Rewrite] Starting license function rewriting analysis...")
-    )
-    app.analyze_status.setText("Rewriting license functions...")
+
+def _process_deep_analysis_candidates(app: Any) -> tuple[list, str]:
+    """Process candidates from deep license analysis.
+
+    Returns:
+        Tuple of (patches list, strategy used)
+    """
     patches = []
     strategy_used = "None"
 
-    # --- Strategy 1: Deep License Analysis ---
     app.update_output.emit(
         log_message("[License Rewrite] Running deep license analysis to find candidates...")
     )
@@ -631,392 +632,518 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
 
     candidates = enhanced_deep_license_analysis(app.binary_path)
 
-    if candidates:
+    if not candidates:
+        return patches, strategy_used
+
+    app.update_output.emit(
+        log_message(
+            f"[License Rewrite] Deep analysis found {len(candidates)} candidates. Processing top candidates..."
+        )
+    )
+    strategy_used = "Deep Analysis"
+
+    # Sort candidates by confidence
+    candidates = _sort_candidates_by_confidence(candidates)
+    top_candidates = candidates[:5]  # Limit number of candidates to patch
+
+    # Process candidates with pefile/capstone/keystone
+    patches = _process_candidates_with_tools(app, top_candidates, candidates)
+
+    return patches, strategy_used
+
+
+def _sort_candidates_by_confidence(candidates):
+    """Sort candidates by confidence score.
+
+    Returns:
+        Sorted list of candidates
+    """
+    if isinstance(candidates, list):
+        candidates.sort(key=lambda x: x.get("confidence", 0), reverse=True)
+    elif isinstance(candidates, dict):
+        # Convert dict to list if needed
+        candidates = list(candidates.values()) if hasattr(candidates, "values") else []
+    return candidates
+
+
+def _process_candidates_with_tools(app: Any, top_candidates: list, candidates: list) -> list:
+    """Process candidates using pefile, capstone, and keystone tools.
+
+    Returns:
+        List of patches generated
+    """
+    patches = []
+
+    if not pefile or not Cs or not keystone:
         app.update_output.emit(
             log_message(
-                f"[License Rewrite] Deep analysis found {len(candidates)} candidates. Processing top candidates..."
+                "[License Rewrite] Error: Required modules (pefile, capstone, keystone) not found."
             )
         )
-        strategy_used = "Deep Analysis"
-        # Sort by confidence and take top ones
-        if isinstance(candidates, list):
-            candidates.sort(key=lambda x: x.get("confidence", 0), reverse=True)
-        elif isinstance(candidates, dict):
-            # Convert dict to list if needed
-            candidates = list(candidates.values()) if hasattr(candidates, "values") else []
-        top_candidates = candidates[:5]  # Limit number of candidates to patch
+        return patches
 
-        if not pefile or not Cs or not keystone:
+    try:
+        pe = pefile.PE(app.binary_path)
+        is_64bit = getattr(pe.FILE_HEADER, "Machine", 0) == 0x8664
+
+        # Setup disassembler and assembler
+        tools = _setup_disassembly_tools(is_64bit)
+
+        # Get .text section
+        text_section = _get_text_section(pe, app)
+        if not text_section:
+            return patches
+
+        code_data = text_section.get_data()
+        code_base_addr = pe.OPTIONAL_HEADER.ImageBase + text_section.VirtualAddress
+
+        # Process each candidate
+        for candidate in top_candidates:
+            patch = _process_single_candidate(
+                app, candidate, is_64bit, tools, code_data, code_base_addr, candidates
+            )
+            if patch:
+                patches.append(patch)
+
+    except ImportError as e:
+        logger.error("Import error in patch_verification: %s", e)
+        app.update_output.emit(
+            log_message(
+                "[License Rewrite] Error: Required modules (pefile, capstone, keystone) not found."
+            )
+        )
+    except Exception as e_deep:
+        logger.error("Exception in patch_verification: %s", e_deep)
+        app.update_output.emit(
+            log_message(
+                f"[License Rewrite] Error processing deep analysis candidates: {e_deep}"
+            )
+        )
+        app.update_output.emit(log_message(traceback.format_exc()))
+
+    return patches
+
+
+def _setup_disassembly_tools(is_64bit: bool) -> dict:
+    """Setup capstone and keystone tools.
+
+    Returns:
+        Dictionary with 'ks' and 'md' tools
+    """
+    arch = keystone.KS_ARCH_X86
+    ks_mode = keystone.KS_MODE_64 if is_64bit else keystone.KS_MODE_32
+    cs_mode = CS_MODE_64 if is_64bit else CS_MODE_32
+
+    ks = keystone.Ks(arch, ks_mode)
+    md = Cs(CS_ARCH_X86, cs_mode)
+    md.detail = True  # Enable detail for instruction size
+
+    return {"ks": ks, "md": md}
+
+
+def _get_text_section(pe, app: Any):
+    """Get the .text section from PE file.
+
+    Returns:
+        Text section or None if not found
+    """
+    text_section = next((s for s in pe.sections if b".text" in s.Name.lower()), None)
+    if not text_section:
+        app.update_output.emit(
+            log_message("[License Rewrite] Error: Cannot find .text section.")
+        )
+    return text_section
+
+
+def _process_single_candidate(
+    app: Any,
+    candidate: dict,
+    is_64bit: bool,
+    tools: dict,
+    code_data: bytes,
+    code_base_addr: int,
+    candidates: list,
+) -> dict | None:
+    """Process a single candidate for patching.
+
+    Returns:
+        Patch dictionary or None if no patch generated
+    """
+    start_addr = candidate["start"]
+    keywords = candidate.get("keywords", [])
+
+    app.update_output.emit(
+        log_message(
+            f"[License Rewrite] Processing candidate at 0x{start_addr:X} (Keywords: {', '.join(keywords)})"
+        )
+    )
+
+    # Generate patch bytes
+    patch_bytes, patch_asm = _generate_patch_bytes(is_64bit, tools["ks"])
+
+    # Perform safety check and generate patch
+    patch = _perform_safety_check_and_patch(
+        app, start_addr, code_data, code_base_addr, patch_bytes, patch_asm, tools["md"], candidates
+    )
+
+    return patch
+
+
+def _generate_patch_bytes(is_64bit: bool, ks) -> tuple[bytes, str]:
+    """Generate patch bytes for the architecture.
+
+    Returns:
+        Tuple of (patch bytes, assembly string)
+    """
+    if is_64bit:
+        # mov rax, 1; ret => 48 C7 C0 01 00 00 00 C3
+        patch_asm = "mov rax, 1; ret"
+    else:
+        # mov eax, 1; ret => B8 01 00 00 00 C3
+        patch_asm = "mov eax, 1; ret"
+
+    patch_bytes, _ = ks.asm(patch_asm)
+    patch_bytes = bytes(patch_bytes)
+
+    return patch_bytes, patch_asm
+
+
+def _perform_safety_check_and_patch(
+    app: Any,
+    start_addr: int,
+    code_data: bytes,
+    code_base_addr: int,
+    patch_bytes: bytes,
+    patch_asm: str,
+    md,
+    candidates: list,
+) -> dict | None:
+    """Perform safety check and create patch if safe.
+
+    Returns:
+        Patch dictionary or None if not safe
+    """
+    try:
+        # Calculate offset within code_data
+        code_offset = start_addr - code_base_addr
+        if not (0 <= code_offset < len(code_data)):
             app.update_output.emit(
                 log_message(
-                    "[License Rewrite] Error: Required modules (pefile, capstone, keystone) not found."
+                    f"[License Rewrite] Warning: Candidate address 0x{start_addr:X} is outside the .text section. Skipping."
                 )
             )
-            candidates = []  # Cannot proceed if imports fail
+            return None
+
+        # Disassemble first few bytes
+        bytes_to_disassemble = max(len(patch_bytes), 15)
+        instructions = list(
+            md.disasm(
+                code_data[code_offset : code_offset + bytes_to_disassemble],
+                start_addr,
+                count=5,
+            )
+        )
+
+        if not instructions:
+            app.update_output.emit(
+                log_message(
+                    f"[License Rewrite] Warning: Could not disassemble instructions at 0x{start_addr:X} for size check."
+                )
+            )
+            return None
+
+        # Check if patch fits safely
+        patch = _check_patch_safety_and_create(
+            app, instructions, patch_bytes, patch_asm, start_addr, code_data, code_offset, candidates
+        )
+
+        return patch
+
+    except Exception as e_check:
+        logger.error("Exception in patch_verification: %s", e_check)
+        app.update_output.emit(
+            log_message(
+                f"[License Rewrite] Error during safety check for 0x{start_addr:X}: {e_check}. Skipping patch for this candidate."
+            )
+        )
+        return None
+
+
+def _check_patch_safety_and_create(
+    app: Any,
+    instructions: list,
+    patch_bytes: bytes,
+    patch_asm: str,
+    start_addr: int,
+    code_data: bytes,
+    code_offset: int,
+    candidates: list,
+) -> dict | None:
+    """Check if patch is safe and create it.
+
+    Returns:
+        Patch dictionary or None if not safe
+    """
+    prologue_size = _calculate_safe_prologue_size(instructions)
+
+    # Strict check: patch must fit within conservative prologue AND be less than 8 bytes
+    if prologue_size >= len(patch_bytes) and len(patch_bytes) <= 8:
+        app.update_output.emit(
+            log_message(
+                f"[License Rewrite] Safety Check OK: Patch size ({len(patch_bytes)} bytes) fits estimated prologue size ({prologue_size} bytes) at 0x{start_addr:X}."
+            )
+        )
+        return {
+            "address": start_addr,
+            "new_bytes": patch_bytes,
+            "description": f"Replace function prologue at 0x{start_addr:X} with '{patch_asm}'",
+        }
+    else:
+        app.update_output.emit(
+            log_message(
+                f"[License Rewrite] Safety Check FAILED: Patch size ({len(patch_bytes)} bytes) may NOT fit estimated prologue size ({prologue_size} bytes) at 0x{start_addr:X}. Skipping direct rewrite."
+            )
+        )
+
+        # Add suggestions for manual review
+        _add_manual_review_suggestions(app, instructions, start_addr, code_data, code_offset, candidates)
+        return None
+
+
+def _calculate_safe_prologue_size(instructions: list) -> int:
+    """Calculate safe prologue size from instructions.
+
+    Returns:
+        Safe prologue size in bytes
+    """
+    prologue_size = 0
+    safe_prologue_mnemonics = ["push", "mov", "sub", "lea", "xor"]
+    safe_instructions_count = 0
+
+    for insn in instructions:
+        # Only consider very simple prologue instructions
+        if insn.mnemonic in safe_prologue_mnemonics:
+            prologue_size += insn.size
+            safe_instructions_count += 1
+            # Break after a very conservative number of instructions
+            if safe_instructions_count >= 3:
+                break
         else:
-            try:
-                pe = pefile.PE(app.binary_path)
-                is_64bit = getattr(pe.FILE_HEADER, "Machine", 0) == 0x8664
-                mode = CS_MODE_64 if is_64bit else CS_MODE_32
-                arch = keystone.KS_ARCH_X86
-                ks_mode = keystone.KS_MODE_64 if is_64bit else keystone.KS_MODE_32
-                cs_mode = CS_MODE_64 if is_64bit else CS_MODE_32
+            # Stop at any other instruction type
+            break
 
-                ks = keystone.Ks(arch, ks_mode)
-                md = Cs(CS_ARCH_X86, cs_mode)
-                md.detail = True  # Enable detail for instruction size
+    return prologue_size
 
-                # Get .text section for code analysis
-                text_section = next((s for s in pe.sections if b".text" in s.Name.lower()), None)
-                if not text_section:
-                    app.update_output.emit(
-                        log_message("[License Rewrite] Error: Cannot find .text section.")
-                    )
-                    raise Exception(".text section not found")
 
-                code_data = text_section.get_data()
-                code_base_addr = pe.OPTIONAL_HEADER.ImageBase + text_section.VirtualAddress
+def _add_manual_review_suggestions(
+    app: Any, instructions: list, start_addr: int, code_data: bytes, code_offset: int, candidates: list
+) -> None:
+    """Add suggestions for manual review."""
+    # Check first 3 instructions for conditional jumps
+    for insn in instructions[:3]:
+        if insn.mnemonic.startswith("j") and insn.mnemonic != "jmp" and insn.size > 0:
+            nop_patch = bytes([0x90] * insn.size)
+            suggestion_desc = f"Consider NOPing conditional jump {insn.mnemonic} at 0x{insn.address:X}"
 
-                for candidate in top_candidates:
-                    start_addr = candidate["start"]
-                    keywords = candidate.get("keywords", [])
-                    patch_generated = False
-
-                    app.update_output.emit(
-                        log_message(
-                            f"[License Rewrite] Processing candidate at 0x{start_addr:X} (Keywords: {', '.join(keywords)})"
-                        )
-                    )
-
-                    # Determine the patch bytes (e.g., return 1)
-                    if is_64bit:
-                        # mov rax, 1; ret => 48 C7 C0 01 00 00 00 C3
-                        patch_asm = "mov rax, 1; ret"
-                        patch_bytes, _ = ks.asm(patch_asm)
-                        patch_bytes = bytes(patch_bytes)
-                    else:
-                        # mov eax, 1; ret => B8 01 00 00 00 C3
-                        patch_asm = "mov eax, 1; ret"
-                        patch_bytes, _ = ks.asm(patch_asm)
-                        patch_bytes = bytes(patch_bytes)
-
-                    # --- Safety Check: Prologue Size ---
-                    try:
-                        # Calculate offset within code_data
-                        code_offset = start_addr - code_base_addr
-                        if 0 <= code_offset < len(code_data):
-                            # Disassemble first few bytes of the function
-                            bytes_to_disassemble = max(len(patch_bytes), 15)
-                            # Disassemble up to 5 instructions
-                            instructions = list(
-                                md.disasm(
-                                    code_data[code_offset : code_offset + bytes_to_disassemble],
-                                    start_addr,
-                                    count=5,
-                                )
-                            )
-
-                            bytes_at_addr = (
-                                code_data[code_offset : code_offset + bytes_to_disassemble]
-                                if 0 <= code_offset < len(code_data)
-                                else None
-                            )
-                            disasm_at_addr = (
-                                "; ".join([f"{i.mnemonic} {i.op_str}" for i in instructions])
-                                if instructions
-                                else None
-                            )
-                            min_patch_size = len(patch_bytes) if "patch_bytes" in locals() else 6
-
-                            if instructions:
-                                prologue_size = 0
-                                # More conservative prologue size estimation
-                                safe_prologue_mnemonics = ["push", "mov", "sub", "lea", "xor"]
-                                safe_instructions_count = 0
-
-                                for insn in instructions:
-                                    # Only consider very simple prologue instructions
-                                    if insn.mnemonic in safe_prologue_mnemonics:
-                                        prologue_size += insn.size
-                                        safe_instructions_count += 1
-                                        # Break after a very conservative number of instructions
-                                        if safe_instructions_count >= 3:
-                                            break
-                                    else:
-                                        # Stop at any other instruction type
-                                        break
-
-                                # Strict check: patch must fit within conservative prologue AND be less than 8 bytes
-                                if prologue_size >= len(patch_bytes) and len(patch_bytes) <= 8:
-                                    app.update_output.emit(
-                                        log_message(
-                                            f"[License Rewrite] Safety Check OK: Patch size ({len(patch_bytes)} bytes) fits estimated prologue size ({prologue_size} bytes) at 0x{start_addr:X}."
-                                        )
-                                    )
-                                    patches.append(
-                                        {
-                                            "address": start_addr,
-                                            "new_bytes": patch_bytes,
-                                            "description": f"Replace function prologue at 0x{start_addr:X} with '{patch_asm}'",
-                                        }
-                                    )
-                                    patch_generated = True
-                                else:
-                                    app.update_output.emit(
-                                        log_message(
-                                            f"[License Rewrite] Safety Check FAILED: Patch size ({len(patch_bytes)} bytes) may NOT fit estimated prologue size ({prologue_size} bytes) at 0x{start_addr:X}. Skipping direct rewrite."
-                                        )
-                                    )
-                                    # Instead of automatically applying NOP fallback, log it as a suggestion
-                                    # Check first 3 instructions for conditional jumps
-                                    for insn in instructions[:3]:
-                                        if (
-                                            insn.mnemonic.startswith("j")
-                                            and insn.mnemonic != "jmp"
-                                            and insn.size > 0
-                                        ):
-                                            nop_patch = bytes([0x90] * insn.size)
-                                            suggestion_desc = f"Consider NOPing conditional jump {insn.mnemonic} at 0x{insn.address:X}"
-
-                                            # Log the suggestion instead of applying it
-                                            app.update_output.emit(
-                                                log_message(
-                                                    f"[License Rewrite] SUGGESTION: {suggestion_desc}"
-                                                )
-                                            )
-
-                                            # Add to potential patches with clear manual verification flag
-                                            if hasattr(app, "potential_patches"):
-                                                fallback_patch = {
-                                                    "address": insn.address,
-                                                    "new_bytes": nop_patch,
-                                                    "description": f"[MANUAL VERIFY REQUIRED] {suggestion_desc}",
-                                                    "requires_verification": True,
-                                                }
-                                                app.potential_patches.append(fallback_patch)
-
-                                                app.update_output.emit(
-                                                    log_message(
-                                                        "[License Rewrite] Added suggestion to potential_patches. Use 'Apply Patches' to apply after review."
-                                                    )
-                                                )
-
-                                            # Mark that we provided a suggestion but didn't automatically patch
-                                            break
-
-                            else:
-                                app.update_output.emit(
-                                    log_message(
-                                        f"[License Rewrite] Warning: Could not disassemble instructions at 0x{start_addr:X} for size check."
-                                    )
-                                )
-                        else:
-                            app.update_output.emit(
-                                log_message(
-                                    f"[License Rewrite] Warning: Candidate address 0x{start_addr:X} is outside the .text section. Skipping."
-                                )
-                            )
-
-                    except Exception as e_check:
-                        logger.error("Exception in patch_verification: %s", e_check)
-                        app.update_output.emit(
-                            log_message(
-                                f"[License Rewrite] Error during safety check for 0x{start_addr:X}: {e_check}. Skipping patch for this candidate."
-                            )
-                        )
-
-                    # If no specific patch was generated, add to candidates for AI/manual review
-                    if not patch_generated:
-                        app.update_output.emit(
-                            log_message(
-                                f"[License Rewrite] No safe patch generated for 0x{start_addr:X}. Adding to manual review list."
-                            )
-                        )
-                        # Add to the list of candidates that need manual review
-                        if isinstance(candidates, list):
-                            candidates.append(
-                                {
-                                    "address": start_addr,
-                                    "size": min_patch_size,
-                                    "original_bytes": bytes_at_addr.hex().upper()
-                                    if bytes_at_addr
-                                    else "",
-                                    "disassembly": disasm_at_addr or "Unknown",
-                                    "reason": "Failed automatic patch generation",
-                                    "needs_review": True,
-                                    "review_priority": "high"
-                                    if "check" in (disasm_at_addr or "").lower()
-                                    else "medium",
-                                }
-                            )
-
-                        # Log to analysis results for reporting
-                        app.analyze_results.append(
-                            f"Manual review needed for potential license check at 0x{start_addr:X}"
-                        )
-
-            except ImportError as e:
-                logger.error("Import error in patch_verification: %s", e)
-                app.update_output.emit(
-                    log_message(
-                        "[License Rewrite] Error: Required modules (pefile, capstone, keystone) not found."
-                    )
-                )
-                candidates = []  # Cannot proceed if imports fail
-            except Exception as e_deep:
-                logger.error("Exception in patch_verification: %s", e_deep)
-                app.update_output.emit(
-                    log_message(
-                        f"[License Rewrite] Error processing deep analysis candidates: {e_deep}"
-                    )
-                )
-                app.update_output.emit(log_message(traceback.format_exc()))
-                # Continue with safer alternatives instead of risky fallbacks
-
-    # --- Alternative approaches when deep analysis fails ---
-    if not patches and not candidates:  # Only if deep analysis yielded nothing
-        app.update_output.emit(
-            log_message(
-                "[License Rewrite] Deep analysis did not identify suitable patches. Suggesting alternatives..."
-            )
-        )
-        strategy_used = "Manual Assistance Required"
-
-        # Log safer alternative approaches instead of attempting risky static IAT patching
-        app.update_output.emit(
-            log_message(
-                "[License Rewrite] RECOMMENDATION: Consider using dynamic hooking via Frida instead of static patching."
-            )
-        )
-        app.update_output.emit(
-            log_message(
-                "[License Rewrite] RECOMMENDATION: Use the AI assistant to analyze specific license functions."
-            )
-        )
-        app.update_output.emit(
-            log_message(
-                "[License Rewrite] RECOMMENDATION: Consider analyzing import usage with the dynamic tracer."
-            )
-        )
-
-        # Add to analysis results for reporting
-        if hasattr(app, "analyze_results"):
-            app.analyze_results.append("\n=== LICENSE FUNCTION ANALYSIS ===")
-            app.analyze_results.append("Deep analysis didn't identify suitable patches")
-            app.analyze_results.append("Recommended approaches:")
-            app.analyze_results.append("1. Use dynamic hooking (Frida) rather than static patching")
-            app.analyze_results.append(
-                "2. Request AI-assisted analysis for specific license checks"
-            )
-            app.analyze_results.append(
-                "3. Use dynamic tracing to identify license verification code paths"
-            )
-
-    # --- Strategy 3: Fallback to Generic/AI Patching (if still no patches) ---
-    if not patches:
-        app.update_output.emit(
-            log_message(
-                "[License Rewrite] No patches generated from specific analysis. Trying generic/AI approach..."
-            )
-        )
-        strategy_used = "AI/Generic Fallback"
-
-        # Actually implement the AI-based patching using the Automated Patch Agent
-        try:
+            # Log the suggestion
             app.update_output.emit(
-                log_message("[License Rewrite] Invoking Automated Patch Agent...")
+                log_message(f"[License Rewrite] SUGGESTION: {suggestion_desc}")
             )
 
-            # Diagnostic log
-            app.update_output.emit(
-                log_message("[License Rewrite] Checking application state before invoking agent...")
-            )
-            app.update_output.emit(
-                log_message(f"[License Rewrite] Has binary_path: {hasattr(app, 'binary_path')}")
-            )
-            if hasattr(app, "binary_path"):
-                app.update_output.emit(
-                    log_message(
-                        f"[License Rewrite] Binary path exists: {os.path.exists(app.binary_path) if app.binary_path else False}"
-                    )
-                )
-
-            # Use the existing Automated Patch Agent function
-            original_status = app.analyze_status.text() if hasattr(app, "analyze_status") else ""
-
-            # Temporarily save any existing potential patches
-            original_patches = getattr(app, "potential_patches", None)
-
-            # Run the automated patch agent which will populate app.potential_patches
-            app.update_output.emit(
-                log_message("[License Rewrite] Calling run_automated_patch_agent()...")
-            )
-            run_automated_patch_agent(app)
-
-            # Check if the automated patch agent generated any patches
-            has_patches = hasattr(app, "potential_patches") and app.potential_patches
-
-            # Compare original patches with new patches if both exist
-            if has_patches and original_patches:
-                app.update_output.emit(
-                    log_message("[License Rewrite] Comparing original patches with new patches...")
-                )
-
-                # Count how many patches are new vs. previously discovered
-                original_patch_addrs = {p.get("address", "unknown") for p in original_patches}
-                new_patch_addrs = {p.get("address", "unknown") for p in app.potential_patches}
-
-                new_patches_count = len(new_patch_addrs - original_patch_addrs)
-                overlapping_patches = len(new_patch_addrs.intersection(original_patch_addrs))
+            # Add to potential patches with clear manual verification flag
+            if hasattr(app, "potential_patches"):
+                fallback_patch = {
+                    "address": insn.address,
+                    "new_bytes": nop_patch,
+                    "description": f"[MANUAL VERIFY REQUIRED] {suggestion_desc}",
+                    "requires_verification": True,
+                }
+                app.potential_patches.append(fallback_patch)
 
                 app.update_output.emit(
                     log_message(
-                        f"[License Rewrite] Found {new_patches_count} new patches and {overlapping_patches} overlapping with previous analysis"
+                        "[License Rewrite] Added suggestion to potential_patches. Use 'Apply Patches' to apply after review."
                     )
                 )
+            break
 
-                # Merge patches to ensure we don't lose any good ones
-                if new_patches_count == 0 and overlapping_patches > 0:
-                    app.update_output.emit(
-                        log_message(
-                            "[License Rewrite] No new patches found, keeping original patches for reference"
-                        )
-                    )
-                    # Keep track of both sets
-                    app.original_patches = original_patches
+    # Add to candidates for review
+    bytes_to_disassemble = max(len(patch_bytes) if 'patch_bytes' in locals() else 6, 15)
+    bytes_at_addr = code_data[code_offset : code_offset + bytes_to_disassemble]
+    disasm_at_addr = "; ".join([f"{i.mnemonic} {i.op_str}" for i in instructions])
+
+    if isinstance(candidates, list):
+        candidates.append(
+            {
+                "address": start_addr,
+                "size": len(patch_bytes) if 'patch_bytes' in locals() else 6,
+                "original_bytes": bytes_at_addr.hex().upper() if bytes_at_addr else "",
+                "disassembly": disasm_at_addr or "Unknown",
+                "reason": "Failed automatic patch generation",
+                "needs_review": True,
+                "review_priority": "high" if "check" in (disasm_at_addr or "").lower() else "medium",
+            }
+        )
+
+    # Log to analysis results
+    app.analyze_results.append(
+        f"Manual review needed for potential license check at 0x{start_addr:X}"
+    )
+
+
+def _handle_no_patches_alternative(app: Any, strategy_used: str) -> None:
+    """Handle case when no patches were generated from deep analysis."""
+    app.update_output.emit(
+        log_message(
+            "[License Rewrite] Deep analysis did not identify suitable patches. Suggesting alternatives..."
+        )
+    )
+
+    # Log safer alternative approaches
+    alternatives = [
+        "Consider using dynamic hooking via Frida instead of static patching.",
+        "Use the AI assistant to analyze specific license functions.",
+        "Consider analyzing import usage with the dynamic tracer.",
+    ]
+
+    for alt in alternatives:
+        app.update_output.emit(log_message(f"[License Rewrite] RECOMMENDATION: {alt}"))
+
+    # Add to analysis results for reporting
+    if hasattr(app, "analyze_results"):
+        app.analyze_results.append("\n=== LICENSE FUNCTION ANALYSIS ===")
+        app.analyze_results.append("Deep analysis didn't identify suitable patches")
+        app.analyze_results.append("Recommended approaches:")
+        app.analyze_results.append("1. Use dynamic hooking (Frida) rather than static patching")
+        app.analyze_results.append("2. Request AI-assisted analysis for specific license checks")
+        app.analyze_results.append("3. Use dynamic tracing to identify license verification code paths")
+
+
+def _apply_ai_fallback_patching(app: Any) -> list:
+    """Apply AI-based fallback patching.
+
+    Returns:
+        List of patches generated
+    """
+    patches = []
+
+    app.update_output.emit(
+        log_message(
+            "[License Rewrite] No patches generated from specific analysis. Trying generic/AI approach..."
+        )
+    )
+
+    try:
+        app.update_output.emit(
+            log_message("[License Rewrite] Invoking Automated Patch Agent...")
+        )
+
+        # Diagnostic logging
+        _log_application_state(app)
+
+        # Save current state
+        original_status = app.analyze_status.text() if hasattr(app, "analyze_status") else ""
+        original_patches = getattr(app, "potential_patches", None)
+
+        # Run the automated patch agent
+        app.update_output.emit(
+            log_message("[License Rewrite] Calling run_automated_patch_agent()...")
+        )
+        run_automated_patch_agent(app)
+
+        # Check results
+        has_patches = hasattr(app, "potential_patches") and app.potential_patches
+
+        if has_patches:
+            patches = _process_ai_patches(app, original_patches)
+        else:
             app.update_output.emit(
-                log_message(f"[License Rewrite] Patches generated: {has_patches}")
+                log_message(
+                    "[License Rewrite] Automated Patch Agent did not generate any patches"
+                )
             )
 
-            if has_patches:
-                patches = app.potential_patches
-                app.update_output.emit(
-                    log_message(f"[License Rewrite] AI generated {len(patches)} potential patches")
-                )
-                # Log first patch details for debugging
-                if patches and len(patches) > 0:
-                    app.update_output.emit(
-                        log_message(f"[License Rewrite] First patch details: {patches[0]!s}")
-                    )
-            else:
-                app.update_output.emit(
-                    log_message(
-                        "[License Rewrite] Automated Patch Agent did not generate any patches"
-                    )
-                )
+        # Restore original status
+        if hasattr(app, "analyze_status"):
+            app.analyze_status.setText(original_status)
 
-            # Restore original status (it gets overwritten by the patch agent)
-            if hasattr(app, "analyze_status"):
-                app.analyze_status.setText(original_status)
+    except Exception as e_agent:
+        logger.error("Exception in patch_verification: %s", e_agent)
+        app.update_output.emit(
+            log_message(f"[License Rewrite] Error running Automated Patch Agent: {e_agent}")
+        )
+        app.update_output.emit(log_message(traceback.format_exc()))
 
-        except Exception as e_agent:
-            logger.error("Exception in patch_verification: %s", e_agent)
-            app.update_output.emit(
-                log_message(f"[License Rewrite] Error running Automated Patch Agent: {e_agent}")
+    return patches
+
+
+def _log_application_state(app: Any) -> None:
+    """Log application state for diagnostics."""
+    app.update_output.emit(
+        log_message("[License Rewrite] Checking application state before invoking agent...")
+    )
+    app.update_output.emit(
+        log_message(f"[License Rewrite] Has binary_path: {hasattr(app, 'binary_path')}")
+    )
+    if hasattr(app, "binary_path"):
+        app.update_output.emit(
+            log_message(
+                f"[License Rewrite] Binary path exists: {os.path.exists(app.binary_path) if app.binary_path else False}"
             )
-            app.update_output.emit(log_message(traceback.format_exc()))
+        )
 
-    # --- Apply Patches ---
+
+def _process_ai_patches(app: Any, original_patches: list | None) -> list:
+    """Process patches generated by AI agent.
+
+    Returns:
+        List of patches
+    """
+    patches = app.potential_patches
+
+    # Compare with original patches if both exist
+    if original_patches:
+        app.update_output.emit(
+            log_message("[License Rewrite] Comparing original patches with new patches...")
+        )
+
+        # Count new vs. overlapping patches
+        original_patch_addrs = {p.get("address", "unknown") for p in original_patches}
+        new_patch_addrs = {p.get("address", "unknown") for p in patches}
+
+        new_patches_count = len(new_patch_addrs - original_patch_addrs)
+        overlapping_patches = len(new_patch_addrs.intersection(original_patch_addrs))
+
+        app.update_output.emit(
+            log_message(
+                f"[License Rewrite] Found {new_patches_count} new patches and {overlapping_patches} overlapping with previous analysis"
+            )
+        )
+
+        # Keep track of both sets if needed
+        if new_patches_count == 0 and overlapping_patches > 0:
+            app.update_output.emit(
+                log_message(
+                    "[License Rewrite] No new patches found, keeping original patches for reference"
+                )
+            )
+            app.original_patches = original_patches
+
+    app.update_output.emit(
+        log_message(f"[License Rewrite] AI generated {len(patches)} potential patches")
+    )
+
+    # Log first patch details for debugging
+    if patches and len(patches) > 0:
+        app.update_output.emit(
+            log_message(f"[License Rewrite] First patch details: {patches[0]!s}")
+        )
+
+    return patches
+
+
+def _apply_patches_and_finalize(app: Any, patches: list, strategy_used: str) -> None:
+    """Apply patches and finalize the process."""
     if patches:
         app.update_output.emit(log_message(f"[License Rewrite] Strategy: {strategy_used}"))
         app.update_output.emit(
@@ -1046,6 +1173,43 @@ def rewrite_license_functions_with_parsing(app: Any) -> None:
 
     # Update status
     app.analyze_status.setText("License function rewriting complete")
+
+
+def rewrite_license_functions_with_parsing(app: Any) -> None:
+    """Attempts to find and rewrite license checking functions using various methods.
+    Includes enhanced logging and basic safety checks for code size.
+
+    Args:
+        app: Application instance with binary_path and UI elements
+
+    """
+    if not _validate_binary_selection(app):
+        return
+
+    app.update_output.emit(
+        log_message("[License Rewrite] Starting license function rewriting analysis...")
+    )
+    app.analyze_status.setText("Rewriting license functions...")
+
+    # Strategy 1: Deep License Analysis
+    patches, strategy_used = _process_deep_analysis_candidates(app)
+    candidates = []  # Initialize for later use
+
+
+    # Alternative approaches when deep analysis fails
+    if not patches and not candidates:
+        _handle_no_patches_alternative(app, strategy_used)
+        strategy_used = "Manual Assistance Required"
+
+    # Strategy 3: Fallback to Generic/AI Patching (if still no patches)
+    if not patches:
+        ai_patches = _apply_ai_fallback_patching(app)
+        if ai_patches:
+            patches = ai_patches
+            strategy_used = "AI/Generic Fallback"
+
+    # Apply Patches
+    _apply_patches_and_finalize(app, patches, strategy_used)
 
 
 # Export all patch verification functions

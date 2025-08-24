@@ -102,12 +102,8 @@ class PEStructureModel(QAbstractItemModel):
         self.setup_model_data()
         self.endResetModel()
 
-    def setup_model_data(self):
-        """Build the tree structure from PE model."""
-        if not self.pe_model:
-            return
-
-        # File Info section
+    def _add_file_info_section(self):
+        """Add file information section to the tree."""
         file_info = PEStructureItem("File Information", self.root_item)
         self.root_item.append_child(file_info)
 
@@ -117,7 +113,8 @@ class PEStructureModel(QAbstractItemModel):
                 info_item = PEStructureItem(f"{key}: {value}", file_info)
                 file_info.append_child(info_item)
 
-        # Headers section
+    def _add_headers_section(self):
+        """Add headers section to the tree."""
         headers = PEStructureItem("Headers", self.root_item)
         self.root_item.append_child(headers)
 
@@ -131,7 +128,8 @@ class PEStructureModel(QAbstractItemModel):
                     prop_item = PEStructureItem(f"{prop_name}: {prop_value}", header_item)
                     header_item.append_child(prop_item)
 
-        # Sections
+    def _add_sections_section(self):
+        """Add sections information to the tree."""
         sections = PEStructureItem("Sections", self.root_item)
         self.root_item.append_child(sections)
 
@@ -158,7 +156,8 @@ class PEStructureModel(QAbstractItemModel):
                 prop_item = PEStructureItem(prop, section_item)
                 section_item.append_child(prop_item)
 
-        # Data Directories
+    def _add_data_directories_section(self):
+        """Add data directories section to the tree."""
         directories = PEStructureItem("Data Directories", self.root_item)
         self.root_item.append_child(directories)
 
@@ -172,127 +171,160 @@ class PEStructureModel(QAbstractItemModel):
                     prop_item = PEStructureItem(f"{prop_name}: {prop_value}", dir_item)
                     dir_item.append_child(prop_item)
 
-        # Imports
+    def _add_imports_section(self):
+        """Add imports section to the tree."""
         imports = self.pe_model.get_imports()
-        if imports:
-            imports_root = PEStructureItem("Imports", self.root_item)
-            self.root_item.append_child(imports_root)
+        if not imports:
+            return
 
-            # Group by DLL
-            dll_groups = {}
-            for imp in imports:
-                if imp.dll_name not in dll_groups:
-                    dll_groups[imp.dll_name] = []
-                dll_groups[imp.dll_name].append(imp)
+        imports_root = PEStructureItem("Imports", self.root_item)
+        self.root_item.append_child(imports_root)
 
-            for dll_name, dll_imports in dll_groups.items():
-                dll_item = PEStructureItem(
-                    f"{dll_name} ({len(dll_imports)} functions)", imports_root
-                )
-                imports_root.append_child(dll_item)
+        # Group by DLL
+        dll_groups = {}
+        for imp in imports:
+            if imp.dll_name not in dll_groups:
+                dll_groups[imp.dll_name] = []
+            dll_groups[imp.dll_name].append(imp)
 
-                for imp in dll_imports[:20]:  # Limit to first 20 for performance
-                    func_text = f"{imp.function_name} @ 0x{imp.address:X}"
-                    if imp.ordinal:
-                        func_text += f" (Ordinal: {imp.ordinal})"
-                    func_item = PEStructureItem(func_text, dll_item)
-                    dll_item.append_child(func_item)
-
-                if len(dll_imports) > 20:
-                    more_item = PEStructureItem(f"... and {len(dll_imports) - 20} more", dll_item)
-                    dll_item.append_child(more_item)
-
-        # Exports
-        exports = self.pe_model.get_exports()
-        if exports:
-            exports_root = PEStructureItem("Exports", self.root_item)
-            self.root_item.append_child(exports_root)
-
-            for exp in exports[:50]:  # Limit for performance
-                exp_text = f"{exp.function_name} @ 0x{exp.address:X} (Ordinal: {exp.ordinal})"
-                if exp.forwarder:
-                    exp_text += f" -> {exp.forwarder}"
-                exp_item = PEStructureItem(exp_text, exports_root)
-                exports_root.append_child(exp_item)
-
-            if len(exports) > 50:
-                more_item = PEStructureItem(f"... and {len(exports) - 50} more", exports_root)
-                exports_root.append_child(more_item)
-
-        # Certificates
-        certificates = self.pe_model.get_certificates()
-        if certificates and certificates.is_signed:
-            certificates_root = PEStructureItem("Digital Certificates", self.root_item)
-            self.root_item.append_child(certificates_root)
-
-            # Signing information
-            signing_cert = certificates.signing_certificate
-            if signing_cert:
-                cert_info = "Signing Certificate"
-                if signing_cert.subject:
-                    # Extract CN from subject
-                    subject_parts = signing_cert.subject.split(",")
-                    cn_part = next(
-                        (part.strip() for part in subject_parts if part.strip().startswith("CN=")),
-                        None,
-                    )
-                    if cn_part:
-                        cert_info = f"{cert_info} - {cn_part[3:]}"  # Remove 'CN=' prefix
-
-                cert_item = PEStructureItem(cert_info, certificates_root)
-                certificates_root.append_child(cert_item)
-
-                # Certificate details
-                details = [
-                    f"Subject: {signing_cert.subject}",
-                    f"Issuer: {signing_cert.issuer}",
-                    f"Serial: {signing_cert.serial_number}",
-                    f"Valid From: {signing_cert.not_before.strftime('%Y-%m-%d %H:%M:%S')}",
-                    f"Valid To: {signing_cert.not_after.strftime('%Y-%m-%d %H:%M:%S')}",
-                    f"Algorithm: {signing_cert.signature_algorithm}",
-                    f"Key: {signing_cert.public_key_algorithm} {signing_cert.public_key_size} bits",
-                    f"SHA1: {signing_cert.fingerprint_sha1}",
-                    f"Valid: {'Yes' if signing_cert.is_valid else 'No'}",
-                    f"Code Signing: {'Yes' if signing_cert.is_code_signing else 'No'}",
-                    f"Self-Signed: {'Yes' if signing_cert.is_self_signed else 'No'}",
-                ]
-
-                for detail in details:
-                    detail_item = PEStructureItem(detail, cert_item)
-                    cert_item.append_child(detail_item)
-
-            # Trust status
-            trust_item = PEStructureItem(
-                f"Trust Status: {certificates.trust_status}", certificates_root
+        for dll_name, dll_imports in dll_groups.items():
+            dll_item = PEStructureItem(
+                f"{dll_name} ({len(dll_imports)} functions)", imports_root
             )
-            certificates_root.append_child(trust_item)
+            imports_root.append_child(dll_item)
 
-            # Additional certificates in chain
-            if len(certificates.certificates) > 1:
-                chain_item = PEStructureItem(
-                    f"Certificate Chain ({len(certificates.certificates)} certificates)",
-                    certificates_root,
+            for imp in dll_imports[:20]:  # Limit to first 20 for performance
+                func_text = f"{imp.function_name} @ 0x{imp.address:X}"
+                if imp.ordinal:
+                    func_text += f" (Ordinal: {imp.ordinal})"
+                func_item = PEStructureItem(func_text, dll_item)
+                dll_item.append_child(func_item)
+
+            if len(dll_imports) > 20:
+                more_item = PEStructureItem(f"... and {len(dll_imports) - 20} more", dll_item)
+                dll_item.append_child(more_item)
+
+    def _add_exports_section(self):
+        """Add exports section to the tree."""
+        exports = self.pe_model.get_exports()
+        if not exports:
+            return
+
+        exports_root = PEStructureItem("Exports", self.root_item)
+        self.root_item.append_child(exports_root)
+
+        for exp in exports[:50]:  # Limit for performance
+            exp_text = f"{exp.function_name} @ 0x{exp.address:X} (Ordinal: {exp.ordinal})"
+            if exp.forwarder:
+                exp_text += f" -> {exp.forwarder}"
+            exp_item = PEStructureItem(exp_text, exports_root)
+            exports_root.append_child(exp_item)
+
+        if len(exports) > 50:
+            more_item = PEStructureItem(f"... and {len(exports) - 50} more", exports_root)
+            exports_root.append_child(more_item)
+
+    def _add_certificate_details(self, signing_cert, certificates_root):
+        """Add certificate details to the tree."""
+        cert_info = "Signing Certificate"
+        if signing_cert.subject:
+            # Extract CN from subject
+            subject_parts = signing_cert.subject.split(",")
+            cn_part = next(
+                (part.strip() for part in subject_parts if part.strip().startswith("CN=")),
+                None,
+            )
+            if cn_part:
+                cert_info = f"{cert_info} - {cn_part[3:]}"  # Remove 'CN=' prefix
+
+        cert_item = PEStructureItem(cert_info, certificates_root)
+        certificates_root.append_child(cert_item)
+
+        # Certificate details
+        details = [
+            f"Subject: {signing_cert.subject}",
+            f"Issuer: {signing_cert.issuer}",
+            f"Serial: {signing_cert.serial_number}",
+            f"Valid From: {signing_cert.not_before.strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Valid To: {signing_cert.not_after.strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Algorithm: {signing_cert.signature_algorithm}",
+            f"Key: {signing_cert.public_key_algorithm} {signing_cert.public_key_size} bits",
+            f"SHA1: {signing_cert.fingerprint_sha1}",
+            f"Valid: {'Yes' if signing_cert.is_valid else 'No'}",
+            f"Code Signing: {'Yes' if signing_cert.is_code_signing else 'No'}",
+            f"Self-Signed: {'Yes' if signing_cert.is_self_signed else 'No'}",
+        ]
+
+        for detail in details:
+            detail_item = PEStructureItem(detail, cert_item)
+            cert_item.append_child(detail_item)
+
+    def _add_certificate_chain(self, certificates, certificates_root):
+        """Add certificate chain information to the tree."""
+        if len(certificates.certificates) <= 1:
+            return
+
+        chain_item = PEStructureItem(
+            f"Certificate Chain ({len(certificates.certificates)} certificates)",
+            certificates_root,
+        )
+        certificates_root.append_child(chain_item)
+
+        for i, cert in enumerate(certificates.certificates[1:], 1):
+            cert_name = f"Certificate {i}"
+            # Try to get CN from subject
+            if cert.subject:
+                subject_parts = cert.subject.split(",")
+                cn_part = next(
+                    (
+                        part.strip()
+                        for part in subject_parts
+                        if part.strip().startswith("CN=")
+                    ),
+                    None,
                 )
-                certificates_root.append_child(chain_item)
+                if cn_part:
+                    cert_name = f"{cert_name} - {cn_part[3:]}"
 
-                for i, cert in enumerate(certificates.certificates[1:], 1):
-                    cert_name = f"Certificate {i}"
-                    # Try to get CN from subject
-                    if cert.subject:
-                        subject_parts = cert.subject.split(",")
-                        cn_part = next(
-                            (
-                                part.strip()
-                                for part in subject_parts
-                                if part.strip().startswith("CN=")
-                            ),
-                            None,
-                        )
-                        if cn_part:
-                            cert_name = f"{cert_name} - {cn_part[3:]}"
+            chain_cert_item = PEStructureItem(cert_name, chain_item)
+            chain_item.append_child(chain_cert_item)
 
-                    chain_cert_item = PEStructureItem(cert_name, chain_item)
-                    chain_item.append_child(chain_cert_item)
+    def _add_certificates_section(self):
+        """Add certificates section to the tree."""
+        certificates = self.pe_model.get_certificates()
+        if not certificates or not certificates.is_signed:
+            return
+
+        certificates_root = PEStructureItem("Digital Certificates", self.root_item)
+        self.root_item.append_child(certificates_root)
+
+        # Signing information
+        signing_cert = certificates.signing_certificate
+        if signing_cert:
+            self._add_certificate_details(signing_cert, certificates_root)
+
+        # Trust status
+        trust_item = PEStructureItem(
+            f"Trust Status: {certificates.trust_status}", certificates_root
+        )
+        certificates_root.append_child(trust_item)
+
+        # Additional certificates in chain
+        self._add_certificate_chain(certificates, certificates_root)
+
+    def setup_model_data(self):
+        """Build the tree structure from PE model."""
+        if not self.pe_model:
+            return
+
+        # Add all sections
+        self._add_file_info_section()
+        self._add_headers_section()
+        self._add_sections_section()
+        self._add_data_directories_section()
+        self._add_imports_section()
+        self._add_exports_section()
+        self._add_certificates_section()
 
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
         """Return number of columns."""

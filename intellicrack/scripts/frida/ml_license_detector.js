@@ -322,7 +322,7 @@ const MlLicenseDetector = {
                 this.processBatch();
             }
 
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -347,7 +347,7 @@ const MlLicenseDetector = {
             }
 
             return functionCount;
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -386,7 +386,7 @@ const MlLicenseDetector = {
             // Decide on hook placement based on confidence
             this.evaluateHookPlacement(detectionResult);
 
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -422,7 +422,7 @@ const MlLicenseDetector = {
             // Combine features
             features.combined_score = this.combineFeatures(features);
 
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -544,7 +544,7 @@ const MlLicenseDetector = {
                 is_license_function: is_license_function
             };
 
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -586,7 +586,7 @@ const MlLicenseDetector = {
                 }
             }
 
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -719,7 +719,7 @@ const MlLicenseDetector = {
                 module_name: moduleName
             });
 
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -765,7 +765,7 @@ const MlLicenseDetector = {
                 result.bypass_type = "activation_bypass";
             }
 
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -948,7 +948,7 @@ const MlLicenseDetector = {
                 samples_count: trainingData.length
             });
 
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",
@@ -1212,7 +1212,7 @@ const MlLicenseDetector = {
                 });
                 this.analyzeModuleFunctions(module);
             }
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "ml_license_detector",

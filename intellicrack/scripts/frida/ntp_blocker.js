@@ -637,7 +637,7 @@ const NtpBlocker = {
         // Block JavaScript Date synchronization attempts
         if (typeof XMLHttpRequest !== 'undefined') {
             var originalXHROpen = XMLHttpRequest.prototype.open;
-            XMLHttpRequest.prototype.open = function: function(method, url) {
+            XMLHttpRequest.prototype.open = function(method, url) {
                 var blocked = false;
 
                 for (var endpoint of cloudTimeEndpoints) {
@@ -667,7 +667,7 @@ const NtpBlocker = {
         // Block fetch API
         if (typeof fetch !== 'undefined') {
             var originalFetch = fetch;
-            fetch = function: function(url) {
+            fetch = function(url) {
                 var urlStr = url.toString();
 
                 for (var endpoint of cloudTimeEndpoints) {
@@ -940,7 +940,7 @@ const NtpBlocker = {
             Java.perform(function() {
                 // Block Android AlarmManager time updates
                 var AlarmManager = Java.use('android.app.AlarmManager');
-                AlarmManager.setTime.implementation = function: function(millis) {
+                AlarmManager.setTime.implementation = function(millis) {
                     send({
                         type: "bypass",
                         target: "ntp_blocker",
@@ -955,7 +955,7 @@ const NtpBlocker = {
                 try {
                     var Settings = Java.use('android.provider.Settings$Global');
                     Settings.putInt.overload('android.content.ContentResolver', 'java.lang.String', 'int')
-                        .implementation = function: function(resolver, name, value) {
+                        .implementation = function(resolver, name, value) {
                         if (name === "auto_time" || name === "auto_time_zone") {
                             send({
                                 type: "bypass",
@@ -969,12 +969,12 @@ const NtpBlocker = {
                         }
                         return this.putInt(resolver, name, value);
                     };
-                } catch: function(e) {}
+                } catch(e) {}
 
                 // Block Android TimeManager
                 try {
                     var TimeManager = Java.use('android.app.time.TimeManager');
-                    TimeManager.suggestExternalTime.implementation = function: function(timeSuggestion) {
+                    TimeManager.suggestExternalTime.implementation = function(timeSuggestion) {
                         send({
                             type: "bypass",
                             target: "ntp_blocker",
@@ -983,16 +983,16 @@ const NtpBlocker = {
                         self.stats.serviceBlocked++;
                         return;
                     };
-                } catch: function(e) {}
+                } catch(e) {}
 
                 // Block Android NITZ (Network Identity and Time Zone)
                 try {
                     var TelephonyManager = Java.use('android.telephony.TelephonyManager');
-                    TelephonyManager.getNetworkOperatorName.implementation = function: function() {
+                    TelephonyManager.getNetworkOperatorName.implementation = function() {
                         // Return empty to prevent NITZ time updates
                         return "";
                     };
-                } catch: function(e) {}
+                } catch(e) {}
             });
         }
 
@@ -1251,7 +1251,7 @@ const NtpBlocker = {
                                     address: address.toString()
                                 });
                                 self.stats.connectionsBlocked++;
-                            } catch: function(e) {}
+                            } catch(e) {}
                         }
                     });
                 }
@@ -1794,7 +1794,7 @@ const NtpBlocker = {
                     }
                 });
             }
-        } catch: function(e) {
+        } catch(e) {
             // Not in browser context
         }
     },

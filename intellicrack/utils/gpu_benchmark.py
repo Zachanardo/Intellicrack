@@ -167,6 +167,186 @@ def run_gpu_accelerated_analysis(app, binary_data: bytes) -> dict[str, Any]:
     return results
 
 
+def _generate_test_data(test_sizes: list[int]) -> dict[int, bytes]:
+    """Generate test data with varying entropy for benchmarking."""
+    test_data = {}
+    for size in test_sizes:
+        # Create data with varying entropy
+        data = bytearray(size)
+        # First third: low entropy (zeros)
+        # Second third: medium entropy (pattern)
+        pattern = b"ABCD" * (size // 12)
+        data[size // 3 : 2 * size // 3] = pattern[: size // 3]
+        # Last third: high entropy (random)
+        data[2 * size // 3 :] = np.random.bytes(size // 3)
+        test_data[size] = bytes(data)
+    return test_data
+
+
+def _benchmark_cupy_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:
+    """Benchmark CuPy framework."""
+    try:
+        import cupy as cp
+
+        for size, data in test_data.items():
+            size_mb = size / (1024 * 1024)
+            pattern = b"LICENSE"
+
+            # Data transfer
+            transfer_start = time.time()
+            data_gpu = cp.asarray(np.frombuffer(data, dtype=np.uint8))
+            transfer_time = time.time() - transfer_start
+            framework_results["data_transfer"][f"{size_mb}MB"] = transfer_time
+
+            # Pattern search
+            start_time = time.time()
+            pattern_gpu = cp.asarray(np.frombuffer(pattern, dtype=np.uint8))
+            # Simple matching for benchmark
+            matches = 0
+            for i in range(0, len(data_gpu) - len(pattern_gpu), 1000):
+                if cp.all(data_gpu[i : i + len(pattern_gpu)] == pattern_gpu):
+                    matches += 1
+            cp.cuda.Stream.null.synchronize()
+
+            search_time = time.time() - start_time - transfer_time
+            framework_results["pattern_search"][f"{size_mb}MB"] = search_time
+
+    except Exception as e:
+        logger.error(f"CuPy benchmark failed: {e}")
+
+
+def _benchmark_numba_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:
+    """Benchmark Numba framework."""
+    try:
+        from numba import cuda as numba_cuda
+
+        for size, data in test_data.items():
+            size_mb = size / (1024 * 1024)
+
+            # Data transfer
+            transfer_start = time.time()
+            data_np = np.frombuffer(data, dtype=np.uint8)
+            d_data = numba_cuda.to_device(data_np)
+            transfer_time = time.time() - transfer_start
+            framework_results["data_transfer"][f"{size_mb}MB"] = transfer_time
+
+            # Simple operation for benchmark - pattern search on GPU data
+            pattern = np.array([0x4D, 0x5A], dtype=np.uint8)  # MZ header pattern
+            d_pattern = numba_cuda.to_device(pattern)
+
+            # Perform a simple search operation using the GPU data
+            search_start = time.time()
+            # In a real implementation, this would be a CUDA kernel
+            # For benchmark purposes, we access the data to ensure it's used
+            result_count = len(d_data) // len(d_pattern)  # Simple calculation using GPU data
+            numba_cuda.synchronize()
+            search_time = time.time() - search_start
+            framework_results["pattern_search"][f"{size_mb}MB"] = search_time
+            framework_results["results_found"] = (
+                framework_results.get("results_found", 0) + result_count
+            )
+
+    except Exception as e:
+        logger.error(f"Numba benchmark failed: {e}")
+
+
+def _benchmark_pycuda_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:
+    """Benchmark PyCUDA framework."""
+    try:
+        import pycuda.driver as cuda
+        from pycuda import gpuarray
+
+        for size, data in test_data.items():
+            size_mb = size / (1024 * 1024)
+
+            # Data transfer
+            transfer_start = time.time()
+            data_np = np.frombuffer(data, dtype=np.uint8)
+            gpuarray.to_gpu(data_np)
+            transfer_time = time.time() - transfer_start
+            framework_results["data_transfer"][f"{size_mb}MB"] = transfer_time
+
+            # Simple operation
+            start_time = time.time()
+            cuda.Context.synchronize()
+            search_time = time.time() - start_time - transfer_time
+            framework_results["pattern_search"][f"{size_mb}MB"] = search_time
+
+    except Exception as e:
+        logger.error(f"PyCUDA benchmark failed: {e}")
+
+
+def _benchmark_cpu_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:
+    """Benchmark CPU baseline."""
+    for size, data in test_data.items():
+        size_mb = size / (1024 * 1024)
+        pattern = b"LICENSE"
+
+        # Pattern search
+        start_time = time.time()
+        data.count(pattern)
+        search_time = time.time() - start_time
+        framework_results["pattern_search"][f"{size_mb}MB"] = search_time
+
+        # Test entropy calculation
+        start_time = time.time()
+        # Simple entropy calculation
+        hist, _ = np.histogram(list(data[:10000]), bins=256, range=(0, 255))
+        hist = hist.astype(np.float32) / 10000
+        hist_nonzero = hist[hist > 0]
+        entropy = -np.sum(hist_nonzero * np.log2(hist_nonzero))
+        entropy_time = time.time() - start_time
+        framework_results["entropy"][f"{size_mb}MB"] = entropy_time
+        framework_results["entropy_values"] = framework_results.get("entropy_values", {})
+        framework_results["entropy_values"][f"{size_mb}MB"] = float(entropy)
+
+
+def _determine_best_framework(results: dict[str, Any]) -> None:
+    """Determine the best performing framework from benchmark results."""
+    if len(results["frameworks_tested"]) <= 1:
+        return
+
+    gpu_frameworks = [f for f in results["frameworks_tested"] if f != "cpu"]
+    if not gpu_frameworks:
+        return
+
+    # Find framework with lowest total time
+    best_time = float("inf")
+    for framework in gpu_frameworks:
+        total_time = results["benchmarks"][framework]["total_time"]
+        if total_time < best_time:
+            best_time = total_time
+            results["best_framework"] = framework
+
+    # Calculate speedups
+    if "cpu" in results["benchmarks"]:
+        cpu_time = results["benchmarks"]["cpu"]["total_time"]
+        for framework in gpu_frameworks:
+            gpu_time = results["benchmarks"][framework]["total_time"]
+            speedup = cpu_time / gpu_time if gpu_time > 0 else 1
+            results["benchmarks"][framework]["speedup"] = speedup
+
+
+def _generate_recommendations(results: dict[str, Any]) -> None:
+    """Generate performance recommendations based on benchmark results."""
+    if not results["best_framework"]:
+        return
+
+    results["recommendations"].append(
+        f"Use {results['best_framework']} for best performance",
+    )
+
+    # Check if data transfer is significant
+    best_framework_data = results["benchmarks"][results["best_framework"]]
+    if "data_transfer" in best_framework_data:
+        total_transfer = sum(best_framework_data["data_transfer"].values())
+        total_compute = sum(best_framework_data["pattern_search"].values())
+        if total_transfer > total_compute * 0.5:
+            results["recommendations"].append(
+                "Consider keeping data on GPU between operations to reduce transfer overhead",
+            )
+
+
 def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any]:
     """Benchmark available GPU frameworks.
 
@@ -193,17 +373,7 @@ def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any
     }
 
     # Generate test data
-    test_data = {}
-    for size in test_sizes:
-        # Create data with varying entropy
-        data = bytearray(size)
-        # First third: low entropy (zeros)
-        # Second third: medium entropy (pattern)
-        pattern = b"ABCD" * (size // 12)
-        data[size // 3 : 2 * size // 3] = pattern[: size // 3]
-        # Last third: high entropy (random)
-        data[2 * size // 3 :] = np.random.bytes(size // 3)
-        test_data[size] = bytes(data)
+    test_data = _generate_test_data(test_sizes)
 
     if hasattr(app, "update_output"):
         app.update_output.emit("[GPU] Starting GPU framework benchmarks...")
@@ -233,157 +403,40 @@ def benchmark_gpu_frameworks(app, test_sizes: list[int] = None) -> dict[str, Any
             "total_time": 0,
         }
 
-        for size, data in test_data.items():
-            size_mb = size / (1024 * 1024)
+        # Call appropriate benchmark function
+        if framework == "cupy":
+            _benchmark_cupy_framework(framework_results, test_data)
+        elif framework == "numba":
+            _benchmark_numba_framework(framework_results, test_data)
+        elif framework == "pycuda":
+            _benchmark_pycuda_framework(framework_results, test_data)
+        else:  # CPU baseline
+            _benchmark_cpu_framework(framework_results, test_data)
 
-            # Test pattern search
-            pattern = b"LICENSE"
-            start_time = time.time()
-
-            if framework == "cupy":
-                try:
-                    import cupy as cp
-
-                    # Data transfer
-                    transfer_start = time.time()
-                    data_gpu = cp.asarray(np.frombuffer(data, dtype=np.uint8))
-                    transfer_time = time.time() - transfer_start
-                    framework_results["data_transfer"][f"{size_mb}MB"] = transfer_time
-
-                    # Pattern search
-                    pattern_gpu = cp.asarray(np.frombuffer(pattern, dtype=np.uint8))
-                    # Simple matching for benchmark
-                    matches = 0
-                    for i in range(0, len(data_gpu) - len(pattern_gpu), 1000):
-                        if cp.all(data_gpu[i : i + len(pattern_gpu)] == pattern_gpu):
-                            matches += 1
-                    cp.cuda.Stream.null.synchronize()
-
-                    search_time = time.time() - start_time - transfer_time
-                    framework_results["pattern_search"][f"{size_mb}MB"] = search_time
-
-                except Exception as e:
-                    logger.error(f"CuPy benchmark failed: {e}")
-
-            elif framework == "numba":
-                try:
-                    from numba import cuda as numba_cuda
-
-                    # Data transfer
-                    transfer_start = time.time()
-                    data_np = np.frombuffer(data, dtype=np.uint8)
-                    d_data = numba_cuda.to_device(data_np)
-                    transfer_time = time.time() - transfer_start
-                    framework_results["data_transfer"][f"{size_mb}MB"] = transfer_time
-
-                    # Simple operation for benchmark - pattern search on GPU data
-                    pattern = np.array([0x4D, 0x5A], dtype=np.uint8)  # MZ header pattern
-                    d_pattern = numba_cuda.to_device(pattern)
-
-                    # Perform a simple search operation using the GPU data
-                    search_start = time.time()
-                    # In a real implementation, this would be a CUDA kernel
-                    # For benchmark purposes, we access the data to ensure it's used
-                    result_count = len(d_data) // len(
-                        d_pattern
-                    )  # Simple calculation using GPU data
-                    numba_cuda.synchronize()
-                    search_time = time.time() - search_start
-                    framework_results["pattern_search"][f"{size_mb}MB"] = search_time
-                    framework_results["results_found"] = (
-                        framework_results.get("results_found", 0) + result_count
-                    )
-
-                except Exception as e:
-                    logger.error(f"Numba benchmark failed: {e}")
-
-            elif framework == "pycuda":
-                try:
-                    import pycuda.driver as cuda
-                    from pycuda import gpuarray
-
-                    # Data transfer
-                    transfer_start = time.time()
-                    data_np = np.frombuffer(data, dtype=np.uint8)
-                    data_gpu = gpuarray.to_gpu(data_np)
-                    transfer_time = time.time() - transfer_start
-                    framework_results["data_transfer"][f"{size_mb}MB"] = transfer_time
-
-                    # Simple operation
-                    cuda.Context.synchronize()
-                    search_time = time.time() - start_time - transfer_time
-                    framework_results["pattern_search"][f"{size_mb}MB"] = search_time
-
-                except Exception as e:
-                    logger.error(f"PyCUDA benchmark failed: {e}")
-
-            else:  # CPU baseline
-                # Pattern search
-                matches = data.count(pattern)
-                search_time = time.time() - start_time
-                framework_results["pattern_search"][f"{size_mb}MB"] = search_time
-
-            # Test entropy calculation
-            start_time = time.time()
-            if framework == "cpu":
-                # Simple entropy calculation
-                hist, _ = np.histogram(list(data[:10000]), bins=256, range=(0, 255))
-                hist = hist.astype(np.float32) / 10000
-                hist_nonzero = hist[hist > 0]
-                entropy = -np.sum(hist_nonzero * np.log2(hist_nonzero))
-                entropy_time = time.time() - start_time
-                framework_results["entropy"][f"{size_mb}MB"] = entropy_time
-                framework_results["entropy_values"] = framework_results.get("entropy_values", {})
-                framework_results["entropy_values"][f"{size_mb}MB"] = float(entropy)
-
-            framework_results["total_time"] += search_time + framework_results.get(
-                "data_transfer", {}
-            ).get(f"{size_mb}MB", 0)
+        # Calculate total time
+        for size_mb in framework_results["pattern_search"].keys():
+            search_time = framework_results["pattern_search"].get(size_mb, 0)
+            transfer_time = framework_results.get("data_transfer", {}).get(size_mb, 0)
+            framework_results["total_time"] += search_time + transfer_time
 
         if framework_results["pattern_search"]:
             results["benchmarks"][framework] = framework_results
             results["frameworks_tested"].append(framework)
 
     # Determine best framework
-    if len(results["frameworks_tested"]) > 1:
-        gpu_frameworks = [f for f in results["frameworks_tested"] if f != "cpu"]
-        if gpu_frameworks:
-            # Find framework with lowest total time
-            best_time = float("inf")
-            for framework in gpu_frameworks:
-                total_time = results["benchmarks"][framework]["total_time"]
-                if total_time < best_time:
-                    best_time = total_time
-                    results["best_framework"] = framework
+    _determine_best_framework(results)
 
-            # Calculate speedups
-            if "cpu" in results["benchmarks"]:
-                cpu_time = results["benchmarks"]["cpu"]["total_time"]
-                for framework in gpu_frameworks:
-                    gpu_time = results["benchmarks"][framework]["total_time"]
-                    speedup = cpu_time / gpu_time if gpu_time > 0 else 1
-                    results["benchmarks"][framework]["speedup"] = speedup
-
-                    if hasattr(app, "update_output"):
-                        app.update_output.emit(
-                            f"[GPU] {framework} speedup: {speedup:.1f}x over CPU",
-                        )
+    # Output speedup information if available
+    if hasattr(app, "update_output"):
+        for framework in results["frameworks_tested"]:
+            if framework != "cpu" and "speedup" in results["benchmarks"].get(framework, {}):
+                speedup = results["benchmarks"][framework]["speedup"]
+                app.update_output.emit(
+                    f"[GPU] {framework} speedup: {speedup:.1f}x over CPU",
+                )
 
     # Generate recommendations
-    if results["best_framework"]:
-        results["recommendations"].append(
-            f"Use {results['best_framework']} for best performance",
-        )
-
-        # Check if data transfer is significant
-        best_framework_data = results["benchmarks"][results["best_framework"]]
-        if "data_transfer" in best_framework_data:
-            total_transfer = sum(best_framework_data["data_transfer"].values())
-            total_compute = sum(best_framework_data["pattern_search"].values())
-            if total_transfer > total_compute * 0.5:
-                results["recommendations"].append(
-                    "Consider keeping data on GPU between operations to reduce transfer overhead",
-                )
+    _generate_recommendations(results)
 
     if hasattr(app, "update_output"):
         app.update_output.emit(

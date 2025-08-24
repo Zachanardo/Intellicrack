@@ -187,7 +187,7 @@ const Http3QuicInterceptor = {
         var self = this;
 
         // QuicStreamFactory::Create
-        this.findAndHook("*quic*stream*factory*create*", function: function(address) {
+        this.findAndHook("*quic*stream*factory*create*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     send({
@@ -201,7 +201,7 @@ const Http3QuicInterceptor = {
         });
 
         // QuicSession::Initialize
-        this.findAndHook("*quic*session*initialize*", function: function(address) {
+        this.findAndHook("*quic*session*initialize*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     this.session = args[0];
@@ -224,7 +224,7 @@ const Http3QuicInterceptor = {
         });
 
         // QuicStream::OnDataAvailable
-        this.findAndHook("*quic*stream*on*data*available*", function: function(address) {
+        this.findAndHook("*quic*stream*on*data*available*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var stream = args[0];
@@ -250,7 +250,7 @@ const Http3QuicInterceptor = {
         });
 
         // QuicHeadersStream
-        this.findAndHook("*quic*headers*stream*", function: function(address) {
+        this.findAndHook("*quic*headers*stream*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     send({
@@ -492,7 +492,7 @@ const Http3QuicInterceptor = {
         }
 
         // ConnectionOpen
-        this.findAndHook("*msquic*connection*open*", function: function(address) {
+        this.findAndHook("*msquic*connection*open*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     this.registration = args[0];
@@ -524,7 +524,7 @@ const Http3QuicInterceptor = {
         });
 
         // StreamOpen
-        this.findAndHook("*msquic*stream*open*", function: function(address) {
+        this.findAndHook("*msquic*stream*open*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var connection = args[0];
@@ -562,7 +562,7 @@ const Http3QuicInterceptor = {
                     var eventType = event.readU32();
 
                     // QUIC_CONNECTION_EVENT_TYPE enum values
-                    switch: function(eventType) {
+                    switch(eventType) {
                         case 0: // CONNECTED
                             send({
                                 type: "status",
@@ -605,7 +605,7 @@ const Http3QuicInterceptor = {
                     var eventType = event.readU32();
 
                     // QUIC_STREAM_EVENT_TYPE enum values
-                    switch: function(eventType) {
+                    switch(eventType) {
                         case 0: // START_COMPLETE
                             send({
                                 type: "success",
@@ -853,7 +853,7 @@ const Http3QuicInterceptor = {
                     return true;
                 }
             }
-        } catch: function(e) {
+        } catch(e) {
             // Not text data
         }
 
@@ -905,7 +905,7 @@ const Http3QuicInterceptor = {
             if (modified) {
                 return this.encodeHttp3Headers(headers);
             }
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "http3_quic_interceptor",
@@ -954,7 +954,7 @@ const Http3QuicInterceptor = {
                     return this.stringToBuffer(JSON.stringify(json));
                 }
             }
-        } catch: function(e) {
+        } catch(e) {
             // Not JSON or text data
         }
 
@@ -1230,7 +1230,7 @@ const Http3QuicInterceptor = {
         };
 
         // Hook QUIC connection close handling
-        this.findAndHook("*quic*connection*close*", function: function(address) {
+        this.findAndHook("*quic*connection*close*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var closeFrame = args[1];
@@ -1290,7 +1290,7 @@ const Http3QuicInterceptor = {
         };
 
         // Hook transport parameter processing
-        this.findAndHook("*quic*transport*param*", function: function(address) {
+        this.findAndHook("*quic*transport*param*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var params = args[1];
@@ -1336,7 +1336,7 @@ const Http3QuicInterceptor = {
         this.streamPriorities = {};
 
         // Hook HTTP/3 settings frame processing
-        this.findAndHook("*http3*settings*", function: function(address) {
+        this.findAndHook("*http3*settings*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var settings = args[1];
@@ -1352,7 +1352,7 @@ const Http3QuicInterceptor = {
         });
 
         // Hook priority update frame handling
-        this.findAndHook("*http3*priority*", function: function(address) {
+        this.findAndHook("*http3*priority*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var streamId = args[1] ? args[1].toNumber() : 0;
@@ -1398,7 +1398,7 @@ const Http3QuicInterceptor = {
         this.streamDependencies = {};
         
         // Hook stream creation to manage dependencies
-        this.findAndHook("*http3*stream*create*", function: function(address) {
+        this.findAndHook("*http3*stream*create*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var streamId = args[1] ? args[1].toNumber() : 0;
@@ -1464,7 +1464,7 @@ const Http3QuicInterceptor = {
         };
 
         // Hook stream data transmission to apply priority scheduling
-        this.findAndHook("*http3*stream*send*", function: function(address) {
+        this.findAndHook("*http3*stream*send*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var streamId = args[0] ? args[0].toNumber() : 0;
@@ -1520,7 +1520,7 @@ const Http3QuicInterceptor = {
         this.migrationState = {};
 
         // Hook connection ID generation
-        this.findAndHook("*quic*connection*id*", function: function(address) {
+        this.findAndHook("*quic*connection*id*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var connIdPtr = args[0];
@@ -1551,7 +1551,7 @@ const Http3QuicInterceptor = {
         });
 
         // Hook NEW_CONNECTION_ID frame processing
-        this.findAndHook("*new*connection*id*", function: function(address) {
+        this.findAndHook("*new*connection*id*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var frame = args[0];
@@ -1591,7 +1591,7 @@ const Http3QuicInterceptor = {
         });
 
         // Hook path challenge/response for migration validation
-        this.findAndHook("*path*challenge*", function: function(address) {
+        this.findAndHook("*path*challenge*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var challenge = args[0];
@@ -1613,7 +1613,7 @@ const Http3QuicInterceptor = {
             });
         });
 
-        this.findAndHook("*path*response*", function: function(address) {
+        this.findAndHook("*path*response*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var response = args[0];
@@ -1712,7 +1712,7 @@ const Http3QuicInterceptor = {
                 this.phase = "migrating";
                 this.pathValidated = false;
                 this.newConnectionId = newConnId;
-                this.migrationTimeout = setTimeout: function(function() {
+                this.migrationTimeout = setTimeout(function() {
                     if (self.migrationState.phase === "migrating") {
                         self.migrationState.phase = "failed";
                         send({
@@ -1775,7 +1775,7 @@ const Http3QuicInterceptor = {
         this.webTransportSessions = {};
 
         // Hook CONNECT method for WebTransport establishment
-        this.findAndHook("*http*connect*", function: function(address) {
+        this.findAndHook("*http*connect*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var method = args[0];
@@ -1816,7 +1816,7 @@ const Http3QuicInterceptor = {
         });
 
         // Hook WebTransport datagram processing
-        this.findAndHook("*webtransport*datagram*", function: function(address) {
+        this.findAndHook("*webtransport*datagram*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var sessionId = args[0] ? args[0].toNumber() : 0;
@@ -1869,7 +1869,7 @@ const Http3QuicInterceptor = {
         });
 
         // Hook WebTransport stream creation
-        this.findAndHook("*webtransport*stream*", function: function(address) {
+        this.findAndHook("*webtransport*stream*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var sessionId = args[0] ? args[0].toNumber() : 0;
@@ -1924,7 +1924,7 @@ const Http3QuicInterceptor = {
         };
 
         // Hook WebTransport capsule protocol
-        this.findAndHook("*capsule*", function: function(address) {
+        this.findAndHook("*capsule*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var capsuleType = args[0] ? args[0].toInt32() : 0;
@@ -1941,7 +1941,7 @@ const Http3QuicInterceptor = {
                         });
                         
                         // Handle specific capsule types
-                        switch: function(capsuleType) {
+                        switch(capsuleType) {
                             case 0x00: // DATAGRAM
                                 self.processWebTransportDatagram(capsuleData, capsuleLen);
                                 break;
@@ -2022,7 +2022,7 @@ const Http3QuicInterceptor = {
         };
 
         // Push Promise frame processing (frame type 0x05)
-        this.findAndHook("*push*promise*", function: function(address) {
+        this.findAndHook("*push*promise*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var streamId = args[0] ? args[0].toNumber() : 0;
@@ -2069,7 +2069,7 @@ const Http3QuicInterceptor = {
         });
 
         // Push stream creation and management
-        this.findAndHook("*push*stream*", function: function(address) {
+        this.findAndHook("*push*stream*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var pushId = args[0] ? args[0].toNumber() : 0;
@@ -2102,7 +2102,7 @@ const Http3QuicInterceptor = {
         });
 
         // Cancel Push frame handling (frame type 0x03)
-        this.findAndHook("*cancel*push*", function: function(address) {
+        this.findAndHook("*cancel*push*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var pushId = args[0] ? args[0].toNumber() : 0;
@@ -2133,7 +2133,7 @@ const Http3QuicInterceptor = {
         });
 
         // Max Push ID frame processing
-        this.findAndHook("*max*push*id*", function: function(address) {
+        this.findAndHook("*max*push*id*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var maxPushId = args[0] ? args[0].toNumber() : 0;
@@ -2168,7 +2168,7 @@ const Http3QuicInterceptor = {
         });
 
         // Push data processing and modification
-        this.findAndHook("*push*data*", function: function(address) {
+        this.findAndHook("*push*data*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var streamId = args[0] ? args[0].toNumber() : 0;
@@ -2273,7 +2273,7 @@ const Http3QuicInterceptor = {
         };
 
         // Preload link detection for proactive push prevention/modification
-        this.findAndHook("*link*header*", function: function(address) {
+        this.findAndHook("*link*header*", function(address) {
             Interceptor.attach(address, {
                 onEnter: function(args) {
                     var linkHeader = args[0];
@@ -2326,7 +2326,7 @@ const Http3QuicInterceptor = {
                 const HeaderTable = Java.use("com.android.org.conscrypt.ct.HeaderTable");
                 
                 if (QPackDecoder) {
-                    QPackDecoder.decode.overload('[B').implementation = function: function(encoded) {
+                    QPackDecoder.decode.overload('[B').implementation = function(encoded) {
                         try {
                             const originalResult = this.decode.call(this, encoded);
                             
@@ -2395,7 +2395,7 @@ const Http3QuicInterceptor = {
                 }
                 
                 if (QPackEncoder) {
-                    QPackEncoder.encode.overload('[Lcom.android.org.conscrypt.ct.HeaderField;').implementation = function: function(headers) {
+                    QPackEncoder.encode.overload('[Lcom.android.org.conscrypt.ct.HeaderField;').implementation = function(headers) {
                         try {
                             const modifiedHeaders = [];
                             
@@ -2439,7 +2439,7 @@ const Http3QuicInterceptor = {
                 }
                 
                 if (HeaderTable) {
-                    HeaderTable.add.overload('com.android.org.conscrypt.ct.HeaderField').implementation = function: function(headerField) {
+                    HeaderTable.add.overload('com.android.org.conscrypt.ct.HeaderField').implementation = function(headerField) {
                         try {
                             const name = headerField.name ? headerField.name.toString() : "";
                             const value = headerField.value ? headerField.value.toString() : "";
@@ -2500,7 +2500,7 @@ const Http3QuicInterceptor = {
                 const NetworkPath = Java.use("com.android.org.conscrypt.QuicNetworkPath");
                 
                 if (CongestionController) {
-                    CongestionController.onCongestionEvent.overload('long', 'int').implementation = function: function(timestamp, congestionType) {
+                    CongestionController.onCongestionEvent.overload('long', 'int').implementation = function(timestamp, congestionType) {
                         try {
                             if (congestionType === 3) {
                                 send({
@@ -2520,7 +2520,7 @@ const Http3QuicInterceptor = {
                         }
                     };
                     
-                    CongestionController.getSlowStartThreshold.implementation = function: function() {
+                    CongestionController.getSlowStartThreshold.implementation = function() {
                         try {
                             const originalThreshold = this.getSlowStartThreshold.call(this);
                             
@@ -2544,7 +2544,7 @@ const Http3QuicInterceptor = {
                 }
                 
                 if (EcnHandler) {
-                    EcnHandler.processEcnMarking.overload('int').implementation = function: function(ecnCodepoint) {
+                    EcnHandler.processEcnMarking.overload('int').implementation = function(ecnCodepoint) {
                         try {
                             if (ecnCodepoint === 3) {
                                 send({
@@ -2564,7 +2564,7 @@ const Http3QuicInterceptor = {
                         }
                     };
                     
-                    EcnHandler.validateEcnCapability.implementation = function: function() {
+                    EcnHandler.validateEcnCapability.implementation = function() {
                         try {
                             const originalCapability = this.validateEcnCapability.call(this);
                             
@@ -2584,7 +2584,7 @@ const Http3QuicInterceptor = {
                 }
                 
                 if (NetworkPath) {
-                    NetworkPath.updateRtt.overload('long', 'long').implementation = function: function(rtt, ackDelay) {
+                    NetworkPath.updateRtt.overload('long', 'long').implementation = function(rtt, ackDelay) {
                         try {
                             if (rtt > 1000000) {
                                 send({
@@ -2604,7 +2604,7 @@ const Http3QuicInterceptor = {
                         }
                     };
                     
-                    NetworkPath.onLossDetected.overload('[J').implementation = function: function(lostPackets) {
+                    NetworkPath.onLossDetected.overload('[J').implementation = function(lostPackets) {
                         try {
                             if (lostPackets && lostPackets.length > 10) {
                                 send({
@@ -2653,7 +2653,7 @@ const Http3QuicInterceptor = {
                 const ConnectProtocolHandler = Java.use("com.android.org.conscrypt.ConnectProtocolHandler");
                 
                 if (Http3Connection) {
-                    Http3Connection.sendExtendedConnect.overload('java.lang.String', '[B').implementation = function: function(protocol, payload) {
+                    Http3Connection.sendExtendedConnect.overload('java.lang.String', '[B').implementation = function(protocol, payload) {
                         try {
                             const payloadStr = payload ? Java.array('byte', payload).join('') : '';
                             
@@ -2688,7 +2688,7 @@ const Http3QuicInterceptor = {
                         }
                     };
                     
-                    Http3Connection.handleExtendedConnectResponse.overload('int', '[B').implementation = function: function(status, responseData) {
+                    Http3Connection.handleExtendedConnectResponse.overload('int', '[B').implementation = function(status, responseData) {
                         try {
                             const responseStr = responseData ? Java.array('byte', responseData).join('') : '';
                             
@@ -2720,7 +2720,7 @@ const Http3QuicInterceptor = {
                 }
                 
                 if (ExtendedConnectFrame) {
-                    ExtendedConnectFrame.parseProtocolField.overload('java.lang.String').implementation = function: function(protocolValue) {
+                    ExtendedConnectFrame.parseProtocolField.overload('java.lang.String').implementation = function(protocolValue) {
                         try {
                             if (protocolValue.includes('license-check') || protocolValue.includes('activation-verify')) {
                                 const bypassedProtocol = protocolValue
@@ -2747,7 +2747,7 @@ const Http3QuicInterceptor = {
                 }
                 
                 if (ConnectProtocolHandler) {
-                    ConnectProtocolHandler.validateProtocolUpgrade.overload('java.lang.String').implementation = function: function(protocol) {
+                    ConnectProtocolHandler.validateProtocolUpgrade.overload('java.lang.String').implementation = function(protocol) {
                         try {
                             if (protocol.includes('license') || protocol.includes('drm') || protocol.includes('protection')) {
                                 send({
@@ -2767,7 +2767,7 @@ const Http3QuicInterceptor = {
                         }
                     };
                     
-                    ConnectProtocolHandler.negotiateProtocol.overload('[Ljava.lang.String;').implementation = function: function(supportedProtocols) {
+                    ConnectProtocolHandler.negotiateProtocol.overload('[Ljava.lang.String;').implementation = function(supportedProtocols) {
                         try {
                             const protocols = [];
                             for (let i = 0; i < supportedProtocols.length; i++) {
@@ -2824,7 +2824,7 @@ const Http3QuicInterceptor = {
                 const NetworkPathValidator = Java.use("com.android.org.conscrypt.NetworkPathValidator");
                 
                 if (MultipathQuicConnection) {
-                    MultipathQuicConnection.addPath.overload('java.net.InetSocketAddress').implementation = function: function(remoteAddress) {
+                    MultipathQuicConnection.addPath.overload('java.net.InetSocketAddress').implementation = function(remoteAddress) {
                         try {
                             const address = remoteAddress.toString();
                             
@@ -2856,7 +2856,7 @@ const Http3QuicInterceptor = {
                         }
                     };
                     
-                    MultipathQuicConnection.selectBestPath.overload().implementation = function: function() {
+                    MultipathQuicConnection.selectBestPath.overload().implementation = function() {
                         try {
                             const selectedPath = this.selectBestPath.call(this);
                             
@@ -2881,7 +2881,7 @@ const Http3QuicInterceptor = {
                 }
                 
                 if (PathManager) {
-                    PathManager.validatePath.overload('com.android.org.conscrypt.NetworkPath').implementation = function: function(path) {
+                    PathManager.validatePath.overload('com.android.org.conscrypt.NetworkPath').implementation = function(path) {
                         try {
                             const pathInfo = path ? path.toString() : "";
                             
@@ -2903,7 +2903,7 @@ const Http3QuicInterceptor = {
                         }
                     };
                     
-                    PathManager.handlePathFailure.overload('com.android.org.conscrypt.NetworkPath', 'int').implementation = function: function(failedPath, errorCode) {
+                    PathManager.handlePathFailure.overload('com.android.org.conscrypt.NetworkPath', 'int').implementation = function(failedPath, errorCode) {
                         try {
                             const pathStr = failedPath ? failedPath.toString() : "";
                             
@@ -2928,7 +2928,7 @@ const Http3QuicInterceptor = {
                 }
                 
                 if (NetworkPathValidator) {
-                    NetworkPathValidator.performPathValidation.overload('java.net.InetSocketAddress').implementation = function: function(remoteEndpoint) {
+                    NetworkPathValidator.performPathValidation.overload('java.net.InetSocketAddress').implementation = function(remoteEndpoint) {
                         try {
                             const endpoint = remoteEndpoint.toString();
                             
@@ -2953,7 +2953,7 @@ const Http3QuicInterceptor = {
                         }
                     };
                     
-                    NetworkPathValidator.checkReachability.overload('java.net.InetAddress').implementation = function: function(address) {
+                    NetworkPathValidator.checkReachability.overload('java.net.InetAddress').implementation = function(address) {
                         try {
                             const addressStr = address.toString();
                             
@@ -3004,7 +3004,7 @@ const Http3QuicInterceptor = {
                 const CertPathValidator = Java.use("java.security.cert.CertPathValidator");
                 
                 if (CertificateVerifier) {
-                    CertificateVerifier.verify.overload('[Ljava.security.cert.X509Certificate;', 'java.lang.String').implementation = function: function(chain, authType) {
+                    CertificateVerifier.verify.overload('[Ljava.security.cert.X509Certificate;', 'java.lang.String').implementation = function(chain, authType) {
                         try {
                             if (chain && chain.length > 0) {
                                 const cert = chain[0];
@@ -3042,7 +3042,7 @@ const Http3QuicInterceptor = {
                 }
                 
                 if (TrustManagerImpl) {
-                    TrustManagerImpl.checkServerTrusted.overload('[Ljava.security.cert.X509Certificate;', 'java.lang.String', 'java.lang.String').implementation = function: function(chain, authType, host) {
+                    TrustManagerImpl.checkServerTrusted.overload('[Ljava.security.cert.X509Certificate;', 'java.lang.String', 'java.lang.String').implementation = function(chain, authType, host) {
                         try {
                             if (host && (host.includes('license') || host.includes('activation') || 
                                         host.includes('drm') || host.includes('protection'))) {
@@ -3093,7 +3093,7 @@ const Http3QuicInterceptor = {
                         }
                     };
                     
-                    TrustManagerImpl.isUserAddedCertificate.overload('java.security.cert.X509Certificate').implementation = function: function(cert) {
+                    TrustManagerImpl.isUserAddedCertificate.overload('java.security.cert.X509Certificate').implementation = function(cert) {
                         try {
                             const subject = cert.getSubjectDN().toString().toLowerCase();
                             
@@ -3117,7 +3117,7 @@ const Http3QuicInterceptor = {
                 }
                 
                 if (CertPathValidator) {
-                    CertPathValidator.validate.overload('java.security.cert.CertPath', 'java.security.cert.CertPathParameters').implementation = function: function(certPath, params) {
+                    CertPathValidator.validate.overload('java.security.cert.CertPath', 'java.security.cert.CertPathParameters').implementation = function(certPath, params) {
                         try {
                             const certificates = certPath.getCertificates();
                             let hasLicenseCert = false;
@@ -3167,7 +3167,7 @@ const Http3QuicInterceptor = {
                 const SSLContext = Java.use("javax.net.ssl.SSLContext");
                 const originalGetInstanceMethod = SSLContext.getInstance.overload('java.lang.String');
                 
-                SSLContext.getInstance.overload('java.lang.String').implementation = function: function(protocol) {
+                SSLContext.getInstance.overload('java.lang.String').implementation = function(protocol) {
                     try {
                         const context = originalGetInstanceMethod.call(this, protocol);
                         
@@ -3232,7 +3232,7 @@ const Http3QuicInterceptor = {
             target: "http3_quic_interceptor",
             action: "advanced_certificate_bypass_initialized"
         });
-    
+    }
 };
 
 // Auto-initialize on load
