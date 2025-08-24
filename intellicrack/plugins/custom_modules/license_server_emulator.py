@@ -20,8 +20,13 @@ import hashlib
 import json
 import logging
 import os
+import platform
+import random
+import secrets
+import shutil
 import socket
 import struct
+import subprocess
 import threading
 import time
 import uuid
@@ -1415,7 +1420,7 @@ class HardwareFingerprintGenerator:
         try:
             diskutil_path = shutil.which("diskutil")
             if diskutil_path:
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage with shell=False  # noqa: S603
                     [diskutil_path, "info", "disk0"],
                     check=False,
                     capture_output=True,

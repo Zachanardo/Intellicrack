@@ -1189,7 +1189,7 @@ const RealtimeProtectionDetector = {
                     try {
                         var frames = Thread.backtrace(this.context, Backtracer.ACCURATE);
                         return frames.slice(0, 5).map(frame => frame.toString());
-                    } catch: function(e) {
+                    } catch(e) {
                         return [];
                     }
                 }
@@ -1202,7 +1202,7 @@ const RealtimeProtectionDetector = {
                 callCount: 0
             });
 
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "realtime_protection_detector",
@@ -1297,7 +1297,7 @@ const RealtimeProtectionDetector = {
                         if (this.valueName && !this.valueName.isNull()) {
                             this.valueNameStr = this.valueName.readUtf16String();
                         }
-                    } catch: function(e) {
+                    } catch(e) {
                         this.valueNameStr = null;
                     }
                 },
@@ -1335,7 +1335,7 @@ const RealtimeProtectionDetector = {
                         if (this.fileName && !this.fileName.isNull()) {
                             this.fileNameStr = this.fileName.readUtf16String();
                         }
-                    } catch: function(e) {
+                    } catch(e) {
                         this.fileNameStr = null;
                     }
                 },
@@ -1480,7 +1480,7 @@ const RealtimeProtectionDetector = {
                 });
             }
 
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "realtime_protection_detector",
@@ -1766,7 +1766,7 @@ const RealtimeProtectionDetector = {
         });
 
         try {
-            switch: function(signature.countermeasure) {
+            switch(signature.countermeasure) {
                 case "replace_return_false":
                     this.applyReplaceReturnCountermeasure(detection, 0);
                     break;
@@ -1796,7 +1796,7 @@ const RealtimeProtectionDetector = {
             detection.countermeasureApplied = true;
             this.stats.bypassesTriggered++;
 
-        } catch: function(e) {
+        } catch(e) {
             send({
                 type: "error",
                 target: "realtime_protection_detector",
