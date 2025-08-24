@@ -1,5 +1,4 @@
-"""
-Hex Viewer Default Configuration Module
+"""Hex Viewer Default Configuration Module.
 
 This module defines all default configuration values for the Intellicrack Hex Viewer.
 These defaults are merged into the main configuration system to provide sensible

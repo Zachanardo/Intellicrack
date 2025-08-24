@@ -53,7 +53,7 @@ from .base_tab import BaseTab
 
 
 class SettingsTab(BaseTab):
-    """Settings tab for configuration management"""
+    """Settings tab for configuration management."""
 
     settings_changed = pyqtSignal(str, object)
     theme_changed = pyqtSignal(str)
@@ -64,7 +64,7 @@ class SettingsTab(BaseTab):
         self.logger = logging.getLogger(__name__ + ".SettingsTab")
 
     def setup_content(self):
-        """Setup the settings tab content"""
+        """Setup the settings tab content."""
         layout = QHBoxLayout(self)
 
         # Left panel - Settings categories
@@ -84,7 +84,7 @@ class SettingsTab(BaseTab):
         self.is_loaded = True
 
     def create_settings_panel(self):
-        """Create the settings control panel"""
+        """Create the settings control panel."""
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -128,7 +128,7 @@ class SettingsTab(BaseTab):
         return panel
 
     def create_appearance_tab(self):
-        """Create appearance settings tab"""
+        """Create appearance settings tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -240,7 +240,7 @@ class SettingsTab(BaseTab):
         return tab
 
     def create_analysis_tab(self):
-        """Create analysis settings tab"""
+        """Create analysis settings tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -338,7 +338,7 @@ class SettingsTab(BaseTab):
         return tab
 
     def create_performance_tab(self):
-        """Create performance settings tab"""
+        """Create performance settings tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -425,7 +425,7 @@ class SettingsTab(BaseTab):
         return tab
 
     def create_paths_tab(self):
-        """Create paths settings tab"""
+        """Create paths settings tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -537,7 +537,7 @@ class SettingsTab(BaseTab):
         return tab
 
     def create_advanced_tab(self):
-        """Create advanced settings tab"""
+        """Create advanced settings tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -647,7 +647,7 @@ class SettingsTab(BaseTab):
         return tab
 
     def create_preview_panel(self):
-        """Create the preview panel"""
+        """Create the preview panel."""
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -668,7 +668,7 @@ class SettingsTab(BaseTab):
         return panel
 
     def update_preview(self):
-        """Update the settings preview"""
+        """Update the settings preview."""
         preview_text = "Current Settings:\n"
         preview_text += "=" * 40 + "\n\n"
 
@@ -703,7 +703,7 @@ class SettingsTab(BaseTab):
         self.preview_area.setText(preview_text)
 
     def load_settings(self):
-        """Load settings from file"""
+        """Load settings from file."""
         settings_file = os.path.join(
             os.path.dirname(__file__), "..", "..", "config", "settings.json"
         )
@@ -719,7 +719,7 @@ class SettingsTab(BaseTab):
             self.settings = self.get_default_settings()
 
     def get_default_settings(self):
-        """Get default settings"""
+        """Get default settings."""
         return {
             # Appearance
             "theme": "Light",
@@ -774,7 +774,7 @@ class SettingsTab(BaseTab):
         }
 
     def save_settings(self):
-        """Save current settings"""
+        """Save current settings."""
         # Collect settings from UI
         self.collect_settings_from_ui()
 
@@ -795,7 +795,7 @@ class SettingsTab(BaseTab):
             QMessageBox.critical(self, "Error", f"Failed to save settings: {e!s}")
 
     def collect_settings_from_ui(self):
-        """Collect settings from UI elements"""
+        """Collect settings from UI elements."""
         # Appearance settings
         if hasattr(self, "theme_combo"):
             self.settings["theme"] = self.theme_combo.currentText()
@@ -841,7 +841,7 @@ class SettingsTab(BaseTab):
         # (Performance, Paths, Advanced settings would be collected similarly)
 
     def reset_to_defaults(self):
-        """Reset settings to defaults"""
+        """Reset settings to defaults."""
         reply = QMessageBox.question(
             self,
             "Reset Settings",
@@ -857,7 +857,7 @@ class SettingsTab(BaseTab):
             QMessageBox.information(self, "Settings", "Settings reset to defaults!")
 
     def update_ui_from_settings(self):
-        """Update UI elements from current settings"""
+        """Update UI elements from current settings."""
         # Update all UI elements to reflect current settings
         if hasattr(self, "theme_combo"):
             self.theme_combo.setCurrentText(self.settings.get("theme", "Dark"))
@@ -866,7 +866,7 @@ class SettingsTab(BaseTab):
         # Continue updating other UI elements...
 
     def export_settings(self):
-        """Export settings to file"""
+        """Export settings to file."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Export Settings",
@@ -884,7 +884,7 @@ class SettingsTab(BaseTab):
                 QMessageBox.critical(self, "Error", f"Failed to export settings: {e!s}")
 
     def import_settings(self):
-        """Import settings from file"""
+        """Import settings from file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Import Settings",
@@ -906,38 +906,38 @@ class SettingsTab(BaseTab):
                 QMessageBox.critical(self, "Error", f"Failed to import settings: {e!s}")
 
     def browse_path(self, line_edit, title):
-        """Browse for file path"""
+        """Browse for file path."""
         file_path, _ = QFileDialog.getOpenFileName(self, title, "", "All Files (*)")
         if file_path:
             line_edit.setText(file_path)
 
     def browse_directory(self, line_edit, title):
-        """Browse for directory"""
+        """Browse for directory."""
         dir_path = QFileDialog.getExistingDirectory(self, title)
         if dir_path:
             line_edit.setText(dir_path)
 
     def browse_file(self, line_edit, title):
-        """Browse for file"""
+        """Browse for file."""
         file_path, _ = QFileDialog.getSaveFileName(self, title, "", "All Files (*)")
         if file_path:
             line_edit.setText(file_path)
 
     def on_theme_changed(self, theme):
-        """Handle theme change"""
+        """Handle theme change."""
         self.settings["theme"] = theme
         self.theme_changed.emit(theme)
         self.update_preview()
 
     def on_opacity_changed(self, value):
-        """Handle opacity change"""
+        """Handle opacity change."""
         self.opacity_label.setText(f"{value}%")
         self.settings["window_opacity"] = value
         if hasattr(self.shared_context, "main_window"):
             self.shared_context.main_window.setWindowOpacity(value / 100.0)
 
     def select_accent_color(self):
-        """Select accent color"""
+        """Select accent color."""
         color = QColorDialog.getColor(QColor(self.settings.get("accent_color", "#0078d4")), self)
         if color.isValid():
             color_hex = color.name()
@@ -946,7 +946,7 @@ class SettingsTab(BaseTab):
             self.update_preview()
 
     def log_message(self, message, level="info"):
-        """Log message to console or status"""
+        """Log message to console or status."""
         if hasattr(self.shared_context, "log_message"):
             self.shared_context.log_message(message, level)
         else:

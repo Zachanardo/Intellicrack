@@ -1,4 +1,4 @@
-"""LLM Integration Handler
+"""LLM Integration Handler.
 
 Manages the integration between protection analysis results and LLM tools,
 allowing AI models to answer questions about detected protections.
@@ -48,7 +48,7 @@ logger = get_logger(__name__)
 
 
 class LLMWorkerSignals(QObject):
-    """Signals for LLM worker thread"""
+    """Signals for LLM worker thread."""
 
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
@@ -57,7 +57,7 @@ class LLMWorkerSignals(QObject):
 
 
 class LLMAnalysisWorker(QRunnable):
-    """Worker thread for LLM analysis operations"""
+    """Worker thread for LLM analysis operations."""
 
     def __init__(self, operation: str, analysis_result: UnifiedProtectionResult, **kwargs):
         """Initialize the LLM analysis worker.
@@ -75,7 +75,7 @@ class LLMAnalysisWorker(QRunnable):
         self.signals = LLMWorkerSignals()
 
     def run(self):
-        """Execute the LLM operation"""
+        """Execute the LLM operation."""
         try:
             self.signals.progress.emit(f"Processing {self.operation}...")
 
@@ -112,7 +112,7 @@ class LLMAnalysisWorker(QRunnable):
             self.signals.finished.emit()
 
     def _build_llm_context(self, result: UnifiedProtectionResult) -> dict[str, Any]:
-        """Build context dictionary for LLM"""
+        """Build context dictionary for LLM."""
         context = {
             "file_path": result.file_path,
             "file_type": result.file_type,
@@ -147,7 +147,7 @@ class LLMAnalysisWorker(QRunnable):
         return context
 
     def _build_summary_prompt(self, result: UnifiedProtectionResult) -> str:
-        """Build prompt for protection summary"""
+        """Build prompt for protection summary."""
         prompt = f"""Analyze the following protection analysis results and provide a concise summary:
 
 File: {result.file_path}
@@ -175,7 +175,7 @@ Please provide:
         return prompt
 
     def _build_bypass_prompt(self, result: UnifiedProtectionResult) -> str:
-        """Build prompt for bypass suggestions"""
+        """Build prompt for bypass suggestions."""
         prompt = """Based on the following protection analysis, suggest bypass strategies:
 
 Protections:
@@ -224,7 +224,7 @@ class LLMHandler(QObject):
         self._register_llm_tool()
 
     def _register_llm_tool(self):
-        """Register the ICP analysis tool with LLM manager"""
+        """Register the ICP analysis tool with LLM manager."""
         try:
             llm_manager = LLMManager.get_instance()
             # Store reference to this handler in the tool
@@ -252,7 +252,7 @@ class LLMHandler(QObject):
         self.thread_pool.start(worker)
 
     def generate_summary(self):
-        """Generate an AI summary of the current protection analysis"""
+        """Generate an AI summary of the current protection analysis."""
         if not self.current_result:
             self.llm_error.emit("No analysis result available")
             return
@@ -265,7 +265,7 @@ class LLMHandler(QObject):
         self.thread_pool.start(worker)
 
     def suggest_bypass_strategies(self):
-        """Get AI suggestions for bypassing detected protections"""
+        """Get AI suggestions for bypassing detected protections."""
         if not self.current_result:
             self.llm_error.emit("No analysis result available")
             return
@@ -278,11 +278,11 @@ class LLMHandler(QObject):
         self.thread_pool.start(worker)
 
     def get_cached_result(self) -> UnifiedProtectionResult | None:
-        """Get the current cached analysis result"""
+        """Get the current cached analysis result."""
         return self.current_result
 
     def _on_context_registered(self, result: dict):
-        """Handle context registration completion"""
+        """Handle context registration completion."""
         if result["success"]:
             logger.info("Protection analysis context registered with LLM")
             self.llm_result_ready.emit(
@@ -295,7 +295,7 @@ class LLMHandler(QObject):
             self.llm_error.emit(result.get("error", "Unknown error"))
 
     def _on_summary_ready(self, result: dict):
-        """Handle summary generation completion"""
+        """Handle summary generation completion."""
         if result["success"]:
             self.llm_result_ready.emit(
                 {
@@ -307,7 +307,7 @@ class LLMHandler(QObject):
             self.llm_error.emit(result.get("error", "Unknown error"))
 
     def _on_bypass_suggestions_ready(self, result: dict):
-        """Handle bypass suggestions completion"""
+        """Handle bypass suggestions completion."""
         if result["success"]:
             self.llm_result_ready.emit(
                 {
@@ -319,7 +319,7 @@ class LLMHandler(QObject):
             self.llm_error.emit(result.get("error", "Unknown error"))
 
     def _on_worker_error(self, error_tuple):
-        """Handle worker thread errors"""
+        """Handle worker thread errors."""
         exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"LLM operation failed: {exc_value}"
         logger.error(f"{error_msg}\n{exc_traceback}")

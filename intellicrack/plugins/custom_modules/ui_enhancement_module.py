@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ License: GPL v3
 
 
 class UITheme(Enum):
-    """UI themes available"""
+    """UI themes available."""
 
     DARK = "dark"
     LIGHT = "light"
@@ -59,7 +59,7 @@ class UITheme(Enum):
 
 
 class PanelType(Enum):
-    """Three-panel interface types"""
+    """Three-panel interface types."""
 
     FILE_EXPLORER = "file_explorer"
     ANALYSIS_VIEWER = "analysis_viewer"
@@ -67,7 +67,7 @@ class PanelType(Enum):
 
 
 class AnalysisState(Enum):
-    """Analysis state tracking"""
+    """Analysis state tracking."""
 
     IDLE = "idle"
     SCANNING = "scanning"
@@ -79,7 +79,7 @@ class AnalysisState(Enum):
 
 @dataclass
 class UIConfig:
-    """UI configuration settings"""
+    """UI configuration settings."""
 
     theme: UITheme = UITheme.DARK
     font_family: str = "Consolas"
@@ -145,7 +145,7 @@ class UIConfig:
 
 @dataclass
 class AnalysisResult:
-    """Analysis result container"""
+    """Analysis result container."""
 
     target_file: str
     protection_type: str
@@ -156,7 +156,7 @@ class AnalysisResult:
     generated_scripts: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert enhancement result to dictionary representation"""
+        """Convert enhancement result to dictionary representation."""
         return {
             "target_file": self.target_file,
             "protection_type": self.protection_type,
@@ -169,7 +169,7 @@ class AnalysisResult:
 
 
 class RealTimeChart:
-    """Real-time data visualization"""
+    """Real-time data visualization."""
 
     def __init__(self, parent: tk.Widget, title: str = "Analysis Progress"):
         """Initialize real-time chart widget with dark theme styling."""
@@ -196,7 +196,7 @@ class RealTimeChart:
         self.max_points = 100
 
     def update_data(self, value: float, label: str = ""):
-        """Update chart with new data point"""
+        """Update chart with new data point."""
         current_time = time.time()
         self.data_points.append((current_time, value, label))
 
@@ -207,7 +207,7 @@ class RealTimeChart:
         self.refresh()
 
     def refresh(self):
-        """Refresh the chart display"""
+        """Refresh the chart display."""
         if not self.data_points:
             return
 
@@ -245,7 +245,7 @@ class RealTimeChart:
 
 
 class LogViewer:
-    """Enhanced log viewer with filtering and search"""
+    """Enhanced log viewer with filtering and search."""
 
     def __init__(self, parent: tk.Widget, config: UIConfig):
         """Initialize enhanced log viewer with filtering and search capabilities."""
@@ -316,7 +316,7 @@ class LogViewer:
         )
 
     def add_log(self, level: str, message: str, source: str = ""):
-        """Add log entry"""
+        """Add log entry."""
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         entry = {
             "timestamp": timestamp,
@@ -334,7 +334,7 @@ class LogViewer:
         self.refresh_display()
 
     def refresh_display(self):
-        """Refresh log display with current filters"""
+        """Refresh log display with current filters."""
         self.text_widget.delete(1.0, tk.END)
 
         search_term = self.search_var.get().lower()
@@ -370,7 +370,7 @@ class LogViewer:
         self.text_widget.see(tk.END)
 
     def highlight_search_term(self, start_pos: str, end_pos: str, search_term: str):
-        """Highlight search terms in text"""
+        """Highlight search terms in text."""
         content = self.text_widget.get(start_pos, end_pos)
         start_idx = 0
 
@@ -390,20 +390,20 @@ class LogViewer:
             start_idx = idx + 1
 
     def on_search(self, event=None):
-        """Handle search input"""
+        """Handle search input."""
         self.refresh_display()
 
     def on_filter_change(self, event=None):
-        """Handle filter change"""
+        """Handle filter change."""
         self.refresh_display()
 
     def clear_logs(self):
-        """Clear all log entries"""
+        """Clear all log entries."""
         self.log_entries.clear()
         self.refresh_display()
 
     def export_logs(self):
-        """Export logs to file"""
+        """Export logs to file."""
         filename = filedialog.asksaveasfilename(
             defaultextension=".log",
             filetypes=[("Log files", "*.log"), ("Text files", "*.txt"), ("All files", "*.*")],
@@ -425,7 +425,7 @@ class LogViewer:
 
 
 class ProgressTracker:
-    """Advanced progress tracking with ETA"""
+    """Advanced progress tracking with ETA."""
 
     def __init__(self, parent: tk.Widget, title: str = "Progress"):
         """Initialize advanced progress tracker with ETA calculation."""
@@ -463,7 +463,7 @@ class ProgressTracker:
         self.max_speed_history = 10
 
     def start(self, total_items: int = 100):
-        """Start progress tracking"""
+        """Start progress tracking."""
         self.total_items = total_items
         self.completed_items = 0
         self.start_time = time.time()
@@ -473,7 +473,7 @@ class ProgressTracker:
         self.update_display()
 
     def update(self, completed: int, status: str = ""):
-        """Update progress"""
+        """Update progress."""
         if self.start_time is None:
             self.start()
 
@@ -497,7 +497,7 @@ class ProgressTracker:
         self.update_display()
 
     def update_display(self):
-        """Update visual display"""
+        """Update visual display."""
         if self.total_items > 0:
             percentage = (self.completed_items / self.total_items) * 100
             self.progress_var.set(percentage)
@@ -520,7 +520,7 @@ class ProgressTracker:
         self.parent.update_idletasks()
 
     def format_time(self, seconds: float) -> str:
-        """Format time duration"""
+        """Format time duration."""
         if seconds < 60:
             return f"{int(seconds)}s"
         if seconds < 3600:
@@ -532,7 +532,7 @@ class ProgressTracker:
         return f"{hours}h {minutes}m"
 
     def finish(self, status: str = "Complete"):
-        """Finish progress tracking"""
+        """Finish progress tracking."""
         self.progress_var.set(100)
         self.status_label.config(text=status)
         self.eta_label.config(text="")
@@ -540,7 +540,7 @@ class ProgressTracker:
 
 
 class FileExplorerPanel:
-    """Enhanced file explorer with analysis integration"""
+    """Enhanced file explorer with analysis integration."""
 
     def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller):
         """Initialize enhanced file explorer with analysis integration."""
@@ -569,7 +569,7 @@ class FileExplorerPanel:
         self.refresh_tree()
 
     def create_toolbar(self):
-        """Create file explorer toolbar"""
+        """Create file explorer toolbar."""
         self.toolbar = ttk.Frame(self.frame)
         self.toolbar.pack(fill=tk.X, padx=5, pady=2)
 
@@ -594,7 +594,7 @@ class FileExplorerPanel:
         self.browse_btn.pack(side=tk.RIGHT, padx=1)
 
     def create_file_tree(self):
-        """Create file tree widget"""
+        """Create file tree widget."""
         tree_frame = ttk.Frame(self.frame)
         tree_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=2)
 
@@ -634,7 +634,7 @@ class FileExplorerPanel:
         self.tree.bind("<<TreeviewSelect>>", self.on_selection_change)
 
     def create_status_bar(self):
-        """Create status bar"""
+        """Create status bar."""
         self.status_frame = ttk.Frame(self.frame)
         self.status_frame.pack(fill=tk.X, padx=5, pady=2)
 
@@ -645,7 +645,7 @@ class FileExplorerPanel:
         self.file_count_label.pack(side=tk.RIGHT)
 
     def create_context_menu(self):
-        """Create right-click context menu"""
+        """Create right-click context menu."""
         self.context_menu = tk.Menu(self.frame, tearoff=0)
         self.context_menu.add_command(label="Analyze File", command=self.analyze_selected)
         self.context_menu.add_command(label="Generate Scripts", command=self.generate_scripts)
@@ -656,7 +656,7 @@ class FileExplorerPanel:
         self.context_menu.add_command(label="Properties", command=self.show_properties)
 
     def refresh_tree(self):
-        """Refresh file tree"""
+        """Refresh file tree."""
         try:
             # Clear existing items
             for item in self.tree.get_children():
@@ -728,7 +728,7 @@ class FileExplorerPanel:
             self.status_label.config(text=f"Error: {e}")
 
     def _process_directory_items(self, items: list):
-        """Process directory items for enhanced functionality"""
+        """Process directory items for enhanced functionality."""
         # Cache items for future operations like search, filtering, etc.
         self._cached_items = items
 
@@ -757,7 +757,7 @@ class FileExplorerPanel:
             }
 
     def get_file_icon(self, file_path: Path) -> str:
-        """Get icon for file type"""
+        """Get icon for file type."""
         suffix = file_path.suffix.lower()
 
         icons = {
@@ -786,7 +786,7 @@ class FileExplorerPanel:
         return icons.get(suffix, "📄")
 
     def format_file_size(self, size: int) -> str:
-        """Format file size in human readable format"""
+        """Format file size in human readable format."""
         for unit in ["B", "KB", "MB", "GB", "TB"]:
             if size < 1024.0:
                 return f"{size:.1f} {unit}"
@@ -794,7 +794,7 @@ class FileExplorerPanel:
         return f"{size:.1f} PB"
 
     def on_double_click(self, event):
-        """Handle double-click on tree item"""
+        """Handle double-click on tree item."""
         item = self.tree.selection()[0]
         item_path = Path(self.tree.set(item, "path"))
 
@@ -806,21 +806,21 @@ class FileExplorerPanel:
             self.analyze_file(item_path)
 
     def on_right_click(self, event):
-        """Handle right-click on tree item"""
+        """Handle right-click on tree item."""
         item = self.tree.identify_row(event.y)
         if item:
             self.tree.selection_set(item)
             self.context_menu.post(event.x_root, event.y_root)
 
     def on_selection_change(self, event):
-        """Handle selection change"""
+        """Handle selection change."""
         selection = self.tree.selection()
         if selection:
             item_path = Path(self.tree.set(selection[0], "path"))
             self.status_label.config(text=str(item_path))
 
     def on_path_change(self, event):
-        """Handle path entry change"""
+        """Handle path entry change."""
         try:
             new_path = Path(self.path_var.get())
             if new_path.exists() and new_path.is_dir():
@@ -831,25 +831,25 @@ class FileExplorerPanel:
             self.path_var.set(str(self.current_path))
 
     def go_back(self):
-        """Navigate back"""
+        """Navigate back."""
         # Simple implementation - go to parent
         self.go_up()
 
     def go_up(self):
-        """Navigate up one directory"""
+        """Navigate up one directory."""
         if self.current_path.parent != self.current_path:
             self.current_path = self.current_path.parent
             self.refresh_tree()
 
     def browse_folder(self):
-        """Browse for folder"""
+        """Browse for folder."""
         folder = filedialog.askdirectory(initialdir=str(self.current_path))
         if folder:
             self.current_path = Path(folder)
             self.refresh_tree()
 
     def analyze_selected(self):
-        """Analyze selected file"""
+        """Analyze selected file."""
         selection = self.tree.selection()
         if selection:
             item_path = Path(self.tree.set(selection[0], "path"))
@@ -857,11 +857,11 @@ class FileExplorerPanel:
                 self.analyze_file(item_path)
 
     def analyze_file(self, file_path: Path):
-        """Trigger file analysis"""
+        """Trigger file analysis."""
         self.ui_controller.analyze_file(str(file_path))
 
     def generate_scripts(self):
-        """Generate scripts for selected file"""
+        """Generate scripts for selected file."""
         selection = self.tree.selection()
         if selection:
             item_path = Path(self.tree.set(selection[0], "path"))
@@ -869,7 +869,7 @@ class FileExplorerPanel:
                 self.ui_controller.generate_scripts(str(item_path))
 
     def open_in_explorer(self):
-        """Open location in system explorer"""
+        """Open location in system explorer."""
         selection = self.tree.selection()
         if selection:
             item_path = Path(self.tree.set(selection[0], "path"))
@@ -882,7 +882,7 @@ class FileExplorerPanel:
                 subprocess.run(["xdg-open", str(item_path.parent)], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
 
     def copy_path(self):
-        """Copy file path to clipboard"""
+        """Copy file path to clipboard."""
         selection = self.tree.selection()
         if selection:
             item_path = Path(self.tree.set(selection[0], "path"))
@@ -890,7 +890,7 @@ class FileExplorerPanel:
             self.parent.clipboard_append(str(item_path))
 
     def show_properties(self):
-        """Show file properties dialog"""
+        """Show file properties dialog."""
         selection = self.tree.selection()
         if selection:
             item_path = Path(self.tree.set(selection[0], "path"))
@@ -898,7 +898,7 @@ class FileExplorerPanel:
 
 
 class AnalysisViewerPanel:
-    """Central analysis viewer with real-time updates"""
+    """Central analysis viewer with real-time updates."""
 
     def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller):
         """Initialize central analysis viewer with real-time updates."""
@@ -924,7 +924,7 @@ class AnalysisViewerPanel:
         self.current_analysis = None
 
     def create_overview_tab(self):
-        """Create analysis overview tab"""
+        """Create analysis overview tab."""
         self.overview_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.overview_frame, text="Overview")
 
@@ -980,7 +980,7 @@ class AnalysisViewerPanel:
         self.bypass_listbox.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
     def create_details_tab(self):
-        """Create detailed analysis tab"""
+        """Create detailed analysis tab."""
         self.details_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.details_frame, text="Details")
 
@@ -1021,7 +1021,7 @@ class AnalysisViewerPanel:
         self.details_tree.bind("<<TreeviewSelect>>", self.on_details_select)
 
     def create_visualization_tab(self):
-        """Create visualization tab"""
+        """Create visualization tab."""
         self.viz_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.viz_frame, text="Visualization")
 
@@ -1048,7 +1048,7 @@ class AnalysisViewerPanel:
         self.chart = RealTimeChart(chart_frame, "Analysis Progress")
 
     def create_history_tab(self):
-        """Create analysis history tab"""
+        """Create analysis history tab."""
         self.history_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.history_frame, text="History")
 
@@ -1094,7 +1094,7 @@ class AnalysisViewerPanel:
         self.history_tree.bind("<Double-1>", self.on_history_double_click)
 
     def update_analysis(self, result: AnalysisResult):
-        """Update analysis display with new results"""
+        """Update analysis display with new results."""
         self.current_analysis = result
 
         # Update overview
@@ -1110,7 +1110,7 @@ class AnalysisViewerPanel:
         self.add_to_history(result)
 
     def update_overview(self, result: AnalysisResult):
-        """Update overview tab"""
+        """Update overview tab."""
         # File info
         file_info = f"File: {result.target_file}\n"
         file_info += f"Size: {Path(result.target_file).stat().st_size if Path(result.target_file).exists() else 'Unknown'}\n"
@@ -1141,7 +1141,7 @@ class AnalysisViewerPanel:
             self.bypass_listbox.insert(tk.END, method)
 
     def update_details(self, result: AnalysisResult):
-        """Update details tab"""
+        """Update details tab."""
         # Clear existing items
         for item in self.details_tree.get_children():
             self.details_tree.delete(item)
@@ -1168,7 +1168,7 @@ class AnalysisViewerPanel:
             self.details_tree.item(item, open=True)
 
     def update_visualization(self, event=None):
-        """Update visualization based on current chart type"""
+        """Update visualization based on current chart type."""
         if not self.current_analysis:
             return
 
@@ -1231,7 +1231,7 @@ class AnalysisViewerPanel:
                 self.chart.clear_data()
 
     def add_to_history(self, result: AnalysisResult):
-        """Add analysis result to history"""
+        """Add analysis result to history."""
         item_count = len(self.history_tree.get_children()) + 1
 
         self.history_tree.insert(
@@ -1252,7 +1252,7 @@ class AnalysisViewerPanel:
             self.history_tree.see(items[-1])
 
     def on_details_select(self, event):
-        """Handle details tree selection"""
+        """Handle details tree selection."""
         selection = self.details_tree.selection()
         if selection:
             item = selection[0]
@@ -1287,7 +1287,7 @@ class AnalysisViewerPanel:
             self.details_text.insert(1.0, details_content)
 
     def on_history_double_click(self, event):
-        """Handle history double-click to view details"""
+        """Handle history double-click to view details."""
         selection = self.history_tree.selection()
         if selection:
             # Load historical analysis details
@@ -1358,7 +1358,7 @@ class AnalysisViewerPanel:
                 ttk.Button(detail_frame, text="Close", command=detail_window.destroy).pack(pady=10)
 
     def clear_history(self):
-        """Clear analysis history"""
+        """Clear analysis history."""
         if messagebox.askyesno(
             "Clear History", "Are you sure you want to clear the analysis history?"
         ):
@@ -1366,7 +1366,7 @@ class AnalysisViewerPanel:
                 self.history_tree.delete(item)
 
     def export_history(self):
-        """Export analysis history"""
+        """Export analysis history."""
         filename = filedialog.asksaveasfilename(
             defaultextension=".csv",
             filetypes=[("CSV files", "*.csv"), ("JSON files", "*.json"), ("All files", "*.*")],
@@ -1406,7 +1406,7 @@ class AnalysisViewerPanel:
 
 
 class ScriptGeneratorPanel:
-    """Script generation and management panel"""
+    """Script generation and management panel."""
 
     def __init__(self, parent: tk.Widget, config: UIConfig, ui_controller):
         """Initialize script generation and management panel."""
@@ -1432,7 +1432,7 @@ class ScriptGeneratorPanel:
         self.script_history = []
 
     def create_frida_tab(self):
-        """Create Frida script tab"""
+        """Create Frida script tab."""
         frida_frame = ttk.Frame(self.notebook)
         self.notebook.add(frida_frame, text="Frida Scripts")
 
@@ -1502,7 +1502,7 @@ class ScriptGeneratorPanel:
         )
 
     def create_ghidra_tab(self):
-        """Create Ghidra script tab"""
+        """Create Ghidra script tab."""
         ghidra_frame = ttk.Frame(self.notebook)
         self.notebook.add(ghidra_frame, text="Ghidra Scripts")
 
@@ -1579,7 +1579,7 @@ class ScriptGeneratorPanel:
         )
 
     def create_radare2_tab(self):
-        """Create Radare2 script tab"""
+        """Create Radare2 script tab."""
         radare2_frame = ttk.Frame(self.notebook)
         self.notebook.add(radare2_frame, text="Radare2 Scripts")
 
@@ -1655,7 +1655,7 @@ class ScriptGeneratorPanel:
         )
 
     def create_custom_tab(self):
-        """Create custom script tab"""
+        """Create custom script tab."""
         custom_frame = ttk.Frame(self.notebook)
         self.notebook.add(custom_frame, text="Custom Scripts")
 
@@ -1702,7 +1702,7 @@ class ScriptGeneratorPanel:
         )
 
     def setup_js_syntax_highlighting(self, text_widget):
-        """Setup JavaScript syntax highlighting"""
+        """Setup JavaScript syntax highlighting."""
         # Define color schemes for different elements
         text_widget.tag_configure("keyword", foreground="#569cd6")
         text_widget.tag_configure("string", foreground="#ce9178")
@@ -1742,7 +1742,7 @@ class ScriptGeneratorPanel:
         text_widget.bind("<KeyRelease>", lambda e: self.highlight_syntax(text_widget, js_keywords))
 
     def setup_java_syntax_highlighting(self, text_widget):
-        """Setup Java syntax highlighting"""
+        """Setup Java syntax highlighting."""
         text_widget.tag_configure("keyword", foreground="#569cd6")
         text_widget.tag_configure("string", foreground="#ce9178")
         text_widget.tag_configure("comment", foreground="#6a9955")
@@ -1790,7 +1790,7 @@ class ScriptGeneratorPanel:
         )
 
     def setup_python_syntax_highlighting(self, text_widget):
-        """Setup Python syntax highlighting"""
+        """Setup Python syntax highlighting."""
         text_widget.tag_configure("keyword", foreground="#569cd6")
         text_widget.tag_configure("string", foreground="#ce9178")
         text_widget.tag_configure("comment", foreground="#6a9955")
@@ -1830,7 +1830,7 @@ class ScriptGeneratorPanel:
         )
 
     def highlight_syntax(self, text_widget, keywords):
-        """Basic syntax highlighting"""
+        """Basic syntax highlighting."""
         content = text_widget.get(1.0, tk.END)
 
         # Clear existing tags
@@ -1874,7 +1874,7 @@ class ScriptGeneratorPanel:
                     text_widget.tag_add("comment", f"{i+1}.{comment_start}", f"{i+1}.end")
 
     def browse_process(self):
-        """Browse for target process"""
+        """Browse for target process."""
         filename = filedialog.askopenfilename(
             title="Select Target Process",
             filetypes=[("Executable files", "*.exe"), ("All files", "*.*")],
@@ -1883,7 +1883,7 @@ class ScriptGeneratorPanel:
             self.frida_process_var.set(filename)
 
     def browse_binary(self):
-        """Browse for target binary"""
+        """Browse for target binary."""
         filename = filedialog.askopenfilename(
             title="Select Target Binary",
             filetypes=[
@@ -1896,7 +1896,7 @@ class ScriptGeneratorPanel:
             self.ghidra_binary_var.set(filename)
 
     def browse_r2_binary(self):
-        """Browse for Radare2 target binary"""
+        """Browse for Radare2 target binary."""
         filename = filedialog.askopenfilename(
             title="Select Target Binary",
             filetypes=[
@@ -1909,7 +1909,7 @@ class ScriptGeneratorPanel:
             self.r2_binary_var.set(filename)
 
     def generate_frida_script(self):
-        """Generate Frida script based on selections"""
+        """Generate Frida script based on selections."""
         target = self.frida_process_var.get()
         script_type = self.frida_type_var.get()
 
@@ -1927,7 +1927,7 @@ class ScriptGeneratorPanel:
         self.add_to_script_history("Frida", script_type, script_content)
 
     def generate_ghidra_script(self):
-        """Generate Ghidra script based on selections"""
+        """Generate Ghidra script based on selections."""
         target = self.ghidra_binary_var.get()
         script_type = self.ghidra_type_var.get()
 
@@ -1945,7 +1945,7 @@ class ScriptGeneratorPanel:
         self.add_to_script_history("Ghidra", script_type, script_content)
 
     def generate_r2_script(self):
-        """Generate Radare2 script based on selections"""
+        """Generate Radare2 script based on selections."""
         target = self.r2_binary_var.get()
         script_type = self.r2_type_var.get()
 
@@ -1963,7 +1963,7 @@ class ScriptGeneratorPanel:
         self.add_to_script_history("Radare2", script_type, script_content)
 
     def add_to_script_history(self, platform: str, script_type: str, content: str):
-        """Add script to history"""
+        """Add script to history."""
         timestamp = datetime.now()
         self.script_history.append(
             {
@@ -1975,7 +1975,7 @@ class ScriptGeneratorPanel:
         )
 
     def on_language_change(self, event=None):
-        """Handle language change for custom scripts"""
+        """Handle language change for custom scripts."""
         language = self.custom_lang_var.get()
 
         if language == "Python":
@@ -1986,7 +1986,7 @@ class ScriptGeneratorPanel:
 
     # Script execution methods
     def run_frida_script(self):
-        """Run Frida script"""
+        """Run Frida script."""
         script = self.frida_editor.get(1.0, tk.END)
         target = self.frida_process_var.get()
 
@@ -1998,7 +1998,7 @@ class ScriptGeneratorPanel:
         self.ui_controller.execute_frida_script(script, target)
 
     def run_ghidra_script(self):
-        """Run Ghidra script"""
+        """Run Ghidra script."""
         script = self.ghidra_editor.get(1.0, tk.END)
         target = self.ghidra_binary_var.get()
 
@@ -2010,7 +2010,7 @@ class ScriptGeneratorPanel:
         self.ui_controller.execute_ghidra_script(script, target)
 
     def run_r2_script(self):
-        """Run Radare2 script"""
+        """Run Radare2 script."""
         script = self.r2_editor.get(1.0, tk.END)
         target = self.r2_binary_var.get()
 
@@ -2022,7 +2022,7 @@ class ScriptGeneratorPanel:
         self.ui_controller.execute_r2_script(script, target)
 
     def run_custom_script(self):
-        """Run custom script"""
+        """Run custom script."""
         script = self.custom_editor.get(1.0, tk.END)
         language = self.custom_lang_var.get()
 
@@ -2035,28 +2035,28 @@ class ScriptGeneratorPanel:
 
     # Script save/load methods
     def save_frida_script(self):
-        """Save Frida script to file"""
+        """Save Frida script to file."""
         script = self.frida_editor.get(1.0, tk.END)
         self.save_script_to_file(
             script, "Frida Script", [("JavaScript files", "*.js"), ("All files", "*.*")]
         )
 
     def save_ghidra_script(self):
-        """Save Ghidra script to file"""
+        """Save Ghidra script to file."""
         script = self.ghidra_editor.get(1.0, tk.END)
         self.save_script_to_file(
             script, "Ghidra Script", [("Java files", "*.java"), ("All files", "*.*")]
         )
 
     def save_r2_script(self):
-        """Save Radare2 script to file"""
+        """Save Radare2 script to file."""
         script = self.r2_editor.get(1.0, tk.END)
         self.save_script_to_file(
             script, "Radare2 Script", [("Python files", "*.py"), ("All files", "*.*")]
         )
 
     def save_custom_script(self):
-        """Save custom script to file"""
+        """Save custom script to file."""
         script = self.custom_editor.get(1.0, tk.END)
         language = self.custom_lang_var.get()
 
@@ -2074,7 +2074,7 @@ class ScriptGeneratorPanel:
         )
 
     def save_script_to_file(self, script: str, title: str, filetypes: list[tuple[str, str]]):
-        """Save script content to file"""
+        """Save script content to file."""
         filename = filedialog.asksaveasfilename(title=f"Save {title}", filetypes=filetypes)
 
         if filename:
@@ -2086,31 +2086,31 @@ class ScriptGeneratorPanel:
                 messagebox.showerror("Save Error", f"Failed to save script: {e}")
 
     def load_frida_script(self):
-        """Load Frida script from file"""
+        """Load Frida script from file."""
         self.load_script_to_editor(
             self.frida_editor, "Frida Script", [("JavaScript files", "*.js"), ("All files", "*.*")]
         )
 
     def load_ghidra_script(self):
-        """Load Ghidra script from file"""
+        """Load Ghidra script from file."""
         self.load_script_to_editor(
             self.ghidra_editor, "Ghidra Script", [("Java files", "*.java"), ("All files", "*.*")]
         )
 
     def load_r2_script(self):
-        """Load Radare2 script from file"""
+        """Load Radare2 script from file."""
         self.load_script_to_editor(
             self.r2_editor, "Radare2 Script", [("Python files", "*.py"), ("All files", "*.*")]
         )
 
     def load_custom_script(self):
-        """Load custom script from file"""
+        """Load custom script from file."""
         self.load_script_to_editor(self.custom_editor, "Custom Script", [("All files", "*.*")])
 
     def load_script_to_editor(
         self, editor: scrolledtext.ScrolledText, title: str, filetypes: list[tuple[str, str]]
     ):
-        """Load script from file into editor"""
+        """Load script from file into editor."""
         filename = filedialog.askopenfilename(title=f"Load {title}", filetypes=filetypes)
 
         if filename:
@@ -2126,7 +2126,7 @@ class ScriptGeneratorPanel:
 
 
 class UIEnhancementModule:
-    """Main UI enhancement module controller"""
+    """Main UI enhancement module controller."""
 
     def __init__(self, root: tk.Tk = None):
         """Initialize main UI enhancement module controller."""
@@ -2162,7 +2162,7 @@ class UIEnhancementModule:
             self.start_auto_refresh()
 
     def setup_logging(self):
-        """Setup logging configuration"""
+        """Setup logging configuration."""
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -2174,7 +2174,7 @@ class UIEnhancementModule:
         self.logger = logging.getLogger(__name__)
 
     def load_config(self) -> UIConfig:
-        """Load UI configuration"""
+        """Load UI configuration."""
         config_file = Path("ui_config.json")
 
         if config_file.exists():
@@ -2188,7 +2188,7 @@ class UIEnhancementModule:
         return UIConfig()
 
     def save_config(self):
-        """Save UI configuration"""
+        """Save UI configuration."""
         config_file = Path("ui_config.json")
 
         try:
@@ -2198,7 +2198,7 @@ class UIEnhancementModule:
             self.logger.error(f"Failed to save config: {e}")
 
     def apply_theme(self):
-        """Apply selected theme"""
+        """Apply selected theme."""
         if self.config.theme == UITheme.DARK:
             self.apply_dark_theme()
         elif self.config.theme == UITheme.LIGHT:
@@ -2209,7 +2209,7 @@ class UIEnhancementModule:
             self.apply_cyberpunk_theme()
 
     def apply_dark_theme(self):
-        """Apply dark theme"""
+        """Apply dark theme."""
         style = ttk.Style()
         style.theme_use("clam")
 
@@ -2229,12 +2229,12 @@ class UIEnhancementModule:
         self.root.configure(bg="#2d2d2d")
 
     def apply_light_theme(self):
-        """Apply light theme"""
+        """Apply light theme."""
         style = ttk.Style()
         style.theme_use("default")
 
     def apply_high_contrast_theme(self):
-        """Apply high contrast theme"""
+        """Apply high contrast theme."""
         style = ttk.Style()
         style.theme_use("clam")
 
@@ -2247,7 +2247,7 @@ class UIEnhancementModule:
         self.root.configure(bg="#000000")
 
     def apply_cyberpunk_theme(self):
-        """Apply cyberpunk theme"""
+        """Apply cyberpunk theme."""
         style = ttk.Style()
         style.theme_use("clam")
 
@@ -2260,7 +2260,7 @@ class UIEnhancementModule:
         self.root.configure(bg="#0a0a0a")
 
     def create_main_interface(self):
-        """Create the main three-panel interface"""
+        """Create the main three-panel interface."""
         # Create main menu
         self.create_menu()
 
@@ -2294,7 +2294,7 @@ class UIEnhancementModule:
         self.log_viewer.add_log("INFO", "Intellicrack UI Enhanced Module initialized", "UI")
 
     def create_menu(self):
-        """Create main menu bar"""
+        """Create main menu bar."""
         menubar = tk.Menu(self.root)
         self.root.config(menu=menubar)
 
@@ -2351,7 +2351,7 @@ class UIEnhancementModule:
         self.root.bind("<F5>", lambda e: self.refresh_current_view())
 
     def create_status_bar(self):
-        """Create status bar"""
+        """Create status bar."""
         self.status_frame = ttk.Frame(self.root)
         self.status_frame.pack(fill=tk.X, side=tk.BOTTOM)
 
@@ -2375,7 +2375,7 @@ class UIEnhancementModule:
         self.update_status()
 
     def initialize_analysis_modules(self):
-        """Initialize analysis modules"""
+        """Initialize analysis modules."""
         try:
             # Import analysis modules
             from .anti_anti_debug_suite import AntiAntiDebugSuite
@@ -2401,7 +2401,7 @@ class UIEnhancementModule:
             )
 
     def start_auto_refresh(self):
-        """Start auto-refresh timer"""
+        """Start auto-refresh timer."""
 
         def refresh():
             if self.config.auto_refresh:
@@ -2411,7 +2411,7 @@ class UIEnhancementModule:
         self.root.after(self.config.refresh_interval, refresh)
 
     def refresh_current_view(self):
-        """Refresh current view"""
+        """Refresh current view."""
         try:
             # Refresh file explorer
             self.file_explorer.refresh_tree()
@@ -2426,7 +2426,7 @@ class UIEnhancementModule:
             self.log_viewer.add_log("WARNING", f"Refresh error: {e}", "UI")
 
     def update_status(self):
-        """Update status bar"""
+        """Update status bar."""
         # Update analysis state
         state_colors = {
             AnalysisState.IDLE: "#888888",
@@ -2458,7 +2458,7 @@ class UIEnhancementModule:
 
     # Analysis methods
     def analyze_file(self, file_path: str):
-        """Analyze selected file"""
+        """Analyze selected file."""
         try:
             self.current_target = file_path
             self.analysis_state = AnalysisState.SCANNING
@@ -2478,7 +2478,7 @@ class UIEnhancementModule:
             self.analysis_state = AnalysisState.ERROR
 
     def _perform_analysis(self, file_path: str):
-        """Perform file analysis in background"""
+        """Perform file analysis in background."""
         try:
             # Update progress
             self.progress_tracker.update(10, "Initializing analysis...")
@@ -2519,7 +2519,7 @@ class UIEnhancementModule:
             self.root.after(0, self._analysis_error, str(e))
 
     def _analysis_complete(self, result: AnalysisResult):
-        """Handle analysis completion"""
+        """Handle analysis completion."""
         self.analysis_state = AnalysisState.COMPLETE
         self.progress_tracker.finish("Analysis complete")
 
@@ -2533,14 +2533,14 @@ class UIEnhancementModule:
         )
 
     def _analysis_error(self, error_msg: str):
-        """Handle analysis error"""
+        """Handle analysis error."""
         self.analysis_state = AnalysisState.ERROR
         self.progress_tracker.finish("Analysis failed")
 
         self.log_viewer.add_log("ERROR", f"Analysis error: {error_msg}", "Analysis")
 
     def generate_scripts(self, file_path: str):
-        """Generate scripts for target file"""
+        """Generate scripts for target file."""
         try:
             self.log_viewer.add_log("INFO", f"Generating scripts for {file_path}", "ScriptGen")
 
@@ -2559,7 +2559,7 @@ class UIEnhancementModule:
 
     # Script generation methods
     def generate_frida_script(self, target: str, script_type: str) -> str:
-        """Generate Frida script"""
+        """Generate Frida script."""
         try:
             # Use core engine to generate script
             if hasattr(self, "core_engine"):
@@ -2571,7 +2571,7 @@ class UIEnhancementModule:
             return f"// Error generating script: {e}"
 
     def generate_ghidra_script(self, target: str, script_type: str) -> str:
-        """Generate Ghidra script"""
+        """Generate Ghidra script."""
         try:
             if hasattr(self, "core_engine"):
                 return self.core_engine.generate_ghidra_script(target, script_type)
@@ -2581,7 +2581,7 @@ class UIEnhancementModule:
             return f"// Error generating script: {e}"
 
     def generate_r2_script(self, target: str, script_type: str) -> str:
-        """Generate Radare2 script"""
+        """Generate Radare2 script."""
         try:
             if hasattr(self, "core_engine"):
                 return self.core_engine.generate_r2_script(target, script_type)
@@ -2591,7 +2591,7 @@ class UIEnhancementModule:
             return f"# Error generating script: {e}"
 
     def _get_frida_template(self, target: str, script_type: str) -> str:
-        """Get Frida script template"""
+        """Get Frida script template."""
         templates = {
             "License Bypass": f"""// Frida License Bypass Script for {Path(target).name}
 // Generated by Intellicrack UI Enhancement Module
@@ -2642,7 +2642,7 @@ Java.perform(function() {{
         return templates.get(script_type, f"// Template for {script_type} not implemented")
 
     def _get_ghidra_template(self, target: str, script_type: str) -> str:
-        """Get Ghidra script template"""
+        """Get Ghidra script template."""
         templates = {
             "License Analysis": f"""// Ghidra License Analysis Script for {Path(target).name}
 // Generated by Intellicrack UI Enhancement Module
@@ -2685,7 +2685,7 @@ public class LicenseAnalysis extends GhidraScript {{
         return templates.get(script_type, f"// Template for {script_type} not implemented")
 
     def _get_r2_template(self, target: str, script_type: str) -> str:
-        """Get Radare2 script template"""
+        """Get Radare2 script template."""
         license_template = '''#!/usr/bin/env python3
 # Radare2 License Analysis Script for TARGET_NAME
 # Generated by Intellicrack UI Enhancement Module
@@ -2736,7 +2736,7 @@ if __name__ == "__main__":
 
     # Script execution methods
     def execute_frida_script(self, script: str, target: str):
-        """Execute Frida script"""
+        """Execute Frida script."""
         self.log_viewer.add_log("INFO", f"Executing Frida script on {target}", "ScriptExec")
 
         # In a real implementation, this would execute the Frida script
@@ -2749,7 +2749,7 @@ if __name__ == "__main__":
         )
 
     def execute_ghidra_script(self, script: str, target: str):
-        """Execute Ghidra script"""
+        """Execute Ghidra script."""
         self.log_viewer.add_log("INFO", f"Executing Ghidra script on {target}", "ScriptExec")
 
         # In a real implementation, this would execute the Ghidra script
@@ -2761,7 +2761,7 @@ if __name__ == "__main__":
         )
 
     def execute_r2_script(self, script: str, target: str):
-        """Execute Radare2 script"""
+        """Execute Radare2 script."""
         self.log_viewer.add_log("INFO", f"Executing Radare2 script on {target}", "ScriptExec")
 
         # In a real implementation, this would execute the R2 script
@@ -2773,7 +2773,7 @@ if __name__ == "__main__":
         )
 
     def execute_custom_script(self, script: str, language: str):
-        """Execute custom script"""
+        """Execute custom script."""
         self.log_viewer.add_log("INFO", f"Executing {language} script", "ScriptExec")
 
         # In a real implementation, this would execute based on language
@@ -2786,7 +2786,7 @@ if __name__ == "__main__":
 
     # File operations
     def open_file(self):
-        """Open file dialog"""
+        """Open file dialog."""
         filename = filedialog.askopenfilename(
             title="Open File",
             filetypes=[
@@ -2807,7 +2807,7 @@ if __name__ == "__main__":
             self.analyze_file(filename)
 
     def open_folder(self):
-        """Open folder dialog"""
+        """Open folder dialog."""
         folder = filedialog.askdirectory(title="Open Folder")
 
         if folder:
@@ -2815,19 +2815,19 @@ if __name__ == "__main__":
             self.file_explorer.refresh_tree()
 
     def show_recent_files(self):
-        """Show recent files dialog"""
+        """Show recent files dialog."""
         # Implementation would show a dialog with recent files
         messagebox.showinfo("Recent Files", "Recent files feature not yet implemented")
 
     def exit_application(self):
-        """Exit application"""
+        """Exit application."""
         if messagebox.askyesno("Exit", "Are you sure you want to exit Intellicrack?"):
             self.save_config()
             self.root.quit()
 
     # Analysis operations
     def quick_scan(self):
-        """Perform quick scan"""
+        """Perform quick scan."""
         if self.current_target:
             self.log_viewer.add_log("INFO", "Starting quick scan", "Analysis")
             # Implementation would perform quick scan
@@ -2835,7 +2835,7 @@ if __name__ == "__main__":
             messagebox.showwarning("No Target", "Please select a file to analyze")
 
     def deep_analysis(self):
-        """Perform deep analysis"""
+        """Perform deep analysis."""
         if self.current_target:
             self.log_viewer.add_log("INFO", "Starting deep analysis", "Analysis")
             # Implementation would perform deep analysis
@@ -2843,7 +2843,7 @@ if __name__ == "__main__":
             messagebox.showwarning("No Target", "Please select a file to analyze")
 
     def batch_analysis(self):
-        """Perform batch analysis"""
+        """Perform batch analysis."""
         folder = filedialog.askdirectory(title="Select Folder for Batch Analysis")
 
         if folder:
@@ -2851,7 +2851,7 @@ if __name__ == "__main__":
             # Implementation would perform batch analysis
 
     def export_results(self):
-        """Export analysis results"""
+        """Export analysis results."""
         filename = filedialog.asksaveasfilename(
             title="Export Results",
             defaultextension=".json",
@@ -2864,7 +2864,7 @@ if __name__ == "__main__":
 
     # Tool operations
     def open_hex_editor(self):
-        """Open hex editor"""
+        """Open hex editor."""
         if self.current_target:
             self.log_viewer.add_log(
                 "INFO", f"Opening hex editor for {self.current_target}", "Tools"
@@ -2874,7 +2874,7 @@ if __name__ == "__main__":
             messagebox.showwarning("No Target", "Please select a file first")
 
     def open_disassembler(self):
-        """Open disassembler"""
+        """Open disassembler."""
         if self.current_target:
             self.log_viewer.add_log(
                 "INFO", f"Opening disassembler for {self.current_target}", "Tools"
@@ -2884,7 +2884,7 @@ if __name__ == "__main__":
             messagebox.showwarning("No Target", "Please select a file first")
 
     def open_string_extractor(self):
-        """Open string extractor"""
+        """Open string extractor."""
         if self.current_target:
             self.log_viewer.add_log(
                 "INFO", f"Extracting strings from {self.current_target}", "Tools"
@@ -2894,19 +2894,19 @@ if __name__ == "__main__":
             messagebox.showwarning("No Target", "Please select a file first")
 
     def open_plugin_manager(self):
-        """Open plugin manager"""
+        """Open plugin manager."""
         self.log_viewer.add_log("INFO", "Opening plugin manager", "Tools")
         # Implementation would open plugin manager dialog
         messagebox.showinfo("Plugin Manager", "Plugin manager feature not yet implemented")
 
     # View operations
     def toggle_panels(self):
-        """Toggle panel visibility"""
+        """Toggle panel visibility."""
         # Implementation would toggle panel visibility
         self.log_viewer.add_log("INFO", "Toggling panel visibility", "View")
 
     def reset_layout(self):
-        """Reset layout to default"""
+        """Reset layout to default."""
         self.log_viewer.add_log("INFO", "Resetting layout to default", "View")
         # Reset panel weights
         weights = [1, 2, 1]
@@ -2914,11 +2914,11 @@ if __name__ == "__main__":
             self.main_paned.sash_place(i, weight * 100)
 
     def show_preferences(self):
-        """Show preferences dialog"""
+        """Show preferences dialog."""
         self.show_preferences_dialog()
 
     def show_preferences_dialog(self):
-        """Show preferences configuration dialog"""
+        """Show preferences configuration dialog."""
         pref_window = tk.Toplevel(self.root)
         pref_window.title("Preferences")
         pref_window.geometry("500x400")
@@ -3012,7 +3012,7 @@ if __name__ == "__main__":
         )
 
     def show_file_properties(self, file_path: Path):
-        """Show file properties dialog"""
+        """Show file properties dialog."""
         prop_window = tk.Toplevel(self.root)
         prop_window.title(f"Properties - {file_path.name}")
         prop_window.geometry("400x300")
@@ -3045,12 +3045,12 @@ Type: {file_path.suffix.upper()[1:] if file_path.suffix else 'File'}
 
     # Help operations
     def show_documentation(self):
-        """Show documentation"""
+        """Show documentation."""
         # Open documentation in web browser
         webbrowser.open("https://github.com/intellicrack/docs")
 
     def show_shortcuts(self):
-        """Show keyboard shortcuts"""
+        """Show keyboard shortcuts."""
         shortcuts_text = """Keyboard Shortcuts:
 
 File Operations:
@@ -3073,7 +3073,7 @@ Ctrl+Tab        Switch between tabs
         messagebox.showinfo("Keyboard Shortcuts", shortcuts_text)
 
     def show_about(self):
-        """Show about dialog"""
+        """Show about dialog."""
         about_text = """Intellicrack UI Enhancement Module v2.0.0
 
 Advanced binary analysis and exploitation platform with
@@ -3093,7 +3093,7 @@ Licensed under GPL v3
         messagebox.showinfo("About Intellicrack", about_text)
 
     def run(self):
-        """Start the UI main loop"""
+        """Start the UI main loop."""
         try:
             self.log_viewer.add_log("INFO", "Starting Intellicrack UI Enhanced Interface", "Main")
             self.root.mainloop()
@@ -3106,7 +3106,7 @@ Licensed under GPL v3
 
 
 def main():
-    """Main entry point"""
+    """Main entry point."""
     app = UIEnhancementModule()
     app.run()
 

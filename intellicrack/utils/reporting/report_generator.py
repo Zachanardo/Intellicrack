@@ -341,7 +341,7 @@ def export_report(report_data: dict[str, Any], format: str = "pdf") -> str | Non
 
 
 def _generate_html_report(report_data: dict[str, Any]) -> str:
-    """Generate HTML report from report data"""
+    """Generate HTML report from report data."""
     html_parts = [
         "<html><head><title>Intellicrack Analysis Report</title>",
         "<style>body{font-family:Arial,sans-serif;margin:40px;}",
@@ -392,7 +392,7 @@ def _generate_html_report(report_data: dict[str, Any]) -> str:
 
 
 def _generate_text_report(report_data: dict[str, Any]) -> str:
-    """Generate plain text report from report data"""
+    """Generate plain text report from report data."""
     text_parts = [
         "=" * 60,
         f"  {report_data.get('title', 'INTELLICRACK ANALYSIS REPORT')}",

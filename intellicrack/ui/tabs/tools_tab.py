@@ -52,7 +52,7 @@ from .base_tab import BaseTab
 
 
 class ToolsTab(BaseTab):
-    """Tools tab consolidating tools, plugins, and network analysis"""
+    """Tools tab consolidating tools, plugins, and network analysis."""
 
     tool_executed = pyqtSignal(str, str)
     plugin_loaded = pyqtSignal(str, bool)
@@ -66,7 +66,7 @@ class ToolsTab(BaseTab):
         self.network_interfaces = []
 
     def setup_content(self):
-        """Setup the tools tab content"""
+        """Setup the tools tab content."""
         layout = QHBoxLayout(self)
 
         # Left panel - Tools and controls
@@ -86,7 +86,7 @@ class ToolsTab(BaseTab):
         self.is_loaded = True
 
     def create_tools_panel(self):
-        """Create the tools control panel"""
+        """Create the tools control panel."""
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -104,7 +104,7 @@ class ToolsTab(BaseTab):
         return panel
 
     def create_system_tools_tab(self):
-        """Create system tools tab"""
+        """Create system tools tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -183,7 +183,7 @@ class ToolsTab(BaseTab):
         return tab
 
     def create_analysis_tools_tab(self):
-        """Create analysis tools tab"""
+        """Create analysis tools tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -274,7 +274,7 @@ class ToolsTab(BaseTab):
         return tab
 
     def create_plugin_manager_tab(self):
-        """Create plugin manager tab"""
+        """Create plugin manager tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -338,7 +338,7 @@ class ToolsTab(BaseTab):
         return tab
 
     def create_network_tools_tab(self):
-        """Create network tools tab"""
+        """Create network tools tab."""
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
@@ -428,7 +428,7 @@ class ToolsTab(BaseTab):
         return tab
 
     def create_results_panel(self):
-        """Create the results panel"""
+        """Create the results panel."""
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -476,7 +476,7 @@ class ToolsTab(BaseTab):
         return panel
 
     def get_system_info(self):
-        """Get system information"""
+        """Get system information."""
         try:
             import platform
 
@@ -498,7 +498,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error getting system info: {e!s}")
 
     def list_processes(self):
-        """List running processes"""
+        """List running processes."""
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
@@ -526,7 +526,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error listing processes: {e!s}")
 
     def get_memory_info(self):
-        """Get memory information"""
+        """Get memory information."""
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
@@ -550,7 +550,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error getting memory info: {e!s}")
 
     def browse_file(self):
-        """Browse for file"""
+        """Browse for file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select File for Analysis",
@@ -563,7 +563,7 @@ class ToolsTab(BaseTab):
             self.log_message(f"File selected: {file_path}")
 
     def get_file_info(self):
-        """Get file information"""
+        """Get file information."""
         file_path = self.file_path_edit.text().strip()
         if not file_path or not os.path.exists(file_path):
             self.output_console.append("Error: Invalid file path")
@@ -592,7 +592,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error getting file info: {e!s}")
 
     def create_hex_dump(self):
-        """Create hex dump of file"""
+        """Create hex dump of file."""
         file_path = self.file_path_edit.text().strip()
         if not file_path or not os.path.exists(file_path):
             self.output_console.append("Error: Invalid file path")
@@ -617,7 +617,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error creating hex dump: {e!s}")
 
     def extract_strings(self):
-        """Extract strings from file"""
+        """Extract strings from file."""
         file_path = self.file_path_edit.text().strip()
         if not file_path or not os.path.exists(file_path):
             self.output_console.append("Error: Invalid file path")
@@ -662,7 +662,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error extracting strings: {e!s}")
 
     def query_registry(self):
-        """Query Windows registry"""
+        """Query Windows registry."""
         reg_key = self.reg_key_edit.text().strip()
         if not reg_key:
             self.output_console.append("Error: No registry key specified")
@@ -704,7 +704,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error querying registry: {e!s}")
 
     def browse_analysis_binary(self):
-        """Browse for binary to analyze"""
+        """Browse for binary to analyze."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Binary for Analysis",
@@ -717,7 +717,7 @@ class ToolsTab(BaseTab):
             self.log_message(f"Analysis binary selected: {file_path}")
 
     def disassemble_binary(self):
-        """Disassemble binary using external tools"""
+        """Disassemble binary using external tools."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
             self.output_console.append("Error: Invalid binary path")
@@ -754,7 +754,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error disassembling binary: {e!s}")
 
     def analyze_entropy(self):
-        """Analyze binary entropy"""
+        """Analyze binary entropy."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
             self.output_console.append("Error: Invalid binary path")
@@ -811,7 +811,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error analyzing entropy: {e!s}")
 
     def analyze_imports(self):
-        """Analyze binary imports"""
+        """Analyze binary imports."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
             self.output_console.append("Error: Invalid binary path")
@@ -847,7 +847,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error analyzing imports: {e!s}")
 
     def analyze_exports(self):
-        """Analyze binary exports"""
+        """Analyze binary exports."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
             self.output_console.append("Error: Invalid binary path")
@@ -891,7 +891,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error analyzing exports: {e!s}")
 
     def analyze_sections(self):
-        """Analyze binary sections"""
+        """Analyze binary sections."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
             self.output_console.append("Error: Invalid binary path")
@@ -929,7 +929,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error analyzing sections: {e!s}")
 
     def analyze_symbols(self):
-        """Analyze binary symbols"""
+        """Analyze binary symbols."""
         binary_path = self.analysis_binary_edit.text().strip()
         if not binary_path or not os.path.exists(binary_path):
             self.output_console.append("Error: Invalid binary path")
@@ -964,7 +964,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error analyzing symbols: {e!s}")
 
     def calculate_hash(self, algorithm):
-        """Calculate hash of input data"""
+        """Calculate hash of input data."""
         data = self.crypto_input.toPlainText().strip()
         if not data:
             self.output_console.append("Error: No input data provided")
@@ -991,7 +991,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error calculating hash: {e!s}")
 
     def base64_encode(self):
-        """Base64 encode input data"""
+        """Base64 encode input data."""
         data = self.crypto_input.toPlainText().strip()
         if not data:
             self.output_console.append("Error: No input data provided")
@@ -1010,7 +1010,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error encoding data: {e!s}")
 
     def base64_decode(self):
-        """Base64 decode input data"""
+        """Base64 decode input data."""
         data = self.crypto_input.toPlainText().strip()
         if not data:
             self.output_console.append("Error: No input data provided")
@@ -1029,7 +1029,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Error decoding data: {e!s}")
 
     def populate_plugin_list(self):
-        """Populate the plugin list"""
+        """Populate the plugin list."""
         self.plugin_list.clear()
 
         # Look for plugins in the plugins directory
@@ -1055,7 +1055,7 @@ class ToolsTab(BaseTab):
         self.log_message(f"Found {self.plugin_list.count()} plugins")
 
     def load_selected_plugin(self):
-        """Load the selected plugin"""
+        """Load the selected plugin."""
         current_item = self.plugin_list.currentItem()
         if not current_item:
             self.output_console.append("Error: No plugin selected")
@@ -1088,7 +1088,7 @@ class ToolsTab(BaseTab):
             self.plugin_loaded.emit(plugin_name, False)
 
     def unload_selected_plugin(self):
-        """Unload the selected plugin"""
+        """Unload the selected plugin."""
         current_item = self.plugin_list.currentItem()
         if not current_item:
             self.output_console.append("Error: No plugin selected")
@@ -1107,7 +1107,7 @@ class ToolsTab(BaseTab):
             self.output_console.append(f"Plugin '{plugin_name}' is not loaded")
 
     def reload_selected_plugin(self):
-        """Reload the selected plugin"""
+        """Reload the selected plugin."""
         current_item = self.plugin_list.currentItem()
         if not current_item:
             self.output_console.append("Error: No plugin selected")
@@ -1122,7 +1122,7 @@ class ToolsTab(BaseTab):
         self.log_message(f"Plugin '{plugin_name}' reloaded")
 
     def create_new_plugin(self):
-        """Create a new plugin"""
+        """Create a new plugin."""
         plugin_name, ok = QInputDialog.getText(self, "Create Plugin", "Plugin Name:")
 
         if ok and plugin_name:
@@ -1185,7 +1185,7 @@ def get_plugin():
                 self.output_console.append(f"Error creating plugin: {e!s}")
 
     def edit_selected_plugin(self):
-        """Edit the selected plugin"""
+        """Edit the selected plugin."""
         current_item = self.plugin_list.currentItem()
         if not current_item:
             self.output_console.append("Error: No plugin selected")
@@ -1217,7 +1217,7 @@ def get_plugin():
             self.output_console.append(f"Plugin file not found: {plugin_file}")
 
     def populate_network_interfaces(self):
-        """Populate network interfaces"""
+        """Populate network interfaces."""
         self.interface_combo.clear()
 
         try:
@@ -1233,7 +1233,7 @@ def get_plugin():
             self.output_console.append(f"Error getting network interfaces: {e!s}")
 
     def start_packet_capture(self):
-        """Start packet capture"""
+        """Start packet capture."""
         interface = self.interface_combo.currentText()
         filter_text = self.capture_filter_edit.text().strip()
 
@@ -1268,12 +1268,12 @@ def get_plugin():
             self.output_console.append(f"Error starting packet capture: {e!s}")
 
     def stop_packet_capture(self):
-        """Stop packet capture"""
+        """Stop packet capture."""
         self.output_console.append("Packet capture stopped")
         self.log_message("Packet capture stopped")
 
     def save_packet_capture(self):
-        """Save packet capture"""
+        """Save packet capture."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Packet Capture",
@@ -1286,7 +1286,7 @@ def get_plugin():
             self.log_message(f"Packet capture saved to: {file_path}")
 
     def ping_scan(self):
-        """Perform ping scan"""
+        """Perform ping scan."""
         target = self.scan_target_edit.text().strip()
         if not target:
             self.output_console.append("Error: No target specified")
@@ -1307,7 +1307,7 @@ def get_plugin():
             self.output_console.append(f"Error performing ping scan: {e!s}")
 
     def port_scan(self):
-        """Perform port scan"""
+        """Perform port scan."""
         target = self.scan_target_edit.text().strip()
         if not target:
             self.output_console.append("Error: No target specified")
@@ -1331,7 +1331,7 @@ def get_plugin():
             self.output_console.append(f"Error performing port scan: {e!s}")
 
     def service_scan(self):
-        """Perform service scan"""
+        """Perform service scan."""
         target = self.scan_target_edit.text().strip()
         if not target:
             self.output_console.append("Error: No target specified")
@@ -1355,7 +1355,7 @@ def get_plugin():
             self.output_console.append(f"Error performing service scan: {e!s}")
 
     def log_message(self, message, level="info"):
-        """Log message to console or status"""
+        """Log message to console or status."""
         if hasattr(self.shared_context, "log_message"):
             self.shared_context.log_message(message, level)
         else:

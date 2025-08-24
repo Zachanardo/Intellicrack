@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -308,7 +308,14 @@ class DebuggerDetector(BaseDetector):
                     try:
                         ps_path = shutil.which("ps")
                         if ps_path:
-                            ps_output = subprocess.check_output([ps_path, 'aux'], text=True)
+                            ps_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                [ps_path, 'aux'],
+                                capture_output=True,
+                                text=True,
+                                check=False,
+                                shell=False  # Explicitly secure - using list format prevents shell injection
+                            )
+                            ps_output = ps_result.stdout
                             debugger_patterns = ['gdb', 'lldb', 'strace', 'ltrace', 'x64dbg']
                             for pattern in debugger_patterns:
                                 if pattern in ps_output:

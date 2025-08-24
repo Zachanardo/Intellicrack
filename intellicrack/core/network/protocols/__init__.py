@@ -41,6 +41,7 @@ def get_parser(parser_name):
 
     Returns:
         module: The parser module, or None if not available
+
     """
     return _parsers.get(parser_name)
 
@@ -52,6 +53,7 @@ def is_parser_available(parser_name):
 
     Returns:
         bool: True if parser is available, False otherwise
+
     """
     return parser_name in _parsers
 

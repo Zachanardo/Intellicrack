@@ -1,4 +1,4 @@
-"""Checksum/Hash Calculation Dialog for Hex Viewer
+"""Checksum/Hash Calculation Dialog for Hex Viewer.
 
 This dialog provides an interface for calculating various checksums and hashes
 for the current file or selected data.
@@ -40,6 +40,7 @@ class ChecksumWorker(QThread):
         Args:
             data: Binary data to process
             file_path: Path to file (if processing file instead of data)
+
         """
         super().__init__()
         self.data = data
@@ -53,6 +54,7 @@ class ChecksumWorker(QThread):
 
         Args:
             algorithms: List of algorithm names
+
         """
         self.algorithms = algorithms
 
@@ -62,6 +64,7 @@ class ChecksumWorker(QThread):
         Args:
             current: Current progress
             total: Total items
+
         """
         self.progress.emit(current, total)
 
@@ -101,6 +104,7 @@ class ChecksumDialog(QDialog):
         Args:
             parent: Parent widget
             hex_viewer: Reference to hex viewer widget
+
         """
         super().__init__(parent)
         self.hex_viewer = hex_viewer
@@ -233,6 +237,7 @@ class ChecksumDialog(QDialog):
 
         Returns:
             List of algorithm names
+
         """
         selected = []
         for algo, checkbox in self.algorithm_checkboxes.items():
@@ -307,6 +312,7 @@ class ChecksumDialog(QDialog):
         Args:
             current: Current progress
             total: Total items
+
         """
         self.progress_bar.setValue(current)
 
@@ -315,6 +321,7 @@ class ChecksumDialog(QDialog):
 
         Args:
             results: Dictionary of algorithm names and results
+
         """
         # Format results
         text = "Checksum/Hash Results\n"
@@ -350,6 +357,7 @@ class ChecksumDialog(QDialog):
 
         Args:
             error: Error message
+
         """
         self.results_text.setPlainText(f"Error: {error}")
         self.progress_bar.setVisible(False)

@@ -1,4 +1,4 @@
-"""Model Cache Manager for Intellicrack
+"""Model Cache Manager for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

@@ -38,6 +38,7 @@ class EnvFileManager:
 
         Args:
             env_file_path: Path to the .env file. If None, uses default location from central config.
+
         """
         # Get central configuration
         self.central_config = get_config()
@@ -72,6 +73,7 @@ class EnvFileManager:
 
         Returns:
             Dictionary of environment variables
+
         """
         env_vars = {}
 
@@ -112,6 +114,7 @@ class EnvFileManager:
         Args:
             env_vars: Dictionary of environment variables to write
             preserve_comments: Whether to preserve existing comments
+
         """
         # Create backup
         backup_path = self._create_backup()
@@ -191,6 +194,7 @@ class EnvFileManager:
 
         Returns:
             The value or None if not found
+
         """
         env_vars = self.read_env()
         return env_vars.get(key)
@@ -201,6 +205,7 @@ class EnvFileManager:
         Args:
             key: The environment variable key
             value: The value to set
+
         """
         env_vars = self.read_env()
         env_vars[key] = value
@@ -213,6 +218,7 @@ class EnvFileManager:
 
         Args:
             updates: Dictionary of key-value pairs to update
+
         """
         env_vars = self.read_env()
         env_vars.update(updates)
@@ -228,6 +234,7 @@ class EnvFileManager:
 
         Returns:
             True if key was deleted, False if it didn't exist
+
         """
         env_vars = self.read_env()
         if key in env_vars:
@@ -246,6 +253,7 @@ class EnvFileManager:
 
         Returns:
             True if valid, False otherwise
+
         """
         # Environment variable names must start with letter or underscore
         # and contain only letters, numbers, and underscores
@@ -256,6 +264,7 @@ class EnvFileManager:
 
         Returns:
             Path to the backup file or None if no file to backup
+
         """
         if not self.env_path.exists():
             return None
@@ -277,6 +286,7 @@ class EnvFileManager:
 
         Returns:
             Tuple of (success, message)
+
         """
         if not api_key:
             return False, "API key is empty"
@@ -308,6 +318,7 @@ class EnvFileManager:
 
         Returns:
             Dictionary of API keys (only keys ending with _API_KEY or _API_TOKEN)
+
         """
         env_vars = self.read_env()
         api_keys = {}
@@ -324,6 +335,7 @@ class EnvFileManager:
         Args:
             service: Service name (openai, anthropic, etc.)
             api_key: The API key to set
+
         """
         # Normalize service name to uppercase with _API_KEY suffix
         key_mapping = {
@@ -373,6 +385,7 @@ class EnvFileManager:
 
         Args:
             override: Whether to override existing environment variables
+
         """
         env_vars = self.read_env()
         for key, value in env_vars.items():

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ License: GPL v3
 
 
 class LicenseType(Enum):
-    """License types supported"""
+    """License types supported."""
 
     FLEXLM = "flexlm"
     HASP = "hasp"
@@ -71,7 +71,7 @@ class LicenseType(Enum):
 
 
 class LicenseStatus(Enum):
-    """License status values"""
+    """License status values."""
 
     VALID = "valid"
     EXPIRED = "expired"
@@ -82,7 +82,7 @@ class LicenseStatus(Enum):
 
 
 class ProtocolType(Enum):
-    """Communication protocols supported"""
+    """Communication protocols supported."""
 
     HTTP_REST = "http_rest"
     HTTPS_REST = "https_rest"
@@ -94,7 +94,7 @@ class ProtocolType(Enum):
 
 @dataclass
 class HardwareFingerprint:
-    """Hardware fingerprint for license binding"""
+    """Hardware fingerprint for license binding."""
 
     cpu_id: str = ""
     motherboard_id: str = ""
@@ -106,7 +106,7 @@ class HardwareFingerprint:
     hostname: str = ""
 
     def generate_hash(self) -> str:
-        """Generate unique hash from hardware components"""
+        """Generate unique hash from hardware components."""
         data = f"{self.cpu_id}{self.motherboard_id}{self.disk_serial}{self.mac_address}"
         return hashlib.sha256(data.encode()).hexdigest()[:16]
 
@@ -116,7 +116,7 @@ Base = declarative_base()
 
 
 class LicenseEntry(Base):
-    """License database entry"""
+    """License database entry."""
 
     __tablename__ = "licenses"
 
@@ -138,7 +138,7 @@ class LicenseEntry(Base):
 
 
 class LicenseActivation(Base):
-    """License activation tracking"""
+    """License activation tracking."""
 
     __tablename__ = "activations"
 
@@ -156,7 +156,7 @@ class LicenseActivation(Base):
 
 
 class LicenseLog(Base):
-    """License operation logging"""
+    """License operation logging."""
 
     __tablename__ = "license_logs"
 
@@ -171,7 +171,7 @@ class LicenseLog(Base):
 
 # Pydantic Models for API
 class LicenseRequest(BaseModel):
-    """License validation request"""
+    """License validation request."""
 
     license_key: str = Field(..., description="License key to validate")
     product_name: str = Field(..., description="Product name")
@@ -181,7 +181,7 @@ class LicenseRequest(BaseModel):
 
 
 class LicenseResponse(BaseModel):
-    """License validation response"""
+    """License validation response."""
 
     valid: bool = Field(..., description="License validity")
     status: str = Field(..., description="License status")
@@ -194,7 +194,7 @@ class LicenseResponse(BaseModel):
 
 
 class ActivationRequest(BaseModel):
-    """License activation request"""
+    """License activation request."""
 
     license_key: str = Field(..., description="License key")
     product_name: str = Field(..., description="Product name")
@@ -203,7 +203,7 @@ class ActivationRequest(BaseModel):
 
 
 class ActivationResponse(BaseModel):
-    """License activation response"""
+    """License activation response."""
 
     success: bool = Field(..., description="Activation success")
     activation_id: str | None = Field(None, description="Activation ID")
@@ -212,7 +212,7 @@ class ActivationResponse(BaseModel):
 
 
 class CryptoManager:
-    """Cryptographic operations for license generation and validation"""
+    """Cryptographic operations for license generation and validation."""
 
     def __init__(self):
         """Initialize crypto manager with RSA key pair and AES encryption key."""
@@ -229,7 +229,7 @@ class CryptoManager:
         self.aes_key = hashlib.sha256(b"intellicrack_license_key_2024").digest()
 
     def generate_license_key(self, product: str, license_type: str) -> str:
-        """Generate cryptographically secure license key"""
+        """Generate cryptographically secure license key."""
         # Create base data
         timestamp = int(time.time())
         random_data = uuid.uuid4().hex
@@ -244,7 +244,7 @@ class CryptoManager:
         return formatted_key
 
     def sign_license_data(self, data: dict[str, Any]) -> str:
-        """Sign license data with RSA private key"""
+        """Sign license data with RSA private key."""
         try:
             json_data = json.dumps(data, sort_keys=True).encode()
 
@@ -263,7 +263,7 @@ class CryptoManager:
             return ""
 
     def verify_license_signature(self, data: dict[str, Any], signature: str) -> bool:
-        """Verify license signature with RSA public key"""
+        """Verify license signature with RSA public key."""
         try:
             json_data = json.dumps(data, sort_keys=True).encode()
             signature_bytes = bytes.fromhex(signature)
@@ -283,7 +283,7 @@ class CryptoManager:
             return False
 
     def encrypt_license_data(self, data: str) -> str:
-        """Encrypt license data with AES"""
+        """Encrypt license data with AES."""
         try:
             iv = os.urandom(16)
             cipher = Cipher(algorithms.AES(self.aes_key), modes.CBC(iv))
@@ -302,7 +302,7 @@ class CryptoManager:
             return ""
 
     def decrypt_license_data(self, encrypted_data: str) -> str:
-        """Decrypt license data with AES"""
+        """Decrypt license data with AES."""
         try:
             data_bytes = bytes.fromhex(encrypted_data)
             iv = data_bytes[:16]
@@ -322,7 +322,7 @@ class CryptoManager:
 
 
 class FlexLMEmulator:
-    """FlexLM license server emulation"""
+    """FlexLM license server emulation."""
 
     def __init__(self, crypto_manager: CryptoManager):
         """Initialize FlexLM license server emulator with crypto manager."""
@@ -338,7 +338,7 @@ class FlexLMEmulator:
         self.TOO_MANY_USERS = 3
 
     def start_server(self, port: int = 27000):
-        """Start FlexLM TCP server"""
+        """Start FlexLM TCP server."""
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -355,7 +355,7 @@ class FlexLMEmulator:
             self.logger.error(f"FlexLM server start failed: {e}")
 
     def _accept_connections(self):
-        """Accept FlexLM client connections"""
+        """Accept FlexLM client connections."""
         while self.running:
             try:
                 client_socket, address = self.server_socket.accept()
@@ -373,7 +373,7 @@ class FlexLMEmulator:
                     self.logger.error(f"FlexLM connection error: {e}")
 
     def _handle_client(self, client_socket: socket.socket, address: tuple):
-        """Handle FlexLM client requests"""
+        """Handle FlexLM client requests."""
         try:
             while True:
                 data = client_socket.recv(1024)
@@ -392,7 +392,7 @@ class FlexLMEmulator:
             client_socket.close()
 
     def _parse_flexlm_request(self, data: bytes) -> dict[str, Any]:
-        """Parse FlexLM protocol request"""
+        """Parse FlexLM protocol request."""
         try:
             # Simplified FlexLM parsing
             text = data.decode("ascii", errors="ignore")
@@ -419,7 +419,7 @@ class FlexLMEmulator:
             return {"type": "unknown"}
 
     def _process_flexlm_request(self, request: dict[str, Any], client_ip: str) -> bytes:
-        """Process FlexLM request and generate response"""
+        """Process FlexLM request and generate response."""
         try:
             if request["type"] == "checkout":
                 # Always grant license (bypass)
@@ -447,7 +447,7 @@ class FlexLMEmulator:
 
 
 class HASPEmulator:
-    """HASP dongle emulation with real cryptographic operations"""
+    """HASP dongle emulation with real cryptographic operations."""
 
     def __init__(self, crypto_manager: CryptoManager):
         """Initialize HASP dongle emulator with real crypto and secure memory."""
@@ -484,7 +484,7 @@ class HASPEmulator:
         self.master_key = self._derive_master_key()
 
     def _derive_master_key(self) -> bytes:
-        """Derive master encryption key from device ID"""
+        """Derive master encryption key from device ID."""
         from intellicrack.handlers.cryptography_handler import PBKDF2HMAC, hashes
 
         kdf = PBKDF2HMAC(
@@ -496,7 +496,7 @@ class HASPEmulator:
         return kdf.derive(self.device_id)
 
     def _initialize_real_hasp_memory(self):
-        """Initialize dongle memory with real HASP data structure"""
+        """Initialize dongle memory with real HASP data structure."""
         import struct
         import time
 
@@ -585,7 +585,7 @@ class HASPEmulator:
         self.dongle_memory[end_marker_offset : end_marker_offset + 4] = b"\xff\xff\xff\xff"
 
     def hasp_login(self, feature_id: int, vendor_code: bytes = None) -> int:
-        """HASP login operation with real authentication"""
+        """HASP login operation with real authentication."""
         try:
             self.logger.info(f"HASP login: feature {feature_id}")
 
@@ -654,7 +654,7 @@ class HASPEmulator:
             return self.HASP_DEVICE_ERROR
 
     def _calculate_vendor_checksum(self, vendor_code: bytes) -> int:
-        """Calculate vendor code checksum"""
+        """Calculate vendor code checksum."""
         checksum = 0x12345678
         for i in range(0, 16, 4):
             value = struct.unpack("<I", vendor_code[i : i + 4])[0]
@@ -662,7 +662,7 @@ class HASPEmulator:
         return checksum & 0xFFFFFFFF
 
     def hasp_logout(self, handle: int) -> int:
-        """HASP logout operation"""
+        """HASP logout operation."""
         self.logger.info(f"HASP logout: handle {handle}")
 
         if handle not in self.active_sessions:
@@ -676,7 +676,7 @@ class HASPEmulator:
         return self.HASP_STATUS_OK
 
     def hasp_encrypt(self, handle: int, data: bytes) -> tuple[int, bytes]:
-        """HASP encrypt operation with real AES encryption"""
+        """HASP encrypt operation with real AES encryption."""
         try:
             if handle not in self.active_sessions:
                 return self.HASP_INVALID_HANDLE, b""
@@ -707,7 +707,7 @@ class HASPEmulator:
             return self.HASP_DEVICE_ERROR, b""
 
     def hasp_decrypt(self, handle: int, data: bytes) -> tuple[int, bytes]:
-        """HASP decrypt operation with real AES decryption"""
+        """HASP decrypt operation with real AES decryption."""
         try:
             if handle not in self.active_sessions:
                 return self.HASP_INVALID_HANDLE, b""
@@ -743,7 +743,7 @@ class HASPEmulator:
             return self.HASP_DEVICE_ERROR, b""
 
     def hasp_read(self, handle: int, offset: int, length: int) -> tuple[int, bytes]:
-        """HASP memory read operation with access control"""
+        """HASP memory read operation with access control."""
         try:
             if handle not in self.active_sessions:
                 return self.HASP_INVALID_HANDLE, b""
@@ -791,7 +791,7 @@ class HASPEmulator:
             return self.HASP_DEVICE_ERROR, b""
 
     def hasp_write(self, handle: int, offset: int, data: bytes) -> int:
-        """HASP memory write operation with access control"""
+        """HASP memory write operation with access control."""
         try:
             if handle not in self.active_sessions:
                 return self.HASP_INVALID_HANDLE
@@ -851,7 +851,7 @@ class HASPEmulator:
             return self.HASP_DEVICE_ERROR
 
     def hasp_get_info(self, handle: int, query_type: int) -> tuple[int, bytes]:
-        """Get HASP information"""
+        """Get HASP information."""
         try:
             if (
                 handle not in self.active_sessions and handle != 0
@@ -879,7 +879,7 @@ class HASPEmulator:
 
 
 class MicrosoftKMSEmulator:
-    """Microsoft KMS server emulation"""
+    """Microsoft KMS server emulation."""
 
     def __init__(self, crypto_manager: CryptoManager):
         """Initialize Microsoft KMS activation server emulator."""
@@ -897,7 +897,7 @@ class MicrosoftKMSEmulator:
     def activate_product(
         self, product_key: str, product_name: str, client_info: dict[str, Any]
     ) -> dict[str, Any]:
-        """Activate Microsoft product"""
+        """Activate Microsoft product."""
         try:
             self.logger.info(f"KMS activation: {product_name}")
 
@@ -923,7 +923,7 @@ class MicrosoftKMSEmulator:
 
 
 class AdobeEmulator:
-    """Adobe license server emulation"""
+    """Adobe license server emulation."""
 
     def __init__(self, crypto_manager: CryptoManager):
         """Initialize Adobe Creative Cloud license emulator."""
@@ -943,7 +943,7 @@ class AdobeEmulator:
     def validate_adobe_license(
         self, product_id: str, user_id: str, machine_id: str
     ) -> dict[str, Any]:
-        """Validate Adobe Creative Cloud license"""
+        """Validate Adobe Creative Cloud license."""
         try:
             self.logger.info(f"Adobe validation: {product_id} for user {user_id}")
 
@@ -973,7 +973,7 @@ class AdobeEmulator:
             return {"status": "error", "message": str(e)}
 
     def _generate_ngl_token(self, product_id: str, user_id: str) -> str:
-        """Generate Adobe NGL (licensing) token"""
+        """Generate Adobe NGL (licensing) token."""
         token_data = {
             "pid": product_id,
             "uid": user_id,
@@ -990,7 +990,7 @@ class AdobeEmulator:
 
 
 class DatabaseManager:
-    """Database operations for license management"""
+    """Database operations for license management."""
 
     def __init__(self, db_path: str = "license_server.db"):
         """Initialize database manager with SQLite engine and session factory."""
@@ -1012,7 +1012,7 @@ class DatabaseManager:
         self._seed_default_licenses()
 
     def _create_tables(self):
-        """Create database tables"""
+        """Create database tables."""
         try:
             Base.metadata.create_all(bind=self.engine)
             self.logger.info("Database tables created successfully")
@@ -1020,7 +1020,7 @@ class DatabaseManager:
             self.logger.error(f"Database table creation failed: {e}")
 
     def _seed_default_licenses(self):
-        """Seed database with default licenses"""
+        """Seed database with default licenses."""
         try:
             db = self.SessionLocal()
 
@@ -1078,7 +1078,7 @@ class DatabaseManager:
             self.logger.error(f"License seeding failed: {e}")
 
     def get_db(self) -> Session:
-        """Get database session"""
+        """Get database session."""
         db = self.SessionLocal()
         try:
             return db
@@ -1086,7 +1086,7 @@ class DatabaseManager:
             pass  # Session will be closed by caller
 
     def validate_license(self, license_key: str, product_name: str) -> LicenseEntry | None:
-        """Validate license in database"""
+        """Validate license in database."""
         try:
             db = self.SessionLocal()
 
@@ -1109,7 +1109,7 @@ class DatabaseManager:
     def log_operation(
         self, license_key: str, operation: str, client_ip: str, success: bool, details: str = ""
     ):
-        """Log license operation"""
+        """Log license operation."""
         try:
             db = self.SessionLocal()
 
@@ -1130,17 +1130,18 @@ class DatabaseManager:
 
 
 class HardwareFingerprintGenerator:
-    """Generate hardware fingerprints for license binding"""
+    """Generate hardware fingerprints for license binding."""
 
     def __init__(self):
         """Initialize hardware fingerprint generator for license binding."""
         self.logger = logging.getLogger(f"{__name__}.Fingerprint")
 
     def generate_fingerprint(self) -> HardwareFingerprint:
-        """Generate hardware fingerprint from system"""
+        """Generate hardware fingerprint from system."""
         try:
             import hashlib
             import platform
+            import shutil
             import socket
             import subprocess
             import uuid
@@ -1323,12 +1324,17 @@ class HardwareFingerprintGenerator:
                                 break
                 elif platform.system() == "Darwin":
                     # macOS - use diskutil
-                    result = subprocess.run(
-                        ["diskutil", "info", "disk0"],
-                        check=False,
-                        capture_output=True,
-                        text=True,  # noqa: S607
-                    )
+                    diskutil_path = shutil.which("diskutil")
+                    if diskutil_path:
+                        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                            [diskutil_path, "info", "disk0"],
+                            check=False,
+                            capture_output=True,
+                            text=True,
+                            shell=False
+                        )
+                    else:
+                        result = type('obj', (object,), {'stdout': '', 'returncode': 1})()
                     lines = result.stdout.split("\n")
                     for line in lines:
                         if "Volume UUID" in line or "Disk / Partition UUID" in line:
@@ -1378,7 +1384,7 @@ class HardwareFingerprintGenerator:
                     import random
 
                     random.seed(platform.node() + platform.processor())
-                    mac_bytes = [random.randint(0, 255) for _ in range(6)]
+                    mac_bytes = [random.randint(0, 255) for _ in range(6)]  # noqa: S311 - License emulation MAC address generation (seeded)
                     mac_bytes[0] = (mac_bytes[0] & 0xFC) | 0x02  # Set locally administered bit
                     fingerprint.mac_address = ":".join(f"{b:02X}" for b in mac_bytes)
             except Exception:
@@ -1386,7 +1392,7 @@ class HardwareFingerprintGenerator:
                 import random
 
                 random.seed(platform.node() + platform.machine())
-                mac_bytes = [random.randint(0, 255) for _ in range(6)]
+                mac_bytes = [random.randint(0, 255) for _ in range(6)]  # noqa: S311 - License emulation MAC address generation (seeded)
                 mac_bytes[0] = (mac_bytes[0] & 0xFC) | 0x02  # Set locally administered bit
                 fingerprint.mac_address = ":".join(f"{b:02X}" for b in mac_bytes)
 
@@ -1459,12 +1465,12 @@ class HardwareFingerprintGenerator:
             random.seed(seed)
 
             # Generate realistic hardware IDs
-            cpu_id = "".join(random.choice("0123456789ABCDEF") for _ in range(16))
-            board_id = "".join(random.choice("0123456789ABCDEF") for _ in range(12))
-            disk_serial = "".join(random.choice("0123456789ABCDEF") for _ in range(8))
+            cpu_id = "".join(random.choice("0123456789ABCDEF") for _ in range(16))  # noqa: S311 - License emulation hardware ID generation (seeded)
+            board_id = "".join(random.choice("0123456789ABCDEF") for _ in range(12))  # noqa: S311 - License emulation hardware ID generation (seeded)
+            disk_serial = "".join(random.choice("0123456789ABCDEF") for _ in range(8))  # noqa: S311 - License emulation hardware ID generation (seeded)
 
             # Generate valid MAC address
-            mac_bytes = [random.randint(0, 255) for _ in range(6)]
+            mac_bytes = [random.randint(0, 255) for _ in range(6)]  # noqa: S311 - License emulation MAC address generation (seeded)
             mac_bytes[0] = (mac_bytes[0] & 0xFC) | 0x02  # Set locally administered bit
             mac_address = ":".join(f"{b:02X}" for b in mac_bytes)
 
@@ -1473,14 +1479,14 @@ class HardwareFingerprintGenerator:
                 motherboard_id=f"MB{board_id}",
                 disk_serial=f"DSK{disk_serial}",
                 mac_address=mac_address,
-                ram_size=random.choice([4, 8, 16, 32, 64]),
+                ram_size=random.choice([4, 8, 16, 32, 64]),  # noqa: S311 - License emulation hardware spec selection (seeded)
                 os_version=platform.platform() if platform.platform() else "Windows 10 Pro",
-                hostname=platform.node() if platform.node() else f"PC-{random.randint(1000, 9999)}",
+                hostname=platform.node() if platform.node() else f"PC-{random.randint(1000, 9999)}",  # noqa: S311 - License emulation hostname generation (seeded)
             )
 
 
 class LicenseServerEmulator:
-    """Main license server emulator class"""
+    """Main license server emulator class."""
 
     def __init__(self, config: dict[str, Any] = None):
         """Initialize comprehensive license server emulator with all protection systems."""
@@ -1530,7 +1536,7 @@ class LicenseServerEmulator:
         self.logger.info("License server emulator initialized")
 
     def _setup_middleware(self):
-        """Setup FastAPI middleware"""
+        """Setup FastAPI middleware."""
         if self.config["enable_cors"]:
             self.app.add_middleware(
                 CORSMiddleware,
@@ -1541,7 +1547,7 @@ class LicenseServerEmulator:
             )
 
     def _setup_routes(self):
-        """Setup FastAPI routes"""
+        """Setup FastAPI routes."""
 
         @self.app.get("/")
         async def root():
@@ -1595,7 +1601,7 @@ class LicenseServerEmulator:
     async def _handle_license_validation(
         self, request: LicenseRequest, client_request: Request
     ) -> LicenseResponse:
-        """Handle license validation request"""
+        """Handle license validation request."""
         try:
             client_ip = client_request.client.host
 
@@ -1653,7 +1659,7 @@ class LicenseServerEmulator:
     async def _handle_license_activation(
         self, request: ActivationRequest, client_request: Request
     ) -> ActivationResponse:
-        """Handle license activation request"""
+        """Handle license activation request."""
         try:
             client_ip = client_request.client.host
 
@@ -1696,7 +1702,7 @@ class LicenseServerEmulator:
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_license_status(self, license_key: str) -> dict[str, Any]:
-        """Handle license status request"""
+        """Handle license status request."""
         try:
             license_entry = self.db_manager.validate_license(license_key, "")
 
@@ -1730,7 +1736,7 @@ class LicenseServerEmulator:
     async def _handle_flexlm_request(
         self, request: dict[str, Any], client_request: Request
     ) -> dict[str, Any]:
-        """Handle FlexLM license request"""
+        """Handle FlexLM license request."""
         try:
             feature = request.get("feature", "unknown")
             version = request.get("version", "1.0")
@@ -1754,7 +1760,7 @@ class LicenseServerEmulator:
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_hasp_request(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle HASP dongle request"""
+        """Handle HASP dongle request."""
         try:
             operation = request.get("operation", "login")
             feature_id = request.get("feature_id", 1)
@@ -1779,7 +1785,7 @@ class LicenseServerEmulator:
     async def _handle_kms_request(
         self, request: dict[str, Any], client_request: Request
     ) -> dict[str, Any]:
-        """Handle Microsoft KMS activation request"""
+        """Handle Microsoft KMS activation request."""
         try:
             product_key = request.get("product_key", "")
             product_name = request.get("product_name", "Windows")
@@ -1798,7 +1804,7 @@ class LicenseServerEmulator:
     async def _handle_adobe_request(
         self, request: dict[str, Any], client_request: Request
     ) -> dict[str, Any]:
-        """Handle Adobe license validation request"""
+        """Handle Adobe license validation request."""
         try:
             product_id = request.get("product_id", "PHSP")
             user_id = request.get(
@@ -1817,7 +1823,7 @@ class LicenseServerEmulator:
             raise HTTPException(status_code=500, detail="Internal server error") from None
 
     def start_servers(self):
-        """Start all license servers"""
+        """Start all license servers."""
         try:
             # Start FlexLM server
             self.flexlm.start_server(self.config["flexlm_port"])
@@ -1846,7 +1852,7 @@ class LicenseServerEmulator:
 
 
 def main():
-    """Main entry point"""
+    """Main entry point."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Intellicrack License Server Emulator")

@@ -1,4 +1,4 @@
-"""Ghidra Script Selector Dialog
+"""Ghidra Script Selector Dialog.
 
 Provides a user-friendly interface for selecting and managing Ghidra scripts.
 

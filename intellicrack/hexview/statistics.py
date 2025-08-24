@@ -1,4 +1,4 @@
-"""Statistical Analysis Module for Hex Viewer
+"""Statistical Analysis Module for Hex Viewer.
 
 This module provides statistical analysis functions for binary data including
 character distribution, entropy calculation, and pattern detection.
@@ -24,6 +24,7 @@ def calculate_byte_distribution(data: bytes) -> Dict[int, int]:
 
     Returns:
         Dictionary mapping byte values (0-255) to their occurrence counts
+
     """
     distribution = Counter(data)
     # Ensure all byte values are represented
@@ -43,6 +44,7 @@ def calculate_entropy(data: bytes) -> float:
 
     Returns:
         Entropy value (0-8 bits)
+
     """
     if not data:
         return 0.0
@@ -69,6 +71,7 @@ def calculate_statistics(data: bytes) -> Dict[str, Any]:
 
     Returns:
         Dictionary containing various statistics
+
     """
     if not data:
         return {
@@ -130,6 +133,7 @@ def detect_file_type_hints(data: bytes, distribution: Dict[int, int]) -> List[st
 
     Returns:
         List of file type hints
+
     """
     hints = []
     size = len(data)
@@ -207,6 +211,7 @@ def calculate_histogram(data: bytes, bins: int = 16) -> List[Tuple[str, int]]:
 
     Returns:
         List of (range_label, count) tuples
+
     """
     if not data or bins <= 0:
         return []
@@ -244,6 +249,7 @@ def find_patterns(data: bytes, min_length: int = 4, max_patterns: int = 10) -> L
 
     Returns:
         List of (pattern, count) tuples sorted by frequency
+
     """
     if not data or len(data) < min_length:
         return []
@@ -273,6 +279,7 @@ def calculate_chi_square(data: bytes) -> float:
 
     Returns:
         Chi-square test statistic
+
     """
     if not data:
         return 0.0
@@ -302,6 +309,7 @@ def analyze_compression_ratio(data: bytes) -> float:
 
     Returns:
         Estimated compression ratio (0-1, lower is more compressible)
+
     """
     if not data:
         return 0.0
@@ -323,6 +331,7 @@ class StatisticsCalculator:
 
         Args:
             callback: Function that takes (current, total) parameters
+
         """
         self.progress_callback = callback
 
@@ -334,6 +343,7 @@ class StatisticsCalculator:
 
         Returns:
             Dictionary containing all statistics
+
         """
         total_steps = 7
         current_step = 0

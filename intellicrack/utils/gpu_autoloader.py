@@ -1,4 +1,4 @@
-"""GPU Auto-configuration System for Intellicrack
+"""GPU Auto-configuration System for Intellicrack.
 
 Automatically detects and configures GPU acceleration for Intel Arc, NVIDIA, AMD, and DirectML.
 Provides a unified interface for all GPU operations.
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class GPUAutoLoader:
-    """Automatic GPU detection and configuration system"""
+    """Automatic GPU detection and configuration system."""
 
     def __init__(self):
         """Initialize the GPU autoloader with default values."""
@@ -30,7 +30,7 @@ class GPUAutoLoader:
         self._device_string = None
 
     def setup(self) -> bool:
-        """Main setup function that tries different GPU configurations"""
+        """Main setup function that tries different GPU configurations."""
         # Check if GPU is disabled via environment variable
         if os.environ.get("INTELLICRACK_NO_GPU", "").lower() in ("1", "true", "yes"):
             logger.info("GPU disabled via environment variable")
@@ -77,7 +77,7 @@ class GPUAutoLoader:
         return False
 
     def _try_intel_xpu(self) -> bool:
-        """Try to use Intel Arc/XPU through Intel Extension for PyTorch"""
+        """Try to use Intel Arc/XPU through Intel Extension for PyTorch."""
         try:
             # First check if we have a conda environment with Intel Extension
             conda_envs = self._find_conda_envs_with_ipex()
@@ -178,7 +178,7 @@ class GPUAutoLoader:
             return False
 
     def _try_nvidia_cuda(self) -> bool:
-        """Try to use NVIDIA CUDA"""
+        """Try to use NVIDIA CUDA."""
         try:
             # Use thread-safe PyTorch import
             from ..utils.torch_gil_safety import safe_torch_import
@@ -218,7 +218,7 @@ class GPUAutoLoader:
             return False
 
     def _try_amd_rocm(self) -> bool:
-        """Try to use AMD ROCm"""
+        """Try to use AMD ROCm."""
         try:
             # Use thread-safe PyTorch import
             from ..utils.torch_gil_safety import safe_torch_import
@@ -264,7 +264,7 @@ class GPUAutoLoader:
             return False
 
     def _try_directml(self) -> bool:
-        """Try to use DirectML (works with Intel Arc on Windows)"""
+        """Try to use DirectML (works with Intel Arc on Windows)."""
         try:
             # Use thread-safe PyTorch import
             from ..utils.torch_gil_safety import safe_torch_import
@@ -291,7 +291,7 @@ class GPUAutoLoader:
             return False
 
     def _try_cpu_fallback(self) -> bool:
-        """Fallback to CPU"""
+        """Fallback to CPU."""
         try:
             # Use thread-safe PyTorch import
             from ..utils.torch_gil_safety import safe_torch_import
@@ -322,7 +322,7 @@ class GPUAutoLoader:
             return False
 
     def _find_conda_envs_with_ipex(self) -> list[dict[str, str]]:
-        """Find conda environments that have Intel Extension for PyTorch installed"""
+        """Find conda environments that have Intel Extension for PyTorch installed."""
         conda_envs = []
 
         # Common conda locations
@@ -386,7 +386,7 @@ class GPUAutoLoader:
         return conda_envs
 
     def _inject_conda_packages(self, conda_env_path: str):
-        """Inject conda environment packages into current Python path"""
+        """Inject conda environment packages into current Python path."""
         # Add conda environment's site-packages to Python path
         if sys.platform == "win32":
             site_packages = os.path.join(conda_env_path, "Lib", "site-packages")
@@ -402,36 +402,36 @@ class GPUAutoLoader:
             logger.info(f"Injected conda packages from: {site_packages}")
 
     def get_device(self) -> Any | None:
-        """Get the configured device object"""
+        """Get the configured device object."""
         return self._device
 
     def get_torch(self) -> Any | None:
-        """Get the torch module if available"""
+        """Get the torch module if available."""
         return self._torch
 
     def get_ipex(self) -> Any | None:
-        """Get the Intel Extension module if available"""
+        """Get the Intel Extension module if available."""
         return self._ipex
 
     def to_device(self, tensor_or_model: Any) -> Any:
-        """Move a tensor or model to the configured device"""
+        """Move a tensor or model to the configured device."""
         if self._device and hasattr(tensor_or_model, "to"):
             return tensor_or_model.to(self._device)
         return tensor_or_model
 
     def get_device_string(self) -> str:
-        """Get device string for torch operations"""
+        """Get device string for torch operations."""
         return self._device_string or "cpu"
 
     def optimize_model(self, model: Any) -> Any:
-        """Optimize model for the current backend"""
+        """Optimize model for the current backend."""
         if self.gpu_type == "intel_xpu" and self._ipex:
             logger.info("Optimizing model with Intel Extension for PyTorch")
             return self._ipex.optimize(model)
         return model
 
     def get_memory_info(self) -> dict[str, Any]:
-        """Get GPU memory information"""
+        """Get GPU memory information."""
         if not self.gpu_available or not self._torch:
             return {}
 
@@ -464,7 +464,7 @@ class GPUAutoLoader:
         return {}
 
     def synchronize(self):
-        """Synchronize GPU operations"""
+        """Synchronize GPU operations."""
         if not self.gpu_available or not self._torch:
             return
 
@@ -486,12 +486,12 @@ gpu_autoloader = GPUAutoLoader()
 
 
 def get_device():
-    """Get the configured GPU device"""
+    """Get the configured GPU device."""
     return gpu_autoloader.get_device()
 
 
 def get_gpu_info() -> dict[str, Any]:
-    """Get GPU information"""
+    """Get GPU information."""
     return {
         "available": gpu_autoloader.gpu_available,
         "type": gpu_autoloader.gpu_type,
@@ -502,10 +502,10 @@ def get_gpu_info() -> dict[str, Any]:
 
 
 def to_device(tensor_or_model: Any) -> Any:
-    """Move tensor or model to GPU"""
+    """Move tensor or model to GPU."""
     return gpu_autoloader.to_device(tensor_or_model)
 
 
 def optimize_for_gpu(model: Any) -> Any:
-    """Optimize model for current GPU backend"""
+    """Optimize model for current GPU backend."""
     return gpu_autoloader.optimize_model(model)

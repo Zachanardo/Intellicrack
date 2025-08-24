@@ -1,4 +1,4 @@
-"""Performance Optimizer for Large Binary Analysis
+"""Performance Optimizer for Large Binary Analysis.
 
 Copyright (C) 2025 Zachary Flint
 

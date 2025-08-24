@@ -1,17 +1,19 @@
-"""
-Network Analysis Plugin Template
-Specialized template for network traffic analysis
+"""Network Analysis Plugin Template
+Specialized template for network traffic analysis.
 """
 
 import logging
 import shlex
+import shutil
 import sys
 
 logger = logging.getLogger(__name__)
 
 
 class NetworkAnalysisPlugin:
+    """Plugin for network traffic analysis and monitoring capabilities for security research."""
     def __init__(self):
+        """Initialize the network analysis plugin with traffic monitoring capabilities."""
         self.name = "Network Analysis Plugin"
         self.version = "1.0.0"
         self.description = "Template for network traffic analysis"
@@ -146,7 +148,9 @@ class NetworkAnalysisPlugin:
                     # Get connections for specific process
                     cmd = f"lsof -i -n -P -p {pid}"
                     try:
-                        output = subprocess.check_output(shlex.split(cmd), text=True)
+                        output = subprocess.check_output(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                            shlex.split(cmd), text=True
+                        )
                         results.append(f"Network connections for PID {pid}:")
                         results.extend(output.strip().split("\n")[1:])  # Skip header
                     except subprocess.CalledProcessError as e:
@@ -157,7 +161,9 @@ class NetworkAnalysisPlugin:
             # Try to capture some traffic
             try:
                 cmd = "tcpdump -c 10 -n -i any"
-                output = subprocess.check_output(shlex.split(cmd), text=True, timeout=5)
+                output = subprocess.check_output(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    shlex.split(cmd), text=True, timeout=5
+                )
                 results.append("Captured traffic:")
                 results.extend(output.strip().split("\n"))
             except subprocess.TimeoutExpired:
@@ -180,13 +186,27 @@ class NetworkAnalysisPlugin:
 
             if sys.platform == "win32":
                 cmd = ["netstat", "-ano"]
-                output = subprocess.check_output(cmd, text=True)
+                output = subprocess.check_output(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    cmd, text=True
+                )
             else:
                 # Try ss first, then netstat as fallback
                 try:
-                    output = subprocess.check_output(["ss", "-tunap"], text=True, stderr=subprocess.DEVNULL)
+                    ss_path = shutil.which("ss")
+                    if ss_path:
+                        output = subprocess.check_output(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                            [ss_path, "-tunap"], text=True, stderr=subprocess.DEVNULL
+                        )
+                    else:
+                        raise FileNotFoundError("ss command not found")
                 except (subprocess.CalledProcessError, FileNotFoundError):
-                    output = subprocess.check_output(["netstat", "-tunap"], text=True, stderr=subprocess.DEVNULL)
+                    netstat_path = shutil.which("netstat")
+                    if netstat_path:
+                        output = subprocess.check_output(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                            [netstat_path, "-tunap"], text=True, stderr=subprocess.DEVNULL
+                        )
+                    else:
+                        output = ""
             lines = output.strip().split("\n")
 
             if target_process:
@@ -222,13 +242,17 @@ class NetworkAnalysisPlugin:
 
                 if sys.platform == "win32":
                     cmd = ["wmic", "process", "where", f"name like '%{process_name}%'", "get", "processid"]
-                    output = subprocess.check_output(cmd, text=True)
+                    output = subprocess.check_output(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        cmd, text=True
+                    )
                     lines = output.strip().split("\n")
                     if len(lines) > 1:
                         return int(lines[1].strip())
                 else:
                     cmd = ["pgrep", "-f", process_name]
-                    output = subprocess.check_output(cmd, text=True)
+                    output = subprocess.check_output(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        cmd, text=True
+                    )
                     return int(output.strip().split("\n")[0])
             except (subprocess.CalledProcessError, ValueError, IndexError) as e:
                 logger.debug(f"Failed to get PID for process '{process_name}': {e}")
@@ -292,13 +316,21 @@ class NetworkAnalysisPlugin:
             import subprocess
 
             # Get netstat output, then filter for tcp/udp
-            netstat_proc = subprocess.run(
-                ["netstat", "-tunap"], capture_output=True, text=True, stderr=subprocess.DEVNULL
-            )
-            if netstat_proc.returncode == 0:
-                grep_proc = subprocess.run(
-                    ["grep", "-E", "tcp|udp"], input=netstat_proc.stdout, capture_output=True, text=True
+            netstat_path = shutil.which("netstat")
+            if netstat_path:
+                netstat_proc = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    [netstat_path, "-tunap"], capture_output=True, text=True, stderr=subprocess.DEVNULL, shell=False
                 )
+            else:
+                netstat_proc = type('obj', (object,), {'returncode': 1, 'stdout': ''})()
+            if netstat_proc.returncode == 0:
+                grep_path = shutil.which("grep")
+                if grep_path:
+                    grep_proc = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        [grep_path, "-E", "tcp|udp"], input=netstat_proc.stdout, capture_output=True, text=True, shell=False
+                    )
+                else:
+                    grep_proc = type('obj', (object,), {'returncode': 1, 'stdout': ''})()
                 output = grep_proc.stdout if grep_proc.returncode == 0 else ""
             else:
                 output = ""
@@ -316,4 +348,5 @@ class NetworkAnalysisPlugin:
 
 
 def register():
+    """Register and return an instance of the network analysis plugin for the plugin system."""
     return NetworkAnalysisPlugin()

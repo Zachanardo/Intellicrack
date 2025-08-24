@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -779,10 +779,10 @@ class DnsProtocol(BaseProtocol):
     def _build_dns_query(self, domain: str) -> bytes:
         """Build DNS query packet."""
         # Simplified DNS query builder
-        import random
+        import secrets
         import struct
 
-        transaction_id = random.randint(1, 65535)
+        transaction_id = secrets.randbelow(65535) + 1
         flags = 0x0100  # Standard query
         questions = 1
         answer_rrs = 0
@@ -815,154 +815,19 @@ class DnsProtocol(BaseProtocol):
                 self.logger.warning("DNS response too short")
                 return ""
 
-            # Parse DNS header
-            header = struct.unpack("!HHHHHH", response[:12])
-            transaction_id, flags, questions, answer_rrs, authority_rrs, additional_rrs = header
+            header_info = self._parse_dns_header(response, struct)
+            if not header_info:
+                return ""
 
-            self.logger.debug(
-                "DNS Response - ID: %s, Flags: %04x, Answers: %s, Authority: %s, Additional: %s",
-                transaction_id,
-                flags,
-                answer_rrs,
-                authority_rrs,
-                additional_rrs,
-            )
+            questions, answer_rrs = header_info
 
             if answer_rrs == 0:
                 self.logger.debug("No answers in DNS response")
                 return ""
 
-            # Skip question section
-            offset = 12
+            offset = self._skip_dns_question_section(response, questions)
+            extracted_data = self._parse_dns_answer_records(response, answer_rrs, offset, struct)
 
-            # Parse question section to skip it
-            for _ in range(questions):
-                # Skip QNAME
-                while offset < len(response) and response[offset] != 0:
-                    length = response[offset]
-                    if length == 0:
-                        break
-                    if length > 63:  # Pointer
-                        offset += 2
-                        break
-                    offset += length + 1
-
-                if offset < len(response) and response[offset] == 0:
-                    offset += 1  # Skip null terminator
-
-                offset += 4  # Skip QTYPE and QCLASS
-
-            # Parse answer section
-            extracted_data = []
-
-            for _ in range(answer_rrs):
-                if offset >= len(response):
-                    break
-
-                # Skip NAME (could be pointer or full name)
-                if offset < len(response) and response[offset] & 0xC0 == 0xC0:
-                    offset += 2  # Pointer
-                else:
-                    # Full name
-                    while offset < len(response) and response[offset] != 0:
-                        length = response[offset]
-                        if length == 0:
-                            break
-                        if length & 0xC0 == 0xC0:  # Pointer
-                            offset += 2
-                            break
-                        offset += length + 1
-
-                    if offset < len(response) and response[offset] == 0:
-                        offset += 1
-
-                if offset + 10 > len(response):
-                    break
-
-                # Parse TYPE, CLASS, TTL, RDLENGTH
-                rr_type, rr_class, ttl, rdlength = struct.unpack(
-                    "!HHIH", response[offset : offset + 10]
-                )
-                self.logger.debug(
-                    "RR - Type: %s, Class: %s, TTL: %s, Length: %s",
-                    rr_type,
-                    rr_class,
-                    ttl,
-                    rdlength,
-                )
-                offset += 10
-
-                if offset + rdlength > len(response):
-                    break
-
-                # Extract RDATA based on type
-                rdata = response[offset : offset + rdlength]
-
-                if rr_type == 1:  # A record
-                    if rdlength == 4:
-                        ip = ".".join(str(b) for b in rdata)
-                        self.logger.debug("A record: %s", ip)
-
-                        # Try to extract encoded data from IP octets
-                        try:
-                            # Convert IP octets to base64-encoded string
-                            data_chunk = "".join(chr(b) for b in rdata if 32 <= b <= 126)
-                            if data_chunk:
-                                extracted_data.append(data_chunk)
-                        except Exception:
-                            self.logger.debug("Error extracting data from IP octets")
-
-                elif rr_type == 16:  # TXT record
-                    # TXT records store our data directly
-                    txt_data = ""
-                    txt_offset = 0
-                    while txt_offset < len(rdata):
-                        if txt_offset >= len(rdata):
-                            break
-                        length = rdata[txt_offset]
-                        txt_offset += 1
-                        if txt_offset + length <= len(rdata):
-                            txt_chunk = rdata[txt_offset : txt_offset + length].decode(
-                                "utf-8", errors="ignore"
-                            )
-                            txt_data += txt_chunk
-                            txt_offset += length
-                        else:
-                            break
-
-                    if txt_data:
-                        self.logger.debug("TXT record data: %s...", txt_data[:50])
-                        extracted_data.append(txt_data)
-
-                elif rr_type == 5:  # CNAME record
-                    # Parse CNAME and extract data from subdomain
-                    cname = self._parse_domain_name(rdata, response)
-                    if cname:
-                        self.logger.debug("CNAME: %s", cname)
-                        # Extract data from subdomain part
-                        parts = cname.split(".")
-                        if len(parts) > 0:
-                            data_part = parts[0]
-                            # Decode base64-safe characters
-                            data_part = data_part.replace("-", "+").replace("_", "/")
-                            try:
-                                # Pad base64 if needed
-                                missing_padding = len(data_part) % 4
-                                if missing_padding:
-                                    data_part += "=" * (4 - missing_padding)
-
-                                decoded = base64.b64decode(data_part).decode(
-                                    "utf-8", errors="ignore"
-                                )
-                                if decoded:
-                                    extracted_data.append(decoded)
-                            except Exception:
-                                self.logger.debug("Error decoding base64 data part")
-                                extracted_data.append(data_part)
-
-                offset += rdlength
-
-            # Combine all extracted data
             result = "".join(extracted_data)
             self.logger.debug("Extracted %s bytes of data from DNS response", len(result))
 
@@ -980,6 +845,165 @@ class DnsProtocol(BaseProtocol):
         ) as e:
             self.logger.error("Error parsing DNS response: %s", e)
             return ""
+
+    def _parse_dns_header(self, response: bytes, struct) -> tuple:
+        """Parse DNS header and return questions count and answer count."""
+        header = struct.unpack("!HHHHHH", response[:12])
+        transaction_id, flags, questions, answer_rrs, authority_rrs, additional_rrs = header
+
+        self.logger.debug(
+            "DNS Response - ID: %s, Flags: %04x, Answers: %s, Authority: %s, Additional: %s",
+            transaction_id,
+            flags,
+            answer_rrs,
+            authority_rrs,
+            additional_rrs,
+        )
+
+        return (questions, answer_rrs)
+
+    def _skip_dns_question_section(self, response: bytes, questions: int) -> int:
+        """Skip DNS question section and return offset to answer section."""
+        offset = 12
+
+        for _ in range(questions):
+            while offset < len(response) and response[offset] != 0:
+                length = response[offset]
+                if length == 0:
+                    break
+                if length > 63:  # Pointer
+                    offset += 2
+                    break
+                offset += length + 1
+
+            if offset < len(response) and response[offset] == 0:
+                offset += 1  # Skip null terminator
+
+            offset += 4  # Skip QTYPE and QCLASS
+
+        return offset
+
+    def _parse_dns_answer_records(self, response: bytes, answer_rrs: int, offset: int, struct) -> list:
+        """Parse DNS answer records and extract data."""
+        extracted_data = []
+
+        for _ in range(answer_rrs):
+            if offset >= len(response):
+                break
+
+            offset = self._skip_dns_name_field(response, offset)
+
+            if offset + 10 > len(response):
+                break
+
+            rr_type, rr_class, ttl, rdlength = struct.unpack(
+                "!HHIH", response[offset : offset + 10]
+            )
+            self.logger.debug(
+                "RR - Type: %s, Class: %s, TTL: %s, Length: %s",
+                rr_type,
+                rr_class,
+                ttl,
+                rdlength,
+            )
+            offset += 10
+
+            if offset + rdlength > len(response):
+                break
+
+            rdata = response[offset : offset + rdlength]
+            self._extract_data_by_record_type(rr_type, rdlength, rdata, response, extracted_data)
+
+            offset += rdlength
+
+        return extracted_data
+
+    def _skip_dns_name_field(self, response: bytes, offset: int) -> int:
+        """Skip DNS NAME field which could be pointer or full name."""
+        if offset < len(response) and response[offset] & 0xC0 == 0xC0:
+            offset += 2  # Pointer
+        else:
+            # Full name
+            while offset < len(response) and response[offset] != 0:
+                length = response[offset]
+                if length == 0:
+                    break
+                if length & 0xC0 == 0xC0:  # Pointer
+                    offset += 2
+                    break
+                offset += length + 1
+
+            if offset < len(response) and response[offset] == 0:
+                offset += 1
+
+        return offset
+
+    def _extract_data_by_record_type(self, rr_type: int, rdlength: int, rdata: bytes, response: bytes, extracted_data: list):
+        """Extract data based on DNS record type."""
+        if rr_type == 1:  # A record
+            self._extract_data_from_a_record(rdlength, rdata, extracted_data)
+        elif rr_type == 16:  # TXT record
+            self._extract_data_from_txt_record(rdata, extracted_data)
+        elif rr_type == 5:  # CNAME record
+            self._extract_data_from_cname_record(rdata, response, extracted_data)
+
+    def _extract_data_from_a_record(self, rdlength: int, rdata: bytes, extracted_data: list):
+        """Extract encoded data from A record IP octets."""
+        if rdlength == 4:
+            ip = ".".join(str(b) for b in rdata)
+            self.logger.debug("A record: %s", ip)
+
+            try:
+                data_chunk = "".join(chr(b) for b in rdata if 32 <= b <= 126)
+                if data_chunk:
+                    extracted_data.append(data_chunk)
+            except Exception:
+                self.logger.debug("Error extracting data from IP octets")
+
+    def _extract_data_from_txt_record(self, rdata: bytes, extracted_data: list):
+        """Extract data from TXT record."""
+        txt_data = ""
+        txt_offset = 0
+        while txt_offset < len(rdata):
+            if txt_offset >= len(rdata):
+                break
+            length = rdata[txt_offset]
+            txt_offset += 1
+            if txt_offset + length <= len(rdata):
+                txt_chunk = rdata[txt_offset : txt_offset + length].decode(
+                    "utf-8", errors="ignore"
+                )
+                txt_data += txt_chunk
+                txt_offset += length
+            else:
+                break
+
+        if txt_data:
+            self.logger.debug("TXT record data: %s...", txt_data[:50])
+            extracted_data.append(txt_data)
+
+    def _extract_data_from_cname_record(self, rdata: bytes, response: bytes, extracted_data: list):
+        """Extract data from CNAME record subdomain."""
+        cname = self._parse_domain_name(rdata, response)
+        if cname:
+            self.logger.debug("CNAME: %s", cname)
+            parts = cname.split(".")
+            if len(parts) > 0:
+                data_part = parts[0]
+                data_part = data_part.replace("-", "+").replace("_", "/")
+                try:
+                    missing_padding = len(data_part) % 4
+                    if missing_padding:
+                        data_part += "=" * (4 - missing_padding)
+
+                    decoded = base64.b64decode(data_part).decode(
+                        "utf-8", errors="ignore"
+                    )
+                    if decoded:
+                        extracted_data.append(decoded)
+                except Exception:
+                    self.logger.debug("Error decoding base64 data part")
+                    extracted_data.append(data_part)
 
     def _parse_domain_name(self, data: bytes, packet: bytes, offset: int = 0) -> str:
         """Parse domain name from DNS data, handling compression pointers."""

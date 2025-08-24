@@ -1,4 +1,4 @@
-"""Protection Detection Handlers for Intellicrack UI
+"""Protection Detection Handlers for Intellicrack UI.
 
 Copyright (C) 2025 Zachary Flint
 

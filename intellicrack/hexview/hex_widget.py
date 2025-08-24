@@ -71,6 +71,7 @@ class FoldedRegion:
             start: Start offset of the region
             end: End offset of the region
             name: Optional name for the region
+
         """
         self.start = start
         self.end = end
@@ -85,6 +86,7 @@ class FoldedRegion:
 
         Returns:
             True if offset is within the region
+
         """
         return self.start <= offset < self.end
 
@@ -97,6 +99,7 @@ class FoldedRegion:
 
         Returns:
             True if there's an overlap
+
         """
         return not (end <= self.start or start >= self.end)
 
@@ -1005,6 +1008,7 @@ class HexViewerWidget(QAbstractScrollArea):
             start: Start offset of region to fold
             end: End offset of region to fold
             name: Optional name for the folded region
+
         """
         if start >= end or not self.file_handler:
             return
@@ -1028,6 +1032,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         Args:
             offset: Offset within the region to unfold
+
         """
         for i, region in enumerate(self.folded_regions):
             if region.contains(offset):
@@ -1062,6 +1067,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         Returns:
             True if offset is folded
+
         """
         for region in self.folded_regions:
             if region.contains(offset):
@@ -1076,6 +1082,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         Returns:
             Visible offset after accounting for folded regions
+
         """
         visible_offset = file_offset
         for region in self.folded_regions:
@@ -1096,6 +1103,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         Returns:
             Actual file offset
+
         """
         file_offset = visible_offset
         for region in self.folded_regions:

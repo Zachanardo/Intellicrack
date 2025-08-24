@@ -1,4 +1,4 @@
-"""Comprehensive Radare2 UI Integration for Intellicrack
+"""Comprehensive Radare2 UI Integration for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -67,7 +67,7 @@ from ..core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
 
 
 class R2AnalysisWorker(QThread):
-    """Worker thread for radare2 analysis operations"""
+    """Worker thread for radare2 analysis operations."""
 
     progress_updated = pyqtSignal(int)
     status_updated = pyqtSignal(str)
@@ -83,7 +83,7 @@ class R2AnalysisWorker(QThread):
         self.logger = logging.getLogger(__name__)
 
     def run(self):
-        """Execute analysis in background thread"""
+        """Execute analysis in background thread."""
         try:
             self.status_updated.emit(f"Starting {self.analysis_type} analysis...")
             self.progress_updated.emit(10)
@@ -116,7 +116,7 @@ class R2AnalysisWorker(QThread):
             self.error_occurred.emit(str(e))
 
     def _run_comprehensive_analysis(self) -> dict[str, Any]:
-        """Run comprehensive radare2 analysis"""
+        """Run comprehensive radare2 analysis."""
         results = {
             "binary_path": self.binary_path,
             "analysis_type": "comprehensive",
@@ -172,50 +172,50 @@ class R2AnalysisWorker(QThread):
         return results
 
     def _run_decompilation_analysis(self) -> dict[str, Any]:
-        """Run decompilation analysis"""
+        """Run decompilation analysis."""
         engine = R2DecompilationEngine(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_license_functions()
 
     def _run_vulnerability_analysis(self) -> dict[str, Any]:
-        """Run vulnerability analysis"""
+        """Run vulnerability analysis."""
         engine = R2VulnerabilityEngine(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_vulnerabilities()
 
     def _run_string_analysis(self) -> dict[str, Any]:
-        """Run string analysis"""
+        """Run string analysis."""
         engine = R2StringAnalyzer(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_all_strings()
 
     def _run_import_analysis(self) -> dict[str, Any]:
-        """Run import/export analysis"""
+        """Run import/export analysis."""
         engine = R2ImportExportAnalyzer(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_imports_exports()
 
     def _run_cfg_analysis(self) -> dict[str, Any]:
-        """Run CFG analysis"""
+        """Run CFG analysis."""
         engine = CFGExplorer(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_cfg()
 
     def _run_ai_analysis(self) -> dict[str, Any]:
-        """Run AI analysis"""
+        """Run AI analysis."""
         engine = R2AIEngine(self.binary_path)
         self.progress_updated.emit(50)
         return engine.analyze_with_ai()
 
     def _run_bypass_analysis(self) -> dict[str, Any]:
-        """Run bypass generation analysis"""
+        """Run bypass generation analysis."""
         engine = R2BypassGenerator(self.binary_path)
         self.progress_updated.emit(50)
         return engine.generate_comprehensive_bypass()
 
 
 class R2ConfigurationDialog(QDialog):
-    """Dialog for configuring radare2 analysis options"""
+    """Dialog for configuring radare2 analysis options."""
 
     def __init__(self, parent=None):
         """Initialize the radare2 configuration dialog with UI setup."""
@@ -226,7 +226,7 @@ class R2ConfigurationDialog(QDialog):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup configuration dialog UI"""
+        """Setup configuration dialog UI."""
         layout = QVBoxLayout(self)
 
         # Analysis options
@@ -306,7 +306,7 @@ class R2ConfigurationDialog(QDialog):
         layout.addWidget(buttons)
 
     def get_configuration(self) -> dict[str, Any]:
-        """Get configuration from dialog"""
+        """Get configuration from dialog."""
         return {
             "analysis_depth": self.analysis_depth.currentText(),
             "max_functions": self.max_functions.value(),
@@ -324,7 +324,7 @@ class R2ConfigurationDialog(QDialog):
 
 
 class R2ResultsViewer(QWidget):
-    """Widget for displaying comprehensive radare2 analysis results"""
+    """Widget for displaying comprehensive radare2 analysis results."""
 
     def __init__(self, parent=None):
         """Initialize the radare2 results viewer with UI components."""
@@ -333,7 +333,7 @@ class R2ResultsViewer(QWidget):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup results viewer UI"""
+        """Setup results viewer UI."""
         layout = QVBoxLayout(self)
 
         # Results navigation
@@ -357,7 +357,7 @@ class R2ResultsViewer(QWidget):
         layout.addWidget(self.results_tabs)
 
     def display_results(self, results: dict[str, Any]):
-        """Display analysis results"""
+        """Display analysis results."""
         self.results_data = results
 
         # Clear existing data
@@ -374,7 +374,7 @@ class R2ResultsViewer(QWidget):
             self._create_component_tab("Analysis", results)
 
     def _create_component_tab(self, component: str, data: dict[str, Any]):
-        """Create tab for component results"""
+        """Create tab for component results."""
         tab_widget = QWidget()
         layout = QVBoxLayout(tab_widget)
 
@@ -412,7 +412,7 @@ class R2ResultsViewer(QWidget):
         self.results_tabs.addTab(tab_widget, component.title())
 
     def _generate_summary(self, data: dict[str, Any]) -> str:
-        """Generate summary text for component"""
+        """Generate summary text for component."""
         if "error" in data:
             return f"Analysis failed: {data['error']}"
 
@@ -446,7 +446,7 @@ class R2ResultsViewer(QWidget):
         return " | ".join(summary_parts) if summary_parts else "Analysis completed"
 
     def _create_vulnerability_view(self, layout: QVBoxLayout, data: dict[str, Any]):
-        """Create vulnerability-specific view"""
+        """Create vulnerability-specific view."""
         table = QTableWidget()
         table.setColumnCount(4)
         table.setHorizontalHeaderLabels(["Type", "Function", "Address", "Severity"])
@@ -485,7 +485,7 @@ class R2ResultsViewer(QWidget):
         layout.addWidget(table)
 
     def _create_strings_view(self, layout: QVBoxLayout, data: dict[str, Any]):
-        """Create strings-specific view"""
+        """Create strings-specific view."""
         # String categories tabs
         strings_tabs = QTabWidget()
 
@@ -512,7 +512,7 @@ class R2ResultsViewer(QWidget):
         layout.addWidget(strings_tabs)
 
     def _create_imports_view(self, layout: QVBoxLayout, data: dict[str, Any]):
-        """Create imports-specific view"""
+        """Create imports-specific view."""
         splitter = QSplitter()
 
         # Imports list
@@ -544,7 +544,7 @@ class R2ResultsViewer(QWidget):
         layout.addWidget(splitter)
 
     def _create_cfg_view(self, layout: QVBoxLayout, data: dict[str, Any]):
-        """Create CFG-specific view"""
+        """Create CFG-specific view."""
         # CFG metrics
         metrics_text = QTextEdit()
         metrics_text.setMaximumHeight(200)
@@ -583,7 +583,7 @@ class R2ResultsViewer(QWidget):
             layout.addWidget(patterns_widget)
 
     def _create_ai_view(self, layout: QVBoxLayout, data: dict[str, Any]):
-        """Create AI analysis-specific view"""
+        """Create AI analysis-specific view."""
         ai_tabs = QTabWidget()
 
         # License detection
@@ -623,7 +623,7 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
         layout.addWidget(ai_tabs)
 
     def _create_generic_view(self, layout: QVBoxLayout, data: dict[str, Any]):
-        """Create generic JSON view"""
+        """Create generic JSON view."""
         text_widget = QTextEdit()
         text_widget.setReadOnly(True)
         text_widget.setFont(QFont("Consolas", 9))
@@ -638,7 +638,7 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
         layout.addWidget(text_widget)
 
     def _on_component_changed(self, component: str):
-        """Handle component selection change"""
+        """Handle component selection change."""
         # Find corresponding tab and activate it
         for i in range(self.results_tabs.count()):
             if self.results_tabs.tabText(i).lower() == component.lower():
@@ -646,7 +646,7 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
                 break
 
     def _export_results(self):
-        """Export results to file"""
+        """Export results to file."""
         if not self.results_data:
             QMessageBox.information(self, "Export", "No results to export")
             return
@@ -669,7 +669,7 @@ Validation Methods: {', '.join(license_data.get('validation_methods', []))}
 
 
 class R2IntegrationWidget(QWidget):
-    """Main widget for radare2 integration UI"""
+    """Main widget for radare2 integration UI."""
 
     def __init__(self, parent=None):
         """Initialize the radare2 integration widget with UI components and analysis functionality."""
@@ -681,7 +681,7 @@ class R2IntegrationWidget(QWidget):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup main UI"""
+        """Setup main UI."""
         layout = QVBoxLayout(self)
 
         # Header section
@@ -763,7 +763,7 @@ class R2IntegrationWidget(QWidget):
         layout.addWidget(self.results_viewer)
 
     def set_binary_path(self, path: str):
-        """Set binary path for analysis"""
+        """Set binary path for analysis."""
         self.binary_path = path
         self.file_label.setText(os.path.basename(path) if path else "No file selected")
 
@@ -773,7 +773,7 @@ class R2IntegrationWidget(QWidget):
             button.setEnabled(enabled)
 
     def _browse_file(self):
-        """Browse for binary file"""
+        """Browse for binary file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Binary File",
@@ -785,14 +785,14 @@ class R2IntegrationWidget(QWidget):
             self.set_binary_path(file_path)
 
     def _configure_analysis(self):
-        """Open configuration dialog"""
+        """Open configuration dialog."""
         dialog = R2ConfigurationDialog(self)
         if dialog.exec() == QDialog.Accepted:
             self.analysis_config = dialog.get_configuration()
             self.status_label.setText("Configuration updated")
 
     def _start_analysis(self, analysis_type: str):
-        """Start analysis of specified type"""
+        """Start analysis of specified type."""
         if not self.binary_path:
             QMessageBox.warning(self, "No File", "Please select a binary file first")
             return
@@ -823,17 +823,17 @@ class R2IntegrationWidget(QWidget):
         self.current_worker.start()
 
     def _on_analysis_completed(self, results: dict[str, Any]):
-        """Handle completed analysis"""
+        """Handle completed analysis."""
         self.results_viewer.display_results(results)
         self.status_label.setText("Analysis completed successfully")
 
     def _on_analysis_error(self, error: str):
-        """Handle analysis error"""
+        """Handle analysis error."""
         self.status_label.setText(f"Analysis failed: {error}")
         QMessageBox.critical(self, "Analysis Error", f"Analysis failed:\n{error}")
 
     def _on_analysis_finished(self):
-        """Handle analysis thread finished"""
+        """Handle analysis thread finished."""
         # Re-enable buttons
         for button in self.buttons.values():
             button.setEnabled(True)
@@ -843,12 +843,12 @@ class R2IntegrationWidget(QWidget):
 
 
 def create_radare2_tab(parent=None) -> QWidget:
-    """Create and return the radare2 integration tab widget"""
+    """Create and return the radare2 integration tab widget."""
     return R2IntegrationWidget(parent)
 
 
 def integrate_with_main_app(main_app):
-    """Integrate radare2 UI with main application"""
+    """Integrate radare2 UI with main application."""
     try:
         # Add radare2 tab to main application
         if hasattr(main_app, "tab_widget"):

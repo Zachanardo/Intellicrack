@@ -1,4 +1,4 @@
-"""ROP Chain Generator Module
+"""ROP Chain Generator Module.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -43,7 +43,7 @@ class ROPChainGenerator:
     """
 
     def __init__(self, config: dict[str, Any] | None = None):
-        """Initialize the ROP chain generator with configuration"""
+        """Initialize the ROP chain generator with configuration."""
         self.config = config or {}
         self.logger = logging.getLogger("IntellicrackLogger.ROPChainGenerator")
         self.binary_path: str | None = None
@@ -55,7 +55,7 @@ class ROPChainGenerator:
         self.arch = self.config.get("arch", "x86_64")
 
     def set_binary(self, binary_path: str) -> bool:
-        """Set the binary to analyze"""
+        """Set the binary to analyze."""
         from ...utils.binary.binary_utils import validate_binary_path
 
         if not validate_binary_path(binary_path, self.logger):
@@ -70,7 +70,7 @@ class ROPChainGenerator:
         function_address: str | None = None,
         description: str | None = None,
     ) -> None:
-        """Add a target function for ROP chain generation"""
+        """Add a target function for ROP chain generation."""
         target = {
             "name": function_name,
             "address": function_address,
@@ -81,7 +81,7 @@ class ROPChainGenerator:
         self.logger.info("Added target function: %s", function_name)
 
     def find_gadgets(self) -> bool:
-        """Find ROP gadgets in the binary"""
+        """Find ROP gadgets in the binary."""
         if not self.binary_path:
             self.logger.error("No binary set")
             return False
@@ -101,7 +101,7 @@ class ROPChainGenerator:
             return False
 
     def generate_chains(self) -> bool:
-        """Generate ROP chains for target functions"""
+        """Generate ROP chains for target functions."""
         if not self.binary_path:
             self.logger.error("No binary set")
             return False
@@ -134,7 +134,7 @@ class ROPChainGenerator:
             return False
 
     def _add_default_targets(self) -> None:
-        """Add default license-related target functions"""
+        """Add default license-related target functions."""
         # Common license check functions
         self.add_target_function("check_license", None, "License check function")
         self.add_target_function("validate_key", None, "License key validation function")
@@ -1484,7 +1484,7 @@ class ROPChainGenerator:
                 self.chains.append(chain)
 
     def get_results(self) -> dict[str, Any]:
-        """Get the ROP chain generation results"""
+        """Get the ROP chain generation results."""
         return {
             "gadgets": self.gadgets,
             "chains": self.chains,
@@ -1497,7 +1497,7 @@ class ROPChainGenerator:
         }
 
     def generate_report(self, filename: str | None = None) -> str | None:
-        """Generate a report of the ROP chain generation results"""
+        """Generate a report of the ROP chain generation results."""
         if not self.chains:
             self.logger.error("No chains generated")
             return None
@@ -1600,14 +1600,14 @@ class ROPChainGenerator:
             return html
 
     def clear_analysis(self) -> None:
-        """Clear all analysis data"""
+        """Clear all analysis data."""
         self.gadgets.clear()
         self.chains.clear()
         self.target_functions.clear()
         self.logger.info("Cleared all ROP chain analysis data")
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get analysis statistics"""
+        """Get analysis statistics."""
         if not self.gadgets:
             return {}
 
@@ -1760,15 +1760,8 @@ class ROPChainGenerator:
         return target_info
 
 
-def run_rop_chain_generator(app: Any) -> None:
-    """Initialize and run the ROP chain generator"""
-    # Check if binary is loaded
-    if not hasattr(app, "binary_path") or not app.binary_path:
-        if hasattr(app, "update_output"):
-            app.update_output.emit("log_message([ROP Chain Generator] No binary loaded)")
-        return
-
-    # Create and configure the generator
+def _setup_rop_generator(app: Any) -> ROPChainGenerator:
+    """Create and configure the ROP chain generator."""
     generator = ROPChainGenerator(
         {
             "max_chain_length": 20,
@@ -1777,7 +1770,6 @@ def run_rop_chain_generator(app: Any) -> None:
         }
     )
 
-    # Set binary
     if hasattr(app, "update_output"):
         app.update_output.emit("log_message([ROP Chain Generator] Setting binary...)")
 
@@ -1786,138 +1778,182 @@ def run_rop_chain_generator(app: Any) -> None:
             app.update_output.emit(
                 f"log_message([ROP Chain Generator] Binary set: {app.binary_path})"
             )
-
-        # Handle architecture selection if PyQt6 is available
-        if PYQT6_AVAILABLE:
-            arch_options = ["x86_64", "x86", "arm", "arm64", "mips"]
-            arch, ok = QInputDialog.getItem(
-                app,
-                "Architecture",
-                "Select architecture:",
-                arch_options,
-                0,  # Default to x86_64
-                False,
-            )
-
-            if not ok:
-                if hasattr(app, "update_output"):
-                    app.update_output.emit("log_message([ROP Chain Generator] Cancelled)")
-                return
-
-            generator.arch = arch
-            if hasattr(app, "update_output"):
-                app.update_output.emit(f"log_message([ROP Chain Generator] Architecture: {arch})")
-
-            # Ask for target function
-            target_function, ok = QInputDialog.getText(
-                app,
-                "Target Function",
-                "Enter target function name (leave empty for default targets):",
-            )
-
-            if not ok:
-                if hasattr(app, "update_output"):
-                    app.update_output.emit("log_message([ROP Chain Generator] Cancelled)")
-                return
-
-            if target_function:
-                generator.add_target_function(target_function)
-            else:
-                generator._add_default_targets()
-        else:
-            # No PyQt6 available, use defaults
-            generator._add_default_targets()
-
-        # Find gadgets
+        return generator
+    else:
         if hasattr(app, "update_output"):
-            app.update_output.emit("log_message([ROP Chain Generator] Finding gadgets...)")
+            app.update_output.emit("log_message([ROP Chain Generator] Failed to set binary)")
+        return None
 
-        if generator.find_gadgets():
+
+def _configure_architecture_and_targets(app: Any, generator: ROPChainGenerator) -> bool:
+    """Configure architecture and target functions for the ROP generator."""
+    if PYQT6_AVAILABLE:
+        arch_options = ["x86_64", "x86", "arm", "arm64", "mips"]
+        arch, ok = QInputDialog.getItem(
+            app,
+            "Architecture",
+            "Select architecture:",
+            arch_options,
+            0,  # Default to x86_64
+            False,
+        )
+
+        if not ok:
+            if hasattr(app, "update_output"):
+                app.update_output.emit("log_message([ROP Chain Generator] Cancelled)")
+            return False
+
+        generator.arch = arch
+        if hasattr(app, "update_output"):
+            app.update_output.emit(f"log_message([ROP Chain Generator] Architecture: {arch})")
+
+        # Ask for target function
+        target_function, ok = QInputDialog.getText(
+            app,
+            "Target Function",
+            "Enter target function name (leave empty for default targets):",
+        )
+
+        if not ok:
+            if hasattr(app, "update_output"):
+                app.update_output.emit("log_message([ROP Chain Generator] Cancelled)")
+            return False
+
+        if target_function:
+            generator.add_target_function(target_function)
+        else:
+            generator._add_default_targets()
+    else:
+        # No PyQt6 available, use defaults
+        generator._add_default_targets()
+
+    return True
+
+
+def _execute_rop_generation_workflow(app: Any, generator: ROPChainGenerator) -> bool:
+    """Execute the main ROP generation workflow."""
+    if hasattr(app, "update_output"):
+        app.update_output.emit("log_message([ROP Chain Generator] Finding gadgets...)")
+
+    if generator.find_gadgets():
+        if hasattr(app, "update_output"):
+            app.update_output.emit(
+                f"log_message([ROP Chain Generator] Found {len(generator.gadgets)} gadgets)"
+            )
+
+        # Generate chains
+        if hasattr(app, "update_output"):
+            app.update_output.emit("log_message([ROP Chain Generator] Generating chains...)")
+
+        if generator.generate_chains():
             if hasattr(app, "update_output"):
                 app.update_output.emit(
-                    f"log_message([ROP Chain Generator] Found {len(generator.gadgets)} gadgets)"
+                    f"log_message([ROP Chain Generator] Generated {len(generator.chains)} chains)"
                 )
-
-            # Generate chains
+            return True
+        else:
             if hasattr(app, "update_output"):
-                app.update_output.emit("log_message([ROP Chain Generator] Generating chains...)")
-
-            if generator.generate_chains():
-                if hasattr(app, "update_output"):
-                    app.update_output.emit(
-                        f"log_message([ROP Chain Generator] Generated {len(generator.chains)} chains)"
-                    )
-
-                # Get results
-                results = generator.get_results()
-
-                # Display summary
-                if hasattr(app, "update_output"):
-                    app.update_output.emit("log_message([ROP Chain Generator] Results:)")
-                    app.update_output.emit(
-                        f"log_message(- Total gadgets: {results['summary']['total_gadgets']})"
-                    )
-                    app.update_output.emit(
-                        f"log_message(- Total chains: {results['summary']['total_chains']})"
-                    )
-                    app.update_output.emit(
-                        f"log_message(- Total targets: {results['summary']['total_targets']})"
-                    )
-
-                # Add to analyze results
-                if not hasattr(app, "analyze_results"):
-                    app.analyze_results = []
-
-                app.analyze_results.append("\n=== ROP CHAIN GENERATOR RESULTS ===")
-                app.analyze_results.append(f"Total gadgets: {results['summary']['total_gadgets']}")
-                app.analyze_results.append(f"Total chains: {results['summary']['total_chains']}")
-                app.analyze_results.append(f"Total targets: {results['summary']['total_targets']}")
-
-                # Display chains
-                for i, chain in enumerate(results["chains"]):
-                    app.analyze_results.append(f"\nChain {i+1}: {chain['description']}")
-                    app.analyze_results.append(f"Target: {chain['target']['name']}")
-                    app.analyze_results.append(f"Length: {chain['length']} gadgets")
-
-                    app.analyze_results.append("Gadgets:")
-                    for j, gadget in enumerate(chain["gadgets"]):
-                        app.analyze_results.append(
-                            f"  {j+1}. {gadget['address']}: {gadget['instruction']}"
-                        )
-
-                    app.analyze_results.append("Payload:")
-                    for _addr in chain["payload"]:
-                        app.analyze_results.append(f"  {_addr}")
-
-                # Handle report generation if PyQt6 is available
-                if PYQT6_AVAILABLE:
-                    from ...utils.reporting.report_common import handle_pyqt6_report_generation
-
-                    report_path = handle_pyqt6_report_generation(
-                        app,
-                        "ROP chain generation",
-                        generator,
-                    )
-                    if report_path:
-                        if hasattr(app, "update_output"):
-                            app.update_output.emit(
-                                f"log_message([ROP Chain Generator] Report saved to {report_path})"
-                            )
-
-                        # Ask if user wants to open the report
-                        ask_open_report(app, report_path)
-                    elif hasattr(app, "update_output"):
-                        app.update_output.emit(
-                            "log_message([ROP Chain Generator] Failed to generate report)"
-                        )
-            elif hasattr(app, "update_output"):
                 app.update_output.emit(
                     "log_message([ROP Chain Generator] Failed to generate chains)"
                 )
-        elif hasattr(app, "update_output"):
+            return False
+    else:
+        if hasattr(app, "update_output"):
             app.update_output.emit("log_message([ROP Chain Generator] Failed to find gadgets)")
-    elif hasattr(app, "update_output"):
-        app.update_output.emit("log_message([ROP Chain Generator] Failed to set binary)")
+        return False
+
+
+def _process_rop_results(app: Any, generator: ROPChainGenerator) -> None:
+    """Process and display ROP generation results."""
+    results = generator.get_results()
+
+    # Display summary
+    if hasattr(app, "update_output"):
+        app.update_output.emit("log_message([ROP Chain Generator] Results:)")
+        app.update_output.emit(
+            f"log_message(- Total gadgets: {results['summary']['total_gadgets']})"
+        )
+        app.update_output.emit(
+            f"log_message(- Total chains: {results['summary']['total_chains']})"
+        )
+        app.update_output.emit(
+            f"log_message(- Total targets: {results['summary']['total_targets']})"
+        )
+
+    # Add to analyze results
+    if not hasattr(app, "analyze_results"):
+        app.analyze_results = []
+
+    app.analyze_results.append("\n=== ROP CHAIN GENERATOR RESULTS ===")
+    app.analyze_results.append(f"Total gadgets: {results['summary']['total_gadgets']}")
+    app.analyze_results.append(f"Total chains: {results['summary']['total_chains']}")
+    app.analyze_results.append(f"Total targets: {results['summary']['total_targets']}")
+
+    # Display chains
+    for i, chain in enumerate(results["chains"]):
+        app.analyze_results.append(f"\nChain {i+1}: {chain['description']}")
+        app.analyze_results.append(f"Target: {chain['target']['name']}")
+        app.analyze_results.append(f"Length: {chain['length']} gadgets")
+
+        app.analyze_results.append("Gadgets:")
+        for j, gadget in enumerate(chain["gadgets"]):
+            app.analyze_results.append(
+                f"  {j+1}. {gadget['address']}: {gadget['instruction']}"
+            )
+
+        app.analyze_results.append("Payload:")
+        for _addr in chain["payload"]:
+            app.analyze_results.append(f"  {_addr}")
+
+
+def _handle_rop_report_generation(app: Any, generator: ROPChainGenerator) -> None:
+    """Handle report generation for ROP chain results."""
+    if PYQT6_AVAILABLE:
+        from ...utils.reporting.report_common import handle_pyqt6_report_generation
+
+        report_path = handle_pyqt6_report_generation(
+            app,
+            "ROP chain generation",
+            generator,
+        )
+        if report_path:
+            if hasattr(app, "update_output"):
+                app.update_output.emit(
+                    f"log_message([ROP Chain Generator] Report saved to {report_path})"
+                )
+
+            # Ask if user wants to open the report
+            ask_open_report(app, report_path)
+        elif hasattr(app, "update_output"):
+            app.update_output.emit(
+                "log_message([ROP Chain Generator] Failed to generate report)"
+            )
+
+
+def run_rop_chain_generator(app: Any) -> None:
+    """Initialize and run the ROP chain generator."""
+    # Check if binary is loaded
+    if not hasattr(app, "binary_path") or not app.binary_path:
+        if hasattr(app, "update_output"):
+            app.update_output.emit("log_message([ROP Chain Generator] No binary loaded)")
+        return
+
+    # Setup generator
+    generator = _setup_rop_generator(app)
+    if not generator:
+        return
+
+    # Configure architecture and targets
+    if not _configure_architecture_and_targets(app, generator):
+        return
+
+    # Execute ROP generation workflow
+    if _execute_rop_generation_workflow(app, generator):
+        # Process and display results
+        _process_rop_results(app, generator)
+
+        # Handle report generation
+        _handle_rop_report_generation(app, generator)
 
     # Store the generator instance
     app.rop_chain_generator = generator

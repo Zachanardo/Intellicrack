@@ -1,4 +1,4 @@
-"""Intellicrack Protection Core Module
+"""Intellicrack Protection Core Module.
 
 This module provides comprehensive protection detection capabilities for
 detecting packers, protectors, compilers, and licensing schemes in binary files.
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 
 
 class ProtectionType(Enum):
-    """Types of protections that can be detected"""
+    """Types of protections that can be detected."""
 
     PACKER = "packer"
     PROTECTOR = "protector"
@@ -37,7 +37,7 @@ class ProtectionType(Enum):
 
 
 class LicenseType(Enum):
-    """Types of licensing schemes that can be detected"""
+    """Types of licensing schemes that can be detected."""
 
     FLEXLM = "flexlm"
     HASP = "hasp"
@@ -51,7 +51,7 @@ class LicenseType(Enum):
 
 @dataclass
 class DetectionResult:
-    """Result of a single detection"""
+    """Result of a single detection."""
 
     name: str
     version: str | None = None
@@ -63,7 +63,7 @@ class DetectionResult:
 
 @dataclass
 class ProtectionAnalysis:
-    """Complete analysis results for a binary"""
+    """Complete analysis results for a binary."""
 
     file_path: str
     file_type: str
@@ -207,7 +207,7 @@ class IntellicrackProtectionCore:
     }
 
     def __init__(self, engine_path: str | None = None):
-        """Initialize protection detector using native ICP Engine integration
+        """Initialize protection detector using native ICP Engine integration.
 
         Args:
             engine_path: Legacy parameter for compatibility, ignored in favor of native integration
@@ -223,7 +223,7 @@ class IntellicrackProtectionCore:
             self.icp_backend = None
 
     def _validate_engine_installation(self):
-        """Validate that native ICP Engine integration is working"""
+        """Validate that native ICP Engine integration is working."""
         try:
             version = self.icp_backend.get_engine_version()
             logger.info(f"ICP Engine: {version}")
@@ -240,7 +240,7 @@ class IntellicrackProtectionCore:
             return False
 
     def detect_protections(self, file_path: str) -> ProtectionAnalysis:
-        """Analyze a binary file for protections, packers, and licensing schemes using native ICP Engine
+        """Analyze a binary file for protections, packers, and licensing schemes using native ICP Engine.
 
         Args:
             file_path: Path to the binary file to analyze
@@ -378,7 +378,7 @@ class IntellicrackProtectionCore:
         return analysis
 
     def _parse_json_output(self, file_path: str, engine_data: dict) -> ProtectionAnalysis:
-        """Parse legacy JSON output into structured results (kept for compatibility)"""
+        """Parse legacy JSON output into structured results (kept for compatibility)."""
         analysis = ProtectionAnalysis(
             file_path=file_path, file_type="Unknown", architecture="Unknown"
         )
@@ -469,7 +469,7 @@ class IntellicrackProtectionCore:
         return analysis
 
     def _parse_text_output(self, file_path: str, output: str) -> ProtectionAnalysis:
-        """Legacy fallback parser for text output (kept for compatibility)"""
+        """Legacy fallback parser for text output (kept for compatibility)."""
         analysis = ProtectionAnalysis(file_path=file_path, file_type="PE", architecture="Unknown")
 
         lines = output.strip().split("\n")
@@ -552,7 +552,7 @@ class IntellicrackProtectionCore:
         )
 
     def _categorize_detection(self, detection_type: str) -> ProtectionType:
-        """Categorize detection type string into enum"""
+        """Categorize detection type string into enum."""
         type_lower = detection_type.lower()
 
         if "pack" in type_lower:
@@ -578,7 +578,7 @@ class IntellicrackProtectionCore:
         return ProtectionType.UNKNOWN
 
     def _get_bypass_recommendations(self, protection_name: str) -> list[str]:
-        """Get bypass recommendations for a specific protection"""
+        """Get bypass recommendations for a specific protection."""
         # Check exact match first
         if protection_name in self.PROTECTION_BYPASSES:
             return self.PROTECTION_BYPASSES[protection_name]
@@ -612,7 +612,7 @@ class IntellicrackProtectionCore:
         return ["Manual analysis required for this protection"]
 
     def analyze_directory(self, directory: str, recursive: bool = True) -> list[ProtectionAnalysis]:
-        """Analyze all executable files in a directory
+        """Analyze all executable files in a directory.
 
         Args:
             directory: Directory path to scan
@@ -649,7 +649,7 @@ class IntellicrackProtectionCore:
         return results
 
     def get_summary(self, analysis: ProtectionAnalysis) -> str:
-        """Get a human-readable summary of the analysis"""
+        """Get a human-readable summary of the analysis."""
         lines = []
         lines.append(f"File: {os.path.basename(analysis.file_path)}")
         lines.append(f"Type: {analysis.file_type} ({analysis.architecture})")
@@ -671,7 +671,7 @@ class IntellicrackProtectionCore:
         return "\n".join(lines)
 
     def export_results(self, analysis: ProtectionAnalysis, output_format: str = "json") -> str:
-        """Export analysis results in various formats
+        """Export analysis results in various formats.
 
         Args:
             analysis: ProtectionAnalysis to export
@@ -720,7 +720,7 @@ class IntellicrackProtectionCore:
 
 # Convenience function for quick analysis
 def quick_analyze(file_path: str) -> ProtectionAnalysis:
-    """Quick analysis function for one-off use"""
+    """Quick analysis function for one-off use."""
     detector = IntellicrackProtectionCore()
     return detector.detect_protections(file_path)
 

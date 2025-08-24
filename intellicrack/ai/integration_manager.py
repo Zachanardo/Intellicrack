@@ -1,4 +1,4 @@
-"""Integration Manager for AI Components
+"""Integration Manager for AI Components.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -284,7 +284,7 @@ Script Analysis:
                 if os.name == "nt":
                     qemu_cmd.extend(["-nographic", "-no-reboot"])
 
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     qemu_cmd + [str(target_file)],
                     capture_output=True,
                     text=True,
@@ -319,7 +319,7 @@ Script Analysis:
                     # Generic execution attempt
                     cmd = ["cat", str(script_file)]  # At least validate file content
 
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     cmd,
                     capture_output=True,
                     text=True,

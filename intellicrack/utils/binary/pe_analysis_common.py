@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -395,6 +395,7 @@ class PEAnalyzer:
     """Production-ready PE file analyzer for comprehensive binary analysis."""
 
     def __init__(self):
+        """Initialize PE analyzer with logger instance."""
         self.logger = logger
 
     def analyze(self, file_path: str) -> dict:
@@ -405,6 +406,7 @@ class PEAnalyzer:
 
         Returns:
             Dictionary containing PE analysis results
+
         """
         try:
             from intellicrack.handlers.pefile_handler import pefile

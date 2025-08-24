@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -117,7 +117,7 @@ def secure_pickle_loads(data):
 
 
 class PatternType(Enum):
-    """Types of patterns that can evolve"""
+    """Types of patterns that can evolve."""
 
     BYTE_SEQUENCE = "byte_sequence"
     API_SEQUENCE = "api_sequence"
@@ -130,7 +130,7 @@ class PatternType(Enum):
 
 
 class MutationType(Enum):
-    """Types of mutations for genetic algorithm"""
+    """Types of mutations for genetic algorithm."""
 
     BIT_FLIP = "bit_flip"
     INSERTION = "insertion"
@@ -144,7 +144,7 @@ class MutationType(Enum):
 
 @dataclass
 class PatternGene:
-    """Represents a single evolvable pattern gene"""
+    """Represents a single evolvable pattern gene."""
 
     id: str
     type: PatternType
@@ -161,12 +161,12 @@ class PatternGene:
             self.id = self.generate_id()
 
     def generate_id(self) -> str:
-        """Generate unique ID for pattern"""
+        """Generate unique ID for pattern."""
         data = f"{self.type.value}_{self.pattern_data}_{time.time()}"
         return hashlib.sha256(data.encode()).hexdigest()[:16]
 
     def mutate(self, mutation_type: MutationType, mutation_rate: float = 0.1) -> "PatternGene":
-        """Create mutated copy of this gene"""
+        """Create mutated copy of this gene."""
         mutated_data = self._apply_mutation(self.pattern_data, mutation_type, mutation_rate)
 
         return PatternGene(
@@ -180,7 +180,7 @@ class PatternGene:
         )
 
     def _apply_mutation(self, data: Any, mutation_type: MutationType, rate: float) -> Any:
-        """Apply specific mutation to pattern data"""
+        """Apply specific mutation to pattern data."""
         if self.type == PatternType.BYTE_SEQUENCE:
             return self._mutate_byte_sequence(data, mutation_type, rate)
         if self.type == PatternType.API_SEQUENCE:
@@ -192,26 +192,26 @@ class PatternGene:
         return data  # No mutation for unsupported types
 
     def _mutate_byte_sequence(self, data: bytes, mutation_type: MutationType, rate: float) -> bytes:
-        """Mutate byte sequence pattern"""
+        """Mutate byte sequence pattern."""
         byte_list = list(data)
 
         if mutation_type == MutationType.BIT_FLIP:
             for i in range(len(byte_list)):
-                if random.random() < rate:
-                    byte_list[i] ^= 1 << random.randint(0, 7)
+                if random.random() < rate:  # noqa: S311 - ML pattern mutation probability
+                    byte_list[i] ^= 1 << random.randint(0, 7)  # noqa: S311 - ML bit flip mutation
 
         elif mutation_type == MutationType.INSERTION:
-            insert_pos = random.randint(0, len(byte_list))
-            byte_list.insert(insert_pos, random.randint(0, 255))
+            insert_pos = random.randint(0, len(byte_list))  # noqa: S311 - ML insertion position
+            byte_list.insert(insert_pos, random.randint(0, 255))  # noqa: S311 - ML byte insertion
 
         elif mutation_type == MutationType.DELETION and len(byte_list) > 1:
-            del_pos = random.randint(0, len(byte_list) - 1)
+            del_pos = random.randint(0, len(byte_list) - 1)  # noqa: S311 - ML byte sequence deletion mutation
             del byte_list[del_pos]
 
         elif mutation_type == MutationType.SUBSTITUTION:
             if byte_list:
-                sub_pos = random.randint(0, len(byte_list) - 1)
-                byte_list[sub_pos] = random.randint(0, 255)
+                sub_pos = random.randint(0, len(byte_list) - 1)  # noqa: S311 - ML byte sequence substitution position
+                byte_list[sub_pos] = random.randint(0, 255)  # noqa: S311 - ML byte sequence substitution value
 
         elif mutation_type == MutationType.Transposition and len(byte_list) > 1:
             i, j = random.sample(range(len(byte_list)), 2)
@@ -222,7 +222,7 @@ class PatternGene:
     def _mutate_api_sequence(
         self, data: list[str], mutation_type: MutationType, rate: float
     ) -> list[str]:
-        """Mutate API sequence pattern based on mutation rate"""
+        """Mutate API sequence pattern based on mutation rate."""
         api_list = data.copy()
 
         # Common Windows APIs for mutation pool
@@ -249,36 +249,36 @@ class PatternGene:
 
         for _ in range(num_mutations):
             # Only proceed if random chance based on rate allows it
-            if random.random() > rate:
+            if random.random() > rate:  # noqa: S311 - ML API mutation probability gating
                 continue
 
             if mutation_type == MutationType.INSERTION and api_pool:
-                insert_pos = random.randint(0, len(api_list))
-                api_list.insert(insert_pos, random.choice(api_pool))
+                insert_pos = random.randint(0, len(api_list))  # noqa: S311 - ML API sequence insertion position
+                api_list.insert(insert_pos, random.choice(api_pool))  # noqa: S311 - ML API sequence insertion choice
 
             elif mutation_type == MutationType.DELETION and len(api_list) > 1:
-                del_pos = random.randint(0, len(api_list) - 1)
+                del_pos = random.randint(0, len(api_list) - 1)  # noqa: S311 - ML API sequence deletion position
                 del api_list[del_pos]
 
             elif mutation_type == MutationType.SUBSTITUTION and api_list and api_pool:
-                sub_pos = random.randint(0, len(api_list) - 1)
-                api_list[sub_pos] = random.choice(api_pool)
+                sub_pos = random.randint(0, len(api_list) - 1)  # noqa: S311 - ML API sequence substitution position
+                api_list[sub_pos] = random.choice(api_pool)  # noqa: S311 - ML API sequence substitution choice
 
         return api_list
 
     def _mutate_string_pattern(self, data: str, mutation_type: MutationType, rate: float) -> str:
-        """Mutate string pattern (regex)"""
+        """Mutate string pattern (regex)."""
         # For regex patterns, we need careful mutations to maintain validity
         if mutation_type == MutationType.SUBSTITUTION:
             # Add optional components
-            if "?" not in data and random.random() < rate:
+            if "?" not in data and random.random() < rate:  # noqa: S311 - ML string pattern mutation probability
                 # Make last character optional
                 data = data[:-1] + data[-1] + "?"
             # Add character class
-            elif "[" not in data and random.random() < rate:
+            elif "[" not in data and random.random() < rate:  # noqa: S311 - ML string pattern mutation probability
                 # Replace a character with character class
                 if len(data) > 0:
-                    pos = random.randint(0, len(data) - 1)
+                    pos = random.randint(0, len(data) - 1)  # noqa: S311 - ML string pattern character position
                     char = data[pos]
                     if char.isalpha():
                         data = data[:pos] + f"[{char.lower()}{char.upper()}]" + data[pos + 1 :]
@@ -288,7 +288,7 @@ class PatternGene:
     def _mutate_opcode_sequence(
         self, data: list[str], mutation_type: MutationType, rate: float
     ) -> list[str]:
-        """Mutate opcode sequence pattern based on mutation rate"""
+        """Mutate opcode sequence pattern based on mutation rate."""
         opcode_list = data.copy()
 
         # Common x86/x64 opcodes for mutation
@@ -315,27 +315,27 @@ class PatternGene:
 
         for _ in range(num_mutations):
             # Only proceed if random chance based on rate allows it
-            if random.random() > rate:
+            if random.random() > rate:  # noqa: S311 - ML opcode mutation probability gating
                 continue
 
             if mutation_type == MutationType.INSERTION and opcode_pool:
-                insert_pos = random.randint(0, len(opcode_list))
-                opcode_list.insert(insert_pos, random.choice(opcode_pool))
+                insert_pos = random.randint(0, len(opcode_list))  # noqa: S311 - ML opcode sequence insertion position
+                opcode_list.insert(insert_pos, random.choice(opcode_pool))  # noqa: S311 - ML opcode sequence insertion choice
 
             elif mutation_type == MutationType.DELETION and len(opcode_list) > 1:
-                del_pos = random.randint(0, len(opcode_list) - 1)
+                del_pos = random.randint(0, len(opcode_list) - 1)  # noqa: S311 - ML opcode sequence deletion position
                 del opcode_list[del_pos]
 
             elif mutation_type == MutationType.SUBSTITUTION and opcode_list and opcode_pool:
-                sub_pos = random.randint(0, len(opcode_list) - 1)
-                opcode_list[sub_pos] = random.choice(opcode_pool)
+                sub_pos = random.randint(0, len(opcode_list) - 1)  # noqa: S311 - ML opcode sequence substitution position
+                opcode_list[sub_pos] = random.choice(opcode_pool)  # noqa: S311 - ML opcode sequence substitution choice
 
         return opcode_list
 
     def crossover(
         self, other: "PatternGene", crossover_point: int | None = None
     ) -> tuple["PatternGene", "PatternGene"]:
-        """Perform crossover with another gene"""
+        """Perform crossover with another gene."""
         if self.type != other.type:
             # Can't crossover different types
             return self, other
@@ -346,7 +346,7 @@ class PatternGene:
             data2 = other.pattern_data
 
             if not crossover_point:
-                crossover_point = random.randint(1, min(len(data1), len(data2)) - 1)
+                crossover_point = random.randint(1, min(len(data1), len(data2)) - 1)  # noqa: S311 - ML genetic algorithm crossover point
 
             new_data1 = data1[:crossover_point] + data2[crossover_point:]
             new_data2 = data2[:crossover_point] + data1[crossover_point:]
@@ -376,7 +376,7 @@ class PatternGene:
 
 
 class QLearningAgent:
-    """Q-learning agent for pattern effectiveness learning"""
+    """Q-learning agent for pattern effectiveness learning."""
 
     def __init__(
         self,
@@ -404,15 +404,15 @@ class QLearningAgent:
         self.memory = deque(maxlen=10000)
 
     def get_state_key(self, state: np.ndarray) -> str:
-        """Convert state to hashable key"""
+        """Convert state to hashable key."""
         # Discretize continuous values
         discretized = np.round(state, decimals=2)
         return str(discretized.tobytes())
 
     def act(self, state: np.ndarray) -> int:
-        """Choose action using epsilon-greedy policy"""
-        if random.random() <= self.epsilon:
-            return random.randint(0, self.action_size - 1)
+        """Choose action using epsilon-greedy policy."""
+        if random.random() <= self.epsilon:  # noqa: S311 - ML Q-learning epsilon-greedy exploration
+            return random.randint(0, self.action_size - 1)  # noqa: S311 - ML Q-learning random action selection
 
         state_key = self.get_state_key(state)
         return np.argmax(self.q_table[state_key])
@@ -420,15 +420,15 @@ class QLearningAgent:
     def remember(
         self, state: np.ndarray, action: int, reward: float, next_state: np.ndarray, done: bool
     ):
-        """Store experience in replay buffer"""
+        """Store experience in replay buffer."""
         self.memory.append((state, action, reward, next_state, done))
 
     def learn(self, batch_size: int = 32):
-        """Learn from batch of experiences"""
+        """Learn from batch of experiences."""
         if len(self.memory) < batch_size:
             return
 
-        batch = random.sample(self.memory, batch_size)
+        batch = random.sample(self.memory, batch_size)  # noqa: S311 - ML Q-learning experience replay batch sampling
 
         for state, action, reward, next_state, done in batch:
             state_key = self.get_state_key(state)
@@ -449,7 +449,7 @@ class QLearningAgent:
 
 
 class PatternStorage:
-    """SQLite-based pattern storage with versioning"""
+    """SQLite-based pattern storage with versioning."""
 
     def __init__(self, db_path: str = "pattern_evolution.db"):
         """Initialize pattern storage with SQLite database and thread safety."""
@@ -459,7 +459,7 @@ class PatternStorage:
         self._init_database()
 
     def _init_database(self):
-        """Initialize database schema"""
+        """Initialize database schema."""
         with self.lock:
             cursor = self.conn.cursor()
 
@@ -515,7 +515,7 @@ class PatternStorage:
             self.conn.commit()
 
     def save_pattern(self, pattern: PatternGene):
-        """Save pattern to database"""
+        """Save pattern to database."""
         with self.lock:
             cursor = self.conn.cursor()
 
@@ -556,7 +556,7 @@ class PatternStorage:
             self.conn.commit()
 
     def load_pattern(self, pattern_id: str) -> PatternGene | None:
-        """Load pattern from database"""
+        """Load pattern from database."""
         with self.lock:
             cursor = self.conn.cursor()
 
@@ -599,7 +599,7 @@ class PatternStorage:
     def get_top_patterns(
         self, pattern_type: PatternType | None = None, limit: int = 10
     ) -> list[PatternGene]:
-        """Get top performing patterns"""
+        """Get top performing patterns."""
         with self.lock:
             cursor = self.conn.cursor()
 
@@ -630,7 +630,7 @@ class PatternStorage:
     def update_metrics(
         self, pattern_id: str, tp: int, fp: int, tn: int, fn: int, detection_time_ms: float
     ):
-        """Update pattern performance metrics"""
+        """Update pattern performance metrics."""
         with self.lock:
             cursor = self.conn.cursor()
 
@@ -668,7 +668,7 @@ class PatternStorage:
 
 
 class PatternMatcher:
-    """Fast pattern matching engine using Bloom filters and optimized algorithms"""
+    """Fast pattern matching engine using Bloom filters and optimized algorithms."""
 
     def __init__(self, bloom_size: int = 1000000, num_hashes: int = 7):
         """Initialize pattern matcher with bloom filter and pattern caching."""
@@ -679,7 +679,7 @@ class PatternMatcher:
         self.compiled_patterns = {}
 
     def add_pattern(self, pattern: PatternGene):
-        """Add pattern to matcher"""
+        """Add pattern to matcher."""
         # Add to bloom filter for fast negative checks
         for i in range(self.num_hashes):
             hash_val = hash((pattern.id, i)) % self.bloom_size
@@ -696,7 +696,7 @@ class PatternMatcher:
                 self.logger.debug("Invalid regex pattern %s: %s", pattern.id, e)
 
     def match(self, data: bytes, pattern_type: PatternType) -> list[tuple[str, float]]:
-        """Match data against patterns, return (``pattern_id``, confidence) tuples"""
+        """Match data against patterns, return (``pattern_id``, confidence) tuples."""
         matches = []
 
         # Quick bloom filter check
@@ -719,7 +719,7 @@ class PatternMatcher:
         return matches
 
     def _match_pattern(self, data: bytes, pattern: PatternGene) -> float:
-        """Match specific pattern against data"""
+        """Match specific pattern against data."""
         if pattern.type == PatternType.BYTE_SEQUENCE:
             return self._match_byte_sequence(data, pattern.pattern_data)
         if pattern.type == PatternType.STRING_PATTERN:
@@ -731,7 +731,7 @@ class PatternMatcher:
         return 0.0
 
     def _match_byte_sequence(self, data: bytes, pattern: bytes) -> float:
-        """Match byte sequence using Boyer-Moore algorithm"""
+        """Match byte sequence using Boyer-Moore algorithm."""
         if not pattern:
             return 0.0
 
@@ -748,7 +748,7 @@ class PatternMatcher:
         return matches / len(pattern)
 
     def _match_string_pattern(self, data: bytes, pattern: PatternGene) -> float:
-        """Match string pattern (regex)"""
+        """Match string pattern (regex)."""
         if pattern.id not in self.compiled_patterns:
             return 0.0
 
@@ -768,7 +768,7 @@ class PatternMatcher:
         return 0.0
 
     def _match_api_sequence(self, data: bytes, pattern: list[str]) -> float:
-        """Match API call sequence"""
+        """Match API call sequence."""
         # Extract API calls from data (simplified)
         text = data.decode("utf-8", errors="ignore")
 
@@ -784,7 +784,7 @@ class PatternMatcher:
         return len(found_apis) / len(pattern)
 
     def _match_opcode_sequence(self, data: bytes, pattern: list[str]) -> float:
-        """Match opcode sequence by analyzing binary data for instruction patterns"""
+        """Match opcode sequence by analyzing binary data for instruction patterns."""
         if not pattern or not data:
             return 0.0
 
@@ -829,7 +829,7 @@ class PatternMatcher:
 
 
 class PatternEvolutionTracker:
-    """Main pattern evolution and tracking system"""
+    """Main pattern evolution and tracking system."""
 
     def __init__(
         self,
@@ -890,7 +890,7 @@ class PatternEvolutionTracker:
         self._initialize_populations()
 
     def _initialize_populations(self):
-        """Initialize pattern populations from storage or create new"""
+        """Initialize pattern populations from storage or create new."""
         self.logger.info("Initializing pattern populations")
 
         # Load existing patterns
@@ -913,14 +913,14 @@ class PatternEvolutionTracker:
                 self.matcher.add_pattern(pattern)
 
     def _generate_random_patterns(self, pattern_type: PatternType, count: int) -> list[PatternGene]:
-        """Generate random initial patterns"""
+        """Generate random initial patterns."""
         patterns = []
 
         for _ in range(count):
             if pattern_type == PatternType.BYTE_SEQUENCE:
                 # Random byte sequence
-                length = random.randint(4, 32)
-                data = bytes([random.randint(0, 255) for _ in range(length)])
+                length = random.randint(4, 32)  # noqa: S311 - ML training data byte sequence length generation
+                data = bytes([random.randint(0, 255) for _ in range(length)])  # noqa: S311 - ML training data byte generation
 
             elif pattern_type == PatternType.API_SEQUENCE:
                 # Random API sequence
@@ -935,8 +935,8 @@ class PatternEvolutionTracker:
                     "GetProcAddress",
                     "MessageBoxA",
                 ]
-                length = random.randint(2, 8)
-                data = [random.choice(api_pool) for _ in range(length)]
+                length = random.randint(2, 8)  # noqa: S311 - ML training data API sequence length generation
+                data = [random.choice(api_pool) for _ in range(length)]  # noqa: S311 - ML training data API sequence generation
 
             elif pattern_type == PatternType.STRING_PATTERN:
                 # Common license-related regex patterns
@@ -952,7 +952,7 @@ class PatternEvolutionTracker:
                     r"\d{1,2}/\d{1,2}/\d{4}",  # Date pattern
                     r"expire[ds]?",
                 ]
-                data = random.choice(patterns_pool)
+                data = random.choice(patterns_pool)  # noqa: S311 - ML training data string pattern generation
 
             elif pattern_type == PatternType.OPCODE_SEQUENCE:
                 # Random opcode sequence
@@ -972,8 +972,8 @@ class PatternEvolutionTracker:
                     "lea",
                     "ret",
                 ]
-                length = random.randint(3, 10)
-                data = [random.choice(opcode_pool) for _ in range(length)]
+                length = random.randint(3, 10)  # noqa: S311 - ML training data opcode sequence length generation
+                data = [random.choice(opcode_pool) for _ in range(length)]  # noqa: S311 - ML training data opcode sequence generation
 
             else:
                 # Default: empty data
@@ -991,7 +991,7 @@ class PatternEvolutionTracker:
         return patterns
 
     def evolve_generation(self, pattern_type: PatternType | None = None):
-        """Evolve one generation of patterns"""
+        """Evolve one generation of patterns."""
         if pattern_type:
             types_to_evolve = [pattern_type]
         else:
@@ -1029,7 +1029,7 @@ class PatternEvolutionTracker:
                 parent2 = self._tournament_selection(population)
 
                 # Crossover
-                if random.random() < self.crossover_rate and parent1.type == parent2.type:
+                if random.random() < self.crossover_rate and parent1.type == parent2.type:  # noqa: S311 - ML genetic algorithm crossover probability
                     child1, child2 = parent1.crossover(parent2)
                     new_population.extend([child1, child2])
                 else:
@@ -1038,8 +1038,8 @@ class PatternEvolutionTracker:
 
                 # Mutation
                 for i in range(len(new_population) - 2, len(new_population)):
-                    if i < len(new_population) and random.random() < self.mutation_rate:
-                        mutation_type = random.choice(list(MutationType))
+                    if i < len(new_population) and random.random() < self.mutation_rate:  # noqa: S311 - ML genetic algorithm mutation probability
+                        mutation_type = random.choice(list(MutationType))  # noqa: S311 - ML genetic algorithm mutation type selection
                         new_population[i] = new_population[i].mutate(
                             mutation_type,
                             self.mutation_rate,
@@ -1061,7 +1061,7 @@ class PatternEvolutionTracker:
         self._notify_observers()
 
     def _evaluate_fitness(self, pattern: PatternGene) -> float:
-        """Evaluate pattern fitness using stored metrics and pattern characteristics"""
+        """Evaluate pattern fitness using stored metrics and pattern characteristics."""
         if not pattern or not pattern.pattern_data:
             return 0.0
 
@@ -1101,19 +1101,19 @@ class PatternEvolutionTracker:
         final_fitness = complexity_score * 0.5 + generation_bonus * 0.2 + historical_fitness * 0.3
 
         # Add some randomness for exploration
-        final_fitness += random.random() * 0.1
+        final_fitness += random.random() * 0.1  # noqa: S311 - ML fitness evaluation exploration randomness
 
         return min(1.0, final_fitness)
 
     def _tournament_selection(
         self, population: list[PatternGene], tournament_size: int = 3
     ) -> PatternGene:
-        """Tournament selection for genetic algorithm"""
-        tournament = random.sample(population, min(tournament_size, len(population)))
+        """Tournament selection for genetic algorithm."""
+        tournament = random.sample(population, min(tournament_size, len(population)))  # noqa: S311 - ML genetic algorithm tournament selection
         return max(tournament, key=lambda p: p.fitness)
 
     def detect(self, data: bytes, pattern_types: list[PatternType] | None = None) -> dict[str, Any]:
-        """Detect patterns in data using evolved patterns"""
+        """Detect patterns in data using evolved patterns."""
         if not pattern_types:
             pattern_types = list(PatternType)
 
@@ -1152,7 +1152,7 @@ class PatternEvolutionTracker:
         return results
 
     def _update_q_learning(self, data: bytes, results: dict[str, Any]):
-        """Update Q-learning agent based on detection results"""
+        """Update Q-learning agent based on detection results."""
         # Extract features for state
         state = self._extract_state_features(data)
 
@@ -1169,7 +1169,7 @@ class PatternEvolutionTracker:
         self.q_agent.learn()
 
     def _extract_state_features(self, data: bytes) -> np.ndarray:
-        """Extract features from data for Q-learning state"""
+        """Extract features from data for Q-learning state."""
         features = []
 
         # Size features
@@ -1197,7 +1197,7 @@ class PatternEvolutionTracker:
         return np.array(features[:50])
 
     def feedback(self, pattern_id: str, correct: bool, detection_time_ms: float):
-        """Provide feedback on pattern detection"""
+        """Provide feedback on pattern detection."""
         pattern = self.storage.load_pattern(pattern_id)
         if not pattern:
             return
@@ -1224,11 +1224,11 @@ class PatternEvolutionTracker:
                         break
 
     def add_observer(self, observer):
-        """Add observer for pattern updates"""
+        """Add observer for pattern updates."""
         self.observers.append(observer)
 
     def _notify_observers(self):
-        """Notify observers of pattern updates"""
+        """Notify observers of pattern updates."""
         for observer in self.observers:
             try:
                 observer.on_patterns_updated(self)
@@ -1236,7 +1236,7 @@ class PatternEvolutionTracker:
                 self.logger.error(f"Error notifying observer: {e}")
 
     def export_patterns(self, output_file: str, pattern_type: PatternType | None = None):
-        """Export patterns to JSON file"""
+        """Export patterns to JSON file."""
         patterns_data = []
 
         if pattern_type:
@@ -1271,7 +1271,7 @@ class PatternEvolutionTracker:
         self.logger.info(f"Exported {len(patterns_data)} patterns to {output_file}")
 
     def import_patterns(self, input_file: str):
-        """Import patterns from JSON file"""
+        """Import patterns from JSON file."""
         with open(input_file) as f:
             data = json.load(f)
 
@@ -1324,7 +1324,7 @@ class PatternEvolutionTracker:
                 self.populations[ptype] = self.populations[ptype][: self.population_size]
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get current statistics"""
+        """Get current statistics."""
         stats = self.stats.copy()
 
         # Add population statistics
@@ -1340,7 +1340,7 @@ class PatternEvolutionTracker:
     def cluster_patterns(
         self, pattern_type: PatternType, min_samples: int = 5
     ) -> dict[int, list[PatternGene]]:
-        """Cluster similar patterns using DBSCAN"""
+        """Cluster similar patterns using DBSCAN."""
         population = self.populations[pattern_type]
         if len(population) < min_samples:
             return {0: population}
@@ -1371,17 +1371,17 @@ class PatternEvolutionTracker:
         return dict(clusters)
 
     def shutdown(self):
-        """Clean shutdown"""
+        """Clean shutdown."""
         self.executor.shutdown(wait=True)
         self.storage.conn.close()
 
 
 # Example observer implementation
 class PatternUpdateObserver:
-    """Example observer for pattern updates"""
+    """Example observer for pattern updates."""
 
     def on_patterns_updated(self, tracker: PatternEvolutionTracker):
-        """Called when patterns are updated"""
+        """Called when patterns are updated."""
         stats = tracker.get_statistics()
         print(
             f"Generation {stats['generations']}: "
@@ -1391,7 +1391,7 @@ class PatternUpdateObserver:
 
 
 def main():
-    """Example usage"""
+    """Example usage."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Pattern Evolution Tracker")

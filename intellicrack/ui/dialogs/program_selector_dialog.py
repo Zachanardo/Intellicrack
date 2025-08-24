@@ -23,6 +23,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -308,9 +309,17 @@ class AnalysisPage(QWizardPage):
                 if sys.platform.startswith('win'):
                     os.startfile(file_path)  # noqa: S606  # Legitimate program file opening for security research target selection
                 elif sys.platform.startswith('darwin'):
-                    subprocess.run(['open', file_path])
+                    open_path = shutil.which('open')
+                    if open_path:
+                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                            [open_path, file_path], shell=False
+                        )
                 else:
-                    subprocess.run(['xdg-open', file_path])
+                    xdg_open_path = shutil.which('xdg-open')
+                    if xdg_open_path:
+                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                            [xdg_open_path, file_path], shell=False
+                        )
         except Exception as e:
             logger.error(f"Error opening licensing file: {e}")
             QMessageBox.warning(self, "Error", f"Could not open file: {e}")

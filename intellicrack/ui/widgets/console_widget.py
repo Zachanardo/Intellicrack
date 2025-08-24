@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ from intellicrack.handlers.pyqt6_handler import (
 
 
 class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for console output"""
+    """Syntax highlighter for console output."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -130,7 +130,7 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         self.rules.append((QRegularExpression(r"'[^']*'"), string_format))
 
     def highlightBlock(self, text):
-        """Apply syntax highlighting to a block of text"""
+        """Apply syntax highlighting to a block of text."""
         for pattern, format in self.rules:
             expression = QRegularExpression(pattern)
             match_iterator = expression.globalMatch(text)
@@ -140,7 +140,7 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
 
 
 class ConsoleWidget(QWidget):
-    """Professional console widget with filtering and search"""
+    """Professional console widget with filtering and search."""
 
     # Signals
     command_entered = pyqtSignal(str)
@@ -157,7 +157,7 @@ class ConsoleWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        """Initialize the user interface"""
+        """Initialize the user interface."""
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
 
@@ -237,7 +237,7 @@ class ConsoleWidget(QWidget):
         self.setLayout(layout)
 
     def append_output(self, text: str, level: str = "INFO"):
-        """Append text to the console with optional level prefix"""
+        """Append text to the console with optional level prefix."""
         timestamp = datetime.now().strftime("%H:%M:%S")
 
         # Format the output
@@ -263,37 +263,37 @@ class ConsoleWidget(QWidget):
             scrollbar.setValue(scrollbar.maximum())
 
     def append_error(self, text: str):
-        """Append error text"""
+        """Append error text."""
         self.append_output(text, "ERROR")
 
     def append_warning(self, text: str):
-        """Append warning text"""
+        """Append warning text."""
         self.append_output(text, "WARNING")
 
     def append_success(self, text: str):
-        """Append success text"""
+        """Append success text."""
         self.append_output(text, "SUCCESS")
 
     def append_info(self, text: str):
-        """Append info text"""
+        """Append info text."""
         self.append_output(text, "INFO")
 
     def append_debug(self, text: str):
-        """Append debug text"""
+        """Append debug text."""
         self.append_output(text, "DEBUG")
 
     def clear(self):
-        """Clear the console"""
+        """Clear the console."""
         self.output.clear()
 
     def apply_filter(self, filter_text: str):
-        """Apply log level filter"""
+        """Apply log level filter."""
         # This is a simplified version - in production you'd actually filter the display
         if filter_text != "All":
             self.append_output(f"Filter applied: {filter_text}", "INFO")
 
     def search_text(self, search_term: str):
-        """Search for text in the console"""
+        """Search for text in the console."""
         if not search_term:
             # Clear highlighting
             cursor = self.output.textCursor()
@@ -333,14 +333,14 @@ class ConsoleWidget(QWidget):
                 self.output.setTextCursor(cursor)
 
     def toggle_wrap(self, state):
-        """Toggle text wrapping"""
+        """Toggle text wrapping."""
         if state == Qt.Checked:
             self.output.setLineWrapMode(QTextEdit.WidgetWidth)
         else:
             self.output.setLineWrapMode(QTextEdit.NoWrap)
 
     def export_log(self):
-        """Export console log to file"""
+        """Export console log to file."""
         from intellicrack.handlers.pyqt6_handler import QFileDialog
 
         filename, _ = QFileDialog.getSaveFileName(
@@ -360,7 +360,7 @@ class ConsoleWidget(QWidget):
                 self.append_error(f"Failed to export log: {e}")
 
     def process_command(self):
-        """Process entered command (if input enabled)"""
+        """Process entered command (if input enabled)."""
         if not hasattr(self, "command_input"):
             return
 
@@ -382,7 +382,7 @@ class ConsoleWidget(QWidget):
         self.command_entered.emit(command)
 
     def eventFilter(self, obj, event):
-        """Handle key events for command history"""
+        """Handle key events for command history."""
         if hasattr(self, "command_input") and obj == self.command_input:
             if event.type() == event.KeyPress:
                 if event.key() == Qt.Key_Up:
@@ -408,11 +408,11 @@ class ConsoleWidget(QWidget):
         return super().eventFilter(obj, event)
 
     def get_content(self) -> str:
-        """Get the console content"""
+        """Get the console content."""
         return self.output.toPlainText()
 
     def set_max_lines(self, max_lines: int):
-        """Set maximum number of lines to keep"""
+        """Set maximum number of lines to keep."""
         self.max_lines = max_lines
 
 

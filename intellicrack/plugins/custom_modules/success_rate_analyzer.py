@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ License: GPL v3
 
 
 class EventType(Enum):
-    """Types of events to track"""
+    """Types of events to track."""
 
     PROTECTION_DETECTION = "protection_detection"
     BYPASS_ATTEMPT = "bypass_attempt"
@@ -67,7 +67,7 @@ class EventType(Enum):
 
 
 class OutcomeType(Enum):
-    """Event outcome types"""
+    """Event outcome types."""
 
     SUCCESS = "success"
     FAILURE = "failure"
@@ -77,7 +77,7 @@ class OutcomeType(Enum):
 
 
 class ProtectionCategory(Enum):
-    """Protection categories for analysis"""
+    """Protection categories for analysis."""
 
     SERIAL_KEY = "serial_key"
     DONGLE = "dongle"
@@ -93,7 +93,7 @@ class ProtectionCategory(Enum):
 
 @dataclass
 class AnalysisEvent:
-    """Individual analysis event for tracking"""
+    """Individual analysis event for tracking."""
 
     event_id: str
     event_type: EventType
@@ -111,14 +111,14 @@ class AnalysisEvent:
             self.event_id = self.generate_event_id()
 
     def generate_event_id(self) -> str:
-        """Generate unique event ID"""
+        """Generate unique event ID."""
         data = f"{self.event_type.value}_{self.component}_{self.timestamp}"
         return hashlib.sha256(data.encode()).hexdigest()[:16]
 
 
 @dataclass
 class StatisticalResult:
-    """Statistical analysis result"""
+    """Statistical analysis result."""
 
     metric_name: str
     value: float
@@ -131,7 +131,7 @@ class StatisticalResult:
 
 @dataclass
 class TrendAnalysis:
-    """Trend analysis result"""
+    """Trend analysis result."""
 
     component: str
     protection_category: ProtectionCategory
@@ -144,13 +144,13 @@ class TrendAnalysis:
 
 
 class WilsonScoreInterval:
-    """Wilson score interval for binomial confidence intervals"""
+    """Wilson score interval for binomial confidence intervals."""
 
     @staticmethod
     def calculate(
         successes: int, total: int, confidence_level: float = 0.95
     ) -> tuple[float, float]:
-        """Calculate Wilson score confidence interval"""
+        """Calculate Wilson score confidence interval."""
         if total == 0:
             return (0.0, 1.0)
 
@@ -168,7 +168,7 @@ class WilsonScoreInterval:
 
 
 class BayesianAnalyzer:
-    """Bayesian analysis for success rates"""
+    """Bayesian analysis for success rates."""
 
     def __init__(self, prior_alpha: float = 1.0, prior_beta: float = 1.0):
         """Initialize Bayesian analyzer with Beta distribution prior parameters."""
@@ -176,20 +176,20 @@ class BayesianAnalyzer:
         self.prior_beta = prior_beta
 
     def update_posterior(self, successes: int, failures: int) -> tuple[float, float]:
-        """Update Beta posterior parameters"""
+        """Update Beta posterior parameters."""
         posterior_alpha = self.prior_alpha + successes
         posterior_beta = self.prior_beta + failures
         return (posterior_alpha, posterior_beta)
 
     def posterior_mean(self, successes: int, failures: int) -> float:
-        """Calculate posterior mean"""
+        """Calculate posterior mean."""
         alpha, beta = self.update_posterior(successes, failures)
         return alpha / (alpha + beta)
 
     def credible_interval(
         self, successes: int, failures: int, confidence: float = 0.95
     ) -> tuple[float, float]:
-        """Calculate Bayesian credible interval"""
+        """Calculate Bayesian credible interval."""
         alpha, beta = self.update_posterior(successes, failures)
         lower_percentile = (1 - confidence) / 2
         upper_percentile = 1 - lower_percentile
@@ -200,24 +200,24 @@ class BayesianAnalyzer:
         return (lower, upper)
 
     def posterior_probability(self, successes: int, failures: int, threshold: float) -> float:
-        """Calculate P(``success_rate`` > threshold | data)"""
+        """Calculate P(``success_rate`` > threshold | data)."""
         alpha, beta = self.update_posterior(successes, failures)
         return 1 - stats.beta.cdf(threshold, alpha, beta)
 
 
 class SurvivalAnalyzer:
-    """Kaplan-Meier survival analysis for bypass longevity"""
+    """Kaplan-Meier survival analysis for bypass longevity."""
 
     def __init__(self):
         """Initialize survival analyzer for Kaplan-Meier analysis."""
         self.survival_data = []
 
     def add_observation(self, duration: float, censored: bool = False):
-        """Add survival observation"""
+        """Add survival observation."""
         self.survival_data.append((duration, not censored))  # True = event occurred
 
     def kaplan_meier_estimate(self) -> tuple[list[float], list[float]]:
-        """Calculate Kaplan-Meier survival function"""
+        """Calculate Kaplan-Meier survival function."""
         if not self.survival_data:
             return ([], [])
 
@@ -253,7 +253,7 @@ class SurvivalAnalyzer:
         return (times, survival_probs)
 
     def median_survival_time(self) -> float | None:
-        """Calculate median survival time"""
+        """Calculate median survival time."""
         times, survival_probs = self.kaplan_meier_estimate()
 
         if not times:
@@ -268,18 +268,18 @@ class SurvivalAnalyzer:
 
 
 class TimeSeriesAnalyzer:
-    """Time series analysis and forecasting"""
+    """Time series analysis and forecasting."""
 
     def __init__(self):
         """Initialize time series analyzer with component history tracking."""
         self.history = defaultdict(list)
 
     def add_data_point(self, component: str, timestamp: float, value: float):
-        """Add time series data point"""
+        """Add time series data point."""
         self.history[component].append((timestamp, value))
 
     def detect_trend(self, component: str, window_size: int = 30) -> dict[str, Any]:
-        """Detect trend using linear regression"""
+        """Detect trend using linear regression."""
         if component not in self.history or len(self.history[component]) < window_size:
             return {"trend": "insufficient_data", "strength": 0.0}
 
@@ -310,7 +310,7 @@ class TimeSeriesAnalyzer:
         }
 
     def seasonal_decomposition(self, component: str, period: int = 24) -> dict[str, Any]:
-        """Perform seasonal decomposition"""
+        """Perform seasonal decomposition."""
         if component not in self.history or len(self.history[component]) < period * 2:
             return {"seasonal": False, "components": {}}
 
@@ -358,7 +358,7 @@ class TimeSeriesAnalyzer:
     def forecast_arima(
         self, component: str, periods: int = 10
     ) -> tuple[list[float], list[tuple[float, float]]]:
-        """Simple ARIMA-like forecasting"""
+        """Simple ARIMA-like forecasting."""
         if component not in self.history or len(self.history[component]) < 10:
             return ([], [])
 
@@ -397,11 +397,11 @@ class TimeSeriesAnalyzer:
 
 
 class StatisticalTester:
-    """Statistical hypothesis testing"""
+    """Statistical hypothesis testing."""
 
     @staticmethod
     def chi_square_test(observed: list[int], expected: list[int] = None) -> dict[str, float]:
-        """Chi-square goodness of fit test"""
+        """Chi-square goodness of fit test."""
         if expected is None:
             expected = [sum(observed) / len(observed)] * len(observed)
 
@@ -417,7 +417,7 @@ class StatisticalTester:
     def fishers_exact_test(
         success1: int, total1: int, success2: int, total2: int
     ) -> dict[str, float]:
-        """Fisher's exact test for comparing two proportions"""
+        """Fisher's exact test for comparing two proportions."""
         # Create contingency table
         table = [[success1, total1 - success1], [success2, total2 - success2]]
 
@@ -430,7 +430,7 @@ class StatisticalTester:
 
     @staticmethod
     def mann_whitney_u_test(group1: list[float], group2: list[float]) -> dict[str, float]:
-        """Mann-Whitney U test for comparing two independent groups"""
+        """Mann-Whitney U test for comparing two independent groups."""
         statistic, p_value = stats.mannwhitneyu(group1, group2, alternative="two-sided")
 
         return {
@@ -440,11 +440,11 @@ class StatisticalTester:
 
 
 class PerformanceMetrics:
-    """Performance metrics calculator"""
+    """Performance metrics calculator."""
 
     @staticmethod
     def confusion_matrix_metrics(tp: int, tn: int, fp: int, fn: int) -> dict[str, float]:
-        """Calculate metrics from confusion matrix"""
+        """Calculate metrics from confusion matrix."""
         total = tp + tn + fp + fn
         if total == 0:
             return {}
@@ -470,7 +470,7 @@ class PerformanceMetrics:
 
     @staticmethod
     def auc_roc(y_true: list[int], y_scores: list[float]) -> float:
-        """Calculate AUC-ROC using trapezoidal rule"""
+        """Calculate AUC-ROC using trapezoidal rule."""
         if len(set(y_true)) != 2:
             return 0.5  # Cannot calculate ROC for non-binary classification
 
@@ -512,7 +512,7 @@ class PerformanceMetrics:
 
 
 class EventTracker:
-    """Event tracking and database management"""
+    """Event tracking and database management."""
 
     def __init__(self, db_path: str = "intellicrack_success_rates.db"):
         """Initialize event tracker with SQLite database and threading support."""
@@ -521,7 +521,7 @@ class EventTracker:
         self.initialize_database()
 
     def initialize_database(self):
-        """Initialize SQLite database schema"""
+        """Initialize SQLite database schema."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
@@ -579,7 +579,7 @@ class EventTracker:
             conn.commit()
 
     def log_event(self, event: AnalysisEvent):
-        """Log analysis event to database"""
+        """Log analysis event to database."""
         with self.lock:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -613,7 +613,7 @@ class EventTracker:
         start_time: float = None,
         end_time: float = None,
     ) -> list[AnalysisEvent]:
-        """Retrieve events from database with filtering"""
+        """Retrieve events from database with filtering."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
@@ -665,7 +665,7 @@ class EventTracker:
         start_time: float = None,
         end_time: float = None,
     ) -> tuple[int, int]:
-        """Get success and total counts"""
+        """Get success and total counts."""
         events = self.get_events(component, protection_category, start_time, end_time)
 
         success_count = sum(1 for event in events if event.outcome == OutcomeType.SUCCESS)
@@ -675,7 +675,7 @@ class EventTracker:
 
 
 class MLPredictor:
-    """Machine learning-based success rate predictor"""
+    """Machine learning-based success rate predictor."""
 
     def __init__(self):
         """Initialize machine learning predictor with ensemble models and feature scaling."""
@@ -689,7 +689,7 @@ class MLPredictor:
         self.feature_names = []
 
     def prepare_features(self, events: list[AnalysisEvent]) -> tuple[np.ndarray, np.ndarray]:
-        """Prepare features for machine learning"""
+        """Prepare features for machine learning."""
         if not events:
             return np.array([]), np.array([])
 
@@ -759,7 +759,7 @@ class MLPredictor:
         return np.array(features), np.array(targets)
 
     def train(self, events: list[AnalysisEvent]):
-        """Train prediction models"""
+        """Train prediction models."""
         X, y = self.prepare_features(events)
 
         if len(X) < 10:  # Need minimum samples for training
@@ -778,7 +778,7 @@ class MLPredictor:
         self.is_trained = True
 
     def predict(self, recent_events: list[AnalysisEvent], horizon: int = 24) -> dict[str, Any]:
-        """Predict future success rates"""
+        """Predict future success rates."""
         if not self.is_trained or not recent_events:
             return {}
 
@@ -808,7 +808,7 @@ class MLPredictor:
 
 
 class ReportGenerator:
-    """Statistical report generation"""
+    """Statistical report generation."""
 
     def __init__(self, output_dir: str = "reports"):
         """Initialize report generator with configurable output directory."""
@@ -816,7 +816,7 @@ class ReportGenerator:
         self.output_dir.mkdir(exist_ok=True)
 
     def generate_comprehensive_report(self, analyzer: "SuccessRateAnalyzer") -> str:
-        """Generate comprehensive PDF report"""
+        """Generate comprehensive PDF report."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_path = self.output_dir / f"intellicrack_success_analysis_{timestamp}.pdf"
 
@@ -948,7 +948,7 @@ class ReportGenerator:
         return str(report_path)
 
     def _calculate_daily_success_rates(self, events: list[AnalysisEvent]) -> dict[int, float]:
-        """Calculate daily success rates"""
+        """Calculate daily success rates."""
         daily_events = defaultdict(list)
         current_time = time.time()
 
@@ -965,7 +965,7 @@ class ReportGenerator:
         return daily_success
 
     def _prepare_correlation_data(self, analyzer: "SuccessRateAnalyzer") -> np.ndarray | None:
-        """Prepare correlation matrix data"""
+        """Prepare correlation matrix data."""
         try:
             component_stats = analyzer.get_component_statistics()
             if len(component_stats) < 2:
@@ -982,7 +982,7 @@ class ReportGenerator:
 
 
 class SuccessRateAnalyzer:
-    """Main success rate analysis engine"""
+    """Main success rate analysis engine."""
 
     def __init__(self, db_path: str = "intellicrack_success_rates.db"):
         """Initialize comprehensive success rate analyzer with all statistical components."""
@@ -1003,7 +1003,7 @@ class SuccessRateAnalyzer:
         self._start_background_tasks()
 
     def _start_background_tasks(self):
-        """Start background analysis tasks"""
+        """Start background analysis tasks."""
 
         def background_worker():
             while self.is_running:
@@ -1043,7 +1043,7 @@ class SuccessRateAnalyzer:
         metadata: dict[str, Any] = None,
         error_details: str = "",
     ):
-        """Log analysis event"""
+        """Log analysis event."""
         event = AnalysisEvent(
             event_id="",  # Will be auto-generated
             event_type=event_type,
@@ -1073,7 +1073,7 @@ class SuccessRateAnalyzer:
         protection_category: ProtectionCategory = None,
         time_window: int = None,
     ) -> StatisticalResult:
-        """Get success rate with confidence interval"""
+        """Get success rate with confidence interval."""
         cache_key = f"success_rate_{component}_{protection_category}_{time_window}"
 
         if cache_key in self.cache and self.cache_expiry.get(cache_key, 0) > time.time():
@@ -1116,7 +1116,7 @@ class SuccessRateAnalyzer:
     def get_bayesian_success_rate(
         self, component: str = None, protection_category: ProtectionCategory = None
     ) -> dict[str, Any]:
-        """Get Bayesian success rate analysis"""
+        """Get Bayesian success rate analysis."""
         success_count, total_count = self.event_tracker.get_success_counts(
             component, protection_category
         )
@@ -1148,7 +1148,7 @@ class SuccessRateAnalyzer:
     def compare_success_rates(
         self, component1: str, component2: str, protection_category: ProtectionCategory = None
     ) -> dict[str, Any]:
-        """Compare success rates between components"""
+        """Compare success rates between components."""
         success1, total1 = self.event_tracker.get_success_counts(component1, protection_category)
         success2, total2 = self.event_tracker.get_success_counts(component2, protection_category)
 
@@ -1182,7 +1182,7 @@ class SuccessRateAnalyzer:
     def get_trend_analysis(
         self, component: str, protection_category: ProtectionCategory = None
     ) -> TrendAnalysis:
-        """Get trend analysis for component"""
+        """Get trend analysis for component."""
         trend_data = self.time_series_analyzer.detect_trend(component)
         forecasts, intervals = self.time_series_analyzer.forecast_arima(component)
         seasonal_data = self.time_series_analyzer.seasonal_decomposition(component)
@@ -1198,7 +1198,7 @@ class SuccessRateAnalyzer:
         )
 
     def get_component_statistics(self) -> dict[str, dict[str, Any]]:
-        """Get statistics for all components"""
+        """Get statistics for all components."""
         # Get all unique components
         all_events = self.event_tracker.get_events()
         components = set(event.component for event in all_events)
@@ -1219,7 +1219,7 @@ class SuccessRateAnalyzer:
         return stats
 
     def get_category_statistics(self) -> dict[str, dict[str, Any]]:
-        """Get statistics for all protection categories"""
+        """Get statistics for all protection categories."""
         stats = {}
         for category in ProtectionCategory:
             success_rate_result = self.get_success_rate(protection_category=category)
@@ -1234,7 +1234,7 @@ class SuccessRateAnalyzer:
         return stats
 
     def generate_performance_dashboard(self) -> dict[str, Any]:
-        """Generate real-time performance dashboard data"""
+        """Generate real-time performance dashboard data."""
         current_time = time.time()
 
         # Recent performance (last 24 hours)
@@ -1293,11 +1293,11 @@ class SuccessRateAnalyzer:
         }
 
     def generate_comprehensive_report(self) -> str:
-        """Generate comprehensive analysis report"""
+        """Generate comprehensive analysis report."""
         return self.report_generator.generate_comprehensive_report(self)
 
     def export_data(self, format: str = "json", include_raw_events: bool = False) -> str:
-        """Export analysis data"""
+        """Export analysis data."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         if format == "json":
@@ -1368,7 +1368,7 @@ class SuccessRateAnalyzer:
         raise ValueError(f"Unsupported export format: {format}")
 
     def shutdown(self):
-        """Shutdown analyzer"""
+        """Shutdown analyzer."""
         self.is_running = False
 
 
@@ -1377,7 +1377,7 @@ _global_analyzer = None
 
 
 def get_success_rate_analyzer(db_path: str = None) -> SuccessRateAnalyzer:
-    """Get global success rate analyzer instance"""
+    """Get global success rate analyzer instance."""
     global _global_analyzer
 
     if _global_analyzer is None:
@@ -1390,7 +1390,7 @@ def get_success_rate_analyzer(db_path: str = None) -> SuccessRateAnalyzer:
 def track_success(
     event_type: EventType, protection_category: ProtectionCategory, component: str = None
 ):
-    """Decorator for automatic success/failure tracking"""
+    """Decorator for automatic success/failure tracking."""
 
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -1461,8 +1461,8 @@ if __name__ == "__main__":
 
     # Generate test events
     for _ in range(100):
-        component = random.choice(components)
-        category = random.choice(categories)
+        component = random.choice(components)  # noqa: S311 - Test event simulation data
+        category = random.choice(categories)  # noqa: S311 - Test event simulation data
 
         # Simulate varying success rates by component
         if component == "neural_network_detector":
@@ -1472,11 +1472,11 @@ if __name__ == "__main__":
         else:
             success_prob = 0.65
 
-        outcome = OutcomeType.SUCCESS if random.random() < success_prob else OutcomeType.FAILURE
-        duration = random.uniform(0.1, 5.0)
+        outcome = OutcomeType.SUCCESS if random.random() < success_prob else OutcomeType.FAILURE  # noqa: S311 - Test event simulation data
+        duration = random.uniform(0.1, 5.0)  # noqa: S311 - Test event simulation data
 
         # Backdate some events
-        timestamp_offset = random.uniform(0, 7 * 24 * 3600)  # Up to 7 days ago
+        timestamp_offset = random.uniform(0, 7 * 24 * 3600)  # noqa: S311 - Test event simulation data, up to 7 days ago
 
         event = AnalysisEvent(
             event_id="",

@@ -1,5 +1,5 @@
 """Centralized Style Manager for Intellicrack UI
-Manages style application without inline setStyleSheet calls
+Manages style application without inline setStyleSheet calls.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -30,7 +30,7 @@ from intellicrack.handlers.pyqt6_handler import (
 
 
 class StyleManager:
-    """Production-ready centralized style manager for all UI widgets"""
+    """Production-ready centralized style manager for all UI widgets."""
 
     # Widget style mappings - define object names for widgets
     STYLE_MAPPINGS = {
@@ -134,11 +134,12 @@ class StyleManager:
 
     @classmethod
     def apply_style(cls, widget: QWidget, style_name: str) -> None:
-        """Apply a predefined style to a widget
+        """Apply a predefined style to a widget.
 
         Args:
             widget: The widget to style
             style_name: The name of the style to apply
+
         """
         if style_name in cls.STYLE_MAPPINGS:
             object_name = cls.STYLE_MAPPINGS[style_name]
@@ -148,61 +149,67 @@ class StyleManager:
 
     @classmethod
     def style_label(cls, label: QLabel, style_type: str) -> None:
-        """Apply style to a QLabel
+        """Apply style to a QLabel.
 
         Args:
             label: The label to style
             style_type: Type of label style to apply
+
         """
         cls.apply_style(label, style_type)
 
     @classmethod
     def style_button(cls, button: QPushButton, style_type: str) -> None:
-        """Apply style to a QPushButton
+        """Apply style to a QPushButton.
 
         Args:
             button: The button to style
             style_type: Type of button style to apply
+
         """
         cls.apply_style(button, style_type)
 
     @classmethod
     def style_progress(cls, progress: QProgressBar, style_type: str) -> None:
-        """Apply style to a QProgressBar
+        """Apply style to a QProgressBar.
 
         Args:
             progress: The progress bar to style
             style_type: Type of progress bar style to apply
+
         """
         cls.apply_style(progress, style_type)
 
     @classmethod
     def style_text_edit(cls, text_edit: QTextEdit, style_type: str) -> None:
-        """Apply style to a QTextEdit
+        """Apply style to a QTextEdit.
 
         Args:
             text_edit: The text edit to style
             style_type: Type of text edit style to apply
+
         """
         cls.apply_style(text_edit, style_type)
 
     @classmethod
     def style_frame(cls, frame: QFrame, style_type: str) -> None:
-        """Apply style to a QFrame
+        """Apply style to a QFrame.
 
         Args:
             frame: The frame to style
             style_type: Type of frame style to apply
+
         """
         cls.apply_style(frame, style_type)
 
     @classmethod
     def update_status_style(cls, label: QLabel, status: str) -> None:
-        """Update status label style based on status
+        """Update status label style based on status.
 
         Args:
             label: The status label
             status: The status type ('success', 'error', 'warning', 'info', 'neutral')
+
         """
         status_map = {
             'success': 'status_success',
@@ -222,11 +229,12 @@ class StyleManager:
 
     @classmethod
     def update_progress_style(cls, progress: QProgressBar, state: str) -> None:
-        """Update progress bar style based on state
+        """Update progress bar style based on state.
 
         Args:
             progress: The progress bar
             state: The state ('loading', 'failed', 'pending', 'completed', 'initializing')
+
         """
         state_map = {
             'loading': 'loading_progress',
@@ -241,11 +249,12 @@ class StyleManager:
 
     @classmethod
     def update_cpu_progress_style(cls, progress: QProgressBar, usage: float) -> None:
-        """Update CPU progress bar style based on usage
+        """Update CPU progress bar style based on usage.
 
         Args:
             progress: The progress bar
             usage: CPU usage percentage
+
         """
         if usage >= 80:
             cls.style_progress(progress, 'cpu_high')
@@ -256,11 +265,12 @@ class StyleManager:
 
     @classmethod
     def update_gpu_progress_style(cls, progress: QProgressBar, usage: float) -> None:
-        """Update GPU progress bar style based on usage
+        """Update GPU progress bar style based on usage.
 
         Args:
             progress: The progress bar
             usage: GPU usage percentage
+
         """
         if usage >= 80:
             cls.style_progress(progress, 'gpu_high')
@@ -271,11 +281,12 @@ class StyleManager:
 
     @classmethod
     def update_memory_progress_style(cls, progress: QProgressBar, usage: float) -> None:
-        """Update memory progress bar style based on usage
+        """Update memory progress bar style based on usage.
 
         Args:
             progress: The progress bar
             usage: Memory usage percentage
+
         """
         if usage >= 80:
             cls.style_progress(progress, 'memory_high')
@@ -286,11 +297,12 @@ class StyleManager:
 
     @classmethod
     def style_drop_zone(cls, widget: QWidget, active: bool) -> None:
-        """Style a drop zone widget
+        """Style a drop zone widget.
 
         Args:
             widget: The drop zone widget
             active: Whether the drop zone is active
+
         """
         if active:
             cls.apply_style(widget, 'drop_zone_active')
@@ -299,19 +311,21 @@ class StyleManager:
 
     @classmethod
     def remove_inline_styles(cls, widget: QWidget) -> None:
-        """Remove any inline styles from a widget
+        """Remove any inline styles from a widget.
 
         Args:
             widget: The widget to clean
+
         """
         widget.setStyleSheet("")
 
     @classmethod
     def batch_apply_styles(cls, widgets: Dict[QWidget, str]) -> None:
-        """Apply styles to multiple widgets at once
+        """Apply styles to multiple widgets at once.
 
         Args:
             widgets: Dictionary mapping widgets to their style names
+
         """
         for widget, style_name in widgets.items():
             cls.apply_style(widget, style_name)

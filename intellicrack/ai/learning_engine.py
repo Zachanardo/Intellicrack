@@ -1,4 +1,4 @@
-"""AI Learning & Evolution Engine
+"""AI Learning & Evolution Engine.
 
 Copyright (C) 2025 Zachary Flint
 

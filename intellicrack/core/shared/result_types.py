@@ -1,4 +1,4 @@
-"""Result types for analysis components
+"""Result types for analysis components.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,7 +22,7 @@ from typing import Any
 
 
 class AnalysisType(Enum):
-    """Types of analysis that can be performed"""
+    """Types of analysis that can be performed."""
 
     STATIC = "static"
     DYNAMIC = "dynamic"
@@ -38,7 +38,7 @@ class AnalysisType(Enum):
 
 @dataclass
 class AnalysisResult:
-    """Result of an analysis operation"""
+    """Result of an analysis operation."""
 
     success: bool
     analysis_type: AnalysisType

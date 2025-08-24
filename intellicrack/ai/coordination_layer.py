@@ -1,4 +1,4 @@
-"""AI Coordination Layer for Intellicrack
+"""AI Coordination Layer for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

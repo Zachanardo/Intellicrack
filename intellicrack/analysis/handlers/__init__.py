@@ -41,6 +41,7 @@ def get_handler(handler_name):
 
     Returns:
         module: The handler module, or None if not available
+
     """
     return _available_handlers.get(handler_name)
 
@@ -52,6 +53,7 @@ def is_handler_available(handler_name):
 
     Returns:
         bool: True if handler is available, False otherwise
+
     """
     return handler_name in _available_handlers
 

@@ -37,6 +37,7 @@ except ImportError:
 
 class ScriptType(Enum):
     """Enumeration of supported script types for AI generation."""
+
     FRIDA = "frida"
     GHIDRA = "ghidra"
 
@@ -187,6 +188,7 @@ class PromptEngineer:
     """Transforms natural language into structured prompts for LLM."""
 
     def __init__(self):
+        """Initialize the prompt engineer with security research context patterns."""
         self.context_patterns = {
             "bypass": ["bypass", "crack", "patch", "remove", "disable", "skip"],
             "hook": ["hook", "intercept", "monitor", "trace", "log", "capture"],
@@ -307,6 +309,7 @@ class LLMScriptInterface:
     """Dynamic interface for ANY LLM backend - no hardcoded constraints."""
 
     def __init__(self, model_path: str | None = None):
+        """Initialize the LLM script interface with optional model path."""
         self.llm_backend = None
         self.config = get_config()
         self.model_path = model_path
@@ -573,6 +576,7 @@ class LLMScriptInterface:
 
         Returns:
             Tuple of (script_content, file_extension)
+
         """
         if not self.llm_backend:
             raise RuntimeError("No LLM backend available")
@@ -808,6 +812,7 @@ class LLMScriptInterface:
 
         Returns:
             Tuple of (script_content, file_extension)
+
         """
         try:
             # Try to parse as JSON
@@ -828,6 +833,7 @@ class ScriptStorageManager:
     """Manages storage and retrieval of AI-generated scripts."""
 
     def __init__(self):
+        """Initialize script storage manager with default directory structure."""
         self.base_path = Path("C:/Intellicrack/intellicrack/scripts")
         self._ensure_directories()
 
@@ -942,6 +948,7 @@ class DynamicScriptGenerator:
     """Main class for dynamic AI-powered script generation."""
 
     def __init__(self, model_path: str | None = None):
+        """Initialize the dynamic script generator with all necessary components."""
         self.prompt_engineer = PromptEngineer()
         self.llm_interface = LLMScriptInterface(model_path=model_path)
         self.storage_manager = ScriptStorageManager()
@@ -1160,6 +1167,7 @@ class AIScriptGenerator:
     """
 
     def __init__(self, model_path: str | None = None):
+        """Initialize AI script generator with optional custom model path."""
         self.generator = DynamicScriptGenerator(model_path=model_path)
         if SCRIPT_EDITOR_AVAILABLE:
             self.script_editor = AIScriptEditor()
@@ -1192,6 +1200,7 @@ class AIScriptGenerator:
 
         Returns:
             Dict with generated script and metadata
+
         """
         # Don't constrain script type - use as-is or let AI determine
         if not script_type:
@@ -1246,6 +1255,7 @@ class AIScriptGenerator:
 
         Returns:
             List of script metadata dictionaries
+
         """
         # Don't constrain to specific types - pass through any filter
         return self.generator.storage_manager.list_ai_scripts(script_type)
@@ -1269,6 +1279,7 @@ class AIScriptGenerator:
 
         Returns:
             Dictionary with edit results
+
         """
         if not SCRIPT_EDITOR_AVAILABLE or not self.script_editor:
             return {
@@ -1328,6 +1339,7 @@ class AIScriptGenerator:
 
         Returns:
             Dictionary with improvement results
+
         """
         if not SCRIPT_EDITOR_AVAILABLE or not self.script_editor:
             return {
@@ -1365,6 +1377,7 @@ class AIScriptGenerator:
 
         Returns:
             List of version information
+
         """
         if not SCRIPT_EDITOR_AVAILABLE or not self.script_editor:
             return []
@@ -1384,6 +1397,7 @@ class AIScriptGenerator:
 
         Returns:
             Rollback operation result
+
         """
         if not SCRIPT_EDITOR_AVAILABLE or not self.script_editor:
             return {
@@ -1419,6 +1433,7 @@ class AIScriptGenerator:
 
         Returns:
             Test results
+
         """
         if not SCRIPT_EDITOR_AVAILABLE or not self.script_editor:
             return {

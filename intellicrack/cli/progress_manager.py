@@ -1,4 +1,4 @@
-"""Progress Manager for Intellicrack CLI Provides beautiful progress visualization for long-running operations
+"""Progress Manager for Intellicrack CLI Provides beautiful progress visualization for long-running operations.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -64,7 +64,7 @@ Provides beautiful progress visualization for long-running operations
 
 @dataclass
 class AnalysisTask:
-    """Represents a single analysis task"""
+    """Represents a single analysis task."""
 
     name: str
     description: str
@@ -83,7 +83,7 @@ class AnalysisTask:
 
 
 class SpeedColumn(ProgressColumn):
-    """Custom column showing processing speed"""
+    """Custom column showing processing speed."""
 
     def render(self, task):
         """Render the speed column."""
@@ -94,7 +94,7 @@ class SpeedColumn(ProgressColumn):
 
 
 class ProgressManager:
-    """Manages progress display for CLI operations"""
+    """Manages progress display for CLI operations."""
 
     def __init__(self):
         """Initialize progress manager with console, task tracking, and threading support."""
@@ -106,7 +106,7 @@ class ProgressManager:
         self._lock = threading.Lock()
 
     def create_progress_display(self) -> Progress:
-        """Create a rich progress display with custom columns"""
+        """Create a rich progress display with custom columns."""
         return Progress(
             SpinnerColumn(),
             TextColumn("[bold blue]{task.description}"),
@@ -120,7 +120,7 @@ class ProgressManager:
         )
 
     def start_analysis(self, binary_path: str, analysis_types: list[str]) -> None:
-        """Start a new analysis with progress tracking"""
+        """Start a new analysis with progress tracking."""
         layout = Layout()
 
         # Create header
@@ -168,7 +168,7 @@ class ProgressManager:
     def update_progress(
         self, task_name: str, current: int, total: int, speed: float | None = None
     ) -> None:
-        """Update progress for a specific task"""
+        """Update progress for a specific task."""
         with self._lock:
             if task_name in self.tasks:
                 task = self.tasks[task_name]
@@ -187,7 +187,7 @@ class ProgressManager:
                         break
 
     def complete_task(self, task_name: str, success: bool = True, error: str | None = None) -> None:
-        """Mark a task as completed"""
+        """Mark a task as completed."""
         with self._lock:
             if task_name in self.tasks:
                 task = self.tasks[task_name]
@@ -208,7 +208,7 @@ class ProgressManager:
                             )
 
     def stop(self) -> None:
-        """Stop the progress display"""
+        """Stop the progress display."""
         if self.live:
             self.live.stop()
 
@@ -216,7 +216,7 @@ class ProgressManager:
             self._print_summary()
 
     def _print_summary(self) -> None:
-        """Print analysis summary"""
+        """Print analysis summary."""
         summary_table = Table(
             title="\n[bold]Analysis Summary[/bold]",
             box=box.ROUNDED,
@@ -267,7 +267,7 @@ class ProgressManager:
 
 
 class MultiStageProgress:
-    """Progress tracker for multi-stage operations"""
+    """Progress tracker for multi-stage operations."""
 
     def __init__(self, console: Console | None = None):
         """Initialize multi-stage progress tracker with console and stage tracking."""
@@ -276,7 +276,7 @@ class MultiStageProgress:
         self.current_stage = 0
 
     def add_stage(self, name: str, steps: list[str]) -> None:
-        """Add a new stage with multiple steps"""
+        """Add a new stage with multiple steps."""
         self.stages.append(
             {
                 "name": name,
@@ -287,7 +287,7 @@ class MultiStageProgress:
         )
 
     def start(self) -> None:
-        """Start the multi-stage progress display"""
+        """Start the multi-stage progress display."""
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -338,236 +338,194 @@ class MultiStageProgress:
                 )
 
 
-def demo_progress():
-    """Demonstrate progress visualization capabilities with real progress tracking"""
-    console = Console()
-
-    console.print("[bold cyan]Intellicrack Progress Visualization Demo[/bold cyan]\n")
-
-    # Demo 1: Binary Analysis Progress with real tracking
-    console.print("[bold]1. Binary Analysis Progress:[/bold]")
-    pm = ProgressManager()
-
-    # Use a real binary for demonstration
-    binary_path = sys.executable  # Use Python executable as demo binary
-
-    analysis_types = [
-        "Static Analysis",
-        "Dynamic Analysis",
-        "Vulnerability Scan",
-        "License Detection",
-        "Network Analysis",
+def _demo_static_analysis(pm: ProgressManager, binary_path: str) -> None:
+    """Perform static analysis demo with real operations."""
+    steps = [
+        ("Reading binary headers", 10),
+        ("Parsing PE/ELF structure", 20),
+        ("Extracting strings", 15),
+        ("Analyzing imports/exports", 25),
+        ("Computing hashes", 10),
+        ("Detecting packers", 20),
     ]
 
-    pm.start_analysis(binary_path, analysis_types)
+    total_weight = sum(weight for _, weight in steps)
+    current_progress = 0
 
-    # Real progress tracking
-    for analysis_type in analysis_types:
-        try:
-            if analysis_type == "Static Analysis":
-                # Real static analysis steps
-                steps = [
-                    ("Reading binary headers", 10),
-                    ("Parsing PE/ELF structure", 20),
-                    ("Extracting strings", 15),
-                    ("Analyzing imports/exports", 25),
-                    ("Computing hashes", 10),
-                    ("Detecting packers", 20),
-                ]
+    for step_name, weight in steps:
+        if step_name == "Computing hashes":
+            with open(binary_path, "rb") as f:
+                data = f.read(1024 * 1024)
+                hashlib.sha256(data).hexdigest()
+                hashlib.sha256(data).hexdigest()
 
-                total_weight = sum(weight for _, weight in steps)
-                current_progress = 0
+        elif step_name == "Extracting strings":
+            cmd = (
+                ["strings", binary_path]
+                if sys.platform != "win32"
+                else ["findstr", "/r", "[a-zA-Z]", binary_path]
+            )
+            try:
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    cmd, check=False, capture_output=True, timeout=5, shell=False
+                )
+                len(result.stdout.decode("utf-8", errors="ignore").split("\n"))
+            except (subprocess.TimeoutExpired, OSError, FileNotFoundError) as e:
+                logger.debug(f"String extraction failed: {e}")
 
-                for step_name, weight in steps:
-                    # Perform real operations
-                    if step_name == "Computing hashes":
-                        with open(binary_path, "rb") as f:
-                            data = f.read(1024 * 1024)  # Read first MB
-                            hashlib.sha256(data).hexdigest()
-                            hashlib.sha256(data).hexdigest()
+        current_progress += weight
+        progress_percent = int((current_progress / total_weight) * 100)
+        pm.update_progress("Static Analysis", progress_percent, 100, speed=weight * 2)
+        time.sleep(0.1)
 
-                    elif step_name == "Extracting strings":
-                        # Real string extraction
-                        cmd = (
-                            ["strings", binary_path]
-                            if sys.platform != "win32"
-                            else ["findstr", "/r", "[a-zA-Z]", binary_path]
-                        )
-                        try:
-                            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                cmd, check=False, capture_output=True, timeout=5
-                            )
-                            len(result.stdout.decode("utf-8", errors="ignore").split("\n"))
-                        except (subprocess.TimeoutExpired, OSError, FileNotFoundError) as e:
-                            logger.debug(f"String extraction failed: {e}")
-                            pass
+    pm.complete_task("Static Analysis", success=True)
 
-                    # Update progress based on real work
-                    current_progress += weight
-                    progress_percent = int((current_progress / total_weight) * 100)
-                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight * 2)
-                    time.sleep(0.1)  # Small delay for visibility
 
-                pm.complete_task(analysis_type, success=True)
+def _demo_dynamic_analysis(pm: ProgressManager, binary_path: str) -> None:
+    """Perform dynamic analysis demo with real monitoring."""
+    steps = [
+        ("Starting process monitor", 15),
+        ("Hooking API calls", 25),
+        ("Monitoring file operations", 20),
+        ("Tracking network activity", 20),
+        ("Recording registry changes", 20),
+    ]
 
-            elif analysis_type == "Dynamic Analysis":
-                # Real dynamic analysis monitoring
-                steps = [
-                    ("Starting process monitor", 15),
-                    ("Hooking API calls", 25),
-                    ("Monitoring file operations", 20),
-                    ("Tracking network activity", 20),
-                    ("Recording registry changes", 20),
-                ]
+    total_weight = sum(weight for _, weight in steps)
+    current_progress = 0
 
-                total_weight = sum(weight for _, weight in steps)
-                current_progress = 0
+    for step_name, weight in steps:
+        if step_name == "Starting process monitor":
+            len(psutil.pids())
+            psutil.cpu_percent(interval=0.1)
 
-                for step_name, weight in steps:
-                    if step_name == "Starting process monitor":
-                        # Real process monitoring
-                        len(psutil.pids())
-                        psutil.cpu_percent(interval=0.1)
+        elif step_name == "Tracking network activity":
+            connections = psutil.net_connections()
+            len([c for c in connections if c.status == "ESTABLISHED"])
 
-                    elif step_name == "Tracking network activity":
-                        # Real network monitoring
-                        connections = psutil.net_connections()
-                        len([c for c in connections if c.status == "ESTABLISHED"])
+        current_progress += weight
+        progress_percent = int((current_progress / total_weight) * 100)
+        pm.update_progress("Dynamic Analysis", progress_percent, 100, speed=weight * 1.5)
+        time.sleep(0.15)
 
-                    current_progress += weight
-                    progress_percent = int((current_progress / total_weight) * 100)
-                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight * 1.5)
-                    time.sleep(0.15)
+    pm.complete_task("Dynamic Analysis", success=True)
 
-                pm.complete_task(analysis_type, success=True)
 
-            elif analysis_type == "Vulnerability Scan":
-                # Real vulnerability scanning
-                scan_items = [
-                    ("Checking for buffer overflows", 30),
-                    ("Analyzing format strings", 20),
-                    ("Detecting integer overflows", 20),
-                    ("Scanning for SQL injection", 15),
-                    ("Checking for command injection", 15),
-                ]
+def _demo_vulnerability_scan(pm: ProgressManager, binary_path: str) -> None:
+    """Perform vulnerability scan demo with real analysis."""
+    scan_items = [
+        ("Checking for buffer overflows", 30),
+        ("Analyzing format strings", 20),
+        ("Detecting integer overflows", 20),
+        ("Scanning for SQL injection", 15),
+        ("Checking for command injection", 15),
+    ]
 
-                total_weight = sum(weight for _, weight in scan_items)
-                current_progress = 0
+    total_weight = sum(weight for _, weight in scan_items)
+    current_progress = 0
 
-                for vuln_type, weight in scan_items:
-                    # Perform real vulnerability analysis
-                    if vuln_type == "Checking for buffer overflows":
-                        # Check for dangerous functions
-                        dangerous_funcs = ["strcpy", "strcat", "sprintf", "gets", "scanf"]
-                        with open(binary_path, "rb") as f:
-                            data = f.read()
-                            for func in dangerous_funcs:
-                                if func.encode() in data:
-                                    break
+    for vuln_type, weight in scan_items:
+        if vuln_type == "Checking for buffer overflows":
+            dangerous_funcs = ["strcpy", "strcat", "sprintf", "gets", "scanf"]
+            with open(binary_path, "rb") as f:
+                data = f.read()
+                for func in dangerous_funcs:
+                    if func.encode() in data:
+                        break
 
-                    elif vuln_type == "Analyzing format strings":
-                        # Check for format string vulnerabilities
-                        format_patterns = [b"printf", b"sprintf", b"fprintf", b"%s", b"%d"]
-                        with open(binary_path, "rb") as f:
-                            data = f.read()
-                            for pattern in format_patterns:
-                                if pattern in data:
-                                    break
+        elif vuln_type == "Analyzing format strings":
+            format_patterns = [b"printf", b"sprintf", b"fprintf", b"%s", b"%d"]
+            with open(binary_path, "rb") as f:
+                data = f.read()
+                for pattern in format_patterns:
+                    if pattern in data:
+                        break
 
-                    elif vuln_type == "Detecting integer overflows":
-                        # Look for arithmetic operations that could overflow
-                        overflow_patterns = [b"add", b"mul", b"imul", b"inc"]
-                        with open(binary_path, "rb") as f:
-                            data = f.read()
-                            for pattern in overflow_patterns:
-                                if pattern in data:
-                                    break
+        elif vuln_type == "Detecting integer overflows":
+            overflow_patterns = [b"add", b"mul", b"imul", b"inc"]
+            with open(binary_path, "rb") as f:
+                data = f.read()
+                for pattern in overflow_patterns:
+                    if pattern in data:
+                        break
 
-                    elif vuln_type == "Scanning for SQL injection":
-                        # Check for SQL-related strings
-                        sql_patterns = [b"SELECT", b"INSERT", b"UPDATE", b"DELETE", b"DROP"]
-                        with open(binary_path, "rb") as f:
-                            data = f.read()
-                            for pattern in sql_patterns:
-                                if pattern in data:
-                                    break
+        elif vuln_type == "Scanning for SQL injection":
+            sql_patterns = [b"SELECT", b"INSERT", b"UPDATE", b"DELETE", b"DROP"]
+            with open(binary_path, "rb") as f:
+                data = f.read()
+                for pattern in sql_patterns:
+                    if pattern in data:
+                        break
 
-                    elif vuln_type == "Checking for command injection":
-                        # Check for system command execution
-                        cmd_patterns = [b"system", b"exec", b"cmd", b"sh", b"bash"]
-                        with open(binary_path, "rb") as f:
-                            data = f.read()
-                            for pattern in cmd_patterns:
-                                if pattern in data:
-                                    break
+        elif vuln_type == "Checking for command injection":
+            cmd_patterns = [b"system", b"exec", b"cmd", b"sh", b"bash"]
+            with open(binary_path, "rb") as f:
+                data = f.read()
+                for pattern in cmd_patterns:
+                    if pattern in data:
+                        break
 
-                    current_progress += weight
-                    progress_percent = int((current_progress / total_weight) * 100)
-                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight)
-                    time.sleep(0.1)  # Reduced sleep for faster real analysis
+        current_progress += weight
+        progress_percent = int((current_progress / total_weight) * 100)
+        pm.update_progress("Vulnerability Scan", progress_percent, 100, speed=weight)
+        time.sleep(0.1)
 
-                pm.complete_task(analysis_type, success=True)
+    pm.complete_task("Vulnerability Scan", success=True)
 
-            elif analysis_type == "License Detection":
-                # Real license detection
-                license_patterns = [
-                    ("Scanning for GPL markers", 25),
-                    ("Checking MIT license", 25),
-                    ("Detecting proprietary licenses", 25),
-                    ("Analyzing copyright notices", 25),
-                ]
 
-                total_weight = sum(weight for _, weight in license_patterns)
-                current_progress = 0
+def _demo_license_detection(pm: ProgressManager) -> None:
+    """Perform license detection demo."""
+    license_patterns = [
+        ("Scanning for GPL markers", 25),
+        ("Checking MIT license", 25),
+        ("Detecting proprietary licenses", 25),
+        ("Analyzing copyright notices", 25),
+    ]
 
-                for _pattern_name, weight in license_patterns:
-                    current_progress += weight
-                    progress_percent = int((current_progress / total_weight) * 100)
-                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight * 3)
-                    time.sleep(0.1)
+    total_weight = sum(weight for _, weight in license_patterns)
+    current_progress = 0
 
-                pm.complete_task(analysis_type, success=True)
+    for _pattern_name, weight in license_patterns:
+        current_progress += weight
+        progress_percent = int((current_progress / total_weight) * 100)
+        pm.update_progress("License Detection", progress_percent, 100, speed=weight * 3)
+        time.sleep(0.1)
 
-            elif analysis_type == "Network Analysis":
-                # Real network analysis
+    pm.complete_task("License Detection", success=True)
 
-                network_checks = [
-                    ("Identifying network protocols", 20),
-                    ("Extracting URLs/IPs", 30),
-                    ("Analyzing C2 patterns", 25),
-                    ("Detecting beaconing", 25),
-                ]
 
-                total_weight = sum(weight for _, weight in network_checks)
-                current_progress = 0
+def _demo_network_analysis(pm: ProgressManager, binary_path: str) -> None:
+    """Perform network analysis demo with real operations."""
+    network_checks = [
+        ("Identifying network protocols", 20),
+        ("Extracting URLs/IPs", 30),
+        ("Analyzing C2 patterns", 25),
+        ("Detecting beaconing", 25),
+    ]
 
-                for check_name, weight in network_checks:
-                    if check_name == "Extracting URLs/IPs":
-                        # Real URL/IP extraction from binary
-                        try:
-                            with open(binary_path, "rb") as f:
-                                data = f.read(1024 * 1024)
-                                # Look for IP patterns
-                                ip_pattern = rb"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
-                                re.findall(ip_pattern, data)
-                        except Exception as e:
-                            logger.debug(f"Error searching for IP patterns: {e}")
+    total_weight = sum(weight for _, weight in network_checks)
+    current_progress = 0
 
-                    current_progress += weight
-                    progress_percent = int((current_progress / total_weight) * 100)
-                    pm.update_progress(analysis_type, progress_percent, 100, speed=weight * 2)
-                    time.sleep(0.15)
+    for check_name, weight in network_checks:
+        if check_name == "Extracting URLs/IPs":
+            try:
+                with open(binary_path, "rb") as f:
+                    data = f.read(1024 * 1024)
+                    ip_pattern = rb"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
+                    re.findall(ip_pattern, data)
+            except Exception as e:
+                logger.debug(f"Error searching for IP patterns: {e}")
 
-                pm.complete_task(analysis_type, success=True)
+        current_progress += weight
+        progress_percent = int((current_progress / total_weight) * 100)
+        pm.update_progress("Network Analysis", progress_percent, 100, speed=weight * 2)
+        time.sleep(0.15)
 
-        except Exception as e:
-            # Real error handling
-            pm.complete_task(analysis_type, success=False, error=str(e))
+    pm.complete_task("Network Analysis", success=True)
 
-    pm.stop()
 
-    # Demo 2: Multi-stage progress with real operations
-    console.print("\n[bold]2. Multi-Stage Operation:[/bold]")
+def _setup_multi_stage_demo(console: Console) -> MultiStageProgress:
+    """Set up multi-stage progress demo."""
     multi_progress = MultiStageProgress(console)
 
     multi_progress.add_stage(
@@ -599,6 +557,48 @@ def demo_progress():
         ],
     )
 
+    return multi_progress
+
+
+def demo_progress():
+    """Demonstrate progress visualization capabilities with real progress tracking."""
+    console = Console()
+
+    console.print("[bold cyan]Intellicrack Progress Visualization Demo[/bold cyan]\n")
+
+    console.print("[bold]1. Binary Analysis Progress:[/bold]")
+    pm = ProgressManager()
+
+    binary_path = sys.executable
+
+    analysis_types = [
+        "Static Analysis",
+        "Dynamic Analysis",
+        "Vulnerability Scan",
+        "License Detection",
+        "Network Analysis",
+    ]
+
+    pm.start_analysis(binary_path, analysis_types)
+
+    analysis_functions = {
+        "Static Analysis": lambda: _demo_static_analysis(pm, binary_path),
+        "Dynamic Analysis": lambda: _demo_dynamic_analysis(pm, binary_path),
+        "Vulnerability Scan": lambda: _demo_vulnerability_scan(pm, binary_path),
+        "License Detection": lambda: _demo_license_detection(pm),
+        "Network Analysis": lambda: _demo_network_analysis(pm, binary_path),
+    }
+
+    for analysis_type in analysis_types:
+        try:
+            analysis_functions[analysis_type]()
+        except Exception as e:
+            pm.complete_task(analysis_type, success=False, error=str(e))
+
+    pm.stop()
+
+    console.print("\n[bold]2. Multi-Stage Operation:[/bold]")
+    multi_progress = _setup_multi_stage_demo(console)
     multi_progress.start()
 
     console.print("\n[bold green]✓ All operations completed successfully![/bold green]")

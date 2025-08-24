@@ -1,4 +1,4 @@
-"""Pipeline Support for Intellicrack CLI Enables Unix-style command chaining and data flow between operations
+"""Pipeline Support for Intellicrack CLI Enables Unix-style command chaining and data flow between operations.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -47,14 +47,14 @@ Enables Unix-style command chaining and data flow between operations
 
 @dataclass
 class PipelineData:
-    """Data passed between pipeline stages"""
+    """Data passed between pipeline stages."""
 
     content: Any
     metadata: dict[str, Any]
     format: str = "json"  # json, binary, text, csv
 
     def to_json(self) -> str:
-        """Convert to JSON string"""
+        """Convert to JSON string."""
         return json.dumps(
             {
                 "content": self.content,
@@ -66,7 +66,7 @@ class PipelineData:
 
     @classmethod
     def from_json(cls, json_str: str) -> "PipelineData":
-        """Create from JSON string"""
+        """Create from JSON string."""
         data = json.loads(json_str)
         return cls(
             content=data.get("content"),
@@ -76,7 +76,7 @@ class PipelineData:
 
 
 class PipelineStage(ABC):
-    """Base class for pipeline stages"""
+    """Base class for pipeline stages."""
 
     def __init__(self, name: str):
         """Initialize pipeline stage with name and console."""
@@ -85,11 +85,11 @@ class PipelineStage(ABC):
 
     @abstractmethod
     def process(self, input_data: PipelineData) -> PipelineData:
-        """Process input data and return output data"""
+        """Process input data and return output data."""
 
     # pylint: disable=too-many-branches
     def validate_input(self, input_data: PipelineData) -> bool:
-        """Validate input data format"""
+        """Validate input data format."""
         # Check if input_data is valid
         if not isinstance(input_data, PipelineData):
             return False
@@ -148,7 +148,7 @@ class PipelineStage(ABC):
 
 
 class AnalysisStage(PipelineStage):
-    """Run binary analysis"""
+    """Run binary analysis."""
 
     def __init__(self):
         """Initialize analysis stage for binary analysis processing."""
@@ -192,7 +192,7 @@ class AnalysisStage(PipelineStage):
 
 
 class FilterStage(PipelineStage):
-    """Filter data based on criteria"""
+    """Filter data based on criteria."""
 
     def __init__(self, filter_expr: str):
         """Initialize filter stage with filter expression for data processing."""
@@ -231,7 +231,7 @@ class FilterStage(PipelineStage):
         )
 
     def _matches_filter(self, item: Any) -> bool:
-        """Check if item matches filter"""
+        """Check if item matches filter."""
         # Simple keyword matching for now
         keywords = self.filter_expr.split()
         item_str = str(item).lower()
@@ -239,7 +239,7 @@ class FilterStage(PipelineStage):
         return any(keyword.lower() in item_str for keyword in keywords)
 
     def _is_high_severity(self, item: Any) -> bool:
-        """Check if item is high severity"""
+        """Check if item is high severity."""
         if isinstance(item, dict):
             severity = item.get("severity", "").lower()
             return severity in ["high", "critical"]
@@ -247,7 +247,7 @@ class FilterStage(PipelineStage):
 
 
 class TransformStage(PipelineStage):
-    """Transform data format"""
+    """Transform data format."""
 
     def __init__(self, output_format: str):
         """Initialize transform stage with output format for data transformation."""
@@ -288,7 +288,7 @@ class TransformStage(PipelineStage):
         return input_data
 
     def _to_csv(self, content: Any) -> str:
-        """Convert to CSV format"""
+        """Convert to CSV format."""
         import csv
         import io
 
@@ -315,7 +315,7 @@ class TransformStage(PipelineStage):
         return output.getvalue()
 
     def _to_table(self, content: Any) -> str:
-        """Convert to table format"""
+        """Convert to table format."""
         table = Table(box=box.SIMPLE)
 
         if isinstance(content, dict):
@@ -343,7 +343,7 @@ class TransformStage(PipelineStage):
         return string_io.getvalue()
 
     def _create_summary(self, content: Any) -> str:
-        """Create a summary of the content"""
+        """Create a summary of the content."""
         lines = []
 
         if isinstance(content, dict):
@@ -369,7 +369,7 @@ class TransformStage(PipelineStage):
 
 
 class OutputStage(PipelineStage):
-    """Output data to file or stdout"""
+    """Output data to file or stdout."""
 
     def __init__(self, output_path: str | None = None):
         """Initialize output stage with optional output path for data export."""
@@ -402,7 +402,7 @@ class OutputStage(PipelineStage):
 
 
 class Pipeline:
-    """Pipeline executor"""
+    """Pipeline executor."""
 
     def __init__(self):
         """Initialize pipeline with empty stages list and console."""
@@ -410,12 +410,12 @@ class Pipeline:
         self.console = Console()
 
     def add_stage(self, stage: PipelineStage) -> "Pipeline":
-        """Add a stage to the pipeline"""
+        """Add a stage to the pipeline."""
         self.stages.append(stage)
         return self
 
     def execute(self, initial_input: str | dict | PipelineData) -> PipelineData:
-        """Execute the pipeline"""
+        """Execute the pipeline."""
         # Convert initial input to PipelineData
         if isinstance(initial_input, PipelineData):
             data = initial_input
@@ -455,7 +455,7 @@ class Pipeline:
 
 # pylint: disable=too-many-branches,too-many-statements
 def parse_pipeline_command(command: str) -> Pipeline:
-    """Parse a pipeline command string"""
+    """Parse a pipeline command string."""
     # Validate command string
     if not command or not isinstance(command, str):
         raise ValueError("Invalid pipeline command")
@@ -539,7 +539,7 @@ def parse_pipeline_command(command: str) -> Pipeline:
 
 # pylint: disable=too-many-branches,too-many-statements
 def main():
-    """CLI entry point for pipeline operations"""
+    """CLI entry point for pipeline operations."""
     parser = argparse.ArgumentParser(
         description="Intellicrack Pipeline Processor",
         formatter_class=argparse.RawDescriptionHelpFormatter,

@@ -1,4 +1,4 @@
-"""Firmware Analyzer
+"""Firmware Analyzer.
 
 Advanced firmware analysis and embedded file extraction using Binwalk.
 Provides comprehensive firmware security analysis, embedded file extraction,
@@ -40,7 +40,7 @@ except (ImportError, ModuleNotFoundError) as e:
 
 
 class FirmwareType(Enum):
-    """Types of firmware detected"""
+    """Types of firmware detected."""
 
     ROUTER_FIRMWARE = "router"
     IOT_DEVICE = "iot_device"
@@ -53,7 +53,7 @@ class FirmwareType(Enum):
 
 
 class SecurityFindingType(Enum):
-    """Types of security findings"""
+    """Types of security findings."""
 
     HARDCODED_CREDENTIALS = "hardcoded_credentials"
     PRIVATE_KEY = "private_key"
@@ -67,7 +67,7 @@ class SecurityFindingType(Enum):
 
 @dataclass
 class FirmwareSignature:
-    """Single firmware signature detection"""
+    """Single firmware signature detection."""
 
     offset: int
     signature_name: str
@@ -78,20 +78,20 @@ class FirmwareSignature:
 
     @property
     def is_executable(self) -> bool:
-        """Check if signature indicates executable content"""
+        """Check if signature indicates executable content."""
         executable_types = ["elf", "pe", "binary", "bootloader", "kernel"]
         return any(etype in self.file_type.lower() for etype in executable_types)
 
     @property
     def is_filesystem(self) -> bool:
-        """Check if signature indicates filesystem"""
+        """Check if signature indicates filesystem."""
         fs_types = ["squashfs", "cramfs", "jffs2", "yaffs", "ext", "fat", "ntfs"]
         return any(fs in self.file_type.lower() for fs in fs_types)
 
 
 @dataclass
 class ExtractedFile:
-    """Information about an extracted file"""
+    """Information about an extracted file."""
 
     file_path: str
     original_offset: int
@@ -105,7 +105,7 @@ class ExtractedFile:
 
     @classmethod
     def from_path(cls, file_path: str, original_offset: int = 0) -> "ExtractedFile":
-        """Create ExtractedFile from filesystem path"""
+        """Create ExtractedFile from filesystem path."""
         try:
             stat_info = os.stat(file_path)
 
@@ -145,7 +145,7 @@ class ExtractedFile:
 
 @dataclass
 class SecurityFinding:
-    """Security-related finding in firmware"""
+    """Security-related finding in firmware."""
 
     finding_type: SecurityFindingType
     description: str
@@ -158,13 +158,13 @@ class SecurityFinding:
 
     @property
     def is_critical(self) -> bool:
-        """Check if finding is critical severity"""
+        """Check if finding is critical severity."""
         return self.severity == "critical"
 
 
 @dataclass
 class FirmwareExtraction:
-    """Results of firmware extraction process"""
+    """Results of firmware extraction process."""
 
     extracted_files: list[ExtractedFile] = field(default_factory=list)
     extraction_directory: str = ""
@@ -175,18 +175,18 @@ class FirmwareExtraction:
 
     @property
     def executable_files(self) -> list[ExtractedFile]:
-        """Get all executable files"""
+        """Get all executable files."""
         return [f for f in self.extracted_files if f.is_executable]
 
     @property
     def text_files(self) -> list[ExtractedFile]:
-        """Get all text/config files"""
+        """Get all text/config files."""
         return [f for f in self.extracted_files if f.file_type in ["text", "config"]]
 
 
 @dataclass
 class FirmwareAnalysisResult:
-    """Complete firmware analysis results"""
+    """Complete firmware analysis results."""
 
     file_path: str
     firmware_type: FirmwareType = FirmwareType.UNKNOWN
@@ -199,17 +199,17 @@ class FirmwareAnalysisResult:
 
     @property
     def has_extractions(self) -> bool:
-        """Check if any files were extracted"""
+        """Check if any files were extracted."""
         return self.extractions is not None and self.extractions.success
 
     @property
     def critical_findings(self) -> list[SecurityFinding]:
-        """Get critical security findings"""
+        """Get critical security findings."""
         return [f for f in self.security_findings if f.is_critical]
 
     @property
     def embedded_executables(self) -> list[ExtractedFile]:
-        """Get embedded executable files"""
+        """Get embedded executable files."""
         if not self.has_extractions:
             return []
         return self.extractions.executable_files
@@ -248,7 +248,7 @@ class FirmwareAnalyzer:
         analyze_security: bool = True,
         extraction_depth: int = 2,
     ) -> FirmwareAnalysisResult:
-        """Perform comprehensive firmware analysis
+        """Perform comprehensive firmware analysis.
 
         Args:
             file_path: Path to firmware file
@@ -325,7 +325,7 @@ class FirmwareAnalyzer:
             )
 
     def _scan_signatures(self, file_path: str) -> list[FirmwareSignature]:
-        """Scan for firmware signatures using Binwalk"""
+        """Scan for firmware signatures using Binwalk."""
         signatures = []
 
         try:
@@ -356,7 +356,7 @@ class FirmwareAnalyzer:
         return signatures
 
     def _extract_file_type(self, description: str) -> str:
-        """Extract file type from Binwalk description"""
+        """Extract file type from Binwalk description."""
         desc_lower = description.lower()
 
         # Map common descriptions to file types
@@ -384,7 +384,7 @@ class FirmwareAnalyzer:
     def _determine_firmware_type(
         self, file_path: str, signatures: list[FirmwareSignature]
     ) -> FirmwareType:
-        """Determine the type of firmware based on signatures and filename"""
+        """Determine the type of firmware based on signatures and filename."""
         filename = os.path.basename(file_path).lower()
 
         # Check filename patterns
@@ -419,7 +419,7 @@ class FirmwareAnalyzer:
         return FirmwareType.UNKNOWN
 
     def _analyze_entropy(self, file_path: str) -> dict[str, Any]:
-        """Analyze file entropy to detect encryption/compression"""
+        """Analyze file entropy to detect encryption/compression."""
         entropy_analysis = {
             "file_entropy": 0.0,
             "encrypted_regions": [],
@@ -474,7 +474,7 @@ class FirmwareAnalyzer:
         return entropy_analysis
 
     def _calculate_basic_entropy(self, file_path: str) -> float:
-        """Calculate basic Shannon entropy"""
+        """Calculate basic Shannon entropy."""
         try:
             with open(file_path, "rb") as f:
                 data = f.read(1024 * 1024)  # Read first 1MB
@@ -501,7 +501,7 @@ class FirmwareAnalyzer:
             return 0.0
 
     def _extract_embedded_files(self, file_path: str, max_depth: int = 2) -> FirmwareExtraction:
-        """Extract embedded files using Binwalk"""
+        """Extract embedded files using Binwalk."""
         start_time = time.time()
         extraction = FirmwareExtraction()
 
@@ -562,7 +562,7 @@ class FirmwareAnalyzer:
         return extraction
 
     def _analyze_extracted_file(self, extracted_file: ExtractedFile):
-        """Analyze an individual extracted file"""
+        """Analyze an individual extracted file."""
         try:
             # Extract strings from the file
             extracted_file.extracted_strings = self._extract_strings(extracted_file.file_path)
@@ -574,7 +574,7 @@ class FirmwareAnalyzer:
             logger.debug(f"Failed to analyze extracted file {extracted_file.file_path}: {e}")
 
     def _extract_strings(self, file_path: str, min_length: int = 4) -> list[str]:
-        """Extract printable strings from file"""
+        """Extract printable strings from file."""
         strings = []
         try:
             with open(file_path, "rb") as f:
@@ -601,7 +601,7 @@ class FirmwareAnalyzer:
             return []
 
     def _analyze_file_security(self, file_path: str) -> dict[str, Any]:
-        """Perform security analysis on a file"""
+        """Perform security analysis on a file."""
         security_info = {
             "has_credentials": False,
             "has_crypto_keys": False,
@@ -636,7 +636,7 @@ class FirmwareAnalyzer:
     def _analyze_security(
         self, file_path: str, extractions: FirmwareExtraction | None
     ) -> list[SecurityFinding]:
-        """Perform comprehensive security analysis"""
+        """Perform comprehensive security analysis."""
         findings = []
 
         # Analyze main firmware file
@@ -685,7 +685,7 @@ class FirmwareAnalyzer:
         return findings
 
     def _scan_for_credentials(self, file_path: str) -> list[SecurityFinding]:
-        """Scan for hardcoded credentials"""
+        """Scan for hardcoded credentials."""
         findings = []
 
         try:
@@ -725,7 +725,7 @@ class FirmwareAnalyzer:
         return findings
 
     def _scan_for_crypto_keys(self, file_path: str) -> list[SecurityFinding]:
-        """Scan for cryptographic keys"""
+        """Scan for cryptographic keys."""
         findings = []
 
         try:
@@ -766,7 +766,7 @@ class FirmwareAnalyzer:
         return findings
 
     def _scan_for_backdoors(self, file_path: str) -> list[SecurityFinding]:
-        """Scan for potential backdoors"""
+        """Scan for potential backdoors."""
         findings = []
 
         try:
@@ -833,7 +833,7 @@ class FirmwareAnalyzer:
         return findings
 
     def _is_suspicious_string(self, string: str) -> bool:
-        """Check if a string looks suspicious"""
+        """Check if a string looks suspicious."""
         suspicious_keywords = [
             "password",
             "passwd",
@@ -854,7 +854,7 @@ class FirmwareAnalyzer:
         return any(keyword in string_lower for keyword in suspicious_keywords)
 
     def _looks_like_credential(self, string: str) -> bool:
-        """Check if string looks like a credential"""
+        """Check if string looks like a credential."""
         # Simple heuristics for credential detection
         if len(string) < 4:
             return False
@@ -877,7 +877,7 @@ class FirmwareAnalyzer:
         return False
 
     def _looks_like_crypto_key(self, string: str) -> bool:
-        """Check if string looks like a cryptographic key"""
+        """Check if string looks like a cryptographic key."""
         # Base64-like patterns of sufficient length
         if len(string) >= 20:
             # Check for base64 characteristics
@@ -898,7 +898,7 @@ class FirmwareAnalyzer:
     def generate_icp_supplemental_data(
         self, analysis_result: FirmwareAnalysisResult
     ) -> dict[str, Any]:
-        """Generate supplemental data for ICP backend integration
+        """Generate supplemental data for ICP backend integration.
 
         Args:
             analysis_result: Firmware analysis results
@@ -983,7 +983,7 @@ class FirmwareAnalyzer:
     def export_analysis_report(
         self, analysis_result: FirmwareAnalysisResult, output_path: str
     ) -> tuple[bool, str]:
-        """Export firmware analysis results to JSON report
+        """Export firmware analysis results to JSON report.
 
         Args:
             analysis_result: Analysis results to export
@@ -1036,7 +1036,7 @@ class FirmwareAnalyzer:
             return False, f"Failed to export report: {e}"
 
     def cleanup_extractions(self, extraction_directory: str):
-        """Clean up extraction directory"""
+        """Clean up extraction directory."""
         try:
             if os.path.exists(extraction_directory):
                 shutil.rmtree(extraction_directory)
@@ -1050,7 +1050,7 @@ _firmware_analyzer: FirmwareAnalyzer | None = None
 
 
 def get_firmware_analyzer() -> FirmwareAnalyzer | None:
-    """Get or create the firmware analyzer singleton"""
+    """Get or create the firmware analyzer singleton."""
     global _firmware_analyzer
     if _firmware_analyzer is None and BINWALK_AVAILABLE:
         try:
@@ -1062,12 +1062,12 @@ def get_firmware_analyzer() -> FirmwareAnalyzer | None:
 
 
 def is_binwalk_available() -> bool:
-    """Check if Binwalk functionality is available"""
+    """Check if Binwalk functionality is available."""
     return BINWALK_AVAILABLE
 
 
 def analyze_firmware_file(file_path: str) -> FirmwareAnalysisResult | None:
-    """Quick firmware analysis function for integration"""
+    """Quick firmware analysis function for integration."""
     analyzer = get_firmware_analyzer()
     if analyzer:
         return analyzer.analyze_firmware(file_path)

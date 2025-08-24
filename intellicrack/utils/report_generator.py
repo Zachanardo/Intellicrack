@@ -71,6 +71,7 @@ except ImportError:
 @dataclass
 class AnalysisResult:
     """Container for analysis results."""
+
     timestamp: str
     target_file: str
     file_hash: str

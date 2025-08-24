@@ -1,4 +1,4 @@
-"""Analysis Result Orchestrator
+"""Analysis Result Orchestrator.
 
 Coordinates the distribution of protection analysis results to various handlers
 for LLM integration, script generation, and report generation.
@@ -146,7 +146,7 @@ class AnalysisResultOrchestrator(QObject):
                 )
 
     def get_current_result(self) -> UnifiedProtectionResult | None:
-        """Get the most recent analysis result"""
+        """Get the most recent analysis result."""
         return self._current_result
 
     def validate_icp_result(self, result: "ICPScanResult") -> bool:

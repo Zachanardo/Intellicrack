@@ -38,7 +38,7 @@ class BaseTab(QWidget):
         super().__init__(parent)
 
     def setup_loading_ui(self):
-        """Setup initial loading state UI"""
+        """Setup initial loading state UI."""
         layout = QVBoxLayout(self)
 
         loading_label = QLabel("Loading...")
@@ -59,10 +59,10 @@ class BaseTab(QWidget):
             self.is_loaded = True
 
     def setup_content(self):
-        """Override this method to setup the actual tab content"""
+        """Override this method to setup the actual tab content."""
 
     def clear_layout(self):
-        """Clear all widgets from the current layout"""
+        """Clear all widgets from the current layout."""
         layout = self.layout()
         if layout:
             while layout.count():
@@ -71,33 +71,33 @@ class BaseTab(QWidget):
                     child.widget().deleteLater()
 
     def log_activity(self, message):
-        """Log activity to shared context if available"""
+        """Log activity to shared context if available."""
         if self.shared_context and hasattr(self.shared_context, "log_activity"):
             self.shared_context.log_activity(message)
 
     @property
     def app_context(self):
-        """Get the application context from shared context"""
+        """Get the application context from shared context."""
         return self.shared_context.get("app_context")
 
     @property
     def task_manager(self):
-        """Get the task manager from shared context"""
+        """Get the task manager from shared context."""
         return self.shared_context.get("task_manager")
 
     @property
     def main_window(self):
-        """Get the main window from shared context"""
+        """Get the main window from shared context."""
         return self.shared_context.get("main_window")
 
     def submit_task(self, task):
-        """Submit a task to the task manager"""
+        """Submit a task to the task manager."""
         if self.task_manager:
             return self.task_manager.submit_task(task)
         return None
 
     def submit_callable(self, func, args=(), kwargs=None, description=""):
-        """Submit a callable to the task manager"""
+        """Submit a callable to the task manager."""
         if self.task_manager:
             return self.task_manager.submit_callable(func, args, kwargs, description=description)
         return None

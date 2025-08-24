@@ -1,5 +1,5 @@
 """Security Enforcement Module for Intellicrack
-Implements security policies defined in intellicrack_config.json
+Implements security policies defined in intellicrack_config.json.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -36,7 +36,7 @@ logger.setLevel(logging.INFO)
 
 
 class SecurityEnforcement:
-    """Central security enforcement class"""
+    """Central security enforcement class."""
 
     def __init__(self):
         """Initialize security enforcement with configuration and tracking state."""
@@ -46,7 +46,7 @@ class SecurityEnforcement:
         self._bypass_security = False  # Emergency bypass flag
 
     def _load_config(self) -> dict[str, Any]:
-        """Load security configuration from ``intellicrack_config.json``"""
+        """Load security configuration from ``intellicrack_config.json``."""
         config_paths = [
             Path(__file__).parent.parent.parent / "config" / "intellicrack_config.json",
             Path.cwd() / "config" / "intellicrack_config.json",
@@ -65,7 +65,7 @@ class SecurityEnforcement:
         return self._get_default_config()
 
     def _get_default_config(self) -> dict[str, Any]:
-        """Return default security configuration"""
+        """Return default security configuration."""
         return {
             "security": {
                 "sandbox_analysis": True,
@@ -93,12 +93,12 @@ class SecurityEnforcement:
         }
 
     def enable_bypass(self):
-        """Enable security bypass for critical operations"""
+        """Enable security bypass for critical operations."""
         self._bypass_security = True
         logger.warning("Security bypass enabled - use with caution!")
 
     def disable_bypass(self):
-        """Disable security bypass"""
+        """Disable security bypass."""
         self._bypass_security = False
         logger.info("Security bypass disabled")
 
@@ -109,7 +109,7 @@ _security = SecurityEnforcement()
 
 # Subprocess Protection
 def _secure_subprocess_run(*args, **kwargs):
-    """Secure wrapper for subprocess.run"""
+    """Secure wrapper for subprocess.run."""
     if _security._bypass_security:
         return _security._original_functions["subprocess.run"](*args, **kwargs)
 
@@ -135,7 +135,7 @@ def _secure_subprocess_run(*args, **kwargs):
 
 
 def _secure_subprocess_popen(*args, **kwargs):
-    """Secure wrapper for subprocess.Popen"""
+    """Secure wrapper for subprocess.Popen."""
     if _security._bypass_security:
         return _security._original_functions["subprocess.Popen"](*args, **kwargs)
 
@@ -159,7 +159,7 @@ def _secure_subprocess_popen(*args, **kwargs):
 
 
 def _secure_subprocess_call(*args, **kwargs):
-    """Secure wrapper for subprocess.call"""
+    """Secure wrapper for subprocess.call."""
     if _security._bypass_security:
         return _security._original_functions["subprocess.call"](*args, **kwargs)
 
@@ -173,7 +173,7 @@ def _secure_subprocess_call(*args, **kwargs):
 
 
 def _secure_subprocess_check_call(*args, **kwargs):
-    """Secure wrapper for ``subprocess.check_call``"""
+    """Secure wrapper for ``subprocess.check_call``."""
     if _security._bypass_security:
         return _security._original_functions["subprocess.check_call"](*args, **kwargs)
 
@@ -187,7 +187,7 @@ def _secure_subprocess_check_call(*args, **kwargs):
 
 
 def _secure_subprocess_check_output(*args, **kwargs):
-    """Secure wrapper for ``subprocess.check_output``"""
+    """Secure wrapper for ``subprocess.check_output``."""
     if _security._bypass_security:
         return _security._original_functions["subprocess.check_output"](*args, **kwargs)
 
@@ -204,7 +204,7 @@ def _secure_subprocess_check_output(*args, **kwargs):
 
 # Pickle Security
 def _secure_pickle_dump(obj, file, protocol=None, *, fix_imports=True, buffer_callback=None):
-    """Secure wrapper for pickle.dump"""
+    """Secure wrapper for pickle.dump."""
     if _security._bypass_security:
         return _security._original_functions["pickle.dump"](
             obj, file, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback
@@ -231,7 +231,7 @@ def _secure_pickle_dump(obj, file, protocol=None, *, fix_imports=True, buffer_ca
 
 
 def _secure_pickle_dumps(obj, protocol=None, *, fix_imports=True, buffer_callback=None):
-    """Secure wrapper for pickle.dumps"""
+    """Secure wrapper for pickle.dumps."""
     if _security._bypass_security:
         return _security._original_functions["pickle.dumps"](
             obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback
@@ -255,7 +255,7 @@ def _secure_pickle_dumps(obj, protocol=None, *, fix_imports=True, buffer_callbac
 
 
 def _secure_pickle_load(file, *, fix_imports=True, encoding="ASCII", errors="strict", buffers=None):
-    """Secure wrapper for pickle.load"""
+    """Secure wrapper for pickle.load."""
     if _security._bypass_security:
         return _security._original_functions["pickle.load"](
             file, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers
@@ -284,7 +284,7 @@ def _secure_pickle_load(file, *, fix_imports=True, encoding="ASCII", errors="str
 def _secure_pickle_loads(
     data, *, fix_imports=True, encoding="ASCII", errors="strict", buffers=None
 ):
-    """Secure wrapper for pickle.loads"""
+    """Secure wrapper for pickle.loads."""
     if _security._bypass_security:
         return _security._original_functions["pickle.loads"](
             data, fix_imports=fix_imports, encoding=encoding, errors=errors, buffers=buffers
@@ -311,7 +311,7 @@ def _secure_pickle_loads(
 
 # Hashlib Security
 class SecureHash:
-    """Secure hash wrapper that enforces algorithm policies"""
+    """Secure hash wrapper that enforces algorithm policies."""
 
     def __init__(self, name, data=b""):
         self.name = name
@@ -362,7 +362,7 @@ class SecureHash:
 
 
 def _secure_hashlib_new(name, data=b"", **kwargs):
-    """Secure wrapper for hashlib.new"""
+    """Secure wrapper for hashlib.new."""
     if _security._bypass_security:
         return _security._original_functions["hashlib.new"](name, data, **kwargs)
 
@@ -381,7 +381,7 @@ def _secure_hashlib_new(name, data=b"", **kwargs):
 
 
 def _secure_hashlib_md5(data=b"", **kwargs):
-    """Secure wrapper for hashlib.md5"""
+    """Secure wrapper for hashlib.md5."""
     if _security._bypass_security:
         return _security._original_functions["hashlib.md5"](data, **kwargs)
 
@@ -401,7 +401,7 @@ def _secure_hashlib_md5(data=b"", **kwargs):
 
 # File Input Validation
 def validate_file_input(file_path: str | Path, operation: str = "read") -> bool:
-    """Validate file input based on security configuration"""
+    """Validate file input based on security configuration."""
     if _security._bypass_security:
         return True
 
@@ -446,7 +446,7 @@ def validate_file_input(file_path: str | Path, operation: str = "read") -> bool:
 
 # Secure file operations
 def secure_open(file, mode="r", *args, **kwargs):
-    """Secure wrapper for open() with validation"""
+    """Secure wrapper for open() with validation."""
     if "r" in mode or "a" in mode:
         validate_file_input(file, "read")
     if "w" in mode or "a" in mode:
@@ -457,7 +457,7 @@ def secure_open(file, mode="r", *args, **kwargs):
 
 # Monkey-patching functions
 def _monkey_patch_subprocess():
-    """Apply subprocess security patches"""
+    """Apply subprocess security patches."""
     if "subprocess.run" not in _security._original_functions:
         _security._original_functions["subprocess.run"] = subprocess.run
         _security._original_functions["subprocess.Popen"] = subprocess.Popen
@@ -467,7 +467,7 @@ def _monkey_patch_subprocess():
 
     # Create a subclassable Popen wrapper
     class SecurePopen(_security._original_functions["subprocess.Popen"]):
-        """Secure wrapper for subprocess.Popen that can be subclassed"""
+        """Secure wrapper for subprocess.Popen that can be subclassed."""
 
         def __init__(self, *args, **kwargs):
             if _security._bypass_security:
@@ -508,7 +508,7 @@ def _monkey_patch_subprocess():
 
 
 def _monkey_patch_pickle():
-    """Apply pickle security patches"""
+    """Apply pickle security patches."""
     if "pickle.dump" not in _security._original_functions:
         _security._original_functions["pickle.dump"] = pickle.dump
         _security._original_functions["pickle.dumps"] = pickle.dumps
@@ -524,7 +524,7 @@ def _monkey_patch_pickle():
 
 
 def _monkey_patch_hashlib():
-    """Apply hashlib security patches"""
+    """Apply hashlib security patches."""
     if "hashlib.new" not in _security._original_functions:
         _security._original_functions["hashlib.new"] = hashlib.new
         _security._original_functions["hashlib.md5"] = hashlib.md5
@@ -536,7 +536,7 @@ def _monkey_patch_hashlib():
 
 
 def initialize_security():
-    """Initialize all security patches"""
+    """Initialize all security patches."""
     logger.info("Initializing Intellicrack security enforcement")
 
     try:
@@ -562,7 +562,7 @@ def initialize_security():
 
 
 def get_security_status() -> dict[str, Any]:
-    """Get current security enforcement status"""
+    """Get current security enforcement status."""
     return {
         "initialized": bool(_security._original_functions),
         "bypass_enabled": _security._bypass_security,
@@ -577,7 +577,7 @@ def get_security_status() -> dict[str, Any]:
 
 # Custom exception
 class SecurityError(Exception):
-    """Raised when a security policy is violated"""
+    """Raised when a security policy is violated."""
 
 
 # Auto-initialize on import

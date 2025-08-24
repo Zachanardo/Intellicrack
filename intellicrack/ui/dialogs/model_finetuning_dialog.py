@@ -1265,7 +1265,7 @@ class TrainingThread(QThread):
                     final_loss = 0.8
                     progress_ratio = current_step / total_steps
                     loss = initial_loss * (1 - progress_ratio) + final_loss * progress_ratio
-                    loss += random.uniform(-0.1, 0.1)  # Add noise
+                    loss += random.uniform(-0.1, 0.1)  # noqa: S311 - ML training simulation noise
 
                     # Calculate learning rate with decay
                     lr = self.config.learning_rate * (0.95**_epoch)
@@ -2549,13 +2549,13 @@ class ModelFinetuningDialog(QDialog):
                 # Replace some words with synonyms
                 result_words = []
                 for _word in words:
-                    if random.random() < 0.3:  # 30% chance to replace
+                    if random.random() < 0.3:  # noqa: S311 - ML data augmentation probability, 30% chance to replace
                         synsets = wordnet.synsets(_word)
                         if synsets:
                             synonyms = [_lemma.name() for _lemma in synsets[0].lemmas()]
                             synonyms = [_s for _s in synonyms if _s != _word]
                             if synonyms:
-                                result_words.append(random.choice(synonyms))
+                                result_words.append(random.choice(synonyms))  # noqa: S311 - ML data augmentation synonym selection
                                 continue
                     result_words.append(_word)
                 return " ".join(result_words)
@@ -2565,8 +2565,8 @@ class ModelFinetuningDialog(QDialog):
         elif technique == "random_insertion":
             # Insert random words
             if len(words) > 1:
-                insert_pos = random.randint(0, len(words))
-                words.insert(insert_pos, random.choice(words))
+                insert_pos = random.randint(0, len(words))  # noqa: S311 - ML data augmentation word insertion
+                words.insert(insert_pos, random.choice(words))  # noqa: S311 - ML data augmentation word selection
 
         elif technique == "random_swap":
             # Swap two random words
@@ -2577,7 +2577,7 @@ class ModelFinetuningDialog(QDialog):
         elif technique == "random_deletion":
             # Delete a random word
             if len(words) > 2:
-                del_pos = random.randint(0, len(words) - 1)
+                del_pos = random.randint(0, len(words) - 1)  # noqa: S311 - ML data augmentation word deletion
                 del words[del_pos]
 
         return " ".join(words)
@@ -2629,7 +2629,7 @@ class ModelFinetuningDialog(QDialog):
                 # Generate augmented versions
                 for __ in range(aug_per_sample):
                     for _technique in techniques:
-                        if random.random() < aug_prob:
+                        if random.random() < aug_prob:  # noqa: S311 - ML data augmentation probability control
                             augmented_sample = sample.copy()
 
                             # Apply to input field

@@ -1,5 +1,4 @@
-"""
-Comprehensive error handling for configuration migration.
+"""Comprehensive error handling for configuration migration.
 
 This module provides robust error handling and recovery mechanisms for
 configuration migration from legacy systems to the central IntellicrackConfig.
@@ -47,14 +46,14 @@ class MigrationValidator:
 
     @staticmethod
     def validate_structure(config: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        """
-        Validate the structure of migrated configuration.
+        """Validate the structure of migrated configuration.
 
         Args:
             config: Configuration dictionary to validate
 
         Returns:
             Tuple of (is_valid, list_of_errors)
+
         """
         errors = []
         required_sections = [
@@ -87,14 +86,14 @@ class MigrationValidator:
 
     @staticmethod
     def validate_data_types(config: Dict[str, Any]) -> Tuple[bool, List[str]]:
-        """
-        Validate data types in configuration.
+        """Validate data types in configuration.
 
         Args:
             config: Configuration dictionary to validate
 
         Returns:
             Tuple of (is_valid, list_of_errors)
+
         """
         errors = []
 
@@ -128,25 +127,25 @@ class MigrationBackup:
     """Handles backup and restore for configuration migration."""
 
     def __init__(self, config_path: Path):
-        """
-        Initialize backup handler.
+        """Initialize backup handler.
 
         Args:
             config_path: Path to the configuration file
+
         """
         self.config_path = config_path
         self.backup_dir = config_path.parent / "migration_backups"
         self.backup_dir.mkdir(exist_ok=True)
 
     def create_backup(self, config_data: Dict[str, Any]) -> Path:
-        """
-        Create a backup of configuration data.
+        """Create a backup of configuration data.
 
         Args:
             config_data: Configuration data to backup
 
         Returns:
             Path to the backup file
+
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_file = self.backup_dir / f"config_backup_{timestamp}.json"
@@ -161,14 +160,14 @@ class MigrationBackup:
             raise MigrationError(f"Backup creation failed: {e}") from e
 
     def restore_backup(self, backup_file: Path) -> Dict[str, Any]:
-        """
-        Restore configuration from backup.
+        """Restore configuration from backup.
 
         Args:
             backup_file: Path to the backup file
 
         Returns:
             Restored configuration data
+
         """
         try:
             with open(backup_file, "r") as f:
@@ -180,11 +179,11 @@ class MigrationBackup:
             raise MigrationRollbackError(f"Backup restoration failed: {e}") from e
 
     def get_latest_backup(self) -> Optional[Path]:
-        """
-        Get the most recent backup file.
+        """Get the most recent backup file.
 
         Returns:
             Path to the latest backup or None
+
         """
         backups = list(self.backup_dir.glob("config_backup_*.json"))
         if backups:
@@ -193,16 +192,14 @@ class MigrationBackup:
 
 
 class ConfigMigrationHandler:
-    """
-    Comprehensive handler for configuration migration with error recovery.
-    """
+    """Comprehensive handler for configuration migration with error recovery."""
 
     def __init__(self, config_path: Path):
-        """
-        Initialize migration handler.
+        """Initialize migration handler.
 
         Args:
             config_path: Path to the main configuration file
+
         """
         self.config_path = config_path
         self.backup_handler = MigrationBackup(config_path)
@@ -213,8 +210,7 @@ class ConfigMigrationHandler:
     def migrate_with_recovery(
         self, config_data: Dict[str, Any], migration_func: callable, migration_name: str
     ) -> Tuple[bool, Dict[str, Any]]:
-        """
-        Execute migration with error handling and recovery.
+        """Execute migration with error handling and recovery.
 
         Args:
             config_data: Current configuration data
@@ -223,6 +219,7 @@ class ConfigMigrationHandler:
 
         Returns:
             Tuple of (success, migrated_config_data)
+
         """
         self.migration_status = MigrationStatus.IN_PROGRESS
         self.log_migration(f"Starting migration: {migration_name}")
@@ -271,8 +268,7 @@ class ConfigMigrationHandler:
     def handle_partial_migration(
         self, config_data: Dict[str, Any], migrations: Dict[str, callable]
     ) -> Dict[str, Any]:
-        """
-        Handle multiple migrations with partial success support.
+        """Handle multiple migrations with partial success support.
 
         Args:
             config_data: Current configuration data
@@ -280,6 +276,7 @@ class ConfigMigrationHandler:
 
         Returns:
             Migrated configuration data
+
         """
         successful_migrations = []
         failed_migrations = []
@@ -309,12 +306,12 @@ class ConfigMigrationHandler:
         return current_data
 
     def log_migration(self, message: str, level: str = "info") -> None:
-        """
-        Log migration message.
+        """Log migration message.
 
         Args:
             message: Message to log
             level: Log level (info, warning, error, critical, debug)
+
         """
         timestamp = datetime.now().isoformat()
         log_entry = {
@@ -340,11 +337,11 @@ class ConfigMigrationHandler:
             logger.error(f"Failed to save migration log: {e}")
 
     def get_migration_report(self) -> Dict[str, Any]:
-        """
-        Get a summary report of the migration.
+        """Get a summary report of the migration.
 
         Returns:
             Dictionary containing migration report
+
         """
         errors = [entry for entry in self.migration_log if entry["level"] in ["error", "critical"]]
         warnings = [entry for entry in self.migration_log if entry["level"] == "warning"]
@@ -361,16 +358,13 @@ class ConfigMigrationHandler:
 
 
 class SafeMigrationWrapper:
-    """
-    Wrapper to safely execute migration functions with timeout and resource limits.
-    """
+    """Wrapper to safely execute migration functions with timeout and resource limits."""
 
     @staticmethod
     def migrate_with_timeout(
         migration_func: callable, config_data: Dict[str, Any], timeout: int = 30
     ) -> Dict[str, Any]:
-        """
-        Execute migration with timeout protection.
+        """Execute migration with timeout protection.
 
         Args:
             migration_func: Migration function to execute
@@ -379,6 +373,7 @@ class SafeMigrationWrapper:
 
         Returns:
             Migrated configuration data
+
         """
         import threading
 
@@ -406,8 +401,7 @@ class SafeMigrationWrapper:
 
     @staticmethod
     def validate_migration_result(original: Dict[str, Any], migrated: Dict[str, Any]) -> bool:
-        """
-        Validate that migration preserved essential data.
+        """Validate that migration preserved essential data.
 
         Args:
             original: Original configuration
@@ -415,6 +409,7 @@ class SafeMigrationWrapper:
 
         Returns:
             True if validation passes
+
         """
         # Check that no critical sections were lost
         critical_sections = ["version", "application"]

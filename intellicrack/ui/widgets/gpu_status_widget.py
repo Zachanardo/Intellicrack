@@ -42,7 +42,7 @@ from intellicrack.logger import logger
 
 
 class GPUMonitorWorker(QObject):
-    """Worker thread for collecting GPU metrics"""
+    """Worker thread for collecting GPU metrics."""
 
     gpu_data_ready = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
@@ -54,16 +54,16 @@ class GPUMonitorWorker(QObject):
         self.update_interval = 1000  # Default 1 second
 
     def start_monitoring(self):
-        """Start the monitoring process"""
+        """Start the monitoring process."""
         self.running = True
         self._monitor_loop()
 
     def stop_monitoring(self):
-        """Stop the monitoring process"""
+        """Stop the monitoring process."""
         self.running = False
 
     def _monitor_loop(self):
-        """Main monitoring loop"""
+        """Main monitoring loop."""
         while self.running:
             try:
                 gpu_data = self._collect_gpu_data()
@@ -76,7 +76,7 @@ class GPUMonitorWorker(QObject):
                 self.thread().msleep(self.update_interval)
 
     def _collect_gpu_data(self) -> dict[str, Any]:
-        """Collect GPU data based on platform"""
+        """Collect GPU data based on platform."""
         gpu_data = {
             "gpus": [],
             "platform": self.platform,
@@ -111,7 +111,7 @@ class GPUMonitorWorker(QObject):
         return gpu_data
 
     def _get_nvidia_gpu_info(self) -> list[dict[str, Any]]:
-        """Get NVIDIA GPU information using nvidia-smi"""
+        """Get NVIDIA GPU information using nvidia-smi."""
         gpus = []
         try:
             # Run nvidia-smi command
@@ -151,7 +151,7 @@ class GPUMonitorWorker(QObject):
         return gpus
 
     def _get_intel_arc_info(self) -> list[dict[str, Any]]:
-        """Get Intel Arc GPU information"""
+        """Get Intel Arc GPU information."""
         gpus = []
         try:
             # Check if Intel GPU tools are available
@@ -180,7 +180,7 @@ class GPUMonitorWorker(QObject):
         return gpus
 
     def _get_amd_gpu_info(self) -> list[dict[str, Any]]:
-        """Get AMD GPU information"""
+        """Get AMD GPU information."""
         gpus = []
         # AMD GPU detection would go here
         # This would use rocm-smi on Linux or AMD tools on Windows
@@ -188,7 +188,7 @@ class GPUMonitorWorker(QObject):
 
 
 class GPUStatusWidget(QWidget):
-    """GPU status monitoring widget"""
+    """GPU status monitoring widget."""
 
     def __init__(self, parent=None):
         """Initialize GPU status widget with performance monitoring and GPU detection."""
@@ -201,7 +201,7 @@ class GPUStatusWidget(QWidget):
         self.customContextMenuRequested.connect(self._show_context_menu)
 
     def setup_ui(self):
-        """Setup the user interface"""
+        """Setup the user interface."""
         layout = QVBoxLayout(self)
 
         # GPU Selection
@@ -287,7 +287,7 @@ class GPUStatusWidget(QWidget):
         layout.addStretch()
 
     def setup_monitoring(self):
-        """Setup GPU monitoring thread"""
+        """Setup GPU monitoring thread."""
         self.monitor_thread = QThread()
         self.monitor_worker = GPUMonitorWorker()
         self.monitor_worker.moveToThread(self.monitor_thread)
@@ -298,24 +298,24 @@ class GPUStatusWidget(QWidget):
         self.monitor_worker.error_occurred.connect(self.handle_error)
 
     def start_monitoring(self):
-        """Start GPU monitoring"""
+        """Start GPU monitoring."""
         if not self.monitor_thread.isRunning():
             self.monitor_thread.start()
 
     def stop_monitoring(self):
-        """Stop GPU monitoring"""
+        """Stop GPU monitoring."""
         if self.monitor_thread.isRunning():
             self.monitor_worker.stop_monitoring()
             self.monitor_thread.quit()
             self.monitor_thread.wait()
 
     def set_refresh_interval(self, interval_ms: int):
-        """Set the refresh interval for GPU monitoring"""
+        """Set the refresh interval for GPU monitoring."""
         if hasattr(self, 'monitor_worker'):
             self.monitor_worker.update_interval = interval_ms
 
     def update_gpu_data(self, data: dict[str, Any]):
-        """Update GPU data from monitor"""
+        """Update GPU data from monitor."""
         self.gpu_data = data
 
         # Update GPU combo box
@@ -339,12 +339,12 @@ class GPUStatusWidget(QWidget):
             self.clear_display()
 
     def on_gpu_selected(self, index):
-        """Handle GPU selection change"""
+        """Handle GPU selection change."""
         self.selected_gpu_index = index
         self.update_display()
 
     def update_display(self):
-        """Update the display with current GPU data"""
+        """Update the display with current GPU data."""
         if not self.gpu_data.get("gpus") or self.selected_gpu_index >= len(self.gpu_data["gpus"]):
             return
 
@@ -384,7 +384,7 @@ class GPUStatusWidget(QWidget):
         self.update_capabilities(gpu)
 
     def update_capabilities(self, gpu: dict[str, Any]):
-        """Update GPU capabilities display"""
+        """Update GPU capabilities display."""
         caps_text = []
 
         if gpu["vendor"] == "NVIDIA":
@@ -408,7 +408,7 @@ class GPUStatusWidget(QWidget):
         self.caps_text.setPlainText("\n".join(caps_text))
 
     def clear_display(self):
-        """Clear all display fields"""
+        """Clear all display fields."""
         self.vendor_label.setText("Vendor: N/A")
         self.name_label.setText("Name: N/A")
         self.driver_label.setText("Driver: N/A")
@@ -428,7 +428,7 @@ class GPUStatusWidget(QWidget):
         self.caps_text.setPlainText("No GPU detected")
 
     def _set_bar_color(self, bar: QProgressBar, value: float, warning: float, critical: float):
-        """Set progress bar color based on value thresholds"""
+        """Set progress bar color based on value thresholds."""
         if value >= critical:
             bar.setStyleSheet("QProgressBar::chunk { background-color: #dc3545; }")
         elif value >= warning:
@@ -437,11 +437,11 @@ class GPUStatusWidget(QWidget):
             bar.setStyleSheet("QProgressBar::chunk { background-color: #28a745; }")
 
     def handle_error(self, error_msg: str):
-        """Handle monitoring errors"""
+        """Handle monitoring errors."""
         self.caps_text.append(f"\nError: {error_msg}")
 
     def refresh_gpus(self):
-        """Manually refresh GPU list"""
+        """Manually refresh GPU list."""
         # Trigger a manual refresh by restarting monitoring
         try:
             if hasattr(self, "monitor_worker") and self.monitor_worker:

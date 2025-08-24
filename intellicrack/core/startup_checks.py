@@ -1,4 +1,4 @@
-"""Startup Checks and Path Resolution
+"""Startup Checks and Path Resolution.
 
 Performs startup checks and ensures paths are properly resolved.
 

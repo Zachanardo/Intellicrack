@@ -37,7 +37,7 @@ from intellicrack.handlers.pyqt6_handler import (
 
 
 class DropZoneWidget(QWidget):
-    """A widget that provides a visual drop zone for files"""
+    """A widget that provides a visual drop zone for files."""
 
     #: List of file paths (type: list)
     files_dropped = pyqtSignal(list)
@@ -50,7 +50,7 @@ class DropZoneWidget(QWidget):
         self._setup_ui()
 
     def setup_ui(self):
-        """Setup the UI"""
+        """Setup the UI."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
 
@@ -75,7 +75,7 @@ class DropZoneWidget(QWidget):
         self.update_style()
 
     def update_style(self):
-        """Update widget style based on state"""
+        """Update widget style based on state."""
         if self.is_dragging:
             self.setStyleSheet("""
                 DropZoneWidget {
@@ -100,7 +100,7 @@ class DropZoneWidget(QWidget):
             self.label.setText("Drop files here for analysis")
 
     def paintEvent(self, event):
-        """Custom paint event"""
+        """Custom paint event."""
         super().paintEvent(event)
 
         # Draw additional visual elements if needed
@@ -115,7 +115,7 @@ class DropZoneWidget(QWidget):
             painter.drawRoundedRect(self.rect().adjusted(5, 5, -5, -5), 10, 10)
 
     def dragEnterEvent(self, event: QDragEnterEvent):
-        """Handle drag enter"""
+        """Handle drag enter."""
         if event.mimeData().hasUrls():
             # Check if any files are supported
             for url in event.mimeData().urls():
@@ -127,12 +127,12 @@ class DropZoneWidget(QWidget):
         event.ignore()
 
     def dragLeaveEvent(self, event):
-        """Handle drag leave"""
+        """Handle drag leave."""
         self.is_dragging = False
         self.update_style()
 
     def dropEvent(self, event: QDropEvent):
-        """Handle drop"""
+        """Handle drop."""
         self.is_dragging = False
         self.update_style()
 
@@ -152,7 +152,7 @@ class DropZoneWidget(QWidget):
         event.ignore()
 
     def _is_supported_file(self, file_path: str) -> bool:
-        """Check if file is supported"""
+        """Check if file is supported."""
         if not os.path.exists(file_path):
             return False
 

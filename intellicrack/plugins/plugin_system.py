@@ -92,6 +92,7 @@ except ImportError as e:
     # a compatibility layer that returns sensible defaults
     class WindowsResourceCompat:
         """Windows compatibility layer for Unix resource module."""
+
         RLIMIT_CPU = 0      # CPU time limit
         RLIMIT_FSIZE = 1    # File size limit
         RLIMIT_DATA = 2     # Data segment size limit

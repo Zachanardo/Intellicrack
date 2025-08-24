@@ -1,4 +1,4 @@
-"""GPU Integration Module for AI Components
+"""GPU Integration Module for AI Components.
 
 This module provides GPU integration for AI components using the unified GPU autoloader system.
 
@@ -83,16 +83,16 @@ except ImportError:
 
 
 class GPUIntegration:
-    """GPU Integration for AI models using unified system"""
+    """GPU Integration for AI models using unified system."""
 
     def __init__(self):
-        """Initialize GPU integration"""
+        """Initialize GPU integration."""
         self.gpu_info = get_gpu_info()
         self.device = get_device()
         logger.info(f"GPU Integration initialized: {self.gpu_info['type']}")
 
     def get_device_info(self) -> dict[str, Any]:
-        """Get comprehensive device information"""
+        """Get comprehensive device information."""
         info = self.gpu_info.copy()
 
         # Add additional runtime info if available
@@ -129,7 +129,7 @@ class GPUIntegration:
         return info
 
     def prepare_model(self, model: Any) -> Any:
-        """Prepare model for GPU execution"""
+        """Prepare model for GPU execution."""
         # Move to device
         model = to_device(model)
 
@@ -139,26 +139,26 @@ class GPUIntegration:
         return model
 
     def prepare_tensor(self, tensor: Any) -> Any:
-        """Prepare tensor for GPU execution"""
+        """Prepare tensor for GPU execution."""
         return to_device(tensor)
 
     def get_memory_usage(self) -> dict[str, Any]:
-        """Get current GPU memory usage"""
+        """Get current GPU memory usage."""
         if GPU_AUTOLOADER_AVAILABLE:
             return gpu_autoloader.get_memory_info()
         return {}
 
     def synchronize(self):
-        """Synchronize GPU operations"""
+        """Synchronize GPU operations."""
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_autoloader.synchronize()
 
     def is_available(self) -> bool:
-        """Check if GPU acceleration is available"""
+        """Check if GPU acceleration is available."""
         return self.gpu_info["available"]
 
     def get_backend_name(self) -> str:
-        """Get the backend name"""
+        """Get the backend name."""
         return self.gpu_info.get("info", {}).get("backend", "Unknown")
 
 
@@ -168,25 +168,25 @@ gpu_integration = GPUIntegration()
 
 # Export convenience functions
 def get_ai_device():
-    """Get device for AI operations"""
+    """Get device for AI operations."""
     return gpu_integration.device
 
 
 def prepare_ai_model(model: Any) -> Any:
-    """Prepare AI model for GPU execution"""
+    """Prepare AI model for GPU execution."""
     return gpu_integration.prepare_model(model)
 
 
 def prepare_ai_tensor(tensor: Any) -> Any:
-    """Prepare tensor for GPU execution"""
+    """Prepare tensor for GPU execution."""
     return gpu_integration.prepare_tensor(tensor)
 
 
 def get_ai_gpu_info() -> dict[str, Any]:
-    """Get GPU information for AI operations"""
+    """Get GPU information for AI operations."""
     return gpu_integration.get_device_info()
 
 
 def is_gpu_available() -> bool:
-    """Check if GPU is available for AI operations"""
+    """Check if GPU is available for AI operations."""
     return gpu_integration.is_available()

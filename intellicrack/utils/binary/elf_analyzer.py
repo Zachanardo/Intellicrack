@@ -1,4 +1,4 @@
-"""ELF Binary Analysis Module for Intellicrack
+"""ELF Binary Analysis Module for Intellicrack.
 
 Provides comprehensive analysis capabilities for ELF (Executable and Linkable Format) binaries
 commonly found on Linux, BSD, and other Unix-like systems.
@@ -54,6 +54,7 @@ class ELFAnalyzer:
 
         Args:
             file_path: Path to ELF binary file
+
         """
         self.file_path = Path(file_path)
         self.data: Optional[bytes] = None
@@ -69,6 +70,7 @@ class ELFAnalyzer:
 
         Returns:
             True if binary loaded successfully, False otherwise
+
         """
         try:
             with open(self.file_path, 'rb') as f:
@@ -90,6 +92,7 @@ class ELFAnalyzer:
 
         Returns:
             True if valid ELF file, False otherwise
+
         """
         if not self.data or len(self.data) < self.EI_NIDENT:
             return False
@@ -153,6 +156,7 @@ class ELFAnalyzer:
 
         Returns:
             List of section information dictionaries
+
         """
         if not self.header or not self.data:
             return []
@@ -208,6 +212,7 @@ class ELFAnalyzer:
 
         Returns:
             List of segment information dictionaries
+
         """
         if not self.header or not self.data:
             return []
@@ -261,6 +266,7 @@ class ELFAnalyzer:
 
         Returns:
             List of symbol information dictionaries
+
         """
         if not self.sections:
             self.analyze_sections()
@@ -287,6 +293,7 @@ class ELFAnalyzer:
         Args:
             section: Symbol table section information
             symbols: List to append symbol information to
+
         """
         if not self.data:
             return
@@ -344,6 +351,7 @@ class ELFAnalyzer:
 
         Returns:
             Dictionary containing security feature analysis
+
         """
         features = {
             'nx_bit': False,
@@ -388,6 +396,7 @@ class ELFAnalyzer:
 
         Returns:
             List of symbol names
+
         """
         names = []
 
@@ -419,6 +428,7 @@ class ELFAnalyzer:
 
         Returns:
             Complete analysis results
+
         """
         if not self.load_binary():
             return {'error': 'Failed to load binary'}
@@ -441,6 +451,7 @@ class ELFAnalyzer:
 
         Returns:
             Architecture description
+
         """
         if not self.header:
             return 'unknown'
@@ -468,6 +479,7 @@ def analyze_elf_file(file_path: Union[str, Path]) -> Dict[str, Any]:
 
     Returns:
         Analysis results dictionary
+
     """
     analyzer = ELFAnalyzer(file_path)
     return analyzer.analyze()
@@ -481,6 +493,7 @@ def is_elf_file(file_path: Union[str, Path]) -> bool:
 
     Returns:
         True if file is ELF, False otherwise
+
     """
     try:
         with open(file_path, 'rb') as f:
@@ -499,6 +512,7 @@ def extract_elf_strings(file_path: Union[str, Path], min_length: int = 4) -> Lis
 
     Returns:
         List of extracted strings
+
     """
     try:
         with open(file_path, 'rb') as f:

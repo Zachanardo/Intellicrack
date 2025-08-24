@@ -2755,6 +2755,7 @@ def get_llm_backend() -> LLMManager:
 
     Returns:
         LLMManager: The global LLM manager instance
+
     """
     return get_llm_manager()
 

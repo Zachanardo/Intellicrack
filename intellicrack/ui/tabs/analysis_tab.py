@@ -50,9 +50,10 @@ from .base_tab import BaseTab
 
 
 class CollapsibleGroupBox(QGroupBox):
-    """A collapsible group box widget for cleaner UI organization"""
+    """A collapsible group box widget for cleaner UI organization."""
 
     def __init__(self, title="", parent=None):
+        """Initialize collapsible group box with title and parent."""
         super().__init__(title, parent)
         self.setCheckable(True)
         self.setChecked(False)
@@ -68,9 +69,11 @@ class CollapsibleGroupBox(QGroupBox):
         self.content_widget.setVisible(checked)
 
     def add_widget(self, widget):
+        """Add widget to the collapsible content area."""
         self.content_layout.addWidget(widget)
 
     def add_layout(self, layout):
+        """Add layout to the collapsible content area."""
         self.content_layout.addLayout(layout)
 
 
@@ -96,7 +99,7 @@ class AnalysisTab(BaseTab):
             shared_context.binary_loaded.connect(self.embed_hex_viewer)
 
     def setup_content(self):
-        """Setup the Analysis tab content with clean, organized interface"""
+        """Setup the Analysis tab content with clean, organized interface."""
         main_layout = QVBoxLayout(self)
 
         # Create horizontal splitter for analysis controls and results
@@ -116,7 +119,7 @@ class AnalysisTab(BaseTab):
         main_layout.addWidget(splitter)
 
     def create_analysis_controls_panel(self):
-        """Create the organized analysis controls panel"""
+        """Create the organized analysis controls panel."""
         # Create scroll area for controls
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -370,7 +373,7 @@ class AnalysisTab(BaseTab):
         return scroll_area
 
     def create_results_panel(self):
-        """Create the analysis results display panel"""
+        """Create the analysis results display panel."""
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -480,7 +483,7 @@ class AnalysisTab(BaseTab):
         return panel
 
     def update_profile_settings(self, profile_name):
-        """Update settings based on selected profile"""
+        """Update settings based on selected profile."""
         profiles = {
             "Quick Scan": {
                 "description": "Fast basic analysis for quick overview. Includes basic static analysis and signature detection.",
@@ -554,7 +557,7 @@ class AnalysisTab(BaseTab):
             self.sandbox_execution_cb.setChecked(profile["engines"]["sandbox"])
 
     def run_analysis(self):
-        """Run analysis based on current settings"""
+        """Run analysis based on current settings."""
         if not self.current_binary:
             # Try to get binary from app context
             if hasattr(self, 'app_context') and self.app_context:
@@ -614,7 +617,7 @@ class AnalysisTab(BaseTab):
             self.analysis_started.emit(profile.lower())
 
     def start_static_analysis(self):
-        """Start static analysis with selected options"""
+        """Start static analysis with selected options."""
         self.log_activity("Starting static analysis...")
         self.results_display.append("=== STATIC ANALYSIS ===\n")
 
@@ -663,7 +666,7 @@ class AnalysisTab(BaseTab):
             self.results_display.append("Static analysis components not available\n")
 
     def start_dynamic_monitoring(self):
-        """Start dynamic monitoring with selected options"""
+        """Start dynamic monitoring with selected options."""
         self.log_activity("Starting dynamic monitoring...")
         self.results_display.append("\n=== DYNAMIC ANALYSIS ===\n")
         self.results_display.append(f"Framework: {self.hooking_framework_combo.currentText()}\n")
@@ -725,8 +728,10 @@ class AnalysisTab(BaseTab):
                         if not strings_path:
                             self.results_display.append("  • strings command not available\n")
                         else:
-                            result = subprocess.run([strings_path, self.current_file_path],
-                                                  capture_output=True, text=True, timeout=10)
+                            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                [strings_path, self.current_file_path],
+                                capture_output=True, text=True, timeout=10, shell=False
+                            )
                             if result.stdout:
                                 strings_count = len(result.stdout.split('\n'))
                                 self.results_display.append(f"  • Found {strings_count} strings\n")
@@ -749,7 +754,7 @@ class AnalysisTab(BaseTab):
             self.results_display.append(f"Dynamic analysis error: {str(e)}\n")
 
     def detect_protections(self):
-        """Detect binary protections"""
+        """Detect binary protections."""
         self.log_activity("Detecting protections...")
         self.results_display.append("\n=== PROTECTION DETECTION ===\n")
 
@@ -835,12 +840,12 @@ class AnalysisTab(BaseTab):
         self._analysis_completed(True, "Analysis completed")
 
     def stop_analysis(self):
-        """Stop current analysis"""
+        """Stop current analysis."""
         self.log_activity("Analysis stopped by user")
         self._analysis_completed(False, "Analysis stopped by user")
 
     def clear_results(self):
-        """Clear analysis results"""
+        """Clear analysis results."""
         self.results_display.clear()
         self.results_display.setText("Analysis results cleared.")
         self.analysis_results = {}
@@ -848,7 +853,7 @@ class AnalysisTab(BaseTab):
         self.log_activity("Analysis results cleared")
 
     def _analysis_completed(self, success, message):
-        """Helper method to re-enable UI elements after analysis completion"""
+        """Helper method to re-enable UI elements after analysis completion."""
         self.run_analysis_btn.setEnabled(True)
         self.stop_analysis_btn.setEnabled(False)
         self.run_analysis_btn.setText("Run Analysis")
@@ -861,7 +866,7 @@ class AnalysisTab(BaseTab):
             self.analysis_status.setText(f"✗ {message}")
 
     def open_hex_viewer(self):
-        """Open hex viewer for current binary"""
+        """Open hex viewer for current binary."""
         if not self.current_binary:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
@@ -882,7 +887,7 @@ class AnalysisTab(BaseTab):
             QMessageBox.critical(self, "Error", f"Failed to open hex viewer: {str(e)}")
 
     def embed_hex_viewer(self):
-        """Embed hex viewer in the results panel"""
+        """Embed hex viewer in the results panel."""
         if not self.current_binary:
             # Silently return if no binary is loaded (automatic call from signal)
             return
@@ -922,7 +927,7 @@ class AnalysisTab(BaseTab):
             self.hex_view_container.layout().addWidget(error_label)
 
     def view_disassembly(self):
-        """View disassembly in separate window"""
+        """View disassembly in separate window."""
         if not self.current_binary:
             QMessageBox.warning(self, "No Binary", "Please load a binary file first.")
             return
@@ -931,7 +936,7 @@ class AnalysisTab(BaseTab):
         QMessageBox.information(self, "Disassembly", "Disassembly viewer will be implemented with Ghidra/IDA integration.")
 
     def attach_to_process(self):
-        """Attach to running process for dynamic analysis"""
+        """Attach to running process for dynamic analysis."""
         pid_text, ok = QInputDialog.getText(
             self,
             "Attach to Process",
@@ -950,7 +955,7 @@ class AnalysisTab(BaseTab):
             )
 
     def take_system_snapshot(self):
-        """Take a system snapshot for differential analysis"""
+        """Take a system snapshot for differential analysis."""
         import time
 
         snapshot_name, ok = QInputDialog.getText(
@@ -971,7 +976,7 @@ class AnalysisTab(BaseTab):
             )
 
     def update_entropy_visualization(self):
-        """Update entropy visualization with current file data"""
+        """Update entropy visualization with current file data."""
         if not self.current_file_path:
             return
 
@@ -993,7 +998,7 @@ class AnalysisTab(BaseTab):
             self.log_activity(f"Failed to update entropy visualization: {e}")
 
     def update_structure_visualization(self):
-        """Update structure visualization with current file data"""
+        """Update structure visualization with current file data."""
         if not self.current_file_path:
             return
 
@@ -1101,13 +1106,13 @@ class AnalysisTab(BaseTab):
             self.log_activity(f"Failed to update structure visualization: {e}")
 
     def clear_analysis_cache(self):
-        """Clear analysis cache"""
+        """Clear analysis cache."""
         self.log_activity("Clearing analysis cache...")
         self.analysis_results = {}
         QMessageBox.information(self, "Cache Cleared", "Analysis cache has been cleared.")
 
     def export_analysis_results(self):
-        """Export analysis results to file"""
+        """Export analysis results to file."""
         if not self.analysis_results:
             QMessageBox.warning(self, "No Results", "No analysis results to export.")
             return
@@ -1137,7 +1142,7 @@ class AnalysisTab(BaseTab):
                 QMessageBox.critical(self, "Export Failed", f"Failed to export results: {str(e)}")
 
     def set_binary_path(self, binary_path):
-        """Set the current binary path for analysis"""
+        """Set the current binary path for analysis."""
         self.current_binary = binary_path
         self.current_file_path = binary_path
         self.log_activity(f"Binary loaded: {os.path.basename(binary_path)}")

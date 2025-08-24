@@ -1,4 +1,4 @@
-"""Radare2 Automated License Bypass Generation System
+"""Radare2 Automated License Bypass Generation System.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -741,7 +741,6 @@ class R2BypassGenerator:
 
     def _generate_hash_keygen_code(self, algorithm: str, construction: dict, details: dict) -> str:
         """Generate actual working keygen code for hash-based validation."""
-
         code = f'''#!/usr/bin/env python3
 """
 Keygen for {algorithm}-based license validation

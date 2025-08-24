@@ -27,6 +27,7 @@ class NodeJSInstallWorker(QThread):
     finished = pyqtSignal(bool, str)
 
     def __init__(self, compiler):
+        """Initialize Node.js installation worker with compiler instance."""
         super().__init__()
         self.compiler = compiler
 
@@ -49,6 +50,7 @@ class NodeJSSetupDialog(BaseDialog):
     """Dialog for Node.js installation setup."""
 
     def __init__(self, parent=None):
+        """Initialize Node.js setup dialog."""
         super().__init__(
             parent=parent,
             title="Node.js Setup Required",
@@ -65,7 +67,6 @@ class NodeJSSetupDialog(BaseDialog):
 
     def setup_content(self, layout):
         """Initialize the dialog UI content."""
-
         # Explanation header
         header_label = QLabel(
             "<h3>Node.js Required for AdobeLicenseX</h3>\n"
@@ -152,6 +153,7 @@ class NodeJSSetupDialog(BaseDialog):
 
         Returns:
             True if input is valid and dialog should close, False otherwise
+
         """
         if self.auto_install_radio.isChecked():
             self.start_installation()

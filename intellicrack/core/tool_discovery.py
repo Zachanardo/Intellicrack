@@ -1,4 +1,4 @@
-"""Advanced Tool Discovery System for Intellicrack
+"""Advanced Tool Discovery System for Intellicrack.
 
 Automatically discovers and validates security tools across platforms.
 Handles version detection, capability checking, and intelligent fallbacks.
@@ -684,6 +684,7 @@ class AdvancedToolDiscovery:
 
         Returns:
             True if override was set successfully, False otherwise
+
         """
         if not os.path.exists(tool_path):
             logger.error(f"Cannot set manual override: path {tool_path} does not exist")
@@ -714,6 +715,7 @@ class AdvancedToolDiscovery:
 
         Returns:
             True if override was cleared, False if no override existed
+
         """
         if tool_name not in self.manual_overrides:
             return False
@@ -736,6 +738,7 @@ class AdvancedToolDiscovery:
 
         Returns:
             Dictionary of tool_name -> manual_path mappings
+
         """
         return self.manual_overrides.copy()
 
@@ -747,6 +750,7 @@ class AdvancedToolDiscovery:
 
         Returns:
             Path to the tool executable, or None if not found
+
         """
         # Check manual override first
         if tool_name in self.manual_overrides:
@@ -768,6 +772,7 @@ class AdvancedToolDiscovery:
 
         Returns:
             Dictionary with health check results
+
         """
         health_status = {
             "tool_name": tool_name,
@@ -828,6 +833,7 @@ class AdvancedToolDiscovery:
 
         Returns:
             Dictionary mapping tool names to health check results
+
         """
         results = {}
 
@@ -852,6 +858,7 @@ class AdvancedToolDiscovery:
 
         Returns:
             List of healthy tool names
+
         """
         health_results = self.health_check_all_tools()
         return [

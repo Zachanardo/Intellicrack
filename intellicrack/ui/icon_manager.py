@@ -119,6 +119,7 @@ class IconManager:
 
         Args:
             icon_path: Optional path to icon resources directory
+
         """
         self.icon_path = icon_path or Path(__file__).parent / "icons"
         self._icon_cache = {}
@@ -132,6 +133,7 @@ class IconManager:
 
         Returns:
             QIcon instance
+
         """
         # Check cache first
         if icon_name in self._icon_cache:
@@ -156,6 +158,7 @@ class IconManager:
 
         Returns:
             QIcon instance (may be null if not found)
+
         """
         # Try various extensions
         for ext in [".png", ".svg", ".ico"]:
@@ -173,6 +176,7 @@ class IconManager:
 
         Returns:
             QIcon with text or emoji
+
         """
         # Get the text/emoji for this icon
         self.ICON_MAP.get(icon_name, "?")
@@ -189,6 +193,7 @@ class IconManager:
 
         Returns:
             Text or emoji string
+
         """
         return self.ICON_MAP.get(icon_name, "")
 
@@ -198,6 +203,7 @@ class IconManager:
         Args:
             icon_name: Name to register the icon under
             icon_path: Path to the icon file
+
         """
         if os.path.exists(icon_path):
             icon = QIcon(icon_path)
@@ -217,6 +223,7 @@ def get_icon_manager() -> IconManager:
 
     Returns:
         IconManager instance
+
     """
     global _icon_manager
     if _icon_manager is None:
@@ -232,6 +239,7 @@ def get_icon(icon_name: str) -> QIcon:
 
     Returns:
         QIcon instance
+
     """
     return get_icon_manager().get_icon(icon_name)
 
@@ -244,6 +252,7 @@ def get_icon_text(icon_name: str) -> str:
 
     Returns:
         Text or emoji string
+
     """
     return get_icon_manager().get_icon_text(icon_name)
 
@@ -255,6 +264,7 @@ def set_button_icon(button, icon_name: str, add_text_prefix: bool = True) -> Non
         button: QPushButton instance
         icon_name: Name of the icon
         add_text_prefix: Whether to add emoji as text prefix if icon not found
+
     """
     manager = get_icon_manager()
     icon = manager.get_icon(icon_name)

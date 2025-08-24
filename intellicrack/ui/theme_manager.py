@@ -1,5 +1,5 @@
 """Theme Manager for Intellicrack UI
-Handles dynamic theme switching and stylesheet application
+Handles dynamic theme switching and stylesheet application.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -24,7 +24,7 @@ from intellicrack.handlers.pyqt6_handler import QApplication
 
 
 class ThemeManager:
-    """Manages application themes and dynamic stylesheet switching"""
+    """Manages application themes and dynamic stylesheet switching."""
 
     def __init__(self):
         """Initialize theme manager with default themes and UI styling options."""
@@ -46,19 +46,19 @@ class ThemeManager:
         self._apply_theme()
 
     def get_current_theme(self):
-        """Get the currently active theme name"""
+        """Get the currently active theme name."""
         return self.current_theme
 
     def load_theme_preference(self):
-        """Load theme preference from central config, default to dark"""
+        """Load theme preference from central config, default to dark."""
         return self.config.get("ui_preferences.theme", "dark")
 
     def save_theme_preference(self):
-        """Save current theme preference to central config"""
+        """Save current theme preference to central config."""
         self.config.set("ui_preferences.theme", self.current_theme)
 
     def set_theme(self, theme_name):
-        """Set the application theme
+        """Set the application theme.
 
         Args:
             theme_name: Name of the theme ("dark" or "light")
@@ -73,7 +73,7 @@ class ThemeManager:
         self._apply_theme()
 
     def _apply_theme(self):
-        """Apply the current theme's stylesheet to the application"""
+        """Apply the current theme's stylesheet to the application."""
         try:
             # Get the stylesheet content
             stylesheet_content = self._get_theme_stylesheet()
@@ -92,7 +92,7 @@ class ThemeManager:
             self._apply_builtin_dark_theme()
 
     def _get_theme_stylesheet(self):
-        """Load theme stylesheet from file or return built-in stylesheet"""
+        """Load theme stylesheet from file or return built-in stylesheet."""
         theme_file = self.themes[self.current_theme]
         theme_path = os.path.join(self.styles_dir, theme_file)
 
@@ -108,13 +108,13 @@ class ThemeManager:
         return self._get_builtin_theme_stylesheet()
 
     def _get_builtin_theme_stylesheet(self):
-        """Get built-in theme stylesheet when external files are not available"""
+        """Get built-in theme stylesheet when external files are not available."""
         if self.current_theme == "dark":
             return self._get_builtin_dark_stylesheet()
         return self._get_builtin_light_stylesheet()
 
     def _get_builtin_dark_stylesheet(self):
-        """Built-in dark theme stylesheet with proper contrast"""
+        """Built-in dark theme stylesheet with proper contrast."""
         return """
 /* Intellicrack Dark Theme */
 QMainWindow {
@@ -460,7 +460,7 @@ QStatusBar {
 """
 
     def _get_builtin_light_stylesheet(self):
-        """Built-in light theme stylesheet"""
+        """Built-in light theme stylesheet."""
         return """
 /* Intellicrack Light Theme */
 QMainWindow {
@@ -807,7 +807,7 @@ QStatusBar {
 """
 
     def _apply_builtin_dark_theme(self):
-        """Apply built-in dark theme as fallback"""
+        """Apply built-in dark theme as fallback."""
         try:
             app = QApplication.instance()
             if app:
@@ -822,7 +822,7 @@ _theme_manager = None
 
 
 def get_theme_manager():
-    """Get the global theme manager instance (lazy initialization)"""
+    """Get the global theme manager instance (lazy initialization)."""
     global _theme_manager
     if _theme_manager is None:
         _theme_manager = ThemeManager()
@@ -830,10 +830,10 @@ def get_theme_manager():
 
 
 def apply_theme(theme_name):
-    """Convenience function to apply a theme"""
+    """Convenience function to apply a theme."""
     get_theme_manager().set_theme(theme_name)
 
 
 def get_current_theme():
-    """Convenience function to get current theme"""
+    """Convenience function to get current theme."""
     return get_theme_manager().get_current_theme()

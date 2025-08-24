@@ -1,4 +1,4 @@
-"""Comprehensive Analysis Orchestrator
+"""Comprehensive Analysis Orchestrator.
 
 Coordinates multiple analysis engines to perform deep binary analysis,
 including static analysis, dynamic analysis, entropy analysis, structure
@@ -28,7 +28,7 @@ from .yara_pattern_engine import YaraPatternEngine
 
 
 class AnalysisPhase(Enum):
-    """Analysis phases"""
+    """Analysis phases."""
 
     PREPARATION = "preparation"
     BASIC_INFO = "basic_info"
@@ -44,7 +44,7 @@ class AnalysisPhase(Enum):
 
 @dataclass
 class OrchestrationResult:
-    """Result of orchestrated analysis"""
+    """Result of orchestrated analysis."""
 
     binary_path: str
     success: bool
@@ -54,21 +54,21 @@ class OrchestrationResult:
     warnings: list[str] = field(default_factory=list)
 
     def add_result(self, phase: AnalysisPhase, result: Any):
-        """Add result for a phase"""
+        """Add result for a phase."""
         self.phases_completed.append(phase)
         self.results[phase.value] = result
 
     def add_error(self, phase: AnalysisPhase, error: str):
-        """Add error for a phase"""
+        """Add error for a phase."""
         self.errors.append(f"{phase.value}: {error}")
 
     def add_warning(self, phase: AnalysisPhase, warning: str):
-        """Add warning for a phase"""
+        """Add warning for a phase."""
         self.warnings.append(f"{phase.value}: {warning}")
 
 
 class AnalysisOrchestrator(QObject):
-    """Orchestrates comprehensive binary analysis using multiple engines"""
+    """Orchestrates comprehensive binary analysis using multiple engines."""
 
     # Signals
     #: phase_name (type: str)
@@ -111,7 +111,7 @@ class AnalysisOrchestrator(QObject):
     def analyze_binary(
         self, binary_path: str, phases: list[AnalysisPhase] | None = None
     ) -> OrchestrationResult:
-        """Perform orchestrated analysis on a binary
+        """Perform orchestrated analysis on a binary.
 
         Args:
             binary_path: Path to the binary file
@@ -178,7 +178,7 @@ class AnalysisOrchestrator(QObject):
         return result
 
     def _prepare_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Prepare for analysis"""
+        """Prepare for analysis."""
         file_stat = os.stat(binary_path)
         return {
             "file_size": file_stat.st_size,
@@ -188,7 +188,7 @@ class AnalysisOrchestrator(QObject):
         }
 
     def _analyze_basic_info(self, binary_path: str) -> dict[str, Any]:
-        """Get basic binary information"""
+        """Get basic binary information."""
         try:
             # Use binary analyzer for basic info
             return self.binary_analyzer.analyze(binary_path)
@@ -196,7 +196,7 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e), "fallback": True}
 
     def _perform_static_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Perform static analysis using radare2"""
+        """Perform static analysis using radare2."""
         try:
             result = {}
 
@@ -243,7 +243,7 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e)}
 
     def _perform_ghidra_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Perform Ghidra analysis in sandboxed QEMU environment
+        """Perform Ghidra analysis in sandboxed QEMU environment.
 
         This method integrates Ghidra analysis into the main pipeline by:
         1. Initializing QEMUManager if not already done
@@ -332,7 +332,7 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e), "ghidra_executed": False}
 
     def _select_ghidra_script(self, binary_path: str):
-        """Select the most appropriate Ghidra script for the binary
+        """Select the most appropriate Ghidra script for the binary.
 
         Analyzes binary characteristics and selects the best matching
         Ghidra script from the available scripts.
@@ -379,7 +379,7 @@ class AnalysisOrchestrator(QObject):
             return None
 
     def _build_ghidra_command(self, script_path: str, binary_path: str) -> str:
-        """Build the Ghidra headless analysis command
+        """Build the Ghidra headless analysis command.
 
         Constructs the command line for running Ghidra in headless mode
         with the selected script and binary.
@@ -400,7 +400,7 @@ class AnalysisOrchestrator(QObject):
         return command
 
     def _parse_ghidra_output(self, output: str) -> dict[str, Any]:
-        """Parse Ghidra script output into structured data
+        """Parse Ghidra script output into structured data.
 
         Extracts meaningful information from Ghidra analysis output
         and structures it for integration into the analysis pipeline.
@@ -482,7 +482,7 @@ class AnalysisOrchestrator(QObject):
         return parsed
 
     def _extract_address(self, line: str) -> str:
-        """Extract memory address from Ghidra output line"""
+        """Extract memory address from Ghidra output line."""
         import re
 
         # Look for hex addresses like 0x401000 or 00401000h
@@ -491,7 +491,7 @@ class AnalysisOrchestrator(QObject):
         return match.group(1) if match else "unknown"
 
     def _identify_crypto_type(self, line: str) -> str:
-        """Identify the type of cryptographic routine from output"""
+        """Identify the type of cryptographic routine from output."""
         line_lower = line.lower()
         if "aes" in line_lower:
             return "AES"
@@ -509,7 +509,7 @@ class AnalysisOrchestrator(QObject):
             return "Unknown Crypto"
 
     def _identify_protection_type(self, line: str) -> str:
-        """Identify the type of protection mechanism from output"""
+        """Identify the type of protection mechanism from output."""
         line_lower = line.lower()
         if "anti-debug" in line_lower:
             return "Anti-Debugging"
@@ -525,7 +525,7 @@ class AnalysisOrchestrator(QObject):
             return "Generic Protection"
 
     def _is_interesting_string(self, string_val: str) -> bool:
-        """Determine if a string is interesting for license analysis"""
+        """Determine if a string is interesting for license analysis."""
         interesting_keywords = [
             "license",
             "serial",
@@ -547,7 +547,7 @@ class AnalysisOrchestrator(QObject):
         return any(keyword in string_lower for keyword in interesting_keywords)
 
     def _perform_entropy_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Perform entropy analysis"""
+        """Perform entropy analysis."""
         try:
             result = {"sections": []}
 
@@ -582,7 +582,7 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e)}
 
     def _analyze_structure(self, binary_path: str) -> dict[str, Any]:
-        """Analyze binary structure"""
+        """Analyze binary structure."""
         try:
             # Use multi-format analyzer
             return self.multi_format_analyzer.analyze(binary_path)
@@ -590,14 +590,14 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e)}
 
     def _scan_vulnerabilities(self, binary_path: str) -> dict[str, Any]:
-        """Scan for vulnerabilities"""
+        """Scan for vulnerabilities."""
         try:
             return self.vulnerability_engine.scan(binary_path)
         except Exception as e:
             return {"error": str(e)}
 
     def _match_patterns(self, binary_path: str) -> dict[str, Any]:
-        """Match YARA patterns"""
+        """Match YARA patterns."""
         try:
             # Load rules if available
             rules_path = "data/yara_rules"
@@ -609,7 +609,7 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e)}
 
     def _perform_dynamic_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Perform dynamic analysis if possible"""
+        """Perform dynamic analysis if possible."""
         try:
             # Check if dynamic analysis is available
             if (
@@ -622,7 +622,7 @@ class AnalysisOrchestrator(QObject):
             return {"error": str(e)}
 
     def _finalize_analysis(self, result: OrchestrationResult) -> dict[str, Any]:
-        """Finalize and summarize analysis"""
+        """Finalize and summarize analysis."""
         summary = {
             "total_phases": len(self.enabled_phases),
             "completed_phases": len(result.phases_completed),

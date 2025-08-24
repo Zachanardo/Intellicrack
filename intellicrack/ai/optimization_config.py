@@ -1,4 +1,4 @@
-"""AI System Optimization Configuration
+"""AI System Optimization Configuration.
 
 Copyright (C) 2025 Zachary Flint
 

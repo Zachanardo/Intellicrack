@@ -1,4 +1,4 @@
-"""Intellicrack Plugins Package
+"""Intellicrack Plugins Package.
 
 Copyright (C) 2025 Zachary Flint
 

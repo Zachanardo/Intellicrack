@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ License: GPL v3
 
 
 class AntiDebugTechnique(Enum):
-    """Types of anti-debug techniques"""
+    """Types of anti-debug techniques."""
 
     API_HOOKS = "api_hooks"
     PEB_FLAGS = "peb_flags"
@@ -58,7 +58,7 @@ class AntiDebugTechnique(Enum):
 
 
 class BypassResult(Enum):
-    """Results of bypass attempts"""
+    """Results of bypass attempts."""
 
     SUCCESS = "success"
     FAILED = "failed"
@@ -68,7 +68,7 @@ class BypassResult(Enum):
 
 @dataclass
 class BypassOperation:
-    """Bypass operation tracking"""
+    """Bypass operation tracking."""
 
     technique: AntiDebugTechnique
     description: str
@@ -79,7 +79,7 @@ class BypassOperation:
 
 
 class WindowsAPIHooker:
-    """Hooks and neutralizes anti-debug Windows APIs"""
+    """Hooks and neutralizes anti-debug Windows APIs."""
 
     def __init__(self):
         """Initialize Windows API hooker for anti-debug function interception."""
@@ -96,7 +96,7 @@ class WindowsAPIHooker:
         self.active_hooks = set()
 
     def hook_is_debugger_present(self) -> bool:
-        """Hook IsDebuggerPresent to always return FALSE"""
+        """Hook IsDebuggerPresent to always return FALSE."""
         try:
             # Get function address
             func_addr = self.kernel32.GetProcAddress(
@@ -145,7 +145,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_check_remote_debugger_present(self) -> bool:
-        """Hook CheckRemoteDebuggerPresent to always return FALSE"""
+        """Hook CheckRemoteDebuggerPresent to always return FALSE."""
         try:
             func_addr = self.kernel32.GetProcAddress(
                 self.kernel32.GetModuleHandleW("kernel32.dll"),
@@ -191,7 +191,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_query_information_process(self) -> bool:
-        """Hook NtQueryInformationProcess for debug-related queries"""
+        """Hook NtQueryInformationProcess for debug-related queries."""
         try:
             func_addr = self.ntdll.NtQueryInformationProcess
 
@@ -210,7 +210,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_nt_set_information_thread(self) -> bool:
-        """Hook NtSetInformationThread to prevent thread hiding"""
+        """Hook NtSetInformationThread to prevent thread hiding."""
         try:
             # Similar to above - complex implementation
             self.logger.info("NtSetInformationThread hook would be installed here")
@@ -222,7 +222,7 @@ class WindowsAPIHooker:
             return False
 
     def hook_output_debug_string(self) -> bool:
-        """Hook OutputDebugString to prevent detection"""
+        """Hook OutputDebugString to prevent detection."""
         try:
             func_addr = self.kernel32.GetProcAddress(
                 self.kernel32.GetModuleHandleW("kernel32.dll"),
@@ -261,7 +261,7 @@ class WindowsAPIHooker:
             return False
 
     def install_all_hooks(self) -> list[str]:
-        """Install all API hooks"""
+        """Install all API hooks."""
         results = []
 
         hooks = [
@@ -284,7 +284,7 @@ class WindowsAPIHooker:
         return results
 
     def restore_hooks(self) -> bool:
-        """Restore original function code"""
+        """Restore original function code."""
         try:
             for func_addr, original_bytes in self.original_functions.items():
                 old_protect = ctypes.c_ulong()
@@ -314,7 +314,7 @@ class WindowsAPIHooker:
 
 
 class PEBManipulator:
-    """Manipulates Process Environment Block to hide debugging"""
+    """Manipulates Process Environment Block to hide debugging."""
 
     def __init__(self):
         """Initialize PEB manipulator for process environment block modification."""
@@ -328,7 +328,7 @@ class PEBManipulator:
         self.PEB_HEAP_FLAGS_OFFSET = 0x70
 
     def get_peb_address(self) -> int | None:
-        """Get PEB address for current process"""
+        """Get PEB address for current process."""
         try:
             # Get current process handle
             process_handle = self.kernel32.GetCurrentProcess()
@@ -364,7 +364,7 @@ class PEBManipulator:
         return None
 
     def patch_being_debugged_flag(self) -> bool:
-        """Patch PEB BeingDebugged flag"""
+        """Patch PEB BeingDebugged flag."""
         try:
             peb_addr = self.get_peb_address()
             if not peb_addr:
@@ -408,7 +408,7 @@ class PEBManipulator:
         return False
 
     def patch_nt_global_flag(self) -> bool:
-        """Patch PEB NtGlobalFlag"""
+        """Patch PEB NtGlobalFlag."""
         try:
             peb_addr = self.get_peb_address()
             if not peb_addr:
@@ -457,7 +457,7 @@ class PEBManipulator:
         return False
 
     def patch_heap_flags(self) -> bool:
-        """Patch heap flags to hide debugging"""
+        """Patch heap flags to hide debugging."""
         try:
             peb_addr = self.get_peb_address()
             if not peb_addr:
@@ -505,7 +505,7 @@ class PEBManipulator:
         return False
 
     def patch_all_peb_flags(self) -> list[str]:
-        """Patch all PEB-related anti-debug flags"""
+        """Patch all PEB-related anti-debug flags."""
         results = []
 
         patches = [
@@ -527,7 +527,7 @@ class PEBManipulator:
 
 
 class HardwareDebugProtector:
-    """Manages hardware debug registers to prevent detection"""
+    """Manages hardware debug registers to prevent detection."""
 
     def __init__(self):
         """Initialize hardware debug register protection and manipulation."""
@@ -536,7 +536,7 @@ class HardwareDebugProtector:
         self.saved_context = None
 
     def get_thread_context(self) -> Any | None:
-        """Get current thread context"""
+        """Get current thread context."""
         try:
             # CONTEXT structure for x64
             class CONTEXT(ctypes.Structure):
@@ -579,7 +579,7 @@ class HardwareDebugProtector:
         return None
 
     def clear_debug_registers(self) -> bool:
-        """Clear all hardware debug registers"""
+        """Clear all hardware debug registers."""
         try:
             context = self.get_thread_context()
             if not context:
@@ -616,7 +616,7 @@ class HardwareDebugProtector:
         return False
 
     def monitor_debug_registers(self) -> dict[str, int]:
-        """Monitor current debug register values"""
+        """Monitor current debug register values."""
         try:
             context = self.get_thread_context()
             if context:
@@ -634,7 +634,7 @@ class HardwareDebugProtector:
         return {}
 
     def restore_debug_registers(self) -> bool:
-        """Restore original debug register values"""
+        """Restore original debug register values."""
         try:
             if not self.saved_context:
                 return True
@@ -663,7 +663,7 @@ class HardwareDebugProtector:
 
 
 class TimingNormalizer:
-    """Normalizes timing to prevent timing-based detection"""
+    """Normalizes timing to prevent timing-based detection."""
 
     def __init__(self):
         """Initialize timing attack protection and normalization system."""
@@ -673,7 +673,7 @@ class TimingNormalizer:
         self.baseline_times = {}
 
     def measure_baseline_timing(self):
-        """Measure baseline timing for various operations"""
+        """Measure baseline timing for various operations."""
         self.logger.info("Measuring baseline timing...")
 
         # GetTickCount timing
@@ -696,7 +696,7 @@ class TimingNormalizer:
         self.logger.info(f"Baseline times: {self.baseline_times}")
 
     def normalize_get_tick_count(self) -> bool:
-        """Normalize GetTickCount to prevent timing detection"""
+        """Normalize GetTickCount to prevent timing detection."""
         try:
             # This would hook GetTickCount and adjust return values
             # For now, just log the attempt
@@ -708,7 +708,7 @@ class TimingNormalizer:
             return False
 
     def normalize_rdtsc(self) -> bool:
-        """Handle RDTSC instruction timing"""
+        """Handle RDTSC instruction timing."""
         try:
             # This would require low-level instruction hooks
             self.logger.info("RDTSC normalization would be implemented here")
@@ -719,14 +719,14 @@ class TimingNormalizer:
             return False
 
     def add_random_delays(self):
-        """Add random delays to mask debugging overhead"""
+        """Add random delays to mask debugging overhead."""
         import random
 
-        delay = random.uniform(0.001, 0.01)  # 1-10ms
+        delay = random.uniform(0.001, 0.01)  # noqa: S311 - Anti-debug timing variation (1-10ms)
         time.sleep(delay)
 
     def apply_timing_normalizations(self) -> list[str]:
-        """Apply all timing normalizations"""
+        """Apply all timing normalizations."""
         self.measure_baseline_timing()
 
         results = []
@@ -748,7 +748,7 @@ class TimingNormalizer:
 
 
 class MemoryPatcher:
-    """Patches anti-debug code patterns in target memory"""
+    """Patches anti-debug code patterns in target memory."""
 
     def __init__(self):
         """Initialize memory patcher for anti-debug pattern modification."""
@@ -779,7 +779,7 @@ class MemoryPatcher:
         }
 
     def find_patterns_in_memory(self, start_addr: int, size: int) -> list[tuple[str, int]]:
-        """Find anti-debug patterns in memory region"""
+        """Find anti-debug patterns in memory region."""
         found_patterns = []
 
         try:
@@ -816,7 +816,7 @@ class MemoryPatcher:
         return found_patterns
 
     def patch_memory_location(self, address: int, new_bytes: bytes) -> bool:
-        """Patch memory at specific location"""
+        """Patch memory at specific location."""
         try:
             # Make memory writable
             old_protect = ctypes.c_ulong()
@@ -862,16 +862,16 @@ class MemoryPatcher:
         return False
 
     def patch_int3_instructions(self, address: int) -> bool:
-        """Replace INT 3 with NOP"""
+        """Replace INT 3 with NOP."""
         return self.patch_memory_location(address, b"\x90")  # NOP
 
     def patch_isdebuggerpresent_calls(self, address: int) -> bool:
-        """Patch IsDebuggerPresent calls to return 0"""
+        """Patch IsDebuggerPresent calls to return 0."""
         # Replace with: xor eax, eax; nop
         return self.patch_memory_location(address, b"\x33\xc0\x90")
 
     def scan_and_patch_module(self, module_name: str) -> list[str]:
-        """Scan and patch a specific module"""
+        """Scan and patch a specific module."""
         results = []
 
         try:
@@ -921,7 +921,7 @@ class MemoryPatcher:
         return results
 
     def scan_all_modules(self) -> list[str]:
-        """Scan and patch all loaded modules"""
+        """Scan and patch all loaded modules."""
         results = []
 
         try:
@@ -943,7 +943,7 @@ class MemoryPatcher:
 
 
 class ExceptionHandler:
-    """Manages exception handling to prevent anti-debug detection"""
+    """Manages exception handling to prevent anti-debug detection."""
 
     def __init__(self):
         """Initialize exception handler for anti-debug exception bypass."""
@@ -953,7 +953,7 @@ class ExceptionHandler:
         self.exception_count = 0
 
     def custom_exception_handler(self, exception_info):
-        """Custom exception handler to mask debugging based on exception info"""
+        """Custom exception handler to mask debugging based on exception info."""
         self.exception_count += 1
 
         try:
@@ -990,7 +990,7 @@ class ExceptionHandler:
             return 0  # EXCEPTION_CONTINUE_SEARCH
 
     def install_exception_handler(self) -> bool:
-        """Install custom exception handler"""
+        """Install custom exception handler."""
         try:
             # This would install a vectored exception handler
             # For now, just log the installation
@@ -1002,7 +1002,7 @@ class ExceptionHandler:
             return False
 
     def remove_exception_handler(self) -> bool:
-        """Remove custom exception handler"""
+        """Remove custom exception handler."""
         try:
             if self.original_handler:
                 # Restore original handler
@@ -1015,12 +1015,12 @@ class ExceptionHandler:
             return False
 
     def mask_debug_exceptions(self) -> bool:
-        """Mask exceptions commonly used for debugging detection"""
+        """Mask exceptions commonly used for debugging detection."""
         return self.install_exception_handler()
 
 
 class EnvironmentSanitizer:
-    """Sanitizes process environment to remove debugging artifacts"""
+    """Sanitizes process environment to remove debugging artifacts."""
 
     def __init__(self):
         """Initialize environment sanitizer for debugger artifact removal."""
@@ -1028,7 +1028,7 @@ class EnvironmentSanitizer:
         self.original_values = {}
 
     def clean_environment_variables(self) -> list[str]:
-        """Clean debugging-related environment variables"""
+        """Clean debugging-related environment variables."""
         results = []
 
         debug_vars = [
@@ -1055,7 +1055,7 @@ class EnvironmentSanitizer:
         return results
 
     def hide_debugger_processes(self) -> list[str]:
-        """Attempt to hide debugger processes from detection"""
+        """Attempt to hide debugger processes from detection."""
         results = []
 
         debugger_names = [
@@ -1084,7 +1084,7 @@ class EnvironmentSanitizer:
         return results
 
     def clean_registry_artifacts(self) -> list[str]:
-        """Clean debugging-related registry entries"""
+        """Clean debugging-related registry entries."""
         results = []
 
         debug_keys = [
@@ -1114,7 +1114,7 @@ class EnvironmentSanitizer:
         return results
 
     def sanitize_file_system(self) -> list[str]:
-        """Remove debugging-related files and artifacts"""
+        """Remove debugging-related files and artifacts."""
         results = []
 
         debug_files = [
@@ -1137,7 +1137,7 @@ class EnvironmentSanitizer:
         return results
 
     def sanitize_all(self) -> list[str]:
-        """Run all sanitization procedures"""
+        """Run all sanitization procedures."""
         all_results = []
 
         sanitizers = [
@@ -1158,7 +1158,7 @@ class EnvironmentSanitizer:
         return all_results
 
     def restore_environment(self) -> bool:
-        """Restore original environment variables"""
+        """Restore original environment variables."""
         try:
             for var, value in self.original_values.items():
                 os.environ[var] = value
@@ -1172,7 +1172,7 @@ class EnvironmentSanitizer:
 
 
 class TargetAnalyzer:
-    """Analyzes target application to determine anti-debug techniques in use"""
+    """Analyzes target application to determine anti-debug techniques in use."""
 
     def __init__(self):
         """Initialize target analyzer for anti-debug technique detection."""
@@ -1180,7 +1180,7 @@ class TargetAnalyzer:
         self.detected_techniques = set()
 
     def analyze_pe_headers(self, file_path: str) -> list[AntiDebugTechnique]:
-        """Analyze PE headers for anti-debug indicators"""
+        """Analyze PE headers for anti-debug indicators."""
         techniques = []
 
         try:
@@ -1215,7 +1215,7 @@ class TargetAnalyzer:
         return techniques
 
     def analyze_imports(self, file_path: str) -> list[AntiDebugTechnique]:
-        """Analyze import table for anti-debug APIs"""
+        """Analyze import table for anti-debug APIs."""
         techniques = []
 
         try:
@@ -1249,7 +1249,7 @@ class TargetAnalyzer:
         return techniques
 
     def analyze_runtime_behavior(self) -> list[AntiDebugTechnique]:
-        """Analyze runtime behavior for anti-debug techniques"""
+        """Analyze runtime behavior for anti-debug techniques."""
         techniques = []
 
         try:
@@ -1271,7 +1271,7 @@ class TargetAnalyzer:
         return techniques
 
     def detect_vm_environment(self) -> bool:
-        """Detect if running in VM environment"""
+        """Detect if running in VM environment."""
         try:
             # Check for VM artifacts
             vm_indicators = [
@@ -1302,7 +1302,7 @@ class TargetAnalyzer:
             return False
 
     def analyze_target(self, file_path: str | None = None) -> dict[str, Any]:
-        """Perform comprehensive target analysis"""
+        """Perform comprehensive target analysis."""
         analysis_results = {
             "techniques_detected": [],
             "vm_environment": False,
@@ -1365,7 +1365,7 @@ class TargetAnalyzer:
 
 
 class AntiAntiDebugSuite:
-    """Main anti-anti-debug suite orchestrator"""
+    """Main anti-anti-debug suite orchestrator."""
 
     def __init__(self):
         """Initialize the anti-anti-debug suite.
@@ -1405,12 +1405,12 @@ class AntiAntiDebugSuite:
         }
 
     def analyze_target(self, file_path: str | None = None) -> dict[str, Any]:
-        """Analyze target and recommend bypasses"""
+        """Analyze target and recommend bypasses."""
         self.statistics["targets_analyzed"] += 1
         return self.target_analyzer.analyze_target(file_path)
 
     def apply_bypass(self, technique: AntiDebugTechnique) -> BypassOperation:
-        """Apply specific bypass technique"""
+        """Apply specific bypass technique."""
         self.statistics["bypasses_attempted"] += 1
 
         operation = BypassOperation(
@@ -1487,7 +1487,7 @@ class AntiAntiDebugSuite:
         return operation
 
     def apply_selective_bypasses(self, target_analysis: dict[str, Any]) -> list[BypassOperation]:
-        """Apply bypasses based on target analysis"""
+        """Apply bypasses based on target analysis."""
         operations = []
 
         detected_techniques = target_analysis.get("techniques_detected", [])
@@ -1512,7 +1512,7 @@ class AntiAntiDebugSuite:
         return operations
 
     def apply_all_bypasses(self) -> list[BypassOperation]:
-        """Apply all available bypasses"""
+        """Apply all available bypasses."""
         operations = []
 
         for technique in AntiDebugTechnique:
@@ -1522,7 +1522,7 @@ class AntiAntiDebugSuite:
         return operations
 
     def monitor_bypasses(self) -> dict[str, Any]:
-        """Monitor status of active bypasses"""
+        """Monitor status of active bypasses."""
         status = {
             "active_bypasses": list(self.active_bypasses),
             "bypass_count": len(self.active_bypasses),
@@ -1534,7 +1534,7 @@ class AntiAntiDebugSuite:
         return status
 
     def remove_bypasses(self) -> list[str]:
-        """Remove all active bypasses"""
+        """Remove all active bypasses."""
         results = []
 
         try:
@@ -1570,7 +1570,7 @@ class AntiAntiDebugSuite:
         return results
 
     def get_report(self) -> dict[str, Any]:
-        """Generate comprehensive bypass report"""
+        """Generate comprehensive bypass report."""
         successful_bypasses = [
             op for op in self.bypass_history if op.result == BypassResult.SUCCESS
         ]
@@ -1604,7 +1604,7 @@ class AntiAntiDebugSuite:
         return report
 
     def export_report(self, output_file: str):
-        """Export bypass report to file"""
+        """Export bypass report to file."""
         try:
             report = self.get_report()
 
@@ -1617,7 +1617,7 @@ class AntiAntiDebugSuite:
             self.logger.error(f"Failed to export report: {e}")
 
     def run_interactive_mode(self):
-        """Run interactive bypass mode"""
+        """Run interactive bypass mode."""
         print("=== Anti-Anti-Debug Suite Interactive Mode ===")
         print("Commands: analyze, bypass, monitor, remove, report, quit")
 
@@ -1712,7 +1712,7 @@ class AntiAntiDebugSuite:
 
 
 def main():
-    """Example usage and CLI interface"""
+    """Example usage and CLI interface."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Anti-Anti-Debug Suite")

@@ -1,4 +1,4 @@
-"""Radare2 Advanced Decompilation Engine
+"""Radare2 Advanced Decompilation Engine.
 
 Copyright (C) 2025 Zachary Flint
 

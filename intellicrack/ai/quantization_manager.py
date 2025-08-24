@@ -1,4 +1,4 @@
-"""Model Quantization Manager for Intellicrack
+"""Model Quantization Manager for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

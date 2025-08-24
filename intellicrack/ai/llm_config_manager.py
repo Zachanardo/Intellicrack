@@ -1,4 +1,4 @@
-"""LLM Configuration Manager for Intellicrack
+"""LLM Configuration Manager for Intellicrack.
 
 This module provides a compatibility layer for LLM configuration management,
 delegating all storage to the central IntellicrackConfig system. Legacy JSON

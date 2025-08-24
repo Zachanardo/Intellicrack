@@ -1,4 +1,4 @@
-"""Integration Manager for AI Components
+"""Integration Manager for AI Components.
 
 Copyright (C) 2025 Zachary Flint
 

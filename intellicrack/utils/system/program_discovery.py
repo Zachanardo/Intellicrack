@@ -588,12 +588,13 @@ class ProgramDiscoveryEngine:
             # Debian/Ubuntu - dpkg
             dpkg_path = shutil.which("dpkg")
             if dpkg_path:
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [dpkg_path, "-l"],
                     check=False,
                     capture_output=True,
                     text=True,
                     timeout=30,
+                    shell=False  # Explicitly secure - using list format prevents shell injection
                 )
                 if result.returncode == 0:
                     programs.extend(self._parse_dpkg_output(result.stdout))
@@ -604,12 +605,13 @@ class ProgramDiscoveryEngine:
             # Red Hat/CentOS - rpm
             rpm_path = shutil.which("rpm")
             if rpm_path:
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [rpm_path, "-qa"],
                     check=False,
                     capture_output=True,
                     text=True,
                     timeout=30,
+                    shell=False  # Explicitly secure - using list format prevents shell injection
                 )
                 if result.returncode == 0:
                     programs.extend(self._parse_rpm_output(result.stdout))

@@ -569,6 +569,7 @@ class SearchEngine:
 
         Returns:
             True if the match is a whole word, False otherwise
+
         """
         def is_word_char(byte_val: int) -> bool:
             """Check if a byte value is a word character.

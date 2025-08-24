@@ -301,7 +301,7 @@ class VirtualFileAccess:
             import time
 
             # Generate a unique temp file with timestamp and random string
-            random_suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
+            random_suffix = "".join(random.choices(string.ascii_lowercase + string.digits, k=8))  # noqa: S311 - Temporary file name collision avoidance
             timestamp = int(time.time())
             basename = os.path.basename(file_path)
 

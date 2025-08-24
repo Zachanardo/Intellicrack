@@ -1,4 +1,4 @@
-"""Model Loading Progress Widget
+"""Model Loading Progress Widget.
 
 This widget provides a visual interface for monitoring model loading progress
 using the BackgroundModelLoader and QueuedProgressCallback.

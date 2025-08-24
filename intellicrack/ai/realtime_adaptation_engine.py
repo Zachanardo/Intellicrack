@@ -1,4 +1,4 @@
-"""Real-Time Adaptation Engine
+"""Real-Time Adaptation Engine.
 
 Copyright (C) 2025 Zachary Flint
 

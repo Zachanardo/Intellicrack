@@ -450,7 +450,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             raise
 
     def _process_captured_packet(self, packet_data: bytes):
-        """Simple packet processor for socket-captured packets"""
+        """Simple packet processor for socket-captured packets."""
         try:
             # Very basic packet processing - extract IP header info
             if len(packet_data) >= 20:  # Minimum IP header size

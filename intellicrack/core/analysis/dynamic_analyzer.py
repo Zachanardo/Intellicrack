@@ -1,4 +1,4 @@
-"""Advanced Dynamic Analysis Module
+"""Advanced Dynamic Analysis Module.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 
 
 class AdvancedDynamicAnalyzer:
-    """Comprehensive dynamic runtime analysis and exploit simulation"""
+    """Comprehensive dynamic runtime analysis and exploit simulation."""
 
     def __init__(self, binary_path: str | Path):
         """Initialize the advanced dynamic analyzer with binary path configuration."""

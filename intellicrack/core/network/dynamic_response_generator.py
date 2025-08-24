@@ -36,7 +36,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 @dataclass
 class ResponseContext:
-    """Context information for response generation"""
+    """Context information for response generation."""
 
     source_ip: str
     source_port: int
@@ -52,7 +52,7 @@ class ResponseContext:
 
 @dataclass
 class GeneratedResponse:
-    """Container for generated response data"""
+    """Container for generated response data."""
 
     response_data: bytes
     response_type: str
@@ -62,14 +62,14 @@ class GeneratedResponse:
 
 
 class FlexLMProtocolHandler:
-    """Handler for FlexLM license protocol"""
+    """Handler for FlexLM license protocol."""
 
     def __init__(self):
         """Initialize FlexLM handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.FlexLMHandler")
 
     def parse_request(self, data: bytes) -> dict[str, Any] | None:
-        """Parse FlexLM license request"""
+        """Parse FlexLM license request."""
         try:
             text_data = data.decode("utf-8", errors="ignore")
 
@@ -114,7 +114,7 @@ class FlexLMProtocolHandler:
             return None
 
     def generate_response(self, context: ResponseContext) -> bytes:
-        """Generate FlexLM license response"""
+        """Generate FlexLM license response."""
         try:
             parsed = self.parse_request(context.request_data)
 
@@ -153,14 +153,14 @@ class FlexLMProtocolHandler:
 
 
 class HASPProtocolHandler:
-    """Handler for HASP/Sentinel license protocol"""
+    """Handler for HASP/Sentinel license protocol."""
 
     def __init__(self):
         """Initialize HASP handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.HASPHandler")
 
     def parse_request(self, data: bytes) -> dict[str, Any] | None:
-        """Parse HASP license request"""
+        """Parse HASP license request."""
         try:
             # Check if it's JSON format
             if data.startswith(b"{"):
@@ -189,7 +189,7 @@ class HASPProtocolHandler:
             return None
 
     def generate_response(self, context: ResponseContext) -> bytes:
-        """Generate HASP license response"""
+        """Generate HASP license response."""
         try:
             parsed = self.parse_request(context.request_data)
 
@@ -220,14 +220,14 @@ class HASPProtocolHandler:
 
 
 class AdobeProtocolHandler:
-    """Handler for Adobe license protocol"""
+    """Handler for Adobe license protocol."""
 
     def __init__(self):
         """Initialize Adobe handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.AdobeHandler")
 
     def parse_request(self, data: bytes) -> dict[str, Any] | None:
-        """Parse Adobe license request"""
+        """Parse Adobe license request."""
         try:
             text_data = data.decode("utf-8", errors="ignore")
 
@@ -278,7 +278,7 @@ class AdobeProtocolHandler:
             return None
 
     def generate_response(self, context: ResponseContext) -> bytes:
-        """Generate Adobe license response"""
+        """Generate Adobe license response."""
         try:
             parsed = self.parse_request(context.request_data)
 
@@ -314,14 +314,14 @@ class AdobeProtocolHandler:
 
 
 class MicrosoftKMSHandler:
-    """Handler for Microsoft KMS protocol"""
+    """Handler for Microsoft KMS protocol."""
 
     def __init__(self):
         """Initialize Microsoft KMS handler with logging for activation request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.KMSHandler")
 
     def parse_request(self, data: bytes) -> dict[str, Any] | None:
-        """Parse Microsoft KMS request"""
+        """Parse Microsoft KMS request."""
         try:
             # KMS uses RPC protocol
             if len(data) >= 16:
@@ -348,7 +348,7 @@ class MicrosoftKMSHandler:
             return None
 
     def generate_response(self, context: ResponseContext) -> bytes:
-        """Generate Microsoft KMS response"""
+        """Generate Microsoft KMS response."""
         try:
             parsed = self.parse_request(context.request_data)
 
@@ -369,14 +369,14 @@ class MicrosoftKMSHandler:
 
 
 class AutodeskProtocolHandler:
-    """Handler for Autodesk license protocol"""
+    """Handler for Autodesk license protocol."""
 
     def __init__(self):
         """Initialize Autodesk handler with logging for license request processing."""
         self.logger = logging.getLogger("IntellicrackLogger.AutodeskHandler")
 
     def parse_request(self, data: bytes) -> dict[str, Any] | None:
-        """Parse Autodesk license request"""
+        """Parse Autodesk license request."""
         try:
             text_data = data.decode("utf-8", errors="ignore")
 
@@ -408,7 +408,7 @@ class AutodeskProtocolHandler:
             return None
 
     def generate_response(self, context: ResponseContext) -> bytes:
-        """Generate Autodesk license response"""
+        """Generate Autodesk license response."""
         try:
             # Log context information for debugging
             self.logger.debug(
@@ -452,7 +452,7 @@ class DynamicResponseGenerator:
     """
 
     def __init__(self):
-        """Initialize the dynamic response generator"""
+        """Initialize the dynamic response generator."""
         self.logger = logging.getLogger("IntellicrackLogger.ResponseGenerator")
 
         # Protocol handlers
@@ -583,14 +583,14 @@ class DynamicResponseGenerator:
             ) / total_requests
 
     def _generate_cache_key(self, context: ResponseContext) -> str:
-        """Generate cache key for request"""
+        """Generate cache key for request."""
         # Use SHA256 instead of MD5 for better security
         request_hash = hashlib.sha256(context.request_data).hexdigest()
         key_data = f"{context.protocol_type}:{context.target_port}:{request_hash}"
         return hashlib.sha256(key_data.encode()).hexdigest()[:32]
 
     def _get_cached_response(self, cache_key: str) -> bytes | None:
-        """Get cached response if still valid"""
+        """Get cached response if still valid."""
         if cache_key in self.response_cache:
             response_data, timestamp = self.response_cache[cache_key]
             if time.time() - timestamp < self.cache_ttl:
@@ -600,7 +600,7 @@ class DynamicResponseGenerator:
         return None
 
     def _cache_response(self, cache_key: str, response_data: bytes):
-        """Cache response data"""
+        """Cache response data."""
         self.response_cache[cache_key] = (response_data, time.time())
 
         # Limit cache size
@@ -611,7 +611,7 @@ class DynamicResponseGenerator:
                 del self.response_cache[old_key]
 
     def _learn_from_request(self, context: ResponseContext, response_data: bytes):
-        """Learn patterns from successful request/response pairs"""
+        """Learn patterns from successful request/response pairs."""
         try:
             protocol = context.protocol_type
             if protocol not in self.learned_patterns:
@@ -641,7 +641,7 @@ class DynamicResponseGenerator:
             self.logger.debug(f"Learning error: {e}")
 
     def _extract_patterns(self, data: bytes) -> list[str]:
-        """Extract patterns from data for learning"""
+        """Extract patterns from data for learning."""
         patterns = []
 
         try:
@@ -671,7 +671,7 @@ class DynamicResponseGenerator:
         return patterns[:20]  # Limit pattern count
 
     def _generate_adaptive_response(self, context: ResponseContext) -> bytes | None:
-        """Generate response based on learned patterns"""
+        """Generate response based on learned patterns."""
         try:
             protocol = context.protocol_type
             if protocol not in self.learned_patterns:
@@ -701,7 +701,7 @@ class DynamicResponseGenerator:
         return None
 
     def _calculate_similarity(self, patterns1: list[str], patterns2: list[str]) -> float:
-        """Calculate similarity between pattern lists"""
+        """Calculate similarity between pattern lists."""
         if not patterns1 or not patterns2:
             return 0.0
 
@@ -711,7 +711,7 @@ class DynamicResponseGenerator:
         return matches / total if total > 0 else 0.0
 
     def _synthesize_response(self, response_patterns: list[str], context: ResponseContext) -> bytes:
-        """Synthesize response from learned patterns"""
+        """Synthesize response from learned patterns."""
         try:
             # Look for JSON patterns
             json_patterns = [p for p in response_patterns if p.startswith("{")]
@@ -746,7 +746,7 @@ class DynamicResponseGenerator:
             return self._create_intelligent_fallback(context)
 
     def _generate_generic_response(self, context: ResponseContext) -> bytes:
-        """Generate generic response based on request characteristics"""
+        """Generate generic response based on request characteristics."""
         try:
             # Analyze request data for clues
             request_text = context.request_data.decode("utf-8", errors="ignore").lower()
@@ -942,11 +942,11 @@ class DynamicResponseGenerator:
             return self._create_protocol_aware_fallback(context)
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get response generation statistics"""
+        """Get response generation statistics."""
         return self.stats.copy()
 
     def export_learning_data(self) -> dict[str, Any]:
-        """Export learning data for backup/analysis"""
+        """Export learning data for backup/analysis."""
         return {
             "learned_patterns": self.learned_patterns,
             "statistics": self.stats,
@@ -954,7 +954,7 @@ class DynamicResponseGenerator:
         }
 
     def import_learning_data(self, data: dict[str, Any]):
-        """Import learning data from previous sessions"""
+        """Import learning data from previous sessions."""
         try:
             if "learned_patterns" in data:
                 self.learned_patterns.update(data["learned_patterns"])

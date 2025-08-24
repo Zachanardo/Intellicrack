@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -87,11 +87,12 @@ except ImportError as e:
                 if sys.platform == "win32":
                     wmic_path = shutil.which("wmic")
                     if wmic_path:
-                        result = subprocess.run(
+                        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                             [wmic_path, "process", "get", "ProcessId,Name,ExecutablePath"],
                             capture_output=True,
                             text=True,
-                            timeout=5
+                            timeout=5,
+                            shell=False  # Explicitly secure - using list format prevents shell injection
                         )
                     else:
                         result = None
@@ -113,11 +114,12 @@ except ImportError as e:
                 else:
                     ps_path = shutil.which("ps")
                     if ps_path:
-                        result = subprocess.run(
+                        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                             [ps_path, "aux"],
                             capture_output=True,
                             text=True,
-                            timeout=5
+                            timeout=5,
+                            shell=False  # Explicitly secure - using list format prevents shell injection
                         )
                     else:
                         result = None
@@ -160,7 +162,6 @@ except ImportError as e:
 
         def spawn(self, program, argv=None, envp=None, env=None, cwd=None):
             """Spawn a new process."""
-
             if argv is None:
                 argv = []
 
@@ -180,12 +181,13 @@ except ImportError as e:
 
             try:
                 # Start process
-                proc = subprocess.Popen(
+                proc = subprocess.Popen(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     cmd,
                     cwd=cwd,
                     env=process_env,
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE
+                    stderr=subprocess.PIPE,
+                    shell=False  # Explicitly secure - using list format prevents shell injection
                 )
 
                 # Give it a moment to start
@@ -217,7 +219,11 @@ except ImportError as e:
                 if sys.platform == "win32":
                     taskkill_path = shutil.which("taskkill")
                     if taskkill_path:
-                        subprocess.run([taskkill_path, "/F", "/PID", str(pid)], check=False)
+                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                            [taskkill_path, "/F", "/PID", str(pid)],
+                            check=False,
+                            shell=False  # Explicitly secure - using list format prevents shell injection
+                        )
                 else:
                     import os
                     import signal

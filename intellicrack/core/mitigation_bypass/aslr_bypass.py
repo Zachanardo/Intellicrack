@@ -1,4 +1,4 @@
-"""ASLR Bypass Module
+"""ASLR Bypass Module.
 
 Real techniques for bypassing Address Space Layout Randomization.
 

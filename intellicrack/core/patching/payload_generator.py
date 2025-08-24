@@ -1,4 +1,4 @@
-"""Advanced Payload Generation Module
+"""Advanced Payload Generation Module.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import random
+import secrets
 import traceback
 from typing import Any
 
@@ -573,7 +574,6 @@ class PayloadGenerator:
         """Generate dynamic HWID based on real system characteristics."""
         import hashlib
         import platform
-        import random
         import time
         import uuid
 
@@ -689,14 +689,11 @@ class PayloadGenerator:
 
         except Exception as e:
             self.logger.warning(f"Error generating dynamic HWID: {e}")
-            # Fallback to semi-random but deterministic values
-            fallback_seed = hash(hwid_type + target_arch + str(int(time.time() / 3600)))
-            random.seed(fallback_seed)
-
+            # Fallback to cryptographically secure random values
             if target_arch == "x64":
-                return random.randint(0x100000000000, 0xFFFFFFFFFFFFFF)
+                return secrets.randbelow(0xFFFFFFFFFFFFFF - 0x100000000000 + 1) + 0x100000000000
             else:
-                return random.randint(0x10000000, 0xFFFFFFFF)
+                return secrets.randbelow(0xFFFFFFFF - 0x10000000 + 1) + 0x10000000
 
     def _generate_dynamic_connection_status(self, network_type: str) -> int:
         """Generate dynamic network connection status based on real network state."""
@@ -737,13 +734,13 @@ class PayloadGenerator:
             # Network type specific adjustments
             if network_type == "wifi":
                 # WiFi networks might have intermittent connectivity
-                connectivity_score = max(1, connectivity_score - random.randint(0, 15))
+                connectivity_score = max(1, connectivity_score - random.randint(0, 15))  # noqa: S311 - Network simulation variability
             elif network_type == "ethernet":
                 # Ethernet usually more stable
                 connectivity_score = min(100, connectivity_score + 10)
             elif network_type == "mobile":
                 # Mobile networks can be variable
-                connectivity_score = max(1, connectivity_score - random.randint(0, 25))
+                connectivity_score = max(1, connectivity_score - random.randint(0, 25))  # noqa: S311 - Network simulation variability
 
             # Convert to appropriate status code
             if connectivity_score >= 50:
@@ -809,7 +806,7 @@ class PayloadGenerator:
 
 
 class AdvancedPayloadGenerator:
-    """Sophisticated payload generation for exploit strategies"""
+    """Sophisticated payload generation for exploit strategies."""
 
     def __init__(self):
         """Initialize the advanced payload generator with sophisticated exploit capabilities."""

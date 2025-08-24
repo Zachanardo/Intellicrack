@@ -1,4 +1,4 @@
-"""Comprehensive Radare2 UI Manager for Intellicrack
+"""Comprehensive Radare2 UI Manager for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -82,7 +82,7 @@ class R2UIManager(QObject):
         self.logger.info("R2UIManager initialized successfully")
 
     def _initialize_ui_components(self):
-        """Initialize all UI components"""
+        """Initialize all UI components."""
         try:
             # Core radare2 integration widget
             self.ui_components["r2_widget"] = R2IntegrationWidget(self.main_app)
@@ -102,7 +102,7 @@ class R2UIManager(QObject):
             self.logger.error(f"Failed to initialize UI components: {e}")
 
     def _setup_signal_connections(self):
-        """Setup signal connections between components"""
+        """Setup signal connections between components."""
         try:
             # Connect main UI manager signals to UI components
             self.binary_loaded.connect(self._on_binary_loaded)
@@ -221,7 +221,7 @@ class R2UIManager(QObject):
             return False
 
     def _integrate_menu_items(self, main_app):
-        """Integrate radare2 menu items with main application"""
+        """Integrate radare2 menu items with main application."""
         try:
             if hasattr(main_app, "menuBar") and main_app.menuBar():
                 from .menu_utils import find_or_create_menu
@@ -256,7 +256,7 @@ class R2UIManager(QObject):
             self.logger.error(f"Menu integration failed: {e}")
 
     def _setup_binary_path_sync(self, main_app):
-        """Setup binary path synchronization"""
+        """Setup binary path synchronization."""
         try:
             # Connect to main app's binary path changes
             if hasattr(main_app, "binary_path"):
@@ -273,7 +273,7 @@ class R2UIManager(QObject):
             self.logger.error(f"Binary path sync setup failed: {e}")
 
     def _integrate_status_bar(self, main_app):
-        """Integrate with main application status bar"""
+        """Integrate with main application status bar."""
         try:
             if hasattr(main_app, "statusBar") and main_app.statusBar():
                 # Connect our status updates to main app status bar
@@ -287,7 +287,7 @@ class R2UIManager(QObject):
             self.logger.error(f"Status bar integration failed: {e}")
 
     def set_binary_path(self, path: str):
-        """Set binary path for all components"""
+        """Set binary path for all components."""
         try:
             self.binary_path = path
 
@@ -308,7 +308,7 @@ class R2UIManager(QObject):
             self.logger.error(f"Failed to set binary path: {e}")
 
     def start_analysis(self, analysis_type: str, options: dict[str, Any] = None):
-        """Start radare2 analysis of specified type"""
+        """Start radare2 analysis of specified type."""
         try:
             if not self.binary_path:
                 QMessageBox.warning(
@@ -346,7 +346,7 @@ class R2UIManager(QObject):
             return False
 
     def show_configuration(self):
-        """Show radare2 configuration dialog"""
+        """Show radare2 configuration dialog."""
         try:
             if "config_dialog" in self.ui_components:
                 dialog = self.ui_components["config_dialog"]
@@ -359,7 +359,7 @@ class R2UIManager(QObject):
             self.logger.error(f"Failed to show configuration: {e}")
 
     def _apply_configuration(self, config: dict[str, Any]):
-        """Apply configuration to all components"""
+        """Apply configuration to all components."""
         try:
             # Store configuration
             self.analysis_config = config
@@ -374,7 +374,7 @@ class R2UIManager(QObject):
             self.logger.error(f"Failed to apply configuration: {e}")
 
     def export_results(self, file_path: str = None) -> bool:
-        """Export current analysis results"""
+        """Export current analysis results."""
         try:
             if not self.current_results:
                 QMessageBox.information(
@@ -442,15 +442,15 @@ class R2UIManager(QObject):
             return False
 
     def get_analysis_history(self) -> list[dict[str, Any]]:
-        """Get analysis history"""
+        """Get analysis history."""
         return self.analysis_history.copy()
 
     def get_current_results(self) -> dict[str, Any]:
-        """Get current analysis results"""
+        """Get current analysis results."""
         return self.current_results.copy()
 
     def clear_results(self):
-        """Clear current analysis results"""
+        """Clear current analysis results."""
         self.current_results = {}
 
         # Clear results viewer
@@ -458,22 +458,22 @@ class R2UIManager(QObject):
             self.ui_components["results_viewer"].results_data = {}
 
     def _get_r2_timestamp(self) -> str:
-        """Get current timestamp for radare2 operations"""
+        """Get current timestamp for radare2 operations."""
         from datetime import datetime
 
         return datetime.now().isoformat()
 
     # Signal handlers
     def _on_binary_loaded(self, path: str):
-        """Handle binary loaded signal"""
+        """Handle binary loaded signal."""
         self.status_updated.emit(f"Binary loaded: {os.path.basename(path)}")
 
     def _on_analysis_started(self, analysis_type: str):
-        """Handle analysis started signal"""
+        """Handle analysis started signal."""
         self.status_updated.emit(f"Starting {analysis_type} analysis...")
 
     def _on_analysis_completed(self, results: dict[str, Any]):
-        """Handle analysis completed signal"""
+        """Handle analysis completed signal."""
         self.current_results = results
         self.status_updated.emit("Analysis completed successfully")
 
@@ -482,7 +482,7 @@ class R2UIManager(QObject):
             self.ui_components["results_viewer"].display_results(results)
 
     def _on_analysis_failed(self, error: str):
-        """Handle analysis failed signal"""
+        """Handle analysis failed signal."""
         self.status_updated.emit(f"Analysis failed: {error}")
         QMessageBox.critical(
             self.main_app,
@@ -491,7 +491,7 @@ class R2UIManager(QObject):
         )
 
     def cleanup(self):
-        """Cleanup resources"""
+        """Cleanup resources."""
         try:
             # Stop any running analysis
             if "r2_widget" in self.ui_components:
@@ -513,7 +513,7 @@ class R2UIManager(QObject):
 
 
 def create_r2_ui_manager(main_app=None) -> R2UIManager:
-    """Create and return configured R2UIManager instance"""
+    """Create and return configured R2UIManager instance."""
     return R2UIManager(main_app)
 
 

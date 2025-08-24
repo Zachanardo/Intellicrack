@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ def parse_ai_response_sections(
 
     Returns:
         Dictionary mapping section names to lists of extracted content
+
     """
     from .parsing_utils import ResponseLineParser
 

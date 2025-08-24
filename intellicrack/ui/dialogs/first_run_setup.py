@@ -1,4 +1,4 @@
-"""First Run Setup Dialog
+"""First Run Setup Dialog.
 
 Automatically configures Intellicrack on first run.
 
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class SetupWorker(QThread):
-    """Worker thread for setup tasks"""
+    """Worker thread for setup tasks."""
 
     progress = pyqtSignal(int)
     status = pyqtSignal(str)
@@ -44,7 +44,7 @@ class SetupWorker(QThread):
         self.success = True
 
     def run(self):
-        """Run setup tasks"""
+        """Run setup tasks."""
         total_tasks = len(self.tasks)
 
         for i, task in enumerate(self.tasks):
@@ -64,7 +64,7 @@ class SetupWorker(QThread):
         self.finished.emit(self.success)
 
     def _install_package(self, package: str):
-        """Install a Python package"""
+        """Install a Python package."""
         try:
             cmd = [sys.executable, "-m", "pip", "install"] + package.split()
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
@@ -77,7 +77,7 @@ class SetupWorker(QThread):
 
 
 class FirstRunSetupDialog(QDialog):
-    """Dialog for first-run setup"""
+    """Dialog for first-run setup."""
 
     def __init__(self, missing_components: dict[str, bool], parent=None):
         """Initialize the FirstRunSetupDialog with default values."""
@@ -87,7 +87,7 @@ class FirstRunSetupDialog(QDialog):
         self.init_ui()
 
     def init_ui(self):
-        """Initialize the UI"""
+        """Initialize the UI."""
         self.setWindowTitle("First Run Setup - Intellicrack")
         self.setMinimumWidth(600)
         self.setMinimumHeight(400)
@@ -164,7 +164,7 @@ class FirstRunSetupDialog(QDialog):
         self.setLayout(layout)
 
     def start_setup(self):
-        """Start the setup process"""
+        """Start the setup process."""
         # Get selected tasks
         tasks = []
         for task_id, checkbox in self.component_checks.items():
@@ -192,12 +192,12 @@ class FirstRunSetupDialog(QDialog):
         self.worker.start()
 
     def update_status(self, status: str):
-        """Update status label"""
+        """Update status label."""
         self.status_label.setText(status)
         self.log_output.append(status)
 
     def setup_finished(self, success: bool):
-        """Handle setup completion"""
+        """Handle setup completion."""
         self.setup_complete = True
 
         if success:

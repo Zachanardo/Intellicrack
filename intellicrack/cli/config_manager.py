@@ -115,6 +115,7 @@ class ConfigManager:
 
         Returns:
             Configuration value or default
+
         """
         # Prepend cli_configuration if not already there
         if not key.startswith("cli_configuration."):
@@ -128,6 +129,7 @@ class ConfigManager:
         Args:
             key: Configuration key (can use dot notation for nested values)
             value: Value to set
+
         """
         # Prepend cli_configuration if not already there
         if not key.startswith("cli_configuration."):
@@ -142,6 +144,7 @@ class ConfigManager:
 
         Returns:
             Dictionary of all CLI configuration settings
+
         """
         return self.central_config.get("cli_configuration", {})
 

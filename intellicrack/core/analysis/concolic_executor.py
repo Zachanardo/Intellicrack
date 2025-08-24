@@ -1,4 +1,4 @@
-"""Concolic Execution Engine for Precise Path Exploration
+"""Concolic Execution Engine for Precise Path Exploration.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -873,6 +873,109 @@ class ConcolicExecutionEngine:
             self.logger.error("Error finding license check address: %s", e)
             return None
 
+    def _extract_analysis_parameters(self, **kwargs) -> dict[str, Any]:
+        """Extract and validate analysis parameters from kwargs."""
+        return {
+            "target_functions": kwargs.get("target_functions", []),
+            "avoid_functions": kwargs.get("avoid_functions", []),
+            "max_depth": kwargs.get("max_depth", 100),
+            "timeout": kwargs.get("timeout", self.timeout),
+            "find_vulnerabilities": kwargs.get("find_vulnerabilities", True),
+            "find_license_checks": kwargs.get("find_license_checks", True),
+            "generate_test_cases": kwargs.get("generate_test_cases", True),
+            "symbolic_stdin_size": kwargs.get("symbolic_stdin_size", 256),
+            "concrete_seed": kwargs.get("concrete_seed"),
+        }
+
+    def _initialize_analysis_results(self, max_depth: int) -> dict[str, Any]:
+        """Initialize the analysis results dictionary."""
+        return {
+            "binary": self.binary_path,
+            "test_cases": [],
+            "coverage": 0.0,
+            "paths_explored": 0,
+            "vulnerabilities": [],
+            "license_checks": {},
+            "execution_time": 0,
+            "constraints": [],
+            "interesting_addresses": [],
+            "max_depth": max_depth,
+            "error": None,
+        }
+
+    def _setup_manticore_hooks(self, m, target_functions: list, avoid_functions: list, analysis_data: dict) -> None:
+        """Set up hooks for target and avoid functions."""
+        for target in target_functions:
+            if isinstance(target, int):
+                m.add_hook(target, lambda s: self._target_reached(s, analysis_data))
+            else:
+                self.logger.debug(
+                    f"Target function {target} specified but name resolution not implemented"
+                )
+
+        for avoid in avoid_functions:
+            if isinstance(avoid, int):
+                m.add_hook(avoid, lambda s: s.abandon())
+
+    def _setup_symbolic_input(self, m, generate_test_cases: bool, symbolic_stdin_size: int, concrete_seed: Any) -> None:
+        """Set up symbolic input for test case generation."""
+        if generate_test_cases:
+            stdin_data = m.make_symbolic_buffer(symbolic_stdin_size)
+            m.input_symbols["stdin"] = stdin_data
+
+            if concrete_seed:
+                if isinstance(concrete_seed, str):
+                    concrete_seed = concrete_seed.encode()
+                for i, byte in enumerate(concrete_seed[:symbolic_stdin_size]):
+                    m.constrain(stdin_data[i] == byte)
+
+    def _generate_test_cases(self, m, analysis_data: dict, symbolic_stdin_size: int) -> list[dict]:
+        """Generate test cases from terminated states."""
+        test_cases = []
+        for i, state in enumerate(m.terminated_states[:50]):
+            try:
+                if hasattr(state, "input_symbols"):
+                    stdin_bytes = state.solve_buffer("stdin", symbolic_stdin_size)
+                    test_case = {
+                        "id": i,
+                        "input": stdin_bytes.hex() if stdin_bytes else "",
+                        "triggers": [],
+                        "path_length": len(state.trace) if hasattr(state, "trace") else 0,
+                    }
+
+                    if state.cpu.PC in analysis_data["interesting_addresses"]:
+                        test_case["triggers"].append("interesting_address")
+
+                    test_cases.append(test_case)
+            except Exception as e:
+                self.logger.debug(f"Failed to generate test case: {e}")
+        return test_cases
+
+    def _process_analysis_results(self, analysis_data: dict, find_license_checks: bool) -> dict:
+        """Process and format analysis results."""
+        processed_results = {}
+
+        # Calculate coverage
+        if analysis_data["covered_blocks"]:
+            total_blocks_estimate = 1000
+            processed_results["coverage"] = (
+                len(analysis_data["covered_blocks"]) / total_blocks_estimate
+            ) * 100
+        else:
+            processed_results["coverage"] = 0.0
+
+        processed_results["vulnerabilities"] = analysis_data["vulnerabilities"]
+        processed_results["constraints"] = list(analysis_data["constraints"].values())
+        processed_results["interesting_addresses"] = [
+            hex(addr) for addr in analysis_data["interesting_addresses"]
+        ]
+
+        if find_license_checks:
+            license_results = self.find_license_bypass()
+            processed_results["license_checks"] = license_results
+
+        return processed_results
+
     def analyze(self, binary_path: str, **kwargs) -> dict[str, Any]:
         """Perform comprehensive concolic execution analysis on a binary.
 
@@ -910,49 +1013,21 @@ class ConcolicExecutionEngine:
 
         start_time = time.time()
 
-        # Update binary path if provided
         if binary_path:
             self.binary_path = binary_path
 
         self.logger.info(f"Starting concolic execution analysis on {self.binary_path}")
 
-        # Extract parameters
-        target_functions = kwargs.get("target_functions", [])
-        avoid_functions = kwargs.get("avoid_functions", [])
-        max_depth = kwargs.get("max_depth", 100)
-        timeout = kwargs.get("timeout", self.timeout)
-        find_vulnerabilities = kwargs.get("find_vulnerabilities", True)
-        find_license_checks = kwargs.get("find_license_checks", True)
-        generate_test_cases = kwargs.get("generate_test_cases", True)
-        symbolic_stdin_size = kwargs.get("symbolic_stdin_size", 256)
-        concrete_seed = kwargs.get("concrete_seed")
-
-        results = {
-            "binary": self.binary_path,
-            "test_cases": [],
-            "coverage": 0.0,
-            "paths_explored": 0,
-            "vulnerabilities": [],
-            "license_checks": {},
-            "execution_time": 0,
-            "constraints": [],
-            "interesting_addresses": [],
-            "max_depth": max_depth,
-            "error": None,
-        }
+        params = self._extract_analysis_parameters(**kwargs)
+        results = self._initialize_analysis_results(params["max_depth"])
 
         if not self.manticore_available:
-            # Use native implementation
             return self._native_analyze(binary_path, **kwargs)
 
         try:
-            # Create Manticore instance
             m = Manticore(self.binary_path)
+            m.set_exec_timeout(params["timeout"])
 
-            # Set analysis parameters
-            m.set_exec_timeout(timeout)
-
-            # Track analysis data
             analysis_data = {
                 "covered_blocks": set(),
                 "crashed_states": [],
@@ -963,217 +1038,26 @@ class ConcolicExecutionEngine:
                 "interesting_addresses": set(),
             }
 
-            # Add comprehensive analysis plugin
-            class ComprehensiveAnalysisPlugin(Plugin):
-                """Plugin for comprehensive concolic analysis."""
+            plugin = self._create_analysis_plugin(analysis_data, params["find_vulnerabilities"])
+            m.register_plugin(plugin)
 
-                def __init__(self, analysis_data):
-                    """Initialize the comprehensive analysis plugin."""
-                    super().__init__()
-                    self.analysis_data = analysis_data
-                    self.logger = logging.getLogger(__name__)
+            self._setup_manticore_hooks(m, params["target_functions"], params["avoid_functions"], analysis_data)
+            self._setup_symbolic_input(m, params["generate_test_cases"], params["symbolic_stdin_size"], params["concrete_seed"])
 
-                def will_execute_instruction_callback(self, state, pc, insn):
-                    """Track execution and detect interesting behaviors."""
-                    # Track coverage
-                    self.analysis_data["covered_blocks"].add(pc)
-
-                    # Check for vulnerabilities
-                    if find_vulnerabilities:
-                        vuln = self._check_for_vulnerability(state, pc, insn)
-                        if vuln:
-                            self.analysis_data["vulnerabilities"].append(vuln)
-
-                    # Check for interesting patterns
-                    if hasattr(insn, "mnemonic"):
-                        # System calls
-                        if insn.mnemonic in ["syscall", "int"] or insn.mnemonic == "call":
-                            self.analysis_data["interesting_addresses"].add(pc)
-
-                def _check_for_vulnerability(self, state, pc, insn):
-                    """Check for potential vulnerabilities using execution state."""
-                    vuln = None
-
-                    try:
-                        # Use state information for vulnerability detection
-                        stack_ptr = (
-                            state.cpu.RSP
-                            if hasattr(state.cpu, "RSP")
-                            else state.cpu.ESP
-                            if hasattr(state.cpu, "ESP")
-                            else None
-                        )
-
-                        # Check for dangerous function calls
-                        if hasattr(insn, "mnemonic") and insn.mnemonic == "call":
-                            # Analyze call based on state
-                            call_target = None
-                            if hasattr(insn, "operands") and insn.operands:
-                                try:
-                                    call_target = insn.operands[0].value
-                                except (AttributeError, IndexError, TypeError):
-                                    pass
-
-                            vuln = {
-                                "type": "dangerous_call",
-                                "address": hex(pc),
-                                "call_target": hex(call_target) if call_target else "indirect",
-                                "stack_ptr": hex(stack_ptr) if stack_ptr else "unknown",
-                                "description": f'Function call at {hex(pc)} with stack at {hex(stack_ptr) if stack_ptr else "unknown"}',
-                            }
-
-                        # Check for potential buffer overflows using state
-                        elif hasattr(insn, "mnemonic") and insn.mnemonic in [
-                            "mov",
-                            "rep movsb",
-                            "strcpy",
-                        ]:
-                            if stack_ptr:
-                                # Check if writing near stack boundaries
-                                vuln = {
-                                    "type": "potential_overflow",
-                                    "address": hex(pc),
-                                    "stack_ptr": hex(stack_ptr),
-                                    "instruction": str(insn),
-                                    "description": f"Potential buffer operation at {hex(pc)}",
-                                }
-
-                        # Check for control flow changes
-                        elif hasattr(insn, "mnemonic") and insn.mnemonic in ["jmp", "ret"]:
-                            # Analyze control flow using state
-                            vuln = {
-                                "type": "control_flow",
-                                "address": hex(pc),
-                                "state_id": getattr(state, "id", "unknown"),
-                                "description": f"Control flow change at {hex(pc)}",
-                            }
-
-                    except Exception as e:
-                        # Fallback for analysis errors
-                        self.logger.debug(f"Vulnerability analysis error: {e}")
-
-                    return vuln
-
-                def will_fork_state_callback(self, state, expression, solutions, *args, **kwargs):
-                    """Track constraints when state forks."""
-                    try:
-                        # Record path constraints with additional context
-                        constraint_str = str(expression) if expression else "unknown"
-
-                        # Extract additional context from args and kwargs
-                        fork_context = {
-                            "additional_args": len(args) if args else 0,
-                            "context_info": {},
-                        }
-
-                        # Process any additional context from kwargs
-                        if kwargs:
-                            for key, value in kwargs.items():
-                                if key in ["reason", "depth", "branch_type"]:
-                                    fork_context["context_info"][key] = str(value)
-
-                        self.analysis_data["constraints"][state.id] = {
-                            "pc": hex(state.cpu.PC),
-                            "constraint": constraint_str,
-                            "solutions": len(solutions) if solutions else 0,
-                            "fork_context": fork_context,
-                        }
-                    except Exception as e:
-                        self.logger.debug(f"Failed to record constraint: {e}")
-
-                def did_run_callback(self):
-                    """Finalize analysis after execution."""
-                    self.logger.info(
-                        f"Analysis complete. Covered {len(self.analysis_data['covered_blocks'])} blocks"
-                    )
-
-            # Register analysis plugin
-            m.register_plugin(ComprehensiveAnalysisPlugin(analysis_data))
-
-            # Add hooks for target/avoid functions
-            for target in target_functions:
-                if isinstance(target, int):
-                    m.add_hook(target, lambda s: self._target_reached(s, analysis_data))
-                else:
-                    # Try to resolve function name to address
-                    self.logger.debug(
-                        f"Target function {target} specified but name resolution not implemented"
-                    )
-
-            for avoid in avoid_functions:
-                if isinstance(avoid, int):
-                    m.add_hook(avoid, lambda s: s.abandon())
-
-            # Set up symbolic input
-            if generate_test_cases:
-                # Create symbolic stdin
-                stdin_data = m.make_symbolic_buffer(symbolic_stdin_size)
-                m.input_symbols["stdin"] = stdin_data
-
-                # Apply concrete seed if provided
-                if concrete_seed:
-                    if isinstance(concrete_seed, str):
-                        concrete_seed = concrete_seed.encode()
-                    for i, byte in enumerate(concrete_seed[:symbolic_stdin_size]):
-                        m.constrain(stdin_data[i] == byte)
-
-            # Run concolic execution
             self.logger.info("Running concolic execution...")
             m.run(procs=4)
 
-            # Process results
             all_states = (
                 list(m.all_states.values()) if hasattr(m.all_states, "values") else m.all_states
             )
             results["paths_explored"] = len(all_states)
 
-            # Generate test cases from terminated states
-            if generate_test_cases:
-                for i, state in enumerate(m.terminated_states[:50]):  # Limit to 50 test cases
-                    try:
-                        # Get concrete input for this state
-                        if hasattr(state, "input_symbols"):
-                            stdin_bytes = state.solve_buffer("stdin", symbolic_stdin_size)
-                            test_case = {
-                                "id": i,
-                                "input": stdin_bytes.hex() if stdin_bytes else "",
-                                "triggers": [],
-                                "path_length": len(state.trace) if hasattr(state, "trace") else 0,
-                            }
+            if params["generate_test_cases"]:
+                results["test_cases"] = self._generate_test_cases(m, analysis_data, params["symbolic_stdin_size"])
 
-                            # Check what this test case triggers
-                            if state.cpu.PC in analysis_data["interesting_addresses"]:
-                                test_case["triggers"].append("interesting_address")
+            processed_results = self._process_analysis_results(analysis_data, params["find_license_checks"])
+            results.update(processed_results)
 
-                            results["test_cases"].append(test_case)
-                    except Exception as e:
-                        self.logger.debug(f"Failed to generate test case: {e}")
-
-            # Calculate coverage
-            if analysis_data["covered_blocks"]:
-                # Estimate total blocks (simplified)
-                total_blocks_estimate = 1000  # Real implementation would parse binary
-                results["coverage"] = (
-                    len(analysis_data["covered_blocks"]) / total_blocks_estimate
-                ) * 100
-
-            # Add vulnerabilities found
-            results["vulnerabilities"] = analysis_data["vulnerabilities"]
-
-            # Add constraints
-            results["constraints"] = list(analysis_data["constraints"].values())
-
-            # Add interesting addresses
-            results["interesting_addresses"] = [
-                hex(addr) for addr in analysis_data["interesting_addresses"]
-            ]
-
-            # Search for license checks if requested
-            if find_license_checks:
-                license_results = self.find_license_bypass()
-                results["license_checks"] = license_results
-
-            # Calculate execution time
             results["execution_time"] = time.time() - start_time
 
             self.logger.info(
@@ -1190,6 +1074,118 @@ class ConcolicExecutionEngine:
             results["error"] = str(e)
             results["execution_time"] = time.time() - start_time
             return results
+
+    def _create_analysis_plugin(self, analysis_data: dict, find_vulnerabilities: bool):
+        """Create the comprehensive analysis plugin."""
+        class ComprehensiveAnalysisPlugin(Plugin):
+            """Plugin for comprehensive concolic analysis."""
+
+            def __init__(self, analysis_data):
+                """Initialize the comprehensive analysis plugin."""
+                super().__init__()
+                self.analysis_data = analysis_data
+                self.logger = logging.getLogger(__name__)
+
+            def will_execute_instruction_callback(self, state, pc, insn):
+                """Track execution and detect interesting behaviors."""
+                self.analysis_data["covered_blocks"].add(pc)
+
+                if find_vulnerabilities:
+                    vuln = self._check_for_vulnerability(state, pc, insn)
+                    if vuln:
+                        self.analysis_data["vulnerabilities"].append(vuln)
+
+                if hasattr(insn, "mnemonic"):
+                    if insn.mnemonic in ["syscall", "int"] or insn.mnemonic == "call":
+                        self.analysis_data["interesting_addresses"].add(pc)
+
+            def _check_for_vulnerability(self, state, pc, insn):
+                """Check for potential vulnerabilities using execution state."""
+                vuln = None
+
+                try:
+                    stack_ptr = (
+                        state.cpu.RSP
+                        if hasattr(state.cpu, "RSP")
+                        else state.cpu.ESP
+                        if hasattr(state.cpu, "ESP")
+                        else None
+                    )
+
+                    if hasattr(insn, "mnemonic") and insn.mnemonic == "call":
+                        call_target = None
+                        if hasattr(insn, "operands") and insn.operands:
+                            try:
+                                call_target = insn.operands[0].value
+                            except (AttributeError, IndexError, TypeError):
+                                pass
+
+                        vuln = {
+                            "type": "dangerous_call",
+                            "address": hex(pc),
+                            "call_target": hex(call_target) if call_target else "indirect",
+                            "stack_ptr": hex(stack_ptr) if stack_ptr else "unknown",
+                            "description": f'Function call at {hex(pc)} with stack at {hex(stack_ptr) if stack_ptr else "unknown"}',
+                        }
+
+                    elif hasattr(insn, "mnemonic") and insn.mnemonic in [
+                        "mov",
+                        "rep movsb",
+                        "strcpy",
+                    ]:
+                        if stack_ptr:
+                            vuln = {
+                                "type": "potential_overflow",
+                                "address": hex(pc),
+                                "stack_ptr": hex(stack_ptr),
+                                "instruction": str(insn),
+                                "description": f"Potential buffer operation at {hex(pc)}",
+                            }
+
+                    elif hasattr(insn, "mnemonic") and insn.mnemonic in ["jmp", "ret"]:
+                        vuln = {
+                            "type": "control_flow",
+                            "address": hex(pc),
+                            "state_id": getattr(state, "id", "unknown"),
+                            "description": f"Control flow change at {hex(pc)}",
+                        }
+
+                except Exception as e:
+                    self.logger.debug(f"Vulnerability analysis error: {e}")
+
+                return vuln
+
+            def will_fork_state_callback(self, state, expression, solutions, *args, **kwargs):
+                """Track constraints when state forks."""
+                try:
+                    constraint_str = str(expression) if expression else "unknown"
+
+                    fork_context = {
+                        "additional_args": len(args) if args else 0,
+                        "context_info": {},
+                    }
+
+                    if kwargs:
+                        for key, value in kwargs.items():
+                            if key in ["reason", "depth", "branch_type"]:
+                                fork_context["context_info"][key] = str(value)
+
+                    self.analysis_data["constraints"][state.id] = {
+                        "pc": hex(state.cpu.PC),
+                        "constraint": constraint_str,
+                        "solutions": len(solutions) if solutions else 0,
+                        "fork_context": fork_context,
+                    }
+                except Exception as e:
+                    self.logger.debug(f"Failed to record constraint: {e}")
+
+            def did_run_callback(self):
+                """Finalize analysis after execution."""
+                self.logger.info(
+                    f"Analysis complete. Covered {len(self.analysis_data['covered_blocks'])} blocks"
+                )
+
+        return ComprehensiveAnalysisPlugin(analysis_data)
 
     def _native_analyze(self, binary_path: str, **kwargs) -> dict[str, Any]:
         """Native implementation of analyze without Manticore."""

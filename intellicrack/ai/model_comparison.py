@@ -1,4 +1,4 @@
-"""Model Comparison Tool for Intellicrack
+"""Model Comparison Tool for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

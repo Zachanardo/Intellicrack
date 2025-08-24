@@ -1,4 +1,4 @@
-"""ICP (Intellicrack Protection Engine) Report Generator
+"""ICP (Intellicrack Protection Engine) Report Generator.
 
 Generates comprehensive analysis reports from ICP engine results.
 Supports multiple output formats including HTML, PDF, and text.
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class ReportOptions:
-    """Options for report generation"""
+    """Options for report generation."""
 
     include_raw_json: bool = False
     include_bypass_methods: bool = True
@@ -32,7 +32,7 @@ class ReportOptions:
 
 
 class ICPReportGenerator:
-    """Generate comprehensive reports from ICP analysis results"""
+    """Generate comprehensive reports from ICP analysis results."""
 
     def __init__(self):
         """Initialize the ICP report generator with template and output directory paths."""
@@ -45,7 +45,7 @@ class ICPReportGenerator:
         result: UnifiedProtectionResult,
         options: ReportOptions | None = None,
     ) -> str:
-        """Generate a comprehensive report from analysis results
+        """Generate a comprehensive report from analysis results.
 
         Args:
             result: Unified protection analysis result
@@ -78,7 +78,7 @@ class ICPReportGenerator:
         options: ReportOptions,
         report_name: str,
     ) -> str:
-        """Generate HTML report"""
+        """Generate HTML report."""
         html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -243,7 +243,7 @@ class ICPReportGenerator:
         return str(report_path)
 
     def _generate_summary_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate summary section HTML"""
+        """Generate summary section HTML."""
         confidence_class = (
             "high"
             if result.confidence_score >= 80
@@ -268,7 +268,7 @@ class ICPReportGenerator:
         """
 
     def _generate_file_info_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate file information section"""
+        """Generate file information section."""
         file_path = Path(result.file_path)
         file_size = file_path.stat().st_size if file_path.exists() else 0
 
@@ -302,7 +302,7 @@ class ICPReportGenerator:
     def _generate_protections_section(
         self, result: UnifiedProtectionResult, options: ReportOptions
     ) -> str:
-        """Generate detected protections section"""
+        """Generate detected protections section."""
         if not result.protections:
             return "<h2>Detected Protections</h2><p>No protections detected.</p>"
 
@@ -336,7 +336,7 @@ class ICPReportGenerator:
         return html
 
     def _generate_icp_analysis_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate ICP engine analysis section"""
+        """Generate ICP engine analysis section."""
         if not result.icp_analysis:
             return ""
 
@@ -371,7 +371,7 @@ class ICPReportGenerator:
         return html
 
     def _generate_recommendations_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate recommendations section"""
+        """Generate recommendations section."""
         html = "<h2>Analysis Recommendations</h2>"
 
         recommendations = []
@@ -418,7 +418,7 @@ class ICPReportGenerator:
         return html
 
     def _generate_bypass_methods_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate bypass methods section"""
+        """Generate bypass methods section."""
         if not result.bypass_strategies:
             return ""
 
@@ -443,7 +443,7 @@ class ICPReportGenerator:
         return html
 
     def _generate_technical_details_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate technical details section"""
+        """Generate technical details section."""
         html = "<h2>Technical Details</h2>"
 
         # Add entropy information if available
@@ -475,7 +475,7 @@ class ICPReportGenerator:
         return html
 
     def _generate_raw_data_section(self, result: UnifiedProtectionResult) -> str:
-        """Generate raw data section"""
+        """Generate raw data section."""
         html = "<h2>Raw Analysis Data</h2>"
 
         if result.icp_analysis and result.icp_analysis.raw_json:
@@ -490,7 +490,7 @@ class ICPReportGenerator:
         options: ReportOptions,
         report_name: str,
     ) -> str:
-        """Generate plain text report"""
+        """Generate plain text report."""
         lines = []
         lines.append("=" * 80)
         lines.append("INTELLICRACK PROTECTION ANALYSIS REPORT")
@@ -556,7 +556,7 @@ class ICPReportGenerator:
         options: ReportOptions,
         report_name: str,
     ) -> str:
-        """Generate JSON report"""
+        """Generate JSON report."""
         report_data = {
             "metadata": {
                 "generated": datetime.datetime.now().isoformat(),
@@ -621,7 +621,7 @@ class ICPReportGenerator:
         return str(report_path)
 
     def _get_severity_class(self, protection_type: str) -> str:
-        """Get CSS class for protection severity"""
+        """Get CSS class for protection severity."""
         severity_map = {
             "protector": "critical",
             "license": "high",
@@ -634,7 +634,7 @@ class ICPReportGenerator:
         return severity_map.get(protection_type.lower(), "low")
 
     def _format_size(self, size: int) -> str:
-        """Format file size in human readable format"""
+        """Format file size in human readable format."""
         for unit in ["B", "KB", "MB", "GB"]:
             if size < 1024.0:
                 return f"{size:.2f} {unit}"
@@ -642,7 +642,7 @@ class ICPReportGenerator:
         return f"{size:.2f} TB"
 
     def _format_details(self, details: Any) -> str:
-        """Format details object for display"""
+        """Format details object for display."""
         if isinstance(details, dict):
             items = []
             for key, value in details.items():
@@ -651,7 +651,7 @@ class ICPReportGenerator:
         return str(details)
 
     def _get_version(self) -> str:
-        """Get Intellicrack version"""
+        """Get Intellicrack version."""
         try:
             import intellicrack
 

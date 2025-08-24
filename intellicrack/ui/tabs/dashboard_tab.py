@@ -67,7 +67,7 @@ class DashboardTab(BaseTab):
         self.config_manager.register_callback('font', self.update_fonts)
 
     def setup_content(self):
-        """Setup the simplified dashboard content"""
+        """Setup the simplified dashboard content."""
         layout_config = self.config_manager.get_layout_config()
         layout = QVBoxLayout(self)
         layout.setSpacing(layout_config.panel_spacing)
@@ -102,7 +102,7 @@ class DashboardTab(BaseTab):
         self.is_loaded = True
 
     def create_quick_start_panel(self):
-        """Create the prominent Quick Start panel"""
+        """Create the prominent Quick Start panel."""
         panel = QGroupBox("Quick Start")
 
         # Apply theme-based styling
@@ -181,7 +181,7 @@ class DashboardTab(BaseTab):
         return panel
 
     def create_recent_files_panel(self):
-        """Create the recent files panel"""
+        """Create the recent files panel."""
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
@@ -271,7 +271,7 @@ class DashboardTab(BaseTab):
         return panel
 
     def open_file_action(self):
-        """Handle Open File button action"""
+        """Handle Open File button action."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open File for Analysis",
@@ -292,7 +292,7 @@ class DashboardTab(BaseTab):
                 self.log_activity(f"Opened file: {os.path.basename(file_path)}")
 
     def select_program_from_target(self):
-        """Handle Select Program from Target button action"""
+        """Handle Select Program from Target button action."""
         try:
             from ..dialogs.program_selector_dialog import ProgramSelectorDialog
 
@@ -318,14 +318,14 @@ class DashboardTab(BaseTab):
             self.open_file_action()
 
     def log_activity(self, message):
-        """Log an activity message - simplified version for dashboard"""
+        """Log an activity message - simplified version for dashboard."""
         # For the simplified dashboard, we can log to console or a simple logger
         # The full activity log functionality will be moved to WorkspaceTab
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"[{timestamp}] {message}")
 
     def create_system_monitor_panel(self):
-        """Create system monitoring panel"""
+        """Create system monitoring panel."""
         self.system_monitor = SystemMonitorWidget()
         self.system_monitor.alert_triggered.connect(self.handle_system_alert)
 
@@ -342,7 +342,7 @@ class DashboardTab(BaseTab):
         return self.system_monitor
 
     def handle_system_alert(self, alert_type: str, message: str):
-        """Handle system monitoring alerts"""
+        """Handle system monitoring alerts."""
         # Log the alert to activity log
         self.log_activity(f"[SYSTEM ALERT - {alert_type}] {message}")
 
@@ -351,7 +351,7 @@ class DashboardTab(BaseTab):
             QMessageBox.warning(self, f"System Alert - {alert_type}", message)
 
     def create_gpu_status_panel(self):
-        """Create GPU status monitoring panel"""
+        """Create GPU status monitoring panel."""
         self.gpu_status = GPUStatusWidget()
 
         # Configure GPU monitoring based on settings
@@ -367,7 +367,7 @@ class DashboardTab(BaseTab):
         return self.gpu_status
 
     def create_cpu_status_panel(self):
-        """Create CPU status monitoring panel"""
+        """Create CPU status monitoring panel."""
         self.cpu_status = CPUStatusWidget()
 
         # Configure CPU monitoring based on settings
@@ -384,7 +384,7 @@ class DashboardTab(BaseTab):
 
 
     def open_project(self):
-        """Simple project opening for Quick Start"""
+        """Simple project opening for Quick Start."""
         project_file, _ = QFileDialog.getOpenFileName(
             self,
             "Open Project",
@@ -399,7 +399,7 @@ class DashboardTab(BaseTab):
 
 
     def populate_recent_files(self):
-        """Populate the recent files list"""
+        """Populate the recent files list."""
         self.recent_files_list.clear()
 
         recent_files = self.config_manager.get_setting("recent_files", [])
@@ -429,7 +429,7 @@ class DashboardTab(BaseTab):
                 self.recent_files_list.addItem(item)
 
     def load_recent_file(self, item):
-        """Load a file from the recent files list"""
+        """Load a file from the recent files list."""
         file_path = item.data(Qt.ItemDataRole.UserRole)
         if file_path and os.path.exists(file_path):
             # Add to recent files and emit signal
@@ -444,7 +444,7 @@ class DashboardTab(BaseTab):
                 self.log_activity(f"Loaded recent file: {os.path.basename(file_path)}")
 
     def add_to_recent_files(self, file_path):
-        """Add a file to the recent files list"""
+        """Add a file to the recent files list."""
         recent_files = self.config_manager.get_setting("recent_files", [])
         max_recent = self.config_manager.get_setting("dashboard.max_recent_files", 10)
 
@@ -465,13 +465,13 @@ class DashboardTab(BaseTab):
         self.populate_recent_files()
 
     def clear_recent_files(self):
-        """Clear the recent files list"""
+        """Clear the recent files list."""
         self.config_manager.set_setting("recent_files", [])
         self.recent_files_list.clear()
         self.log_activity("Recent files list cleared")
 
     def cleanup(self):
-        """Cleanup resources when tab is closed"""
+        """Cleanup resources when tab is closed."""
         # Stop system monitoring
         if hasattr(self, "system_monitor"):
             self.system_monitor.stop_monitoring()
@@ -496,7 +496,7 @@ class DashboardTab(BaseTab):
         super().cleanup()
 
     def _style_quick_start_button(self, button, base_color):
-        """Apply consistent styling to quick start buttons"""
+        """Apply consistent styling to quick start buttons."""
         theme = self.config_manager.get_theme_config()
         font_config = self.config_manager.get_font_config()
 
@@ -529,7 +529,7 @@ class DashboardTab(BaseTab):
         """)
 
     def apply_theme(self):
-        """Apply theme changes to dashboard components"""
+        """Apply theme changes to dashboard components."""
         if not self.is_loaded:
             return
 
@@ -567,7 +567,7 @@ class DashboardTab(BaseTab):
             """)
 
     def update_layout(self):
-        """Update layout configuration when settings change"""
+        """Update layout configuration when settings change."""
         if not self.is_loaded:
             return
 
@@ -582,7 +582,7 @@ class DashboardTab(BaseTab):
             )
 
     def update_fonts(self):
-        """Update font configuration when settings change"""
+        """Update font configuration when settings change."""
         if not self.is_loaded:
             return
 

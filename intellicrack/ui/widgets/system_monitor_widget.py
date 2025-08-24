@@ -1,4 +1,4 @@
-"""System Monitor Widget
+"""System Monitor Widget.
 
 Provides real-time system monitoring including CPU, GPU, Memory usage,
 network activity, and process information for the Dashboard tab.
@@ -49,7 +49,7 @@ except ImportError:
 
 @dataclass
 class SystemMetrics:
-    """Container for system metrics"""
+    """Container for system metrics."""
 
     timestamp: float
     cpu_percent: float
@@ -67,7 +67,7 @@ class SystemMetrics:
 
 
 class SystemMonitorWorker(QObject):
-    """Worker thread for collecting system metrics"""
+    """Worker thread for collecting system metrics."""
 
     metrics_updated = pyqtSignal(SystemMetrics)
     error_occurred = pyqtSignal(str)
@@ -81,7 +81,7 @@ class SystemMonitorWorker(QObject):
         self.last_disk_io = None
 
     def run(self):
-        """Run the monitoring loop"""
+        """Run the monitoring loop."""
         self.running = True
 
         while self.running:
@@ -94,11 +94,11 @@ class SystemMonitorWorker(QObject):
             time.sleep(self.update_interval / 1000.0)
 
     def stop(self):
-        """Stop the monitoring loop"""
+        """Stop the monitoring loop."""
         self.running = False
 
     def _collect_metrics(self) -> SystemMetrics:
-        """Collect current system metrics"""
+        """Collect current system metrics."""
         # CPU metrics
         cpu_percent = psutil.cpu_percent(interval=0.1)
         cpu_per_core = psutil.cpu_percent(interval=0.1, percpu=True)
@@ -165,7 +165,7 @@ class SystemMonitorWorker(QObject):
 
 
 class SystemMonitorWidget(QWidget):
-    """System monitoring widget for the Dashboard"""
+    """System monitoring widget for the Dashboard."""
 
     # Signals
     #: alert_type, message (type: str, str)
@@ -201,7 +201,7 @@ class SystemMonitorWidget(QWidget):
         self.start_monitoring()
 
     def setup_ui(self):
-        """Setup the UI components"""
+        """Setup the UI components."""
         layout = QVBoxLayout(self)
 
         # Controls
@@ -318,11 +318,11 @@ class SystemMonitorWidget(QWidget):
         layout.addWidget(content_splitter)
 
     def start_monitoring(self):
-        """Start system monitoring"""
+        """Start system monitoring."""
         self.monitor_thread.start()
 
     def stop_monitoring(self):
-        """Stop system monitoring"""
+        """Stop system monitoring."""
         if self.monitor_worker:
             self.monitor_worker.stop()
         if self.monitor_thread.isRunning():
@@ -330,7 +330,7 @@ class SystemMonitorWidget(QWidget):
             self.monitor_thread.wait()
 
     def _on_metrics_updated(self, metrics: SystemMetrics):
-        """Handle new metrics data"""
+        """Handle new metrics data."""
         if self.pause_btn.isChecked():
             return
 
@@ -360,7 +360,7 @@ class SystemMonitorWidget(QWidget):
         self._check_thresholds(metrics)
 
     def _update_graphs(self):
-        """Update performance graphs"""
+        """Update performance graphs."""
         if not self.metrics_history:
             return
 
@@ -381,7 +381,7 @@ class SystemMonitorWidget(QWidget):
             self.memory_plot.setXRange(max(0, len(times) - self.history_size), len(times))
 
     def _update_process_table(self):
-        """Update the process table with top processes"""
+        """Update the process table with top processes."""
         try:
             # Get top processes by CPU usage
             processes = []
@@ -421,7 +421,7 @@ class SystemMonitorWidget(QWidget):
             logger.debug("Error updating system monitor: %s", e)
 
     def _check_thresholds(self, metrics: SystemMetrics):
-        """Check if any metrics exceed thresholds"""
+        """Check if any metrics exceed thresholds."""
         if metrics.cpu_percent > self.cpu_threshold:
             self.alert_triggered.emit("cpu", f"High CPU usage: {metrics.cpu_percent:.1f}%")
             self.cpu_bar.setStyleSheet("QProgressBar::chunk { background-color: #ff6666; }")
@@ -443,30 +443,30 @@ class SystemMonitorWidget(QWidget):
                 self.gpu_bar.setStyleSheet("")
 
     def _on_interval_changed(self, value: int):
-        """Handle update interval change"""
+        """Handle update interval change."""
         self.update_interval = value
         if self.monitor_worker:
             self.monitor_worker.update_interval = value
 
     def _on_pause_toggled(self, checked: bool):
-        """Handle pause button toggle"""
+        """Handle pause button toggle."""
         if checked:
             self.pause_btn.setText("Resume")
         else:
             self.pause_btn.setText("Pause")
 
     def _on_error(self, error_msg: str):
-        """Handle monitoring errors"""
+        """Handle monitoring errors."""
         # Log error but don't show to user to avoid spam
 
     def get_current_metrics(self) -> SystemMetrics | None:
-        """Get the most recent metrics"""
+        """Get the most recent metrics."""
         if self.metrics_history:
             return self.metrics_history[-1]
         return None
 
     def get_metrics_summary(self) -> dict[str, Any]:
-        """Get a summary of recent metrics"""
+        """Get a summary of recent metrics."""
         if not self.metrics_history:
             return {}
 
@@ -496,7 +496,7 @@ class SystemMonitorWidget(QWidget):
         return summary
 
     def set_thresholds(self, cpu: float = None, memory: float = None, gpu: float = None):
-        """Set alert thresholds"""
+        """Set alert thresholds."""
         if cpu is not None:
             self.cpu_threshold = cpu
         if memory is not None:
@@ -505,7 +505,7 @@ class SystemMonitorWidget(QWidget):
             self.gpu_threshold = gpu
 
     def set_refresh_interval(self, interval_ms: int):
-        """Set the refresh interval for monitoring"""
+        """Set the refresh interval for monitoring."""
         self.update_interval = interval_ms
         if hasattr(self, 'interval_spin'):
             self.interval_spin.setValue(interval_ms)
@@ -513,7 +513,7 @@ class SystemMonitorWidget(QWidget):
             self.monitor_worker.update_interval = interval_ms
 
     def export_metrics(self, filepath: str):
-        """Export metrics history to file"""
+        """Export metrics history to file."""
         import json
 
         data = []
@@ -534,6 +534,6 @@ class SystemMonitorWidget(QWidget):
             json.dump(data, f, indent=2)
 
     def closeEvent(self, event):
-        """Handle widget close event"""
+        """Handle widget close event."""
         self.stop_monitoring()
         event.accept()

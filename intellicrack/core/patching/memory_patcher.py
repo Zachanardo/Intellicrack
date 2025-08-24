@@ -1,4 +1,4 @@
-"""Memory Patching Module for Intellicrack
+"""Memory Patching Module for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -35,11 +35,193 @@ from ...utils.protection.protection_detection import (
 logger = get_logger(__name__)
 
 
+def _create_dword_type(ctypes):
+    """Create Windows DWORD type implementation."""
+    class DWORD(ctypes.c_uint32):
+        """Real Windows DWORD type implementation."""
+
+        def __init__(self, value=0):
+            """Initialize DWORD with proper value handling."""
+            super().__init__(value)
+
+        @property
+        def value(self):
+            """Get the DWORD value."""
+            return super().value
+
+        @value.setter
+        def value(self, val):
+            """Set the DWORD value with bounds checking."""
+            if val < 0:
+                val = 0
+            elif val > 0xFFFFFFFF:
+                val = 0xFFFFFFFF
+            super().__setattr__('value', val)
+
+        def __str__(self):
+            return f"DWORD(0x{self.value:08X})"
+
+        def __repr__(self):
+            return f"DWORD({self.value})"
+
+    return DWORD
+
+
+def _create_bool_type(ctypes):
+    """Create Windows BOOL type implementation."""
+    class BOOL(ctypes.c_int32):
+        """Real Windows BOOL type implementation."""
+
+        def __init__(self, value=0):
+            """Initialize BOOL with proper value handling."""
+            super().__init__(1 if value else 0)
+
+        @property
+        def value(self):
+            """Get the BOOL value."""
+            return bool(super().value)
+
+        @value.setter
+        def value(self, val):
+            """Set the BOOL value."""
+            super().__setattr__('value', 1 if val else 0)
+
+        def __bool__(self):
+            return bool(super().value)
+
+        def __str__(self):
+            return f"BOOL({'TRUE' if self.value else 'FALSE'})"
+
+        def __repr__(self):
+            return f"BOOL({self.value})"
+
+    return BOOL
+
+
+def _create_word_type(ctypes):
+    """Create Windows WORD type implementation."""
+    class WORD(ctypes.c_uint16):
+        """Real Windows WORD type implementation."""
+
+        def __init__(self, value=0):
+            """Initialize WORD with proper value handling."""
+            super().__init__(value & 0xFFFF)
+
+        def __str__(self):
+            return f"WORD(0x{self.value:04X})"
+
+        def __repr__(self):
+            return f"WORD({self.value})"
+
+    return WORD
+
+
+def _create_byte_type(ctypes):
+    """Create Windows BYTE type implementation."""
+    class BYTE(ctypes.c_uint8):
+        """Real Windows BYTE type implementation."""
+
+        def __init__(self, value=0):
+            """Initialize BYTE with proper value handling."""
+            super().__init__(value & 0xFF)
+
+        def __str__(self):
+            return f"BYTE(0x{self.value:02X})"
+
+        def __repr__(self):
+            return f"BYTE({self.value})"
+
+    return BYTE
+
+
+def _create_handle_types(ctypes):
+    """Create Windows HANDLE and related types."""
+    class HANDLE(ctypes.c_void_p):
+        """Real Windows HANDLE type implementation."""
+
+        def __init__(self, value=None):
+            """Initialize HANDLE with proper value handling."""
+            super().__init__(value)
+
+        def is_valid(self):
+            """Check if handle is valid (not NULL or INVALID_HANDLE_VALUE)."""
+            return self.value is not None and self.value != 0 and self.value != -1
+
+        def __bool__(self):
+            return self.is_valid()
+
+        def __str__(self):
+            return f"HANDLE(0x{self.value:08X})" if self.value else "HANDLE(NULL)"
+
+        def __repr__(self):
+            return f"HANDLE({self.value})"
+
+    class HWND(HANDLE):
+        """Real Windows HWND type implementation."""
+
+        def __str__(self):
+            return f"HWND(0x{self.value:08X})" if self.value else "HWND(NULL)"
+
+        def __repr__(self):
+            return f"HWND({self.value})"
+
+    class HDC(HANDLE):
+        """Real Windows HDC type implementation."""
+
+        def __str__(self):
+            return f"HDC(0x{self.value:08X})" if self.value else "HDC(NULL)"
+
+        def __repr__(self):
+            return f"HDC({self.value})"
+
+    class HINSTANCE(HANDLE):
+        """Real Windows HINSTANCE type implementation."""
+
+        def __str__(self):
+            return f"HINSTANCE(0x{self.value:08X})" if self.value else "HINSTANCE(NULL)"
+
+        def __repr__(self):
+            return f"HINSTANCE({self.value})"
+
+    return HANDLE, HWND, HDC, HINSTANCE
+
+
+def _create_pointer_types(ctypes):
+    """Create Windows pointer types."""
+    class LPVOID(ctypes.c_void_p):
+        """Real Windows LPVOID type implementation."""
+
+        def __str__(self):
+            return f"LPVOID(0x{self.value:08X})" if self.value else "LPVOID(NULL)"
+
+        def __repr__(self):
+            return f"LPVOID({self.value})"
+
+    class SIZE_T(ctypes.c_size_t):  # noqa: N801
+        """Real Windows SIZE_T type implementation."""
+
+        def __str__(self):
+            return f"SIZE_T({self.value})"
+
+        def __repr__(self):
+            return f"SIZE_T({self.value})"
+
+    class ULONG_PTR(ctypes.c_void_p):  # noqa: N801
+        """Real Windows ULONG_PTR type implementation."""
+
+        def __str__(self):
+            return f"ULONG_PTR(0x{self.value:08X})" if self.value else "ULONG_PTR(0)"
+
+        def __repr__(self):
+            return f"ULONG_PTR({self.value})"
+
+    return LPVOID, SIZE_T, ULONG_PTR
+
+
 def _get_wintypes():
     """Get wintypes module or create production-ready replacement."""
     try:
         from ctypes import wintypes
-
         return wintypes, True
     except ImportError as e:
         logger.warning("Windows API not available, implementing comprehensive Windows types: %s", e)
@@ -50,158 +232,17 @@ def _get_wintypes():
         class _IntellicrackWinTypes:
             """Production Windows types implementation for Intellicrack."""
 
-            class DWORD(ctypes.c_uint32):
-                """Real Windows DWORD type implementation."""
+            # Create type classes using helper functions
+            DWORD = _create_dword_type(ctypes)
+            BOOL = _create_bool_type(ctypes)
+            WORD = _create_word_type(ctypes)
+            BYTE = _create_byte_type(ctypes)
 
-                def __init__(self, value=0):
-                    """Initialize DWORD with proper value handling."""
-                    super().__init__(value)
+            # Create handle types
+            HANDLE, HWND, HDC, HINSTANCE = _create_handle_types(ctypes)
 
-                @property
-                def value(self):
-                    """Get the DWORD value."""
-                    return super().value
-
-                @value.setter
-                def value(self, val):
-                    """Set the DWORD value with bounds checking."""
-                    if val < 0:
-                        val = 0
-                    elif val > 0xFFFFFFFF:
-                        val = 0xFFFFFFFF
-                    super().__setattr__('value', val)
-
-                def __str__(self):
-                    return f"DWORD(0x{self.value:08X})"
-
-                def __repr__(self):
-                    return f"DWORD({self.value})"
-
-            class BOOL(ctypes.c_int32):
-                """Real Windows BOOL type implementation."""
-
-                def __init__(self, value=0):
-                    """Initialize BOOL with proper value handling."""
-                    super().__init__(1 if value else 0)
-
-                @property
-                def value(self):
-                    """Get the BOOL value."""
-                    return bool(super().value)
-
-                @value.setter
-                def value(self, val):
-                    """Set the BOOL value."""
-                    super().__setattr__('value', 1 if val else 0)
-
-                def __bool__(self):
-                    return bool(super().value)
-
-                def __str__(self):
-                    return f"BOOL({'TRUE' if self.value else 'FALSE'})"
-
-                def __repr__(self):
-                    return f"BOOL({self.value})"
-
-            class WORD(ctypes.c_uint16):
-                """Real Windows WORD type implementation."""
-
-                def __init__(self, value=0):
-                    """Initialize WORD with proper value handling."""
-                    super().__init__(value & 0xFFFF)
-
-                def __str__(self):
-                    return f"WORD(0x{self.value:04X})"
-
-                def __repr__(self):
-                    return f"WORD({self.value})"
-
-            class BYTE(ctypes.c_uint8):
-                """Real Windows BYTE type implementation."""
-
-                def __init__(self, value=0):
-                    """Initialize BYTE with proper value handling."""
-                    super().__init__(value & 0xFF)
-
-                def __str__(self):
-                    return f"BYTE(0x{self.value:02X})"
-
-                def __repr__(self):
-                    return f"BYTE({self.value})"
-
-            class HANDLE(ctypes.c_void_p):
-                """Real Windows HANDLE type implementation."""
-
-                def __init__(self, value=None):
-                    """Initialize HANDLE with proper value handling."""
-                    super().__init__(value)
-
-                def is_valid(self):
-                    """Check if handle is valid (not NULL or INVALID_HANDLE_VALUE)."""
-                    return self.value is not None and self.value != 0 and self.value != -1
-
-                def __bool__(self):
-                    return self.is_valid()
-
-                def __str__(self):
-                    return f"HANDLE(0x{self.value:08X})" if self.value else "HANDLE(NULL)"
-
-                def __repr__(self):
-                    return f"HANDLE({self.value})"
-
-            class HWND(HANDLE):
-                """Real Windows HWND type implementation."""
-
-                def __str__(self):
-                    return f"HWND(0x{self.value:08X})" if self.value else "HWND(NULL)"
-
-                def __repr__(self):
-                    return f"HWND({self.value})"
-
-            class HDC(HANDLE):
-                """Real Windows HDC type implementation."""
-
-                def __str__(self):
-                    return f"HDC(0x{self.value:08X})" if self.value else "HDC(NULL)"
-
-                def __repr__(self):
-                    return f"HDC({self.value})"
-
-            class HINSTANCE(HANDLE):
-                """Real Windows HINSTANCE type implementation."""
-
-                def __str__(self):
-                    return f"HINSTANCE(0x{self.value:08X})" if self.value else "HINSTANCE(NULL)"
-
-                def __repr__(self):
-                    return f"HINSTANCE({self.value})"
-
-            class LPVOID(ctypes.c_void_p):
-                """Real Windows LPVOID type implementation."""
-
-                def __str__(self):
-                    return f"LPVOID(0x{self.value:08X})" if self.value else "LPVOID(NULL)"
-
-                def __repr__(self):
-                    return f"LPVOID({self.value})"
-
-            class SIZE_T(ctypes.c_size_t):  # noqa: N801
-                """Real Windows SIZE_T type implementation."""
-
-                def __str__(self):
-                    return f"SIZE_T({self.value})"
-
-                def __repr__(self):
-                    return f"SIZE_T({self.value})"
-
-            class ULONG_PTR(ctypes.c_void_p):  # noqa: N801
-                """Real Windows ULONG_PTR type implementation."""
-
-                def __str__(self):
-                    return f"ULONG_PTR(0x{self.value:08X})" if self.value else "ULONG_PTR(0)"
-
-                def __repr__(self):
-                    return f"ULONG_PTR({self.value})"
+            # Create pointer types
+            LPVOID, SIZE_T, ULONG_PTR = _create_pointer_types(ctypes)
 
             # String types
             LPCSTR = ctypes.c_char_p
@@ -584,7 +625,7 @@ def setup_memory_patching(app: Any) -> None:
 
 # Export functions
 def bypass_memory_protection(address: int, size: int, protection: int = None) -> bool:
-    """Bypass memory protection using VirtualProtect (Windows) or mprotect (Unix)
+    """Bypass memory protection using VirtualProtect (Windows) or mprotect (Unix).
 
     Args:
         address: Memory address to modify protection for
@@ -608,7 +649,7 @@ def bypass_memory_protection(address: int, size: int, protection: int = None) ->
 
 
 def _bypass_memory_protection_windows(address: int, size: int, protection: int = None) -> bool:
-    """Bypass memory protection on Windows using VirtualProtect
+    """Bypass memory protection on Windows using VirtualProtect.
 
     Args:
         address: Memory address to modify protection for
@@ -667,7 +708,7 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
 
 
 def _bypass_memory_protection_unix(address: int, size: int, protection: int = None) -> bool:
-    """Bypass memory protection on Unix-like systems using mprotect
+    """Bypass memory protection on Unix-like systems using mprotect.
 
     Args:
         address: Memory address to modify protection for
@@ -737,7 +778,7 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
 
 
 def patch_memory_direct(process_id: int, address: int, data: bytes) -> bool:
-    """Directly patch memory in a running process
+    """Directly patch memory in a running process.
 
     Args:
         process_id: Process ID to patch
@@ -761,7 +802,7 @@ def patch_memory_direct(process_id: int, address: int, data: bytes) -> bool:
 
 
 def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
-    """Patch memory on Windows using WriteProcessMemory
+    """Patch memory on Windows using WriteProcessMemory.
 
     Args:
         process_id: Process ID to patch
@@ -839,7 +880,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
 
 
 def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
-    """Patch memory on Unix-like systems using ptrace or /proc/pid/mem
+    """Patch memory on Unix-like systems using ptrace or /proc/pid/mem.
 
     Args:
         process_id: Process ID to patch
@@ -916,7 +957,7 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
 
 # Export functions
 def handle_guard_pages(address: int, size: int, process_handle: int = None) -> bool:
-    """Handle PAGE_GUARD protected memory regions
+    """Handle PAGE_GUARD protected memory regions.
 
     Args:
         address: Memory address that may have guard pages
@@ -940,7 +981,7 @@ def handle_guard_pages(address: int, size: int, process_handle: int = None) -> b
 
 
 def _handle_guard_pages_windows(address: int, size: int, process_handle: int = None) -> bool:
-    """Handle PAGE_GUARD on Windows
+    """Handle PAGE_GUARD on Windows.
 
     Args:
         address: Memory address
@@ -1047,7 +1088,7 @@ def _handle_guard_pages_windows(address: int, size: int, process_handle: int = N
 
 
 def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None) -> bool:
-    """Handle guard pages on Unix-like systems
+    """Handle guard pages on Unix-like systems.
 
     Args:
         address: Memory address
@@ -1151,7 +1192,7 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
 
 
 def detect_and_bypass_guard_pages(process_handle: int, address: int, size: int) -> bool:
-    """Detect and bypass guard pages before memory operations
+    """Detect and bypass guard pages before memory operations.
 
     Args:
         process_handle: Handle to process

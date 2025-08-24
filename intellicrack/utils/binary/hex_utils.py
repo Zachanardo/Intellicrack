@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ def create_hex_dump(
 
 
 def hex_to_bytes(hex_string: str) -> bytes:
-    """Convert hex string to bytes, handling various formats.
+    r"""Convert hex string to bytes, handling various formats.
 
     Args:
         hex_string: Hex string (supports spaces, 0x prefix, \\x format)
@@ -87,7 +87,7 @@ def hex_to_bytes(hex_string: str) -> bytes:
 
 
 def bytes_to_hex(data: bytes, format_style: str = "plain", uppercase: bool = False) -> str:
-    """Convert bytes to hex string in various formats.
+    r"""Convert bytes to hex string in various formats.
 
     Args:
         data: Binary data

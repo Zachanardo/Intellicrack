@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ License: GPL v3
 
 
 class LicenseType(Enum):
-    """Types of license validation mechanisms"""
+    """Types of license validation mechanisms."""
 
     SERIAL_KEY = "serial_key"
     ONLINE = "online_validation"
@@ -55,7 +55,7 @@ class LicenseType(Enum):
 
 
 class ProtectionLevel(Enum):
-    """License protection complexity levels"""
+    """License protection complexity levels."""
 
     BASIC = 1  # Simple checks, easily bypassable
     MODERATE = 2  # Some obfuscation, multiple checks
@@ -65,7 +65,7 @@ class ProtectionLevel(Enum):
 
 @dataclass
 class LicenseFunction:
-    """Represents a detected license validation function"""
+    """Represents a detected license validation function."""
 
     address: int
     name: str
@@ -81,7 +81,7 @@ class LicenseFunction:
 
 
 class R2LicenseAnalyzer:
-    """Advanced license analysis engine for Radare2"""
+    """Advanced license analysis engine for Radare2."""
 
     # Pattern weights for ML-based detection
     PATTERN_WEIGHTS = {
@@ -154,7 +154,7 @@ class R2LicenseAnalyzer:
     }
 
     def __init__(self, r2: r2pipe.open = None, filename: str = None):
-        """Initialize the license analyzer"""
+        """Initialize the license analyzer."""
         self.r2 = r2 if r2 else r2pipe.open(filename)
         self.license_functions: list[LicenseFunction] = []
         self.call_graph = nx.DiGraph()
@@ -167,7 +167,7 @@ class R2LicenseAnalyzer:
         self._init_analysis()
 
     def _init_analysis(self):
-        """Initialize r2 analysis"""
+        """Initialize r2 analysis."""
         print("[*] Initializing Radare2 analysis...")
 
         # Analyze all
@@ -188,7 +188,7 @@ class R2LicenseAnalyzer:
         self._build_call_graph()
 
     def _load_strings(self):
-        """Load and categorize strings"""
+        """Load and categorize strings."""
         print("[*] Loading strings...")
 
         strings = self.r2.cmdj("izj")
@@ -207,7 +207,7 @@ class R2LicenseAnalyzer:
                     self.string_refs[func_addr].append(string_val)
 
     def _load_imports(self):
-        """Load and categorize imports"""
+        """Load and categorize imports."""
         print("[*] Loading imports...")
 
         imports = self.r2.cmdj("iij")
@@ -227,7 +227,7 @@ class R2LicenseAnalyzer:
                         self.api_refs[func_addr].append(name)
 
     def _build_call_graph(self):
-        """Build function call graph"""
+        """Build function call graph."""
         print("[*] Building call graph...")
 
         functions = self.r2.cmdj("aflj")
@@ -245,7 +245,7 @@ class R2LicenseAnalyzer:
                     self.call_graph.add_edge(addr, callee)
 
     def _get_function_at(self, addr: int) -> int | None:
-        """Get function containing address"""
+        """Get function containing address."""
         result = self.r2.cmd(f"afi. @ {addr}")
         if result and result.strip():
             try:
@@ -259,7 +259,7 @@ class R2LicenseAnalyzer:
         return None
 
     def analyze(self) -> list[LicenseFunction]:
-        """Perform comprehensive license analysis"""
+        """Perform comprehensive license analysis."""
         print("\n[*] Starting license function detection...")
 
         # Phase 1: Function name analysis
@@ -292,7 +292,7 @@ class R2LicenseAnalyzer:
         return self.license_functions
 
     def _analyze_function_names(self):
-        """Analyze function names for license patterns"""
+        """Analyze function names for license patterns."""
         print("[*] Analyzing function names...")
 
         functions = self.r2.cmdj("aflj")
@@ -319,7 +319,7 @@ class R2LicenseAnalyzer:
                 self.license_functions.append(lic_func)
 
     def _calculate_name_score(self, name: str) -> float:
-        """Calculate license probability based on function name"""
+        """Calculate license probability based on function name."""
         name_lower = name.lower()
         score = 0.0
         matches = 0
@@ -336,7 +336,7 @@ class R2LicenseAnalyzer:
         return max(0.0, min(1.0, score))
 
     def _analyze_string_references(self):
-        """Analyze string references in functions"""
+        """Analyze string references in functions."""
         print("[*] Analyzing string references...")
 
         # Check existing license functions
@@ -368,7 +368,7 @@ class R2LicenseAnalyzer:
                     self.license_functions.append(lic_func)
 
     def _calculate_string_score(self, strings: list[str]) -> float:
-        """Calculate license probability based on strings"""
+        """Calculate license probability based on strings."""
         if not strings:
             return 0.0
 
@@ -388,7 +388,7 @@ class R2LicenseAnalyzer:
         return 0.0
 
     def _determine_license_type(self, indicators: list[str]) -> LicenseType:
-        """Determine license type from indicators"""
+        """Determine license type from indicators."""
         indicators_lower = " ".join(indicators).lower()
 
         if any(x in indicators_lower for x in ["serial", "key", "product key"]):
@@ -406,7 +406,7 @@ class R2LicenseAnalyzer:
         return LicenseType.CUSTOM
 
     def _analyze_api_calls(self):
-        """Analyze API calls in functions"""
+        """Analyze API calls in functions."""
         print("[*] Analyzing API calls...")
 
         # Update existing functions
@@ -423,7 +423,7 @@ class R2LicenseAnalyzer:
                 lic_func.protection_level = ProtectionLevel.ADVANCED
 
     def _calculate_api_score(self, apis: list[str]) -> float:
-        """Calculate license probability based on API calls"""
+        """Calculate license probability based on API calls."""
         if not apis:
             return 0.0
 
@@ -442,7 +442,7 @@ class R2LicenseAnalyzer:
         return 0.0
 
     def _analyze_control_flow(self):
-        """Analyze control flow complexity"""
+        """Analyze control flow complexity."""
         print("[*] Analyzing control flow patterns...")
 
         for lic_func in self.license_functions:
@@ -469,7 +469,7 @@ class R2LicenseAnalyzer:
                 lic_func.confidence *= 1.2
 
     def _has_license_control_pattern(self, blocks: list[dict]) -> bool:
-        """Check for common license validation patterns"""
+        """Check for common license validation patterns."""
         if len(blocks) < 3:
             return False
 
@@ -484,7 +484,7 @@ class R2LicenseAnalyzer:
         return len(return_blocks) >= 2
 
     def _detect_crypto_operations(self):
-        """Detect cryptographic operations"""
+        """Detect cryptographic operations."""
         print("[*] Detecting cryptographic operations...")
 
         # Search for crypto constants
@@ -509,7 +509,7 @@ class R2LicenseAnalyzer:
                     lic_func.confidence = min(1.0, lic_func.confidence * 1.3)
 
     def _search_crypto_constants(self, name: str, constants: list[int]):
-        """Search for cryptographic constants"""
+        """Search for cryptographic constants."""
         for const in constants:
             # Search in different formats
             search_patterns = [
@@ -527,7 +527,7 @@ class R2LicenseAnalyzer:
                             self.crypto_locations[name].append(addr)
 
     def _pattern_matching(self):
-        """Advanced pattern matching for license functions"""
+        """Advanced pattern matching for license functions."""
         print("[*] Performing pattern matching...")
 
         # Common license validation patterns
@@ -563,7 +563,7 @@ class R2LicenseAnalyzer:
             self._check_pattern(pattern)
 
     def _check_pattern(self, pattern: dict):
-        """Check if pattern matches any function"""
+        """Check if pattern matches any function."""
         required_apis = set(pattern.get("apis", []))
         required_strings = set(pattern.get("strings", []))
         license_type = pattern.get("type", LicenseType.CUSTOM)
@@ -603,7 +603,7 @@ class R2LicenseAnalyzer:
                     self.license_functions.append(lic_func)
 
     def _ml_scoring(self):
-        """Apply machine learning-based scoring"""
+        """Apply machine learning-based scoring."""
         print("[*] Applying ML-based scoring...")
 
         for lic_func in self.license_functions:
@@ -616,7 +616,7 @@ class R2LicenseAnalyzer:
             lic_func.confidence = lic_func.confidence * 0.7 + score * 0.3
 
     def _extract_ml_features(self, lic_func: LicenseFunction) -> dict[str, float]:
-        """Extract features for ML scoring"""
+        """Extract features for ML scoring."""
         features = {
             "name_score": self._calculate_name_score(lic_func.name),
             "string_score": self._calculate_string_score(lic_func.strings),
@@ -629,7 +629,7 @@ class R2LicenseAnalyzer:
         return features
 
     def _neural_network_score(self, features: dict[str, float]) -> float:
-        """Simulate neural network scoring"""
+        """Simulate neural network scoring."""
         # Weights learned from training data
         weights = {
             "name_score": 0.25,
@@ -646,7 +646,7 @@ class R2LicenseAnalyzer:
         return 1 / (1 + 2.71828 ** (-score))
 
     def _generate_bypass_strategies(self):
-        """Generate bypass strategies for each license function"""
+        """Generate bypass strategies for each license function."""
         print("[*] Generating bypass strategies...")
 
         for lic_func in self.license_functions:
@@ -687,7 +687,7 @@ class R2LicenseAnalyzer:
             lic_func.bypass_strategies = strategies
 
     def export_report(self, output_file: str = "license_analysis.json"):
-        """Export analysis results"""
+        """Export analysis results."""
         report = {
             "binary": self.info.get("bin", {}).get("file", "unknown"),
             "arch": self.arch,
@@ -717,7 +717,7 @@ class R2LicenseAnalyzer:
         print(f"\n[+] Report exported to {output_file}")
 
     def generate_r2_script(self, output_file: str = "patch_license.r2"):
-        """Generate r2 patching script"""
+        """Generate r2 patching script."""
         with open(output_file, "w") as f:
             f.write("# Radare2 License Patch Script\n")
             f.write("# Generated by Intellicrack License Analyzer\n\n")
@@ -747,7 +747,7 @@ class R2LicenseAnalyzer:
         print(f"[+] R2 script generated: {output_file}")
 
     def interactive_analysis(self):
-        """Interactive analysis mode"""
+        """Interactive analysis mode."""
         print("\n=== Interactive License Analysis ===")
 
         while True:
@@ -772,7 +772,7 @@ class R2LicenseAnalyzer:
                 break
 
     def _list_functions(self):
-        """List detected license functions"""
+        """List detected license functions."""
         print("\nDetected License Functions:")
         print("-" * 80)
 
@@ -783,7 +783,7 @@ class R2LicenseAnalyzer:
             print(f"   Protection: {lic_func.protection_level.name}")
 
     def _analyze_specific(self):
-        """Analyze specific function in detail"""
+        """Analyze specific function in detail."""
         idx = int(input("Function number: ")) - 1
 
         if 0 <= idx < len(self.license_functions):
@@ -812,7 +812,7 @@ class R2LicenseAnalyzer:
             print(self.r2.cmd(f"pd 20 @ {lic_func.address}"))
 
     def _generate_patches(self):
-        """Generate patches interactively"""
+        """Generate patches interactively."""
         print("\nGenerating patches...")
 
         self.generate_r2_script()
@@ -856,7 +856,7 @@ class R2LicenseAnalyzer:
             )
 
     def _find_patch_location(self, lic_func: LicenseFunction) -> tuple[int | None, bytes | None]:
-        """Find optimal patch location"""
+        """Find optimal patch location."""
         # Get function bytes
         func_bytes = self.r2.cmdj(f"p8j {lic_func.size} @ {lic_func.address}")
 
@@ -884,7 +884,7 @@ class R2LicenseAnalyzer:
 
 
 def main():
-    """Main entry point"""
+    """Main entry point."""
     if len(sys.argv) < 2:
         print("Usage: radare2_license_analyzer.py <binary>")
         sys.exit(1)

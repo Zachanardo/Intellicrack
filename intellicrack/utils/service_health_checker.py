@@ -62,6 +62,7 @@ class ServiceHealthChecker:
 
         Returns:
             Service URL or None if not found
+
         """
         return self.config.get(f"service_urls.{service_name}")
 
@@ -75,6 +76,7 @@ class ServiceHealthChecker:
 
         Returns:
             True if port is open, False otherwise
+
         """
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -95,6 +97,7 @@ class ServiceHealthChecker:
 
         Returns:
             Dictionary with health check results
+
         """
         result = {
             "url": url,
@@ -133,6 +136,7 @@ class ServiceHealthChecker:
 
         Returns:
             Dictionary with health check results
+
         """
         result = {
             "url": url,
@@ -166,6 +170,7 @@ class ServiceHealthChecker:
 
         Returns:
             Dictionary with service health information
+
         """
         # Check cache first
         cache_key = service_name
@@ -221,6 +226,7 @@ class ServiceHealthChecker:
 
         Returns:
             Dictionary mapping service names to health check results
+
         """
         service_urls = self.config.get("service_urls", {})
         results = {}
@@ -259,6 +265,7 @@ class ServiceHealthChecker:
 
         Returns:
             Dictionary mapping service names to health check results
+
         """
         critical_services = ["ollama_api", "local_llm_server", "c2_server", "proxy_server"]
 
@@ -274,6 +281,7 @@ class ServiceHealthChecker:
 
         Returns:
             List of healthy service names
+
         """
         health_data = self.config.get("service_health.last_check", {})
         return [
@@ -287,6 +295,7 @@ class ServiceHealthChecker:
 
         Returns:
             List of unhealthy service names
+
         """
         health_data = self.config.get("service_health.last_check", {})
         return [
@@ -307,6 +316,7 @@ class ServiceHealthChecker:
 
         Returns:
             True if service became available, False if timeout
+
         """
         start_time = time.time()
 
@@ -332,6 +342,7 @@ class ServiceHealthChecker:
 
         Raises:
             ConfigurationError: If service URL is not configured
+
         """
         url = self.get_service_url(service_name)
         if not url:
@@ -363,6 +374,7 @@ def get_health_checker() -> ServiceHealthChecker:
 
     Returns:
         ServiceHealthChecker instance
+
     """
     global _health_checker
     if _health_checker is None:
@@ -378,6 +390,7 @@ async def check_service_health(service_name: str) -> dict[str, Any]:
 
     Returns:
         Health check results
+
     """
     checker = get_health_checker()
     return await checker.check_service(service_name)
@@ -388,6 +401,7 @@ async def check_all_services_health() -> dict[str, dict[str, Any]]:
 
     Returns:
         Dictionary of health check results
+
     """
     checker = get_health_checker()
     return await checker.check_all_services()

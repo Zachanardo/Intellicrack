@@ -1,4 +1,4 @@
-"""Cache Management Widget
+"""Cache Management Widget.
 
 Provides UI for monitoring and managing the analysis cache.
 
@@ -37,7 +37,7 @@ logger = get_logger(__name__)
 
 
 class CacheStatsWidget(QWidget):
-    """Widget displaying cache statistics"""
+    """Widget displaying cache statistics."""
 
     def __init__(self, parent=None):
         """Initialize the cache statistics widget with UI components."""
@@ -45,7 +45,7 @@ class CacheStatsWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        """Initialize the UI"""
+        """Initialize the UI."""
         layout = QVBoxLayout()
 
         # Cache metrics
@@ -94,7 +94,7 @@ class CacheStatsWidget(QWidget):
         self.setLayout(layout)
 
     def update_stats(self, stats: dict[str, Any]):
-        """Update displayed statistics"""
+        """Update displayed statistics."""
         try:
             stats_data = stats.get("stats", {})
 
@@ -119,7 +119,7 @@ class CacheStatsWidget(QWidget):
 
 
 class CacheTopEntriesWidget(QWidget):
-    """Widget showing most accessed cache entries"""
+    """Widget showing most accessed cache entries."""
 
     def __init__(self, parent=None):
         """Initialize the cache top entries widget with UI components."""
@@ -127,7 +127,7 @@ class CacheTopEntriesWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        """Initialize the UI"""
+        """Initialize the UI."""
         layout = QVBoxLayout()
 
         # Header
@@ -154,7 +154,7 @@ class CacheTopEntriesWidget(QWidget):
         self.setLayout(layout)
 
     def update_entries(self, entries: list):
-        """Update top entries table"""
+        """Update top entries table."""
         self.table.setRowCount(len(entries))
 
         for row, entry in enumerate(entries):
@@ -165,7 +165,7 @@ class CacheTopEntriesWidget(QWidget):
 
 
 class CacheManagementWidget(QWidget):
-    """Complete cache management interface"""
+    """Complete cache management interface."""
 
     cache_cleared = pyqtSignal()
     cache_cleaned = pyqtSignal(int)
@@ -179,7 +179,7 @@ class CacheManagementWidget(QWidget):
         self.setup_timer()
 
     def init_ui(self):
-        """Initialize the UI"""
+        """Initialize the UI."""
         layout = QVBoxLayout()
 
         # Title
@@ -269,13 +269,13 @@ class CacheManagementWidget(QWidget):
         self.refresh_stats()
 
     def setup_timer(self):
-        """Setup auto-refresh timer"""
+        """Setup auto-refresh timer."""
         self.timer = QTimer()
         self.timer.timeout.connect(self.refresh_stats)
         self.timer.start(5000)  # Refresh every 5 seconds
 
     def refresh_stats(self):
-        """Refresh cache statistics"""
+        """Refresh cache statistics."""
         try:
             stats = self.engine.get_cache_stats()
 
@@ -293,7 +293,7 @@ class CacheManagementWidget(QWidget):
             logger.error(f"Failed to refresh cache stats: {e}")
 
     def update_details(self, stats: dict[str, Any]):
-        """Update cache details text"""
+        """Update cache details text."""
         details = []
 
         stats_data = stats.get("stats", {})
@@ -358,7 +358,7 @@ class CacheManagementWidget(QWidget):
         self.details_text.setPlainText("\n".join(details))
 
     def cleanup_cache(self):
-        """Clean up invalid cache entries"""
+        """Clean up invalid cache entries."""
         try:
             removed = self.engine.cleanup_cache()
 
@@ -380,7 +380,7 @@ class CacheManagementWidget(QWidget):
             )
 
     def save_cache(self):
-        """Save cache to disk"""
+        """Save cache to disk."""
         try:
             self.engine.save_cache()
 
@@ -399,7 +399,7 @@ class CacheManagementWidget(QWidget):
             )
 
     def clear_cache(self):
-        """Clear all cache entries"""
+        """Clear all cache entries."""
         reply = QMessageBox.question(
             self,
             "Clear Cache",
@@ -449,7 +449,7 @@ class CacheManagementWidget(QWidget):
                 )
 
     def closeEvent(self, event):
-        """Clean up on close"""
+        """Clean up on close."""
         if hasattr(self, "timer"):
             self.timer.stop()
         super().closeEvent(event)

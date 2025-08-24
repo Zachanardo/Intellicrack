@@ -79,6 +79,212 @@ class SymbolicExecutionEngine:
             f"Symbolic execution engine initialized for {binary_path} with {max_paths} max paths"
         )
 
+    def _setup_symbolic_execution_project(self, vulnerability_types: list[str]) -> tuple[Any, Any, Any]:
+        """Setup angr project and initial state for symbolic execution."""
+        project = angr.Project(self.binary_path, auto_load_libs=False)
+
+        # Create symbolic arguments
+        symbolic_args = []
+        if "buffer_overflow" in vulnerability_types or "format_string" in vulnerability_types:
+            symbolic_args.append(claripy.BVS("arg1", 8 * 100))  # 100-byte symbolic buffer
+
+        # Create initial state with symbolic arguments and enhanced options
+        initial_state = project.factory.entry_state(
+            args=[project.filename] + symbolic_args,
+            add_options={
+                angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY,
+                angr.options.ZERO_FILL_UNCONSTRAINED_REGISTERS,
+                angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
+                angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS,
+                angr.options.TRACK_MEMORY_ACTIONS,
+                angr.options.TRACK_REGISTER_ACTIONS,
+                angr.options.TRACK_JMP_ACTIONS,
+                angr.options.TRACK_CONSTRAINT_ACTIONS,
+            },
+        )
+
+        # Set up memory tracking for use-after-free detection
+        if "use_after_free" in vulnerability_types:
+            self._setup_heap_tracking(initial_state)
+
+        # Set up taint tracking for data flow analysis
+        if any(
+            v in vulnerability_types
+            for v in ["command_injection", "sql_injection", "path_traversal"]
+        ):
+            self._setup_taint_tracking(initial_state)
+
+        return project, initial_state, symbolic_args
+
+    def _configure_exploration_techniques(self, simgr: Any, vulnerability_types: list[str]) -> None:
+        """Configure advanced exploration techniques for symbolic execution."""
+        # Add advanced exploration techniques
+        if "buffer_overflow" in vulnerability_types:
+            simgr.use_technique(angr.exploration_techniques.Spiller())
+            simgr.use_technique(
+                angr.exploration_techniques.LengthLimiter(max_length=self.max_paths)
+            )
+            if hasattr(angr.exploration_techniques, "MemoryLimiter"):
+                simgr.use_technique(
+                    angr.exploration_techniques.MemoryLimiter(self.memory_limit)
+                )
+            else:
+                self.logger.warning("MemoryLimiter not available in this angr version")
+
+        # Add veritesting for path explosion mitigation
+        if hasattr(angr.exploration_techniques, "Veritesting"):
+            simgr.use_technique(angr.exploration_techniques.Veritesting())
+
+        # Add loop seer for infinite loop detection
+        if hasattr(angr.exploration_techniques, "LoopSeer"):
+            simgr.use_technique(angr.exploration_techniques.LoopSeer(bound=10))
+
+    def _explore_program_paths(self, simgr: Any, project: Any) -> None:
+        """Explore program paths with custom find/avoid conditions."""
+        self.logger.info("Exploring program paths with enhanced techniques...")
+
+        # Define vulnerability-specific exploration targets
+        find_addrs = []
+        avoid_addrs = []
+
+        # Add addresses of dangerous functions as exploration targets
+        dangerous_funcs = ["strcpy", "strcat", "gets", "sprintf", "system", "exec"]
+        for func_name in dangerous_funcs:
+            if func_name in project.kb.functions:
+                func = project.kb.functions[func_name]
+                find_addrs.append(func.addr)
+
+        simgr.explore(
+            find=find_addrs if find_addrs else None,
+            avoid=avoid_addrs if avoid_addrs else None,
+            timeout=self.timeout,
+        )
+
+    def _analyze_integer_overflows(self, simgr: Any, vulnerabilities: list[dict[str, Any]]) -> None:
+        """Analyze states for integer overflow vulnerabilities."""
+        for _state in simgr.deadended + simgr.active:
+            # Look for arithmetic operations with insufficient bounds checking
+            for _constraint in _state.solver.constraints:
+                if "mul" in str(_constraint) or "add" in str(_constraint):
+                    if self._check_integer_overflow(_state, _constraint):
+                        vuln = {
+                            "type": "integer_overflow",
+                            "address": hex(_state.addr),
+                            "description": "Potential integer overflow detected",
+                            "constraint": str(_constraint),
+                            "severity": "high",
+                        }
+                        vulnerabilities.append(vuln)
+
+    def _analyze_format_string_vulns(self, simgr: Any, project: Any, vulnerabilities: list[dict[str, Any]]) -> None:
+        """Analyze states for format string vulnerabilities."""
+        for _state in simgr.active + simgr.deadended:
+            if self._check_format_string(_state, project):
+                vuln = {
+                    "type": "format_string",
+                    "address": hex(_state.addr),
+                    "description": "Potential format string vulnerability detected",
+                    "input": _state.posix.dumps(0) if hasattr(_state, "posix") else None,
+                    "severity": "high",
+                }
+                vulnerabilities.append(vuln)
+
+    def _analyze_memory_vulns(self, simgr: Any, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]]) -> None:
+        """Analyze states for use-after-free and double-free vulnerabilities."""
+        # Check for use-after-free vulnerabilities
+        if "use_after_free" in vulnerability_types:
+            for _state in simgr.active + simgr.deadended + simgr.errored:
+                if hasattr(_state, "heap") and hasattr(_state.heap, "_freed_chunks"):
+                    # Check for accesses to freed memory
+                    for action in _state.history.actions:
+                        if action.type == "mem" and action.action == "read":
+                            addr = _state.solver.eval(action.addr)
+                            if addr in _state.heap._freed_chunks:
+                                vuln = {
+                                    "type": "use_after_free",
+                                    "address": hex(_state.addr),
+                                    "description": f"Use-after-free detected: accessing freed memory at {hex(addr)}",
+                                    "freed_at": hex(
+                                        _state.heap._freed_chunks[addr]["freed_at"]
+                                    ),
+                                    "severity": "critical",
+                                }
+                                vulnerabilities.append(vuln)
+
+        # Check for double-free vulnerabilities
+        if "double_free" in vulnerability_types:
+            for _state in simgr.active + simgr.deadended:
+                if hasattr(_state, "heap") and hasattr(_state.heap, "_freed_chunks"):
+                    # Check if any pointer was freed twice
+                    freed_ptrs = {}
+                    for ptr, info in _state.heap._freed_chunks.items():
+                        if ptr in freed_ptrs:
+                            vuln = {
+                                "type": "double_free",
+                                "address": hex(info["freed_at"]),
+                                "description": f"Double-free detected for pointer {hex(ptr)}",
+                                "first_free": hex(freed_ptrs[ptr]),
+                                "second_free": hex(info["freed_at"]),
+                                "severity": "critical",
+                            }
+                            vulnerabilities.append(vuln)
+                        freed_ptrs[ptr] = info["freed_at"]
+
+    def _analyze_injection_and_race_vulns(self, simgr: Any, project: Any, initial_state: Any, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]]) -> None:
+        """Analyze states for race conditions and command injection vulnerabilities."""
+        # Check for race conditions
+        if "race_condition" in vulnerability_types:
+            for _state in simgr.active + simgr.deadended:
+                if self._check_race_condition(_state, project):
+                    vuln = {
+                        "type": "race_condition",
+                        "address": hex(_state.addr),
+                        "description": "Potential race condition: multi-threading without proper synchronization",
+                        "severity": "high",
+                    }
+                    vulnerabilities.append(vuln)
+
+        # Check for command injection via taint analysis
+        if (
+            "command_injection" in vulnerability_types
+            and hasattr(initial_state, "plugins")
+            and "taint" in initial_state.plugins
+        ):
+            for _state in simgr.active + simgr.deadended:
+                # Check if tainted data reaches system/exec calls
+                for func_name in ["system", "exec", "execve", "popen"]:
+                    if func_name in project.kb.functions:
+                        func = project.kb.functions[func_name]
+                        if _state.addr == func.addr:
+                            # Check if arguments are tainted
+                            arg_reg = "rdi" if _state.arch.bits == 64 else "eax"
+                            if hasattr(_state.regs, arg_reg):
+                                arg_val = getattr(_state.regs, arg_reg)
+                                if _state.plugins.taint.is_tainted(arg_val):
+                                    vuln = {
+                                        "type": "command_injection",
+                                        "address": hex(_state.addr),
+                                        "description": f"Command injection: tainted data reaches {func_name}",
+                                        "taint_source": _state.plugins.taint.get_taint_source(
+                                            arg_val
+                                        ),
+                                        "severity": "critical",
+                                    }
+                                    vulnerabilities.append(vuln)
+
+    def _analyze_type_confusion_vulns(self, simgr: Any, project: Any, vulnerability_types: list[str], vulnerabilities: list[dict[str, Any]]) -> None:
+        """Analyze states for type confusion vulnerabilities."""
+        if "type_confusion" in vulnerability_types:
+            for _state in simgr.active + simgr.deadended:
+                if self._check_type_confusion(_state, project):
+                    vuln = {
+                        "type": "type_confusion",
+                        "address": hex(_state.addr),
+                        "description": "Potential type confusion vulnerability in C++ virtual function handling",
+                        "severity": "high",
+                    }
+                    vulnerabilities.append(vuln)
+
     def discover_vulnerabilities(
         self, vulnerability_types: list[str] | None = None
     ) -> list[dict[str, Any]]:
@@ -115,83 +321,17 @@ class SymbolicExecutionEngine:
         self.logger.info("Looking for vulnerability types: %s", vulnerability_types)
 
         try:
-            # Create project
-            project = angr.Project(self.binary_path, auto_load_libs=False)
-
-            # Create symbolic arguments
-            symbolic_args = []
-            if "buffer_overflow" in vulnerability_types or "format_string" in vulnerability_types:
-                symbolic_args.append(claripy.BVS("arg1", 8 * 100))  # 100-byte symbolic buffer
-
-            # Create initial state with symbolic arguments and enhanced options
-            initial_state = project.factory.entry_state(
-                args=[project.filename] + symbolic_args,
-                add_options={
-                    angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY,
-                    angr.options.ZERO_FILL_UNCONSTRAINED_REGISTERS,
-                    angr.options.SYMBOL_FILL_UNCONSTRAINED_MEMORY,
-                    angr.options.SYMBOL_FILL_UNCONSTRAINED_REGISTERS,
-                    angr.options.TRACK_MEMORY_ACTIONS,
-                    angr.options.TRACK_REGISTER_ACTIONS,
-                    angr.options.TRACK_JMP_ACTIONS,
-                    angr.options.TRACK_CONSTRAINT_ACTIONS,
-                },
-            )
-
-            # Set up memory tracking for use-after-free detection
-            if "use_after_free" in vulnerability_types:
-                self._setup_heap_tracking(initial_state)
-
-            # Set up taint tracking for data flow analysis
-            if any(
-                v in vulnerability_types
-                for v in ["command_injection", "sql_injection", "path_traversal"]
-            ):
-                self._setup_taint_tracking(initial_state)
+            # Setup project and initial state
+            project, initial_state, symbolic_args = self._setup_symbolic_execution_project(vulnerability_types)
 
             # Set up exploration technique
             simgr = project.factory.simulation_manager(initial_state)
 
-            # Add advanced exploration techniques
-            if "buffer_overflow" in vulnerability_types:
-                simgr.use_technique(angr.exploration_techniques.Spiller())
-                simgr.use_technique(
-                    angr.exploration_techniques.LengthLimiter(max_length=self.max_paths)
-                )
-                if hasattr(angr.exploration_techniques, "MemoryLimiter"):
-                    simgr.use_technique(
-                        angr.exploration_techniques.MemoryLimiter(self.memory_limit)
-                    )
-                else:
-                    self.logger.warning("MemoryLimiter not available in this angr version")
+            # Configure exploration techniques
+            self._configure_exploration_techniques(simgr, vulnerability_types)
 
-            # Add veritesting for path explosion mitigation
-            if hasattr(angr.exploration_techniques, "Veritesting"):
-                simgr.use_technique(angr.exploration_techniques.Veritesting())
-
-            # Add loop seer for infinite loop detection
-            if hasattr(angr.exploration_techniques, "LoopSeer"):
-                simgr.use_technique(angr.exploration_techniques.LoopSeer(bound=10))
-
-            # Explore the program with custom find/avoid conditions
-            self.logger.info("Exploring program paths with enhanced techniques...")
-
-            # Define vulnerability-specific exploration targets
-            find_addrs = []
-            avoid_addrs = []
-
-            # Add addresses of dangerous functions as exploration targets
-            dangerous_funcs = ["strcpy", "strcat", "gets", "sprintf", "system", "exec"]
-            for func_name in dangerous_funcs:
-                if func_name in project.kb.functions:
-                    func = project.kb.functions[func_name]
-                    find_addrs.append(func.addr)
-
-            simgr.explore(
-                find=find_addrs if find_addrs else None,
-                avoid=avoid_addrs if avoid_addrs else None,
-                timeout=self.timeout,
-            )
+            # Explore program paths
+            self._explore_program_paths(simgr, project)
 
             # Analyze results with enhanced vulnerability detection
             vulnerabilities = []
@@ -200,125 +340,21 @@ class SymbolicExecutionEngine:
             enhanced_vulns = self._analyze_vulnerable_paths(simgr, vulnerability_types, project)
             vulnerabilities.extend(enhanced_vulns)
 
-            # Check for integer overflows
+            # Check for different vulnerability types
             if "integer_overflow" in vulnerability_types:
-                for _state in simgr.deadended + simgr.active:
-                    # Look for arithmetic operations with insufficient bounds checking
-                    for _constraint in _state.solver.constraints:
-                        if "mul" in str(_constraint) or "add" in str(_constraint):
-                            if self._check_integer_overflow(_state, _constraint):
-                                vuln = {
-                                    "type": "integer_overflow",
-                                    "address": hex(_state.addr),
-                                    "description": "Potential integer overflow detected",
-                                    "constraint": str(_constraint),
-                                    "severity": "high",
-                                }
-                                vulnerabilities.append(vuln)
+                self._analyze_integer_overflows(simgr, vulnerabilities)
 
-            # Check for format string vulnerabilities
             if "format_string" in vulnerability_types:
-                for _state in simgr.active + simgr.deadended:
-                    if self._check_format_string(_state, project):
-                        vuln = {
-                            "type": "format_string",
-                            "address": hex(_state.addr),
-                            "description": "Potential format string vulnerability detected",
-                            "input": _state.posix.dumps(0) if hasattr(_state, "posix") else None,
-                            "severity": "high",
-                        }
-                        vulnerabilities.append(vuln)
+                self._analyze_format_string_vulns(simgr, project, vulnerabilities)
 
-            # Check for use-after-free vulnerabilities
-            if "use_after_free" in vulnerability_types:
-                for _state in simgr.active + simgr.deadended + simgr.errored:
-                    if hasattr(_state, "heap") and hasattr(_state.heap, "_freed_chunks"):
-                        # Check for accesses to freed memory
-                        for action in _state.history.actions:
-                            if action.type == "mem" and action.action == "read":
-                                addr = _state.solver.eval(action.addr)
-                                if addr in _state.heap._freed_chunks:
-                                    vuln = {
-                                        "type": "use_after_free",
-                                        "address": hex(_state.addr),
-                                        "description": f"Use-after-free detected: accessing freed memory at {hex(addr)}",
-                                        "freed_at": hex(
-                                            _state.heap._freed_chunks[addr]["freed_at"]
-                                        ),
-                                        "severity": "critical",
-                                    }
-                                    vulnerabilities.append(vuln)
+            if "use_after_free" in vulnerability_types or "double_free" in vulnerability_types:
+                self._analyze_memory_vulns(simgr, vulnerability_types, vulnerabilities)
 
-            # Check for double-free vulnerabilities
-            if "double_free" in vulnerability_types:
-                for _state in simgr.active + simgr.deadended:
-                    if hasattr(_state, "heap") and hasattr(_state.heap, "_freed_chunks"):
-                        # Check if any pointer was freed twice
-                        freed_ptrs = {}
-                        for ptr, info in _state.heap._freed_chunks.items():
-                            if ptr in freed_ptrs:
-                                vuln = {
-                                    "type": "double_free",
-                                    "address": hex(info["freed_at"]),
-                                    "description": f"Double-free detected for pointer {hex(ptr)}",
-                                    "first_free": hex(freed_ptrs[ptr]),
-                                    "second_free": hex(info["freed_at"]),
-                                    "severity": "critical",
-                                }
-                                vulnerabilities.append(vuln)
-                            freed_ptrs[ptr] = info["freed_at"]
+            if "race_condition" in vulnerability_types or "command_injection" in vulnerability_types:
+                self._analyze_injection_and_race_vulns(simgr, project, initial_state, vulnerability_types, vulnerabilities)
 
-            # Check for race conditions
-            if "race_condition" in vulnerability_types:
-                for _state in simgr.active + simgr.deadended:
-                    if self._check_race_condition(_state, project):
-                        vuln = {
-                            "type": "race_condition",
-                            "address": hex(_state.addr),
-                            "description": "Potential race condition: multi-threading without proper synchronization",
-                            "severity": "high",
-                        }
-                        vulnerabilities.append(vuln)
-
-            # Check for type confusion
             if "type_confusion" in vulnerability_types:
-                for _state in simgr.active + simgr.deadended:
-                    if self._check_type_confusion(_state, project):
-                        vuln = {
-                            "type": "type_confusion",
-                            "address": hex(_state.addr),
-                            "description": "Potential type confusion vulnerability in C++ virtual function handling",
-                            "severity": "high",
-                        }
-                        vulnerabilities.append(vuln)
-
-            # Check for command injection via taint analysis
-            if (
-                "command_injection" in vulnerability_types
-                and hasattr(initial_state, "plugins")
-                and "taint" in initial_state.plugins
-            ):
-                for _state in simgr.active + simgr.deadended:
-                    # Check if tainted data reaches system/exec calls
-                    for func_name in ["system", "exec", "execve", "popen"]:
-                        if func_name in project.kb.functions:
-                            func = project.kb.functions[func_name]
-                            if _state.addr == func.addr:
-                                # Check if arguments are tainted
-                                arg_reg = "rdi" if _state.arch.bits == 64 else "eax"
-                                if hasattr(_state.regs, arg_reg):
-                                    arg_val = getattr(_state.regs, arg_reg)
-                                    if _state.plugins.taint.is_tainted(arg_val):
-                                        vuln = {
-                                            "type": "command_injection",
-                                            "address": hex(_state.addr),
-                                            "description": f"Command injection: tainted data reaches {func_name}",
-                                            "taint_source": _state.plugins.taint.get_taint_source(
-                                                arg_val
-                                            ),
-                                            "severity": "critical",
-                                        }
-                                        vulnerabilities.append(vuln)
+                self._analyze_type_confusion_vulns(simgr, project, vulnerability_types, vulnerabilities)
 
             self.logger.info(
                 "Symbolic execution completed. Found %d potential vulnerabilities.",
@@ -832,6 +868,151 @@ int main() {{
             },
         }
 
+    def _check_memory_violations(self, state) -> bool:
+        """Check for memory violations in the current state."""
+        if not hasattr(state, "memory"):
+            return False
+
+        try:
+            # Look for writes to invalid memory regions
+            if hasattr(state.memory.mem, "get_memory_backer"):
+                memory_plugins = state.memory.mem.get_memory_backer()
+            else:
+                memory_plugins = getattr(state.memory.mem, "_memory_backer", None)
+
+            if memory_plugins and hasattr(memory_plugins, "get_memory_objects_by_region"):
+                memory_objects_by_region = memory_plugins.get_memory_objects_by_region()
+            elif memory_plugins:
+                memory_objects_by_region = getattr(
+                    memory_plugins, "_memory_objects_by_region", []
+                )
+            else:
+                memory_objects_by_region = []
+
+            if memory_objects_by_region:
+                # Check if we're writing outside allocated regions
+                for region in memory_objects_by_region:
+                    if hasattr(region, "violations") and region.violations:
+                        self.logger.info("Memory violation detected at 0x%x", state.addr)
+                        return True
+        except (AttributeError, TypeError) as e:
+            self.logger.debug("Failed to analyze memory for violations: %s", e)
+
+        return False
+
+    def _check_stack_buffer_overflow(self, state) -> bool:
+        """Check for stack buffer overflows by examining stack pointer manipulation."""
+        if not hasattr(state, "regs"):
+            return False
+
+        try:
+            # Get current stack pointer
+            sp_name = "rsp" if state.arch.bits == 64 else "esp"
+            if hasattr(state.regs, sp_name):
+                current_sp = getattr(state.regs, sp_name)
+
+                # Check if stack pointer is symbolic and unconstrained
+                if current_sp.symbolic and len(current_sp.variables) > 0:
+                    # Check if we can make SP point to arbitrary locations
+                    try:
+                        min_sp = state.solver.min(current_sp)
+                        max_sp = state.solver.max(current_sp)
+
+                        # If SP can vary widely, it might indicate stack corruption
+                        if max_sp - min_sp > 0x10000:  # 64KB range
+                            self.logger.info(
+                                "Potential stack buffer overflow: SP can vary by %d bytes",
+                                max_sp - min_sp,
+                            )
+                            return True
+                    except (RuntimeError, ValueError) as e:
+                        self.logger.debug(
+                            "Failed to analyze stack pointer variation: %s", e
+                        )
+
+        except (AttributeError, TypeError) as e:
+            self.logger.debug("Failed to analyze stack buffer overflow: %s", e)
+
+        return False
+
+    def _check_dangerous_function_calls(self, state, project) -> bool:
+        """Check for function calls to dangerous functions with symbolic arguments."""
+        if not (hasattr(state, "history") and hasattr(state.history, "bbl_addrs")):
+            return False
+
+        try:
+            for addr in state.history.bbl_addrs[-5:]:  # Check last 5 basic blocks
+                try:
+                    block = project.factory.block(addr)
+                    for insn in block.capstone.insns:
+                        # Look for calls to dangerous functions
+                        if insn.mnemonic == "call":
+                            try:
+                                target = insn.operands[0].value.imm
+                                if target in project.kb.functions:
+                                    func = project.kb.functions[target]
+                                    if func.name and any(
+                                        dangerous in func.name.lower()
+                                        for dangerous in [
+                                            "strcpy",
+                                            "strcat",
+                                            "gets",
+                                            "sprintf",
+                                            "scanf",
+                                        ]
+                                    ):
+                                        # Check if arguments are symbolic
+                                        for reg in (
+                                            ["rdi", "rsi", "rdx"]
+                                            if state.arch.bits == 64
+                                            else ["eax", "ebx", "ecx"]
+                                        ):
+                                            if hasattr(state.regs, reg):
+                                                arg = getattr(state.regs, reg)
+                                                if arg.symbolic:
+                                                    self.logger.info(
+                                                        "Dangerous function %s called with symbolic argument",
+                                                        func.name,
+                                                    )
+                                                    return True
+                            except (AttributeError, IndexError, KeyError) as e:
+                                logger.error("Error in symbolic_executor: %s", e)
+                                continue
+                except (RuntimeError, ValueError) as e:
+                    logger.error("Error in symbolic_executor: %s", e)
+                    continue
+        except (AttributeError, TypeError) as e:
+            self.logger.debug("Failed to analyze dangerous function calls: %s", e)
+
+        return False
+
+    def _check_heap_buffer_overflow(self, state) -> bool:
+        """Check for heap buffer overflows by examining malloc/free patterns."""
+        if not hasattr(state, "heap"):
+            return False
+
+        try:
+            # Look for heap metadata corruption indicators
+            heap_chunks = getattr(state.heap, "_chunks", {})
+            for chunk_info in heap_chunks.values():
+                if hasattr(chunk_info, "size") and hasattr(chunk_info, "data"):
+                    # Check if chunk size is symbolic and can be made very large
+                    if chunk_info.size.symbolic:
+                        try:
+                            max_size = state.solver.max(chunk_info.size)
+                            if max_size > 0x100000:  # 1MB threshold
+                                self.logger.info(
+                                    "Potential heap overflow: chunk size can be %d bytes",
+                                    max_size,
+                                )
+                                return True
+                        except (RuntimeError, ValueError) as e:
+                            self.logger.debug("Failed to analyze heap operation: %s", e)
+        except (AttributeError, TypeError) as e:
+            self.logger.debug("Failed to analyze heap buffer overflow: %s", e)
+
+        return False
+
     def _check_buffer_overflow(self, state, project) -> bool:
         """Check if state could contain a buffer overflow vulnerability.
 
@@ -847,129 +1028,20 @@ int main() {{
             self.logger.debug("Checking for buffer overflow at 0x%x", state.addr)
 
             # Check for memory violations
-            if hasattr(state, "memory"):
-                try:
-                    # Look for writes to invalid memory regions
-                    if hasattr(state.memory.mem, "get_memory_backer"):
-                        memory_plugins = state.memory.mem.get_memory_backer()
-                    else:
-                        memory_plugins = getattr(state.memory.mem, "_memory_backer", None)
-
-                    if memory_plugins and hasattr(memory_plugins, "get_memory_objects_by_region"):
-                        memory_objects_by_region = memory_plugins.get_memory_objects_by_region()
-                    elif memory_plugins:
-                        memory_objects_by_region = getattr(
-                            memory_plugins, "_memory_objects_by_region", []
-                        )
-                    else:
-                        memory_objects_by_region = []
-
-                    if memory_objects_by_region:
-                        # Check if we're writing outside allocated regions
-                        for region in memory_objects_by_region:
-                            if hasattr(region, "violations") and region.violations:
-                                self.logger.info("Memory violation detected at 0x%x", state.addr)
-                                return True
-                except (AttributeError, TypeError) as e:
-                    self.logger.debug("Failed to analyze memory for violations: %s", e)
+            if self._check_memory_violations(state):
+                return True
 
             # Check for stack buffer overflows by examining stack pointer manipulation
-            if hasattr(state, "regs"):
-                try:
-                    # Get current stack pointer
-                    sp_name = "rsp" if state.arch.bits == 64 else "esp"
-                    if hasattr(state.regs, sp_name):
-                        current_sp = getattr(state.regs, sp_name)
-
-                        # Check if stack pointer is symbolic and unconstrained
-                        if current_sp.symbolic and len(current_sp.variables) > 0:
-                            # Check if we can make SP point to arbitrary locations
-                            try:
-                                min_sp = state.solver.min(current_sp)
-                                max_sp = state.solver.max(current_sp)
-
-                                # If SP can vary widely, it might indicate stack corruption
-                                if max_sp - min_sp > 0x10000:  # 64KB range
-                                    self.logger.info(
-                                        "Potential stack buffer overflow: SP can vary by %d bytes",
-                                        max_sp - min_sp,
-                                    )
-                                    return True
-                            except (RuntimeError, ValueError) as e:
-                                self.logger.debug(
-                                    "Failed to analyze stack pointer variation: %s", e
-                                )
-
-                except (AttributeError, TypeError) as e:
-                    self.logger.debug("Failed to analyze stack buffer overflow: %s", e)
+            if self._check_stack_buffer_overflow(state):
+                return True
 
             # Check for function calls to dangerous functions with symbolic arguments
-            if hasattr(state, "history") and hasattr(state.history, "bbl_addrs"):
-                try:
-                    for addr in state.history.bbl_addrs[-5:]:  # Check last 5 basic blocks
-                        try:
-                            block = project.factory.block(addr)
-                            for insn in block.capstone.insns:
-                                # Look for calls to dangerous functions
-                                if insn.mnemonic == "call":
-                                    try:
-                                        target = insn.operands[0].value.imm
-                                        if target in project.kb.functions:
-                                            func = project.kb.functions[target]
-                                            if func.name and any(
-                                                dangerous in func.name.lower()
-                                                for dangerous in [
-                                                    "strcpy",
-                                                    "strcat",
-                                                    "gets",
-                                                    "sprintf",
-                                                    "scanf",
-                                                ]
-                                            ):
-                                                # Check if arguments are symbolic
-                                                for reg in (
-                                                    ["rdi", "rsi", "rdx"]
-                                                    if state.arch.bits == 64
-                                                    else ["eax", "ebx", "ecx"]
-                                                ):
-                                                    if hasattr(state.regs, reg):
-                                                        arg = getattr(state.regs, reg)
-                                                        if arg.symbolic:
-                                                            self.logger.info(
-                                                                "Dangerous function %s called with symbolic argument",
-                                                                func.name,
-                                                            )
-                                                            return True
-                                    except (AttributeError, IndexError, KeyError) as e:
-                                        logger.error("Error in symbolic_executor: %s", e)
-                                        continue
-                        except (RuntimeError, ValueError) as e:
-                            logger.error("Error in symbolic_executor: %s", e)
-                            continue
-                except (AttributeError, TypeError) as e:
-                    self.logger.debug("Failed to analyze dangerous function calls: %s", e)
+            if self._check_dangerous_function_calls(state, project):
+                return True
 
             # Check for heap buffer overflows by examining malloc/free patterns
-            if hasattr(state, "heap"):
-                try:
-                    # Look for heap metadata corruption indicators
-                    heap_chunks = getattr(state.heap, "_chunks", {})
-                    for chunk_info in heap_chunks.values():
-                        if hasattr(chunk_info, "size") and hasattr(chunk_info, "data"):
-                            # Check if chunk size is symbolic and can be made very large
-                            if chunk_info.size.symbolic:
-                                try:
-                                    max_size = state.solver.max(chunk_info.size)
-                                    if max_size > 0x100000:  # 1MB threshold
-                                        self.logger.info(
-                                            "Potential heap overflow: chunk size can be %d bytes",
-                                            max_size,
-                                        )
-                                        return True
-                                except (RuntimeError, ValueError) as e:
-                                    self.logger.debug("Failed to analyze heap operation: %s", e)
-                except (AttributeError, TypeError) as e:
-                    self.logger.debug("Failed to analyze heap buffer overflow: %s", e)
+            if self._check_heap_buffer_overflow(state):
+                return True
 
             return False
 
@@ -1892,6 +1964,161 @@ int main() {{
             self.logger.debug(f"Type confusion check failed: {e}")
             return False
 
+    def _setup_exploration_project(self, start_address: int) -> tuple[Any, Any]:
+        """Setup angr project and initial state for exploration."""
+        project = angr.Project(self.binary_path, auto_load_libs=False)
+
+        # Verify start address is valid
+        if start_address < project.loader.min_addr or start_address > project.loader.max_addr:
+            raise ValueError(f"Invalid start address: 0x{start_address:x} outside of binary range")
+
+        # Create initial state at the specified address
+        initial_state = project.factory.blank_state(
+            addr=start_address,
+            add_options={
+                angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY,
+                angr.options.ZERO_FILL_UNCONSTRAINED_REGISTERS,
+                angr.options.TRACK_MEMORY_ACTIONS,
+                angr.options.TRACK_CONSTRAINT_ACTIONS,
+                angr.options.TRACK_REGISTER_ACTIONS,
+            },
+        )
+
+        return project, initial_state
+
+    def _setup_symbolic_stdin_for_exploration(self, initial_state: Any, symbolic_stdin: bool, **kwargs) -> None:
+        """Set up symbolic stdin if requested."""
+        if symbolic_stdin:
+            stdin_size = kwargs.get("stdin_size", 256)
+            stdin_content = claripy.BVS("stdin", 8 * stdin_size)
+            initial_state.posix.stdin.content = stdin_content
+            self.logger.info(f"Created symbolic stdin of size {stdin_size}")
+
+    def _apply_concrete_values_for_exploration(self, initial_state: Any, concrete_values: dict) -> None:
+        """Apply concrete values if provided."""
+        for addr, value in concrete_values.items():
+            if isinstance(value, int):
+                initial_state.memory.store(addr, initial_state.solver.BVV(value, 32))
+            elif isinstance(value, bytes):
+                initial_state.memory.store(addr, value)
+            self.logger.debug(f"Set concrete value at 0x{addr:x}: {value}")
+
+    def _create_custom_step_function(self, results: dict, find_addresses: list, track_constraints: bool, covered_blocks: set, path_constraints: dict, execution_paths: list) -> Any:
+        """Create custom step function to track execution."""
+        def custom_step(simgr):
+            for stash in simgr.stashes:
+                for state in simgr.stashes[stash]:
+                    # Track covered blocks
+                    if hasattr(state, "history"):
+                        for addr in state.history.bbl_addrs:
+                            covered_blocks.add(addr)
+
+                    # Track path constraints
+                    if track_constraints and state.solver.constraints:
+                        path_id = len(execution_paths)
+                        path_constraints[path_id] = {
+                            "constraints": [str(c) for c in state.solver.constraints],
+                            "satisfiable": state.solver.satisfiable(),
+                            "variables": list(state.solver.variables),
+                        }
+
+                    # Check if we've reached target addresses
+                    if state.addr in find_addresses:
+                        results["reached_targets"].append(hex(state.addr))
+
+                        # Extract concrete input that reaches this target
+                        if hasattr(state, "posix") and state.posix.stdin.content:
+                            try:
+                                concrete_input = state.solver.eval(
+                                    state.posix.stdin.content, cast_to=bytes
+                                )
+                                results["interesting_values"][hex(state.addr)] = {
+                                    "input": concrete_input.hex(),
+                                    "constraints": len(state.solver.constraints),
+                                }
+                            except Exception as e:
+                                self.logger.debug(
+                                    f"Error extracting concrete input at {hex(state.addr)}: {e}"
+                                )
+
+            return simgr.step()
+        return custom_step
+
+    def _execute_exploration_loop(self, simgr: Any, custom_step: Any, max_depth: int, timeout: int, find_addresses: list, avoid_addresses: list, project: Any, results: dict) -> None:
+        """Execute the main exploration loop."""
+        start_time = time.time()
+        steps = 0
+
+        while (
+            len(simgr.active) > 0 and steps < max_depth and time.time() - start_time < timeout
+        ):
+            # Custom stepping to track execution
+            simgr = custom_step(simgr)
+            steps += 1
+
+            # Move states that hit find addresses to found stash
+            for state in list(simgr.active):
+                if state.addr in find_addresses:
+                    simgr.move("active", "found", lambda s, addr=state.addr: s.addr == addr)
+
+            # Avoid specified addresses
+            for state in list(simgr.active):
+                if state.addr in avoid_addresses:
+                    simgr.move("active", "avoided", lambda s, addr=state.addr: s.addr == addr)
+
+            # Check for vulnerabilities in active states
+            if steps % 10 == 0:  # Check every 10 steps for performance
+                for state in simgr.active:
+                    vuln = self._check_state_for_vulnerabilities(state, project)
+                    if vuln:
+                        results["vulnerabilities"].extend(vuln)
+
+    def _analyze_exploration_results(self, simgr: Any, project: Any, start_address: int, covered_blocks: set, results: dict) -> None:
+        """Analyze final exploration results."""
+        all_states = simgr.active + simgr.deadended + simgr.found
+        results["paths_found"] = len(all_states)
+
+        # Build execution tree
+        execution_tree = self._build_execution_tree(all_states, start_address)
+        results["execution_tree"] = execution_tree
+
+        # Calculate coverage
+        if project.loader.main_object:
+            total_blocks = len(list(project.analyses.CFGFast().graph.nodes()))
+            if total_blocks > 0:
+                results["coverage"] = (len(covered_blocks) / total_blocks) * 100
+
+        # Collect all constraints
+        for state in all_states:
+            if state.solver.constraints:
+                constraint_info = {
+                    "path_address": hex(state.addr),
+                    "constraints": [str(c) for c in state.solver.constraints],
+                    "num_constraints": len(state.solver.constraints),
+                    "satisfiable": state.solver.satisfiable(),
+                }
+                results["constraints"].append(constraint_info)
+
+    def _extract_interesting_test_cases(self, simgr: Any, find_addresses: list, start_address: int, results: dict) -> None:
+        """Extract interesting test cases from exploration results."""
+        interesting_states = simgr.found + [
+            s for s in simgr.deadended if s.addr in find_addresses
+        ]
+        for state in interesting_states[:10]:  # Limit to 10 most interesting
+            try:
+                # Generate concrete inputs for interesting states
+                if hasattr(state, "posix") and state.posix.stdin.content:
+                    concrete_input = state.solver.eval(state.posix.stdin.content, cast_to=bytes)
+                    results["interesting_values"][f"state_{hex(state.addr)}"] = {
+                        "input": concrete_input.hex(),
+                        "path_length": len(state.history.bbl_addrs)
+                        if hasattr(state, "history")
+                        else 0,
+                        "reached_from": hex(start_address),
+                    }
+            except Exception as e:
+                self.logger.debug(f"Failed to extract concrete values: {e}")
+
     def explore_from(self, start_address: int, **kwargs) -> dict[str, Any]:
         """Explore execution paths from a specific start address.
 
@@ -1949,42 +2176,14 @@ int main() {{
             return self._native_explore_from(start_address, **kwargs)
 
         try:
-            # Create angr project
-            project = angr.Project(self.binary_path, auto_load_libs=False)
-
-            # Verify start address is valid
-            if start_address < project.loader.min_addr or start_address > project.loader.max_addr:
-                results["error"] = (
-                    f"Invalid start address: 0x{start_address:x} outside of binary range"
-                )
-                return results
-
-            # Create initial state at the specified address
-            initial_state = project.factory.blank_state(
-                addr=start_address,
-                add_options={
-                    angr.options.ZERO_FILL_UNCONSTRAINED_MEMORY,
-                    angr.options.ZERO_FILL_UNCONSTRAINED_REGISTERS,
-                    angr.options.TRACK_MEMORY_ACTIONS,
-                    angr.options.TRACK_CONSTRAINT_ACTIONS,
-                    angr.options.TRACK_REGISTER_ACTIONS,
-                },
-            )
+            # Setup project and initial state
+            project, initial_state = self._setup_exploration_project(start_address)
 
             # Set up symbolic stdin if requested
-            if symbolic_stdin:
-                stdin_size = kwargs.get("stdin_size", 256)
-                stdin_content = claripy.BVS("stdin", 8 * stdin_size)
-                initial_state.posix.stdin.content = stdin_content
-                self.logger.info(f"Created symbolic stdin of size {stdin_size}")
+            self._setup_symbolic_stdin_for_exploration(initial_state, symbolic_stdin, **kwargs)
 
             # Apply concrete values if provided
-            for addr, value in concrete_values.items():
-                if isinstance(value, int):
-                    initial_state.memory.store(addr, initial_state.solver.BVV(value, 32))
-                elif isinstance(value, bytes):
-                    initial_state.memory.store(addr, value)
-                self.logger.debug(f"Set concrete value at 0x{addr:x}: {value}")
+            self._apply_concrete_values_for_exploration(initial_state, concrete_values)
 
             # Create simulation manager
             simgr = project.factory.simulation_manager(initial_state)
@@ -1998,116 +2197,19 @@ int main() {{
             path_constraints = {}
             covered_blocks = set()
 
-            # Custom step function to track execution
-            def custom_step(simgr):
-                for stash in simgr.stashes:
-                    for state in simgr.stashes[stash]:
-                        # Track covered blocks
-                        if hasattr(state, "history"):
-                            for addr in state.history.bbl_addrs:
-                                covered_blocks.add(addr)
+            # Create custom step function to track execution
+            custom_step = self._create_custom_step_function(
+                results, find_addresses, track_constraints, covered_blocks, path_constraints, execution_paths
+            )
 
-                        # Track path constraints
-                        if track_constraints and state.solver.constraints:
-                            path_id = len(execution_paths)
-                            path_constraints[path_id] = {
-                                "constraints": [str(c) for c in state.solver.constraints],
-                                "satisfiable": state.solver.satisfiable(),
-                                "variables": list(state.solver.variables),
-                            }
-
-                        # Check if we've reached target addresses
-                        if state.addr in find_addresses:
-                            results["reached_targets"].append(hex(state.addr))
-
-                            # Extract concrete input that reaches this target
-                            if hasattr(state, "posix") and state.posix.stdin.content:
-                                try:
-                                    concrete_input = state.solver.eval(
-                                        state.posix.stdin.content, cast_to=bytes
-                                    )
-                                    results["interesting_values"][hex(state.addr)] = {
-                                        "input": concrete_input.hex(),
-                                        "constraints": len(state.solver.constraints),
-                                    }
-                                except Exception as e:
-                                    self.logger.debug(
-                                        f"Error extracting concrete input at {hex(state.addr)}: {e}"
-                                    )
-
-                return simgr.step()
-
-            # Explore with timeout and depth limit
-            start_time = time.time()
-            steps = 0
-
-            while (
-                len(simgr.active) > 0 and steps < max_depth and time.time() - start_time < timeout
-            ):
-                # Custom stepping to track execution
-                simgr = custom_step(simgr)
-                steps += 1
-
-                # Move states that hit find addresses to found stash
-                for state in list(simgr.active):
-                    if state.addr in find_addresses:
-                        simgr.move("active", "found", lambda s, addr=state.addr: s.addr == addr)
-
-                # Avoid specified addresses
-                for state in list(simgr.active):
-                    if state.addr in avoid_addresses:
-                        simgr.move("active", "avoided", lambda s, addr=state.addr: s.addr == addr)
-
-                # Check for vulnerabilities in active states
-                if steps % 10 == 0:  # Check every 10 steps for performance
-                    for state in simgr.active:
-                        vuln = self._check_state_for_vulnerabilities(state, project)
-                        if vuln:
-                            results["vulnerabilities"].extend(vuln)
+            # Execute main exploration loop
+            self._execute_exploration_loop(simgr, custom_step, max_depth, timeout, find_addresses, avoid_addresses, project, results)
 
             # Analyze final results
-            all_states = simgr.active + simgr.deadended + simgr.found
-            results["paths_found"] = len(all_states)
+            self._analyze_exploration_results(simgr, project, start_address, covered_blocks, results)
 
-            # Build execution tree
-            execution_tree = self._build_execution_tree(all_states, start_address)
-            results["execution_tree"] = execution_tree
-
-            # Calculate coverage
-            if project.loader.main_object:
-                total_blocks = len(list(project.analyses.CFGFast().graph.nodes()))
-                if total_blocks > 0:
-                    results["coverage"] = (len(covered_blocks) / total_blocks) * 100
-
-            # Collect all constraints
-            for state in all_states:
-                if state.solver.constraints:
-                    constraint_info = {
-                        "path_address": hex(state.addr),
-                        "constraints": [str(c) for c in state.solver.constraints],
-                        "num_constraints": len(state.solver.constraints),
-                        "satisfiable": state.solver.satisfiable(),
-                    }
-                    results["constraints"].append(constraint_info)
-
-            # Find interesting test cases
-            interesting_states = simgr.found + [
-                s for s in simgr.deadended if s.addr in find_addresses
-            ]
-            for state in interesting_states[:10]:  # Limit to 10 most interesting
-                try:
-                    # Generate concrete inputs for interesting states
-                    if hasattr(state, "posix") and state.posix.stdin.content:
-                        concrete_input = state.solver.eval(state.posix.stdin.content, cast_to=bytes)
-                        results["interesting_values"][f"state_{hex(state.addr)}"] = {
-                            "input": concrete_input.hex(),
-                            "path_length": len(state.history.bbl_addrs)
-                            if hasattr(state, "history")
-                            else 0,
-                            "reached_from": hex(start_address),
-                        }
-                except Exception as e:
-                    self.logger.debug(f"Failed to extract concrete values: {e}")
+            # Extract interesting test cases
+            self._extract_interesting_test_cases(simgr, find_addresses, start_address, results)
 
             self.logger.info(
                 f"Exploration completed: {results['paths_found']} paths found, "

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Terminal Dashboard - ASCII-based status overview for Intellicrack
+"""Terminal Dashboard - ASCII-based status overview for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -574,7 +574,10 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
         try:
             while True:
                 import subprocess
-                subprocess.run(["cls"] if os.name == "nt" else ["clear"], shell=False)
+                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    ["cls"] if os.name == "nt" else ["clear"],
+                    shell=False  # Explicitly secure - using list format prevents shell injection
+                )
 
                 print("=" * 60)
                 print("           INTELLICRACK TERMINAL DASHBOARD")

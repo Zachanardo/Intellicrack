@@ -1,4 +1,4 @@
-"""String Extraction Widget for Protection Analysis
+"""String Extraction Widget for Protection Analysis.
 
 Provides string extraction and analysis capabilities integrated with
 the Intellicrack Protection Engine. Helps identify hardcoded values,
@@ -40,7 +40,7 @@ logger = get_logger(__name__)
 
 
 class StringExtractionThread(QThread):
-    """Thread for extracting strings from binary files"""
+    """Thread for extracting strings from binary files."""
 
     #: List of (offset, string, encoding) (type: list)
     strings_found = pyqtSignal(list)
@@ -107,7 +107,7 @@ class StringExtractionThread(QThread):
             self.error_occurred.emit(str(e))
 
     def _extract_ascii_strings(self, data: bytes) -> list[tuple[int, str]]:
-        """Extract ASCII strings from binary data"""
+        """Extract ASCII strings from binary data."""
         strings = []
         pattern = rb"[\x20-\x7E]{" + str(self.min_length).encode() + rb",}"
 
@@ -122,7 +122,7 @@ class StringExtractionThread(QThread):
         return strings
 
     def _extract_unicode_strings(self, data: bytes) -> list[tuple[int, str]]:
-        """Extract Unicode (UTF-16LE) strings from binary data"""
+        """Extract Unicode (UTF-16LE) strings from binary data."""
         strings = []
         # Look for UTF-16LE patterns (ASCII chars with null bytes)
         pattern = rb"(?:[\x20-\x7E]\x00){" + str(self.min_length).encode() + rb",}"
@@ -139,7 +139,7 @@ class StringExtractionThread(QThread):
 
 
 class StringExtractionWidget(QWidget):
-    """String extraction widget with filtering and analysis"""
+    """String extraction widget with filtering and analysis."""
 
     # Signals
     #: offset, string (type: int, str)
@@ -156,7 +156,7 @@ class StringExtractionWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        """Initialize the UI"""
+        """Initialize the UI."""
         layout = QVBoxLayout()
 
         # Control bar
@@ -220,7 +220,7 @@ class StringExtractionWidget(QWidget):
         self.setLayout(layout)
 
     def _create_control_bar(self) -> QHBoxLayout:
-        """Create control bar"""
+        """Create control bar."""
         layout = QHBoxLayout()
 
         # Extraction options
@@ -268,7 +268,7 @@ class StringExtractionWidget(QWidget):
         return layout
 
     def _create_filter_bar(self) -> QHBoxLayout:
-        """Create filter bar"""
+        """Create filter bar."""
         layout = QHBoxLayout()
 
         # Search filter
@@ -317,7 +317,7 @@ class StringExtractionWidget(QWidget):
         return layout
 
     def load_file(self, file_path: str):
-        """Load a file for string extraction"""
+        """Load a file for string extraction."""
         if not os.path.exists(file_path):
             QMessageBox.warning(self, "File Not Found", f"File not found: {file_path}")
             return
@@ -326,7 +326,7 @@ class StringExtractionWidget(QWidget):
         self.extract_strings()
 
     def extract_strings(self):
-        """Extract strings from the current file"""
+        """Extract strings from the current file."""
         if not self.file_path:
             return
 
@@ -356,7 +356,7 @@ class StringExtractionWidget(QWidget):
 
     @pyqtSlot(list)
     def on_strings_found(self, strings: list[tuple[int, str, str]]):
-        """Handle extracted strings"""
+        """Handle extracted strings."""
         self.all_strings = strings
         self.filtered_strings = strings
 
@@ -379,24 +379,24 @@ class StringExtractionWidget(QWidget):
 
     @pyqtSlot(int)
     def on_progress_update(self, progress: int):
-        """Handle progress update"""
+        """Handle progress update."""
         self.progress_bar.setValue(progress)
 
     @pyqtSlot(str)
     def on_status_update(self, status: str):
-        """Handle status update"""
+        """Handle status update."""
         self.status_label.setText(status)
 
     @pyqtSlot(str)
     def on_error(self, error: str):
-        """Handle extraction error"""
+        """Handle extraction error."""
         QMessageBox.critical(self, "Extraction Error", f"Error extracting strings: {error}")
         self.extract_btn.setEnabled(True)
         self.progress_bar.setVisible(False)
         self.status_label.setText("Extraction failed")
 
     def _categorize_string(self, string: str) -> str:
-        """Categorize a string based on its content"""
+        """Categorize a string based on its content."""
         string_lower = string.lower()
 
         # License/Serial patterns
@@ -483,7 +483,7 @@ class StringExtractionWidget(QWidget):
         return "Other"
 
     def display_strings(self, strings: list[tuple[int, str, str, str]]):
-        """Display strings in the table"""
+        """Display strings in the table."""
         self.string_table.setRowCount(0)
 
         for offset, string, encoding, category in strings:
@@ -521,7 +521,7 @@ class StringExtractionWidget(QWidget):
             self.string_table.setItem(row, 4, category_item)
 
     def apply_filters(self):
-        """Apply filters to string list"""
+        """Apply filters to string list."""
         if not self.all_strings:
             return
 
@@ -562,7 +562,7 @@ class StringExtractionWidget(QWidget):
         )
 
     def _show_context_menu(self, position):
-        """Show context menu for string table"""
+        """Show context menu for string table."""
         if not self.string_table.selectedItems():
             return
 
@@ -591,7 +591,7 @@ class StringExtractionWidget(QWidget):
         menu.exec_(self.string_table.mapToGlobal(position))
 
     def _copy_selected_string(self):
-        """Copy selected string to clipboard"""
+        """Copy selected string to clipboard."""
         row = self.string_table.currentRow()
         if row >= 0:
             string_item = self.string_table.item(row, 1)
@@ -602,7 +602,7 @@ class StringExtractionWidget(QWidget):
                 QApplication.clipboard().setText(full_string)
 
     def _copy_selected_offset(self):
-        """Copy selected offset to clipboard"""
+        """Copy selected offset to clipboard."""
         row = self.string_table.currentRow()
         if row >= 0:
             offset_item = self.string_table.item(row, 0)
@@ -612,7 +612,7 @@ class StringExtractionWidget(QWidget):
                 QApplication.clipboard().setText(offset_item.text())
 
     def _copy_selected_row(self):
-        """Copy entire selected row to clipboard"""
+        """Copy entire selected row to clipboard."""
         row = self.string_table.currentRow()
         if row >= 0:
             row_data = []
@@ -629,7 +629,7 @@ class StringExtractionWidget(QWidget):
             QApplication.clipboard().setText("\t".join(row_data))
 
     def _goto_selected_offset(self):
-        """Emit signal to go to selected offset"""
+        """Emit signal to go to selected offset."""
         row = self.string_table.currentRow()
         if row >= 0:
             offset_item = self.string_table.item(row, 0)
@@ -640,7 +640,7 @@ class StringExtractionWidget(QWidget):
                 self.string_selected.emit(offset, string)
 
     def _on_selection_changed(self):
-        """Handle selection change"""
+        """Handle selection change."""
         row = self.string_table.currentRow()
         if row >= 0:
             offset_item = self.string_table.item(row, 0)
@@ -652,7 +652,7 @@ class StringExtractionWidget(QWidget):
                 self.string_selected.emit(offset, string)
 
     def export_strings(self):
-        """Export strings to file"""
+        """Export strings to file."""
         if not self.filtered_strings:
             QMessageBox.information(self, "No Strings", "No strings to export")
             return
@@ -709,7 +709,7 @@ class StringExtractionWidget(QWidget):
             )
 
     def _export_as_text(self, file_path: str):
-        """Export strings as text"""
+        """Export strings as text."""
         with open(file_path, "w", encoding="utf-8") as f:
             f.write("String Extraction Report\n")
             f.write(f"File: {self.file_path}\n")
@@ -725,7 +725,7 @@ class StringExtractionWidget(QWidget):
                 f.write("-" * 40 + "\n")
 
     def _export_as_csv(self, file_path: str):
-        """Export strings as CSV"""
+        """Export strings as CSV."""
         import csv
 
         with open(file_path, "w", newline="", encoding="utf-8") as f:
@@ -744,7 +744,7 @@ class StringExtractionWidget(QWidget):
                 )
 
     def _export_as_json(self, file_path: str):
-        """Export strings as JSON"""
+        """Export strings as JSON."""
         import json
 
         data = {

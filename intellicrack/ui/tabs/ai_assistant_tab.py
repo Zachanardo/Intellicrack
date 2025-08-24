@@ -234,7 +234,6 @@ class AIAssistantTab(QWidget):
 
     def copy_to_clipboard(self):
         """Copy output to clipboard."""
-
         clipboard = QApplication.clipboard()
         clipboard.setText(self.output_text.toPlainText())
 

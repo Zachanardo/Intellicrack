@@ -1,4 +1,4 @@
-"""Main Protection Detection Module
+"""Main Protection Detection Module.
 
 This module serves as the primary interface for protection detection in Intellicrack.
 It uses the unified protection engine which provides comprehensive protection detection
@@ -26,14 +26,14 @@ logger = get_logger(__name__)
 
 
 class ProtectionDetector:
-    """Main protection detection interface for Intellicrack
+    """Main protection detection interface for Intellicrack.
 
     This class provides a seamless interface to the unified protection engine,
     making it appear as if all detection capabilities are native to Intellicrack.
     """
 
     def __init__(self, enable_protection: bool = True, enable_heuristics: bool = True):
-        """Initialize the protection detector
+        """Initialize the protection detector.
 
         Args:
             enable_protection: Enable protection analysis
@@ -46,7 +46,7 @@ class ProtectionDetector:
         )
 
     def detect_protections(self, file_path: str, deep_scan: bool = True) -> ProtectionAnalysis:
-        """Analyze a binary file for protections
+        """Analyze a binary file for protections.
 
         This method maintains backward compatibility with the original ICP detector
         interface while using the unified engine underneath.
@@ -69,7 +69,7 @@ class ProtectionDetector:
         return self._convert_to_legacy_format(unified_result)
 
     def analyze(self, file_path: str, deep_scan: bool = True) -> UnifiedProtectionResult:
-        """Perform unified protection analysis
+        """Perform unified protection analysis.
 
         This is the modern interface that returns the full unified result.
 
@@ -84,7 +84,7 @@ class ProtectionDetector:
         return self.engine.analyze(file_path, deep_scan=deep_scan)
 
     def get_quick_summary(self, file_path: str) -> dict[str, Any]:
-        """Get a quick protection summary without deep analysis
+        """Get a quick protection summary without deep analysis.
 
         Args:
             file_path: Path to the binary file
@@ -98,7 +98,7 @@ class ProtectionDetector:
     def analyze_directory(
         self, directory: str, recursive: bool = True, deep_scan: bool = False
     ) -> list[ProtectionAnalysis]:
-        """Analyze all executable files in a directory
+        """Analyze all executable files in a directory.
 
         Args:
             directory: Directory path to scan
@@ -136,7 +136,7 @@ class ProtectionDetector:
         return results
 
     def get_bypass_strategies(self, file_path: str) -> list[dict[str, Any]]:
-        """Get bypass strategies for protections detected in a file
+        """Get bypass strategies for protections detected in a file.
 
         Args:
             file_path: Path to the binary file
@@ -151,7 +151,7 @@ class ProtectionDetector:
     def _convert_to_legacy_format(
         self, unified_result: UnifiedProtectionResult
     ) -> ProtectionAnalysis:
-        """Convert unified result to legacy ProtectionAnalysis format
+        """Convert unified result to legacy ProtectionAnalysis format.
 
         This ensures backward compatibility with existing code.
         """
@@ -195,7 +195,7 @@ class ProtectionDetector:
         return analysis
 
     def _map_protection_type(self, type_str: str) -> ProtectionType:
-        """Map string protection type to enum"""
+        """Map string protection type to enum."""
         type_map = {
             "packer": ProtectionType.PACKER,
             "protector": ProtectionType.PROTECTOR,
@@ -214,7 +214,7 @@ class ProtectionDetector:
         return type_map.get(type_str.lower(), ProtectionType.UNKNOWN)
 
     def get_summary(self, analysis: ProtectionAnalysis) -> str:
-        """Get a human-readable summary of the analysis"""
+        """Get a human-readable summary of the analysis."""
         lines = []
         lines.append(f"File: {os.path.basename(analysis.file_path)}")
         lines.append(f"Type: {analysis.file_type} ({analysis.architecture})")
@@ -247,7 +247,7 @@ class ProtectionDetector:
         return "\n".join(lines)
 
     def export_results(self, analysis: ProtectionAnalysis, output_format: str = "json") -> str:
-        """Export analysis results in various formats
+        """Export analysis results in various formats.
 
         Args:
             analysis: ProtectionAnalysis to export
@@ -302,7 +302,7 @@ _global_detector = None
 
 
 def get_protection_detector() -> ProtectionDetector:
-    """Get or create global protection detector instance"""
+    """Get or create global protection detector instance."""
     global _global_detector
     if _global_detector is None:
         _global_detector = ProtectionDetector()
@@ -311,13 +311,13 @@ def get_protection_detector() -> ProtectionDetector:
 
 # Convenience functions for quick analysis
 def quick_analyze(file_path: str) -> ProtectionAnalysis:
-    """Quick analysis function for one-off use"""
+    """Quick analysis function for one-off use."""
     detector = get_protection_detector()
     return detector.detect_protections(file_path, deep_scan=False)
 
 
 def deep_analyze(file_path: str) -> UnifiedProtectionResult:
-    """Deep analysis with full unified result"""
+    """Deep analysis with full unified result."""
     detector = get_protection_detector()
     return detector.analyze(file_path, deep_scan=True)
 

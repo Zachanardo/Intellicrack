@@ -1,4 +1,4 @@
-"""Command and Control (C2) Infrastructure for Intellicrack
+"""Command and Control (C2) Infrastructure for Intellicrack.
 
 This module provides advanced C2 capabilities including:
 - Multi-protocol communication (HTTP/S, DNS, TCP, custom)

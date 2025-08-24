@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AI Chat Interface - Terminal-based AI interaction for Intellicrack CLI
+"""AI Chat Interface - Terminal-based AI interaction for Intellicrack CLI.
 
 Copyright (C) 2025 Zachary Flint
 

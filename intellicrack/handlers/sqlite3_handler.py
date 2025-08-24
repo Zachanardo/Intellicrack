@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -61,22 +61,27 @@ except ImportError as e:
     # Exception classes
     class Error(Exception):
         """Base exception for database errors."""
+
         pass
 
     class DatabaseError(Error):
         """Database error."""
+
         pass
 
     class IntegrityError(DatabaseError):
         """Integrity constraint violation."""
+
         pass
 
     class OperationalError(DatabaseError):
         """Database operational error."""
+
         pass
 
     class ProgrammingError(DatabaseError):
         """Programming error."""
+
         pass
 
     class FallbackTable:

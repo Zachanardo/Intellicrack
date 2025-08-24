@@ -249,6 +249,7 @@ class InsertCommand(HexCommand):
 
         Returns:
             True if commands can be merged
+
         """
         if not isinstance(other, InsertCommand):
             return False
@@ -268,6 +269,7 @@ class InsertCommand(HexCommand):
 
         Raises:
             ValueError: If commands cannot be merged
+
         """
         if not self.can_merge_with(other):
             raise ValueError("Cannot merge non-consecutive insert commands")
@@ -336,6 +338,7 @@ class DeleteCommand(HexCommand):
 
         Returns:
             True if commands can be merged
+
         """
         if not isinstance(other, DeleteCommand):
             return False
@@ -367,6 +370,7 @@ class DeleteCommand(HexCommand):
 
         Raises:
             ValueError: If commands cannot be merged
+
         """
         if not self.can_merge_with(other):
             raise ValueError("Cannot merge non-adjacent delete commands")
@@ -549,6 +553,7 @@ class CommandManager:
         Args:
             max_history: Maximum number of commands to keep in history.
                         Defaults to sys.maxsize for virtually unlimited undo/redo.
+
         """
         self.max_history = max_history
         self.command_history: list[HexCommand] = []

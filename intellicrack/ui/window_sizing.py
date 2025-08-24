@@ -1,4 +1,4 @@
-"""Window sizing utilities for responsive UI design
+"""Window sizing utilities for responsive UI design.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -22,7 +22,7 @@ from intellicrack.handlers.pyqt6_handler import QApplication
 def get_default_window_size(
     width_percentage=0.8, height_percentage=0.8, min_width=800, min_height=600
 ):
-    """Calculate appropriate window size based on screen dimensions
+    """Calculate appropriate window size based on screen dimensions.
 
     Args:
         width_percentage: Percentage of screen width to use (0.0-1.0)
@@ -45,7 +45,7 @@ def get_default_window_size(
 
 
 def center_window_on_screen(window):
-    """Center a window on the primary screen
+    """Center a window on the primary screen.
 
     Args:
         window: QWidget to center
@@ -62,7 +62,7 @@ def center_window_on_screen(window):
 
 
 def get_dialog_size(dialog_type="standard"):
-    """Get appropriate dialog size based on type
+    """Get appropriate dialog size based on type.
 
     Args:
         dialog_type: Type of dialog ("small", "standard", "large", "full")
@@ -109,7 +109,7 @@ def get_dialog_size(dialog_type="standard"):
 
 
 def apply_dialog_sizing(dialog, dialog_type="standard"):
-    """Apply dynamic sizing to a dialog based on screen size
+    """Apply dynamic sizing to a dialog based on screen size.
 
     Args:
         dialog: QDialog instance

@@ -1,4 +1,4 @@
-"""Batch Analysis Widget for File Browser Integration
+"""Batch Analysis Widget for File Browser Integration.
 
 Provides batch processing capabilities for analyzing multiple files with the
 Intellicrack Protection Engine (ICP). Supports parallel processing, progress tracking,
@@ -49,7 +49,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class BatchAnalysisResult:
-    """Result of batch analysis for a single file"""
+    """Result of batch analysis for a single file."""
 
     file_path: str
     file_size: int
@@ -67,7 +67,7 @@ class BatchAnalysisResult:
 
     @property
     def status(self) -> str:
-        """Get analysis status string"""
+        """Get analysis status string."""
         if not self.success:
             return "Failed"
         if self.is_protected:
@@ -78,7 +78,7 @@ class BatchAnalysisResult:
 
 
 class BatchAnalysisWorker(QThread):
-    """Worker thread for batch analysis"""
+    """Worker thread for batch analysis."""
 
     # Signals
     #: current, total (type: int, int)
@@ -107,11 +107,11 @@ class BatchAnalysisWorker(QThread):
         self.unified_engine = get_unified_engine()
 
     def cancel(self):
-        """Cancel the analysis"""
+        """Cancel the analysis."""
         self.cancelled = True
 
     def run(self):
-        """Execute batch analysis"""
+        """Execute batch analysis."""
         try:
             results = []
             completed = 0
@@ -164,7 +164,7 @@ class BatchAnalysisWorker(QThread):
             self.error_occurred.emit(f"Batch analysis failed: {e!s}")
 
     def _analyze_file(self, file_path: str) -> BatchAnalysisResult:
-        """Analyze a single file"""
+        """Analyze a single file."""
         start_time = time.time()
 
         try:
@@ -223,7 +223,7 @@ class BatchAnalysisWorker(QThread):
 
 
 class BatchAnalysisWidget(QWidget):
-    """Widget for batch analysis of multiple files"""
+    """Widget for batch analysis of multiple files."""
 
     # Signals
     #: file_path (type: str)
@@ -240,7 +240,7 @@ class BatchAnalysisWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        """Initialize the UI"""
+        """Initialize the UI."""
         layout = QVBoxLayout()
 
         # Control panel
@@ -269,7 +269,7 @@ class BatchAnalysisWidget(QWidget):
         self.setLayout(layout)
 
     def _create_control_panel(self) -> QWidget:
-        """Create control panel with analysis options"""
+        """Create control panel with analysis options."""
         panel = QWidget()
         layout = QVBoxLayout()
 
@@ -356,7 +356,7 @@ class BatchAnalysisWidget(QWidget):
         return panel
 
     def _create_results_table(self) -> QTableWidget:
-        """Create results table"""
+        """Create results table."""
         table = QTableWidget()
 
         # Set columns
@@ -389,7 +389,7 @@ class BatchAnalysisWidget(QWidget):
         return table
 
     def _create_details_panel(self) -> QWidget:
-        """Create details panel for selected file"""
+        """Create details panel for selected file."""
         panel = QWidget()
         layout = QVBoxLayout()
 
@@ -420,7 +420,7 @@ class BatchAnalysisWidget(QWidget):
         return panel
 
     def select_files(self):
-        """Select individual files for analysis"""
+        """Select individual files for analysis."""
         files, _ = QFileDialog.getOpenFileNames(
             self,
             "Select Files for Batch Analysis",
@@ -433,7 +433,7 @@ class BatchAnalysisWidget(QWidget):
             self._update_file_selection()
 
     def select_folder(self):
-        """Select folder and scan for files"""
+        """Select folder and scan for files."""
         folder = QFileDialog.getExistingDirectory(
             self,
             "Select Folder for Batch Analysis",
@@ -455,7 +455,7 @@ class BatchAnalysisWidget(QWidget):
                 )
 
     def _scan_folder(self, folder_path: str, filter_type: str) -> list[str]:
-        """Scan folder for files matching filter"""
+        """Scan folder for files matching filter."""
         files = []
 
         # Define file extensions for each filter
@@ -488,7 +488,7 @@ class BatchAnalysisWidget(QWidget):
         return files
 
     def _update_file_selection(self):
-        """Update UI after file selection"""
+        """Update UI after file selection."""
         count = len(self.selected_files)
         self.file_count_label.setText(f"{count} files selected")
         self.start_btn.setEnabled(count > 0)
@@ -499,7 +499,7 @@ class BatchAnalysisWidget(QWidget):
         self.status_label.setText(f"Ready: {count} files ({size_mb:.1f} MB)")
 
     def start_analysis(self):
-        """Start batch analysis"""
+        """Start batch analysis."""
         if not self.selected_files:
             QMessageBox.warning(self, "No Files", "Please select files to analyze")
             return
@@ -530,7 +530,7 @@ class BatchAnalysisWidget(QWidget):
         self.worker.start()
 
     def stop_analysis(self):
-        """Stop current analysis"""
+        """Stop current analysis."""
         if self.worker:
             self.worker.cancel()
             self.worker.wait()
@@ -541,7 +541,7 @@ class BatchAnalysisWidget(QWidget):
         self.status_label.setText("Analysis stopped")
 
     def clear_results(self):
-        """Clear all results"""
+        """Clear all results."""
         self.results.clear()
         self.results_table.setRowCount(0)
         self.summary_text.clear()
@@ -550,7 +550,7 @@ class BatchAnalysisWidget(QWidget):
         self.status_label.setText("Results cleared")
 
     def export_results(self):
-        """Export results to CSV"""
+        """Export results to CSV."""
         if not self.results:
             QMessageBox.information(self, "No Results", "No analysis results to export")
             return
@@ -579,7 +579,7 @@ class BatchAnalysisWidget(QWidget):
                 )
 
     def _export_to_csv(self, file_path: str):
-        """Export results to CSV file"""
+        """Export results to CSV file."""
         import csv
 
         with open(file_path, "w", newline="", encoding="utf-8") as csvfile:
@@ -634,20 +634,20 @@ class BatchAnalysisWidget(QWidget):
 
     @pyqtSlot(int, int)
     def _on_progress_updated(self, current: int, total: int):
-        """Handle progress update"""
+        """Handle progress update."""
         self.progress_bar.setValue(current)
         progress_pct = (current / total) * 100 if total > 0 else 0
         self.status_label.setText(f"Analyzing... {current}/{total} ({progress_pct:.1f}%)")
 
     @pyqtSlot(str, BatchAnalysisResult)
     def _on_file_completed(self, file_path: str, result: BatchAnalysisResult):
-        """Handle completed file analysis"""
+        """Handle completed file analysis."""
         self.results.append(result)
         self._add_result_to_table(result)
 
     @pyqtSlot(list)
     def _on_analysis_finished(self, results: list[BatchAnalysisResult]):
-        """Handle analysis completion"""
+        """Handle analysis completion."""
         self._reset_ui_state()
 
         # Update status with summary
@@ -663,19 +663,19 @@ class BatchAnalysisWidget(QWidget):
 
     @pyqtSlot(str)
     def _on_error_occurred(self, error_message: str):
-        """Handle analysis error"""
+        """Handle analysis error."""
         self._reset_ui_state()
         QMessageBox.critical(self, "Analysis Error", error_message)
         self.status_label.setText("Analysis failed")
 
     def _reset_ui_state(self):
-        """Reset UI to ready state"""
+        """Reset UI to ready state."""
         self.progress_bar.setVisible(False)
         self.start_btn.setEnabled(len(self.selected_files) > 0)
         self.stop_btn.setEnabled(False)
 
     def _add_result_to_table(self, result: BatchAnalysisResult):
-        """Add analysis result to table"""
+        """Add analysis result to table."""
         row = self.results_table.rowCount()
         self.results_table.insertRow(row)
 
@@ -738,7 +738,7 @@ class BatchAnalysisWidget(QWidget):
         self.results_table.resizeColumnsToContents()
 
     def _on_cell_double_clicked(self, row: int, column: int):
-        """Handle double click on table cell"""
+        """Handle double click on table cell."""
         if row < len(self.results):
             result = self.results[row]
             if column == 10:  # Details column
@@ -748,14 +748,14 @@ class BatchAnalysisWidget(QWidget):
                 self.file_selected.emit(result.file_path)
 
     def _on_selection_changed(self):
-        """Handle table selection change"""
+        """Handle table selection change."""
         current_row = self.results_table.currentRow()
         if 0 <= current_row < len(self.results):
             result = self.results[current_row]
             self._show_file_details(result)
 
     def _show_file_details(self, result: BatchAnalysisResult):
-        """Show detailed information for selected file"""
+        """Show detailed information for selected file."""
         # Summary tab
         summary = f"File: {os.path.basename(result.file_path)}\n"
         summary += f"Path: {result.file_path}\n"
@@ -795,18 +795,18 @@ class BatchAnalysisWidget(QWidget):
             self.error_log_text.setPlainText("No errors")
 
     def add_files_from_list(self, file_paths: list[str]):
-        """Add files from external source (e.g., file browser)"""
+        """Add files from external source (e.g., file browser)."""
         self.selected_files.extend(file_paths)
         # Remove duplicates
         self.selected_files = list(set(self.selected_files))
         self._update_file_selection()
 
     def get_analysis_results(self) -> list[BatchAnalysisResult]:
-        """Get current analysis results"""
+        """Get current analysis results."""
         return self.results.copy()
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get analysis statistics"""
+        """Get analysis statistics."""
         if not self.results:
             return {}
 

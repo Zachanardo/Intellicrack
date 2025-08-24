@@ -1,4 +1,4 @@
-"""Enhanced Radare2 Integration with Comprehensive Error Handling and Recovery
+"""Enhanced Radare2 Integration with Comprehensive Error Handling and Recovery.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -109,7 +109,7 @@ class EnhancedR2Integration:
         self.logger.info(f"EnhancedR2Integration initialized for {binary_path}")
 
     def _initialize_components(self):
-        """Initialize all analysis components with error handling"""
+        """Initialize all analysis components with error handling."""
         if not self.r2pipe_available:
             self.logger.warning("r2pipe not available, skipping component initialization")
             return
@@ -210,7 +210,7 @@ class EnhancedR2Integration:
         return standardized_results
 
     def _run_parallel_analysis(self, analysis_types: list[str]) -> dict[str, Any]:
-        """Run analyses in parallel for performance"""
+        """Run analyses in parallel for performance."""
         results = {}
         max_workers = min(len(analysis_types), self.config.get("max_parallel_workers", 3))
 
@@ -242,7 +242,7 @@ class EnhancedR2Integration:
         return results
 
     def _run_single_analysis(self, analysis_type: str) -> dict[str, Any] | None:
-        """Run a single analysis with caching and error handling"""
+        """Run a single analysis with caching and error handling."""
         # Check cache first
         cache_key = f"{analysis_type}_{self.binary_path}"
         cached_result = self._get_cached_result(cache_key)
@@ -335,7 +335,7 @@ class EnhancedR2Integration:
             return {"error": str(e), "failed_analysis": analysis_type}
 
     def _get_cached_result(self, cache_key: str) -> dict[str, Any] | None:
-        """Get cached result if still valid"""
+        """Get cached result if still valid."""
         with self._lock:
             if cache_key in self.results_cache:
                 cached_data = self.results_cache[cache_key]
@@ -346,7 +346,7 @@ class EnhancedR2Integration:
         return None
 
     def _cache_result(self, cache_key: str, result: dict[str, Any]):
-        """Cache analysis result"""
+        """Cache analysis result."""
         with self._lock:
             self.results_cache[cache_key] = {
                 "result": result,
@@ -365,7 +365,7 @@ class EnhancedR2Integration:
                     del self.results_cache[key]
 
     def _record_analysis_time(self, analysis_type: str, duration: float, success: bool = True):
-        """Record analysis performance"""
+        """Record analysis performance."""
         with self._lock:
             if analysis_type not in self.performance_stats["analysis_times"]:
                 self.performance_stats["analysis_times"][analysis_type] = {
@@ -387,7 +387,7 @@ class EnhancedR2Integration:
                 stats["times"] = stats["times"][-50:]
 
     def start_real_time_monitoring(self, callback: Callable | None = None):
-        """Start real-time monitoring of analysis results"""
+        """Start real-time monitoring of analysis results."""
         if self.monitoring_enabled and not self.monitoring_thread:
             self.monitoring_thread = threading.Thread(
                 target=self._monitoring_loop,
@@ -398,7 +398,7 @@ class EnhancedR2Integration:
             self.logger.info("Real-time monitoring started")
 
     def stop_real_time_monitoring(self):
-        """Stop real-time monitoring"""
+        """Stop real-time monitoring."""
         self.monitoring_enabled = False
         if self.monitoring_thread:
             self.monitoring_thread.join(timeout=5)
@@ -406,7 +406,7 @@ class EnhancedR2Integration:
             self.logger.info("Real-time monitoring stopped")
 
     def _monitoring_loop(self, callback: Callable | None):
-        """Real-time monitoring loop"""
+        """Real-time monitoring loop."""
         while self.monitoring_enabled:
             try:
                 # Run lightweight analysis
@@ -428,7 +428,7 @@ class EnhancedR2Integration:
                 time.sleep(60)  # Wait longer on error
 
     def get_performance_stats(self) -> dict[str, Any]:
-        """Get comprehensive performance statistics"""
+        """Get comprehensive performance statistics."""
         with self._lock:
             stats = self.performance_stats.copy()
 
@@ -454,7 +454,7 @@ class EnhancedR2Integration:
             return stats
 
     def optimize_performance(self):
-        """Optimize performance based on collected metrics"""
+        """Optimize performance based on collected metrics."""
         stats = self.get_performance_stats()
 
         # Adjust cache TTL based on hit rate
@@ -474,13 +474,13 @@ class EnhancedR2Integration:
         self.logger.info(f"Performance optimized: cache_ttl={self.cache_ttl}")
 
     def clear_cache(self):
-        """Clear results cache"""
+        """Clear results cache."""
         with self._lock:
             self.results_cache.clear()
             self.logger.info("Results cache cleared")
 
     def get_health_status(self) -> dict[str, Any]:
-        """Get system health status"""
+        """Get system health status."""
         stats = self.get_performance_stats()
 
         health = {
@@ -523,7 +523,7 @@ class EnhancedR2Integration:
         return health
 
     def cleanup(self):
-        """Cleanup resources"""
+        """Cleanup resources."""
         try:
             self.stop_real_time_monitoring()
             self.clear_cache()

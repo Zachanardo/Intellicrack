@@ -26,6 +26,7 @@ def get_template_path(template_name):
 
     Returns:
         Path: Path to the template file, or None if not found
+
     """
     return TEMPLATE_FILES.get(template_name)
 
@@ -41,6 +42,7 @@ def load_template(template_name):
 
     Returns:
         str: Template contents, or None if template not found
+
     """
     template_path = get_template_path(template_name)
     if template_path and template_path.exists():
@@ -61,6 +63,7 @@ def template_exists(template_name):
 
     Returns:
         bool: True if template exists, False otherwise
+
     """
     template_path = get_template_path(template_name)
     return template_path is not None and template_path.exists()

@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -118,7 +118,7 @@ logger = logging.getLogger("IntellicrackLogger.CLI")
     "--quiet", "-q", is_flag=True, help="Suppress non-essential output", envvar="INTELLICRACK_QUIET"
 )
 def cli(verbose: bool, quiet: bool):
-    """Intellicrack - Advanced Binary Analysis and Exploitation Framework"""
+    """Intellicrack - Advanced Binary Analysis and Exploitation Framework."""
     # Configure logging
     if verbose:
         logging.basicConfig(level=logging.DEBUG)
@@ -142,7 +142,7 @@ def cli(verbose: bool, quiet: bool):
 @click.option("--output", "-o", help="Save scan results")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 def scan(binary_path: str, vulns: bool, output: str | None, verbose: bool):
-    """Scan binary for vulnerabilities and security issues"""
+    """Scan binary for vulnerabilities and security issues."""
     try:
         click.echo(f"Scanning binary: {binary_path}")
 
@@ -235,7 +235,7 @@ def scan(binary_path: str, vulns: bool, output: str | None, verbose: bool):
 def strings(
     binary_path: str, min_length: int, encoding: str, output: str | None, filter: str | None
 ):
-    """Extract strings from binary file"""
+    """Extract strings from binary file."""
     try:
         click.echo(f"Extracting strings from: {binary_path}")
 
@@ -282,7 +282,7 @@ def strings(
 
 @cli.group()
 def payload():
-    """Payload generation commands"""
+    """Payload generation commands."""
 
 
 @payload.command("generate")
@@ -328,7 +328,7 @@ def generate(
     output: str | None,
     output_format: str,
 ):
-    """Generate a custom payload with various options"""
+    """Generate a custom payload with various options."""
     try:
         engine = PayloadEngine()
 
@@ -426,7 +426,7 @@ def generate(
     help="Template category",
 )
 def list_templates(category: str | None):
-    """List available payload templates"""
+    """List available payload templates."""
     try:
         templates = PayloadTemplates()
         available = templates.list_templates(category)
@@ -467,7 +467,7 @@ def list_templates(category: str | None):
 def from_template(
     category: str, template_name: str, architecture: str, param: tuple, output: str | None
 ):
-    """Generate payload from template"""
+    """Generate payload from template."""
     try:
         engine = PayloadEngine()
         templates = PayloadTemplates()
@@ -546,7 +546,7 @@ def from_template(
 
 @cli.group()
 def c2():
-    """Command and Control operations"""
+    """Command and Control operations."""
 
 
 @c2.command()
@@ -563,7 +563,7 @@ def c2():
     help="Protocols to enable",
 )
 def server(host: str, https_port: int, dns_port: int, tcp_port: int, protocols: tuple):
-    """Start C2 server"""
+    """Start C2 server."""
     try:
         config = {
             "https_enabled": "https" in protocols,
@@ -632,7 +632,7 @@ def server(host: str, https_port: int, dns_port: int, tcp_port: int, protocols: 
 )
 @click.option("--interval", "-i", default=60, help="Beacon interval in seconds")
 def client(server_host: str, port: int, protocol: str, interval: int):
-    """Start C2 client (agent)"""
+    """Start C2 client (agent)."""
     try:
         config = {
             "beacon_interval": interval,
@@ -687,7 +687,7 @@ def client(server_host: str, port: int, protocol: str, interval: int):
 def execute_command(
     session_id: str, command: str, server: str, port: int, timeout: int, interactive: bool
 ):
-    """Execute command on remote session through C2 server"""
+    """Execute command on remote session through C2 server."""
     import json
     import socket
     import ssl
@@ -896,7 +896,7 @@ def _send_c2_command(
 @click.option("--payload", "-p", "payload_data", help="Custom payload or payload file")
 @click.option("--output", "-o", help="Output exploit to file")
 def exploit_target(target: str, exploit_type: str, payload_data: str | None, output: str | None):
-    """Exploit a target binary or service"""
+    """Exploit a target binary or service."""
     try:
         click.echo(f"Exploiting target: {target}")
         click.echo(f"Exploit type: {exploit_type}")
@@ -937,6 +937,177 @@ def exploit_target(target: str, exploit_type: str, payload_data: str | None, out
         sys.exit(1)
 
 
+def _get_analysis_types(mode: str, gpu_accelerate: bool, distributed: bool, symbolic_execution: bool, concolic_execution: bool) -> list[str]:
+    """Determine analysis types based on mode and options."""
+    if mode == "comprehensive":
+        analysis_types = [
+            "Basic Analysis",
+            "Protection Detection",
+            "Vulnerability Scan",
+            "String Extraction",
+            "Import Analysis",
+            "Export Analysis",
+        ]
+    elif mode == "vulnerability":
+        analysis_types = ["Vulnerability Scan", "Exploit Detection", "Security Assessment"]
+    elif mode == "protection":
+        analysis_types = ["Protection Analysis", "Packer Detection", "Anti-Debug Detection"]
+    else:
+        analysis_types = ["Basic Analysis", "File Type Detection", "Architecture Analysis"]
+
+    if gpu_accelerate:
+        analysis_types.append("GPU Acceleration")
+    if distributed:
+        analysis_types.append("Distributed Processing")
+    if symbolic_execution or concolic_execution:
+        analysis_types.append("Symbolic/Concolic Execution")
+
+    return analysis_types
+
+
+def _handle_gpu_acceleration(binary_path: str) -> None:
+    """Handle GPU acceleration if enabled."""
+    click.echo("GPU acceleration enabled")
+    try:
+        from intellicrack.utils.gpu_benchmark import run_gpu_accelerated_analysis
+
+        gpu_result = run_gpu_accelerated_analysis(binary_path)
+        if gpu_result.get("success"):
+            click.echo(
+                f"GPU analysis completed in {gpu_result.get('execution_time', 0):.2f}s"
+            )
+        else:
+            click.echo("GPU acceleration not available, falling back to CPU")
+    except ImportError:
+        click.echo("GPU acceleration module not available")
+
+
+def _handle_distributed_processing(binary_path: str) -> None:
+    """Handle distributed processing if enabled."""
+    click.echo("Distributed processing enabled")
+    try:
+        from intellicrack.utils.runtime.distributed_processing import (
+            run_distributed_analysis,
+        )
+
+        dist_result = run_distributed_analysis(binary_path)
+        if dist_result.get("success"):
+            click.echo(
+                f"Distributed analysis completed with {dist_result.get('nodes', 1)} nodes"
+            )
+    except ImportError:
+        click.echo("Distributed processing module not available")
+
+
+def _handle_symbolic_execution(binary_path: str, symbolic_execution: bool, concolic_execution: bool) -> None:
+    """Handle symbolic/concolic execution if enabled."""
+    execution_type = "symbolic" if symbolic_execution else "concolic"
+    click.echo(f"Using {execution_type} execution")
+    try:
+        from intellicrack.core.execution.symbolic_engine import SymbolicExecutionEngine
+
+        engine = SymbolicExecutionEngine()
+        exec_result = engine.analyze(binary_path, mode=execution_type)
+        if exec_result.get("success"):
+            click.echo(f"{execution_type.capitalize()} execution completed")
+    except ImportError:
+        click.echo(f"{execution_type.capitalize()} execution engine not available")
+
+
+def _perform_analysis(mode: str, binary_path: str, output: str | None, verbose: bool, no_ai: bool, deep: bool) -> dict:
+    """Perform the main analysis based on mode."""
+    if mode == "comprehensive":
+        from intellicrack.utils.runtime.runner_functions import run_comprehensive_analysis
+
+        return run_comprehensive_analysis(
+            binary_path, output_dir=output, verbose=verbose, enable_ai=not no_ai
+        )
+    elif mode == "vulnerability":
+        from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
+
+        engine = AdvancedVulnerabilityEngine()
+        return engine.run_vulnerability_scan(binary_path)
+    elif mode == "protection":
+        from intellicrack.core.protection_analyzer import ProtectionAnalyzer
+
+        analyzer = ProtectionAnalyzer()
+        return analyzer.analyze_protections(binary_path)
+    else:
+        return analyze_binary(binary_path, detailed=deep, enable_ai_integration=not no_ai)
+
+
+def _display_basic_results(result: dict) -> None:
+    """Display basic analysis results."""
+    click.echo(f"\nBinary Type: {result.get('format', result.get('file_type', 'Unknown'))}")
+    click.echo(f"Architecture: {result.get('architecture', 'Unknown')}")
+
+    size = result.get("size", 0)
+    if size == 0 and "basic_info" in result:
+        size = result.get("basic_info", {}).get("size", 0)
+    click.echo(f"Size: {size} bytes")
+
+    if "error" in result:
+        click.echo(f"\nWarning: {result['error']}")
+
+    if "protections" in result:
+        click.echo("\nProtections:")
+        for protection, enabled in result["protections"].items():
+            protection_status = "Enabled" if enabled else "Disabled"
+            click.echo(f"  {protection}: {protection_status}")
+
+    if result.get("vulnerabilities"):
+        click.echo("\nPotential Vulnerabilities:")
+        for vuln in result["vulnerabilities"]:
+            click.echo(f"  - {vuln}")
+
+
+def _display_ai_integration_results(result: dict) -> None:
+    """Display AI integration results."""
+    if "ai_integration" in result and result["ai_integration"].get("enabled"):
+        ai_data = result["ai_integration"]
+        click.echo("\n🤖 AI Script Generation Suggestions:")
+
+        suggestions = ai_data.get("script_suggestions", {})
+        if suggestions.get("frida_scripts"):
+            click.echo("  Frida Scripts:")
+            for script in suggestions["frida_scripts"]:
+                click.echo(
+                    f"    - {script['description']} (confidence: {script['confidence']:.0%})"
+                )
+
+        if suggestions.get("ghidra_scripts"):
+            click.echo("  Ghidra Scripts:")
+            for script in suggestions["ghidra_scripts"]:
+                click.echo(
+                    f"    - {script['description']} (confidence: {script['confidence']:.0%})"
+                )
+
+        if ai_data.get("recommended_actions"):
+            click.echo("\n  Recommended AI Actions:")
+            for action in ai_data["recommended_actions"]:
+                click.echo(f"    • {action}")
+
+        auto_confidence = suggestions.get("auto_generate_confidence", 0)
+        if auto_confidence > 0.8:
+            click.echo(
+                f"\n  🚀 High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!"
+            )
+        elif auto_confidence > 0.5:
+            click.echo(
+                f"\n  ⚡ Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation"
+            )
+
+        if ai_data.get("autonomous_generation", {}).get("started"):
+            click.echo("  🔄 Autonomous script generation started in background")
+            click.echo(
+                f"  📋 Targets: {', '.join(ai_data['autonomous_generation']['targets'])}"
+            )
+
+    elif "ai_integration" in result and not result["ai_integration"].get("enabled"):
+        ai_error = result["ai_integration"].get("error", "Unknown error")
+        click.echo(f"\n⚠️  AI integration failed: {ai_error}")
+
+
 @cli.command("analyze")
 @click.argument("binary_path")
 @click.option("--deep", "-d", is_flag=True, help="Perform deep analysis")
@@ -966,43 +1137,17 @@ def analyze(
     symbolic_execution: bool,
     concolic_execution: bool,
 ):
-    """Comprehensive binary analysis with multiple modes and options"""
-    # Import and initialize ProgressManager
+    """Comprehensive binary analysis with multiple modes and options."""
     from intellicrack.cli.progress_manager import ProgressManager
 
     progress_manager = ProgressManager()
 
     try:
-        # Start progress display
-        analysis_types = []
-        if mode == "comprehensive":
-            analysis_types = [
-                "Basic Analysis",
-                "Protection Detection",
-                "Vulnerability Scan",
-                "String Extraction",
-                "Import Analysis",
-                "Export Analysis",
-            ]
-        elif mode == "vulnerability":
-            analysis_types = ["Vulnerability Scan", "Exploit Detection", "Security Assessment"]
-        elif mode == "protection":
-            analysis_types = ["Protection Analysis", "Packer Detection", "Anti-Debug Detection"]
-        else:
-            analysis_types = ["Basic Analysis", "File Type Detection", "Architecture Analysis"]
-
-        if gpu_accelerate:
-            analysis_types.append("GPU Acceleration")
-        if distributed:
-            analysis_types.append("Distributed Processing")
-        if symbolic_execution or concolic_execution:
-            analysis_types.append("Symbolic/Concolic Execution")
-
+        analysis_types = _get_analysis_types(mode, gpu_accelerate, distributed, symbolic_execution, concolic_execution)
         progress_manager.start_analysis(binary_path, analysis_types)
 
-        # Create progress callback
         def progress_callback(step: str, progress: float, message: str = ""):
-            """Update progress for current analysis step"""
+            """Update progress for current analysis step."""
             if step in progress_manager.task_ids:
                 task_id = progress_manager.task_ids[step]
                 if progress_manager.progress:
@@ -1021,155 +1166,28 @@ def analyze(
         if verbose:
             logging.basicConfig(level=logging.DEBUG)
 
-        # Handle GPU acceleration
         if gpu_accelerate:
-            click.echo("GPU acceleration enabled")
-            try:
-                from intellicrack.utils.gpu_benchmark import run_gpu_accelerated_analysis
+            _handle_gpu_acceleration(binary_path)
 
-                gpu_result = run_gpu_accelerated_analysis(binary_path)
-                if gpu_result.get("success"):
-                    click.echo(
-                        f"GPU analysis completed in {gpu_result.get('execution_time', 0):.2f}s"
-                    )
-                else:
-                    click.echo("GPU acceleration not available, falling back to CPU")
-            except ImportError:
-                click.echo("GPU acceleration module not available")
-
-        # Handle distributed processing
         if distributed:
-            click.echo("Distributed processing enabled")
-            try:
-                from intellicrack.utils.runtime.distributed_processing import (
-                    run_distributed_analysis,
-                )
+            _handle_distributed_processing(binary_path)
 
-                dist_result = run_distributed_analysis(binary_path)
-                if dist_result.get("success"):
-                    click.echo(
-                        f"Distributed analysis completed with {dist_result.get('nodes', 1)} nodes"
-                    )
-            except ImportError:
-                click.echo("Distributed processing module not available")
-
-        # Handle symbolic/concolic execution
         if symbolic_execution or concolic_execution:
-            execution_type = "symbolic" if symbolic_execution else "concolic"
-            click.echo(f"Using {execution_type} execution")
-            try:
-                from intellicrack.core.execution.symbolic_engine import SymbolicExecutionEngine
+            _handle_symbolic_execution(binary_path, symbolic_execution, concolic_execution)
 
-                engine = SymbolicExecutionEngine()
-                exec_result = engine.analyze(binary_path, mode=execution_type)
-                if exec_result.get("success"):
-                    click.echo(f"{execution_type.capitalize()} execution completed")
-            except ImportError:
-                click.echo(f"{execution_type.capitalize()} execution engine not available")
-
-        # Perform the main analysis based on mode
-        if mode == "comprehensive":
-            from intellicrack.utils.runtime.runner_functions import run_comprehensive_analysis
-
-            result = run_comprehensive_analysis(
-                binary_path, output_dir=output, verbose=verbose, enable_ai=not no_ai
-            )
-        elif mode == "vulnerability":
-            from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
-
-            engine = AdvancedVulnerabilityEngine()
-            result = engine.run_vulnerability_scan(binary_path)
-        elif mode == "protection":
-            from intellicrack.core.protection_analyzer import ProtectionAnalyzer
-
-            analyzer = ProtectionAnalyzer()
-            result = analyzer.analyze_protections(binary_path)
-        else:
-            # Basic mode - use existing analyze_binary function
-            result = analyze_binary(binary_path, detailed=deep, enable_ai_integration=not no_ai)
+        result = _perform_analysis(mode, binary_path, output, verbose, no_ai, deep)
 
         if not no_ai:
             click.echo("AI integration enabled - will suggest script generation opportunities")
 
-        # Display analysis results
-        click.echo(f"\nBinary Type: {result.get('format', result.get('file_type', 'Unknown'))}")
-        click.echo(f"Architecture: {result.get('architecture', 'Unknown')}")
-
-        # Get size from basic_info if not at top level
-        size = result.get("size", 0)
-        if size == 0 and "basic_info" in result:
-            size = result.get("basic_info", {}).get("size", 0)
-        click.echo(f"Size: {size} bytes")
-
-        # Display any errors
-        if "error" in result:
-            click.echo(f"\nWarning: {result['error']}")
-
-        if "protections" in result:
-            click.echo("\nProtections:")
-            for protection, enabled in result["protections"].items():
-                protection_status = "Enabled" if enabled else "Disabled"
-                click.echo(f"  {protection}: {protection_status}")
-
-        if result.get("vulnerabilities"):
-            click.echo("\nPotential Vulnerabilities:")
-            for vuln in result["vulnerabilities"]:
-                click.echo(f"  - {vuln}")
-
-        # Display AI integration results
-        if "ai_integration" in result and result["ai_integration"].get("enabled"):
-            ai_data = result["ai_integration"]
-            click.echo("\n🤖 AI Script Generation Suggestions:")
-
-            suggestions = ai_data.get("script_suggestions", {})
-            if suggestions.get("frida_scripts"):
-                click.echo("  Frida Scripts:")
-                for script in suggestions["frida_scripts"]:
-                    click.echo(
-                        f"    - {script['description']} (confidence: {script['confidence']:.0%})"
-                    )
-
-            if suggestions.get("ghidra_scripts"):
-                click.echo("  Ghidra Scripts:")
-                for script in suggestions["ghidra_scripts"]:
-                    click.echo(
-                        f"    - {script['description']} (confidence: {script['confidence']:.0%})"
-                    )
-
-            # Display recommended actions
-            if ai_data.get("recommended_actions"):
-                click.echo("\n  Recommended AI Actions:")
-                for action in ai_data["recommended_actions"]:
-                    click.echo(f"    • {action}")
-
-            # Display auto-generation status
-            auto_confidence = suggestions.get("auto_generate_confidence", 0)
-            if auto_confidence > 0.8:
-                click.echo(
-                    f"\n  🚀 High confidence ({auto_confidence:.0%}) - Autonomous script generation triggered!"
-                )
-            elif auto_confidence > 0.5:
-                click.echo(
-                    f"\n  ⚡ Moderate confidence ({auto_confidence:.0%}) - Consider manual script generation"
-                )
-
-            # Display autonomous generation status
-            if ai_data.get("autonomous_generation", {}).get("started"):
-                click.echo("  🔄 Autonomous script generation started in background")
-                click.echo(
-                    f"  📋 Targets: {', '.join(ai_data['autonomous_generation']['targets'])}"
-                )
-
-        elif "ai_integration" in result and not result["ai_integration"].get("enabled"):
-            ai_error = result["ai_integration"].get("error", "Unknown error")
-            click.echo(f"\n⚠️  AI integration failed: {ai_error}")
+        _display_basic_results(result)
+        _display_ai_integration_results(result)
 
         if output:
             with open(output, "w", encoding="utf-8") as f:
                 json.dump(result, f, indent=2)
             click.echo(f"\nAnalysis saved to: {output}")
 
-        # Stop progress display
         progress_manager.stop()
 
     except (
@@ -1184,7 +1202,6 @@ def analyze(
         TimeoutError,
     ) as e:
         logger.error("Analysis failed: %s", e, exc_info=True)
-        # Stop progress display on error
         if "progress_manager" in locals():
             progress_manager.stop()
         click.echo(f"Error: {e}", err=True)
@@ -1197,7 +1214,7 @@ def analyze(
 @click.option("--output", "-o", help="Save analysis report")
 @click.option("--no-ai", is_flag=True, help="Disable AI integration")
 def basic_analyze(binary_path: str, deep: bool, output: str | None, no_ai: bool):
-    """Analyze a binary file with AI integration"""
+    """Analyze a binary file with AI integration."""
     try:
         click.echo(f"Analyzing binary: {binary_path}")
         if deep:
@@ -1315,7 +1332,7 @@ def patch(
     nop_range: str | None,
     output: str | None,
 ):
-    """Patch a binary file"""
+    """Patch a binary file."""
     try:
         patches = []
 
@@ -1378,7 +1395,7 @@ def patch(
 
 @cli.group()
 def advanced():
-    """Advanced exploitation commands"""
+    """Advanced exploitation commands."""
     if not ADVANCED_MODULES_AVAILABLE:
         click.echo("Advanced modules not available. Please check installation.", err=True)
         sys.exit(1)
@@ -1386,7 +1403,7 @@ def advanced():
 
 @advanced.group()
 def advanced_payload():
-    """Advanced payload generation commands"""
+    """Advanced payload generation commands."""
 
 
 @advanced_payload.command()
@@ -1437,7 +1454,7 @@ def advanced_generate(
     output: str | None,
     output_format: str,
 ):
-    """Generate advanced payload with evasion techniques"""
+    """Generate advanced payload with evasion techniques."""
     try:
         from intellicrack.core.exploitation.payload_types import (
             Architecture as AdvancedArchitecture,
@@ -1554,7 +1571,7 @@ def advanced_generate(
 
 @advanced.group()
 def advanced_c2():
-    """Advanced C2 infrastructure commands"""
+    """Advanced C2 infrastructure commands."""
 
 
 @advanced_c2.command()
@@ -1574,7 +1591,7 @@ def advanced_c2():
 @click.option("--interface", "-i", default="0.0.0.0", help="Listen interface")
 @click.option("--config", "-c", help="Configuration file path")
 def start(protocol: str, port: int | None, encryption: str, interface: str, config: str | None):
-    """Start advanced C2 server"""
+    """Start advanced C2 server."""
     try:
         manager = C2Manager()
 
@@ -1639,7 +1656,7 @@ def start(protocol: str, port: int | None, encryption: str, interface: str, conf
 
 @c2.command()
 def status():
-    """Show C2 server status and active sessions"""
+    """Show C2 server status and active sessions."""
     try:
         manager = C2Manager()
         status_info = manager.get_server_status()
@@ -1672,7 +1689,7 @@ def status():
 
 @advanced.group()
 def research():
-    """Vulnerability research commands"""
+    """Vulnerability research commands."""
 
 
 @research.command()
@@ -1697,7 +1714,7 @@ def research():
 @click.option("--timeout", type=int, default=3600, help="Analysis timeout (seconds)")
 @click.option("--use-ai", is_flag=True, help="Use AI-guided analysis")
 def run(target_path: str, campaign_type: str, output: str | None, timeout: int, use_ai: bool):
-    """Run vulnerability research analysis"""
+    """Run vulnerability research analysis."""
     try:
         if not os.path.exists(target_path):
             click.echo(f"Target file not found: {target_path}", err=True)
@@ -1943,7 +1960,7 @@ def run(target_path: str, campaign_type: str, output: str | None, timeout: int, 
 
 @advanced.group()
 def post_exploit():
-    """Post-exploitation commands"""
+    """Post-exploitation commands."""
 
 
 @post_exploit.command()
@@ -1961,7 +1978,7 @@ def post_exploit():
 )
 @click.option("--payload-path", help="Path to payload for persistence")
 def persist(platform: str, method: str, payload_path: str | None):
-    """Establish persistence on target system"""
+    """Establish persistence on target system."""
     try:
         manager = PersistenceManager()
 
@@ -2045,7 +2062,7 @@ def persist(platform: str, method: str, payload_path: str | None):
     help="Privilege escalation method",
 )
 def escalate(target_platform: str, method: str):
-    """Escalate privileges on target system"""
+    """Escalate privileges on target system."""
     try:
         manager = PrivilegeEscalationManager()
 
@@ -2091,7 +2108,7 @@ def escalate(target_platform: str, method: str):
 def auto_exploit(
     target_path: str, lhost: str, lport: int, target_platform: str, output: str | None
 ):
-    """Run full automated exploitation workflow"""
+    """Run full automated exploitation workflow."""
     try:
         if not os.path.exists(target_path):
             click.echo(f"Target file not found: {target_path}", err=True)
@@ -2171,7 +2188,7 @@ def auto_exploit(
 
 @cli.group()
 def ai():
-    """AI-powered script generation and analysis commands"""
+    """AI-powered script generation and analysis commands."""
 
 
 @ai.command("generate")
@@ -2206,7 +2223,7 @@ def ai_generate(
     autonomous_mode: bool,
     preview: bool,
 ):
-    """Generate AI scripts for binary protection bypass"""
+    """Generate AI scripts for binary protection bypass."""
     try:
         if not os.path.exists(binary_path):
             click.echo(f"Binary file not found: {binary_path}", err=True)
@@ -2363,7 +2380,7 @@ def ai_generate(
 @click.option("--timeout", default=60, help="Test timeout in seconds")
 @click.option("--verbose", "-v", is_flag=True, help="Verbose output")
 def test(script_path: str, binary: str | None, environment: str, timeout: int, verbose: bool):
-    """Test AI-generated scripts in safe environments"""
+    """Test AI-generated scripts in safe environments."""
     try:
         if not os.path.exists(script_path):
             click.echo(f"Script file not found: {script_path}", err=True)
@@ -2458,7 +2475,7 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
 )
 @click.option("--deep", is_flag=True, help="Enable deep AI analysis")
 def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: bool):
-    """Analyze binary for protection mechanisms using AI"""
+    """Analyze binary for protection mechanisms using AI."""
     try:
         if not os.path.exists(binary_path):
             click.echo(f"Binary file not found: {binary_path}", err=True)
@@ -2624,7 +2641,7 @@ def autonomous(
     save_all: bool,
     verbose: bool,
 ):
-    """Run autonomous AI workflow for complex tasks"""
+    """Run autonomous AI workflow for complex tasks."""
     try:
         from intellicrack.ai.autonomous_agent import AutonomousAgent
         from intellicrack.ai.orchestrator import get_orchestrator
@@ -2725,7 +2742,7 @@ def autonomous(
 @click.option("--output", "-o", help="Output file for session data")
 @click.option("--include-ui", is_flag=True, help="Include UI conversation history")
 def save_session(binary_path: str, output: str | None, include_ui: bool):
-    """Save AI session data including conversation history"""
+    """Save AI session data including conversation history."""
     try:
         from intellicrack.ai.autonomous_agent import AutonomousAgent
 
@@ -2804,7 +2821,7 @@ def save_session(binary_path: str, output: str | None, include_ui: bool):
 @ai.command()
 @click.option("--confirm", is_flag=True, help="Confirm reset without prompt")
 def reset(confirm: bool):
-    """Reset AI agent state for new analysis"""
+    """Reset AI agent state for new analysis."""
     try:
         from intellicrack.ai.autonomous_agent import AutonomousAgent
 
@@ -2859,7 +2876,7 @@ def task(
     output: str | None,
     verbose: bool,
 ):
-    """Execute specific autonomous AI task"""
+    """Execute specific autonomous AI task."""
     try:
         from intellicrack.ai.autonomous_agent import AutonomousAgent
 
@@ -2937,7 +2954,7 @@ def task(
 
 
 def main():
-    """Main entry point for CLI"""
+    """Main entry point for CLI."""
     # Check for --gui flag in command line arguments
     if "--gui" in sys.argv:
         # Remove --gui from argv before passing to click

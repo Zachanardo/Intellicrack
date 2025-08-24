@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -60,14 +60,17 @@ except ImportError as e:
     # Exception classes
     class ClientError(Exception):
         """Base aiohttp client error."""
+
         pass
 
     class ClientConnectorError(ClientError):
         """Connection error."""
+
         pass
 
     class ServerTimeoutError(ClientError):
         """Server timeout error."""
+
         pass
 
     # Response class

@@ -64,7 +64,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 
 class PluginCreationWizard(QWizard):
-    """Wizard for creating new plugins with professional templates"""
+    """Wizard for creating new plugins with professional templates."""
 
     #: Emitted when plugin is created (type: dict)
     plugin_created = pyqtSignal(dict)
@@ -94,7 +94,7 @@ class PluginCreationWizard(QWizard):
         self.currentIdChanged.connect(self.on_page_changed)
 
     def on_page_changed(self, page_id):
-        """Handle page changes"""
+        """Handle page changes."""
         _ = page_id
         current_page = self.currentPage()
 
@@ -106,7 +106,7 @@ class PluginCreationWizard(QWizard):
             self.update_summary()
 
     def generate_plugin_code(self):
-        """Generate plugin code based on user selections"""
+        """Generate plugin code based on user selections."""
         info = self.info_page.get_plugin_info()
         template = self.template_page.get_selected_template()
         features = self.features_page.get_selected_features()
@@ -116,7 +116,7 @@ class PluginCreationWizard(QWizard):
         self.code_page.set_generated_code(code)
 
     def generate_code_from_template(self, info, template, features):
-        """Generate plugin code from template"""
+        """Generate plugin code from template."""
         if self.plugin_type == "frida":
             return self.generate_frida_code(info, template, features)
         if self.plugin_type == "ghidra":
@@ -124,7 +124,7 @@ class PluginCreationWizard(QWizard):
         return self.generate_python_code(info, template, features)
 
     def generate_python_code(self, info, template, features):
-        """Generate Python plugin code"""
+        """Generate Python plugin code."""
         _ = template
         code = f'''"""
 {info['name']}
@@ -185,7 +185,7 @@ def get_plugin():
         return code
 
     def generate_frida_code(self, info, template, features):
-        """Generate Frida script code"""
+        """Generate Frida script code."""
         _ = template
         code = f"""/*
  * {info['name']}
@@ -224,7 +224,7 @@ function hexdump(buffer, options) {{
         return code
 
     def generate_ghidra_code(self, info, template, features):
-        """Generate Ghidra script code"""
+        """Generate Ghidra script code."""
         _ = template
         code = f'''# {info['name']}
 # {info['description']}
@@ -259,7 +259,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
         return code
 
     def _generate_feature_code(self, features):
-        """Generate code snippets for selected features"""
+        """Generate code snippets for selected features."""
         code_snippets = []
 
         if "binary_analysis" in features:
@@ -288,7 +288,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
         return "\n".join(code_snippets)
 
     def _generate_frida_feature_code(self, features):
-        """Generate Frida code for features"""
+        """Generate Frida code for features."""
         code_snippets = []
 
         if "function_hooking" in features:
@@ -313,7 +313,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
         return "\n".join(code_snippets)
 
     def _generate_ghidra_feature_code(self, features):
-        """Generate Ghidra code for features"""
+        """Generate Ghidra code for features."""
         code_snippets = []
 
         if "function_analysis" in features:
@@ -326,7 +326,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
         return "\n".join(code_snippets)
 
     def update_summary(self):
-        """Update the summary page"""
+        """Update the summary page."""
         info = self.info_page.get_plugin_info()
         template = self.template_page.get_selected_template()
         features = self.features_page.get_selected_features()
@@ -335,7 +335,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
         self.summary_page.update_summary(info, template, features, code)
 
     def accept(self):
-        """Handle wizard completion"""
+        """Handle wizard completion."""
         # Get all plugin data
         plugin_data = {
             "info": self.info_page.get_plugin_info(),
@@ -350,7 +350,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
             super().accept()
 
     def save_plugin(self, plugin_data):
-        """Save the plugin to disk"""
+        """Save the plugin to disk."""
         info = plugin_data["info"]
         code = plugin_data["code"]
 
@@ -403,7 +403,7 @@ class {info['name'].replace(' ', '')}(GhidraScript):
 
 
 class PluginInfoPage(QWizardPage):
-    """Page for basic plugin information"""
+    """Page for basic plugin information."""
 
     def __init__(self):
         """Initialize the PluginInfoPage with default values."""
@@ -454,7 +454,7 @@ class PluginInfoPage(QWizardPage):
         self.registerField("pluginAuthor*", self.author_edit)
 
     def get_plugin_info(self):
-        """Get the plugin information"""
+        """Get the plugin information."""
         return {
             "name": self.name_edit.text(),
             "version": self.version_edit.text(),
@@ -465,7 +465,7 @@ class PluginInfoPage(QWizardPage):
 
 
 class TemplateSelectionPage(QWizardPage):
-    """Page for selecting plugin template"""
+    """Page for selecting plugin template."""
 
     def __init__(self, plugin_type):
         """Initialize the TemplateSelectionPage with default values."""
@@ -498,7 +498,7 @@ class TemplateSelectionPage(QWizardPage):
             self.template_list.setCurrentRow(0)
 
     def populate_templates(self):
-        """Populate template list based on plugin type"""
+        """Populate template list based on plugin type."""
         templates = self.get_templates_for_type(self.plugin_type)
 
         for template in templates:
@@ -507,7 +507,7 @@ class TemplateSelectionPage(QWizardPage):
             self.template_list.addItem(item)
 
     def get_templates_for_type(self, plugin_type):
-        """Get available templates for plugin type"""
+        """Get available templates for plugin type."""
         if plugin_type == "frida":
             return [
                 {
@@ -562,14 +562,14 @@ class TemplateSelectionPage(QWizardPage):
         ]
 
     def on_template_selected(self, current, previous):
-        """Handle template selection"""
+        """Handle template selection."""
         _ = previous
         if current:
             template = current.data(Qt.UserRole)
             self.description_label.setText(template["description"])
 
     def get_selected_template(self):
-        """Get the selected template"""
+        """Get the selected template."""
         current = self.template_list.currentItem()
         if current:
             return current.data(Qt.UserRole)
@@ -577,7 +577,7 @@ class TemplateSelectionPage(QWizardPage):
 
 
 class PluginFeaturesPage(QWizardPage):
-    """Page for selecting plugin features"""
+    """Page for selecting plugin features."""
 
     def __init__(self):
         """Initialize the PluginFeaturesPage with default values."""
@@ -624,7 +624,7 @@ class PluginFeaturesPage(QWizardPage):
         self.setLayout(layout)
 
     def get_selected_features(self):
-        """Get list of selected features"""
+        """Get list of selected features."""
         features = []
         for feature_id, checkbox in self.feature_checks.items():
             if checkbox.isChecked():
@@ -633,7 +633,7 @@ class PluginFeaturesPage(QWizardPage):
 
 
 class CodeGenerationPage(QWizardPage):
-    """Page showing generated code"""
+    """Page showing generated code."""
 
     def __init__(self):
         """Initialize the CodeGenerationPage with default values."""
@@ -666,21 +666,21 @@ class CodeGenerationPage(QWizardPage):
         self.setLayout(layout)
 
     def set_generated_code(self, code):
-        """Set the generated code"""
+        """Set the generated code."""
         self.code_edit.setPlainText(code)
 
     def get_code(self):
-        """Get the current code"""
+        """Get the current code."""
         return self.code_edit.toPlainText()
 
     def copy_code(self):
-        """Copy code to clipboard"""
+        """Copy code to clipboard."""
         clipboard = QApplication.clipboard()
         clipboard.setText(self.code_edit.toPlainText())
         QMessageBox.information(self, "Copied", "Code copied to clipboard!")
 
     def validate_code(self):
-        """Validate the plugin code"""
+        """Validate the plugin code."""
         code = self.code_edit.toPlainText()
 
         try:
@@ -710,7 +710,7 @@ class CodeGenerationPage(QWizardPage):
 
 
 class SummaryPage(QWizardPage):
-    """Summary page showing all selections"""
+    """Summary page showing all selections."""
 
     def __init__(self):
         """Initialize the SummaryPage with default values."""
@@ -727,7 +727,7 @@ class SummaryPage(QWizardPage):
         self.setLayout(layout)
 
     def update_summary(self, info, template, features, code):
-        """Update the summary display"""
+        """Update the summary display."""
         summary = f"""
 <h3>Plugin Summary</h3>
 <p><b>Name:</b> {info['name']}<br>

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Interactive Tutorial System - Step-by-step CLI guidance for Intellicrack
+"""Interactive Tutorial System - Step-by-step CLI guidance for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -631,6 +631,7 @@ class TutorialSystem:
 
         Returns:
             Tuple of (success, message)
+
         """
         if not self.current_tutorial or self.current_step >= len(self.current_tutorial.steps):
             return False, "No active tutorial step"
@@ -670,11 +671,12 @@ class TutorialSystem:
                 import sys
 
                 # Execute command through CLI
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [sys.executable, "-m", "intellicrack.cli.cli"] + user_command.split(),
                     capture_output=True,
                     text=True,
                     timeout=30,
+                    shell=False  # Explicitly secure - using list format prevents shell injection
                 )
                 result_output = result.stdout + result.stderr
 

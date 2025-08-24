@@ -1,5 +1,4 @@
-"""
-Deprecation warnings for legacy configuration methods.
+"""Deprecation warnings for legacy configuration methods.
 
 This module provides deprecation warnings for old configuration methods
 that have been migrated to the central IntellicrackConfig system.
@@ -14,8 +13,7 @@ from typing import Any, Callable
 
 
 def deprecated_config_method(replacement: str, version: str = "4.0") -> Callable:
-    """
-    Decorator to mark configuration methods as deprecated.
+    """Decorator to mark configuration methods as deprecated.
 
     Args:
         replacement: The new method or approach to use instead
@@ -23,6 +21,7 @@ def deprecated_config_method(replacement: str, version: str = "4.0") -> Callable
 
     Returns:
         Decorated function that emits deprecation warning
+
     """
 
     def decorator(func: Callable) -> Callable:
@@ -42,14 +41,14 @@ def deprecated_config_method(replacement: str, version: str = "4.0") -> Callable
 
 
 def deprecated_qsettings(func: Callable) -> Callable:
-    """
-    Decorator specifically for QSettings-based methods.
+    """Decorator specifically for QSettings-based methods.
 
     Args:
         func: Function using QSettings
 
     Returns:
         Decorated function that emits QSettings deprecation warning
+
     """
 
     @functools.wraps(func)
@@ -67,14 +66,14 @@ def deprecated_qsettings(func: Callable) -> Callable:
 
 
 def deprecated_llm_file_storage(func: Callable) -> Callable:
-    """
-    Decorator for LLM configuration file storage methods.
+    """Decorator for LLM configuration file storage methods.
 
     Args:
         func: Function using file-based LLM config storage
 
     Returns:
         Decorated function that emits file storage deprecation warning
+
     """
 
     @functools.wraps(func)
@@ -92,14 +91,14 @@ def deprecated_llm_file_storage(func: Callable) -> Callable:
 
 
 def deprecated_cli_config_file(func: Callable) -> Callable:
-    """
-    Decorator for CLI configuration file methods.
+    """Decorator for CLI configuration file methods.
 
     Args:
         func: Function using separate CLI config file
 
     Returns:
         Decorated function that emits CLI config deprecation warning
+
     """
 
     @functools.wraps(func)
@@ -117,11 +116,11 @@ def deprecated_cli_config_file(func: Callable) -> Callable:
 
 
 def deprecated_legacy_config_path(path: str) -> None:
-    """
-    Emit warning for legacy configuration file paths.
+    """Emit warning for legacy configuration file paths.
 
     Args:
         path: The legacy path being accessed
+
     """
     warnings.warn(
         f"Legacy configuration path '{path}' is deprecated. "
@@ -133,12 +132,12 @@ def deprecated_legacy_config_path(path: str) -> None:
 
 
 def emit_migration_warning(old_system: str, new_system: str = "IntellicrackConfig") -> None:
-    """
-    Emit a migration warning for configuration systems.
+    """Emit a migration warning for configuration systems.
 
     Args:
         old_system: Name of the old configuration system
         new_system: Name of the new configuration system
+
     """
     warnings.warn(
         f"Configuration system '{old_system}' has been migrated to '{new_system}'. "
@@ -150,8 +149,7 @@ def emit_migration_warning(old_system: str, new_system: str = "IntellicrackConfi
 
 
 class DeprecatedConfigAccess:
-    """
-    Context manager for deprecated configuration access patterns.
+    """Context manager for deprecated configuration access patterns.
 
     Usage:
         with DeprecatedConfigAccess("QSettings"):
@@ -160,11 +158,11 @@ class DeprecatedConfigAccess:
     """
 
     def __init__(self, system_name: str):
-        """
-        Initialize deprecation context.
+        """Initialize deprecation context.
 
         Args:
             system_name: Name of the deprecated system
+
         """
         self.system_name = system_name
 
@@ -189,11 +187,11 @@ DEPRECATION_MESSAGES = {
 
 
 def check_deprecated_import(module_name: str) -> None:
-    """
-    Check if an imported module is deprecated for configuration.
+    """Check if an imported module is deprecated for configuration.
 
     Args:
         module_name: Name of the module being imported
+
     """
     deprecated_modules = {
         "PyQt6.QtCore.QSettings": "Use intellicrack.core.config_manager.IntellicrackConfig instead",
@@ -211,12 +209,12 @@ def check_deprecated_import(module_name: str) -> None:
 
 # Production-ready warning configuration
 def configure_deprecation_warnings(show_warnings: bool = True, error_on_deprecated: bool = False):
-    """
-    Configure how deprecation warnings are handled.
+    """Configure how deprecation warnings are handled.
 
     Args:
         show_warnings: Whether to show deprecation warnings
         error_on_deprecated: Whether to raise errors instead of warnings
+
     """
     if error_on_deprecated:
         # Convert deprecation warnings to errors

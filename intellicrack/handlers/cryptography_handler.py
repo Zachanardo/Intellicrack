@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -571,6 +571,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
     class FallbackBackend:
         """Default backend."""
+
         pass
 
     def default_backend():
@@ -707,6 +708,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                         self.password = password
 
     class NameOID:
+        """Object identifier constants for X509 certificate name attributes."""
         COMMON_NAME = 'CN'
         ORGANIZATION_NAME = 'O'
         COUNTRY_NAME = 'C'

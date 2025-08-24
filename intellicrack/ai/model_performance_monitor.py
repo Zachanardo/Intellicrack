@@ -1,4 +1,4 @@
-"""Model Performance Monitor for Intellicrack
+"""Model Performance Monitor for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

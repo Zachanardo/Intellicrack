@@ -1,4 +1,4 @@
-"""Template and response generation utilities for Intellicrack
+"""Template and response generation utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

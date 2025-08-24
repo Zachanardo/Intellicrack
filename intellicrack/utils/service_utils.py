@@ -36,6 +36,7 @@ def get_service_url(service_name: str) -> str:
 
     Raises:
         ConfigurationError: If service URL is not configured
+
     """
     # Import here to avoid circular imports
     try:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ License: GPL v3
 
 
 class CloudProvider(Enum):
-    """Supported cloud providers"""
+    """Supported cloud providers."""
 
     AWS = "aws"
     AZURE = "azure"
@@ -81,7 +81,7 @@ class CloudProvider(Enum):
 
 
 class AuthenticationType(Enum):
-    """Authentication types"""
+    """Authentication types."""
 
     OAUTH2 = "oauth2"
     JWT = "jwt"
@@ -93,7 +93,7 @@ class AuthenticationType(Enum):
 
 
 class RequestType(Enum):
-    """Request classification types"""
+    """Request classification types."""
 
     LICENSE_VALIDATION = "license_validation"
     TOKEN_REFRESH = "token_refresh"  # noqa: S105
@@ -105,7 +105,7 @@ class RequestType(Enum):
 
 
 class BypassResult(Enum):
-    """Bypass operation results"""
+    """Bypass operation results."""
 
     SUCCESS = "success"
     FAILED = "failed"
@@ -116,7 +116,7 @@ class BypassResult(Enum):
 
 @dataclass
 class InterceptorConfig:
-    """Configuration for the interceptor"""
+    """Configuration for the interceptor."""
 
     listen_host: str = "127.0.0.1"
     listen_port: int = 8888
@@ -142,7 +142,7 @@ class InterceptorConfig:
 
 @dataclass
 class RequestInfo:
-    """Information about intercepted request"""
+    """Information about intercepted request."""
 
     method: str
     url: str
@@ -158,7 +158,7 @@ class RequestInfo:
 
 @dataclass
 class ResponseInfo:
-    """Information about modified response"""
+    """Information about modified response."""
 
     status: int
     headers: dict[str, str]
@@ -172,7 +172,7 @@ class ResponseInfo:
 
 @dataclass
 class BypassOperation:
-    """Bypass operation tracking"""
+    """Bypass operation tracking."""
 
     request_id: str
     provider: CloudProvider
@@ -187,7 +187,7 @@ class BypassOperation:
 
 
 class CertificateManager:
-    """Manages SSL certificates for HTTPS interception"""
+    """Manages SSL certificates for HTTPS interception."""
 
     def __init__(self, config: InterceptorConfig):
         """Initialize with configuration and network interception capabilities."""
@@ -309,7 +309,7 @@ class CertificateManager:
             return False
 
     def get_server_certificate(self, hostname: str) -> tuple[ssl.SSLContext, str]:
-        """Get or generate server certificate for hostname"""
+        """Get or generate server certificate for hostname."""
         with self.cert_lock:
             if hostname in self.server_certs:
                 return self.server_certs[hostname]
@@ -404,7 +404,7 @@ class CertificateManager:
 
 
 class RequestClassifier:
-    """Classifies and analyzes intercepted requests"""
+    """Classifies and analyzes intercepted requests."""
 
     def __init__(self):
         """Initialize request classifier with cloud provider and license patterns."""
@@ -476,7 +476,7 @@ class RequestClassifier:
     def classify_request(
         self, request: RequestInfo
     ) -> tuple[CloudProvider, AuthenticationType, RequestType, float]:
-        """Classify request and return provider, auth type, request type, and confidence"""
+        """Classify request and return provider, auth type, request type, and confidence."""
         # Detect cloud provider
         provider = self._detect_provider(request.url, request.headers)
 
@@ -492,7 +492,7 @@ class RequestClassifier:
         return provider, auth_type, request_type, confidence
 
     def _detect_provider(self, url: str, headers: dict[str, str]) -> CloudProvider:
-        """Detect cloud provider from URL and headers"""
+        """Detect cloud provider from URL and headers."""
         url_lower = url.lower()
 
         for provider, patterns in self.provider_patterns.items():
@@ -512,7 +512,7 @@ class RequestClassifier:
         return CloudProvider.GENERIC_SAAS
 
     def _detect_auth_type(self, headers: dict[str, str], body: bytes) -> AuthenticationType:
-        """Detect authentication type from headers and body"""
+        """Detect authentication type from headers and body."""
         # Check Authorization header
         auth_header = headers.get("Authorization", "")
         if auth_header:
@@ -547,7 +547,7 @@ class RequestClassifier:
         return AuthenticationType.CUSTOM
 
     def _detect_request_type(self, url: str, headers: dict[str, str], body: bytes) -> RequestType:
-        """Detect request type from URL, headers, and body content"""
+        """Detect request type from URL, headers, and body content."""
         url_lower = url.lower()
 
         # Parse body content for additional request type hints
@@ -622,7 +622,7 @@ class RequestClassifier:
         request_type: RequestType,
         request: RequestInfo,
     ) -> float:
-        """Calculate confidence score for classification"""
+        """Calculate confidence score for classification."""
         confidence = 0.0
 
         # Provider confidence
@@ -651,7 +651,7 @@ class RequestClassifier:
 
 
 class AuthenticationManager:
-    """Manages authentication tokens and credentials"""
+    """Manages authentication tokens and credentials."""
 
     def __init__(self):
         """Initialize authentication manager with token caching and signing capabilities."""
@@ -661,7 +661,7 @@ class AuthenticationManager:
         self._generate_signing_keys()
 
     def _generate_signing_keys(self):
-        """Generate JWT signing keys for different algorithms"""
+        """Generate JWT signing keys for different algorithms."""
         # RSA key for RS256
         rsa_key = rsa.generate_private_key(
             public_exponent=65537,
@@ -748,7 +748,7 @@ class AuthenticationManager:
             return token
 
     def generate_license_token(self, provider: CloudProvider, auth_type: AuthenticationType) -> str:
-        """Generate a new license validation token"""
+        """Generate a new license validation token."""
         current_time = int(time.time())
 
         # Base payload with auth_type-specific claims
@@ -847,13 +847,13 @@ class AuthenticationManager:
         return token
 
     def extract_bearer_token(self, auth_header: str) -> str | None:
-        """Extract bearer token from Authorization header"""
+        """Extract bearer token from Authorization header."""
         if auth_header.lower().startswith("bearer "):
             return auth_header[7:]
         return None
 
     def modify_api_key(self, api_key: str) -> str:
-        """Modify API key to bypass validation"""
+        """Modify API key to bypass validation."""
         # Generate a valid-looking API key
         prefix = api_key.split("-")[0] if "-" in api_key else api_key[:8]
         new_key = f"{prefix}-{secrets.token_hex(16)}"
@@ -863,7 +863,7 @@ class AuthenticationManager:
 
 
 class ResponseModifier:
-    """Modifies responses to bypass license validation"""
+    """Modifies responses to bypass license validation."""
 
     def __init__(self, auth_manager: AuthenticationManager):
         """Initialize response generator with authentication manager and response templates."""
@@ -873,7 +873,7 @@ class ResponseModifier:
     def modify_response(
         self, request: RequestInfo, original_response: aiohttp.ClientResponse, response_body: bytes
     ) -> tuple[int, dict[str, str], bytes]:
-        """Modify response based on request type"""
+        """Modify response based on request type."""
         if request.request_type == RequestType.LICENSE_VALIDATION:
             return self._modify_license_response(request, original_response, response_body)
         if request.request_type == RequestType.FEATURE_CHECK:
@@ -1146,7 +1146,7 @@ class ResponseModifier:
 
 
 class CacheManager:
-    """Manages response caching with TTL"""
+    """Manages response caching with TTL."""
 
     def __init__(self, config: InterceptorConfig):
         """Initialize with configuration and network interception capabilities."""
@@ -1161,7 +1161,7 @@ class CacheManager:
         self.cleanup_thread.start()
 
     def _generate_cache_key(self, request: RequestInfo) -> str:
-        """Generate cache key for request"""
+        """Generate cache key for request."""
         # Include method, URL, and relevant headers
         key_data = f"{request.method}:{request.url}"
 
@@ -1175,7 +1175,7 @@ class CacheManager:
         return hashlib.sha256(key_data.encode()).hexdigest()
 
     def get_cached_response(self, request: RequestInfo) -> ResponseInfo | None:
-        """Get cached response if available and valid"""
+        """Get cached response if available and valid."""
         cache_key = self._generate_cache_key(request)
 
         with self.cache_lock:
@@ -1196,7 +1196,7 @@ class CacheManager:
         return None
 
     def store_response(self, request: RequestInfo, response: ResponseInfo):
-        """Store response in cache"""
+        """Store response in cache."""
         cache_key = self._generate_cache_key(request)
 
         with self.cache_lock:
@@ -1227,7 +1227,7 @@ class CacheManager:
         self.logger.debug(f"Cached response for {request.url}")
 
     def _store_in_sqlite(self, cache_key: str, encoded_data: str):
-        """Store cache data in SQLite database"""
+        """Store cache data in SQLite database."""
         try:
             conn = sqlite3.connect(":memory:")  # In-memory database for this example
             cursor = conn.cursor()
@@ -1243,7 +1243,7 @@ class CacheManager:
             self.logger.debug(f"SQLite storage failed: {e}")
 
     def _check_network_connectivity(self, url: str) -> bool:
-        """Check network connectivity using socket"""
+        """Check network connectivity using socket."""
         try:
             parsed_url = urllib.parse.urlparse(url)
             hostname = parsed_url.hostname or parsed_url.netloc
@@ -1293,7 +1293,7 @@ class CacheManager:
             return False
 
     def _compress_cache_data(self, data: bytes) -> bytes:
-        """Compress cache data using zlib"""
+        """Compress cache data using zlib."""
         try:
             compressed = zlib.compress(data)
             self.logger.debug(f"Compressed {len(data)} bytes to {len(compressed)} bytes")
@@ -1303,7 +1303,7 @@ class CacheManager:
             return data
 
     def _analyze_response_content(self, response_body: bytes, content_type: str) -> dict[str, Any]:
-        """Analyze response content and detect MIME types"""
+        """Analyze response content and detect MIME types."""
         # Use Set type for tracking unique domains
         unique_domains: set[str] = set()
         analysis = {
@@ -1337,7 +1337,7 @@ class CacheManager:
         return analysis
 
     def _evict_oldest(self):
-        """Evict oldest cache entry based on access time"""
+        """Evict oldest cache entry based on access time."""
         if not self.cache:
             return
 
@@ -1352,7 +1352,7 @@ class CacheManager:
         self.logger.debug(f"Evicted cache entry: {oldest_key}")
 
     def _cleanup_loop(self):
-        """Background cleanup of expired cache entries"""
+        """Background cleanup of expired cache entries."""
         while True:
             try:
                 time.sleep(300)  # Cleanup every 5 minutes
@@ -1379,7 +1379,7 @@ class CacheManager:
                 self.logger.error(f"Cache cleanup error: {e}")
 
     def clear_cache(self):
-        """Clear all cached responses"""
+        """Clear all cached responses."""
         with self.cache_lock:
             self.cache.clear()
             self.access_times.clear()
@@ -1387,7 +1387,7 @@ class CacheManager:
 
 
 class LocalLicenseServer:
-    """Local license server for fallback scenarios"""
+    """Local license server for fallback scenarios."""
 
     def __init__(self, auth_manager: AuthenticationManager):
         """Initialize response generator with authentication manager and response templates."""
@@ -1399,7 +1399,7 @@ class LocalLicenseServer:
         self._initialize_licenses()
 
     def _initialize_licenses(self):
-        """Initialize default license data"""
+        """Initialize default license data."""
         default_license = {
             "id": str(uuid.uuid4()),
             "status": "active",
@@ -1426,7 +1426,7 @@ class LocalLicenseServer:
             self.license_db[key] = default_license.copy()
 
     def handle_license_request(self, request: RequestInfo) -> ResponseInfo:
-        """Handle license validation request locally"""
+        """Handle license validation request locally."""
         # Extract identifier from request
         identifier = self._extract_identifier(request)
 
@@ -1465,7 +1465,7 @@ class LocalLicenseServer:
         return response
 
     def _extract_identifier(self, request: RequestInfo) -> str:
-        """Extract identifier from request for license lookup"""
+        """Extract identifier from request for license lookup."""
         # Try to extract from various sources
 
         # Check Authorization header
@@ -1491,7 +1491,7 @@ class LocalLicenseServer:
         return "default"
 
     def _generate_validation_response(self, license_data: dict[str, Any]) -> dict[str, Any]:
-        """Generate license validation response"""
+        """Generate license validation response."""
         return {
             "valid": True,
             "licensed": True,
@@ -1503,7 +1503,7 @@ class LocalLicenseServer:
         }
 
     def _generate_feature_response(self, license_data: dict[str, Any]) -> dict[str, Any]:
-        """Generate feature check response"""
+        """Generate feature check response."""
         return {
             "features_enabled": True,
             "available_features": license_data.get("features", []),
@@ -1520,7 +1520,7 @@ class LocalLicenseServer:
     def _generate_token_response(
         self, request: RequestInfo, license_data: dict[str, Any]
     ) -> dict[str, Any]:
-        """Generate token refresh response"""
+        """Generate token refresh response."""
         # Generate new tokens
         access_token = self.auth_manager.generate_license_token(request.provider, request.auth_type)
         refresh_token = secrets.token_urlsafe(32)
@@ -1535,7 +1535,7 @@ class LocalLicenseServer:
         }
 
     def _generate_generic_response(self, license_data: dict[str, Any]) -> dict[str, Any]:
-        """Generate generic successful response"""
+        """Generate generic successful response."""
         return {
             "success": True,
             "status": "ok",
@@ -1545,7 +1545,7 @@ class LocalLicenseServer:
 
 
 class CloudLicenseInterceptor:
-    """Main cloud license interceptor service"""
+    """Main cloud license interceptor service."""
 
     def __init__(self, config: InterceptorConfig = None):
         """Initialize the cloud license interceptor.
@@ -1600,7 +1600,7 @@ class CloudLicenseInterceptor:
             self.session = aiohttp.ClientSession(
                 connector=connector,
                 timeout=timeout,
-                headers={"User-Agent": random.choice(self.config.user_agents)},
+                headers={"User-Agent": random.choice(self.config.user_agents)},  # noqa: S311 - User-Agent rotation for stealth research
             )
 
             # Start HTTP server
@@ -1622,7 +1622,7 @@ class CloudLicenseInterceptor:
             return False
 
     async def stop(self):
-        """Stop the interceptor service"""
+        """Stop the interceptor service."""
         self.running = False
 
         if self.server:
@@ -1635,7 +1635,7 @@ class CloudLicenseInterceptor:
         self.logger.info("Interceptor stopped")
 
     def _create_app(self) -> aiohttp.web.Application:
-        """Create aiohttp application"""
+        """Create aiohttp application."""
         app = aiohttp.web.Application()
 
         # Add routes
@@ -1650,10 +1650,10 @@ class CloudLicenseInterceptor:
     async def _stealth_middleware(
         self, request: aiohttp.web.Request, handler: Callable
     ) -> aiohttp.web.Response:
-        """Middleware for stealth operation"""
+        """Middleware for stealth operation."""
         if self.config.stealth_mode:
             # Add realistic delay
-            delay = random.uniform(self.config.request_delay_min, self.config.request_delay_max)
+            delay = random.uniform(self.config.request_delay_min, self.config.request_delay_max)  # noqa: S311 - Stealth timing randomization for research
             await asyncio.sleep(delay)
 
         response = await handler(request)
@@ -1668,7 +1668,7 @@ class CloudLicenseInterceptor:
     async def _logging_middleware(
         self, request: aiohttp.web.Request, handler: Callable
     ) -> aiohttp.web.Response:
-        """Middleware for request logging"""
+        """Middleware for request logging."""
         start_time = time.time()
         response = await handler(request)
         processing_time = time.time() - start_time
@@ -1729,7 +1729,7 @@ class CloudLicenseInterceptor:
             )
 
     async def _handle_license_request(self, request: RequestInfo) -> aiohttp.web.Response:
-        """Handle license-related request with bypass logic"""
+        """Handle license-related request with bypass logic."""
         self.logger.info(
             f"License request detected: {request.provider.value} "
             f"{request.request_type.value} (confidence: {request.confidence:.2f})",
@@ -1797,7 +1797,7 @@ class CloudLicenseInterceptor:
             headers = request.headers.copy()
             if self.config.stealth_mode:
                 # Rotate User-Agent
-                headers["User-Agent"] = random.choice(self.config.user_agents)
+                headers["User-Agent"] = random.choice(self.config.user_agents)  # noqa: S311 - User-Agent rotation for stealth research
 
                 # Remove proxy headers
                 headers.pop("Proxy-Connection", None)
@@ -1833,7 +1833,7 @@ class CloudLicenseInterceptor:
     def _modify_upstream_response(
         self, request: RequestInfo, upstream_response: ResponseInfo
     ) -> ResponseInfo:
-        """Modify upstream response for bypass"""
+        """Modify upstream response for bypass."""
         # Use response modifier
         status, headers, body = self.response_modifier.modify_response(
             request,
@@ -1862,7 +1862,7 @@ class CloudLicenseInterceptor:
         return modified_response
 
     def _generate_fallback_response(self, request: RequestInfo) -> ResponseInfo:
-        """Generate emergency fallback response"""
+        """Generate emergency fallback response."""
         # Simple success response
         response_data = {
             "status": "success",
@@ -1891,7 +1891,7 @@ class CloudLicenseInterceptor:
         )
 
     def _create_response(self, response_info: ResponseInfo) -> aiohttp.web.Response:
-        """Create aiohttp response from ResponseInfo"""
+        """Create aiohttp response from ResponseInfo."""
         return aiohttp.web.Response(
             status=response_info.status,
             headers=response_info.headers,
@@ -1899,7 +1899,7 @@ class CloudLicenseInterceptor:
         )
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get interceptor statistics"""
+        """Get interceptor statistics."""
         return {
             "running": self.running,
             "uptime": time.time()
@@ -1924,7 +1924,7 @@ class CloudLicenseInterceptor:
 
 
 async def main():
-    """Main function for CLI usage"""
+    """Main function for CLI usage."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Cloud License Interceptor")

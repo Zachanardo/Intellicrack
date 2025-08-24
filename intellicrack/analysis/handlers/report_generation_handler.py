@@ -1,4 +1,4 @@
-"""Report Generation Handler
+"""Report Generation Handler.
 
 Manages the generation of comprehensive analysis reports in multiple formats
 (HTML, Markdown, PDF) based on protection analysis results.
@@ -54,7 +54,7 @@ logger = get_logger(__name__)
 
 
 class ReportGeneratorWorkerSignals(QObject):
-    """Signals for report generation worker"""
+    """Signals for report generation worker."""
 
     finished = pyqtSignal()
     error = pyqtSignal(tuple)
@@ -63,7 +63,7 @@ class ReportGeneratorWorkerSignals(QObject):
 
 
 class ReportGeneratorWorker(QRunnable):
-    """Worker thread for report generation"""
+    """Worker thread for report generation."""
 
     def __init__(
         self, result: UnifiedProtectionResult, format_type: str, output_path: str, options: dict
@@ -85,7 +85,7 @@ class ReportGeneratorWorker(QRunnable):
         self.signals = ReportGeneratorWorkerSignals()
 
     def run(self):
-        """Generate the report"""
+        """Generate the report."""
         try:
             self.signals.progress.emit(f"Generating {self.format_type.upper()} report...")
 
@@ -123,7 +123,7 @@ class ReportGeneratorWorker(QRunnable):
 
 
 class ReportOptionsDialog(QDialog):
-    """Dialog for selecting report generation options"""
+    """Dialog for selecting report generation options."""
 
     def __init__(self, parent=None):
         """Initialize the report options dialog.
@@ -204,7 +204,7 @@ class ReportOptionsDialog(QDialog):
         self.setLayout(layout)
 
     def _on_format_changed(self, format_text):
-        """Handle format change"""
+        """Handle format change."""
         # Disable entropy visualization for non-HTML formats
         if format_text != "HTML":
             self.include_entropy.setChecked(False)
@@ -213,7 +213,7 @@ class ReportOptionsDialog(QDialog):
             self.include_entropy.setEnabled(True)
 
     def get_options(self) -> dict:
-        """Get selected options"""
+        """Get selected options."""
         return {
             "format": self.format_combo.currentText().lower(),
             "include_summary": self.include_summary.isChecked(),
@@ -305,7 +305,7 @@ class ReportGenerationHandler(QObject):
         self.thread_pool.start(worker)
 
     def _on_report_ready(self, result: dict):
-        """Handle report generation completion"""
+        """Handle report generation completion."""
         if result["success"]:
             self.report_ready.emit(result)
 
@@ -314,7 +314,7 @@ class ReportGenerationHandler(QObject):
             logger.info(msg)
 
     def _on_worker_error(self, error_tuple):
-        """Handle worker thread errors"""
+        """Handle worker thread errors."""
         exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"Report generation failed: {exc_value}"
         logger.error(f"{error_msg}\n{exc_traceback}")

@@ -1,4 +1,4 @@
-"""Protection detection utilities - wrapper to redirect to protection/protection_detection.py
+"""Protection detection utilities - wrapper to redirect to protection/protection_detection.py.
 
 Copyright (C) 2025 Zachary Flint
 

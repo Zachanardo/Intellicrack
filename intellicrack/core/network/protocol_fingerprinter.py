@@ -1,4 +1,4 @@
-"""Protocol Fingerprinting for Proprietary License Protocols
+"""Protocol Fingerprinting for Proprietary License Protocols.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -268,144 +268,180 @@ class ProtocolFingerprinter:
 
         """
         try:
-            # Store traffic sample for learning
-            if self.config["learning_mode"]:
-                self.traffic_samples.append(
-                    {
-                        "data": packet_data,
-                        "port": port,
-                        "timestamp": time.time(),
-                    }
-                )
-
-                # Trim samples if needed
-                if len(self.traffic_samples) > 1000:
-                    self.traffic_samples = self.traffic_samples[-1000:]
-
-            # Check each signature
-            results = []
-
-            for protocol_id, signature in self.signatures.items():
-                confidence = 0.0
-
-                # Check port if provided
-                if port is not None and port in signature["ports"]:
-                    confidence += 0.2
-
-                # Check statistical features if defined
-                if "statistical_features" in signature:
-                    # Calculate entropy
-                    entropy = calculate_entropy(packet_data)
-
-                    # Calculate byte frequency distribution
-                    byte_freq = self._calculate_byte_frequency(packet_data)
-
-                    # Check entropy range
-                    if entropy > signature["statistical_features"].get(
-                        "min_entropy", 0
-                    ) and entropy < signature["statistical_features"].get("max_entropy", 8):
-                        confidence += 0.3
-
-                    # Check byte frequency distribution if defined
-                    if "byte_freq_thresholds" in signature["statistical_features"]:
-                        freq_matches = 0
-                        total_checks = 0
-
-                        for byte_val, (min_freq, max_freq) in signature["statistical_features"][
-                            "byte_freq_thresholds"
-                        ].items():
-                            byte_val = int(byte_val) if isinstance(byte_val, str) else byte_val
-                            total_checks += 1
-
-                            if byte_val in byte_freq:
-                                if min_freq <= byte_freq[byte_val] <= max_freq:
-                                    freq_matches += 1
-
-                        if total_checks > 0:
-                            confidence += 0.3 * (freq_matches / total_checks)
-
-                # Check patterns
-                # First check for binary pattern matching
-                if "patterns" in signature:
-                    for _pattern in signature["patterns"]:
-                        if "offset" in _pattern and "bytes" in _pattern:
-                            offset = _pattern["offset"]
-
-                            if offset + len(_pattern["bytes"]) <= len(packet_data):
-                                if _pattern.get("mask") is None:
-                                    # Simple pattern match
-                                    if (
-                                        packet_data[offset : offset + len(_pattern["bytes"])]
-                                        == _pattern["bytes"]
-                                    ):
-                                        confidence += _pattern.get("weight", 0.2)
-                                else:
-                                    # Masked pattern match
-                                    match = True
-                                    for _i in range(len(_pattern["bytes"])):
-                                        if (_pattern["mask"][_i] & packet_data[offset + _i]) != (
-                                            _pattern["mask"][_i] & _pattern["bytes"][_i]
-                                        ):
-                                            match = False
-                                            break
-
-                                    if match:
-                                        confidence += _pattern.get("weight", 0.2)
-
-                # Also check for regex pattern matching
-                if "patterns" in signature:
-                    pattern_matches = 0
-                    regex_patterns = [_p for _p in signature["patterns"] if isinstance(_p, str)]
-
-                    if regex_patterns:
-                        for _pattern in regex_patterns:
-                            if re.search(
-                                _pattern.encode("utf-8")
-                                if isinstance(packet_data, bytes)
-                                else _pattern,
-                                packet_data,
-                            ):
-                                pattern_matches += 1
-
-                        # Calculate match percentage for regex patterns
-                        if len(regex_patterns) > 0:
-                            match_ratio = pattern_matches / len(regex_patterns)
-                            if match_ratio >= 0.7:  # 70% match threshold
-                                confidence += 0.5
-                            else:
-                                confidence += 0.3 * match_ratio
-
-                if confidence >= self.config["min_confidence"]:
-                    results.append(
-                        {
-                            "protocol_id": protocol_id,
-                            "name": signature["name"],
-                            "description": signature["description"],
-                            "confidence": confidence,
-                            "header_format": signature["header_format"],
-                            "response_templates": signature["response_templates"],
-                        }
-                    )
-
-            # Sort by confidence
-            results.sort(key=lambda x: x["confidence"], reverse=True)
-
-            if results:
-                self.logger.info(
-                    "Identified protocol: %s (confidence: %.2f)",
-                    results[0]["name"],
-                    results[0]["confidence"],
-                )
-                return results[0]
-
-            # If no match, try to learn new signature
-            if self.config["learning_mode"]:
-                self._learn_new_signature(packet_data, port)
-
-            return None
+            self._store_traffic_sample(packet_data, port)
+            results = self._analyze_protocol_signatures(packet_data, port)
+            return self._process_analysis_results(results, packet_data, port)
 
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error("Error analyzing traffic: %s", e)
+            return None
+
+    def _store_traffic_sample(self, packet_data: bytes | bytearray, port: int | None) -> None:
+        """Store traffic sample for learning if learning mode is enabled."""
+        if not self.config["learning_mode"]:
+            return
+
+        self.traffic_samples.append({
+            "data": packet_data,
+            "port": port,
+            "timestamp": time.time(),
+        })
+
+        if len(self.traffic_samples) > 1000:
+            self.traffic_samples = self.traffic_samples[-1000:]
+
+    def _analyze_protocol_signatures(self, packet_data: bytes | bytearray, port: int | None) -> list[dict[str, Any]]:
+        """Analyze packet data against all protocol signatures."""
+        results = []
+
+        for protocol_id, signature in self.signatures.items():
+            confidence = self._calculate_protocol_confidence(packet_data, port, signature)
+
+            if confidence >= self.config["min_confidence"]:
+                results.append({
+                    "protocol_id": protocol_id,
+                    "name": signature["name"],
+                    "description": signature["description"],
+                    "confidence": confidence,
+                    "header_format": signature["header_format"],
+                    "response_templates": signature["response_templates"],
+                })
+
+        return results
+
+    def _calculate_protocol_confidence(self, packet_data: bytes | bytearray, port: int | None, signature: dict[str, Any]) -> float:
+        """Calculate confidence score for a protocol signature."""
+        confidence = 0.0
+
+        confidence += self._check_port_match(port, signature)
+        confidence += self._check_statistical_features(packet_data, signature)
+        confidence += self._check_binary_patterns(packet_data, signature)
+        confidence += self._check_regex_patterns(packet_data, signature)
+
+        return confidence
+
+    def _check_port_match(self, port: int | None, signature: dict[str, Any]) -> float:
+        """Check if port matches signature ports."""
+        if port is not None and port in signature["ports"]:
+            return 0.2
+        return 0.0
+
+    def _check_statistical_features(self, packet_data: bytes | bytearray, signature: dict[str, Any]) -> float:
+        """Check statistical features like entropy and byte frequency."""
+        if "statistical_features" not in signature:
+            return 0.0
+
+        confidence = 0.0
+        confidence += self._check_entropy_match(packet_data, signature["statistical_features"])
+        confidence += self._check_byte_frequency_match(packet_data, signature["statistical_features"])
+
+        return confidence
+
+    def _check_entropy_match(self, packet_data: bytes | bytearray, stats_features: dict[str, Any]) -> float:
+        """Check if packet entropy matches signature requirements."""
+        entropy = calculate_entropy(packet_data)
+        min_entropy = stats_features.get("min_entropy", 0)
+        max_entropy = stats_features.get("max_entropy", 8)
+
+        if min_entropy < entropy < max_entropy:
+            return 0.3
+        return 0.0
+
+    def _check_byte_frequency_match(self, packet_data: bytes | bytearray, stats_features: dict[str, Any]) -> float:
+        """Check if byte frequency distribution matches signature requirements."""
+        if "byte_freq_thresholds" not in stats_features:
+            return 0.0
+
+        byte_freq = self._calculate_byte_frequency(packet_data)
+        freq_matches = 0
+        total_checks = 0
+
+        for byte_val, (min_freq, max_freq) in stats_features["byte_freq_thresholds"].items():
+            byte_val = int(byte_val) if isinstance(byte_val, str) else byte_val
+            total_checks += 1
+
+            if byte_val in byte_freq and min_freq <= byte_freq[byte_val] <= max_freq:
+                freq_matches += 1
+
+        if total_checks > 0:
+            return 0.3 * (freq_matches / total_checks)
+        return 0.0
+
+    def _check_binary_patterns(self, packet_data: bytes | bytearray, signature: dict[str, Any]) -> float:
+        """Check binary pattern matching for signature."""
+        if "patterns" not in signature:
+            return 0.0
+
+        confidence = 0.0
+
+        for pattern in signature["patterns"]:
+            if "offset" in pattern and "bytes" in pattern:
+                confidence += self._match_binary_pattern(packet_data, pattern)
+
+        return confidence
+
+    def _match_binary_pattern(self, packet_data: bytes | bytearray, pattern: dict[str, Any]) -> float:
+        """Match a single binary pattern against packet data."""
+        offset = pattern["offset"]
+
+        if offset + len(pattern["bytes"]) > len(packet_data):
+            return 0.0
+
+        if pattern.get("mask") is None:
+            if packet_data[offset:offset + len(pattern["bytes"])] == pattern["bytes"]:
+                return pattern.get("weight", 0.2)
+        else:
+            if self._match_masked_pattern(packet_data, pattern, offset):
+                return pattern.get("weight", 0.2)
+
+        return 0.0
+
+    def _match_masked_pattern(self, packet_data: bytes | bytearray, pattern: dict[str, Any], offset: int) -> bool:
+        """Check masked pattern match."""
+        for i in range(len(pattern["bytes"])):
+            masked_packet = pattern["mask"][i] & packet_data[offset + i]
+            masked_pattern = pattern["mask"][i] & pattern["bytes"][i]
+            if masked_packet != masked_pattern:
+                return False
+        return True
+
+    def _check_regex_patterns(self, packet_data: bytes | bytearray, signature: dict[str, Any]) -> float:
+        """Check regex pattern matching for signature."""
+        if "patterns" not in signature:
+            return 0.0
+
+        regex_patterns = [p for p in signature["patterns"] if isinstance(p, str)]
+        if not regex_patterns:
+            return 0.0
+
+        pattern_matches = 0
+        for pattern in regex_patterns:
+            search_pattern = pattern.encode("utf-8") if isinstance(packet_data, bytes) else pattern
+            if re.search(search_pattern, packet_data):
+                pattern_matches += 1
+
+        match_ratio = pattern_matches / len(regex_patterns)
+        if match_ratio >= 0.7:
+            return 0.5
+        else:
+            return 0.3 * match_ratio
+
+    def _process_analysis_results(self, results: list[dict[str, Any]], packet_data: bytes | bytearray, port: int | None) -> dict[str, Any] | None:
+        """Process analysis results and return best match or learn new signature."""
+        results.sort(key=lambda x: x["confidence"], reverse=True)
+
+        if results:
+            self.logger.info(
+                "Identified protocol: %s (confidence: %.2f)",
+                results[0]["name"],
+                results[0]["confidence"],
+            )
+            return results[0]
+
+        if self.config["learning_mode"]:
+            self._learn_new_signature(packet_data, port)
+
+        return None
 
     def fingerprint_packet(
         self, packet_data: bytes | bytearray, port: int | None = None

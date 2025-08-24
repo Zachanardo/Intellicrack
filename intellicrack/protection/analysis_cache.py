@@ -1,4 +1,4 @@
-"""Advanced Analysis Cache for Protection Engine
+"""Advanced Analysis Cache for Protection Engine.
 
 Provides efficient caching with persistence, size management, and automatic invalidation.
 
@@ -104,7 +104,7 @@ def secure_pickle_load(file_path):
 
 @dataclass
 class CacheEntry:
-    """Single cache entry with metadata"""
+    """Single cache entry with metadata."""
 
     data: Any
     timestamp: float
@@ -115,11 +115,11 @@ class CacheEntry:
     cache_key: str = ""
 
     def __post_init__(self):
-        """Initialize logger after dataclass initialization"""
+        """Initialize logger after dataclass initialization."""
         self.logger = logging.getLogger(__name__ + ".CacheEntry")
 
     def is_valid(self, file_path: str) -> bool:
-        """Check if cache entry is still valid"""
+        """Check if cache entry is still valid."""
         try:
             if not os.path.exists(file_path):
                 return False
@@ -140,14 +140,14 @@ class CacheEntry:
             return False
 
     def update_access(self):
-        """Update access statistics"""
+        """Update access statistics."""
         self.access_count += 1
         self.last_access = time.time()
 
 
 @dataclass
 class CacheStats:
-    """Cache statistics"""
+    """Cache statistics."""
 
     total_entries: int = 0
     cache_hits: int = 0
@@ -159,17 +159,17 @@ class CacheStats:
 
     @property
     def hit_rate(self) -> float:
-        """Calculate cache hit rate"""
+        """Calculate cache hit rate."""
         total = self.cache_hits + self.cache_misses
         return (self.cache_hits / total * 100) if total > 0 else 0.0
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization"""
+        """Convert to dictionary for JSON serialization."""
         return asdict(self)
 
 
 class AnalysisCache:
-    """Advanced cache for protection analysis results
+    """Advanced cache for protection analysis results.
 
     Features:
     - Persistent storage to disk
@@ -186,7 +186,7 @@ class AnalysisCache:
         max_size_mb: int = 100,
         auto_save: bool = True,
     ):
-        """Initialize cache
+        """Initialize cache.
 
         Args:
             cache_dir: Directory for persistent cache storage
@@ -227,7 +227,7 @@ class AnalysisCache:
         )
 
     def get(self, file_path: str, scan_options: str = "") -> Any | None:
-        """Get cached analysis result
+        """Get cached analysis result.
 
         Args:
             file_path: Path to analyzed file
@@ -263,7 +263,7 @@ class AnalysisCache:
             return entry.data
 
     def put(self, file_path: str, data: Any, scan_options: str = "") -> None:
-        """Store analysis result in cache
+        """Store analysis result in cache.
 
         Args:
             file_path: Path to analyzed file
@@ -309,7 +309,7 @@ class AnalysisCache:
             logger.error(f"Failed to cache result for {file_path}: {e}")
 
     def remove(self, file_path: str, scan_options: str = "") -> bool:
-        """Remove specific entry from cache
+        """Remove specific entry from cache.
 
         Args:
             file_path: Path to analyzed file
@@ -330,7 +330,7 @@ class AnalysisCache:
             return False
 
     def clear(self) -> None:
-        """Clear all cache entries"""
+        """Clear all cache entries."""
         with self._lock:
             self._cache.clear()
             self._stats = CacheStats()
@@ -346,7 +346,7 @@ class AnalysisCache:
                 logger.error(f"Failed to remove cache files: {e}")
 
     def cleanup_invalid(self) -> int:
-        """Remove invalid cache entries
+        """Remove invalid cache entries.
 
         Returns:
             Number of entries removed
@@ -376,14 +376,14 @@ class AnalysisCache:
         return removed_count
 
     def get_stats(self) -> CacheStats:
-        """Get cache statistics"""
+        """Get cache statistics."""
         with self._lock:
             self._stats.total_entries = len(self._cache)
             self._stats.total_size_bytes = self._calculate_cache_size()
             return self._stats
 
     def get_cache_info(self) -> dict[str, Any]:
-        """Get detailed cache information"""
+        """Get detailed cache information."""
         stats = self.get_stats()
 
         with self._lock:
@@ -416,7 +416,7 @@ class AnalysisCache:
         }
 
     def save_cache(self) -> None:
-        """Manually save cache to disk"""
+        """Manually save cache to disk."""
         try:
             with self._lock:
                 # Save cache data
@@ -432,14 +432,14 @@ class AnalysisCache:
             logger.error(f"Failed to save cache: {e}")
 
     def _generate_cache_key(self, file_path: str, scan_options: str) -> str:
-        """Generate cache key from file path and options"""
+        """Generate cache key from file path and options."""
         # Use file path + scan options hash for key
         key_data = f"{file_path}:{scan_options}"
         key_hash = hashlib.sha256(key_data.encode()).hexdigest()[:16]
         return f"{file_path}:{key_hash}"
 
     def _evict_if_needed(self) -> None:
-        """Evict entries if cache is too large"""
+        """Evict entries if cache is too large."""
         # Check entry count limit
         if len(self._cache) >= self.max_entries:
             self._evict_lru_entries(self.max_entries // 4)  # Remove 25%
@@ -450,7 +450,7 @@ class AnalysisCache:
             self._evict_lru_entries(len(self._cache) // 4)  # Remove 25%
 
     def _evict_lru_entries(self, count: int) -> None:
-        """Evict least recently used entries"""
+        """Evict least recently used entries."""
         if not self._cache:
             return
 
@@ -467,7 +467,7 @@ class AnalysisCache:
             logger.debug(f"Evicted LRU entry: {cache_key}")
 
     def _calculate_cache_size(self) -> int:
-        """Calculate total cache size in bytes"""
+        """Calculate total cache size in bytes."""
         total_size = 0
         for entry in self._cache.values():
             try:
@@ -479,11 +479,11 @@ class AnalysisCache:
         return total_size
 
     def _get_cache_size_mb(self) -> float:
-        """Get cache size in MB"""
+        """Get cache size in MB."""
         return self._calculate_cache_size() / (1024 * 1024)
 
     def _load_cache(self) -> None:
-        """Load cache from disk"""
+        """Load cache from disk."""
         try:
             # Load cache data
             if self.cache_file.exists():
@@ -502,7 +502,7 @@ class AnalysisCache:
             self._stats = CacheStats()
 
     def _save_cache_async(self) -> None:
-        """Save cache asynchronously (non-blocking)"""
+        """Save cache asynchronously (non-blocking)."""
         # Skip thread creation during testing
         if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
             logger.info("Skipping async cache save (testing mode)")
@@ -525,7 +525,7 @@ _analysis_cache: AnalysisCache | None = None
 
 
 def get_analysis_cache() -> AnalysisCache:
-    """Get or create global analysis cache instance"""
+    """Get or create global analysis cache instance."""
     global _analysis_cache
     if _analysis_cache is None:
         _analysis_cache = AnalysisCache()
@@ -533,7 +533,7 @@ def get_analysis_cache() -> AnalysisCache:
 
 
 def clear_analysis_cache() -> None:
-    """Clear global analysis cache"""
+    """Clear global analysis cache."""
     global _analysis_cache
     if _analysis_cache:
         _analysis_cache.clear()

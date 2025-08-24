@@ -53,7 +53,7 @@ from ...tools.plugin_debugger import DebuggerState, DebuggerThread, PluginDebugg
 
 
 class DebuggerOutputThread(QThread):
-    """Thread for handling debugger output"""
+    """Thread for handling debugger output."""
 
     output_received = pyqtSignal(str, object)
 
@@ -64,7 +64,7 @@ class DebuggerOutputThread(QThread):
         self.running = True
 
     def run(self):
-        """Process debugger output"""
+        """Process debugger output."""
         while self.running:
             try:
                 msg_type, data = self.output_queue.get(timeout=0.1)
@@ -77,12 +77,12 @@ class DebuggerOutputThread(QThread):
                 print(f"Debugger output error: {e}")
 
     def stop(self):
-        """Stop the thread"""
+        """Stop the thread."""
         self.running = False
 
 
 class DebuggerDialog(QDialog):
-    """Advanced debugger dialog with breakpoint support"""
+    """Advanced debugger dialog with breakpoint support."""
 
     def __init__(self, parent=None, plugin_path=None):
         """Initialize the DebuggerDialog with default values."""
@@ -102,7 +102,7 @@ class DebuggerDialog(QDialog):
             self.load_plugin(plugin_path)
 
     def setup_ui(self):
-        """Set up the dialog UI"""
+        """Set up the dialog UI."""
         layout = QVBoxLayout(self)
 
         # Toolbar
@@ -192,7 +192,7 @@ class DebuggerDialog(QDialog):
         layout.addWidget(main_splitter)
 
     def create_toolbar(self) -> QToolBar:
-        """Create debugger toolbar"""
+        """Create debugger toolbar."""
         toolbar = QToolBar()
 
         # Run/Continue
@@ -235,7 +235,7 @@ class DebuggerDialog(QDialog):
         return toolbar
 
     def create_breakpoints_widget(self) -> QWidget:
-        """Create breakpoints management widget"""
+        """Create breakpoints management widget."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -262,7 +262,7 @@ class DebuggerDialog(QDialog):
         return widget
 
     def create_watch_widget(self) -> QWidget:
-        """Create watch expressions widget"""
+        """Create watch expressions widget."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -286,7 +286,7 @@ class DebuggerDialog(QDialog):
         return widget
 
     def browse_plugin(self):
-        """Browse for plugin file"""
+        """Browse for plugin file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Plugin",
@@ -298,7 +298,7 @@ class DebuggerDialog(QDialog):
             self.load_plugin(file_path)
 
     def load_plugin(self, path: str):
-        """Load a plugin for debugging"""
+        """Load a plugin for debugging."""
         self.plugin_path = path
         self.file_label.setText(os.path.basename(path))
 
@@ -316,7 +316,7 @@ class DebuggerDialog(QDialog):
         self.clear_debug_info()
 
     def clear_debug_info(self):
-        """Clear all debug information"""
+        """Clear all debug information."""
         self.variables_tree.clear()
         self.stack_list.clear()
         self.watch_tree.clear()
@@ -325,7 +325,7 @@ class DebuggerDialog(QDialog):
         self.code_editor.highlight_line(None)
 
     def toggle_breakpoint(self, line: int):
-        """Toggle breakpoint at line"""
+        """Toggle breakpoint at line."""
         if not self.plugin_path:
             return
 
@@ -342,18 +342,18 @@ class DebuggerDialog(QDialog):
         self.update_breakpoint_display()
 
     def toggle_current_line_breakpoint(self):
-        """Toggle breakpoint at current line"""
+        """Toggle breakpoint at current line."""
         cursor = self.code_editor.textCursor()
         line = cursor.blockNumber() + 1
         self.toggle_breakpoint(line)
 
     def clear_all_breakpoints(self):
-        """Clear all breakpoints"""
+        """Clear all breakpoints."""
         self.debugger.breakpoints.clear()
         self.update_breakpoint_display()
 
     def update_breakpoint_display(self):
-        """Update breakpoint display"""
+        """Update breakpoint display."""
         # Update editor
         self.code_editor.clear_breakpoints()
 
@@ -376,7 +376,7 @@ class DebuggerDialog(QDialog):
             self.breakpoint_list.addItem(item)
 
     def show_breakpoint_menu(self, pos):
-        """Show breakpoint context menu"""
+        """Show breakpoint context menu."""
         item = self.breakpoint_list.itemAt(pos)
         if not item:
             return
@@ -401,34 +401,34 @@ class DebuggerDialog(QDialog):
         menu.exec_(self.breakpoint_list.mapToGlobal(pos))
 
     def disable_breakpoint(self, bp_id: int):
-        """Disable breakpoint"""
+        """Disable breakpoint."""
         self.debugger.disable_breakpoint(bp_id)
         self.update_breakpoint_display()
 
     def enable_breakpoint(self, bp_id: int):
-        """Enable breakpoint"""
+        """Enable breakpoint."""
         self.debugger.enable_breakpoint(bp_id)
         self.update_breakpoint_display()
 
     def remove_breakpoint(self, bp_id: int):
-        """Remove breakpoint"""
+        """Remove breakpoint."""
         self.debugger.remove_breakpoint(bp_id)
         self.update_breakpoint_display()
 
     def remove_selected_breakpoint(self):
-        """Remove selected breakpoint"""
+        """Remove selected breakpoint."""
         item = self.breakpoint_list.currentItem()
         if item:
             bp_id = item.data(Qt.UserRole)
             self.remove_breakpoint(bp_id)
 
     def add_breakpoint_dialog(self):
-        """Show add breakpoint dialog"""
+        """Show add breakpoint dialog."""
         # For now, just use current line
         self.toggle_current_line_breakpoint()
 
     def run_continue(self):
-        """Run or continue execution"""
+        """Run or continue execution."""
         if self.debugger.state == DebuggerState.IDLE:
             # Start debugging
             self.start_debugging()
@@ -438,7 +438,7 @@ class DebuggerDialog(QDialog):
             self.update_ui_state("running")
 
     def start_debugging(self):
-        """Start debugging session"""
+        """Start debugging session."""
         if not self.plugin_path:
             return
 
@@ -478,11 +478,11 @@ class DebuggerDialog(QDialog):
         self.update_ui_state("running")
 
     def pause_execution(self):
-        """Pause execution"""
+        """Pause execution."""
         self.debugger.command_queue.put({"type": "pause"})
 
     def stop_debugging(self):
-        """Stop debugging session"""
+        """Stop debugging session."""
         self.debugger.command_queue.put({"type": "terminate"})
 
         # Wait for threads
@@ -502,22 +502,22 @@ class DebuggerDialog(QDialog):
         self.console.append("\n🛑 Debug session terminated.")
 
     def step_over(self):
-        """Step over"""
+        """Step over."""
         self.debugger.command_queue.put({"type": "step_over"})
         self.update_ui_state("running")
 
     def step_into(self):
-        """Step into"""
+        """Step into."""
         self.debugger.command_queue.put({"type": "step_into"})
         self.update_ui_state("running")
 
     def step_out(self):
-        """Step out"""
+        """Step out."""
         self.debugger.command_queue.put({"type": "step_out"})
         self.update_ui_state("running")
 
     def update_ui_state(self, state: str):
-        """Update UI based on debugger state"""
+        """Update UI based on debugger state."""
         if state == "idle":
             self.run_action.setEnabled(True)
             self.run_action.setText("▶️ Run")
@@ -545,7 +545,7 @@ class DebuggerDialog(QDialog):
             self.step_out_action.setEnabled(True)
 
     def handle_debugger_output(self, msg_type: str, data: Any):
-        """Handle debugger output messages"""
+        """Handle debugger output messages."""
         if msg_type == "paused":
             self.update_ui_state("paused")
             self.current_line = data["line"]
@@ -580,7 +580,7 @@ class DebuggerDialog(QDialog):
             self.console.append(f"❌ Error: {data}")
 
     def update_stack_display(self, stack_frames: list[dict[str, Any]]):
-        """Update call stack display"""
+        """Update call stack display."""
         self.stack_list.clear()
 
         for i, frame in enumerate(stack_frames):
@@ -598,12 +598,12 @@ class DebuggerDialog(QDialog):
             self.update_variables_display(0)
 
     def on_stack_frame_clicked(self, item: QListWidgetItem):
-        """Handle stack frame selection"""
+        """Handle stack frame selection."""
         frame_index = item.data(Qt.UserRole)
         self.update_variables_display(frame_index)
 
     def update_variables_display(self, frame_index: int = 0):
-        """Update variables display"""
+        """Update variables display."""
         variables = self.debugger.get_variables(frame_index)
 
         self.variables_tree.clear()
@@ -636,7 +636,7 @@ class DebuggerDialog(QDialog):
         local_root.setExpanded(True)
 
     def update_watch_display(self, watches: dict[str, Any]):
-        """Update watch expressions display"""
+        """Update watch expressions display."""
         # Update existing items
         for i in range(self.watch_tree.topLevelItemCount()):
             item = self.watch_tree.topLevelItem(i)
@@ -645,7 +645,7 @@ class DebuggerDialog(QDialog):
                 item.setText(1, str(watches[expr]))
 
     def add_watch(self):
-        """Add watch expression"""
+        """Add watch expression."""
         expr = self.watch_input.text().strip()
         if not expr:
             return
@@ -665,7 +665,7 @@ class DebuggerDialog(QDialog):
         self.watch_input.clear()
 
     def evaluate_expression(self):
-        """Evaluate expression in debug context"""
+        """Evaluate expression in debug context."""
         expr = self.repl_input.text().strip()
         if not expr:
             return
@@ -683,7 +683,7 @@ class DebuggerDialog(QDialog):
         self.repl_input.clear()
 
     def closeEvent(self, event):
-        """Handle dialog close"""
+        """Handle dialog close."""
         if self.debugger.state != DebuggerState.IDLE:
             reply = QMessageBox.question(
                 self,
@@ -702,7 +702,7 @@ class DebuggerDialog(QDialog):
 
 
 class CodeEditorWidget(QTextEdit):
-    """Code editor with line numbers and breakpoint support"""
+    """Code editor with line numbers and breakpoint support."""
 
     breakpoint_toggled = pyqtSignal(int)
 
@@ -729,7 +729,7 @@ class CodeEditorWidget(QTextEdit):
         self.highlight_current_line()
 
     def line_number_area_width(self):
-        """Calculate line number area width"""
+        """Calculate line number area width."""
         digits = 1
         max_num = max(1, self.blockCount())
         while max_num >= 10:
@@ -740,13 +740,13 @@ class CodeEditorWidget(QTextEdit):
         return space
 
     def update_line_number_area_width(self, new_block_count):
-        """Update line number area width"""
+        """Update line number area width."""
         # Log block count changes for debugging
         self.logger.debug(f"Updating line number area width for {new_block_count} blocks")
         self.setViewportMargins(self.line_number_area_width(), 0, 0, 0)
 
     def update_line_number_area(self, rect, dy):
-        """Update line number area"""
+        """Update line number area."""
         if dy:
             self.line_number_area.scroll(0, dy)
         else:
@@ -756,7 +756,7 @@ class CodeEditorWidget(QTextEdit):
             self.update_line_number_area_width(0)
 
     def resizeEvent(self, event):
-        """Handle resize event"""
+        """Handle resize event."""
         super().resizeEvent(event)
 
         cr = self.contentsRect()
@@ -765,7 +765,7 @@ class CodeEditorWidget(QTextEdit):
         )
 
     def line_number_area_paint_event(self, event):
-        """Paint line numbers"""
+        """Paint line numbers."""
         from intellicrack.handlers.pyqt6_handler import QPainter
 
         painter = QPainter(self.line_number_area)
@@ -808,14 +808,14 @@ class CodeEditorWidget(QTextEdit):
             block_number += 1
 
     def line_number_area_mouse_press(self, event):
-        """Handle mouse press in line number area"""
+        """Handle mouse press in line number area."""
         if event.button() == Qt.LeftButton:
             cursor = self.cursorForPosition(event.pos())
             line = cursor.blockNumber() + 1
             self.breakpoint_toggled.emit(line)
 
     def highlight_current_line(self):
-        """Highlight current line"""
+        """Highlight current line."""
         extra_selections = []
 
         if not self.isReadOnly():
@@ -832,7 +832,7 @@ class CodeEditorWidget(QTextEdit):
         self.setExtraSelections(extra_selections)
 
     def highlight_line(self, line: int):
-        """Highlight execution line"""
+        """Highlight execution line."""
         if line is None:
             self.current_line = None
             self.highlight_current_line()
@@ -860,27 +860,27 @@ class CodeEditorWidget(QTextEdit):
         self.setExtraSelections(extra_selections)
 
     def set_code(self, code: str):
-        """Set code content"""
+        """Set code content."""
         self.setPlainText(code)
 
     def add_breakpoint(self, line: int):
-        """Add breakpoint"""
+        """Add breakpoint."""
         self.breakpoint_lines.add(line)
         self.line_number_area.update()
 
     def remove_breakpoint(self, line: int):
-        """Remove breakpoint"""
+        """Remove breakpoint."""
         self.breakpoint_lines.discard(line)
         self.line_number_area.update()
 
     def clear_breakpoints(self):
-        """Clear all breakpoints"""
+        """Clear all breakpoints."""
         self.breakpoint_lines.clear()
         self.line_number_area.update()
 
 
 class LineNumberArea(QWidget):
-    """Line number area widget"""
+    """Line number area widget."""
 
     def __init__(self, editor):
         """Initialize the LineNumberArea with default values."""
@@ -888,13 +888,13 @@ class LineNumberArea(QWidget):
         self.code_editor = editor
 
     def sizeHint(self):
-        """Return size hint"""
+        """Return size hint."""
         return QSize(self.code_editor.line_number_area_width(), 0)
 
     def paintEvent(self, event):
-        """Paint event"""
+        """Paint event."""
         self.code_editor.line_number_area_paint_event(event)
 
     def mousePressEvent(self, event):
-        """Mouse press event"""
+        """Mouse press event."""
         self.code_editor.line_number_area_mouse_press(event)

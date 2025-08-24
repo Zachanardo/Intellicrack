@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 class ProtectionAwareScriptGenerator:
-    """Generate targeted scripts based on detected protection schemes"""
+    """Generate targeted scripts based on detected protection schemes."""
 
     def __init__(self):
         """Initialize the protection-aware script generator.
@@ -214,7 +214,7 @@ class ProtectionAwareScriptGenerator:
     def _generate_ai_prompt(
         self, result, protection_type: str, confidence: float, protection_info: Any
     ) -> str:
-        """Generate AI prompt for script enhancement"""
+        """Generate AI prompt for script enhancement."""
         prompt = f"""Generate a bypass script for {protection_type} protection.
 
 Protection Details:
@@ -261,7 +261,7 @@ Focus on the most effective approach for this specific protection type.
         return prompt
 
     def _format_detections(self, result) -> str:
-        """Format detections for display"""
+        """Format detections for display."""
         lines = []
 
         # Format ICP detections if available
@@ -286,7 +286,7 @@ Focus on the most effective approach for this specific protection type.
         return "\n".join(lines)
 
     def _get_recommended_techniques(self, protection_info: Any) -> list[dict[str, Any]]:
-        """Get recommended bypass techniques"""
+        """Get recommended bypass techniques."""
         if not protection_info:
             return []
 
@@ -306,7 +306,7 @@ Focus on the most effective approach for this specific protection type.
         return techniques
 
     def _get_hasp_scripts(self) -> dict[str, str]:
-        """Sentinel HASP specific scripts"""
+        """Sentinel HASP specific scripts."""
         return {
             "frida": """// Sentinel HASP Bypass Script
 // Targets: hasp_login, hasp_encrypt, hasp_decrypt
@@ -424,7 +424,7 @@ public class SentinelHASPBypass extends GhidraScript {
         }
 
     def _get_flexlm_scripts(self) -> dict[str, str]:
-        """FlexLM/FlexNet specific scripts"""
+        """FlexLM/FlexNet specific scripts."""
         return {
             "frida": """// FlexLM/FlexNet License Bypass Script
 // Targets license checkout and validation
@@ -474,7 +474,7 @@ console.log("[+] FlexLM hooks installed");
         }
 
     def _get_winlicense_scripts(self) -> dict[str, str]:
-        """WinLicense/Themida specific scripts"""
+        """WinLicense/Themida specific scripts."""
         return {
             "frida": """// WinLicense/Themida Analysis Script
 // Note: This protection uses heavy virtualization
@@ -529,7 +529,7 @@ console.log("[!] Manual unpacking likely required");
         }
 
     def _get_steam_scripts(self) -> dict[str, str]:
-        """Steam CEG specific scripts"""
+        """Steam CEG specific scripts."""
         return {
             "frida": """// Steam CEG Bypass Script
 // Targets Steam API initialization and checks
@@ -584,7 +584,7 @@ console.log("[+] Steam CEG bypass hooks installed");
         }
 
     def _get_vmprotect_scripts(self) -> dict[str, str]:
-        """VMProtect specific scripts"""
+        """VMProtect specific scripts."""
         return {
             "frida": """// VMProtect Analysis Helper
 // Note: VMProtect uses heavy virtualization - full bypass is complex
@@ -653,7 +653,7 @@ console.log("[!] Full devirtualization required for complete bypass");
         }
 
     def _get_denuvo_scripts(self) -> dict[str, str]:
-        """Denuvo specific scripts"""
+        """Denuvo specific scripts."""
         return {
             "frida": """// Denuvo Analysis Helper
 // WARNING: Denuvo is extremely complex protection
@@ -701,7 +701,7 @@ console.log("[!] Consider waiting for scene release");
         }
 
     def _get_ms_activation_scripts(self) -> dict[str, str]:
-        """Microsoft Activation specific scripts"""
+        """Microsoft Activation specific scripts."""
         return {
             "frida": """// Microsoft Activation Bypass Helper
 // For educational/testing purposes only
@@ -757,7 +757,7 @@ console.log("[+] Microsoft Activation hooks installed");
         }
 
     def _get_basic_analysis_script(self, script_type: str) -> str:
-        """Basic analysis script for unprotected binaries"""
+        """Basic analysis script for unprotected binaries."""
         if script_type == "frida":
             return """// Basic Binary Analysis Script
 // No protection detected - standard analysis
@@ -795,7 +795,7 @@ console.log("[+] Basic analysis hooks installed");
         return "// Basic analysis script"
 
     def _get_generic_bypass_script(self, script_type: str) -> str:
-        """Generic bypass script for unknown protections"""
+        """Generic bypass script for unknown protections."""
         if script_type == "frida":
             return """// Generic Protection Bypass Script
 // For unknown/custom protection schemes
@@ -856,7 +856,7 @@ console.log("[+] Generic bypass hooks installed");
         return "// Generic bypass script"
 
     def _get_generic_analysis_script(self, script_type: str) -> str:
-        """Generic analysis script when protection detection fails"""
+        """Generic analysis script when protection detection fails."""
         script_type_upper = script_type.upper()
 
         if script_type.lower() == "frida":

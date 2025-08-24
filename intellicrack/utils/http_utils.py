@@ -1,4 +1,4 @@
-"""HTTP Request Utilities with Configurable SSL Verification
+"""HTTP Request Utilities with Configurable SSL Verification.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -91,6 +91,7 @@ class SecureHTTPClient:
 
         Returns:
             SSL verification setting for requests
+
         """
         if override_verify is not None:
             if override_verify is False:
@@ -144,6 +145,7 @@ class SecureHTTPClient:
 
         Returns:
             Response object
+
         """
         # Get timeout from config if not specified
         if "timeout" not in kwargs:
@@ -201,6 +203,7 @@ def get_http_client() -> SecureHTTPClient:
 
     Returns:
         SecureHTTPClient instance
+
     """
     global _http_client
     if _http_client is None:
@@ -226,6 +229,7 @@ def secure_request(
 
     Returns:
         Response object
+
     """
     client = get_http_client()
     return client.request(method, url, verify=verify, **kwargs)

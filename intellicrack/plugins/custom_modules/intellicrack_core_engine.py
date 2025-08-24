@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ License: GPL v3
 
 
 class ComponentType(Enum):
-    """Types of components in the framework"""
+    """Types of components in the framework."""
 
     GHIDRA_SCRIPT = "ghidra_script"
     FRIDA_SCRIPT = "frida_script"
@@ -77,7 +77,7 @@ class ComponentType(Enum):
 
 
 class PluginStatus(Enum):
-    """Plugin lifecycle status"""
+    """Plugin lifecycle status."""
 
     DISCOVERED = "discovered"
     LOADING = "loading"
@@ -93,7 +93,7 @@ class PluginStatus(Enum):
 
 
 class EventPriority(Enum):
-    """Event priority levels"""
+    """Event priority levels."""
 
     CRITICAL = 0
     HIGH = 1
@@ -103,7 +103,7 @@ class EventPriority(Enum):
 
 
 class WorkflowStatus(Enum):
-    """Workflow execution status"""
+    """Workflow execution status."""
 
     PENDING = "pending"
     RUNNING = "running"
@@ -115,7 +115,7 @@ class WorkflowStatus(Enum):
 
 @dataclass
 class PluginMetadata:
-    """Plugin metadata structure"""
+    """Plugin metadata structure."""
 
     name: str
     version: str
@@ -130,7 +130,7 @@ class PluginMetadata:
     tags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary"""
+        """Convert to dictionary."""
         return {
             "name": self.name,
             "version": self.version,
@@ -148,7 +148,7 @@ class PluginMetadata:
 
 @dataclass
 class Event:
-    """Event structure for inter-component communication"""
+    """Event structure for inter-component communication."""
 
     event_type: str
     source: str
@@ -161,7 +161,7 @@ class Event:
     ttl: int | None = None  # Time to live in seconds
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary"""
+        """Convert to dictionary."""
         return {
             "event_id": self.event_id,
             "event_type": self.event_type,
@@ -177,7 +177,7 @@ class Event:
 
 @dataclass
 class WorkflowStep:
-    """Individual step in a workflow"""
+    """Individual step in a workflow."""
 
     step_id: str
     name: str
@@ -191,7 +191,7 @@ class WorkflowStep:
     condition: str | None = None  # Python expression for conditional execution
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary"""
+        """Convert to dictionary."""
         return {
             "step_id": self.step_id,
             "name": self.name,
@@ -208,7 +208,7 @@ class WorkflowStep:
 
 @dataclass
 class WorkflowDefinition:
-    """Complete workflow definition"""
+    """Complete workflow definition."""
 
     workflow_id: str
     name: str
@@ -221,7 +221,7 @@ class WorkflowDefinition:
     tags: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary"""
+        """Convert to dictionary."""
         return {
             "workflow_id": self.workflow_id,
             "name": self.name,
@@ -236,7 +236,7 @@ class WorkflowDefinition:
 
 
 class LoggingManager:
-    """Advanced logging manager with structured logging and multiple outputs"""
+    """Advanced logging manager with structured logging and multiple outputs."""
 
     def __init__(self, config: dict[str, Any]):
         """Initialize advanced logging manager with configuration."""
@@ -263,7 +263,7 @@ class LoggingManager:
         self._setup_component_loggers()
 
     def _setup_root_logger(self):
-        """Setup root logger with multiple handlers"""
+        """Setup root logger with multiple handlers."""
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
 
@@ -322,7 +322,7 @@ class LoggingManager:
         self.handlers["error"] = error_handler
 
     def _setup_component_loggers(self):
-        """Setup specialized loggers for different components"""
+        """Setup specialized loggers for different components."""
         components = [
             "plugin_manager",
             "workflow_engine",
@@ -338,7 +338,7 @@ class LoggingManager:
             self.loggers[component] = logger
 
     def get_logger(self, name: str) -> logging.Logger:
-        """Get logger for specific component"""
+        """Get logger for specific component."""
         if name not in self.loggers:
             logger = logging.getLogger(f"intellicrack.{name}")
             logger.setLevel(logging.DEBUG)
@@ -347,7 +347,7 @@ class LoggingManager:
         return self.loggers[name]
 
     def log_event(self, event: Event):
-        """Log an event with structured data"""
+        """Log an event with structured data."""
         logger = self.get_logger("events")
         logger.info(
             f"Event: {event.event_type}",
@@ -360,7 +360,7 @@ class LoggingManager:
     def log_plugin_operation(
         self, plugin_name: str, operation: str, status: str, details: dict[str, Any] = None
     ):
-        """Log plugin operation"""
+        """Log plugin operation."""
         logger = self.get_logger("plugins")
         logger.info(
             f"Plugin {plugin_name}: {operation} -> {status}",
@@ -381,7 +381,7 @@ class LoggingManager:
         duration: float = None,
         result: Any = None,
     ):
-        """Log workflow step execution"""
+        """Log workflow step execution."""
         logger = self.get_logger("workflows")
         logger.info(
             f"Workflow {workflow_id} Step {step_id}: {status}",
@@ -397,7 +397,7 @@ class LoggingManager:
 
 
 class JSONFormatter(logging.Formatter):
-    """JSON formatter for structured logging"""
+    """JSON formatter for structured logging."""
 
     def format(self, record):
         """Format log record as JSON structure."""
@@ -432,7 +432,7 @@ class JSONFormatter(logging.Formatter):
 
 
 class ConfigurationManager:
-    """Configuration management with validation and hot reloading"""
+    """Configuration management with validation and hot reloading."""
 
     def __init__(self, config_path: str | None = None):
         """Initialize configuration manager with optional config path."""
@@ -454,7 +454,7 @@ class ConfigurationManager:
         self._start_file_watcher()
 
     def _load_schema(self):
-        """Load configuration schema for validation"""
+        """Load configuration schema for validation."""
         self.schema = {
             "type": "object",
             "properties": {
@@ -522,7 +522,7 @@ class ConfigurationManager:
         }
 
     def _get_default_config(self) -> dict[str, Any]:
-        """Get default configuration"""
+        """Get default configuration."""
         return {
             "logging": {
                 "console_level": "INFO",
@@ -567,7 +567,7 @@ class ConfigurationManager:
         }
 
     def reload_config(self):
-        """Reload configuration from file"""
+        """Reload configuration from file."""
         try:
             if self.config_path.exists():
                 with open(self.config_path) as f:
@@ -600,7 +600,7 @@ class ConfigurationManager:
             self.config = self._get_default_config()
 
     def _deep_merge(self, base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
-        """Deep merge two dictionaries"""
+        """Deep merge two dictionaries."""
         result = base.copy()
 
         for key, value in override.items():
@@ -612,14 +612,14 @@ class ConfigurationManager:
         return result
 
     def _save_config(self):
-        """Save current configuration to file"""
+        """Save current configuration to file."""
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(self.config_path, "w") as f:
             json.dump(self.config, f, indent=2)
 
     def _start_file_watcher(self):
-        """Start file watcher for hot reloading"""
+        """Start file watcher for hot reloading."""
 
         def watch_file():
             while True:
@@ -640,7 +640,7 @@ class ConfigurationManager:
         self.file_watcher.start()
 
     def get(self, key: str, default: Any = None) -> Any:
-        """Get configuration value with dot notation support"""
+        """Get configuration value with dot notation support."""
         keys = key.split(".")
         value = self.config
 
@@ -653,7 +653,7 @@ class ConfigurationManager:
         return value
 
     def set(self, key: str, value: Any):
-        """Set configuration value with dot notation support"""
+        """Set configuration value with dot notation support."""
         keys = key.split(".")
         config = self.config
 
@@ -666,17 +666,17 @@ class ConfigurationManager:
         self._save_config()
 
     def add_watcher(self, callback: Callable[[dict[str, Any]], None]):
-        """Add configuration change watcher"""
+        """Add configuration change watcher."""
         self.watchers.append(callback)
 
     def remove_watcher(self, callback: Callable[[dict[str, Any]], None]):
-        """Remove configuration change watcher"""
+        """Remove configuration change watcher."""
         if callback in self.watchers:
             self.watchers.remove(callback)
 
 
 class AbstractPlugin(ABC):
-    """Abstract base class for all plugins"""
+    """Abstract base class for all plugins."""
 
     def __init__(self, name: str, version: str = "1.0.0"):
         """Initialize abstract plugin with name and version."""
@@ -694,46 +694,46 @@ class AbstractPlugin(ABC):
 
     @abstractmethod
     def get_metadata(self) -> PluginMetadata:
-        """Get plugin metadata"""
+        """Get plugin metadata."""
 
     @abstractmethod
     async def initialize(self, config: dict[str, Any]) -> bool:
-        """Initialize the plugin with configuration"""
+        """Initialize the plugin with configuration."""
 
     @abstractmethod
     async def activate(self) -> bool:
-        """Activate the plugin"""
+        """Activate the plugin."""
 
     @abstractmethod
     async def deactivate(self) -> bool:
-        """Deactivate the plugin"""
+        """Deactivate the plugin."""
 
     @abstractmethod
     async def cleanup(self) -> bool:
-        """Cleanup plugin resources"""
+        """Cleanup plugin resources."""
 
     @abstractmethod
     def get_supported_operations(self) -> list[str]:
-        """Get list of supported operations"""
+        """Get list of supported operations."""
 
     @abstractmethod
     async def execute_operation(self, operation: str, parameters: dict[str, Any]) -> Any:
-        """Execute a specific operation"""
+        """Execute a specific operation."""
 
     def set_logger(self, logger: logging.Logger):
-        """Set plugin logger"""
+        """Set plugin logger."""
         self.logger = logger
 
     def set_event_bus(self, event_bus: "EventBus"):
-        """Set event bus for communication"""
+        """Set event bus for communication."""
         self.event_bus = event_bus
 
     def update_config(self, config: dict[str, Any]):
-        """Update plugin configuration"""
+        """Update plugin configuration."""
         self.config.update(config)
 
     def emit_event(self, event_type: str, data: dict[str, Any] = None, target: str = None):
-        """Emit an event"""
+        """Emit an event."""
         if self.event_bus:
             event = Event(
                 event_type=event_type,
@@ -744,14 +744,14 @@ class AbstractPlugin(ABC):
             asyncio.create_task(self.event_bus.emit(event))
 
     def log_performance_metric(self, metric_name: str, value: Any):
-        """Log performance metric"""
+        """Log performance metric."""
         self.performance_metrics[metric_name] = {
             "value": value,
             "timestamp": datetime.utcnow().isoformat(),
         }
 
     def get_status(self) -> dict[str, Any]:
-        """Get plugin status information"""
+        """Get plugin status information."""
         return {
             "name": self.name,
             "version": self.version,
@@ -763,7 +763,7 @@ class AbstractPlugin(ABC):
 
 
 class GhidraPlugin(AbstractPlugin):
-    """Base class for Ghidra script plugins"""
+    """Base class for Ghidra script plugins."""
 
     def __init__(self, name: str, script_path: str, version: str = "1.0.0"):
         """Initialize Ghidra plugin with name, script path, and version."""
@@ -773,7 +773,7 @@ class GhidraPlugin(AbstractPlugin):
         self.ghidra_project_path: str | None = None
 
     def get_metadata(self) -> PluginMetadata:
-        """Get Ghidra plugin metadata"""
+        """Get Ghidra plugin metadata."""
         return PluginMetadata(
             name=self.name,
             version=self.version,
@@ -785,7 +785,7 @@ class GhidraPlugin(AbstractPlugin):
         )
 
     async def initialize(self, config: dict[str, Any]) -> bool:
-        """Initialize Ghidra plugin"""
+        """Initialize Ghidra plugin."""
         try:
             self.status = PluginStatus.INITIALIZING
             self.config.update(config)
@@ -810,12 +810,12 @@ class GhidraPlugin(AbstractPlugin):
             return False
 
     async def activate(self) -> bool:
-        """Activate Ghidra plugin"""
+        """Activate Ghidra plugin."""
         self.status = PluginStatus.ACTIVE
         return True
 
     async def deactivate(self) -> bool:
-        """Deactivate Ghidra plugin"""
+        """Deactivate Ghidra plugin."""
         if self.java_process:
             self.java_process.terminate()
             self.java_process = None
@@ -823,12 +823,12 @@ class GhidraPlugin(AbstractPlugin):
         return True
 
     async def cleanup(self) -> bool:
-        """Cleanup Ghidra plugin resources"""
+        """Cleanup Ghidra plugin resources."""
         await self.deactivate()
         return True
 
     def get_supported_operations(self) -> list[str]:
-        """Get supported Ghidra operations"""
+        """Get supported Ghidra operations."""
         return [
             "analyze_binary",
             "extract_functions",
@@ -839,7 +839,7 @@ class GhidraPlugin(AbstractPlugin):
         ]
 
     async def execute_operation(self, operation: str, parameters: dict[str, Any]) -> Any:
-        """Execute Ghidra operation"""
+        """Execute Ghidra operation."""
         try:
             if operation not in self.get_supported_operations():
                 raise ValueError(f"Unsupported operation: {operation}")
@@ -881,7 +881,7 @@ class GhidraPlugin(AbstractPlugin):
     async def _execute_ghidra_script(
         self, binary_path: str, operation: str, parameters: dict[str, Any]
     ) -> dict[str, Any]:
-        """Execute Ghidra script in subprocess"""
+        """Execute Ghidra script in subprocess."""
         ghidra_path = self.config.get("ghidra_path")
         java_path = self.config.get("java_path", "java")
 
@@ -976,7 +976,7 @@ class GhidraPlugin(AbstractPlugin):
             raise
 
     def _parse_ghidra_output(self, output: str, operation: str) -> dict[str, Any]:
-        """Parse Ghidra script output"""
+        """Parse Ghidra script output."""
         result = {
             "operation": operation,
             "raw_output": output,
@@ -1019,7 +1019,7 @@ class GhidraPlugin(AbstractPlugin):
 
 
 class FridaPlugin(AbstractPlugin):
-    """Base class for Frida script plugins"""
+    """Base class for Frida script plugins."""
 
     def __init__(self, name: str, script_path: str, version: str = "1.0.0"):
         """Initialize Frida plugin with name, script path, and version."""
@@ -1030,7 +1030,7 @@ class FridaPlugin(AbstractPlugin):
         self.target_process = None
 
     def get_metadata(self) -> PluginMetadata:
-        """Get Frida plugin metadata"""
+        """Get Frida plugin metadata."""
         return PluginMetadata(
             name=self.name,
             version=self.version,
@@ -1042,7 +1042,7 @@ class FridaPlugin(AbstractPlugin):
         )
 
     async def initialize(self, config: dict[str, Any]) -> bool:
-        """Initialize Frida plugin"""
+        """Initialize Frida plugin."""
         try:
             from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
             _ = HAS_FRIDA  # Verify frida availability flag is imported for initialization checks
@@ -1074,12 +1074,12 @@ class FridaPlugin(AbstractPlugin):
             return False
 
     async def activate(self) -> bool:
-        """Activate Frida plugin"""
+        """Activate Frida plugin."""
         self.status = PluginStatus.ACTIVE
         return True
 
     async def deactivate(self) -> bool:
-        """Deactivate Frida plugin"""
+        """Deactivate Frida plugin."""
         if self.frida_script:
             self.frida_script.unload()
             self.frida_script = None
@@ -1092,12 +1092,12 @@ class FridaPlugin(AbstractPlugin):
         return True
 
     async def cleanup(self) -> bool:
-        """Cleanup Frida plugin resources"""
+        """Cleanup Frida plugin resources."""
         await self.deactivate()
         return True
 
     def get_supported_operations(self) -> list[str]:
-        """Get supported Frida operations"""
+        """Get supported Frida operations."""
         return [
             "attach_process",
             "hook_functions",
@@ -1108,7 +1108,7 @@ class FridaPlugin(AbstractPlugin):
         ]
 
     async def execute_operation(self, operation: str, parameters: dict[str, Any]) -> Any:
-        """Execute Frida operation"""
+        """Execute Frida operation."""
         try:
             from intellicrack.handlers.frida_handler import frida
 
@@ -1163,7 +1163,7 @@ class FridaPlugin(AbstractPlugin):
     async def _attach_to_process(
         self, target: str | int, parameters: dict[str, Any]
     ) -> dict[str, Any]:
-        """Attach to target process"""
+        """Attach to target process."""
         try:
             from intellicrack.handlers.frida_handler import frida
 
@@ -1203,7 +1203,7 @@ class FridaPlugin(AbstractPlugin):
             raise Exception(f"Failed to attach to process: {e}") from e
 
     def _on_message(self, message, data):
-        """Handle Frida script messages"""
+        """Handle Frida script messages."""
         if self.logger:
             self.logger.debug(f"Frida message: {message}")
 
@@ -1218,7 +1218,7 @@ class FridaPlugin(AbstractPlugin):
         )
 
     async def _hook_functions(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Hook functions in target process"""
+        """Hook functions in target process."""
         functions = parameters.get("functions", [])
         if not functions:
             raise ValueError("No functions specified for hooking")
@@ -1247,7 +1247,7 @@ class FridaPlugin(AbstractPlugin):
         return {"hooked_functions": results}
 
     async def _trace_calls(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Trace function calls"""
+        """Trace function calls."""
         duration = parameters.get("duration", 30)
 
         # Start tracing
@@ -1266,7 +1266,7 @@ class FridaPlugin(AbstractPlugin):
         }
 
     async def _modify_memory(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Modify process memory"""
+        """Modify process memory."""
         address = parameters.get("address")
         data = parameters.get("data")
 
@@ -1282,7 +1282,7 @@ class FridaPlugin(AbstractPlugin):
         }
 
     async def _bypass_protections(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Bypass protection mechanisms"""
+        """Bypass protection mechanisms."""
         protections = parameters.get("protections", [])
 
         results = []
@@ -1308,7 +1308,7 @@ class FridaPlugin(AbstractPlugin):
         return {"bypass_results": results}
 
     async def _extract_runtime_data(self, parameters: dict[str, Any]) -> dict[str, Any]:
-        """Extract runtime data from process"""
+        """Extract runtime data from process."""
         data_types = parameters.get("data_types", ["strings", "keys", "certificates"])
 
         extracted_data = {}
@@ -1323,7 +1323,7 @@ class FridaPlugin(AbstractPlugin):
 
 
 class PythonPlugin(AbstractPlugin):
-    """Base class for Python module plugins"""
+    """Base class for Python module plugins."""
 
     def __init__(self, name: str, module_path: str, version: str = "1.0.0"):
         """Initialize Python plugin with name, module path, and version."""
@@ -1333,7 +1333,7 @@ class PythonPlugin(AbstractPlugin):
         self.plugin_instance = None
 
     def get_metadata(self) -> PluginMetadata:
-        """Get Python plugin metadata"""
+        """Get Python plugin metadata."""
         return PluginMetadata(
             name=self.name,
             version=self.version,
@@ -1345,7 +1345,7 @@ class PythonPlugin(AbstractPlugin):
         )
 
     async def initialize(self, config: dict[str, Any]) -> bool:
-        """Initialize Python plugin"""
+        """Initialize Python plugin."""
         try:
             self.status = PluginStatus.INITIALIZING
             self.config.update(config)
@@ -1388,7 +1388,7 @@ class PythonPlugin(AbstractPlugin):
             return False
 
     async def activate(self) -> bool:
-        """Activate Python plugin"""
+        """Activate Python plugin."""
         try:
             if hasattr(self.plugin_instance, "activate"):
                 if asyncio.iscoroutinefunction(self.plugin_instance.activate):
@@ -1409,7 +1409,7 @@ class PythonPlugin(AbstractPlugin):
             return False
 
     async def deactivate(self) -> bool:
-        """Deactivate Python plugin"""
+        """Deactivate Python plugin."""
         try:
             if hasattr(self.plugin_instance, "deactivate"):
                 if asyncio.iscoroutinefunction(self.plugin_instance.deactivate):
@@ -1427,7 +1427,7 @@ class PythonPlugin(AbstractPlugin):
             return False
 
     async def cleanup(self) -> bool:
-        """Cleanup Python plugin resources"""
+        """Cleanup Python plugin resources."""
         try:
             if hasattr(self.plugin_instance, "cleanup"):
                 if asyncio.iscoroutinefunction(self.plugin_instance.cleanup):
@@ -1446,7 +1446,7 @@ class PythonPlugin(AbstractPlugin):
             return False
 
     def get_supported_operations(self) -> list[str]:
-        """Get supported Python plugin operations"""
+        """Get supported Python plugin operations."""
         if not self.plugin_instance:
             return []
 
@@ -1480,7 +1480,7 @@ class PythonPlugin(AbstractPlugin):
         return list(set(operations))
 
     async def execute_operation(self, operation: str, parameters: dict[str, Any]) -> Any:
-        """Execute Python plugin operation"""
+        """Execute Python plugin operation."""
         try:
             if not self.plugin_instance:
                 raise Exception("Plugin not initialized")
@@ -1528,7 +1528,7 @@ class PythonPlugin(AbstractPlugin):
 
 
 class EventBus:
-    """Async event bus for inter-component communication"""
+    """Async event bus for inter-component communication."""
 
     def __init__(self, max_queue_size: int = 10000):
         """Initialize event bus with maximum queue size."""
@@ -1547,11 +1547,11 @@ class EventBus:
         }
 
     def set_logger(self, logger: logging.Logger):
-        """Set logger for event bus"""
+        """Set logger for event bus."""
         self.logger = logger
 
     async def start(self):
-        """Start event processing"""
+        """Start event processing."""
         if self.running:
             return
 
@@ -1562,7 +1562,7 @@ class EventBus:
             self.logger.info("Event bus started")
 
     async def stop(self):
-        """Stop event processing"""
+        """Stop event processing."""
         if not self.running:
             return
 
@@ -1579,7 +1579,7 @@ class EventBus:
             self.logger.info("Event bus stopped")
 
     def subscribe(self, event_type: str, handler: Callable[[Event], Awaitable[None]]):
-        """Subscribe to events of specific type"""
+        """Subscribe to events of specific type."""
         if event_type not in self.subscribers:
             self.subscribers[event_type] = []
 
@@ -1592,7 +1592,7 @@ class EventBus:
             self.logger.debug(f"New subscriber for event type: {event_type}")
 
     def unsubscribe(self, event_type: str, handler: Callable[[Event], Awaitable[None]]):
-        """Unsubscribe from events"""
+        """Unsubscribe from events."""
         if event_type in self.subscribers and handler in self.subscribers[event_type]:
             self.subscribers[event_type].remove(handler)
 
@@ -1607,7 +1607,7 @@ class EventBus:
                 self.logger.debug(f"Unsubscribed from event type: {event_type}")
 
     async def emit(self, event: Event):
-        """Emit an event"""
+        """Emit an event."""
         try:
             # Check TTL
             if event.ttl is not None:
@@ -1629,7 +1629,7 @@ class EventBus:
                 self.logger.error(f"Event queue full, dropping event: {event.event_type}")
 
     async def _process_events(self):
-        """Process events from queue"""
+        """Process events from queue."""
         while self.running:
             try:
                 # Get event from queue with timeout
@@ -1654,7 +1654,7 @@ class EventBus:
                     self.logger.error(f"Event processing error: {e}")
 
     async def _handle_event(self, event: Event):
-        """Handle individual event"""
+        """Handle individual event."""
         handlers = []
 
         # Get specific handlers
@@ -1720,12 +1720,12 @@ class EventBus:
                         task.cancel()
 
     async def _run_sync_handler(self, handler: Callable, event: Event):
-        """Run synchronous handler in executor"""
+        """Run synchronous handler in executor."""
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, handler, event)
 
     def _add_to_history(self, event: Event):
-        """Add event to history"""
+        """Add event to history."""
         self.event_history.append(event)
 
         # Limit history size
@@ -1733,7 +1733,7 @@ class EventBus:
             self.event_history = self.event_history[-self.max_history_size // 2 :]
 
     def get_stats(self) -> dict[str, Any]:
-        """Get event bus statistics"""
+        """Get event bus statistics."""
         return {
             **self.stats,
             "history_size": len(self.event_history),
@@ -1742,12 +1742,12 @@ class EventBus:
         }
 
     def get_recent_events(self, count: int = 100) -> list[Event]:
-        """Get recent events from history"""
+        """Get recent events from history."""
         return self.event_history[-count:]
 
 
 class PluginManager:
-    """Plugin discovery, loading, and lifecycle management"""
+    """Plugin discovery, loading, and lifecycle management."""
 
     def __init__(self, config: dict[str, Any], event_bus: EventBus, logger: logging.Logger):
         """Initialize plugin manager with configuration, event bus, and logger."""
@@ -1778,7 +1778,7 @@ class PluginManager:
         }
 
     async def discover_plugins(self) -> list[str]:
-        """Discover available plugins"""
+        """Discover available plugins."""
         discovered = []
 
         for directory in self.discovery_paths:
@@ -1800,7 +1800,7 @@ class PluginManager:
         return discovered
 
     async def _discover_ghidra_scripts(self, directory: Path) -> list[str]:
-        """Discover Ghidra script plugins"""
+        """Discover Ghidra script plugins."""
         scripts = []
 
         for script_file in directory.glob("*.java"):
@@ -1820,7 +1820,7 @@ class PluginManager:
         return scripts
 
     async def _discover_frida_scripts(self, directory: Path) -> list[str]:
-        """Discover Frida script plugins"""
+        """Discover Frida script plugins."""
         scripts = []
 
         for script_file in directory.glob("*.js"):
@@ -1840,7 +1840,7 @@ class PluginManager:
         return scripts
 
     async def _discover_python_modules(self, directory: Path) -> list[str]:
-        """Discover Python module plugins"""
+        """Discover Python module plugins."""
         modules = []
 
         for module_file in directory.glob("*.py"):
@@ -1864,7 +1864,7 @@ class PluginManager:
         return modules
 
     async def _extract_ghidra_metadata(self, script_file: Path) -> PluginMetadata | None:
-        """Extract metadata from Ghidra script"""
+        """Extract metadata from Ghidra script."""
         try:
             with open(script_file, encoding="utf-8") as f:
                 content = f.read()
@@ -1909,7 +1909,7 @@ class PluginManager:
             return None
 
     async def _extract_frida_metadata(self, script_file: Path) -> PluginMetadata | None:
-        """Extract metadata from Frida script"""
+        """Extract metadata from Frida script."""
         try:
             with open(script_file, encoding="utf-8") as f:
                 content = f.read()
@@ -1959,7 +1959,7 @@ class PluginManager:
             return None
 
     async def _extract_python_metadata(self, module_file: Path) -> PluginMetadata | None:
-        """Extract metadata from Python module"""
+        """Extract metadata from Python module."""
         try:
             with open(module_file, encoding="utf-8") as f:
                 content = f.read()
@@ -2013,7 +2013,7 @@ class PluginManager:
             return None
 
     async def load_plugin(self, plugin_name: str) -> bool:
-        """Load a specific plugin"""
+        """Load a specific plugin."""
         try:
             if plugin_name in self.plugins:
                 self.logger.debug(f"Plugin {plugin_name} already loaded")
@@ -2071,7 +2071,7 @@ class PluginManager:
     async def _create_plugin_instance(
         self, plugin_name: str, metadata: PluginMetadata
     ) -> AbstractPlugin | None:
-        """Create plugin instance based on type"""
+        """Create plugin instance based on type."""
         try:
             # Find plugin file
             plugin_file = None
@@ -2110,7 +2110,7 @@ class PluginManager:
             return None
 
     async def load_all_plugins(self) -> int:
-        """Load all discovered plugins"""
+        """Load all discovered plugins."""
         if self.auto_discover:
             await self.discover_plugins()
 
@@ -2127,7 +2127,7 @@ class PluginManager:
         return loaded_count
 
     def _calculate_load_order(self) -> list[str]:
-        """Calculate plugin load order based on dependencies"""
+        """Calculate plugin load order based on dependencies."""
         # Simple topological sort for dependency resolution
         visited = set()
         temp_visited = set()
@@ -2162,7 +2162,7 @@ class PluginManager:
         return result
 
     async def activate_plugin(self, plugin_name: str) -> bool:
-        """Activate a loaded plugin"""
+        """Activate a loaded plugin."""
         if plugin_name not in self.plugins:
             self.logger.error(f"Plugin {plugin_name} not loaded")
             return False
@@ -2192,7 +2192,7 @@ class PluginManager:
             return False
 
     async def deactivate_plugin(self, plugin_name: str) -> bool:
-        """Deactivate an active plugin"""
+        """Deactivate an active plugin."""
         if plugin_name not in self.plugins:
             self.logger.error(f"Plugin {plugin_name} not loaded")
             return False
@@ -2224,7 +2224,7 @@ class PluginManager:
             return False
 
     async def unload_plugin(self, plugin_name: str) -> bool:
-        """Unload a plugin"""
+        """Unload a plugin."""
         if plugin_name not in self.plugins:
             return True
 
@@ -2259,11 +2259,11 @@ class PluginManager:
             return False
 
     def get_plugin(self, plugin_name: str) -> AbstractPlugin | None:
-        """Get plugin instance"""
+        """Get plugin instance."""
         return self.plugins.get(plugin_name)
 
     def get_plugins_by_capability(self, capability: str) -> list[AbstractPlugin]:
-        """Get plugins with specific capability"""
+        """Get plugins with specific capability."""
         matching_plugins = []
 
         for plugin_name, plugin in self.plugins.items():
@@ -2275,7 +2275,7 @@ class PluginManager:
         return matching_plugins
 
     def get_plugins_by_type(self, component_type: ComponentType) -> list[AbstractPlugin]:
-        """Get plugins of specific type"""
+        """Get plugins of specific type."""
         matching_plugins = []
 
         for plugin_name, plugin in self.plugins.items():
@@ -2287,7 +2287,7 @@ class PluginManager:
         return matching_plugins
 
     def get_plugin_stats(self) -> dict[str, Any]:
-        """Get plugin statistics"""
+        """Get plugin statistics."""
         active_plugins = [
             name for name, plugin in self.plugins.items() if plugin.status == PluginStatus.ACTIVE
         ]
@@ -2323,7 +2323,7 @@ class PluginManager:
 
 
 class WorkflowEngine:
-    """Configurable workflow execution engine"""
+    """Configurable workflow execution engine."""
 
     def __init__(self, plugin_manager: PluginManager, event_bus: EventBus, logger: logging.Logger):
         """Initialize workflow engine with plugin manager, event bus, and logger."""
@@ -2342,7 +2342,7 @@ class WorkflowEngine:
         self._load_default_workflows()
 
     def _load_default_workflows(self):
-        """Load default workflow templates"""
+        """Load default workflow templates."""
         # Binary Analysis Workflow
         self.register_workflow(
             WorkflowDefinition(
@@ -2430,12 +2430,12 @@ class WorkflowEngine:
         )
 
     def register_workflow(self, workflow: WorkflowDefinition):
-        """Register a workflow definition"""
+        """Register a workflow definition."""
         self.workflows[workflow.workflow_id] = workflow
         self.logger.info(f"Registered workflow: {workflow.name}")
 
     async def execute_workflow(self, workflow_id: str, parameters: dict[str, Any]) -> str:
-        """Execute a workflow"""
+        """Execute a workflow."""
         if workflow_id not in self.workflows:
             raise ValueError(f"Workflow not found: {workflow_id}")
 
@@ -2471,7 +2471,7 @@ class WorkflowEngine:
         return execution_id
 
     async def _execute_workflow_async(self, context: dict[str, Any]):
-        """Execute workflow asynchronously"""
+        """Execute workflow asynchronously."""
         execution_id = context["execution_id"]
         workflow = context["workflow"]
 
@@ -2542,7 +2542,7 @@ class WorkflowEngine:
                 del self.running_workflows[execution_id]
 
     async def _execute_sequential_workflow(self, context: dict[str, Any]):
-        """Execute workflow steps sequentially"""
+        """Execute workflow steps sequentially."""
         workflow = context["workflow"]
         total_steps = len(workflow.steps)
 
@@ -2583,7 +2583,7 @@ class WorkflowEngine:
             )
 
     async def _execute_parallel_workflow(self, context: dict[str, Any]):
-        """Execute workflow steps in parallel where possible"""
+        """Execute workflow steps in parallel where possible."""
         workflow = context["workflow"]
 
         # Build dependency graph
@@ -2649,21 +2649,21 @@ class WorkflowEngine:
                 task.cancel()
 
     def _build_dependency_graph(self, steps: list[WorkflowStep]) -> dict[str, list[str]]:
-        """Build dependency graph for parallel execution"""
+        """Build dependency graph for parallel execution."""
         graph = {}
         for step in steps:
             graph[step.step_id] = step.dependencies.copy()
         return graph
 
     def _check_dependencies(self, step: WorkflowStep, context: dict[str, Any]) -> bool:
-        """Check if step dependencies are satisfied"""
+        """Check if step dependencies are satisfied."""
         for dep in step.dependencies:
             if dep not in context["completed_steps"]:
                 return False
         return True
 
     def _evaluate_condition(self, condition: str, context: dict[str, Any]) -> bool:
-        """Evaluate step execution condition"""
+        """Evaluate step execution condition."""
         try:
             # Create safe evaluation context
             eval_context = {
@@ -2693,7 +2693,7 @@ class WorkflowEngine:
             return False
 
     async def _execute_step(self, step: WorkflowStep, context: dict[str, Any]):
-        """Execute individual workflow step"""
+        """Execute individual workflow step."""
         start_time = datetime.utcnow()
 
         try:
@@ -2744,7 +2744,7 @@ class WorkflowEngine:
                 raise Exception(error_msg) from e
 
     def get_workflow_status(self, execution_id: str) -> dict[str, Any] | None:
-        """Get workflow execution status"""
+        """Get workflow execution status."""
         if execution_id in self.running_workflows:
             context = self.running_workflows[execution_id]
             return {
@@ -2782,7 +2782,7 @@ class WorkflowEngine:
         return None
 
     def cancel_workflow(self, execution_id: str) -> bool:
-        """Cancel running workflow"""
+        """Cancel running workflow."""
         if execution_id in self.running_workflows:
             context = self.running_workflows[execution_id]
             context["status"] = WorkflowStatus.CANCELLED
@@ -2794,7 +2794,7 @@ class WorkflowEngine:
         return False
 
     def get_available_workflows(self) -> list[dict[str, Any]]:
-        """Get list of available workflows"""
+        """Get list of available workflows."""
         return [
             {
                 "workflow_id": workflow.workflow_id,
@@ -2809,7 +2809,7 @@ class WorkflowEngine:
 
 
 class AnalysisCoordinator:
-    """Real-time analysis coordination and orchestration"""
+    """Real-time analysis coordination and orchestration."""
 
     def __init__(
         self,
@@ -2854,7 +2854,7 @@ class AnalysisCoordinator:
         self.event_bus.subscribe("workflow_failed", self._handle_workflow_failed)
 
     async def start(self):
-        """Start analysis coordinator"""
+        """Start analysis coordinator."""
         if self.running:
             return
 
@@ -2864,7 +2864,7 @@ class AnalysisCoordinator:
         self.logger.info("Analysis coordinator started")
 
     async def stop(self):
-        """Stop analysis coordinator"""
+        """Stop analysis coordinator."""
         if not self.running:
             return
 
@@ -2885,7 +2885,7 @@ class AnalysisCoordinator:
         analysis_type: str = "deep_analysis",
         parameters: dict[str, Any] = None,
     ) -> str:
-        """Analyze binary file"""
+        """Analyze binary file."""
         if not Path(binary_path).exists():
             raise ValueError(f"Binary file not found: {binary_path}")
 
@@ -2924,7 +2924,7 @@ class AnalysisCoordinator:
         return analysis_id
 
     async def _coordination_loop(self):
-        """Main coordination loop"""
+        """Main coordination loop."""
         while self.running:
             try:
                 # Process analysis queue
@@ -2942,7 +2942,7 @@ class AnalysisCoordinator:
                 self.logger.error(f"Error in coordination loop: {e}")
 
     async def _start_analysis(self, analysis_context: dict[str, Any]):
-        """Start individual analysis"""
+        """Start individual analysis."""
         analysis_id = analysis_context["analysis_id"]
 
         try:
@@ -2997,7 +2997,7 @@ class AnalysisCoordinator:
             )
 
     async def _extract_file_info(self, file_path: str) -> dict[str, Any]:
-        """Extract basic file information"""
+        """Extract basic file information."""
         try:
             file_path_obj = Path(file_path)
             stat = file_path_obj.stat()
@@ -3031,7 +3031,7 @@ class AnalysisCoordinator:
             return {"name": Path(file_path).name, "error": str(e)}
 
     def _detect_file_type(self, file_path: str) -> str:
-        """Detect file type"""
+        """Detect file type."""
         try:
             with open(file_path, "rb") as f:
                 magic = f.read(4)
@@ -3056,7 +3056,7 @@ class AnalysisCoordinator:
             return "Unknown"
 
     async def _handle_analysis_request(self, event: Event):
-        """Handle analysis request event"""
+        """Handle analysis request event."""
         try:
             data = event.data
             binary_path = data.get("binary_path")
@@ -3080,7 +3080,7 @@ class AnalysisCoordinator:
             self.logger.error(f"Error handling analysis request: {e}")
 
     async def _handle_workflow_completed(self, event: Event):
-        """Handle workflow completion"""
+        """Handle workflow completion."""
         execution_id = event.data.get("execution_id")
         results = event.data.get("results", {})
 
@@ -3111,7 +3111,7 @@ class AnalysisCoordinator:
                 break
 
     async def _handle_workflow_failed(self, event: Event):
-        """Handle workflow failure"""
+        """Handle workflow failure."""
         execution_id = event.data.get("execution_id")
         error = event.data.get("error")
 
@@ -3138,7 +3138,7 @@ class AnalysisCoordinator:
                 break
 
     def get_analysis_status(self, analysis_id: str) -> dict[str, Any] | None:
-        """Get analysis status"""
+        """Get analysis status."""
         if analysis_id in self.active_analyses:
             context = self.active_analyses[analysis_id]
             return {
@@ -3159,14 +3159,14 @@ class AnalysisCoordinator:
         return None
 
     def get_active_analyses(self) -> list[dict[str, Any]]:
-        """Get all active analyses"""
+        """Get all active analyses."""
         return [
             self.get_analysis_status(analysis_id) for analysis_id in self.active_analyses.keys()
         ]
 
 
 class ResourceManager:
-    """System resource monitoring and management"""
+    """System resource monitoring and management."""
 
     def __init__(self, config: dict[str, Any], logger: logging.Logger):
         """Initialize resource manager with configuration and logger."""
@@ -3200,7 +3200,7 @@ class ResourceManager:
         self.tracked_processes: dict[int, psutil.Process] = {}
 
     async def start(self):
-        """Start resource manager"""
+        """Start resource manager."""
         if self.running:
             return
 
@@ -3217,7 +3217,7 @@ class ResourceManager:
         self.logger.info("Resource manager started")
 
     async def stop(self):
-        """Stop resource manager"""
+        """Stop resource manager."""
         if not self.running:
             return
 
@@ -3244,7 +3244,7 @@ class ResourceManager:
         self.logger.info("Resource manager stopped")
 
     async def _monitoring_loop(self):
-        """Resource monitoring loop"""
+        """Resource monitoring loop."""
         while self.running:
             try:
                 await self._update_resource_stats()
@@ -3260,7 +3260,7 @@ class ResourceManager:
                 await asyncio.sleep(10)
 
     async def _update_resource_stats(self):
-        """Update resource statistics"""
+        """Update resource statistics."""
         try:
             # CPU usage
             self.resource_stats["cpu_usage"] = psutil.cpu_percent(interval=1)
@@ -3282,7 +3282,7 @@ class ResourceManager:
             self.logger.error(f"Error updating resource stats: {e}")
 
     async def _check_resource_limits(self):
-        """Check resource limits and warn if exceeded"""
+        """Check resource limits and warn if exceeded."""
         cpu_usage = self.resource_stats["cpu_usage"]
         memory_usage = self.resource_stats["memory_usage"]
 
@@ -3293,7 +3293,7 @@ class ResourceManager:
             self.logger.warning(f"High memory usage: {memory_usage:.1f}%")
 
     async def _auto_cleanup(self):
-        """Automatic cleanup of resources"""
+        """Automatic cleanup of resources."""
         try:
             # Clean up completed processes
             completed_pids = []
@@ -3318,7 +3318,7 @@ class ResourceManager:
             self.logger.error(f"Error in auto cleanup: {e}")
 
     async def execute_in_process(self, func: Callable, *args, **kwargs):
-        """Execute function in process pool"""
+        """Execute function in process pool."""
         if not self.process_pool:
             raise Exception("Process pool not initialized")
 
@@ -3327,7 +3327,7 @@ class ResourceManager:
         return await loop.run_in_executor(None, future.result)
 
     async def execute_in_thread(self, func: Callable, *args, **kwargs):
-        """Execute function in thread pool"""
+        """Execute function in thread pool."""
         if not self.thread_pool:
             raise Exception("Thread pool not initialized")
 
@@ -3337,7 +3337,7 @@ class ResourceManager:
     async def start_external_process(
         self, cmd: list[str], cwd: str = None, timeout: int = 300
     ) -> subprocess.Popen:
-        """Start external process with tracking"""
+        """Start external process with tracking."""
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -3363,7 +3363,7 @@ class ResourceManager:
             raise
 
     async def kill_process(self, pid: int, force: bool = False):
-        """Kill tracked process"""
+        """Kill tracked process."""
         if pid in self.tracked_processes:
             try:
                 process = self.tracked_processes[pid]
@@ -3388,12 +3388,12 @@ class ResourceManager:
                 self.logger.error(f"Error killing process {pid}: {e}")
 
     async def _cleanup_processes(self):
-        """Cleanup all tracked processes"""
+        """Cleanup all tracked processes."""
         for pid in list(self.tracked_processes.keys()):
             await self.kill_process(pid, force=True)
 
     def get_resource_stats(self) -> dict[str, Any]:
-        """Get current resource statistics"""
+        """Get current resource statistics."""
         return {
             **self.resource_stats,
             "tracked_processes": len(self.tracked_processes),
@@ -3404,7 +3404,7 @@ class ResourceManager:
 
 
 class IntellicrackcoreEngine:
-    """Main Intellicrack core engine - orchestrates all components"""
+    """Main Intellicrack core engine - orchestrates all components."""
 
     def __init__(self, config_path: str | None = None):
         """Initialize Intellicrack core engine with optional configuration path."""
@@ -3462,7 +3462,7 @@ class IntellicrackcoreEngine:
         self.logger.info("Intellicrack Core Engine initialized")
 
     async def start(self):
-        """Start the core engine"""
+        """Start the core engine."""
         if self.running:
             self.logger.warning("Engine already running")
             return
@@ -3508,7 +3508,7 @@ class IntellicrackcoreEngine:
             raise
 
     async def stop(self):
-        """Stop the core engine"""
+        """Stop the core engine."""
         if not self.running:
             return
 
@@ -3532,7 +3532,7 @@ class IntellicrackcoreEngine:
             self.logger.error(f"Error stopping engine: {e}")
 
     async def _activate_core_plugins(self):
-        """Activate core plugins required for operation"""
+        """Activate core plugins required for operation."""
         core_plugins = [
             "python_neural_network_detector",
             "python_pattern_evolution_tracker",
@@ -3545,7 +3545,7 @@ class IntellicrackcoreEngine:
                 await self.plugin_manager.activate_plugin(plugin_name)
 
     async def _deactivate_all_plugins(self):
-        """Deactivate all active plugins"""
+        """Deactivate all active plugins."""
         active_plugins = list(self.plugin_manager.plugins.keys())
 
         for plugin_name in active_plugins:
@@ -3555,7 +3555,7 @@ class IntellicrackcoreEngine:
     # API Interface Methods
 
     async def _handle_analyze_binary(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle binary analysis request"""
+        """Handle binary analysis request."""
         binary_path = request.get("binary_path")
         analysis_type = request.get("analysis_type", "deep_analysis")
         parameters = request.get("parameters", {})
@@ -3576,7 +3576,7 @@ class IntellicrackcoreEngine:
         }
 
     async def _handle_get_analysis_status(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle get analysis status request"""
+        """Handle get analysis status request."""
         analysis_id = request.get("analysis_id")
 
         if not analysis_id:
@@ -3590,7 +3590,7 @@ class IntellicrackcoreEngine:
         return status
 
     async def _handle_list_plugins(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle list plugins request"""
+        """Handle list plugins request."""
         plugin_type = request.get("type")
         capability = request.get("capability")
 
@@ -3620,7 +3620,7 @@ class IntellicrackcoreEngine:
         return {"plugins": plugins}
 
     async def _handle_get_plugin_status(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle get plugin status request"""
+        """Handle get plugin status request."""
         plugin_name = request.get("plugin_name")
 
         if not plugin_name:
@@ -3634,7 +3634,7 @@ class IntellicrackcoreEngine:
         return plugin.get_status()
 
     async def _handle_execute_workflow(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle execute workflow request"""
+        """Handle execute workflow request."""
         workflow_id = request.get("workflow_id")
         parameters = request.get("parameters", {})
 
@@ -3650,7 +3650,7 @@ class IntellicrackcoreEngine:
         }
 
     async def _handle_get_workflow_status(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle get workflow status request"""
+        """Handle get workflow status request."""
         execution_id = request.get("execution_id")
 
         if not execution_id:
@@ -3664,7 +3664,7 @@ class IntellicrackcoreEngine:
         return status
 
     async def _handle_get_system_status(self, request: dict[str, Any]) -> dict[str, Any]:
-        """Handle get system status request"""
+        """Handle get system status request."""
         return {
             "engine_status": "running" if self.running else "stopped",
             "startup_time": self.startup_time.isoformat() if self.startup_time else None,
@@ -3679,7 +3679,7 @@ class IntellicrackcoreEngine:
         }
 
     async def process_api_request(self, method: str, request: dict[str, Any]) -> dict[str, Any]:
-        """Process API request"""
+        """Process API request."""
         if not self.running:
             raise Exception("Engine not running")
 
@@ -3707,7 +3707,7 @@ class IntellicrackcoreEngine:
 
 
 def main():
-    """Main entry point for running the core engine"""
+    """Main entry point for running the core engine."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Intellicrack Core Engine")

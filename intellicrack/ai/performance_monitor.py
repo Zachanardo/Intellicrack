@@ -1,4 +1,4 @@
-"""Performance Monitoring and Optimization System
+"""Performance Monitoring and Optimization System.
 
 Copyright (C) 2025 Zachary Flint
 

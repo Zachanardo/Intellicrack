@@ -77,7 +77,7 @@ except ImportError:
 
 
 class PipelineThread(QThread):
-    """Thread for running CI/CD pipeline"""
+    """Thread for running CI/CD pipeline."""
 
     stage_started = pyqtSignal(str)
     stage_completed = pyqtSignal(str, dict)
@@ -92,7 +92,7 @@ class PipelineThread(QThread):
         self.pipeline = CICDPipeline(plugin_path)
 
     def run(self):
-        """Run the pipeline"""
+        """Run the pipeline."""
         try:
             # Override pipeline methods to emit signals
             def run_stage_wrapper(stage_name, original_method):
@@ -122,7 +122,7 @@ class PipelineThread(QThread):
 
 
 class CICDDialog(PluginDialogBase):
-    """CI/CD Pipeline Management Dialog"""
+    """CI/CD Pipeline Management Dialog."""
 
     def __init__(self, parent=None, plugin_path=None):
         """Initialize the CICDDialog with default values."""
@@ -131,13 +131,13 @@ class CICDDialog(PluginDialogBase):
         super().__init__(parent, plugin_path)
 
     def init_dialog(self):
-        """Initialize the CI/CD dialog"""
+        """Initialize the CI/CD dialog."""
         self.setWindowTitle("CI/CD Pipeline")
         self.setMinimumSize(1000, 700)
         self.setup_ui()
 
     def setup_ui(self):
-        """Set up the dialog UI"""
+        """Set up the dialog UI."""
         layout = QVBoxLayout(self)
 
         # Plugin selection (using base class method)
@@ -189,7 +189,7 @@ class CICDDialog(PluginDialogBase):
         layout.addLayout(control_layout)
 
     def create_pipeline_tab(self) -> QWidget:
-        """Create pipeline visualization tab"""
+        """Create pipeline visualization tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -220,7 +220,7 @@ class CICDDialog(PluginDialogBase):
         return widget
 
     def create_stage_widget(self, stage: str) -> QWidget:
-        """Create widget for a pipeline stage"""
+        """Create widget for a pipeline stage."""
         widget = QWidget()
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(5, 5, 5, 5)
@@ -257,7 +257,7 @@ class CICDDialog(PluginDialogBase):
         return widget
 
     def create_config_tab(self) -> QWidget:
-        """Create configuration tab"""
+        """Create configuration tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -287,7 +287,7 @@ class CICDDialog(PluginDialogBase):
         return widget
 
     def create_reports_tab(self) -> QWidget:
-        """Create reports tab"""
+        """Create reports tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -320,7 +320,7 @@ class CICDDialog(PluginDialogBase):
         return widget
 
     def create_github_tab(self) -> QWidget:
-        """Create GitHub Actions tab"""
+        """Create GitHub Actions tab."""
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
@@ -380,7 +380,7 @@ class CICDDialog(PluginDialogBase):
         return widget
 
     def load_plugin(self, path: str):
-        """Load a plugin for CI/CD"""
+        """Load a plugin for CI/CD."""
         # Call the base class method first
         if not super().load_plugin(path):
             return False
@@ -400,7 +400,7 @@ class CICDDialog(PluginDialogBase):
         return True
 
     def load_configuration(self):
-        """Load pipeline configuration"""
+        """Load pipeline configuration."""
         if not self.plugin_path:
             return
 
@@ -430,7 +430,7 @@ class CICDDialog(PluginDialogBase):
         self.populate_config_tree(config, self.config_tree.invisibleRootItem())
 
     def populate_config_tree(self, config: dict[str, Any], parent: QTreeWidgetItem):
-        """Populate configuration tree"""
+        """Populate configuration tree."""
         for key, value in config.items():
             if isinstance(value, dict):
                 # Create parent node
@@ -444,14 +444,14 @@ class CICDDialog(PluginDialogBase):
                 item.setFlags(item.flags() | Qt.ItemIsEditable)
 
     def on_config_changed(self, item: QTreeWidgetItem, column: int):
-        """Handle configuration change"""
+        """Handle configuration change."""
         _ = item
         if column == 1:  # Value column
             # Mark as modified
             self.setWindowTitle("CI/CD Pipeline *")
 
     def save_configuration(self):
-        """Save pipeline configuration"""
+        """Save pipeline configuration."""
         if not self.plugin_path:
             return
 
@@ -471,7 +471,7 @@ class CICDDialog(PluginDialogBase):
         self.setWindowTitle("CI/CD Pipeline")
 
     def build_config_from_tree(self) -> dict[str, Any]:
-        """Build configuration from tree widget"""
+        """Build configuration from tree widget."""
         config = {}
 
         def process_item(item: QTreeWidgetItem) -> Any:
@@ -506,7 +506,7 @@ class CICDDialog(PluginDialogBase):
         return config
 
     def reset_configuration(self):
-        """Reset configuration to defaults"""
+        """Reset configuration to defaults."""
         reply = QMessageBox.question(
             self,
             "Reset Configuration",
@@ -528,7 +528,7 @@ class CICDDialog(PluginDialogBase):
             self.load_configuration()
 
     def load_reports(self):
-        """Load existing pipeline reports"""
+        """Load existing pipeline reports."""
         if not self.plugin_path:
             return
 
@@ -552,7 +552,7 @@ class CICDDialog(PluginDialogBase):
                 self.report_list.addItem(item)
 
     def show_report(self, item: QListWidgetItem):
-        """Show selected report"""
+        """Show selected report."""
         report_path = item.data(Qt.UserRole)
 
         # Also check for text report
@@ -567,7 +567,7 @@ class CICDDialog(PluginDialogBase):
                 self.report_viewer.setPlainText(json.dumps(report, indent=2))
 
     def export_report(self):
-        """Export current report"""
+        """Export current report."""
         content = self.report_viewer.toPlainText()
         if not content:
             QMessageBox.warning(self, "No Report", "No report to export.")
@@ -587,7 +587,7 @@ class CICDDialog(PluginDialogBase):
             QMessageBox.information(self, "Exported", f"Report exported to:\n{file_path}")
 
     def update_workflow_preview(self):
-        """Update GitHub Actions workflow preview"""
+        """Update GitHub Actions workflow preview."""
         if not self.plugin_path:
             return
 
@@ -598,7 +598,7 @@ class CICDDialog(PluginDialogBase):
         self.workflow_preview.setPlainText(workflow)
 
     def generate_workflow(self):
-        """Generate and save GitHub Actions workflow"""
+        """Generate and save GitHub Actions workflow."""
         if not self.plugin_path:
             QMessageBox.warning(self, "No Plugin", "Please select a plugin first.")
             return
@@ -628,7 +628,7 @@ class CICDDialog(PluginDialogBase):
         )
 
     def run_pipeline(self):
-        """Run the CI/CD pipeline"""
+        """Run the CI/CD pipeline."""
         if not self.plugin_path:
             return
 
@@ -663,14 +663,14 @@ class CICDDialog(PluginDialogBase):
         self.pipeline_thread.start()
 
     def stop_pipeline(self):
-        """Stop running pipeline"""
+        """Stop running pipeline."""
         if self.pipeline_thread and self.pipeline_thread.isRunning():
             self.pipeline_thread.terminate()
             self.console_output.append("\n⏹️ Pipeline stopped by user")
             self.on_pipeline_finished({"overall_status": "cancelled"})
 
     def on_stage_started(self, stage: str):
-        """Handle stage started"""
+        """Handle stage started."""
         self.console_output.append(f"\n📦 Running stage: {stage}")
 
         if stage in self.stage_widgets:
@@ -681,7 +681,7 @@ class CICDDialog(PluginDialogBase):
             widget.setObjectName("pipelineStageRunning")
 
     def on_stage_completed(self, stage: str, result: dict[str, Any]):
-        """Handle stage completed"""
+        """Handle stage completed."""
         success = result.get("success", False)
 
         if stage in self.stage_widgets:
@@ -718,11 +718,11 @@ class CICDDialog(PluginDialogBase):
                 self.console_output.append(f"    - {error}")
 
     def on_log_message(self, message: str):
-        """Handle log message"""
+        """Handle log message."""
         self.console_output.append(message)
 
     def on_pipeline_finished(self, results: dict[str, Any]):
-        """Handle pipeline finished"""
+        """Handle pipeline finished."""
         # Update UI
         self.run_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
@@ -742,6 +742,6 @@ class CICDDialog(PluginDialogBase):
         self.tab_widget.setCurrentWidget(self.reports_widget)
 
     def on_pipeline_error(self, error: str):
-        """Handle pipeline error"""
+        """Handle pipeline error."""
         self.console_output.append(f"\n❌ Pipeline error: {error}")
         self.on_pipeline_finished({"overall_status": "error"})

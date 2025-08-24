@@ -1,4 +1,4 @@
-"""Centralized Secrets Management for Intellicrack
+"""Centralized Secrets Management for Intellicrack.
 
 This module provides secure storage and retrieval of sensitive information
 such as API keys, tokens, and passwords.
@@ -128,7 +128,7 @@ class SecretsManager:
         self._sync_metadata_to_central_config()
 
     def _get_default_config_dir(self) -> Path:
-        """Get unified configuration directory.
+        r"""Get unified configuration directory.
 
         Uses C:\\Intellicrack\\config\\secrets for all platforms to ensure consistency.
         """

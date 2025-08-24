@@ -1,4 +1,4 @@
-"""File Reading Helper for AI Components
+"""File Reading Helper for AI Components.
 
 This module provides a unified interface for file reading operations in AI components,
 integrating the AIFileTools.read_file() method with fallback to direct file reading.

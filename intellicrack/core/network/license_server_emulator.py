@@ -1,4 +1,4 @@
-"""Network License Server Emulator
+"""Network License Server Emulator.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -140,7 +140,7 @@ class NetworkLicenseServerEmulator:
         return ports if ports else [27000, 27001]
 
     def _initialize_enhanced_components(self):
-        """Initialize enhanced traffic interception and response generation"""
+        """Initialize enhanced traffic interception and response generation."""
         try:
             # Initialize traffic interception engine
             self.traffic_engine = TrafficInterceptionEngine(self.config["listen_ip"])
@@ -801,7 +801,7 @@ class NetworkLicenseServerEmulator:
         try:
 
             class SSLInterceptor:
-                """SSL/TLS interceptor for HTTPS license verification"""
+                """SSL/TLS interceptor for HTTPS license verification."""
 
                 def __init__(self, parent: "NetworkLicenseServerEmulator") -> None:
                     self.parent = parent
@@ -809,7 +809,7 @@ class NetworkLicenseServerEmulator:
                     self.running = False
 
                 def _create_ssl_context(self) -> ssl.SSLContext:
-                    """Create SSL context with custom certificate"""
+                    """Create SSL context with custom certificate."""
                     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
 
                     # Check for certificate files or create them
@@ -834,7 +834,7 @@ class NetworkLicenseServerEmulator:
                     return context
 
                 def _generate_self_signed_cert(self, cert_file: str, key_file: str) -> None:
-                    """Generate a self-signed certificate for SSL interception using common utility"""
+                    """Generate a self-signed certificate for SSL interception using common utility."""
                     try:
                         from ...utils.certificate_utils import generate_self_signed_cert
 
@@ -877,7 +877,7 @@ class NetworkLicenseServerEmulator:
                 def intercept_connection(
                     self, client_socket: socket.socket, server_address: tuple[str, int]
                 ) -> None:
-                    """Intercept and handle SSL connection"""
+                    """Intercept and handle SSL connection."""
                     try:
                         # Wrap socket with SSL
                         ssl_socket = self.context.wrap_socket(client_socket, server_side=True)
@@ -902,7 +902,7 @@ class NetworkLicenseServerEmulator:
                         self.parent.logger.error("SSL interception error: %s", e)
 
                 def stop(self) -> None:
-                    """Stop the SSL interceptor"""
+                    """Stop the SSL interceptor."""
                     self.running = False
 
             self.ssl_interceptor = SSLInterceptor(self)
@@ -972,7 +972,7 @@ class NetworkLicenseServerEmulator:
         try:
 
             class TrafficRecorder:
-                """Records network traffic for analysis"""
+                """Records network traffic for analysis."""
 
                 def __init__(self, parent: "NetworkLicenseServerEmulator") -> None:
                     self.parent = parent
@@ -985,7 +985,7 @@ class NetworkLicenseServerEmulator:
                 def record(
                     self, source: str, destination: str, data: bytes, protocol: str = "unknown"
                 ) -> None:
-                    """Record a traffic entry"""
+                    """Record a traffic entry."""
                     entry = {
                         "timestamp": time.time(),
                         "source": source,
@@ -1006,7 +1006,7 @@ class NetworkLicenseServerEmulator:
                         self.save_log()
 
                 def save_log(self) -> None:
-                    """Save traffic log to file"""
+                    """Save traffic log to file."""
                     try:
                         from intellicrack.utils.core.plugin_paths import get_logs_dir
 
@@ -1033,7 +1033,7 @@ class NetworkLicenseServerEmulator:
                         self.parent.logger.error("Failed to save traffic log: %s", e)
 
                 def analyze_patterns(self) -> dict[str, list[str]]:
-                    """Analyze recorded traffic for patterns"""
+                    """Analyze recorded traffic for patterns."""
                     patterns: dict[str, list[str]] = {}
 
                     for _entry in self.traffic_log:
@@ -1053,7 +1053,7 @@ class NetworkLicenseServerEmulator:
                     return patterns
 
                 def stop(self) -> None:
-                    """Stop traffic recording"""
+                    """Stop traffic recording."""
                     self.recording = False
                     self.save_log()
 
@@ -1082,7 +1082,7 @@ class NetworkLicenseServerEmulator:
             return None
 
     def _handle_analyzed_traffic(self, analysis: "AnalyzedTraffic") -> None:
-        """Handle analyzed traffic from the traffic interception engine"""
+        """Handle analyzed traffic from the traffic interception engine."""
         try:
             if analysis.is_license_related:
                 self.logger.info(
@@ -1110,7 +1110,7 @@ class NetworkLicenseServerEmulator:
             self.logger.error(f"Error handling analyzed traffic: {e}")
 
     def _learn_protocol_pattern(self, analysis: "AnalyzedTraffic") -> None:
-        """Learn new protocol patterns from analyzed traffic"""
+        """Learn new protocol patterns from analyzed traffic."""
         try:
             protocol_type = analysis.protocol_type
 
@@ -1148,7 +1148,7 @@ class NetworkLicenseServerEmulator:
             self.logger.error(f"Error learning protocol pattern: {e}")
 
     def setup_dns_redirection_for_hosts(self, hostnames: list[str]) -> None:
-        """Setup DNS redirection for specific license server hostnames"""
+        """Setup DNS redirection for specific license server hostnames."""
         try:
             if self.traffic_engine:
                 for hostname in hostnames:
@@ -1161,7 +1161,7 @@ class NetworkLicenseServerEmulator:
             self.logger.error(f"Error setting up DNS redirection: {e}")
 
     def setup_transparent_proxy(self, target_host: str, target_port: int) -> bool:
-        """Setup transparent proxy for license server traffic"""
+        """Setup transparent proxy for license server traffic."""
         try:
             if self.traffic_engine:
                 success = self.traffic_engine.setup_transparent_proxy(target_host, target_port)
@@ -1177,7 +1177,7 @@ class NetworkLicenseServerEmulator:
             return False
 
     def get_traffic_statistics(self) -> dict[str, Any]:
-        """Get traffic interception statistics"""
+        """Get traffic interception statistics."""
         stats = {}
 
         try:
@@ -1204,7 +1204,7 @@ class NetworkLicenseServerEmulator:
         return stats
 
     def analyze_captured_protocols(self) -> dict[str, Any]:
-        """Analyze protocols detected in captured traffic"""
+        """Analyze protocols detected in captured traffic."""
         analysis = {
             "detected_protocols": [],
             "confidence_scores": {},
@@ -1257,7 +1257,7 @@ class NetworkLicenseServerEmulator:
         return analysis
 
     def export_learning_data(self) -> dict[str, Any]:
-        """Export learning data for analysis and backup"""
+        """Export learning data for analysis and backup."""
         export_data = {
             "timestamp": time.time(),
             "config": self.config.copy(),
@@ -1293,7 +1293,7 @@ class NetworkLicenseServerEmulator:
         return export_data
 
     def import_learning_data(self, data: dict[str, Any]) -> None:
-        """Import learning data from previous sessions"""
+        """Import learning data from previous sessions."""
         try:
             # Import learned protocols
             if "learned_protocols" in data:

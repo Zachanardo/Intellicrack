@@ -1,4 +1,4 @@
-"""Print Dialog for Hex Viewer
+"""Print Dialog for Hex Viewer.
 
 This dialog provides configuration options for printing hex data.
 
@@ -45,6 +45,7 @@ class PrintOptionsDialog(QDialog):
         Args:
             parent: Parent widget
             hex_viewer: Reference to hex viewer widget
+
         """
         super().__init__(parent)
         self.hex_viewer = hex_viewer
@@ -257,6 +258,7 @@ class PrintOptionsDialog(QDialog):
 
         Returns:
             Tuple of (data, start_offset)
+
         """
         if not self.hex_viewer or not hasattr(self.hex_viewer, 'file_handler'):
             return (None, 0)
@@ -286,6 +288,7 @@ class PrintOptionsDialog(QDialog):
 
         Returns:
             Formatted line string
+
         """
         line = ""
 
@@ -337,6 +340,7 @@ class PrintOptionsDialog(QDialog):
             start_offset: Starting offset in the file
             page_num: Current page number
             total_pages: Total number of pages
+
         """
         # Set up font
         font = self.font_combo.currentFont()
@@ -408,6 +412,7 @@ class PrintOptionsDialog(QDialog):
 
         Returns:
             Text with variables replaced
+
         """
         import datetime
 
@@ -432,6 +437,7 @@ class PrintOptionsDialog(QDialog):
 
         Returns:
             Total number of pages
+
         """
         if not data:
             return 0
@@ -473,6 +479,7 @@ class PrintOptionsDialog(QDialog):
 
         Args:
             printer: QPrinter to render to
+
         """
         self.render_to_printer(printer)
 
@@ -489,6 +496,7 @@ class PrintOptionsDialog(QDialog):
 
         Args:
             printer: QPrinter to render to
+
         """
         # Get data to print
         data, start_offset = self.get_print_data()

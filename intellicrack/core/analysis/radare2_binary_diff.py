@@ -1,4 +1,4 @@
-"""Radare2 Advanced Binary Comparison and Diffing Engine
+"""Radare2 Advanced Binary Comparison and Diffing Engine.
 
 Copyright (C) 2025 Zachary Flint
 

@@ -1,4 +1,4 @@
-"""Export Dialog for Hex Viewer
+"""Export Dialog for Hex Viewer.
 
 This dialog provides options for exporting data in various formats.
 
@@ -53,6 +53,7 @@ class ExportDialog(QDialog):
         Args:
             parent: Parent widget
             hex_viewer: Reference to hex viewer widget
+
         """
         super().__init__(parent)
         self.hex_viewer = hex_viewer
@@ -171,6 +172,7 @@ class ExportDialog(QDialog):
 
         Args:
             format_name: Selected format name
+
         """
         # Show/hide relevant options based on format
         is_hex_text = format_name == "Hex Text"
@@ -283,6 +285,7 @@ class ExportDialog(QDialog):
 
         Returns:
             Bytes to export or None if unavailable
+
         """
         if not self.hex_viewer or not hasattr(self.hex_viewer, 'file_handler'):
             QMessageBox.warning(self, "No Data", "No file is loaded.")
@@ -318,6 +321,7 @@ class ExportDialog(QDialog):
 
         Returns:
             Formatted hex string
+
         """
         hex_format = "{:02X}" if self.hex_uppercase_check.isChecked() else "{:02x}"
         return " ".join(hex_format.format(b) for b in data)
@@ -330,6 +334,7 @@ class ExportDialog(QDialog):
 
         Returns:
             C array source code
+
         """
         var_name = self.var_name_edit.text() or "data"
         items_per_line = self.items_per_line_spin.value()
@@ -363,6 +368,7 @@ class ExportDialog(QDialog):
 
         Returns:
             C++ array source code
+
         """
         var_name = self.var_name_edit.text() or "data"
         items_per_line = self.items_per_line_spin.value()
@@ -396,6 +402,7 @@ class ExportDialog(QDialog):
 
         Returns:
             Java array source code
+
         """
         var_name = self.var_name_edit.text() or "data"
         items_per_line = self.items_per_line_spin.value()
@@ -434,6 +441,7 @@ class ExportDialog(QDialog):
 
         Returns:
             Python bytes literal
+
         """
         var_name = self.var_name_edit.text() or "data"
         items_per_line = self.items_per_line_spin.value()
@@ -464,6 +472,7 @@ class ExportDialog(QDialog):
 
         Returns:
             Intel Hex format string
+
         """
         lines = []
         record_size = 16  # Standard Intel Hex uses 16 bytes per record
@@ -500,6 +509,7 @@ class ExportDialog(QDialog):
 
         Returns:
             S-Record format string
+
         """
         lines = []
         record_size = 16  # Standard S-Record uses 16 bytes per record
@@ -543,6 +553,7 @@ class ExportDialog(QDialog):
 
         Returns:
             Base64 encoded string
+
         """
         import base64
         encoded = base64.b64encode(data).decode('ascii')
@@ -562,6 +573,7 @@ class ExportDialog(QDialog):
 
         Returns:
             Data URI string
+
         """
         import base64
 

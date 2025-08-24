@@ -1,4 +1,4 @@
-"""Background Model Loading with Progress for Intellicrack
+"""Background Model Loading with Progress for Intellicrack.
 
 This module provides background loading capabilities for AI models with
 real-time progress updates and user feedback.

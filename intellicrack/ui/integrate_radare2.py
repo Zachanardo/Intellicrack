@@ -1,4 +1,4 @@
-"""Simple Integration Script for Adding Radare2 UI to Existing Application
+"""Simple Integration Script for Adding Radare2 UI to Existing Application.
 
 Copyright (C) 2025 Zachary Flint
 

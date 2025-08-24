@@ -1,4 +1,4 @@
-"""Pattern Library for Protection Detection and Bypass Strategies
+"""Pattern Library for Protection Detection and Bypass Strategies.
 
 Copyright (C) 2025 Zachary Flint
 

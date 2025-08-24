@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Headless Training Interface for Intellicrack AI Models
+"""Headless Training Interface for Intellicrack AI Models.
 
 Production-ready console interface for AI model training when GUI is not available.
 Provides full functionality without mock or placeholder implementations.
@@ -374,6 +374,7 @@ class HeadlessTrainingInterface:
 
         Returns:
             Tuple of (train_loss, train_acc, val_loss, val_acc)
+
         """
         try:
             # Get training parameters
@@ -461,6 +462,7 @@ class HeadlessTrainingInterface:
 
         Returns:
             Tuple of (train_data, val_data)
+
         """
         try:
             if not dataset_path or not os.path.exists(dataset_path):
@@ -506,6 +508,7 @@ class HeadlessTrainingInterface:
 
         Returns:
             List of training samples
+
         """
         try:
             samples = []
@@ -548,6 +551,7 @@ class HeadlessTrainingInterface:
 
         Returns:
             Tuple of (batch_loss, correct_predictions, total_samples)
+
         """
         try:
             total_loss = 0.0
@@ -596,6 +600,7 @@ class HeadlessTrainingInterface:
 
         Returns:
             Tuple of (batch_loss, correct_predictions, total_samples)
+
         """
         try:
             total_loss = 0.0
@@ -643,6 +648,7 @@ class HeadlessTrainingInterface:
 
         Returns:
             Model prediction (probability between 0 and 1)
+
         """
         try:
             import math

@@ -1,4 +1,4 @@
-"""Local GGUF Model Server for Intellicrack AI
+"""Local GGUF Model Server for Intellicrack AI.
 
 Copyright (C) 2025 Zachary Flint
 

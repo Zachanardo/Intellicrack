@@ -1,4 +1,4 @@
-"""Binary Similarity Search Engine
+"""Binary Similarity Search Engine.
 
 Copyright (C) 2025 Zachary Flint
 

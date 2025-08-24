@@ -1,4 +1,4 @@
-"""Intellicrack UI Dialogs Package
+"""Intellicrack UI Dialogs Package.
 
 Copyright (C) 2025 Zachary Flint
 

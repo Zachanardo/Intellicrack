@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ class FontManager:
         self.config = self._load_config()
 
     def _load_config(self):
-        """Load font configuration from central config system"""
+        """Load font configuration from central config system."""
         try:
             # Get font configuration from central config
             font_config = self.central_config.get("font_configuration", {})
@@ -73,7 +73,7 @@ class FontManager:
             }
 
     def load_application_fonts(self):
-        """Load custom fonts into Qt application"""
+        """Load custom fonts into Qt application."""
         if not os.path.exists(self.fonts_dir):
             return
 
@@ -89,7 +89,7 @@ class FontManager:
                     logger.warning(f"Failed to load font {font_file}: {e}")
 
     def get_monospace_font(self, size=None):
-        """Get the best available monospace font"""
+        """Get the best available monospace font."""
         if size is None:
             size = self.config.get("font_sizes", {}).get("code_default", 10)
 
@@ -113,7 +113,7 @@ class FontManager:
         return font
 
     def get_ui_font(self, size=None):
-        """Get the best available UI font"""
+        """Get the best available UI font."""
         if size is None:
             size = self.config.get("font_sizes", {}).get("ui_default", 10)
 
@@ -138,7 +138,7 @@ _font_manager = None
 
 
 def get_font_manager():
-    """Get or create the global font manager"""
+    """Get or create the global font manager."""
     global _font_manager
     if _font_manager is None:
         _font_manager = FontManager()

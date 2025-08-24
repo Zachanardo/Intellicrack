@@ -1,4 +1,4 @@
-"""File Comparison Module for Hex Viewer
+"""File Comparison Module for Hex Viewer.
 
 This module provides binary file comparison functionality with
 difference highlighting and synchronization support.
@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 
 class DifferenceType(Enum):
     """Types of differences between files."""
+
     MODIFIED = "modified"
     INSERTED = "inserted"
     DELETED = "deleted"
@@ -53,6 +54,7 @@ class BinaryComparer:
 
         Args:
             block_size: Size of blocks to read for comparison
+
         """
         self.block_size = block_size
         self.differences = []
@@ -63,6 +65,7 @@ class BinaryComparer:
 
         Args:
             callback: Function that takes (current, total) parameters
+
         """
         self.progress_callback = callback
 
@@ -75,6 +78,7 @@ class BinaryComparer:
 
         Returns:
             List of DifferenceBlock objects
+
         """
         self.differences = []
 
@@ -100,6 +104,7 @@ class BinaryComparer:
 
         Returns:
             List of DifferenceBlock objects
+
         """
         self.differences = []
 
@@ -116,6 +121,7 @@ class BinaryComparer:
             f2: Second file stream
             size1: Size of first file
             size2: Size of second file
+
         """
         offset = 0
         max_size = max(size1, size2)
@@ -174,6 +180,7 @@ class BinaryComparer:
 
         Returns:
             Type of difference
+
         """
         if not block1:
             return DifferenceType.INSERTED
@@ -188,6 +195,7 @@ class BinaryComparer:
         Args:
             data1: First data
             data2: Second data
+
         """
         # For large files, fall back to block comparison
         if len(data1) > 10000 or len(data2) > 10000:
@@ -214,6 +222,7 @@ class BinaryComparer:
         Args:
             data1: First data
             data2: Second data
+
         """
         i = 0
         j = 0
@@ -288,6 +297,7 @@ class BinaryComparer:
             data1: First data
             data2: Second data
             lcs: LCS table
+
         """
         i, j = len(data1), len(data2)
 
@@ -381,6 +391,7 @@ class BinaryComparer:
 
         Returns:
             Dictionary with comparison statistics
+
         """
         stats = {
             'total_differences': len(self.differences),
@@ -414,6 +425,7 @@ class ComparisonNavigator:
 
         Args:
             differences: List of difference blocks
+
         """
         self.differences = differences
         self.current_index = -1
@@ -423,6 +435,7 @@ class ComparisonNavigator:
 
         Returns:
             True if differences exist
+
         """
         return len(self.differences) > 0
 
@@ -431,6 +444,7 @@ class ComparisonNavigator:
 
         Returns:
             First difference block or None
+
         """
         if self.differences:
             self.current_index = 0
@@ -442,6 +456,7 @@ class ComparisonNavigator:
 
         Returns:
             Last difference block or None
+
         """
         if self.differences:
             self.current_index = len(self.differences) - 1
@@ -453,6 +468,7 @@ class ComparisonNavigator:
 
         Returns:
             Next difference block or None
+
         """
         if self.current_index < len(self.differences) - 1:
             self.current_index += 1
@@ -464,6 +480,7 @@ class ComparisonNavigator:
 
         Returns:
             Previous difference block or None
+
         """
         if self.current_index > 0:
             self.current_index -= 1
@@ -479,6 +496,7 @@ class ComparisonNavigator:
 
         Returns:
             Difference block containing offset or None
+
         """
         for i, diff in enumerate(self.differences):
             if file_num == 1:
@@ -496,6 +514,7 @@ class ComparisonNavigator:
 
         Returns:
             Current difference block or None
+
         """
         if 0 <= self.current_index < len(self.differences):
             return self.differences[self.current_index]
@@ -506,5 +525,6 @@ class ComparisonNavigator:
 
         Returns:
             Tuple of (current_index + 1, total_differences)
+
         """
         return (self.current_index + 1, len(self.differences))

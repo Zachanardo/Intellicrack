@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ThemeConfig:
     """Theme configuration settings."""
+
     name: str = "dark"
     primary_color: str = "#00ff00"
     background_color: str = "#1e1e1e"
@@ -59,6 +60,7 @@ class ThemeConfig:
 @dataclass
 class FontConfig:
     """Font configuration settings."""
+
     family: str = "Segoe UI"
     base_size: int = 10
     header_size: int = 14
@@ -71,6 +73,7 @@ class FontConfig:
 @dataclass
 class LayoutConfig:
     """Layout configuration settings."""
+
     window_width: int = 1400
     window_height: int = 900
     sidebar_width: int = 250
@@ -85,6 +88,7 @@ class LayoutConfig:
 @dataclass
 class EditorConfig:
     """Code editor configuration settings."""
+
     indent_size: int = 4
     use_tabs: bool = False
     show_whitespace: bool = False
@@ -98,6 +102,7 @@ class EditorConfig:
 @dataclass
 class AnimationConfig:
     """Animation and transition settings."""
+
     enabled: bool = True
     duration: int = 200
     fade_effects: bool = True
@@ -108,6 +113,7 @@ class AnimationConfig:
 @dataclass
 class AccessibilityConfig:
     """Accessibility configuration settings."""
+
     high_contrast: bool = False
     large_icons: bool = False
     screen_reader_mode: bool = False
@@ -313,6 +319,7 @@ class UIConfigManager:
 
         Returns:
             True if theme was applied, False if theme not found
+
         """
         # Check default themes
         if theme_name in self.DEFAULT_THEMES:
@@ -402,6 +409,7 @@ class UIConfigManager:
 
         Returns:
             Setting value or default
+
         """
         full_key = f"ui.{key}"
         return self.main_config.get(full_key, default)
@@ -412,6 +420,7 @@ class UIConfigManager:
         Args:
             key: Dot-notation key (e.g., 'dashboard.max_recent_files')
             value: Value to set
+
         """
         full_key = f"ui.{key}"
         self.main_config.set(full_key, value)
@@ -474,6 +483,7 @@ def get_ui_config_manager() -> UIConfigManager:
 
     Returns:
         The UIConfigManager instance
+
     """
     global _ui_config_manager
     if _ui_config_manager is None:

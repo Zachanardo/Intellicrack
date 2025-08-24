@@ -1,4 +1,4 @@
-"""Resource Management Framework for Intellicrack
+"""Resource Management Framework for Intellicrack.
 
 Provides context managers and automatic cleanup for VMs, containers, processes,
 and other system resources. Ensures proper resource cleanup even on errors.

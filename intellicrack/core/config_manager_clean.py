@@ -1,4 +1,4 @@
-"""Configuration Manager for Intellicrack
+"""Configuration Manager for Intellicrack.
 
 Auto configures itself with platform aware directories and tool discovery.
 Creates configuration files dynamically without requiring manual setup.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ASCII Charts - Visual terminal graphs for analysis results
+"""ASCII Charts - Visual terminal graphs for analysis results.
 
 Copyright (C) 2025 Zachary Flint
 

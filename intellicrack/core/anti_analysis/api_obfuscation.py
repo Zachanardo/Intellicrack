@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import ctypes
 import logging
+import random
 import secrets
 import struct
 import zlib
@@ -965,6 +966,7 @@ if (p{api_name}) {{
 
         Returns:
             Assembly stub bytes for runtime decryption
+
         """
         stub = bytearray()
 

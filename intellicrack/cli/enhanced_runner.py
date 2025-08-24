@@ -1,4 +1,4 @@
-"""Enhanced CLI Runner for Intellicrack Integrates progress visualization and improved user experience
+"""Enhanced CLI Runner for Intellicrack Integrates progress visualization and improved user experience.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -52,7 +52,7 @@ Integrates progress visualization and improved user experience
 
 
 class EnhancedCLIRunner:
-    """Enhanced CLI runner with progress visualization"""
+    """Enhanced CLI runner with progress visualization."""
 
     def __init__(self):
         """Initialize enhanced CLI runner with console, progress management, and logging."""
@@ -62,7 +62,7 @@ class EnhancedCLIRunner:
         self.logger = logging.getLogger(__name__)
 
     def run_with_progress(self, binary_path: str, operations: list[str]) -> dict[str, Any]:
-        """Run operations with progress visualization"""
+        """Run operations with progress visualization."""
         self.console.print(f"\n[bold cyan]Analyzing:[/bold cyan] {binary_path}")
 
         # Start progress display
@@ -104,7 +104,7 @@ class EnhancedCLIRunner:
         return self.results
 
     def _run_static_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Run static analysis with progress updates"""
+        """Run static analysis with progress updates."""
         steps = [
             ("Loading binary", 10),
             ("Parsing headers", 20),
@@ -171,7 +171,7 @@ class EnhancedCLIRunner:
         return results
 
     def _run_vulnerability_scan(self, binary_path: str) -> dict[str, Any]:
-        """Run vulnerability scan with progress updates"""
+        """Run vulnerability scan with progress updates."""
         try:
             engine = VulnerabilityEngine()
 
@@ -221,7 +221,7 @@ class EnhancedCLIRunner:
             return {"error": str(e)}
 
     def _run_protection_detection(self, binary_path: str) -> dict[str, Any]:
-        """Run protection detection with progress updates"""
+        """Run protection detection with progress updates."""
         try:
             # Real protection detection with progress tracking
             detection_steps = [
@@ -269,7 +269,7 @@ class EnhancedCLIRunner:
             return {"error": str(e)}
 
     def _run_dynamic_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Run dynamic analysis with real behavioral monitoring"""
+        """Run dynamic analysis with real behavioral monitoring."""
         results = {
             "behavior": [],
             "syscalls": [],
@@ -358,7 +358,7 @@ class EnhancedCLIRunner:
         return results
 
     def _run_network_analysis(self, binary_path: str) -> dict[str, Any]:
-        """Run network analysis"""
+        """Run network analysis."""
         try:
             analyzer = NetworkTrafficAnalyzer()
 
@@ -456,7 +456,7 @@ class EnhancedCLIRunner:
             return {"error": str(e)}
 
     def display_results(self) -> None:
-        """Display analysis results in a beautiful format"""
+        """Display analysis results in a beautiful format."""
         self.console.print("\n[bold cyan]Analysis Results[/bold cyan]\n")
 
         for operation, result in self.results.items():
@@ -480,7 +480,7 @@ class EnhancedCLIRunner:
             self.console.print(panel)
 
     def _format_static_results(self, result: dict) -> str:
-        """Format static analysis results"""
+        """Format static analysis results."""
         lines = []
         if "file_type" in result:
             lines.append(f"[yellow]File Type:[/yellow] {result.get('file_type', 'Unknown')}")
@@ -494,7 +494,7 @@ class EnhancedCLIRunner:
         return "\n".join(lines) if lines else "No static analysis data"
 
     def _format_vulnerability_results(self, result: dict) -> str:
-        """Format vulnerability scan results"""
+        """Format vulnerability scan results."""
         vulns = result.get("vulnerabilities", [])
         if not vulns:
             return "[green]No vulnerabilities detected[/green]"
@@ -509,7 +509,7 @@ class EnhancedCLIRunner:
         return "\n".join(lines)
 
     def _format_protection_results(self, result: dict) -> str:
-        """Format protection detection results"""
+        """Format protection detection results."""
         protections = result.get("protections", {})
         if not protections:
             return "[green]No protections detected[/green]"
@@ -522,7 +522,7 @@ class EnhancedCLIRunner:
         return "\n".join(lines)
 
     def _format_generic_results(self, result: dict) -> str:
-        """Format generic results"""
+        """Format generic results."""
         lines = []
         for key, value in result.items():
             if isinstance(value, list):
@@ -536,7 +536,7 @@ class EnhancedCLIRunner:
 
 
 def main():
-    """Main entry point for enhanced CLI"""
+    """Main entry point for enhanced CLI."""
     console = Console()
 
     # Show banner

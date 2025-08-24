@@ -1,4 +1,4 @@
-"""CodeMeter License Protocol Parser and Response Generator
+"""CodeMeter License Protocol Parser and Response Generator.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import hashlib
 import random
+import secrets
 import struct
 import time
 import uuid
@@ -33,7 +34,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class CodeMeterRequest:
-    """CodeMeter request structure"""
+    """CodeMeter request structure."""
 
     command: int
     request_id: int
@@ -49,7 +50,7 @@ class CodeMeterRequest:
 
 @dataclass
 class CodeMeterResponse:
-    """CodeMeter response structure"""
+    """CodeMeter response structure."""
 
     status: int
     request_id: int
@@ -62,7 +63,7 @@ class CodeMeterResponse:
 
 
 class CodeMeterProtocolParser:
-    """Real CodeMeter protocol parser and response generator"""
+    """Real CodeMeter protocol parser and response generator."""
 
     # CodeMeter command constants
     CODEMETER_COMMANDS = {
@@ -120,7 +121,7 @@ class CodeMeterProtocolParser:
         self._load_default_products()
 
     def _load_default_products(self):
-        """Load default CodeMeter products"""
+        """Load default CodeMeter products."""
         self.products = {
             # Common firm codes and products
             (500001, 1): {  # Sample CAD software
@@ -180,23 +181,23 @@ class CodeMeterProtocolParser:
         }
 
     def _generate_container_info(self) -> dict[str, Any]:
-        """Generate realistic CodeMeter container information"""
+        """Generate realistic CodeMeter container information."""
         return {
-            "serial_number": random.randint(1000000, 9999999),
+            "serial_number": secrets.randbelow(9000000) + 1000000,
             "firm_code": 500001,
             "container_type": "CmStick/T",
             "memory_total": 65536,
             "memory_free": 32768,
-            "creation_time": int(time.time() - random.randint(86400, 864000)),
-            "activation_count": random.randint(1, 100),
-            "firm_update_count": random.randint(0, 10),
-            "product_update_count": random.randint(0, 50),
+            "creation_time": int(time.time() - random.randint(86400, 864000)),  # noqa: S311 - Simulated creation time offset
+            "activation_count": random.randint(1, 100),  # noqa: S311 - Simulated activation statistics
+            "firm_update_count": random.randint(0, 10),  # noqa: S311 - Simulated update statistics
+            "product_update_count": random.randint(0, 50),  # noqa: S311 - Simulated update statistics
             "device_id": str(uuid.uuid4()).upper(),
             "firmware_version": "6.90.5317.500",
         }
 
     def parse_request(self, data: bytes) -> CodeMeterRequest | None:
-        """Parse incoming CodeMeter request
+        """Parse incoming CodeMeter request.
 
         Args:
             data: Raw CodeMeter request data
@@ -304,7 +305,7 @@ class CodeMeterProtocolParser:
             return None
 
     def _parse_session_context(self, data: bytes) -> dict[str, Any]:
-        """Parse CodeMeter session context data"""
+        """Parse CodeMeter session context data."""
         context = {}
         try:
             offset = 0
@@ -335,7 +336,7 @@ class CodeMeterProtocolParser:
         return context
 
     def _parse_additional_data(self, data: bytes) -> dict[str, Any]:
-        """Parse additional CodeMeter data fields"""
+        """Parse additional CodeMeter data fields."""
         additional = {}
         try:
             offset = 0
@@ -368,7 +369,7 @@ class CodeMeterProtocolParser:
         return additional
 
     def generate_response(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Generate appropriate CodeMeter response based on request
+        """Generate appropriate CodeMeter response based on request.
 
         Args:
             request: Parsed CodeMeter request
@@ -415,7 +416,7 @@ class CodeMeterProtocolParser:
         return self._handle_unknown_command(request)
 
     def _handle_login(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle CodeMeter login request"""
+        """Handle CodeMeter login request."""
         product_key = (request.firm_code, request.product_code)
 
         if product_key not in self.products:
@@ -462,7 +463,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_logout(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle CodeMeter logout request"""
+        """Handle CodeMeter logout request."""
         session_id = request.session_context.get("session_id", "")
 
         if session_id in self.active_sessions:
@@ -483,7 +484,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_challenge(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle challenge-response authentication"""
+        """Handle challenge-response authentication."""
         # Generate response to challenge
         challenge_response = hashlib.sha256(
             request.challenge_data
@@ -503,7 +504,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_response(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle response verification"""
+        """Handle response verification."""
         # Verify the response (simplified - always accept)
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK
@@ -517,7 +518,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_get_info(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle get info request"""
+        """Handle get info request."""
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK
             request_id=request.request_id,
@@ -535,7 +536,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_encrypt(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle encryption request"""
+        """Handle encryption request."""
         # Simulate encryption (XOR with firm/product code)
         key = struct.pack("<II", request.firm_code, request.product_code)
         encrypted_data = bytearray()
@@ -555,12 +556,12 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_decrypt(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle decryption request"""
+        """Handle decryption request."""
         # Same as encrypt for XOR cipher
         return self._handle_encrypt(request)
 
     def _handle_sign(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle digital signature request"""
+        """Handle digital signature request."""
         # Generate signature hash
         signature = hashlib.sha256(
             request.challenge_data + struct.pack("<II", request.firm_code, request.product_code),
@@ -578,7 +579,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_verify(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle signature verification request"""
+        """Handle signature verification request."""
         # Simplified verification - always succeed
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK
@@ -592,7 +593,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_get_license(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle get license request"""
+        """Handle get license request."""
         product_key = (request.firm_code, request.product_code)
 
         if product_key in self.products:
@@ -622,7 +623,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_release_license(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle release license request"""
+        """Handle release license request."""
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK
             request_id=request.request_id,
@@ -635,7 +636,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_heartbeat(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle heartbeat request"""
+        """Handle heartbeat request."""
         session_id = request.session_context.get("session_id", "")
 
         if session_id in self.active_sessions:
@@ -653,7 +654,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_get_container_info(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle get container info request"""
+        """Handle get container info request."""
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK
             request_id=request.request_id,
@@ -666,7 +667,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_enum_products(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle enumerate products request"""
+        """Handle enumerate products request."""
         products_list = []
         for (firm_code, product_code), product in self.products.items():
             if firm_code == request.firm_code or request.firm_code == 0:
@@ -692,7 +693,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_transfer_receipt(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle transfer receipt request"""
+        """Handle transfer receipt request."""
         receipt_id = hashlib.sha256(
             f"{request.firm_code}:{request.product_code}:{time.time()}".encode(),
         ).hexdigest()
@@ -716,7 +717,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_check_receipt(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle check receipt request"""
+        """Handle check receipt request."""
         receipt_id = request.session_context.get("receipt_id", "")
 
         if receipt_id in self.license_receipts:
@@ -743,7 +744,7 @@ class CodeMeterProtocolParser:
         )
 
     def _handle_unknown_command(self, request: CodeMeterRequest) -> CodeMeterResponse:
-        """Handle unknown command"""
+        """Handle unknown command."""
         self.logger.warning(f"Unknown CodeMeter command: 0x{request.command:04X}")
         return CodeMeterResponse(
             status=0x00000012,  # CM_GCM_ENCRYPTION_ERROR (generic error)
@@ -757,7 +758,7 @@ class CodeMeterProtocolParser:
         )
 
     def serialize_response(self, response: CodeMeterResponse) -> bytes:
-        """Serialize CodeMeter response to bytes
+        """Serialize CodeMeter response to bytes.
 
         Args:
             response: CodeMeter response object
@@ -811,7 +812,7 @@ class CodeMeterProtocolParser:
             return struct.pack("<III", 0x434D4554, response.status, response.request_id)
 
     def _serialize_dict(self, data: dict[str, Any]) -> bytes:
-        """Serialize dictionary to bytes"""
+        """Serialize dictionary to bytes."""
         serialized = bytearray()
 
         for key, value in data.items():

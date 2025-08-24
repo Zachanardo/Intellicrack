@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -66,6 +66,7 @@ except ImportError as e:
     # Architecture constants
     class ARCHITECTURES:
         """Binary architectures."""
+
         NONE = 0
         X86 = 1
         X64 = 2
@@ -76,11 +77,13 @@ except ImportError as e:
 
     class ENDIANNESS:
         """Byte order."""
+
         LITTLE = 0
         BIG = 1
 
     class MODES:
         """Execution modes."""
+
         MODE_32 = 0
         MODE_64 = 1
         THUMB = 2

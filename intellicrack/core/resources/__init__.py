@@ -1,4 +1,4 @@
-"""Resource Management Package
+"""Resource Management Package.
 
 Provides context managers and automatic cleanup for system resources.
 

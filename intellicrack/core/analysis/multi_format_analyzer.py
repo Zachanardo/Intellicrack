@@ -1189,7 +1189,7 @@ class MultiFormatBinaryAnalyzer:
         return result
 
     def _analyze_lief_binary(self, binary) -> dict[str, Any]:
-        """Analyze a binary using LIEF"""
+        """Analyze a binary using LIEF."""
         result = {}
 
         # Get basic info

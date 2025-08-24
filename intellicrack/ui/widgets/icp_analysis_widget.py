@@ -1,4 +1,4 @@
-"""Intellicrack Protection Engine Analysis Widget
+"""Intellicrack Protection Engine Analysis Widget.
 
 PyQt6 widget for displaying ICP engine analysis results.
 
@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 
 
 class ICPAnalysisThread(QThread):
-    """Background thread for ICP analysis"""
+    """Background thread for ICP analysis."""
 
     #: ICPScanResult (type: object)
     result_ready = pyqtSignal(object)
@@ -53,7 +53,7 @@ class ICPAnalysisThread(QThread):
         self._backend = get_icp_backend()
 
     def run(self):
-        """Run analysis in background thread"""
+        """Run analysis in background thread."""
         try:
             self.progress_update.emit(f"Analyzing {self.file_path}...")
 
@@ -79,7 +79,7 @@ class ICPAnalysisThread(QThread):
 
 
 class ICPAnalysisWidget(QWidget):
-    """Widget for displaying ICP engine analysis results"""
+    """Widget for displaying ICP engine analysis results."""
 
     # Signals
     #: ICPScanResult (type: object)
@@ -100,7 +100,7 @@ class ICPAnalysisWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        """Initialize the UI"""
+        """Initialize the UI."""
         layout = QVBoxLayout(self)
 
         # Header with controls
@@ -183,7 +183,7 @@ class ICPAnalysisWidget(QWidget):
         layout.addWidget(self.status_label)
 
     def analyze_file(self, file_path: str):
-        """Start analysis of a file"""
+        """Start analysis of a file."""
         if self._analysis_thread and self._analysis_thread.isRunning():
             self.status_label.setText("Analysis already in progress")
             return
@@ -207,19 +207,19 @@ class ICPAnalysisWidget(QWidget):
 
     @pyqtSlot()
     def on_analyze_clicked(self):
-        """Handle analyze button click"""
+        """Handle analyze button click."""
         # This would typically open a file dialog
         # For now, emit a signal for the parent to handle
         self.status_label.setText("Select a file to analyze")
 
     @pyqtSlot(str)
     def on_progress_update(self, message: str):
-        """Handle progress updates"""
+        """Handle progress updates."""
         self.status_label.setText(message)
 
     @pyqtSlot(object)
     def on_analysis_complete(self, result: ICPScanResult):
-        """Handle analysis completion"""
+        """Handle analysis completion."""
         self._current_result = result
 
         # Update UI
@@ -289,13 +289,13 @@ class ICPAnalysisWidget(QWidget):
 
     @pyqtSlot(str)
     def on_analysis_error(self, error: str):
-        """Handle analysis errors"""
+        """Handle analysis errors."""
         self.analyze_btn.setEnabled(True)
         self.progress_bar.setVisible(False)
         self.status_label.setText(f"Error: {error}")
 
     def on_detection_selected(self, item: QTreeWidgetItem, column: int):
-        """Handle detection selection"""
+        """Handle detection selection."""
         if not item.parent():  # Skip parent items
             return
 
@@ -331,7 +331,7 @@ class ICPAnalysisWidget(QWidget):
             self.protection_selected.emit(detection)
 
     def _get_bypass_methods(self, detection: ICPDetection) -> str:
-        """Get bypass methods for a detection"""
+        """Get bypass methods for a detection."""
         # This would integrate with the protection knowledge base
         # For now, provide generic recommendations
 
@@ -365,7 +365,7 @@ class ICPAnalysisWidget(QWidget):
         return methods
 
     def clear_results(self):
-        """Clear all results"""
+        """Clear all results."""
         self._current_result = None
         self.detections_tree.clear()
         self.details_text.clear()
@@ -374,5 +374,5 @@ class ICPAnalysisWidget(QWidget):
         self.status_label.setText("Ready")
 
     def get_current_result(self) -> ICPScanResult | None:
-        """Get the current analysis result"""
+        """Get the current analysis result."""
         return self._current_result

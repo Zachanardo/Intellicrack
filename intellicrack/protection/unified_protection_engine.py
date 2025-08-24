@@ -1,4 +1,4 @@
-"""Unified Protection Analysis Engine
+"""Unified Protection Analysis Engine.
 
 Seamlessly integrates protection detection and custom analysis into a single unified interface.
 
@@ -27,7 +27,7 @@ logger = get_logger(__name__)
 
 
 class AnalysisSource(Enum):
-    """Source of protection analysis"""
+    """Source of protection analysis."""
 
     PROTECTION_ENGINE = "protection_engine"
     HEURISTIC = "heuristic"
@@ -40,7 +40,7 @@ class AnalysisSource(Enum):
 
 @dataclass
 class UnifiedProtectionResult:
-    """Unified protection analysis result combining all sources"""
+    """Unified protection analysis result combining all sources."""
 
     file_path: str
     file_type: str
@@ -71,7 +71,7 @@ class UnifiedProtectionResult:
 
 
 class UnifiedProtectionEngine:
-    """Unified engine that seamlessly combines multiple protection analysis methods"""
+    """Unified engine that seamlessly combines multiple protection analysis methods."""
 
     def __init__(
         self,
@@ -79,7 +79,7 @@ class UnifiedProtectionEngine:
         enable_heuristics: bool = True,
         cache_config: dict[str, Any] | None = None,
     ):
-        """Initialize unified protection engine
+        """Initialize unified protection engine.
 
         Args:
             enable_protection: Enable protection analysis
@@ -102,7 +102,7 @@ class UnifiedProtectionEngine:
     def analyze(
         self, file_path: str, deep_scan: bool = True, timeout: int = 60
     ) -> UnifiedProtectionResult:
-        """Perform unified protection analysis
+        """Perform unified protection analysis.
 
         Args:
             file_path: Path to file to analyze
@@ -205,7 +205,7 @@ class UnifiedProtectionEngine:
     def _run_protection_analysis(
         self, file_path: str, deep_scan: bool
     ) -> AdvancedProtectionAnalysis | None:
-        """Run protection analysis"""
+        """Run protection analysis."""
         try:
             scan_mode = ScanMode.DEEP if deep_scan else ScanMode.NORMAL
             return self.protection_detector.detect_protections_advanced(
@@ -219,7 +219,7 @@ class UnifiedProtectionEngine:
             return None
 
     def _run_heuristic_analysis(self, file_path: str) -> dict[str, Any] | None:
-        """Run heuristic analysis"""
+        """Run heuristic analysis."""
         try:
             heuristics = {}
 
@@ -299,7 +299,7 @@ class UnifiedProtectionEngine:
     def _merge_protection_results(
         self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis
     ):
-        """Merge protection results into unified result"""
+        """Merge protection results into unified result."""
         result.file_type = protection_analysis.file_type
         result.architecture = protection_analysis.architecture
         result.is_packed = protection_analysis.is_packed
@@ -331,7 +331,7 @@ class UnifiedProtectionEngine:
                 result.has_licensing = True
 
     def _merge_heuristic_results(self, result: UnifiedProtectionResult, heuristics: dict[str, Any]):
-        """Merge heuristic results into unified result"""
+        """Merge heuristic results into unified result."""
         if heuristics.get("likely_packed"):
             result.is_packed = True
             protection = {
@@ -355,7 +355,7 @@ class UnifiedProtectionEngine:
             result.protections.append(protection)
 
     def _run_icp_analysis(self, file_path: str, deep_scan: bool) -> ICPScanResult | None:
-        """Run ICP engine analysis"""
+        """Run ICP engine analysis."""
         try:
             # Convert scan mode
             icp_mode = ICPScanMode.DEEP if deep_scan else ICPScanMode.NORMAL
@@ -376,7 +376,7 @@ class UnifiedProtectionEngine:
             return None
 
     def _merge_icp_results(self, result: UnifiedProtectionResult, icp_result: ICPScanResult):
-        """Merge ICP engine results into unified result"""
+        """Merge ICP engine results into unified result."""
         # Update file info if not already set
         if result.file_type == "Unknown" and icp_result.file_infos:
             result.file_type = icp_result.file_infos[0].filetype
@@ -415,7 +415,7 @@ class UnifiedProtectionEngine:
                 result.has_licensing = True
 
     def _map_icp_type(self, icp_type: str) -> str:
-        """Map ICP detection types to our unified types"""
+        """Map ICP detection types to our unified types."""
         type_mapping = {
             "Packer": "packer",
             "Protector": "protector",
@@ -432,7 +432,7 @@ class UnifiedProtectionEngine:
         return type_mapping.get(icp_type, "unknown")
 
     def _consolidate_results(self, result: UnifiedProtectionResult):
-        """Consolidate and deduplicate results from multiple sources"""
+        """Consolidate and deduplicate results from multiple sources."""
         # Group protections by name
         protection_groups = {}
         for protection in result.protections:
@@ -471,7 +471,7 @@ class UnifiedProtectionEngine:
         result.protections = consolidated
 
     def _generate_bypass_strategies(self, result: UnifiedProtectionResult):
-        """Generate comprehensive bypass strategies"""
+        """Generate comprehensive bypass strategies."""
         strategies = []
 
         # Analyze protection combinations
@@ -548,7 +548,7 @@ class UnifiedProtectionEngine:
         result.bypass_strategies = strategies
 
     def _calculate_confidence(self, result: UnifiedProtectionResult):
-        """Calculate overall confidence score"""
+        """Calculate overall confidence score."""
         if not result.protections:
             result.confidence_score = 0.0
             return
@@ -578,7 +578,7 @@ class UnifiedProtectionEngine:
             result.confidence_score = 0.0
 
     def get_quick_summary(self, file_path: str) -> dict[str, Any]:
-        """Get quick protection summary without deep analysis"""
+        """Get quick protection summary without deep analysis."""
         # Try to get cached result first
         cached_result = self.cache.get(file_path, "deep_scan:False,timeout:60")
         if cached_result is None:
@@ -622,7 +622,7 @@ class UnifiedProtectionEngine:
     def analyze_file(
         self, file_path: str, deep_scan: bool = True, timeout: int = 60
     ) -> UnifiedProtectionResult:
-        """Backward-compatible alias for analyze method
+        """Backward-compatible alias for analyze method.
 
         Args:
             file_path: Path to file to analyze
@@ -636,16 +636,16 @@ class UnifiedProtectionEngine:
         return self.analyze(file_path, deep_scan, timeout)
 
     def get_cache_stats(self) -> dict[str, Any]:
-        """Get cache statistics"""
+        """Get cache statistics."""
         return self.cache.get_cache_info()
 
     def clear_cache(self) -> None:
-        """Clear all cached results"""
+        """Clear all cached results."""
         self.cache.clear()
         logger.info("Analysis cache cleared")
 
     def cleanup_cache(self) -> int:
-        """Clean up invalid cache entries
+        """Clean up invalid cache entries.
 
         Returns:
             Number of entries removed
@@ -656,11 +656,11 @@ class UnifiedProtectionEngine:
         return removed
 
     def save_cache(self) -> None:
-        """Manually save cache to disk"""
+        """Manually save cache to disk."""
         self.cache.save_cache()
 
     def remove_from_cache(self, file_path: str) -> bool:
-        """Remove specific file from cache
+        """Remove specific file from cache.
 
         Args:
             file_path: Path to file to remove from cache
@@ -681,12 +681,12 @@ class UnifiedProtectionEngine:
 
     def invalidate_cache_for_file(self, file_path: str) -> None:
         """Invalidate cache entries for a specific file
-        This is useful when a file has been modified
+        This is useful when a file has been modified.
         """
         self.remove_from_cache(file_path)
 
     def get_cache_size(self) -> tuple[int, float]:
-        """Get cache size information
+        """Get cache size information.
 
         Returns:
             Tuple of (entry_count, size_in_mb)
@@ -701,7 +701,7 @@ _unified_engine = None
 
 
 def get_unified_engine() -> UnifiedProtectionEngine:
-    """Get or create unified protection engine instance"""
+    """Get or create unified protection engine instance."""
     global _unified_engine
     if _unified_engine is None:
         _unified_engine = UnifiedProtectionEngine()

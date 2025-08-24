@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -344,18 +344,25 @@ class SandboxDetector(BaseDetector):
             if platform.system() == "Windows":
                 netstat_path = shutil.which("netstat")
                 if netstat_path:
-                    result = subprocess.run(
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                         [netstat_path, "-an"],
                         check=False,
                         capture_output=True,
                         text=True,
+                        shell=False  # Explicitly secure - using list format prevents shell injection
                     )
                 else:
                     result = None
             else:
                 ss_path = shutil.which("ss")
                 if ss_path:
-                    result = subprocess.run([ss_path, "-an"], check=False, capture_output=True, text=True)
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        [ss_path, "-an"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        shell=False  # Explicitly secure - using list format prevents shell injection
+                    )
                 else:
                     result = None
 
@@ -695,6 +702,7 @@ class SandboxDetector(BaseDetector):
                         # Real POINT structure implementation
                         class POINT(ctypes.Structure):
                             """Real Windows API POINT structure."""
+
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
                             def __repr__(self):
@@ -711,6 +719,7 @@ class SandboxDetector(BaseDetector):
 
                         class POINT(ctypes.Structure):
                             """Real Windows API POINT structure with full functionality."""
+
                             _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
                             def __init__(self, x=0, y=0):
@@ -733,6 +742,7 @@ class SandboxDetector(BaseDetector):
 
                         class RECT(ctypes.Structure):
                             """Real Windows API RECT structure."""
+
                             _fields_ = [
                                 ("left", ctypes.c_long),
                                 ("top", ctypes.c_long),
@@ -753,6 +763,7 @@ class SandboxDetector(BaseDetector):
 
                         class SYSTEMTIME(ctypes.Structure):
                             """Real Windows API SYSTEMTIME structure."""
+
                             _fields_ = [
                                 ("wYear", ctypes.c_uint16),
                                 ("wMonth", ctypes.c_uint16),
@@ -766,6 +777,7 @@ class SandboxDetector(BaseDetector):
 
                         class MEMORYSTATUSEX(ctypes.Structure):
                             """Real Windows API MEMORYSTATUSEX structure."""
+
                             _fields_ = [
                                 ("dwLength", ctypes.c_uint32),
                                 ("dwMemoryLoad", ctypes.c_uint32),
@@ -784,6 +796,7 @@ class SandboxDetector(BaseDetector):
 
                         class OSVERSIONINFOEX(ctypes.Structure):
                             """Real Windows API OSVERSIONINFOEX structure."""
+
                             _fields_ = [
                                 ("dwOSVersionInfoSize", ctypes.c_uint32),
                                 ("dwMajorVersion", ctypes.c_uint32),

@@ -1,4 +1,4 @@
-"""Windows Activation Module
+"""Windows Activation Module.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 
 
 class ActivationMethod(Enum):
-    """Windows activation methods"""
+    """Windows activation methods."""
 
     HWID = "hwid"
     KMS38 = "kms38"
@@ -40,7 +40,7 @@ class ActivationMethod(Enum):
 
 
 class ActivationStatus(Enum):
-    """Activation status values"""
+    """Activation status values."""
 
     ACTIVATED = "activated"
     NOT_ACTIVATED = "not_activated"
@@ -50,7 +50,7 @@ class ActivationStatus(Enum):
 
 
 class WindowsActivator:
-    """Windows Activation Manager
+    """Windows Activation Manager.
 
     Provides a Python interface to Windows activation functionality
     using the MAS (Microsoft Activation Scripts) approach.
@@ -68,7 +68,7 @@ class WindowsActivator:
         self.validation_cache_duration = 300  # 5 minutes
 
     def check_prerequisites(self) -> tuple[bool, list[str]]:
-        """Check if prerequisites for Windows activation are met
+        """Check if prerequisites for Windows activation are met.
 
         Returns:
             Tuple of (success, list of issues)
@@ -91,7 +91,7 @@ class WindowsActivator:
         return len(issues) == 0, issues
 
     def get_activation_status(self) -> dict[str, str]:
-        """Get current Windows activation status
+        """Get current Windows activation status.
 
         Returns:
             Dictionary with activation information
@@ -134,7 +134,7 @@ class WindowsActivator:
             }
 
     def activate_windows(self, method: ActivationMethod = ActivationMethod.HWID) -> dict[str, any]:
-        """Activate Windows using specified method
+        """Activate Windows using specified method.
 
         Args:
             method: Activation method to use
@@ -210,7 +210,7 @@ class WindowsActivator:
             }
 
     def reset_activation(self) -> dict[str, any]:
-        """Reset Windows activation state
+        """Reset Windows activation state.
 
         Returns:
             Dictionary with reset result
@@ -241,7 +241,7 @@ class WindowsActivator:
             }
 
     def get_product_key_info(self) -> dict[str, str]:
-        """Get information about installed product keys
+        """Get information about installed product keys.
 
         Returns:
             Dictionary with product key information
@@ -650,7 +650,7 @@ class WindowsActivator:
 
 
 def create_windows_activator() -> WindowsActivator:
-    """Factory function to create Windows activator instance
+    """Factory function to create Windows activator instance.
 
     Returns:
         Configured WindowsActivator instance
@@ -661,7 +661,7 @@ def create_windows_activator() -> WindowsActivator:
 
 # Convenience functions
 def check_windows_activation() -> dict[str, str]:
-    """Quick check of Windows activation status
+    """Quick check of Windows activation status.
 
     Returns:
         Dictionary with activation status
@@ -672,7 +672,7 @@ def check_windows_activation() -> dict[str, str]:
 
 
 def activate_windows_hwid() -> dict[str, any]:
-    """Activate Windows using HWID method
+    """Activate Windows using HWID method.
 
     Returns:
         Dictionary with activation result
@@ -683,7 +683,7 @@ def activate_windows_hwid() -> dict[str, any]:
 
 
 def activate_windows_kms() -> dict[str, any]:
-    """Activate Windows using KMS38 method
+    """Activate Windows using KMS38 method.
 
     Returns:
         Dictionary with activation result

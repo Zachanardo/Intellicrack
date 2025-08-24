@@ -1,4 +1,4 @@
-"""Model Loading Dialog
+"""Model Loading Dialog.
 
 A dialog that demonstrates the integration of BackgroundModelLoader
 with progress tracking and management capabilities.

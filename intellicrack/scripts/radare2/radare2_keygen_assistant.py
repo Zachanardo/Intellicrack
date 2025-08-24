@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ License: GPL v3
 
 
 class CryptoAlgorithm(Enum):
-    """Supported cryptographic algorithms"""
+    """Supported cryptographic algorithms."""
 
     RSA = "RSA"
     ECC = "Elliptic Curve"
@@ -64,7 +64,7 @@ class CryptoAlgorithm(Enum):
 
 
 class KeygenLanguage(Enum):
-    """Target languages for keygen generation"""
+    """Target languages for keygen generation."""
 
     PYTHON = "Python"
     CPP = "C++"
@@ -77,7 +77,7 @@ class KeygenLanguage(Enum):
 
 @dataclass
 class CryptoOperation:
-    """Represents a cryptographic operation"""
+    """Represents a cryptographic operation."""
 
     address: int
     algorithm: CryptoAlgorithm
@@ -89,7 +89,7 @@ class CryptoOperation:
 
 @dataclass
 class ValidationFlow:
-    """Represents the validation flow"""
+    """Represents the validation flow."""
 
     entry_point: int
     operations: list[CryptoOperation]
@@ -101,7 +101,7 @@ class ValidationFlow:
 
 @dataclass
 class KeygenTemplate:
-    """Generated keygen template"""
+    """Generated keygen template."""
 
     language: KeygenLanguage
     algorithm_chain: list[CryptoAlgorithm]
@@ -111,7 +111,7 @@ class KeygenTemplate:
 
 
 class R2KeygenAssistant:
-    """Advanced keygen generation assistant for Radare2"""
+    """Advanced keygen generation assistant for Radare2."""
 
     # Crypto constants database
     CRYPTO_CONSTANTS = {
@@ -151,7 +151,7 @@ class R2KeygenAssistant:
     }
 
     def __init__(self, r2: r2pipe.open = None, filename: str = None):
-        """Initialize the keygen assistant"""
+        """Initialize the keygen assistant."""
         self.r2 = r2 if r2 else r2pipe.open(filename)
         self.crypto_operations: list[CryptoOperation] = []
         self.validation_flows: list[ValidationFlow] = []
@@ -165,7 +165,7 @@ class R2KeygenAssistant:
         self._init_analysis()
 
     def _init_disassemblers(self):
-        """Initialize disassembly engines"""
+        """Initialize disassembly engines."""
         info = self.r2.cmdj("ij")
         arch = info.get("bin", {}).get("arch", "x86")
         bits = info.get("bin", {}).get("bits", 32)
@@ -190,7 +190,7 @@ class R2KeygenAssistant:
                 self.ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_32)
 
     def _init_analysis(self):
-        """Initialize r2 analysis"""
+        """Initialize r2 analysis."""
         print("[*] Initializing analysis...")
         self.r2.cmd("aaa")
 
@@ -200,7 +200,7 @@ class R2KeygenAssistant:
         self.bits = self.info.get("bin", {}).get("bits", 32)
 
     def analyze_validation(self, target_functions: list[int]) -> list[ValidationFlow]:
-        """Analyze validation routines for keygen generation"""
+        """Analyze validation routines for keygen generation."""
         print("\n[*] Analyzing validation routines...")
 
         for func_addr in target_functions:
@@ -215,7 +215,7 @@ class R2KeygenAssistant:
         return self.validation_flows
 
     def _analyze_function_flow(self, func_addr: int) -> ValidationFlow | None:
-        """Analyze validation flow in function"""
+        """Analyze validation flow in function."""
         flow = ValidationFlow(
             entry_point=func_addr,
             operations=[],
@@ -246,7 +246,7 @@ class R2KeygenAssistant:
         return flow
 
     def _analyze_block_instructions(self, addr: int, block_bytes: bytes, flow: ValidationFlow):
-        """Analyze instructions in a basic block"""
+        """Analyze instructions in a basic block."""
         for insn in self.cs.disasm(block_bytes, addr):
             # Check for crypto operations
             crypto_op = self._detect_crypto_operation(insn)
@@ -263,7 +263,7 @@ class R2KeygenAssistant:
                 self._analyze_call(insn, flow)
 
     def _detect_crypto_operation(self, insn) -> CryptoOperation | None:
-        """Detect cryptographic operations from instruction"""
+        """Detect cryptographic operations from instruction."""
         # Check for crypto-specific instructions
         crypto_instructions = {
             "aesenc": (CryptoAlgorithm.AES, "encrypt"),
@@ -295,7 +295,7 @@ class R2KeygenAssistant:
         return None
 
     def _analyze_call(self, insn, flow: ValidationFlow):
-        """Analyze function calls for crypto operations"""
+        """Analyze function calls for crypto operations."""
         if insn.operands[0].type == capstone.x86.X86_OP_IMM:
             target = insn.operands[0].imm
 
@@ -330,7 +330,7 @@ class R2KeygenAssistant:
                         break
 
     def _determine_operation_type(self, func_name: str) -> str:
-        """Determine crypto operation type from function name"""
+        """Determine crypto operation type from function name."""
         func_lower = func_name.lower()
 
         if any(x in func_lower for x in ["encrypt", "encode", "encipher"]):
@@ -346,7 +346,7 @@ class R2KeygenAssistant:
         return "unknown"
 
     def _detect_serial_format(self, func_addr: int) -> str | None:
-        """Detect serial number format from function"""
+        """Detect serial number format from function."""
         # Look for string patterns in function
         strings = self.r2.cmd(f"iz~{func_addr}")
 
@@ -371,7 +371,7 @@ class R2KeygenAssistant:
         return None
 
     def extract_crypto_parameters(self) -> dict[str, Any]:
-        """Extract cryptographic parameters from binary"""
+        """Extract cryptographic parameters from binary."""
         print("\n[*] Extracting cryptographic parameters...")
 
         # Search for known crypto constants
@@ -390,7 +390,7 @@ class R2KeygenAssistant:
         return self.extracted_keys
 
     def _search_constants(self, algo_name: str, constants: dict[str, Any]):
-        """Search for algorithm-specific constants"""
+        """Search for algorithm-specific constants."""
         for const_type, values in constants.items():
             if isinstance(values, list):
                 for val in values:
@@ -399,7 +399,7 @@ class R2KeygenAssistant:
                 self._search_constant_value(algo_name, const_type, values)
 
     def _search_constant_value(self, algo_name: str, const_type: str, value: int):
-        """Search for a specific constant value"""
+        """Search for a specific constant value."""
         # Search in different endianness
         search_values = []
 
@@ -440,7 +440,7 @@ class R2KeygenAssistant:
                         )
 
     def _extract_rsa_keys(self):
-        """Extract RSA keys from binary"""
+        """Extract RSA keys from binary."""
         print("[*] Searching for RSA keys...")
 
         # Common RSA public exponents
@@ -462,7 +462,7 @@ class R2KeygenAssistant:
                         self._search_rsa_modulus(addr, exp)
 
     def _search_rsa_modulus(self, exp_addr: int, exponent: int):
-        """Search for RSA modulus near exponent"""
+        """Search for RSA modulus near exponent."""
         # RSA modulus is typically 128-512 bytes
         search_range = 0x1000
 
@@ -503,7 +503,7 @@ class R2KeygenAssistant:
                     )
 
     def _extract_aes_keys(self):
-        """Extract AES keys from binary"""
+        """Extract AES keys from binary."""
         print("[*] Searching for AES keys...")
 
         # AES S-box pattern
@@ -541,7 +541,7 @@ class R2KeygenAssistant:
                     self._search_aes_keys_near(sbox_addr)
 
     def _search_aes_keys_near(self, sbox_addr: int):
-        """Search for AES keys near S-box"""
+        """Search for AES keys near S-box."""
         # AES keys are 16, 24, or 32 bytes
         key_sizes = [16, 24, 32]
         search_range = 0x1000
@@ -568,7 +568,7 @@ class R2KeygenAssistant:
                     print(f"[+] Found potential AES-{key_size*8} key at 0x{addr:x}")
 
     def _is_high_entropy(self, data: bytes) -> bool:
-        """Check if data has high entropy (potential key material)"""
+        """Check if data has high entropy (potential key material)."""
         if len(data) < 8:
             return False
 
@@ -579,7 +579,7 @@ class R2KeygenAssistant:
         return unique_bytes > len(data) * 0.6
 
     def _extract_custom_algorithms(self):
-        """Extract custom algorithm patterns"""
+        """Extract custom algorithm patterns."""
         print("[*] Analyzing custom algorithms...")
 
         # Look for XOR key patterns
@@ -589,7 +589,7 @@ class R2KeygenAssistant:
         self._extract_custom_constants()
 
     def _extract_xor_keys(self):
-        """Extract XOR keys from validation routines"""
+        """Extract XOR keys from validation routines."""
         for flow in self.validation_flows:
             for op in flow.operations:
                 if op.algorithm == CryptoAlgorithm.CUSTOM_XOR:
@@ -604,7 +604,7 @@ class R2KeygenAssistant:
                     )
 
     def _extract_custom_constants(self):
-        """Extract custom constants from validation"""
+        """Extract custom constants from validation."""
         # Look for repeated constants in validation functions
         for flow in self.validation_flows:
             func_constants = self._get_function_constants(flow.entry_point)
@@ -616,7 +616,7 @@ class R2KeygenAssistant:
                 self.extracted_keys["CUSTOM"].extend(func_constants)
 
     def _get_function_constants(self, func_addr: int) -> list[dict[str, Any]]:
-        """Extract constants from function"""
+        """Extract constants from function."""
         constants = []
 
         # Get function size
@@ -651,7 +651,7 @@ class R2KeygenAssistant:
         return constants
 
     def generate_keygens(self, languages: list[KeygenLanguage] = None) -> list[KeygenTemplate]:
-        """Generate keygen source code"""
+        """Generate keygen source code."""
         if not languages:
             languages = [KeygenLanguage.PYTHON, KeygenLanguage.CPP, KeygenLanguage.JAVA]
 
@@ -673,7 +673,7 @@ class R2KeygenAssistant:
     def _generate_keygen_template(
         self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm], language: KeygenLanguage
     ) -> KeygenTemplate | None:
-        """Generate keygen template for specific language"""
+        """Generate keygen template for specific language."""
         print(f"[*] Generating {language.value} keygen...")
 
         if language == KeygenLanguage.PYTHON:
@@ -688,7 +688,7 @@ class R2KeygenAssistant:
     def _generate_python_keygen(
         self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
     ) -> KeygenTemplate:
-        """Generate Python keygen"""
+        """Generate Python keygen."""
         code = []
         dependencies = []
 
@@ -804,7 +804,7 @@ class R2KeygenAssistant:
         return template
 
     def _add_python_constants(self, code: list[str]):
-        """Add extracted constants to Python code"""
+        """Add extracted constants to Python code."""
         code.append("# Extracted constants")
 
         if "RSA" in self.extracted_keys and "modulus" in self.extracted_keys["RSA"]:
@@ -821,7 +821,7 @@ class R2KeygenAssistant:
             code.append("")
 
     def _add_serial_formatting(self, code: list[str], format_pattern: str):
-        """Add serial formatting code"""
+        """Add serial formatting code."""
         if format_pattern == "4x4":
             code.append("    hex_str = digest.hex().upper()[:16]")
             code.append("    parts = [hex_str[i:i+4] for i in range(0, 16, 4)]")
@@ -847,7 +847,7 @@ class R2KeygenAssistant:
     def _generate_cpp_keygen(
         self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
     ) -> KeygenTemplate:
-        """Generate C++ keygen"""
+        """Generate C++ keygen."""
         code = []
         dependencies = []
 
@@ -952,7 +952,7 @@ class R2KeygenAssistant:
         return template
 
     def _add_cpp_constants(self, code: list[str]):
-        """Add extracted constants to C++ code"""
+        """Add extracted constants to C++ code."""
         code.append("// Extracted constants")
 
         if "RSA" in self.extracted_keys and "modulus" in self.extracted_keys["RSA"]:
@@ -973,7 +973,7 @@ class R2KeygenAssistant:
     def _generate_java_keygen(
         self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]
     ) -> KeygenTemplate:
-        """Generate Java keygen"""
+        """Generate Java keygen."""
         code = []
         dependencies = []
 
@@ -1089,7 +1089,7 @@ class R2KeygenAssistant:
         return template
 
     def _add_java_constants(self, code: list[str]):
-        """Add extracted constants to Java code"""
+        """Add extracted constants to Java code."""
         code.append("    // Extracted constants")
 
         if "CUSTOM" in self.extracted_keys:
@@ -1100,7 +1100,7 @@ class R2KeygenAssistant:
             code.append("")
 
     def export_keygens(self, templates: list[KeygenTemplate], output_dir: str = "keygens"):
-        """Export generated keygens to files"""
+        """Export generated keygens to files."""
         os.makedirs(output_dir, exist_ok=True)
 
         for i, template in enumerate(templates):
@@ -1139,7 +1139,7 @@ class R2KeygenAssistant:
                 f.write(template.usage_instructions + "\n")
 
     def analyze_from_license_functions(self, license_functions: list[dict]) -> list[KeygenTemplate]:
-        """Analyze validation from detected license functions"""
+        """Analyze validation from detected license functions."""
         print("\n[*] Analyzing license functions for keygen generation...")
 
         # Convert to addresses
@@ -1160,7 +1160,7 @@ class R2KeygenAssistant:
 
 
 def main():
-    """Main entry point"""
+    """Main entry point."""
     if len(sys.argv) < 2:
         print("Usage: radare2_keygen_assistant.py <binary> [license_analysis.json]")
         sys.exit(1)

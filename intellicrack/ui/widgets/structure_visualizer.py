@@ -1,4 +1,4 @@
-"""Structure Visualization Widget
+"""Structure Visualization Widget.
 
 Provides interactive visualization for binary file structures (PE/ELF/Mach-O),
 showing headers, sections, imports/exports, and other structural elements.
@@ -38,7 +38,7 @@ except ImportError:
 
 
 class StructureVisualizerWidget(QWidget):
-    """Interactive structure visualization widget for binary files"""
+    """Interactive structure visualization widget for binary files."""
 
     # Signals
     #: section_name, section_data (type: str, dict)
@@ -56,7 +56,7 @@ class StructureVisualizerWidget(QWidget):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup the UI components"""
+        """Setup the UI components."""
         layout = QVBoxLayout(self)
 
         # Controls
@@ -121,7 +121,7 @@ class StructureVisualizerWidget(QWidget):
         self._init_views()
 
     def _init_views(self):
-        """Initialize the different view widgets"""
+        """Initialize the different view widgets."""
         # Tree view
         self.tree_view = QTreeWidget()
         self.tree_view.setHeaderLabel("Binary Structure")
@@ -176,7 +176,7 @@ class StructureVisualizerWidget(QWidget):
             self.structure_widget.addTab(self.memory_map, "Memory Map")
 
     def set_structure_data(self, data: dict[str, Any]):
-        """Set structure data for visualization"""
+        """Set structure data for visualization."""
         self.structure_data = data
         self.binary_format = data.get("format", "Unknown")
 
@@ -185,11 +185,11 @@ class StructureVisualizerWidget(QWidget):
         self.update_details()
 
     def load_structure(self, data: dict[str, Any]):
-        """Load structure data for visualization (alias for set_structure_data)"""
+        """Load structure data for visualization (alias for set_structure_data)."""
         self.set_structure_data(data)
 
     def update_view(self):
-        """Update the current view"""
+        """Update the current view."""
         if not self.structure_data:
             return
 
@@ -213,7 +213,7 @@ class StructureVisualizerWidget(QWidget):
                 self.structure_widget.setCurrentIndex(4)
 
     def _update_tree_view(self):
-        """Update the tree view with structure data"""
+        """Update the tree view with structure data."""
         self.tree_view.clear()
 
         if self.binary_format == "PE":
@@ -227,7 +227,7 @@ class StructureVisualizerWidget(QWidget):
             self._build_generic_tree()
 
     def _build_pe_tree(self):
-        """Build PE structure tree"""
+        """Build PE structure tree."""
         root = QTreeWidgetItem(self.tree_view, ["PE Structure"])
 
         # DOS Header
@@ -307,7 +307,7 @@ class StructureVisualizerWidget(QWidget):
         self.tree_view.expandAll()
 
     def _build_elf_tree(self):
-        """Build ELF structure tree"""
+        """Build ELF structure tree."""
         root = QTreeWidgetItem(self.tree_view, ["ELF Structure"])
 
         # ELF Header
@@ -354,7 +354,7 @@ class StructureVisualizerWidget(QWidget):
         self.tree_view.expandAll()
 
     def _build_generic_tree(self):
-        """Build generic structure tree"""
+        """Build generic structure tree."""
         root = QTreeWidgetItem(self.tree_view, [f"{self.binary_format} Structure"])
 
         # Recursively build tree from data
@@ -363,7 +363,7 @@ class StructureVisualizerWidget(QWidget):
         self.tree_view.expandAll()
 
     def _add_dict_to_tree(self, data: dict | list, parent: QTreeWidgetItem):
-        """Recursively add dictionary/list data to tree"""
+        """Recursively add dictionary/list data to tree."""
         if isinstance(data, dict):
             for key, value in data.items():
                 if isinstance(value, (dict, list)):
@@ -381,7 +381,7 @@ class StructureVisualizerWidget(QWidget):
                     QTreeWidgetItem(parent, [f"[{i}]", str(item)])
 
     def _update_headers_view(self):
-        """Update headers table view"""
+        """Update headers table view."""
         self.headers_table.setRowCount(0)
 
         if self.binary_format == "PE":
@@ -392,7 +392,7 @@ class StructureVisualizerWidget(QWidget):
             self._populate_generic_headers()
 
     def _populate_pe_headers(self):
-        """Populate PE headers in table"""
+        """Populate PE headers in table."""
         row = 0
 
         # DOS Header fields
@@ -471,7 +471,7 @@ class StructureVisualizerWidget(QWidget):
                 row += 1
 
     def _update_sections_view(self):
-        """Update sections table view"""
+        """Update sections table view."""
         self.sections_table.setRowCount(0)
 
         if "sections" not in self.structure_data:
@@ -513,7 +513,7 @@ class StructureVisualizerWidget(QWidget):
                             item.setBackground(QBrush(QColor(255, 200, 200)))
 
     def _update_imports_exports_view(self):
-        """Update imports/exports view"""
+        """Update imports/exports view."""
         # Clear tables
         self.imports_table.setRowCount(0)
         self.exports_table.setRowCount(0)
@@ -554,7 +554,7 @@ class StructureVisualizerWidget(QWidget):
                 self.exports_table.setItem(row, 3, QTableWidgetItem(export.get("forwarded", "")))
 
     def _update_memory_map(self):
-        """Update memory map visualization"""
+        """Update memory map visualization."""
         if not PYQTGRAPH_AVAILABLE or "sections" not in self.structure_data:
             return
 
@@ -593,7 +593,7 @@ class StructureVisualizerWidget(QWidget):
         self.memory_map.getAxis("left").setTicks([y_ticks])
 
     def update_details(self):
-        """Update the details panel"""
+        """Update the details panel."""
         if not self.structure_data:
             return
 
@@ -640,7 +640,7 @@ class StructureVisualizerWidget(QWidget):
 
     # Helper methods
     def _is_suspicious_section(self, section: dict[str, Any]) -> bool:
-        """Check if a section has suspicious characteristics"""
+        """Check if a section has suspicious characteristics."""
         name = section.get("name", "").lower()
 
         # Check for unusual section names
@@ -668,7 +668,7 @@ class StructureVisualizerWidget(QWidget):
         return False
 
     def _is_suspicious_import(self, func_name: str) -> bool:
-        """Check if an import is suspicious"""
+        """Check if an import is suspicious."""
         if not func_name:
             return False
 
@@ -695,7 +695,7 @@ class StructureVisualizerWidget(QWidget):
         return func_name in suspicious_funcs
 
     def _is_executable_section(self, section: dict[str, Any]) -> bool:
-        """Check if section is executable"""
+        """Check if section is executable."""
         chars = section.get("characteristics", 0)
 
         if self.binary_format == "PE":
@@ -706,7 +706,7 @@ class StructureVisualizerWidget(QWidget):
         return False
 
     def _is_writable_section(self, section: dict[str, Any]) -> bool:
-        """Check if section is writable"""
+        """Check if section is writable."""
         chars = section.get("characteristics", 0)
 
         if self.binary_format == "PE":
@@ -717,7 +717,7 @@ class StructureVisualizerWidget(QWidget):
         return False
 
     def _get_machine_name(self, machine: int) -> str:
-        """Get machine type name"""
+        """Get machine type name."""
         machines = {
             0x014C: "x86 (32-bit)",
             0x8664: "x64 (AMD64)",
@@ -728,7 +728,7 @@ class StructureVisualizerWidget(QWidget):
         return machines.get(machine, f"Unknown (0x{machine:04X})")
 
     def _get_subsystem_name(self, subsystem: int) -> str:
-        """Get subsystem name"""
+        """Get subsystem name."""
         subsystems = {
             0: "Unknown",
             1: "Native",
@@ -747,7 +747,7 @@ class StructureVisualizerWidget(QWidget):
         return subsystems.get(subsystem, f"Unknown ({subsystem})")
 
     def _populate_elf_headers(self):
-        """Populate ELF headers in table"""
+        """Populate ELF headers in table."""
         row = 0
 
         if "elf_header" in self.structure_data:
@@ -773,7 +773,7 @@ class StructureVisualizerWidget(QWidget):
                 row += 1
 
     def _populate_generic_headers(self):
-        """Populate generic headers"""
+        """Populate generic headers."""
         row = 0
 
         # Add any header-like data from structure
@@ -786,7 +786,7 @@ class StructureVisualizerWidget(QWidget):
                 row += 1
 
     def _on_tree_selection(self):
-        """Handle tree item selection"""
+        """Handle tree item selection."""
         items = self.tree_view.selectedItems()
         if items:
             item = items[0]
@@ -804,7 +804,7 @@ class StructureVisualizerWidget(QWidget):
                 )
 
     def _on_section_selection(self):
-        """Handle section selection"""
+        """Handle section selection."""
         items = self.sections_table.selectedItems()
         if items:
             row = items[0].row()
@@ -813,7 +813,7 @@ class StructureVisualizerWidget(QWidget):
                 self.section_selected.emit(section.get("name", ""), section)
 
     def export_structure(self):
-        """Export structure data"""
+        """Export structure data."""
         import json
 
         from intellicrack.handlers.pyqt6_handler import QFileDialog, QMessageBox
@@ -848,7 +848,7 @@ class StructureVisualizerWidget(QWidget):
                 QMessageBox.critical(self, "Export Error", f"Failed to export: {e!s}")
 
     def _format_structure_text(self) -> str:
-        """Format structure data as readable text"""
+        """Format structure data as readable text."""
         text = "Binary Structure Analysis\n"
         text += f"{'=' * 50}\n\n"
 

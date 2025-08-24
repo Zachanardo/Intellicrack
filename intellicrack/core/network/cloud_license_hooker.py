@@ -5,6 +5,7 @@ import json
 import logging
 import random
 import re
+import secrets
 import string
 import time
 from datetime import datetime, timedelta
@@ -598,7 +599,7 @@ class CloudLicenseResponseGenerator:
 
         # Generate random license ID if not present
         if "licenseId" not in result:
-            result["licenseId"] = "".join(random.choices(string.digits, k=10))
+            result["licenseId"] = "".join(secrets.choices(string.digits, k=10))
 
         # Set current date for issued date if not present
         if "issuedDate" not in result:
@@ -1685,11 +1686,11 @@ class CloudLicenseResponseGenerator:
 
     def _generate_activation_code(self) -> str:
         """Generate realistic activation code."""
-        return "".join(random.choices(string.ascii_uppercase + string.digits, k=16))
+        return "".join(secrets.choices(string.ascii_uppercase + string.digits, k=16))
 
     def _generate_serial_number(self) -> str:
         """Generate realistic serial number."""
-        return f"{''.join(random.choices('0123456789', k=3))}-{''.join(random.choices('0123456789', k=8))}"
+        return f"{''.join(secrets.choices('0123456789', k=3))}-{''.join(secrets.choices('0123456789', k=8))}"
 
     def _generate_vendor_string(self) -> str:
         """Generate vendor string for FlexLM."""
@@ -1703,17 +1704,17 @@ class CloudLicenseResponseGenerator:
         """Generate Microsoft-style product key."""
         groups = []
         for _ in range(5):
-            group = "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
+            group = "".join(secrets.choices(string.ascii_uppercase + string.digits, k=5))
             groups.append(group)
         return "-".join(groups)
 
     def _generate_digital_product_id(self) -> str:
         """Generate digital product ID."""
-        return "".join(random.choices("0123456789ABCDEF", k=32))
+        return "".join(secrets.choices("0123456789ABCDEF", k=32))
 
     def _generate_validation_data(self) -> str:
         """Generate validation data."""
-        return "".join(random.choices(string.ascii_letters + string.digits, k=64))
+        return "".join(secrets.choices(string.ascii_letters + string.digits, k=64))
 
     def _get_common_license_response(self) -> dict:
         """Get common license response template."""

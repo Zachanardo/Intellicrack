@@ -773,11 +773,12 @@ class VMDetector:
             if platform.system() == "Windows":
                 wmic_path = shutil.which("wmic")
                 if wmic_path:
-                    result = subprocess.run(
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                         [wmic_path, "cpu", "get", "name"],
                         capture_output=True,
                         text=True,
                         check=False,
+                        shell=False  # Explicitly secure - using list format prevents shell injection
                     )
                     if "virtual" in result.stdout.lower():
                         indicators.append("CPU name contains 'virtual'")

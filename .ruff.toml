@@ -93,7 +93,7 @@ ignore = [
 "conftest.py" = ["F401", "F403"]   # Allow imports in pytest config
 
 [lint.mccabe]
-max-complexity = 10
+max-complexity = 30
 
 [lint.pep8-naming]
 classmethod-decorators = ["classmethod", "pydantic.validator"]

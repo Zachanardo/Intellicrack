@@ -1,4 +1,4 @@
-"""AI Orchestrator for Intellicrack
+"""AI Orchestrator for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -246,7 +246,7 @@ class AIEventBus:
 
 
 class AIOrchestrator:
-    """Central AI Orchestrator for Intellicrack
+    """Central AI Orchestrator for Intellicrack.
 
     Coordinates between fast ML models and intelligent LLM agents,
     creating a truly agentic environment that leverages the strengths

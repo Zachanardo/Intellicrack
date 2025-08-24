@@ -52,7 +52,7 @@ except ImportError as e:
 
 @dataclass
 class InterceptedPacket:
-    """Container for intercepted network packet data"""
+    """Container for intercepted network packet data."""
 
     source_ip: str
     dest_ip: str
@@ -65,14 +65,14 @@ class InterceptedPacket:
     flags: dict[str, bool]
 
     def __post_init__(self):
-        """Initialize flags if not provided"""
+        """Initialize flags if not provided."""
         if not self.flags:
             self.flags = {"syn": False, "ack": False, "fin": False, "rst": False}
 
 
 @dataclass
 class AnalyzedTraffic:
-    """Container for analyzed traffic data"""
+    """Container for analyzed traffic data."""
 
     packet: InterceptedPacket
     is_license_related: bool
@@ -219,7 +219,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         self.capture_backend = self._initialize_capture_backend()
 
     def _initialize_capture_backend(self) -> str:
-        """Initialize the best available packet capture backend"""
+        """Initialize the best available packet capture backend."""
         # Check platform and available libraries
         if sys.platform == "win32":
             if HAS_SCAPY:
@@ -288,7 +288,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return False
 
     def stop_interception(self) -> bool:
-        """Stop traffic interception"""
+        """Stop traffic interception."""
         try:
             self.running = False
 
@@ -307,7 +307,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return False
 
     def _capture_loop(self):
-        """Main packet capture loop"""
+        """Main packet capture loop."""
         try:
             if self.capture_backend == "scapy":
                 self._scapy_capture()
@@ -319,7 +319,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.error(f"Capture loop error: {e}")
 
     def _scapy_capture(self):
-        """Packet capture using Scapy"""
+        """Packet capture using Scapy."""
         if not HAS_SCAPY:
             return
 
@@ -379,7 +379,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     # This provides better cross-platform compatibility and enhanced features
 
     def _socket_capture(self):
-        """Basic socket-based capture for localhost traffic"""
+        """Basic socket-based capture for localhost traffic."""
         try:
             # Create raw socket for local traffic monitoring
             if sys.platform == "win32":
@@ -420,7 +420,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self._monitor_local_connections()
 
     def _monitor_local_connections(self):
-        """Monitor local connections when raw sockets aren't available"""
+        """Monitor local connections when raw sockets aren't available."""
         self.logger.info("Monitoring localhost connections for license traffic")
 
         while self.running:
@@ -458,7 +458,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 self.logger.debug(f"Connection monitoring error: {e}")
 
     def _parse_raw_packet(self, raw_packet: bytes):
-        """Parse raw network packet"""
+        """Parse raw network packet."""
         try:
             if len(raw_packet) < 20:
                 return
@@ -516,7 +516,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.debug(f"Error parsing packet: {e}")
 
     def _queue_packet(self, packet: InterceptedPacket):
-        """Add packet to analysis queue"""
+        """Add packet to analysis queue."""
         with self.queue_lock:
             self.packet_queue.append(packet)
 
@@ -529,7 +529,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 self.packet_queue.pop(0)
 
     def _analysis_loop(self):
-        """Main packet analysis loop"""
+        """Main packet analysis loop."""
         while self.running:
             try:
                 packets_to_analyze = []
@@ -555,7 +555,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 self.logger.error(f"Analysis loop error: {e}")
 
     def _analyze_packet(self, packet: InterceptedPacket) -> AnalyzedTraffic | None:
-        """Analyze packet for license-related content"""
+        """Analyze packet for license-related content."""
         try:
             is_license_related = False
             protocol_type = "unknown"
@@ -629,16 +629,16 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return None
 
     def add_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]):
-        """Add callback for analyzed traffic"""
+        """Add callback for analyzed traffic."""
         self.analysis_callbacks.append(callback)
 
     def remove_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]):
-        """Remove analysis callback"""
+        """Remove analysis callback."""
         if callback in self.analysis_callbacks:
             self.analysis_callbacks.remove(callback)
 
     def set_dns_redirection(self, hostname: str, target_ip: str) -> bool:
-        """Setup DNS redirection for hostname"""
+        """Setup DNS redirection for hostname."""
         try:
             self.dns_redirections[hostname.lower()] = target_ip
             self.logger.info(f"DNS redirection setup: {hostname} -> {target_ip}")
@@ -648,7 +648,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return False
 
     def setup_transparent_proxy(self, target_host: str, target_port: int) -> bool:
-        """Setup transparent proxy for target server"""
+        """Setup transparent proxy for target server."""
         try:
             proxy_key = f"{target_host}:{target_port}"
             self.proxy_mappings[proxy_key] = (self.bind_interface, target_port)
@@ -661,7 +661,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return False
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get traffic interception statistics"""
+        """Get traffic interception statistics."""
         current_time = time.time()
         uptime = current_time - self.stats["start_time"] if self.stats["start_time"] else 0
 
@@ -677,7 +677,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         return stats
 
     def get_active_connections(self) -> list[dict[str, Any]]:
-        """Get list of active connections"""
+        """Get list of active connections."""
         connections = []
         current_time = time.time()
 

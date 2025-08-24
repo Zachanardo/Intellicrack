@@ -1,4 +1,4 @@
-"""Binary patching and modification utilities for Intellicrack
+"""Binary patching and modification utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

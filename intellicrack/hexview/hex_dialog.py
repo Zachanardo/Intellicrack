@@ -286,6 +286,7 @@ class HexViewerDialog(QDialog):
 
         Returns:
             Configured menu bar
+
         """
         menu_bar = QMenuBar()
 
@@ -385,6 +386,7 @@ class HexViewerDialog(QDialog):
 
         Args:
             orientation: Split orientation (Vertical or Horizontal)
+
         """
         if len(self.viewers) >= 4:
             QMessageBox.warning(self, "Maximum Splits", "Maximum of 4 views is already reached.")
@@ -508,6 +510,7 @@ class HexViewerDialog(QDialog):
 
         Args:
             checked: Whether sync is enabled
+
         """
         if checked:
             # Set up synchronization for all viewers
@@ -527,6 +530,7 @@ class HexViewerDialog(QDialog):
 
         Args:
             viewer: Viewer to set up sync for
+
         """
         def sync_vertical(value):
             if not self.sync_scrolling_action.isChecked():
@@ -554,6 +558,7 @@ class HexViewerDialog(QDialog):
 
         Args:
             viewer: Viewer to make active
+
         """
         self.active_viewer = viewer
 
@@ -833,6 +838,7 @@ class HexViewerDialog(QDialog):
 
         Args:
             settings: Dictionary with comparison settings
+
         """
         file1 = settings['file1']
         file2 = settings['file2']
@@ -887,6 +893,7 @@ class HexViewerDialog(QDialog):
             file2: Path to second file
             differences: List of DifferenceBlock objects
             settings: Comparison settings
+
         """
         # Clear existing viewers if in split view
         if hasattr(self, 'viewers') and len(self.viewers) > 1:
@@ -922,6 +929,7 @@ class HexViewerDialog(QDialog):
 
         Args:
             differences: List of DifferenceBlock objects
+
         """
         from .hex_highlighter import Highlight, HighlightType
 
@@ -981,6 +989,7 @@ class HexViewerDialog(QDialog):
 
         Args:
             differences: List of DifferenceBlock objects
+
         """
         if not differences:
             self.statusBar().showMessage("Files are identical")
@@ -1009,6 +1018,7 @@ class HexViewerDialog(QDialog):
         Args:
             differences: List of DifferenceBlock objects
             settings: Comparison settings
+
         """
         from PyQt6.QtWidgets import QTextEdit
 
@@ -1067,6 +1077,7 @@ class HexViewerDialog(QDialog):
         Args:
             differences: List of DifferenceBlock objects
             settings: Comparison settings
+
         """
         from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
 

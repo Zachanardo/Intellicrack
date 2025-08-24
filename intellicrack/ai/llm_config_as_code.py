@@ -1,4 +1,4 @@
-"""Config-as-Code Support for Intellicrack LLM System
+"""Config-as-Code Support for Intellicrack LLM System.
 
 Provides YAML/JSON configuration management with schema validation.
 

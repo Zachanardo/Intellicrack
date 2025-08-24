@@ -1,4 +1,4 @@
-"""Kernel-level injection using Windows driver
+"""Kernel-level injection using Windows driver.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -57,7 +57,7 @@ class InjectionInfo(ctypes.Structure):
 
 
 class KernelInjector:
-    """Kernel-level injection using Windows driver"""
+    """Kernel-level injection using Windows driver."""
 
     def __init__(self):
         """Initialize the kernel injector with Windows platform validation and driver setup."""
@@ -71,7 +71,7 @@ class KernelInjector:
         self._setup_api()
 
     def _setup_api(self):
-        """Setup Windows API for driver operations"""
+        """Setup Windows API for driver operations."""
         self.kernel32 = get_windows_kernel32()
         if not self.kernel32:
             raise RuntimeError("Failed to load kernel32")
@@ -90,11 +90,11 @@ class KernelInjector:
         )
 
     def _ctl_code(self, device_type: int, function: int, method: int, access: int) -> int:
-        """Calculate Windows IOCTL code"""
+        """Calculate Windows IOCTL code."""
         return (device_type << 16) | (access << 14) | (function << 2) | method
 
     def inject_kernel_mode(self, target_pid: int, dll_path: str) -> bool:
-        """Inject DLL using kernel driver
+        """Inject DLL using kernel driver.
 
         Args:
             target_pid: Target process ID
@@ -135,7 +135,7 @@ class KernelInjector:
             self._cleanup()
 
     def _create_driver(self) -> bool:
-        """Create kernel driver binary"""
+        """Create kernel driver binary."""
         try:
             # Driver binary (simplified stub - real driver would need proper development)
             # This is a minimal driver that accepts IOCTL for injection
@@ -156,7 +156,7 @@ class KernelInjector:
             return False
 
     def _get_driver_stub(self) -> bytes:
-        """Generate functional driver stub with realistic kernel driver structure"""
+        """Generate functional driver stub with realistic kernel driver structure."""
         # NOTE: This generates a realistic driver structure but has architectural limitations:
         # 1. Real kernel drivers require proper WDK development environment
         # 2. x64 Windows requires driver signing (test signing or production certificate)
@@ -169,7 +169,7 @@ class KernelInjector:
         return self._build_driver_pe_structure()
 
     def _build_driver_pe_structure(self) -> bytes:
-        """Build realistic PE driver structure with proper headers and sections"""
+        """Build realistic PE driver structure with proper headers and sections."""
         # DOS Header (64 bytes)
         dos_header = bytearray(64)
         dos_header[0:2] = b"MZ"  # DOS signature
@@ -309,7 +309,7 @@ class KernelInjector:
         return bytes(driver_binary)
 
     def _generate_driver_code(self) -> bytes:
-        """Generate realistic driver entry point and IOCTL handler code"""
+        """Generate realistic driver entry point and IOCTL handler code."""
         # This generates x64 assembly code for a minimal but functional driver
         # Real implementation would require full kernel development
 
@@ -436,7 +436,7 @@ class KernelInjector:
         return bytes(code[:0x200])
 
     def _generate_export_import_tables(self) -> bytes:
-        """Generate minimal export and import tables for driver"""
+        """Generate minimal export and import tables for driver."""
         # Minimal export table for DriverEntry
         export_table = bytearray()
 
@@ -491,7 +491,7 @@ class KernelInjector:
         return bytes(export_table + import_table)
 
     def _install_driver(self) -> bool:
-        """Install driver as Windows service"""
+        """Install driver as Windows service."""
         try:
             # Open service control manager
             sc_manager = self.advapi32.OpenSCManagerW(
@@ -562,7 +562,7 @@ class KernelInjector:
             return False
 
     def _open_driver(self) -> bool:
-        """Open handle to driver device"""
+        """Open handle to driver device."""
         try:
             # Device name for our driver
             device_name = f"\\\\.\\{self.service_name}"
@@ -592,7 +592,7 @@ class KernelInjector:
             return False
 
     def _send_injection_command(self, target_pid: int, dll_path: str) -> bool:
-        """Send injection command to driver"""
+        """Send injection command to driver."""
         try:
             if not self.driver_handle:
                 return False
@@ -629,7 +629,7 @@ class KernelInjector:
             return False
 
     def _cleanup(self):
-        """Clean up driver resources"""
+        """Clean up driver resources."""
         try:
             # Close driver handle
             if self.driver_handle:
@@ -650,7 +650,7 @@ class KernelInjector:
             logger.error(f"Cleanup error: {e}")
 
     def _remove_driver_service(self):
-        """Remove driver service"""
+        """Remove driver service."""
         try:
             sc_manager = self.advapi32.OpenSCManagerW(
                 None,
@@ -689,7 +689,7 @@ class KernelInjector:
 
 
 def inject_via_kernel_driver(target_pid: int, dll_path: str) -> bool:
-    """Convenience function for kernel-level injection
+    """Convenience function for kernel-level injection.
 
     Args:
         target_pid: Target process ID

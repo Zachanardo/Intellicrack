@@ -1,4 +1,4 @@
-"""File Comparison Dialog for Hex Viewer
+"""File Comparison Dialog for Hex Viewer.
 
 This module provides a dialog for selecting two files to compare
 and displays the comparison results in a side-by-side view.
@@ -47,6 +47,7 @@ class ComparisonWorker(QThread):
             comparer: BinaryComparer instance
             file1_path: Path to first file
             file2_path: Path to second file
+
         """
         super().__init__()
         self.comparer = comparer
@@ -78,6 +79,7 @@ class CompareDialog(QDialog):
         Args:
             parent: Parent widget
             initial_file: Path to pre-populate as first file
+
         """
         super().__init__(parent)
         self.file1_path = initial_file or ""
@@ -222,6 +224,7 @@ class CompareDialog(QDialog):
 
         Args:
             file_num: 1 or 2 for first or second file
+
         """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -245,6 +248,7 @@ class CompareDialog(QDialog):
 
         Args:
             file_num: 1 or 2 for first or second file
+
         """
         if file_num == 1:
             path = self.file1_path
@@ -286,6 +290,7 @@ class CompareDialog(QDialog):
 
         Args:
             mode: Comparison mode (visual, byte, or structural)
+
         """
         self.comparison_mode = mode
 
@@ -294,6 +299,7 @@ class CompareDialog(QDialog):
 
         Args:
             checked: Whether sync scrolling is enabled
+
         """
         self.sync_scrolling = checked
 
@@ -302,6 +308,7 @@ class CompareDialog(QDialog):
 
         Args:
             checked: Whether highlighting is enabled
+
         """
         self.highlight_differences = checked
 
@@ -310,6 +317,7 @@ class CompareDialog(QDialog):
 
         Returns:
             True if selection is valid
+
         """
         if not self.file1_path or not self.file2_path:
             QMessageBox.warning(
@@ -355,6 +363,7 @@ class CompareDialog(QDialog):
 
         Returns:
             Dictionary with comparison settings
+
         """
         return {
             'file1': self.file1_path,
@@ -370,6 +379,7 @@ class CompareDialog(QDialog):
 
         Args:
             differences: List of DifferenceBlock objects
+
         """
         if not differences:
             self.stats_label.setText("Files are identical")

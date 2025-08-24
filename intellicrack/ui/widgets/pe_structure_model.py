@@ -1,4 +1,4 @@
-"""PE Structure Tree Model for Hex Viewer Integration
+"""PE Structure Tree Model for Hex Viewer Integration.
 
 Provides a QAbstractItemModel adapter for PEFileModel to display PE structures
 in a tree view with navigation capabilities.
@@ -15,7 +15,7 @@ from .pe_file_model import FileStructure, PEFileModel, SectionInfo
 
 
 class PEStructureItem:
-    """Tree item representing a PE structure element"""
+    """Tree item representing a PE structure element."""
 
     def __init__(self, data: FileStructure | SectionInfo | str, parent=None):
         """Initialize PE structure item with hierarchical data representation."""
@@ -24,25 +24,25 @@ class PEStructureItem:
         self.child_items = []
 
     def append_child(self, item):
-        """Add a child item"""
+        """Add a child item."""
         self.child_items.append(item)
 
     def child(self, row: int):
-        """Get child at row"""
+        """Get child at row."""
         if 0 <= row < len(self.child_items):
             return self.child_items[row]
         return None
 
     def child_count(self) -> int:
-        """Get number of children"""
+        """Get number of children."""
         return len(self.child_items)
 
     def column_count(self) -> int:
-        """Get number of columns"""
+        """Get number of columns."""
         return 3  # Name, Offset, Size
 
     def data(self, column: int) -> Any:
-        """Get data for column"""
+        """Get data for column."""
         if isinstance(self.item_data, str):
             # Root node or category
             return self.item_data if column == 0 else ""
@@ -66,18 +66,18 @@ class PEStructureItem:
         return ""
 
     def parent(self):
-        """Get parent item"""
+        """Get parent item."""
         return self.parent_item
 
     def row(self) -> int:
-        """Get row number in parent"""
+        """Get row number in parent."""
         if self.parent_item:
             return self.parent_item.child_items.index(self)
         return 0
 
 
 class PEStructureModel(QAbstractItemModel):
-    """QAbstractItemModel for PE structure tree display"""
+    """QAbstractItemModel for PE structure tree display."""
 
     # Signals
     #: offset, size (type: int, int)
@@ -95,7 +95,7 @@ class PEStructureModel(QAbstractItemModel):
             self.setup_model_data()
 
     def set_pe_model(self, pe_model: PEFileModel):
-        """Set the PE model and rebuild tree"""
+        """Set the PE model and rebuild tree."""
         self.beginResetModel()
         self.pe_model = pe_model
         self.root_item = PEStructureItem("PE Structure")
@@ -103,7 +103,7 @@ class PEStructureModel(QAbstractItemModel):
         self.endResetModel()
 
     def setup_model_data(self):
-        """Build the tree structure from PE model"""
+        """Build the tree structure from PE model."""
         if not self.pe_model:
             return
 
@@ -295,11 +295,11 @@ class PEStructureModel(QAbstractItemModel):
                     chain_item.append_child(chain_cert_item)
 
     def columnCount(self, parent: QModelIndex = QModelIndex()) -> int:
-        """Return number of columns"""
+        """Return number of columns."""
         return self.root_item.column_count()
 
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
-        """Return data for index and role"""
+        """Return data for index and role."""
         if not index.isValid():
             return None
 
@@ -329,7 +329,7 @@ class PEStructureModel(QAbstractItemModel):
         return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:
-        """Return item flags"""
+        """Return item flags."""
         if not index.isValid():
             return Qt.ItemFlag.NoItemFlags
 
@@ -338,7 +338,7 @@ class PEStructureModel(QAbstractItemModel):
     def headerData(
         self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:
-        """Return header data"""
+        """Return header data."""
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             if section == 0:
                 return "Name"
@@ -350,7 +350,7 @@ class PEStructureModel(QAbstractItemModel):
         return None
 
     def index(self, row: int, column: int, parent: QModelIndex = QModelIndex()) -> QModelIndex:
-        """Create index for row, column under parent"""
+        """Create index for row, column under parent."""
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 
@@ -365,7 +365,7 @@ class PEStructureModel(QAbstractItemModel):
         return QModelIndex()
 
     def parent(self, index: QModelIndex) -> QModelIndex:
-        """Return parent of index"""
+        """Return parent of index."""
         if not index.isValid():
             return QModelIndex()
 
@@ -378,7 +378,7 @@ class PEStructureModel(QAbstractItemModel):
         return self.createIndex(parent_item.row(), 0, parent_item)
 
     def rowCount(self, parent: QModelIndex = QModelIndex()) -> int:
-        """Return number of rows under parent"""
+        """Return number of rows under parent."""
         if parent.column() > 0:
             return 0
 
@@ -390,7 +390,7 @@ class PEStructureModel(QAbstractItemModel):
         return parent_item.child_count()
 
     def get_item_offset_and_size(self, index: QModelIndex) -> tuple[int | None, int | None]:
-        """Get file offset and size for item at index"""
+        """Get file offset and size for item at index."""
         if not index.isValid():
             return None, None
 
@@ -404,7 +404,7 @@ class PEStructureModel(QAbstractItemModel):
         return None, None
 
     def get_item_rva(self, index: QModelIndex) -> int | None:
-        """Get RVA for item at index"""
+        """Get RVA for item at index."""
         if not index.isValid():
             return None
 

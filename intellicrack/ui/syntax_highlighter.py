@@ -42,6 +42,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         Args:
             document: The text document to highlight
             language: Programming language to highlight
+
         """
         super().__init__(document)
         self.language = language.lower()
@@ -83,6 +84,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
 
         Returns:
             Configured text format
+
         """
         text_format = QTextCharFormat()
         text_format.setForeground(QColor(color))
@@ -419,6 +421,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
 
         Args:
             text: Text block to highlight
+
         """
         for pattern, text_format in self.rules:
             expression = pattern
@@ -434,6 +437,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
 
         Args:
             language: New language to use for highlighting
+
         """
         self.language = language.lower()
         self.rules.clear()
@@ -453,6 +457,7 @@ def create_highlighter(
 
     Returns:
         Configured syntax highlighter
+
     """
     return SyntaxHighlighter(document, language)
 
@@ -462,6 +467,7 @@ def get_supported_languages() -> List[str]:
 
     Returns:
         List of supported language names
+
     """
     return [
         "python",
@@ -487,6 +493,7 @@ def detect_language(code: str) -> str:
 
     Returns:
         Detected language name or 'python' as default
+
     """
     code_lower = code.lower()
 

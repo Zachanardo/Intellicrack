@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ class WizardState(Enum):
 
 
 class BypassStrategy:
-    """Represents a bypass strategy for a specific protection"""
+    """Represents a bypass strategy for a specific protection."""
 
     def __init__(
         self,
@@ -140,7 +140,7 @@ class BypassStrategy:
 
 
 class FridaBypassWizard:
-    """Automated bypass wizard with intelligent decision making"""
+    """Automated bypass wizard with intelligent decision making."""
 
     def __init__(self, frida_manager):
         """Initialize the Frida bypass wizard.
@@ -248,7 +248,7 @@ class FridaBypassWizard:
         self.status_callback = status_callback
 
     def _update_progress(self, progress: int, message: str = ""):
-        """Update progress and notify callbacks"""
+        """Update progress and notify callbacks."""
         self.progress = progress
         if self.progress_callback:
             self.progress_callback(progress)
@@ -257,7 +257,7 @@ class FridaBypassWizard:
         logger.info(f"Wizard progress: {progress}% - {message}")
 
     def _update_state(self, state: WizardState):
-        """Update wizard state"""
+        """Update wizard state."""
         self.state = state
         logger.debug(f"Wizard state changed to: {state.value}")
 
@@ -637,7 +637,7 @@ class FridaBypassWizard:
                     self.protection_evidence[prot_type].append(f"String: {string[:50]}")
 
     def _guess_protections_by_target(self):
-        """Guess likely protections based on target software"""
+        """Guess likely protections based on target software."""
         if not self.target_process:
             return
 
@@ -886,7 +886,7 @@ class FridaBypassWizard:
             logger.error(f"Result monitoring failed: {e}")
 
     async def _verify_bypass(self, protection_type: ProtectionType) -> bool:
-        """Verify if a protection is still active"""
+        """Verify if a protection is still active."""
         # Check if the specific protection is still being triggered
         logger.info(f"Verifying bypass for {protection_type.value}")
 
@@ -908,7 +908,7 @@ class FridaBypassWizard:
         return protection_type not in self.executed_bypasses
 
     async def _check_anti_debug_active(self) -> bool:
-        """Check if anti-debug protection is still active"""
+        """Check if anti-debug protection is still active."""
         try:
             # Create detection script
             detection_script = """
@@ -972,7 +972,7 @@ class FridaBypassWizard:
             return False
 
     async def _check_anti_attach_active(self) -> bool:
-        """Check if anti-attach protection is still active"""
+        """Check if anti-attach protection is still active."""
         try:
             # Create attach detection script
             detection_script = """
@@ -1046,7 +1046,7 @@ class FridaBypassWizard:
             return False
 
     async def _check_ssl_pinning_active(self) -> bool:
-        """Check if SSL pinning is still active"""
+        """Check if SSL pinning is still active."""
         try:
             # Create SSL pinning detection script
             detection_script = """
@@ -1143,7 +1143,7 @@ class FridaBypassWizard:
             return False
 
     async def _run_detection_script(self, script_path: Path) -> dict[str, Any]:
-        """Run a detection script and collect results"""
+        """Run a detection script and collect results."""
         result = {"detected": False}
 
         try:
@@ -1176,7 +1176,7 @@ class FridaBypassWizard:
             return {"detected": False}
 
     async def _adaptive_retry(self, verification_results: dict[ProtectionType, bool]):
-        """Adaptively retry failed bypasses with alternative strategies"""
+        """Adaptively retry failed bypasses with alternative strategies."""
         retry_count = 0
         max_retries = 3
 
@@ -1217,7 +1217,7 @@ class FridaBypassWizard:
                 retry_count += 1
 
     def _get_alternative_strategy(self, protection_type: ProtectionType) -> BypassStrategy | None:
-        """Get alternative bypass strategy for failed protection"""
+        """Get alternative bypass strategy for failed protection."""
         alternative_strategies = {
             ProtectionType.ANTI_DEBUG: BypassStrategy(
                 protection_type=ProtectionType.ANTI_DEBUG,

@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -60,6 +60,7 @@ except ImportError as e:
     # PE Constants
     class DIRECTORY_ENTRY:  # noqa: N801
         """PE directory entry indices."""
+
         EXPORT = 0
         IMPORT = 1
         RESOURCE = 2
@@ -79,6 +80,7 @@ except ImportError as e:
 
     class SECTION_CHARACTERISTICS:  # noqa: N801
         """Section characteristics flags."""
+
         IMAGE_SCN_CNT_CODE = 0x00000020
         IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040
         IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080
@@ -90,6 +92,7 @@ except ImportError as e:
 
     class DLL_CHARACTERISTICS:  # noqa: N801
         """DLL characteristics flags."""
+
         IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA = 0x0020
         IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE = 0x0040
         IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY = 0x0080
@@ -104,6 +107,7 @@ except ImportError as e:
 
     class MACHINE_TYPE:  # noqa: N801
         """Machine types."""
+
         IMAGE_FILE_MACHINE_UNKNOWN = 0x0
         IMAGE_FILE_MACHINE_I386 = 0x14c
         IMAGE_FILE_MACHINE_R3000 = 0x162
@@ -137,6 +141,7 @@ except ImportError as e:
 
     class SUBSYSTEM_TYPE:  # noqa: N801
         """Subsystem types."""
+
         IMAGE_SUBSYSTEM_UNKNOWN = 0
         IMAGE_SUBSYSTEM_NATIVE = 1
         IMAGE_SUBSYSTEM_WINDOWS_GUI = 2
@@ -153,6 +158,7 @@ except ImportError as e:
 
     class IMAGE_CHARACTERISTICS:  # noqa: N801
         """Image characteristics."""
+
         IMAGE_FILE_RELOCS_STRIPPED = 0x0001
         IMAGE_FILE_EXECUTABLE_IMAGE = 0x0002
         IMAGE_FILE_LINE_NUMS_STRIPPED = 0x0004
@@ -171,6 +177,7 @@ except ImportError as e:
 
     class DEBUG_TYPE:  # noqa: N801
         """Debug types."""
+
         IMAGE_DEBUG_TYPE_UNKNOWN = 0
         IMAGE_DEBUG_TYPE_COFF = 1
         IMAGE_DEBUG_TYPE_CODEVIEW = 2
@@ -186,6 +193,7 @@ except ImportError as e:
 
     class RESOURCE_TYPE:  # noqa: N801
         """Resource types."""
+
         RT_CURSOR = 1
         RT_BITMAP = 2
         RT_ICON = 3
@@ -210,6 +218,7 @@ except ImportError as e:
 
     class PEFormatError(Exception):
         """PE format error exception."""
+
         pass
 
     class Structure:

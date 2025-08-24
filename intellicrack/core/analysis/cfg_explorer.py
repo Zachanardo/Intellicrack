@@ -172,6 +172,7 @@ except ImportError as e:
 
         class NetworkXError(Exception):
             """NetworkX-compatible exception."""
+
             pass
 
         @staticmethod
@@ -551,7 +552,7 @@ class CFGExplorer:
     """
 
     def __init__(self, binary_path: str | None = None, radare2_path: str | None = None):
-        """Initialize the enhanced CFG explorer"""
+        """Initialize the enhanced CFG explorer."""
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
@@ -581,7 +582,7 @@ class CFGExplorer:
             self._initialize_analysis_engines()
 
     def _initialize_analysis_engines(self) -> None:
-        """Initialize all analysis engines with current binary path"""
+        """Initialize all analysis engines with current binary path."""
         if not self.binary_path:
             return
 
@@ -597,7 +598,7 @@ class CFGExplorer:
             self.logger.warning(f"Failed to initialize some analysis engines: {e}")
 
     def load_binary(self, binary_path: str | None = None) -> bool:
-        """Load a binary file and extract its enhanced CFG with advanced analysis"""
+        """Load a binary file and extract its enhanced CFG with advanced analysis."""
         if binary_path:
             self.binary_path = binary_path
             self._initialize_analysis_engines()
@@ -693,7 +694,7 @@ class CFGExplorer:
     def _create_enhanced_function_graph(
         self, graph_data: dict[str, Any], r2, function_addr: int
     ) -> nx.DiGraph:
-        """Create enhanced function graph with comprehensive node data"""
+        """Create enhanced function graph with comprehensive node data."""
         function_graph = nx.DiGraph()
 
         # Add function-level metadata using r2 and function_addr
@@ -781,7 +782,7 @@ class CFGExplorer:
         return function_graph
 
     def _classify_block_type(self, block: dict[str, Any]) -> str:
-        """Classify block type based on its characteristics"""
+        """Classify block type based on its characteristics."""
         ops = block.get("ops", [])
 
         if not ops:
@@ -806,7 +807,7 @@ class CFGExplorer:
         return "basic"
 
     def _calculate_block_complexity(self, block: dict[str, Any]) -> float:
-        """Calculate complexity score for a basic block"""
+        """Calculate complexity score for a basic block."""
         ops = block.get("ops", [])
 
         if not ops:
@@ -830,7 +831,7 @@ class CFGExplorer:
         return complexity
 
     def _build_call_graph(self, r2) -> None:
-        """Build inter-function call graph"""
+        """Build inter-function call graph."""
         try:
             # Get all cross-references
             xrefs = r2._execute_command("axtj", expect_json=True)
@@ -861,7 +862,7 @@ class CFGExplorer:
             self.logger.debug(f"Failed to build call graph: {e}")
 
     def _find_function_by_address(self, address: int) -> str | None:
-        """Find function name containing the given address"""
+        """Find function name containing the given address."""
         for func_name, func_data in self.functions.items():
             func_addr = func_data.get("addr", 0)
             func_size = func_data.get("size", 0)
@@ -872,7 +873,7 @@ class CFGExplorer:
         return None
 
     def _perform_advanced_analysis(self) -> None:
-        """Perform advanced analysis using integrated engines"""
+        """Perform advanced analysis using integrated engines."""
         if not self.binary_path:
             return
 
@@ -906,7 +907,7 @@ class CFGExplorer:
             self.logger.warning(f"Advanced analysis partially failed: {e}")
 
     def _calculate_function_similarities(self) -> None:
-        """Calculate similarities between functions using graph metrics"""
+        """Calculate similarities between functions using graph metrics."""
         if not NETWORKX_AVAILABLE:
             return
 
@@ -930,7 +931,7 @@ class CFGExplorer:
                     )
 
     def _calculate_graph_similarity(self, graph1: nx.DiGraph, graph2: nx.DiGraph) -> float:
-        """Calculate similarity between two function graphs"""
+        """Calculate similarity between two function graphs."""
         if graph1.number_of_nodes() == 0 or graph2.number_of_nodes() == 0:
             return 0.0
 
@@ -957,11 +958,11 @@ class CFGExplorer:
         return (node_ratio + edge_ratio + complexity_ratio) / 3.0
 
     def get_function_list(self) -> list[str]:
-        """Get a list of all functions in the binary"""
+        """Get a list of all functions in the binary."""
         return list(self.functions.keys())
 
     def set_current_function(self, function_name: str) -> bool:
-        """Set the current function for analysis"""
+        """Set the current function for analysis."""
         if function_name in self.functions:
             self.current_function = function_name
             self.graph = self.functions[function_name]["graph"]
@@ -1042,7 +1043,7 @@ class CFGExplorer:
             return {"error": str(e)}
 
     def get_graph_layout(self, layout_type: str = "spring") -> dict | None:
-        """Get a layout for the current function graph"""
+        """Get a layout for the current function graph."""
         if not self.graph:
             self.logger.error("No graph loaded")
             return None
@@ -1068,7 +1069,7 @@ class CFGExplorer:
         return layout
 
     def get_graph_data(self, layout_type: str = "spring") -> dict[str, Any] | None:
-        """Get graph data for visualization"""
+        """Get graph data for visualization."""
         if not self.graph:
             self.logger.error("No graph loaded")
             return None
@@ -1112,7 +1113,7 @@ class CFGExplorer:
         }
 
     def get_advanced_analysis_results(self) -> dict[str, Any]:
-        """Get comprehensive advanced analysis results"""
+        """Get comprehensive advanced analysis results."""
         return {
             "analysis_cache": self.analysis_cache,
             "function_similarities": self.function_similarities,
@@ -1124,7 +1125,7 @@ class CFGExplorer:
         }
 
     def get_call_graph_metrics(self) -> dict[str, Any]:
-        """Get call graph analysis metrics"""
+        """Get call graph analysis metrics."""
         if not self.call_graph or not NETWORKX_AVAILABLE:
             return {}
 
@@ -1160,7 +1161,7 @@ class CFGExplorer:
             return {}
 
     def _find_recursive_functions(self) -> list[str]:
-        """Find functions that call themselves directly or indirectly"""
+        """Find functions that call themselves directly or indirectly."""
         recursive_funcs = []
 
         if not self.call_graph:
@@ -1182,7 +1183,7 @@ class CFGExplorer:
         return list(set(recursive_funcs))
 
     def get_vulnerability_patterns(self) -> dict[str, Any]:
-        """Get vulnerability patterns from advanced analysis"""
+        """Get vulnerability patterns from advanced analysis."""
         patterns = {
             "buffer_overflow_candidates": [],
             "format_string_candidates": [],
@@ -1243,7 +1244,7 @@ class CFGExplorer:
         return patterns
 
     def get_license_validation_analysis(self) -> dict[str, Any]:
-        """Get comprehensive license validation analysis"""
+        """Get comprehensive license validation analysis."""
         analysis = {
             "license_functions": [],
             "validation_mechanisms": [],
@@ -1289,7 +1290,7 @@ class CFGExplorer:
         return analysis
 
     def get_code_complexity_analysis(self) -> dict[str, Any]:
-        """Get comprehensive code complexity analysis"""
+        """Get comprehensive code complexity analysis."""
         complexity_data = {
             "function_complexities": {},
             "overall_metrics": {},
@@ -1362,7 +1363,7 @@ class CFGExplorer:
         return complexity_data
 
     def _calculate_cyclomatic_complexity(self, graph: nx.DiGraph) -> int:
-        """Calculate cyclomatic complexity of a function graph"""
+        """Calculate cyclomatic complexity of a function graph."""
         if not graph or graph.number_of_nodes() == 0:
             return 1
 
@@ -1378,7 +1379,7 @@ class CFGExplorer:
             return 1
 
     def get_cross_reference_analysis(self) -> dict[str, Any]:
-        """Get cross-reference analysis between functions"""
+        """Get cross-reference analysis between functions."""
         xref_analysis = {
             "function_dependencies": {},
             "dependency_depth": {},
@@ -1422,7 +1423,7 @@ class CFGExplorer:
         return xref_analysis
 
     def find_license_check_patterns(self) -> list[dict[str, Any]]:
-        """Find potential license check patterns in the CFG"""
+        """Find potential license check patterns in the CFG."""
         if not self.graph:
             self.logger.error("No graph loaded")
             return []
@@ -1481,7 +1482,7 @@ class CFGExplorer:
     def generate_interactive_html(
         self, function_name: str, license_patterns: list[dict], output_file: str
     ) -> bool:
-        """Generate an interactive HTML visualization of the CFG"""
+        """Generate an interactive HTML visualization of the CFG."""
         try:
             graph_data = self.get_graph_data(layout_type="spring")
             if not graph_data:
@@ -1541,7 +1542,7 @@ class CFGExplorer:
             return False
 
     def export_graph_image(self, output_file: str, format: str = "png") -> bool:  # pylint: disable=redefined-builtin
-        """Export the CFG as an image file"""
+        """Export the CFG as an image file."""
         if not MATPLOTLIB_AVAILABLE or not NETWORKX_AVAILABLE:
             self.logger.error("Matplotlib or NetworkX not available for image export")
             return False
@@ -1583,7 +1584,7 @@ class CFGExplorer:
             return False
 
     def export_dot_file(self, output_file: str) -> bool:
-        """Export the CFG as a DOT file"""
+        """Export the CFG as a DOT file."""
         if not NETWORKX_AVAILABLE:
             self.logger.error("NetworkX not available for DOT export")
             return False
@@ -1744,7 +1745,7 @@ class CFGExplorer:
         return results
 
     def _generate_similarity_clusters(self) -> list[list[str]]:
-        """Generate clusters of similar functions"""
+        """Generate clusters of similar functions."""
         clusters = []
         processed = set()
 
@@ -1772,7 +1773,7 @@ class CFGExplorer:
         return clusters
 
     def _generate_analysis_summary(self, results: dict[str, Any]) -> dict[str, Any]:
-        """Generate comprehensive analysis summary"""
+        """Generate comprehensive analysis summary."""
         summary = {
             "total_functions": results.get("functions_analyzed", 0),
             "license_related_functions": 0,
@@ -2221,9 +2222,10 @@ def run_deep_cfg_analysis(app):
                 if SUBPROCESS_AVAILABLE:
                     dot_path = shutil.which("dot")
                     if dot_path:
-                        subprocess.run(
+                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                             [dot_path, "-Tsvg", "-o", "license_cfg.svg", "license_cfg.dot"],
                             check=False,
+                            shell=False  # Explicitly secure - using list format prevents shell injection
                         )
                         app.update_output.emit(log_message("[CFG Analysis] Generated license_cfg.svg"))
                     else:
@@ -2242,7 +2244,7 @@ def run_deep_cfg_analysis(app):
 
 
 def run_cfg_explorer(app):
-    """Initialize and run the CFG explorer with GUI integration"""
+    """Initialize and run the CFG explorer with GUI integration."""
     if not PYQT_AVAILABLE:
         print("PyQt6 not available - cannot run GUI version")
         return
@@ -2332,7 +2334,7 @@ def run_cfg_explorer(app):
 
 
 def log_message(message: str) -> str:
-    """Helper function for log message formatting"""
+    """Helper function for log message formatting."""
     return message
 
 

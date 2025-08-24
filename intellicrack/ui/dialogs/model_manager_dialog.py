@@ -1,4 +1,4 @@
-"""Model Manager Dialog for Local GGUF Models
+"""Model Manager Dialog for Local GGUF Models.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -53,7 +53,7 @@ logger = get_logger(__name__)
 
 # Utility functions for QHeaderView and QAbstractItemView
 def create_custom_header_view(orientation, parent=None):
-    """Create a custom header view with enhanced functionality"""
+    """Create a custom header view with enhanced functionality."""
     header = QHeaderView(orientation, parent)
     header.setDefaultSectionSize(100)
     header.setMinimumSectionSize(50)
@@ -63,7 +63,7 @@ def create_custom_header_view(orientation, parent=None):
 
 
 def configure_table_selection(table, behavior=None, mode=None):
-    """Configure table selection behavior using QAbstractItemView"""
+    """Configure table selection behavior using QAbstractItemView."""
     if behavior is None:
         behavior = QAbstractItemView.SelectRows
     if mode is None:
@@ -80,7 +80,7 @@ def configure_table_selection(table, behavior=None, mode=None):
 
 
 def create_enhanced_item_view(parent=None):
-    """Create an enhanced item view with custom behavior"""
+    """Create an enhanced item view with custom behavior."""
     from intellicrack.handlers.pyqt6_handler import QListView
 
     view = QListView(parent)

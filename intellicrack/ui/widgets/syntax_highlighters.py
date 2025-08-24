@@ -22,7 +22,7 @@ from intellicrack.handlers.pyqt6_handler import QRegularExpression
 
 
 class PythonHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for Python code"""
+    """Syntax highlighter for Python code."""
 
     def __init__(self, parent=None):
         """Initialize Python syntax highlighter with comprehensive language support."""
@@ -210,7 +210,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         self.triple_single_quote_format.setForeground(QColor("#CE9178"))  # Orange
 
     def highlightBlock(self, text):
-        """Apply syntax highlighting to block"""
+        """Apply syntax highlighting to block."""
         # Single line rules
         for pattern, format in self.highlighting_rules:
             expression = QRegularExpression(pattern)
@@ -230,7 +230,7 @@ class PythonHighlighter(QSyntaxHighlighter):
         )
 
     def match_multiline_string(self, text, expression, state, format):
-        """Handle multi-line string highlighting"""
+        """Handle multi-line string highlighting."""
         if self.previousBlockState() == state:
             start_index = 0
             add = 0
@@ -259,7 +259,7 @@ class PythonHighlighter(QSyntaxHighlighter):
 
 
 class JavaScriptHighlighter(QSyntaxHighlighter):
-    """Syntax highlighter for JavaScript/Frida code"""
+    """Syntax highlighter for JavaScript/Frida code."""
 
     def __init__(self, parent=None):
         """Initialize JavaScript syntax highlighter with ES6+ language support."""
@@ -466,7 +466,7 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
         self.multiline_comment_format.setFontItalic(True)
 
     def highlightBlock(self, text):
-        """Apply syntax highlighting to block"""
+        """Apply syntax highlighting to block."""
         # Single line rules
         for pattern, format in self.highlighting_rules:
             expression = QRegularExpression(pattern)

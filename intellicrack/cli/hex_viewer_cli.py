@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Terminal-based Hex Viewer with ncurses - Advanced hex editing capabilities for CLI
+"""Terminal-based Hex Viewer with ncurses - Advanced hex editing capabilities for CLI.
 
 Copyright (C) 2025 Zachary Flint
 

@@ -2580,7 +2580,7 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
     if data_type == "float32":
         for _i in range(total_elements):
             # Bias typically starts small or zero, with occasional non-zero values
-            if random.random() < 0.1:  # 10% chance of non-zero bias
+            if random.random() < 0.1:  # noqa: S311 - ML tensor bias simulation data, 10% chance of non-zero bias
                 bias = random.gauss(0, 0.01)
             else:
                 bias = 0.0
@@ -2593,7 +2593,7 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
 
     elif data_type == "float16":
         for _i in range(total_elements):
-            bias = random.gauss(0, 0.005) if random.random() < 0.1 else 0.0
+            bias = random.gauss(0, 0.005) if random.random() < 0.1 else 0.0  # noqa: S311 - ML tensor bias simulation data
             data.extend(struct.pack("e", bias))
 
     else:
@@ -2719,12 +2719,12 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
 
     elif data_type == "int32":
         for _i in range(total_elements):
-            val = random.randint(-1000, 1000)
+            val = random.randint(-1000, 1000)  # noqa: S311 - ML tensor simulation data generation
             data.extend(struct.pack("i", val))
 
     elif data_type == "int8":
         for _i in range(total_elements):
-            val = random.randint(-100, 100)
+            val = random.randint(-100, 100)  # noqa: S311 - ML tensor simulation data generation
             data.extend(struct.pack("b", val))
 
     else:

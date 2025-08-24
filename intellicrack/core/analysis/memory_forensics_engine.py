@@ -1,4 +1,4 @@
-"""Memory Forensics Engine
+"""Memory Forensics Engine.
 
 Advanced memory analysis using Volatility3 framework for runtime binary examination.
 Provides comprehensive memory dump analysis, process inspection, and runtime forensics
@@ -42,7 +42,7 @@ except ImportError:
 
 
 class MemoryArtifactType(Enum):
-    """Types of memory artifacts"""
+    """Types of memory artifacts."""
 
     PROCESS_LIST = "process_list"
     NETWORK_CONNECTIONS = "network_connections"
@@ -59,7 +59,7 @@ class MemoryArtifactType(Enum):
 
 
 class AnalysisProfile(Enum):
-    """Memory analysis profiles"""
+    """Memory analysis profiles."""
 
     WINDOWS_10 = "Win10x64_19041"
     WINDOWS_11 = "Win11x64_22000"
@@ -72,7 +72,7 @@ class AnalysisProfile(Enum):
 
 @dataclass
 class MemoryProcess:
-    """Information about a process in memory"""
+    """Information about a process in memory."""
 
     pid: int
     ppid: int
@@ -92,7 +92,7 @@ class MemoryProcess:
 
 @dataclass
 class MemoryModule:
-    """Information about a loaded module"""
+    """Information about a loaded module."""
 
     base_address: int
     size: int
@@ -109,7 +109,7 @@ class MemoryModule:
 
 @dataclass
 class NetworkConnection:
-    """Network connection information"""
+    """Network connection information."""
 
     local_addr: str
     local_port: int
@@ -124,7 +124,7 @@ class NetworkConnection:
 
 @dataclass
 class MemoryString:
-    """String found in memory"""
+    """String found in memory."""
 
     offset: int
     value: str
@@ -136,7 +136,7 @@ class MemoryString:
 
 @dataclass
 class MemoryAnalysisResult:
-    """Complete memory analysis results"""
+    """Complete memory analysis results."""
 
     dump_path: str
     analysis_profile: str = ""
@@ -153,7 +153,7 @@ class MemoryAnalysisResult:
 
     @property
     def has_suspicious_activity(self) -> bool:
-        """Check if any suspicious activity was detected"""
+        """Check if any suspicious activity was detected."""
         return (
             any(p.is_hidden for p in self.processes)
             or any(p.suspicious_indicators for p in self.processes)
@@ -163,7 +163,7 @@ class MemoryAnalysisResult:
 
     @property
     def hidden_process_count(self) -> int:
-        """Get count of hidden processes"""
+        """Get count of hidden processes."""
         return sum(1 for p in self.processes if p.is_hidden)
 
 
@@ -201,7 +201,7 @@ class MemoryForensicsEngine:
         self.analysis_results = {}
 
     def _init_volatility(self):
-        """Initialize Volatility3 framework"""
+        """Initialize Volatility3 framework."""
         try:
             # Initialize Volatility3 context
             self.vol_context = contexts.Context()
@@ -228,7 +228,7 @@ class MemoryForensicsEngine:
         profile: AnalysisProfile = AnalysisProfile.AUTO_DETECT,
         deep_analysis: bool = True,
     ) -> MemoryAnalysisResult:
-        """Analyze a memory dump file for forensic artifacts
+        """Analyze a memory dump file for forensic artifacts.
 
         Args:
             dump_path: Path to the memory dump file
@@ -312,7 +312,7 @@ class MemoryForensicsEngine:
             )
 
     def _fallback_memory_analysis(self, dump_path: str) -> MemoryAnalysisResult:
-        """Fallback analysis when Volatility3 is not available"""
+        """Fallback analysis when Volatility3 is not available."""
         result = MemoryAnalysisResult(dump_path=dump_path)
 
         try:
@@ -323,12 +323,13 @@ class MemoryForensicsEngine:
             try:
                 file_cmd_path = shutil.which("file")
                 if file_cmd_path:
-                    file_result = subprocess.run(
+                    file_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                         [file_cmd_path, dump_path],
                         check=False,
                         capture_output=True,
                         text=True,
                         timeout=10,
+                        shell=False  # Explicitly secure - using list format prevents shell injection
                     )
                     if file_result.returncode == 0:
                         result.analysis_profile = file_result.stdout.strip()
@@ -360,7 +361,7 @@ class MemoryForensicsEngine:
         return result
 
     def _detect_profile(self, dump_path: str) -> str:
-        """Detect appropriate Volatility3 profile for memory dump"""
+        """Detect appropriate Volatility3 profile for memory dump."""
         try:
             # First, try file-based heuristics using dump_path
             import os
@@ -472,7 +473,7 @@ class MemoryForensicsEngine:
             return AnalysisProfile.WINDOWS_10.value
 
     def _configure_volatility(self, dump_path: str, profile: str):
-        """Configure Volatility3 for analysis"""
+        """Configure Volatility3 for analysis."""
         try:
             # Clear existing configuration
             self.vol_config.clear()
@@ -494,7 +495,7 @@ class MemoryForensicsEngine:
             raise
 
     def _run_volatility_plugin(self, plugin_name: str, plugin_config: dict[str, Any]) -> list[Any]:
-        """Run a Volatility3 plugin and return results"""
+        """Run a Volatility3 plugin and return results."""
         try:
             # Get plugin class using plugins framework
             available_plugins = plugins.list_plugins()
@@ -603,7 +604,7 @@ class MemoryForensicsEngine:
             return []
 
     def _analyze_processes(self) -> list[MemoryProcess]:
-        """Analyze processes in memory dump"""
+        """Analyze processes in memory dump."""
         processes = []
 
         try:
@@ -639,7 +640,7 @@ class MemoryForensicsEngine:
         return processes
 
     def _analyze_modules(self) -> list[MemoryModule]:
-        """Analyze loaded modules"""
+        """Analyze loaded modules."""
         modules = []
 
         try:
@@ -663,7 +664,7 @@ class MemoryForensicsEngine:
         return modules
 
     def _analyze_network_connections(self) -> list[NetworkConnection]:
-        """Analyze network connections"""
+        """Analyze network connections."""
         connections = []
 
         try:
@@ -690,7 +691,7 @@ class MemoryForensicsEngine:
         return connections
 
     def _analyze_registry(self) -> list[dict[str, Any]]:
-        """Analyze registry artifacts"""
+        """Analyze registry artifacts."""
         registry_artifacts = []
 
         try:
@@ -712,7 +713,7 @@ class MemoryForensicsEngine:
         return registry_artifacts
 
     def _analyze_file_handles(self) -> list[dict[str, Any]]:
-        """Analyze file handles"""
+        """Analyze file handles."""
         file_handles = []
 
         try:
@@ -736,7 +737,7 @@ class MemoryForensicsEngine:
         return file_handles
 
     def _extract_memory_strings(self, min_length: int = 6) -> list[MemoryString]:
-        """Extract strings from memory dump"""
+        """Extract strings from memory dump."""
         strings = []
 
         try:
@@ -763,7 +764,7 @@ class MemoryForensicsEngine:
         return strings
 
     def _extract_strings_fallback(self, file_path: str, min_length: int = 4) -> list[str]:
-        """Fallback string extraction using basic binary parsing"""
+        """Fallback string extraction using basic binary parsing."""
         strings = []
 
         try:
@@ -799,7 +800,7 @@ class MemoryForensicsEngine:
         return strings
 
     def _check_process_suspicious_indicators(self, process: MemoryProcess) -> list[str]:
-        """Check for suspicious process indicators"""
+        """Check for suspicious process indicators."""
         indicators = []
 
         # Check for common license bypass tool process names
@@ -864,7 +865,7 @@ class MemoryForensicsEngine:
         return indicators
 
     def _detect_hidden_processes(self, processes: list[MemoryProcess]):
-        """Detect hidden processes using psxview-like analysis"""
+        """Detect hidden processes using psxview-like analysis."""
         try:
             # This would involve comparing multiple process listing methods
             # For now, mark processes with suspicious characteristics as potentially hidden
@@ -878,7 +879,7 @@ class MemoryForensicsEngine:
             logger.error(f"Hidden process detection failed: {e}")
 
     def _is_module_suspicious(self, module_data: Any) -> bool:
-        """Check if a module appears suspicious"""
+        """Check if a module appears suspicious."""
         try:
             module_name = getattr(module_data, "BaseDllName", "").lower()
             module_path = getattr(module_data, "FullDllName", "").lower()
@@ -945,7 +946,7 @@ class MemoryForensicsEngine:
     def _detect_security_issues(
         self, analysis_result: MemoryAnalysisResult
     ) -> list[dict[str, Any]]:
-        """Detect security issues based on analysis results"""
+        """Detect security issues based on analysis results."""
         findings = []
 
         try:
@@ -1016,7 +1017,7 @@ class MemoryForensicsEngine:
     def analyze_process_memory(
         self, process_id: int, dump_path: str | None = None
     ) -> dict[str, Any]:
-        """Analyze live process memory or specific process from dump
+        """Analyze live process memory or specific process from dump.
 
         Args:
             process_id: Process ID to analyze
@@ -1503,7 +1504,7 @@ class MemoryForensicsEngine:
             return addr_str
 
     def extract_strings(self, memory_data: bytes, min_length: int = 4) -> list[str]:
-        """Extract ASCII strings from memory data
+        """Extract ASCII strings from memory data.
 
         Args:
             memory_data: Binary memory data
@@ -1538,7 +1539,7 @@ class MemoryForensicsEngine:
     def generate_icp_supplemental_data(
         self, analysis_result: MemoryAnalysisResult
     ) -> dict[str, Any]:
-        """Generate supplemental data for ICP backend integration
+        """Generate supplemental data for ICP backend integration.
 
         Args:
             analysis_result: Memory analysis results
@@ -1618,7 +1619,7 @@ class MemoryForensicsEngine:
         return supplemental_data
 
     def get_analysis_summary(self, analysis_result: MemoryAnalysisResult) -> dict[str, Any]:
-        """Generate a summary of memory analysis results"""
+        """Generate a summary of memory analysis results."""
         return {
             "dump_path": analysis_result.dump_path,
             "analysis_profile": analysis_result.analysis_profile,
@@ -1638,7 +1639,7 @@ class MemoryForensicsEngine:
     def export_analysis_report(
         self, analysis_result: MemoryAnalysisResult, output_path: str
     ) -> tuple[bool, str]:
-        """Export memory analysis results to JSON report
+        """Export memory analysis results to JSON report.
 
         Args:
             analysis_result: Analysis results to export
@@ -1710,7 +1711,7 @@ _memory_forensics_engine: MemoryForensicsEngine | None = None
 
 
 def get_memory_forensics_engine() -> MemoryForensicsEngine | None:
-    """Get or create the memory forensics engine singleton"""
+    """Get or create the memory forensics engine singleton."""
     global _memory_forensics_engine
     if _memory_forensics_engine is None:
         try:
@@ -1722,12 +1723,12 @@ def get_memory_forensics_engine() -> MemoryForensicsEngine | None:
 
 
 def is_volatility3_available() -> bool:
-    """Check if Volatility3 functionality is available"""
+    """Check if Volatility3 functionality is available."""
     return VOLATILITY3_AVAILABLE
 
 
 def analyze_memory_dump_file(dump_path: str) -> MemoryAnalysisResult | None:
-    """Quick memory dump analysis function for integration"""
+    """Quick memory dump analysis function for integration."""
     engine = get_memory_forensics_engine()
     if engine:
         return engine.analyze_memory_dump(dump_path)

@@ -1,4 +1,4 @@
-"""Certificate Generation and Management Utilities
+"""Certificate Generation and Management Utilities.
 
 Copyright (C) 2025 Zachary Flint
 

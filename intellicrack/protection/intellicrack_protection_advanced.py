@@ -1,4 +1,4 @@
-"""Advanced Intellicrack Protection Analysis Module
+"""Advanced Intellicrack Protection Analysis Module.
 
 Enhanced features for comprehensive protection analysis capabilities.
 
@@ -30,7 +30,7 @@ logger = get_logger(__name__)
 
 
 class ScanMode(Enum):
-    """Protection analysis scan modes"""
+    """Protection analysis scan modes."""
 
     NORMAL = "normal"
     DEEP = "deep"
@@ -39,7 +39,7 @@ class ScanMode(Enum):
 
 
 class ExportFormat(Enum):
-    """Export formats supported by protection analysis"""
+    """Export formats supported by protection analysis."""
 
     JSON = "json"
     XML = "xml"
@@ -50,7 +50,7 @@ class ExportFormat(Enum):
 
 @dataclass
 class EntropyInfo:
-    """Entropy information for file sections"""
+    """Entropy information for file sections."""
 
     section_name: str
     offset: int
@@ -62,7 +62,7 @@ class EntropyInfo:
 
 @dataclass
 class CertificateInfo:
-    """Digital certificate information"""
+    """Digital certificate information."""
 
     subject: str
     issuer: str
@@ -76,7 +76,7 @@ class CertificateInfo:
 
 @dataclass
 class ResourceInfo:
-    """Resource information from PE files"""
+    """Resource information from PE files."""
 
     type: str
     name: str
@@ -88,7 +88,7 @@ class ResourceInfo:
 
 @dataclass
 class StringInfo:
-    """String information with encoding"""
+    """String information with encoding."""
 
     value: str
     offset: int
@@ -99,7 +99,7 @@ class StringInfo:
 
 @dataclass
 class ImportHash:
-    """Import hash for similarity analysis"""
+    """Import hash for similarity analysis."""
 
     imphash: str
     imphash_sorted: str
@@ -108,7 +108,7 @@ class ImportHash:
 
 @dataclass
 class AdvancedProtectionAnalysis(ProtectionAnalysis):
-    """Extended protection analysis with additional features"""
+    """Extended protection analysis with additional features."""
 
     entropy_info: list[EntropyInfo] = field(default_factory=list)
     certificates: list[CertificateInfo] = field(default_factory=list)
@@ -174,7 +174,7 @@ class AdvancedProtectionAnalysis(ProtectionAnalysis):
 
 
 class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
-    """Advanced Intellicrack protection analysis with full feature support"""
+    """Advanced Intellicrack protection analysis with full feature support."""
 
     def __init__(
         self,
@@ -182,7 +182,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         custom_db_path: str | None = None,
         enable_cache: bool = True,
     ):
-        """Initialize advanced protection analyzer
+        """Initialize advanced protection analyzer.
 
         Args:
             engine_path: Path to protection engine executable
@@ -196,7 +196,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         self.result_cache = {} if enable_cache else None
 
     def _find_custom_db(self) -> str | None:
-        """Find custom database directory"""
+        """Find custom database directory."""
         if not self.engine_path:
             # No engine path, no custom db
             return None
@@ -218,7 +218,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         extract_strings: bool = True,
         max_string_length: int = 1000,
     ) -> AdvancedProtectionAnalysis:
-        """Advanced protection detection with full analysis features
+        """Advanced protection detection with full analysis features.
 
         Args:
             file_path: Path to file to analyze
@@ -278,7 +278,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             # Run protection engine with extended timeout for deep scans
             timeout = 60 if scan_mode in [ScanMode.DEEP, ScanMode.ALL] else 30
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                cmd, check=False, capture_output=True, text=True, timeout=timeout
+                cmd, check=False, capture_output=True, text=True, timeout=timeout, shell=False
             )
 
             if result.returncode != 0:
@@ -334,7 +334,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             )
 
     def _parse_advanced_json(self, file_path: str, json_output: str) -> AdvancedProtectionAnalysis:
-        """Parse advanced JSON output from protection engine"""
+        """Parse advanced JSON output from protection engine."""
         # Start with basic parsing
         basic_analysis = self._parse_json_output(file_path, json.loads(json_output))
 
@@ -416,7 +416,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         return analysis
 
     def _parse_advanced_xml(self, file_path: str, xml_output: str) -> AdvancedProtectionAnalysis:
-        """Parse advanced XML output from protection engine"""
+        """Parse advanced XML output from protection engine."""
         analysis = AdvancedProtectionAnalysis(
             file_path=file_path,
             file_type="Unknown",
@@ -458,7 +458,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         return analysis
 
     def _parse_advanced_text(self, file_path: str, text_output: str) -> AdvancedProtectionAnalysis:
-        """Parse advanced text output from protection engine"""
+        """Parse advanced text output from protection engine."""
         analysis = AdvancedProtectionAnalysis(
             file_path=file_path,
             file_type="Unknown",
@@ -515,7 +515,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         return analysis
 
     def _extract_suspicious_strings(self, file_path: str, max_length: int) -> list[StringInfo]:
-        """Extract suspicious strings from file"""
+        """Extract suspicious strings from file."""
         suspicious_patterns = [
             "kernel32",
             "ntdll",
@@ -560,7 +560,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         try:
             # Use protection engine's string extraction
             cmd = [self.engine_path, "-s", file_path]
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
 
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):
@@ -586,7 +586,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         return suspicious_strings
 
     def _calculate_import_hash(self, file_path: str) -> ImportHash | None:
-        """Calculate import hash for file using proper PE import table analysis"""
+        """Calculate import hash for file using proper PE import table analysis."""
         try:
             import pefile
         except ImportError:
@@ -643,7 +643,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return self._calculate_import_hash_manual(file_path)
 
     def _calculate_import_hash_manual(self, file_path: str) -> ImportHash | None:
-        """Manual PE import hash calculation without pefile library"""
+        """Manual PE import hash calculation without pefile library."""
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
@@ -727,7 +727,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return None
 
     def _calculate_similarity_hash(self, file_path: str) -> str | None:
-        """Calculate similarity hash using ssdeep fuzzy hashing or TLSH"""
+        """Calculate similarity hash using ssdeep fuzzy hashing or TLSH."""
         # Try ssdeep first
         try:
             import ssdeep
@@ -764,7 +764,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return None
 
     def _calculate_custom_fuzzy_hash(self, file_path: str) -> str:
-        """Custom fuzzy hash implementation using rolling hash and context triggering"""
+        """Custom fuzzy hash implementation using rolling hash and context triggering."""
         try:
             with open(file_path, "rb") as f:
                 data = f.read()
@@ -888,7 +888,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 return f"sha256:{hashlib.sha256(f.read()).hexdigest()}"
 
     def _calculate_file_hash(self, file_path: str) -> str:
-        """Calculate file hash for caching"""
+        """Calculate file hash for caching."""
         try:
             with open(file_path, "rb") as f:
                 return hashlib.sha256(f.read()).hexdigest()
@@ -898,7 +898,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
     def batch_analyze(
         self, file_paths: list[str], max_workers: int = 4, scan_mode: ScanMode = ScanMode.NORMAL
     ) -> dict[str, AdvancedProtectionAnalysis]:
-        """Analyze multiple files in parallel
+        """Analyze multiple files in parallel.
 
         Args:
             file_paths: List of files to analyze
@@ -940,7 +940,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
     def create_custom_signature(
         self, name: str, pattern: bytes, offset: int = 0, description: str = ""
     ) -> bool:
-        """Create custom signature for protection analysis
+        """Create custom signature for protection analysis.
 
         Args:
             name: Signature name
@@ -986,7 +986,7 @@ function detect(bShowType, bShowVersion, bShowOptions)
             return False
 
     def export_to_yara(self, analysis: AdvancedProtectionAnalysis) -> str:
-        """Export detection results as comprehensive YARA rules
+        """Export detection results as comprehensive YARA rules.
 
         Args:
             analysis: Analysis results to export
@@ -1104,7 +1104,7 @@ rule {rule_name}_Specific {{
         return "\n".join(yara_rules)
 
     def _generate_detection_patterns(self, detection: DetectionResult) -> list[str]:
-        """Generate YARA patterns for specific detection"""
+        """Generate YARA patterns for specific detection."""
         patterns = []
 
         # Common packer/protector patterns
@@ -1154,7 +1154,7 @@ rule {rule_name}_Specific {{
         return patterns
 
     def _generate_detection_condition(self, detection: DetectionResult) -> str:
-        """Generate YARA condition for specific detection"""
+        """Generate YARA condition for specific detection."""
         base_conditions = []
 
         # File type conditions
@@ -1176,7 +1176,7 @@ rule {rule_name}_Specific {{
         return " and ".join(base_conditions) if base_conditions else "any of them"
 
     def _generate_heuristic_yara_rule(self, heuristic_detections: list[DetectionResult]) -> str:
-        """Generate YARA rule for heuristic detections"""
+        """Generate YARA rule for heuristic detections."""
         rule = (
             """
 rule Heuristic_Protection_Detection {
@@ -1215,7 +1215,7 @@ rule Heuristic_Protection_Detection {
         return rule
 
     def get_format_capabilities(self, file_path: str) -> dict[str, bool]:
-        """Check what protection engine can detect for this file format
+        """Check what protection engine can detect for this file format.
 
         Args:
             file_path: Path to file
@@ -1248,7 +1248,7 @@ rule Heuristic_Protection_Detection {
 def advanced_analyze(
     file_path: str, scan_mode: ScanMode = ScanMode.DEEP, enable_heuristic: bool = True
 ) -> AdvancedProtectionAnalysis:
-    """Quick advanced analysis function"""
+    """Quick advanced analysis function."""
     analyzer = IntellicrackAdvancedProtection()
     return analyzer.detect_protections_advanced(
         file_path,

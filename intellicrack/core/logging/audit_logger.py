@@ -1,4 +1,4 @@
-"""Audit Logging Framework for Intellicrack
+"""Audit Logging Framework for Intellicrack.
 
 Provides tamper-resistant, structured logging for all exploitation attempts
 and security-sensitive operations.

@@ -1,4 +1,4 @@
-"""Configuration Profile System for Intellicrack CLI Allows saving and loading of analysis configurations
+"""Configuration Profile System for Intellicrack CLI Allows saving and loading of analysis configurations.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -36,7 +36,7 @@ Allows saving and loading of analysis configurations
 
 
 class ConfigProfile:
-    """Represents a saved configuration profile"""
+    """Represents a saved configuration profile."""
 
     def __init__(self, name: str, description: str = ""):
         """Initialize configuration profile with settings and metadata."""
@@ -51,7 +51,7 @@ class ConfigProfile:
         self.custom_scripts = []
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert profile to dictionary"""
+        """Convert profile to dictionary."""
         return {
             "name": self.name,
             "description": self.description,
@@ -66,7 +66,7 @@ class ConfigProfile:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ConfigProfile":
-        """Create profile from dictionary"""
+        """Create profile from dictionary."""
         profile = cls(data["name"], data.get("description", ""))
         profile.created_at = datetime.fromisoformat(data["created_at"])
         if data.get("last_used"):
@@ -148,7 +148,7 @@ class ProfileManager:
                 logger.error(f"Failed to migrate CLI profiles: {e}")
 
     def _load_profiles(self) -> dict[str, ConfigProfile]:
-        """Load all profiles from central config"""
+        """Load all profiles from central config."""
         profiles = {}
 
         # Get profiles from central config
@@ -174,7 +174,7 @@ class ProfileManager:
         return profiles
 
     def save_profile(self, profile: ConfigProfile) -> None:
-        """Save profile to central config"""
+        """Save profile to central config."""
         # Get current CLI config
         cli_config = self.central_config.get("cli_configuration", {})
         profiles_data = cli_config.get("profiles", {})
@@ -192,7 +192,7 @@ class ProfileManager:
         self.console.print(f"[green]Profile '{profile.name}' saved successfully![/green]")
 
     def delete_profile(self, name: str) -> bool:
-        """Delete a profile from central config"""
+        """Delete a profile from central config."""
         if name not in self.profiles:
             return False
 
@@ -211,7 +211,7 @@ class ProfileManager:
         return True
 
     def get_profile(self, name: str) -> Optional[ConfigProfile]:
-        """Get a profile by name"""
+        """Get a profile by name."""
         profile = self.profiles.get(name)
         if profile:
             profile.last_used = datetime.now()
@@ -219,7 +219,7 @@ class ProfileManager:
         return profile
 
     def list_profiles(self) -> None:
-        """Display all profiles in a table"""
+        """Display all profiles in a table."""
         if not self.profiles:
             self.console.print("[yellow]No profiles found.[/yellow]")
             return
@@ -245,7 +245,7 @@ class ProfileManager:
         self.console.print(table)
 
     def create_profile_interactive(self) -> ConfigProfile:
-        """Create a new profile interactively"""
+        """Create a new profile interactively."""
         self.console.print("\n[bold cyan]Create New Configuration Profile[/bold cyan]\n")
 
         # Get basic info
@@ -307,7 +307,7 @@ class ProfileManager:
         return profile
 
     def apply_profile(self, profile_name: str, args: Any) -> Any:
-        """Apply a profile to command-line arguments"""
+        """Apply a profile to command-line arguments."""
         profile = self.get_profile(profile_name)
         if not profile:
             self.console.print(f"[red]Profile '{profile_name}' not found![/red]")
@@ -335,7 +335,7 @@ class ProfileManager:
 
 
 def create_default_profiles():
-    """Create some default profiles for common use cases"""
+    """Create some default profiles for common use cases."""
     manager = ProfileManager()
 
     # Quick scan profile
@@ -391,7 +391,7 @@ def create_default_profiles():
 
 # pylint: disable=too-many-branches,too-many-statements
 def main():
-    """Demo the profile system"""
+    """Demo the profile system."""
     console = Console()
 
     console.print(

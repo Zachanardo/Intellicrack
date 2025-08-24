@@ -1,4 +1,4 @@
-"""AI Coding Assistant Dialog with Three-Panel Layout
+"""AI Coding Assistant Dialog with Three-Panel Layout.
 
 Copyright (C) 2025 Zachary Flint
 

@@ -32,7 +32,7 @@ from intellicrack.handlers.pyqt6_handler import (
 
 
 class PluginDialogBase(QDialog):
-    """Base class for dialogs that work with plugins"""
+    """Base class for dialogs that work with plugins."""
 
     def __init__(self, parent=None, plugin_path: str = None):
         """Initialize the PluginDialogBase with default values."""
@@ -42,11 +42,11 @@ class PluginDialogBase(QDialog):
         self.init_dialog()
 
     def init_dialog(self):
-        """Initialize dialog - to be overridden by subclasses"""
+        """Initialize dialog - to be overridden by subclasses."""
         raise NotImplementedError("Subclasses must implement init_dialog()")
 
     def create_plugin_selection_layout(self):
-        """Create the common plugin selection layout"""
+        """Create the common plugin selection layout."""
         plugin_layout = QHBoxLayout()
         plugin_layout.addWidget(QLabel("Plugin:"))
 
@@ -62,7 +62,7 @@ class PluginDialogBase(QDialog):
         return plugin_layout
 
     def browse_plugin(self):
-        """Browse for a plugin file"""
+        """Browse for a plugin file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Plugin",
@@ -74,7 +74,7 @@ class PluginDialogBase(QDialog):
             self.load_plugin(file_path)
 
     def load_plugin(self, plugin_path: str):
-        """Load a plugin file - to be overridden by subclasses"""
+        """Load a plugin file - to be overridden by subclasses."""
         if not os.path.exists(plugin_path):
             QMessageBox.warning(self, "Error", f"Plugin file not found: {plugin_path}")
             return False
@@ -87,7 +87,7 @@ class PluginDialogBase(QDialog):
         return True
 
     def on_plugin_loaded(self, plugin_path: str):
-        """Called when a plugin is loaded - to be overridden by subclasses"""
+        """Called when a plugin is loaded - to be overridden by subclasses."""
         self.logger.debug(f"Plugin loaded from: {plugin_path}")
 
         # Store plugin metadata

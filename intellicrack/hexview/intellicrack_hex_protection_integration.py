@@ -1,4 +1,4 @@
-"""Intellicrack Hex Protection Integration Module
+"""Intellicrack Hex Protection Integration Module.
 
 Integrates protection analysis hex viewer features with Intellicrack's advanced hex viewer.
 
@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 
 
 class IntellicrackHexProtectionIntegration(QObject):
-    """Integrates protection analysis hex viewer with Intellicrack's hex viewer"""
+    """Integrates protection analysis hex viewer with Intellicrack's hex viewer."""
 
     # Signals
     #: Signal to request jumping to a specific offset (type: int)
@@ -27,7 +27,7 @@ class IntellicrackHexProtectionIntegration(QObject):
     section_requested = pyqtSignal(str)
 
     def __init__(self, hex_widget=None):
-        """Initialize hex protection integration
+        """Initialize hex protection integration.
 
         Args:
             hex_widget: Reference to Intellicrack's hex viewer widget
@@ -46,7 +46,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         self.sync_timer.start(500)  # Check every 500ms
 
     def open_in_protection_viewer(self, file_path: str, offset: int | None = None):
-        """Open file in protection analysis hex viewer
+        """Open file in protection analysis hex viewer.
 
         Args:
             file_path: Path to file to open
@@ -111,7 +111,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             logger.error(f"Error opening file in protection viewer: {e}")
 
     def open_in_icp(self, file_path: str, offset: int | None = None):
-        """Alias for open_in_protection_viewer to maintain ICP naming consistency"""
+        """Alias for open_in_protection_viewer to maintain ICP naming consistency."""
         return self.open_in_protection_viewer(file_path, offset)
 
     def _cleanup_sync_files(self):
@@ -137,7 +137,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             logger.debug(f"Failed to cleanup sync files: {e}")
 
     def sync_offset_from_protection_viewer(self, offset: int):
-        """Sync offset from protection viewer to our hex viewer
+        """Sync offset from protection viewer to our hex viewer.
 
         Args:
             offset: Offset to sync
@@ -148,7 +148,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             self.offset_requested.emit(offset)
 
     def sync_offset_to_protection_viewer(self, offset: int):
-        """Sync offset from our hex viewer to protection viewer
+        """Sync offset from our hex viewer to protection viewer.
 
         Args:
             offset: Offset to sync
@@ -205,7 +205,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             logger.debug(f"Error monitoring protection viewer offset: {e}")
 
     def get_section_offsets(self, file_path: str) -> dict[str, int]:
-        """Get section offsets from protection viewer analysis
+        """Get section offsets from protection viewer analysis.
 
         Args:
             file_path: Path to file
@@ -232,7 +232,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             return {}
 
     def compare_features(self) -> dict[str, dict[str, bool]]:
-        """Compare features between protection viewer hex viewer and our hex viewer
+        """Compare features between protection viewer hex viewer and our hex viewer.
 
         Returns:
             Feature comparison dictionary
@@ -266,10 +266,11 @@ class IntellicrackHexProtectionIntegration(QObject):
         }
 
     def _detect_intellicrack_features(self) -> dict[str, bool]:
-        """Dynamically detect features available in Intellicrack hex viewer
+        """Dynamically detect features available in Intellicrack hex viewer.
 
         Returns:
             Dictionary of feature availability
+
         """
         features = {
             "Basic Viewing": False,
@@ -423,10 +424,10 @@ class IntellicrackHexProtectionIntegration(QObject):
 
 
 class ProtectionIntegrationWidget(QWidget):
-    """Widget for protection viewer hex viewer integration controls"""
+    """Widget for protection viewer hex viewer integration controls."""
 
     def __init__(self, hex_widget=None, parent=None):
-        """Initialize protection viewer integration widget
+        """Initialize protection viewer integration widget.
 
         Args:
             hex_widget: Reference to hex viewer widget
@@ -439,7 +440,7 @@ class ProtectionIntegrationWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        """Initialize UI"""
+        """Initialize UI."""
         layout = QVBoxLayout()
 
         # Header
@@ -473,7 +474,7 @@ class ProtectionIntegrationWidget(QWidget):
         self.setLayout(layout)
 
     def _open_in_protection_viewer(self):
-        """Open current file in protection viewer"""
+        """Open current file in protection viewer."""
         if self.hex_widget and hasattr(self.hex_widget, "file_path"):
             file_path = self.hex_widget.file_path
             if file_path:
@@ -485,7 +486,7 @@ class ProtectionIntegrationWidget(QWidget):
             self.info_label.setText("Hex viewer not available")
 
     def sync_sections_from_icp(self):
-        """Sync section information from protection viewer"""
+        """Sync section information from protection viewer."""
         if self.hex_widget and hasattr(self.hex_widget, "file_path"):
             file_path = self.hex_widget.file_path
             if file_path:
@@ -505,7 +506,7 @@ class ProtectionIntegrationWidget(QWidget):
 
 
 def create_intellicrack_hex_integration(hex_widget=None) -> IntellicrackHexProtectionIntegration:
-    """Factory function to create Intellicrack hex viewer integration
+    """Factory function to create Intellicrack hex viewer integration.
 
     Args:
         hex_widget: Optional hex viewer widget to integrate with

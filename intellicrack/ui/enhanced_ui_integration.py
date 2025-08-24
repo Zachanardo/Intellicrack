@@ -1,4 +1,4 @@
-"""Enhanced UI Integration for Comprehensive Radare2 Features
+"""Enhanced UI Integration for Comprehensive Radare2 Features.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -57,7 +57,7 @@ logger = get_logger(__name__)
 
 
 class EnhancedAnalysisDashboard(QWidget):
-    """Enhanced dashboard integrating all radare2 capabilities"""
+    """Enhanced dashboard integrating all radare2 capabilities."""
 
     def __init__(self, parent=None):
         """Initialize the enhanced analysis dashboard with UI components and logging."""
@@ -67,7 +67,7 @@ class EnhancedAnalysisDashboard(QWidget):
         self._setup_ui()
 
     def _setup_ui(self):
-        """Setup enhanced dashboard UI"""
+        """Setup enhanced dashboard UI."""
         layout = QVBoxLayout(self)
 
         # Header with logo and title
@@ -128,7 +128,7 @@ class EnhancedAnalysisDashboard(QWidget):
         layout.addWidget(self.content_tabs)
 
     def _setup_overview_tab(self):
-        """Setup enhanced overview tab"""
+        """Setup enhanced overview tab."""
         overview_widget = QWidget()
         layout = QVBoxLayout(overview_widget)
 
@@ -203,12 +203,12 @@ class EnhancedAnalysisDashboard(QWidget):
         self.content_tabs.addTab(overview_widget, "Overview")
 
     def _setup_radare2_tab(self):
-        """Setup enhanced radare2 analysis tab"""
+        """Setup enhanced radare2 analysis tab."""
         self.r2_widget = R2IntegrationWidget(self)
         self.content_tabs.addTab(self.r2_widget, "Radare2 Analysis")
 
     def _setup_visualization_tab(self):
-        """Setup visualization tab"""
+        """Setup visualization tab."""
         viz_widget = QWidget()
         layout = QVBoxLayout(viz_widget)
 
@@ -253,7 +253,7 @@ class EnhancedAnalysisDashboard(QWidget):
         self.content_tabs.addTab(viz_widget, "Visualization")
 
     def _setup_reports_tab(self):
-        """Setup reports management tab"""
+        """Setup reports management tab."""
         reports_widget = QWidget()
         layout = QVBoxLayout(reports_widget)
 
@@ -303,7 +303,7 @@ class EnhancedAnalysisDashboard(QWidget):
         self.content_tabs.addTab(reports_widget, "Reports")
 
     def _darken_color(self, color: str) -> str:
-        """Darken a hex color for hover effects"""
+        """Darken a hex color for hover effects."""
         # Simple color darkening
         color_map = {
             "#3498db": "#2980b9",
@@ -314,13 +314,13 @@ class EnhancedAnalysisDashboard(QWidget):
         return color_map.get(color, color)
 
     def update_stats(self, stats_data: dict[str, Any]):
-        """Update dashboard statistics"""
+        """Update dashboard statistics."""
         for key, value in stats_data.items():
             if key in self.stats_labels:
                 self.stats_labels[key].setText(str(value))
 
     def add_activity(self, message: str):
-        """Add activity to recent activity list"""
+        """Add activity to recent activity list."""
         self.activity_list.insertItem(0, f"[{self._get_ui_timestamp()}] {message}")
 
         # Keep only last 20 items
@@ -328,13 +328,13 @@ class EnhancedAnalysisDashboard(QWidget):
             self.activity_list.takeItem(self.activity_list.count() - 1)
 
     def _get_ui_timestamp(self) -> str:
-        """Get current timestamp for UI display"""
+        """Get current timestamp for UI display."""
         from datetime import datetime
 
         return datetime.now().strftime("%H:%M:%S")
 
     def set_analysis_status(self, status: str, color: str = "#27ae60"):
-        """Set analysis status with color"""
+        """Set analysis status with color."""
         self.analysis_status.setText(status)
         self.analysis_status.setStyleSheet(f"""
             QLabel {{
@@ -347,12 +347,12 @@ class EnhancedAnalysisDashboard(QWidget):
         """)
 
     def _start_new_analysis(self):
-        """Start new analysis"""
+        """Start new analysis."""
         self.content_tabs.setCurrentIndex(1)  # Switch to radare2 tab
         self.add_activity("New analysis session started")
 
     def _load_report(self):
-        """Load existing report"""
+        """Load existing report."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Load Report",
@@ -363,28 +363,28 @@ class EnhancedAnalysisDashboard(QWidget):
             self.add_activity(f"Loaded report: {os.path.basename(file_path)}")
 
     def _export_results(self):
-        """Export analysis results"""
+        """Export analysis results."""
         self.add_activity("Results exported")
 
     def _open_settings(self):
-        """Open settings dialog"""
+        """Open settings dialog."""
         dialog = R2ConfigurationDialog(self)
         if dialog.exec() == QDialog.Accepted:
             self.add_activity("Settings updated")
 
     def _update_visualization(self, viz_type: str):
-        """Update visualization based on type"""
+        """Update visualization based on type."""
         self.viz_scene.clear()
         self.viz_info.setText(f"Visualization: {viz_type}\nNo data available yet.")
 
     def _refresh_visualization(self):
-        """Refresh current visualization"""
+        """Refresh current visualization."""
         viz_type = self.viz_type_combo.currentText()
         self._update_visualization(viz_type)
         self.add_activity(f"Refreshed {viz_type} visualization")
 
     def _generate_report(self):
-        """Generate report based on template"""
+        """Generate report based on template."""
         template = self.report_template_combo.currentText()
         self.report_editor.setText(
             f"# {template}\n\nReport generated at {self._get_ui_timestamp()}\n\nNo analysis data available yet."
@@ -392,7 +392,7 @@ class EnhancedAnalysisDashboard(QWidget):
         self.add_activity(f"Generated {template} report")
 
     def _save_report(self):
-        """Save current report"""
+        """Save current report."""
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Report",
@@ -405,12 +405,12 @@ class EnhancedAnalysisDashboard(QWidget):
             self.add_activity(f"Saved report: {os.path.basename(file_path)}")
 
     def _export_pdf(self):
-        """Export report as PDF"""
+        """Export report as PDF."""
         self.add_activity("PDF export not yet implemented")
 
 
 class EnhancedMainWindow(QMainWindow):
-    """Enhanced main window with integrated radare2 features"""
+    """Enhanced main window with integrated radare2 features."""
 
     def __init__(self):
         """Initialize the enhanced main window with UI setup, menu bar, toolbar, and status bar."""
@@ -423,7 +423,7 @@ class EnhancedMainWindow(QMainWindow):
         self._setup_status_bar()
 
     def _setup_ui(self):
-        """Setup enhanced main UI"""
+        """Setup enhanced main UI."""
         self.setWindowTitle("Intellicrack - Advanced Binary Analysis Framework")
         self.setGeometry(100, 100, 1600, 1000)
 
@@ -438,7 +438,7 @@ class EnhancedMainWindow(QMainWindow):
         self._apply_dark_theme()
 
     def _setup_menu_bar(self):
-        """Setup enhanced menu bar"""
+        """Setup enhanced menu bar."""
         menubar = self.menuBar()
 
         # File menu
@@ -502,7 +502,7 @@ class EnhancedMainWindow(QMainWindow):
         help_menu.addAction(about_action)
 
     def _setup_tool_bar(self):
-        """Setup enhanced tool bar"""
+        """Setup enhanced tool bar."""
         toolbar = self.addToolBar("Main")
         toolbar.setMovable(False)
 
@@ -534,7 +534,7 @@ class EnhancedMainWindow(QMainWindow):
         toolbar.addAction(export_action)
 
     def _setup_status_bar(self):
-        """Setup enhanced status bar"""
+        """Setup enhanced status bar."""
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
@@ -552,7 +552,7 @@ class EnhancedMainWindow(QMainWindow):
         self.status_bar.addPermanentWidget(self.binary_info_label)
 
     def _apply_dark_theme(self):
-        """Apply dark theme to application"""
+        """Apply dark theme to application."""
         dark_palette = QPalette()
 
         # Set colors
@@ -573,7 +573,7 @@ class EnhancedMainWindow(QMainWindow):
         QApplication.setPalette(dark_palette)
 
     def _open_file(self):
-        """Open binary file"""
+        """Open binary file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open Binary File",
@@ -589,7 +589,7 @@ class EnhancedMainWindow(QMainWindow):
             self.status_bar.showMessage(f"Loaded: {file_path}")
 
     def _start_analysis(self, analysis_type: str):
-        """Start analysis of specified type"""
+        """Start analysis of specified type."""
         if not self.binary_path:
             QMessageBox.warning(self, "No File", "Please open a binary file first")
             return
@@ -603,7 +603,7 @@ class EnhancedMainWindow(QMainWindow):
         self.dashboard.r2_widget._start_analysis(analysis_type)
 
     def _save_results(self):
-        """Save analysis results"""
+        """Save analysis results."""
         if not hasattr(self.dashboard.r2_widget.results_viewer, "results_data"):
             QMessageBox.information(self, "No Results", "No analysis results to save")
             return
@@ -611,18 +611,18 @@ class EnhancedMainWindow(QMainWindow):
         self.dashboard.r2_widget.results_viewer._export_results()
 
     def _export_report(self):
-        """Export analysis report"""
+        """Export analysis report."""
         self.dashboard.content_tabs.setCurrentIndex(3)  # Switch to reports tab
         self.dashboard._generate_report()
 
     def _open_configuration(self):
-        """Open configuration dialog"""
+        """Open configuration dialog."""
         dialog = R2ConfigurationDialog(self)
         if dialog.exec() == QDialog.Accepted:
             self.dashboard.add_activity("Configuration updated")
 
     def _open_hex_viewer(self):
-        """Open hex viewer"""
+        """Open hex viewer."""
         if not self.binary_path:
             QMessageBox.warning(self, "No File", "Please open a binary file first")
             return
@@ -637,7 +637,7 @@ class EnhancedMainWindow(QMainWindow):
             QMessageBox.information(self, "Hex Viewer", "Hex viewer not available")
 
     def _show_about(self):
-        """Show about dialog"""
+        """Show about dialog."""
         QMessageBox.about(
             self,
             "About Intellicrack",
@@ -650,7 +650,7 @@ class EnhancedMainWindow(QMainWindow):
 
 
 def create_enhanced_application():
-    """Create and return enhanced Intellicrack application"""
+    """Create and return enhanced Intellicrack application."""
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
@@ -665,7 +665,7 @@ def create_enhanced_application():
 
 
 def integrate_enhanced_ui_with_existing_app(existing_app):
-    """Integrate enhanced UI features with existing application"""
+    """Integrate enhanced UI features with existing application."""
     try:
         # Add enhanced dashboard if main app has tab widget
         if hasattr(existing_app, "tab_widget"):

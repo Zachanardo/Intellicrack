@@ -1,4 +1,4 @@
-"""Semantic Code Understanding System
+"""Semantic Code Understanding System.
 
 Copyright (C) 2025 Zachary Flint
 

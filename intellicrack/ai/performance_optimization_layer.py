@@ -1,4 +1,4 @@
-"""Performance Optimization Layer for AI Operations
+"""Performance Optimization Layer for AI Operations.
 
 Copyright (C) 2025 Zachary Flint
 

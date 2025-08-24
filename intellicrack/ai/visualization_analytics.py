@@ -1,4 +1,4 @@
-"""Advanced Visualization & Analytics for AI Operations
+"""Advanced Visualization & Analytics for AI Operations.
 
 Copyright (C) 2025 Zachary Flint
 

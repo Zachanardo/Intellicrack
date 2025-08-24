@@ -1,4 +1,4 @@
-"""Lazy Model Loading System for Intellicrack
+"""Lazy Model Loading System for Intellicrack.
 
 This module provides lazy loading capabilities for large AI models,
 improving startup time and memory usage by loading models only when needed.

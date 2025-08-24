@@ -1,4 +1,4 @@
-"""Model Batch Tester for Intellicrack
+"""Model Batch Tester for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

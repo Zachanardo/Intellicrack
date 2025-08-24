@@ -1,4 +1,4 @@
-"""PE File Model for Hex Viewer Integration
+"""PE File Model for Hex Viewer Integration.
 
 Provides structured access to PE file information with RVA/offset conversion capabilities.
 Serves as the foundational data layer for hex viewer structure visualization.
@@ -28,7 +28,7 @@ except ImportError as e:
 
 @dataclass
 class FileStructure:
-    """Generic file structure information"""
+    """Generic file structure information."""
 
     name: str
     offset: int
@@ -40,7 +40,7 @@ class FileStructure:
 
 @dataclass
 class SectionInfo:
-    """PE section information"""
+    """PE section information."""
 
     name: str
     virtual_address: int
@@ -52,23 +52,23 @@ class SectionInfo:
 
     @property
     def is_executable(self) -> bool:
-        """Check if section is executable"""
+        """Check if section is executable."""
         return bool(self.characteristics & 0x20000000)  # IMAGE_SCN_MEM_EXECUTE
 
     @property
     def is_writable(self) -> bool:
-        """Check if section is writable"""
+        """Check if section is writable."""
         return bool(self.characteristics & 0x80000000)  # IMAGE_SCN_MEM_WRITE
 
     @property
     def is_readable(self) -> bool:
-        """Check if section is readable"""
+        """Check if section is readable."""
         return bool(self.characteristics & 0x40000000)  # IMAGE_SCN_MEM_READ
 
 
 @dataclass
 class ImportInfo:
-    """Import information"""
+    """Import information."""
 
     dll_name: str
     function_name: str
@@ -79,7 +79,7 @@ class ImportInfo:
 
 @dataclass
 class ExportInfo:
-    """Export information"""
+    """Export information."""
 
     function_name: str
     ordinal: int
@@ -88,7 +88,7 @@ class ExportInfo:
 
 
 class BinaryFileModel(ABC):
-    """Abstract base class for binary file models"""
+    """Abstract base class for binary file models."""
 
     def __init__(self, file_path: str):
         """Initialize binary file model with file path validation and basic file information."""
@@ -101,27 +101,27 @@ class BinaryFileModel(ABC):
 
     @abstractmethod
     def parse_file(self) -> None:
-        """Parse the binary file structure"""
+        """Parse the binary file structure."""
 
     @abstractmethod
     def rva_to_offset(self, rva: int) -> int | None:
-        """Convert RVA to file offset"""
+        """Convert RVA to file offset."""
 
     @abstractmethod
     def offset_to_rva(self, offset: int) -> int | None:
-        """Convert file offset to RVA"""
+        """Convert file offset to RVA."""
 
     @abstractmethod
     def get_sections(self) -> list[SectionInfo]:
-        """Get file sections"""
+        """Get file sections."""
 
     @abstractmethod
     def get_structures(self) -> list[FileStructure]:
-        """Get file structures for tree view"""
+        """Get file structures for tree view."""
 
 
 class PEFileModel(BinaryFileModel):
-    """PE file model with comprehensive structure parsing"""
+    """PE file model with comprehensive structure parsing."""
 
     def __init__(self, file_path: str):
         """Initialize PE file model with comprehensive analysis of Portable Executable structure."""
@@ -143,7 +143,7 @@ class PEFileModel(BinaryFileModel):
         self.parse_file()
 
     def parse_file(self) -> None:
-        """Parse PE file structure"""
+        """Parse PE file structure."""
         try:
             logger.debug(f"Parsing PE file: {self.file_path}")
 
@@ -179,7 +179,7 @@ class PEFileModel(BinaryFileModel):
             raise
 
     def _parse_sections(self) -> None:
-        """Parse PE sections"""
+        """Parse PE sections."""
         self.sections = []
 
         for section in self.pe.sections:
@@ -199,7 +199,7 @@ class PEFileModel(BinaryFileModel):
             self.sections.append(section_info)
 
     def _calculate_section_entropy(self, section: SectionInfo) -> float:
-        """Calculate entropy for a section"""
+        """Calculate entropy for a section."""
         try:
             with open(self.file_path, "rb") as f:
                 f.seek(section.raw_offset)
@@ -232,7 +232,7 @@ class PEFileModel(BinaryFileModel):
             return 0.0
 
     def _parse_imports(self) -> None:
-        """Parse PE imports"""
+        """Parse PE imports."""
         self.imports = []
 
         if not hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
@@ -258,7 +258,7 @@ class PEFileModel(BinaryFileModel):
             logger.warning(f"Failed to parse imports: {e}")
 
     def _parse_exports(self) -> None:
-        """Parse PE exports"""
+        """Parse PE exports."""
         self.exports = []
 
         if not hasattr(self.pe, "DIRECTORY_ENTRY_EXPORT"):
@@ -282,7 +282,7 @@ class PEFileModel(BinaryFileModel):
             logger.warning(f"Failed to parse exports: {e}")
 
     def _extract_certificates(self) -> None:
-        """Extract digital certificates from PE file"""
+        """Extract digital certificates from PE file."""
         try:
             self.certificates = extract_pe_certificates(str(self.file_path))
             logger.debug(f"Certificate extraction completed. Signed: {self.certificates.is_signed}")
@@ -291,7 +291,7 @@ class PEFileModel(BinaryFileModel):
             self.certificates = CodeSigningInfo(is_signed=False)
 
     def _build_structures(self) -> None:
-        """Build structure hierarchy for tree view"""
+        """Build structure hierarchy for tree view."""
         self.structures = []
 
         # DOS Header
@@ -398,7 +398,7 @@ class PEFileModel(BinaryFileModel):
             # pylint: enable=no-member
 
     def rva_to_offset(self, rva: int) -> int | None:
-        """Convert RVA to file offset"""
+        """Convert RVA to file offset."""
         if not self.pe:
             return None
 
@@ -409,7 +409,7 @@ class PEFileModel(BinaryFileModel):
             return None
 
     def offset_to_rva(self, offset: int) -> int | None:
-        """Convert file offset to RVA"""
+        """Convert file offset to RVA."""
         if not self.pe:
             return None
 
@@ -420,49 +420,49 @@ class PEFileModel(BinaryFileModel):
             return None
 
     def get_sections(self) -> list[SectionInfo]:
-        """Get PE sections"""
+        """Get PE sections."""
         return self.sections
 
     def get_structures(self) -> list[FileStructure]:
-        """Get file structures for tree view"""
+        """Get file structures for tree view."""
         return self.structures
 
     def get_imports(self) -> list[ImportInfo]:
-        """Get PE imports"""
+        """Get PE imports."""
         return self.imports
 
     def get_exports(self) -> list[ExportInfo]:
-        """Get PE exports"""
+        """Get PE exports."""
         return self.exports
 
     def get_certificates(self) -> CodeSigningInfo | None:
-        """Get digital certificate information"""
+        """Get digital certificate information."""
         return self.certificates
 
     def get_section_at_rva(self, rva: int) -> SectionInfo | None:
-        """Get section containing the given RVA"""
+        """Get section containing the given RVA."""
         for section in self.sections:
             if section.virtual_address <= rva < section.virtual_address + section.virtual_size:
                 return section
         return None
 
     def get_section_at_offset(self, offset: int) -> SectionInfo | None:
-        """Get section containing the given file offset"""
+        """Get section containing the given file offset."""
         for section in self.sections:
             if section.raw_offset <= offset < section.raw_offset + section.raw_size:
                 return section
         return None
 
     def is_valid_rva(self, rva: int) -> bool:
-        """Check if RVA is valid"""
+        """Check if RVA is valid."""
         return self.rva_to_offset(rva) is not None
 
     def is_valid_offset(self, offset: int) -> bool:
-        """Check if file offset is valid"""
+        """Check if file offset is valid."""
         return 0 <= offset < self.file_size
 
     def get_file_info(self) -> dict[str, Any]:
-        """Get comprehensive file information"""
+        """Get comprehensive file information."""
         info = {
             "file_path": str(self.file_path),
             "file_size": self.file_size,
@@ -496,7 +496,7 @@ class PEFileModel(BinaryFileModel):
 
 
 def create_file_model(file_path: str) -> BinaryFileModel | None:
-    """Factory function to create appropriate file model"""
+    """Factory function to create appropriate file model."""
     try:
         # Check file format
         with open(file_path, "rb") as f:

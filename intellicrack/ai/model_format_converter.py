@@ -1,4 +1,4 @@
-"""Model Format Converter for Intellicrack
+"""Model Format Converter for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

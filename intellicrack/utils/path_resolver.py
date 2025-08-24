@@ -1,4 +1,4 @@
-"""Path Resolution Utilities for Intellicrack
+"""Path Resolution Utilities for Intellicrack.
 
 Provides consistent path resolution across the application,
 ensuring paths are relative to the project root or user directories.

@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -84,42 +84,52 @@ except ImportError as e:
     # Exception classes
     class RequestError(Exception):
         """Base exception for requests."""
+
         pass
 
     class ConnectionError(RequestError):
         """Connection error."""
+
         pass
 
     class HTTPError(RequestError):
         """HTTP error."""
+
         pass
 
     class TimeoutError(RequestError):
         """Timeout error."""
+
         pass
 
     class TooManyRedirectsError(RequestError):
         """Too many redirects."""
+
         pass
 
     class InvalidURLError(RequestError):
         """Invalid URL."""
+
         pass
 
     class ConnectTimeoutError(TimeoutError):
         """Connection timeout."""
+
         pass
 
     class ReadTimeoutError(TimeoutError):
         """Read timeout."""
+
         pass
 
     class SSLError(ConnectionError):
         """SSL error."""
+
         pass
 
     class ProxyError(ConnectionError):
         """Proxy error."""
+
         pass
 
     # Response class

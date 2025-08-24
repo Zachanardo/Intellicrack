@@ -1,4 +1,4 @@
-"""Multi-Agent Collaboration System
+"""Multi-Agent Collaboration System.
 
 Copyright (C) 2025 Zachary Flint
 

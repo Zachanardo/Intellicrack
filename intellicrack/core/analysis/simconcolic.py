@@ -1,4 +1,4 @@
-"""SimConcolic - A simple binary analysis framework
+"""SimConcolic - A simple binary analysis framework.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -30,14 +30,14 @@ logger = logging.getLogger(__name__)
 
 
 class Plugin:
-    """Base class for SimConcolic plugins"""
+    """Base class for SimConcolic plugins."""
 
     def __init__(self):
-        """Initialize the plugin"""
+        """Initialize the plugin."""
         self.analyzer = None
 
     def will_run_callback(self, *args, **kwargs):
-        """Called before analysis starts"""
+        """Called before analysis starts."""
         # Initialize analysis state
         self.analysis_start_time = time.time()
         self.total_states_analyzed = 0
@@ -50,7 +50,7 @@ class Plugin:
         logger.info(f"Starting analysis at {datetime.fromtimestamp(self.analysis_start_time)}")
 
     def did_finish_run_callback(self, *args, **kwargs):
-        """Called after analysis finishes"""
+        """Called after analysis finishes."""
         # Calculate analysis statistics
         end_time = time.time()
         duration = end_time - getattr(self, "analysis_start_time", end_time)
@@ -68,7 +68,7 @@ class Plugin:
             self.analysis_metadata["completion_kwargs"] = kwargs
 
     def will_fork_state_callback(self, state, *args, **kwargs):
-        """Called before a state is forked"""
+        """Called before a state is forked."""
         # Track state forking for analysis
         if not hasattr(self, "fork_count"):
             self.fork_count = 0
@@ -92,7 +92,7 @@ class Plugin:
         )
 
     def will_terminate_state_callback(self, state, *args, **kwargs):
-        """Called before a state is terminated"""
+        """Called before a state is terminated."""
         # Track termination reasons
         if not hasattr(self, "termination_pending"):
             self.termination_pending = {}
@@ -109,7 +109,7 @@ class Plugin:
         logger.debug(f"State at 0x{state.address:x} pending termination")
 
     def did_terminate_state_callback(self, state, *args, **kwargs):
-        """Called after a state is terminated"""
+        """Called after a state is terminated."""
         # Update termination statistics
         if not hasattr(self, "terminated_states"):
             self.terminated_states = []
@@ -140,7 +140,7 @@ class Plugin:
         )
 
     def _get_memory_usage(self):
-        """Get current memory usage in MB"""
+        """Get current memory usage in MB."""
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
@@ -151,10 +151,10 @@ class Plugin:
 
 
 class State:
-    """Represents an execution state in the binary"""
+    """Represents an execution state in the binary."""
 
     def __init__(self, address: int, analyzer: "BinaryAnalyzer", state_id: str = None):
-        """Initialize a state
+        """Initialize a state.
 
         Args:
             address: The current instruction pointer address
@@ -184,25 +184,25 @@ class State:
         )
 
     def abandon(self):
-        """Abandon this state (terminate exploration)"""
+        """Abandon this state (terminate exploration)."""
         self.terminated = True
         self.termination_reason = "abandoned"
         self.analyzer._handle_state_termination(self)
 
     def is_terminated(self) -> bool:
-        """Check if the state is terminated"""
+        """Check if the state is terminated."""
         return self.terminated
 
     def set_termination_reason(self, reason: str):
-        """Set the termination reason"""
+        """Set the termination reason."""
         self.termination_reason = reason
 
 
 class BinaryAnalyzer:
-    """Base class for binary analysis"""
+    """Base class for binary analysis."""
 
     def __init__(self, binary_path: str, workspace_url: str | None = None):
-        """Initialize a binary analyzer
+        """Initialize a binary analyzer.
 
         Args:
             binary_path: Path to the binary file to analyze
@@ -219,7 +219,7 @@ class BinaryAnalyzer:
         self._procs = 1
 
     def add_hook(self, address: int, callback: Callable):
-        """Add a hook at the specified address
+        """Add a hook at the specified address.
 
         Args:
             address: The address to hook
@@ -237,7 +237,7 @@ class BinaryAnalyzer:
         self.logger.debug(f"Added hook at address 0x{address:x}")
 
     def set_exec_timeout(self, timeout: int):
-        """Set the execution timeout
+        """Set the execution timeout.
 
         Args:
             timeout: Timeout in seconds
@@ -246,7 +246,7 @@ class BinaryAnalyzer:
         self._exec_timeout = timeout
 
     def register_plugin(self, plugin: Plugin):
-        """Register a plugin
+        """Register a plugin.
 
         Args:
             plugin: The plugin instance to register
@@ -257,7 +257,7 @@ class BinaryAnalyzer:
 
     # pylint: disable=too-many-branches,too-many-statements
     def run(self, timeout: int | None = None, procs: int = 1):
-        """Run the analysis
+        """Run the analysis.
 
         Args:
             timeout: Optional timeout in seconds
@@ -362,14 +362,14 @@ class BinaryAnalyzer:
         return explored_states
 
     def _is_timeout(self, start_time: float) -> bool:
-        """Check if the execution has timed out"""
+        """Check if the execution has timed out."""
         if self._exec_timeout is None:
             return False
 
         return (time.time() - start_time) > self._exec_timeout
 
     def _handle_state_termination(self, state: State):
-        """Handle the termination of a state"""
+        """Handle the termination of a state."""
         for plugin in self.plugins:
             if hasattr(plugin, "will_terminate_state_callback"):
                 plugin.will_terminate_state_callback(state)
@@ -387,7 +387,7 @@ class BinaryAnalyzer:
 
     @property
     def all_states(self) -> dict[str, State]:
-        """Get all states created during analysis as a dictionary
+        """Get all states created during analysis as a dictionary.
 
         Returns:
             Dictionary of states keyed by state ID

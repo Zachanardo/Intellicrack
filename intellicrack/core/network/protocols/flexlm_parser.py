@@ -1,4 +1,4 @@
-"""FlexLM License Protocol Parser and Response Generator
+"""FlexLM License Protocol Parser and Response Generator.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -31,7 +31,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class FlexLMRequest:
-    """FlexLM request structure"""
+    """FlexLM request structure."""
 
     command: int
     version: int
@@ -49,7 +49,7 @@ class FlexLMRequest:
 
 @dataclass
 class FlexLMResponse:
-    """FlexLM response structure"""
+    """FlexLM response structure."""
 
     status: int
     sequence: int
@@ -62,7 +62,7 @@ class FlexLMResponse:
 
 
 class FlexLMProtocolParser:
-    """Real FlexLM protocol parser and response generator"""
+    """Real FlexLM protocol parser and response generator."""
 
     # FlexLM protocol constants
     FLEXLM_COMMANDS = {
@@ -111,7 +111,7 @@ class FlexLMProtocolParser:
         self._load_default_features()
 
     def _load_default_features(self):
-        """Load default feature set for common applications"""
+        """Load default feature set for common applications."""
         self.server_features = {
             # Autodesk Products
             "AUTOCAD": {
@@ -177,11 +177,11 @@ class FlexLMProtocolParser:
         }
 
     def _generate_encryption_seed(self) -> bytes:
-        """Generate encryption seed for FlexLM communication"""
+        """Generate encryption seed for FlexLM communication."""
         return hashlib.sha256(str(time.time()).encode()).digest()
 
     def parse_request(self, data: bytes) -> FlexLMRequest | None:
-        """Parse incoming FlexLM request
+        """Parse incoming FlexLM request.
 
         Args:
             data: Raw FlexLM request data
@@ -283,7 +283,7 @@ class FlexLMProtocolParser:
             return None
 
     def _parse_string_field(self, data: bytes, offset: int) -> str:
-        """Parse null-terminated string from data"""
+        """Parse null-terminated string from data."""
         try:
             end = data.find(b"\x00", offset)
             if end == -1:
@@ -294,7 +294,7 @@ class FlexLMProtocolParser:
             return ""
 
     def _parse_additional_data(self, data: bytes) -> dict[str, Any]:
-        """Parse additional FlexLM data fields"""
+        """Parse additional FlexLM data fields."""
         additional = {}
         try:
             offset = 0
@@ -327,7 +327,7 @@ class FlexLMProtocolParser:
         return additional
 
     def generate_response(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Generate appropriate FlexLM response based on request
+        """Generate appropriate FlexLM response based on request.
 
         Args:
             request: Parsed FlexLM request
@@ -358,7 +358,7 @@ class FlexLMProtocolParser:
         return self._handle_unknown_command(request)
 
     def _handle_checkout(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle license checkout request"""
+        """Handle license checkout request."""
         feature = request.feature.upper()
 
         # Check if feature exists
@@ -409,7 +409,7 @@ class FlexLMProtocolParser:
         )
 
     def _handle_checkin(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle license checkin request"""
+        """Handle license checkin request."""
         checkout_id = f"{request.hostname}:{request.username}:{request.feature}"
 
         if checkout_id in self.active_checkouts:
@@ -430,7 +430,7 @@ class FlexLMProtocolParser:
         )
 
     def _handle_status(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle server status request"""
+        """Handle server status request."""
         return FlexLMResponse(
             status=0x00,  # SUCCESS
             sequence=request.sequence,
@@ -448,7 +448,7 @@ class FlexLMProtocolParser:
         )
 
     def _handle_heartbeat(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle heartbeat request"""
+        """Handle heartbeat request."""
         checkout_id = f"{request.hostname}:{request.username}:{request.feature}"
 
         if checkout_id in self.active_checkouts:
@@ -470,7 +470,7 @@ class FlexLMProtocolParser:
         )
 
     def _handle_feature_info(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle feature information request"""
+        """Handle feature information request."""
         feature = request.feature.upper()
 
         if feature in self.server_features:
@@ -497,7 +497,7 @@ class FlexLMProtocolParser:
         )
 
     def _handle_server_info(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle server information request"""
+        """Handle server information request."""
         return FlexLMResponse(
             status=0x00,  # SUCCESS
             sequence=request.sequence,
@@ -516,7 +516,7 @@ class FlexLMProtocolParser:
         )
 
     def _handle_hostid_request(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle host ID request"""
+        """Handle host ID request."""
         # Generate deterministic host ID
         hostid = hashlib.sha256(request.hostname.encode()).hexdigest()[:12].upper()
 
@@ -532,7 +532,7 @@ class FlexLMProtocolParser:
         )
 
     def _handle_encryption_seed(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle encryption seed request"""
+        """Handle encryption seed request."""
         return FlexLMResponse(
             status=0x00,  # SUCCESS
             sequence=request.sequence,
@@ -545,7 +545,7 @@ class FlexLMProtocolParser:
         )
 
     def _handle_unknown_command(self, request: FlexLMRequest) -> FlexLMResponse:
-        """Handle unknown command"""
+        """Handle unknown command."""
         self.logger.warning(f"Unknown FlexLM command: 0x{request.command:02X}")
         return FlexLMResponse(
             status=0x0C,  # ENCRYPTION_FAILED (generic error)
@@ -559,7 +559,7 @@ class FlexLMProtocolParser:
         )
 
     def _generate_checkout_key(self, request: FlexLMRequest, feature_info: dict[str, Any]) -> str:
-        """Generate checkout key for license"""
+        """Generate checkout key for license."""
         # Incorporate feature information into key generation
         feature_version = feature_info.get("version", "1.0")
         feature_type = feature_info.get("type", "standard")
@@ -587,7 +587,7 @@ class FlexLMProtocolParser:
         return key
 
     def serialize_response(self, response: FlexLMResponse) -> bytes:
-        """Serialize FlexLM response to bytes
+        """Serialize FlexLM response to bytes.
 
         Args:
             response: FlexLM response object
@@ -646,7 +646,7 @@ class FlexLMProtocolParser:
             return struct.pack(">IHI", 0x464C4558, 0x03, response.sequence) + b"\x00"
 
     def _serialize_additional_data(self, data: dict[str, Any]) -> bytes:
-        """Serialize additional data fields"""
+        """Serialize additional data fields."""
         serialized = bytearray()
 
         for key, value in data.items():

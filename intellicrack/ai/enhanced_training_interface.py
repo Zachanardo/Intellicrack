@@ -1,4 +1,4 @@
-"""Enhanced AI Model Training Interface
+"""Enhanced AI Model Training Interface.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -1304,6 +1304,7 @@ class HyperparameterOptimizationWidget(QWidget):
 
         Returns:
             Tuple of (accuracy, loss) from training evaluation
+
         """
         try:
             # Create a mini training run with the hyperparameters

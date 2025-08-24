@@ -121,7 +121,7 @@
             const funcAddr = Module.findExportByName(null, funcName);
             if (funcAddr) {
                 Interceptor.attach(funcAddr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         logger.warn(`License function called: ${funcName}`);
                         detections.license_checks++;
                     },
@@ -147,13 +147,13 @@
             const importAddr = Module.findExportByName(null, importName);
             if (importAddr) {
                 Interceptor.attach(importAddr, {
-                    onEnter: function(args) {
+                    onEnter: function() {
                         // Log import usage for analysis
                         logger.info(`Import called: ${importName}`);
                     }
                 });
             }
-        } catch (e) {
+        } catch {
             // Silently ignore failed import hooks
         }
     });

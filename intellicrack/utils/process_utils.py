@@ -1,4 +1,4 @@
-"""Legacy process utilities - consolidated functions moved to utils.system.process_utils
+"""Legacy process utilities - consolidated functions moved to utils.system.process_utils.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -545,12 +545,13 @@ def detect_hardware_dongles() -> list[dict[str, Any]]:
                 if not lsusb_path:
                     return []
 
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [lsusb_path],
                     check=False,
                     capture_output=True,
                     text=True,
                     timeout=10,
+                    shell=False
                 )
 
                 if result.returncode == 0:
@@ -658,12 +659,13 @@ def detect_tpm_protection() -> dict[str, Any]:
                 # Check dmesg for TPM messages
                 dmesg_path = shutil.which("dmesg")
                 if dmesg_path:
-                    result = subprocess.run(
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                         [dmesg_path],
                         check=False,
                         capture_output=True,
                         text=True,
                         timeout=5,
+                        shell=False
                     )
                     if result.returncode == 0:
                         tpm_lines = [

@@ -1,4 +1,4 @@
-"""Configuration Management - Modern Dynamic Configuration System
+"""Configuration Management - Modern Dynamic Configuration System.
 
 Uses the new IntellicrackConfig class with auto-discovery and platform-aware directories.
 Provides backward compatibility with legacy configuration access patterns.

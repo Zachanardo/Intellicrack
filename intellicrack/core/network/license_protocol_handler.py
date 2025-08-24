@@ -2,6 +2,7 @@
 
 import logging
 import os
+import secrets
 import threading
 from abc import ABC, abstractmethod
 from typing import Any
@@ -622,9 +623,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             # Handle common HASP commands
             if command_id == 0x01:  # HASP_LOGIN
                 # Login response: success status + dynamic handle
-                import random
-
-                handle = random.randint(0x10000000, 0x7FFFFFFF)  # Generate dynamic handle
+                handle = secrets.randbelow(0x7FFFFFFF - 0x10000000 + 1) + 0x10000000  # Generate dynamic handle
                 response = struct.pack("<II", 0x00000000, handle)  # Success + handle
                 # Store handle for this session
                 self.session_data["handle"] = handle

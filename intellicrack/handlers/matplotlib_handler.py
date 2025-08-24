@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -59,7 +59,9 @@ try:
     if FigureCanvasQTAgg is None:
         class FigureCanvasQTAgg:
             """Basic Qt canvas fallback when Qt backend is not available."""
+
             def __init__(self, figure):
+                """Initialize Qt canvas with matplotlib figure."""
                 self.figure = figure
             def draw(self):
                 """Draw the Qt canvas."""

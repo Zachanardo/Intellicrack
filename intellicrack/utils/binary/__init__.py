@@ -1,4 +1,4 @@
-"""Binary manipulation utilities for Intellicrack
+"""Binary manipulation utilities for Intellicrack.
 
 Copyright (C) 2025 Zachary Flint
 

@@ -1,5 +1,5 @@
 """Security utilities for Intellicrack
-Provides secure alternatives to common operations
+Provides secure alternatives to common operations.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -27,11 +27,11 @@ import yaml
 
 
 class SecurityError(Exception):
-    """Raised when a security policy is violated"""
+    """Raised when a security policy is violated."""
 
 
 def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
-    """Generate a secure hash of the given data
+    """Generate a secure hash of the given data.
 
     Args:
         data: Data to hash
@@ -57,7 +57,7 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
 def secure_subprocess(
     command: str | list[str], shell: bool = False, timeout: int | None = 30, **kwargs
 ) -> subprocess.CompletedProcess:
-    """Execute a subprocess command securely
+    """Execute a subprocess command securely.
 
     Args:
         command: Command to execute
@@ -92,7 +92,7 @@ def secure_subprocess(
 
 
 def secure_yaml_load(data: str) -> Any:
-    """Safely load YAML data
+    """Safely load YAML data.
 
     Args:
         data: YAML string to parse
@@ -105,7 +105,7 @@ def secure_yaml_load(data: str) -> Any:
 
 
 def secure_json_load(data: str) -> Any:
-    """Safely load JSON data
+    """Safely load JSON data.
 
     Args:
         data: JSON string to parse
@@ -118,7 +118,7 @@ def secure_json_load(data: str) -> Any:
 
 
 def validate_file_path(path: str, allowed_extensions: list[str] | None = None) -> bool:
-    """Validate a file path for security
+    """Validate a file path for security.
 
     Args:
         path: File path to validate
@@ -147,7 +147,7 @@ def validate_file_path(path: str, allowed_extensions: list[str] | None = None) -
 
 
 def sanitize_input(text: str, max_length: int = 1024) -> str:
-    """Sanitize user input
+    """Sanitize user input.
 
     Args:
         text: Input text to sanitize

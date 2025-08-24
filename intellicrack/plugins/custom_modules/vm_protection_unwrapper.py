@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ License: GPL v3
 
 
 class ProtectionType(Enum):
-    """Types of VM protection"""
+    """Types of VM protection."""
 
     VMPROTECT_1X = "VMProtect_1x"
     VMPROTECT_2X = "VMProtect_2x"
@@ -61,7 +61,7 @@ class ProtectionType(Enum):
 
 
 class VMInstructionType(Enum):
-    """VM instruction types"""
+    """VM instruction types."""
 
     ARITHMETIC = "arithmetic"
     LOGICAL = "logical"
@@ -74,7 +74,7 @@ class VMInstructionType(Enum):
 
 @dataclass
 class VMInstruction:
-    """VM instruction representation"""
+    """VM instruction representation."""
 
     opcode: int
     operands: list[int]
@@ -87,7 +87,7 @@ class VMInstruction:
 
 @dataclass
 class VMContext:
-    """VM execution context"""
+    """VM execution context."""
 
     registers: dict[str, int] = field(default_factory=dict)
     stack: list[int] = field(default_factory=list)
@@ -120,14 +120,14 @@ class VMContext:
 
 
 class VMProtectHandler:
-    """VMProtect-specific handling"""
+    """VMProtect-specific handling."""
 
     def __init__(self):
         """Initialize VMProtect handler with logging and detection capabilities."""
         self.logger = logging.getLogger(f"{__name__}.VMProtect")
 
     def identify_version(self, vm_data: bytes) -> ProtectionType:
-        """Identify VMProtect version"""
+        """Identify VMProtect version."""
         # Version signatures
         signatures = {
             ProtectionType.VMPROTECT_1X: [
@@ -153,7 +153,7 @@ class VMProtectHandler:
         return ProtectionType.UNKNOWN_VM
 
     def decrypt_vm_code(self, encrypted_data: bytes, key: bytes, version: ProtectionType) -> bytes:
-        """Decrypt VMProtect VM code"""
+        """Decrypt VMProtect VM code."""
         if version in self.key_schedules:
             key_schedule = self.key_schedules[version](key)
             return self._decrypt_with_schedule(encrypted_data, key_schedule)
@@ -161,7 +161,7 @@ class VMProtectHandler:
         return self._simple_decrypt(encrypted_data, key)
 
     def _vmprotect_1x_key_schedule(self, key: bytes) -> list[int]:
-        """VMProtect 1.x key schedule"""
+        """VMProtect 1.x key schedule."""
         schedule = []
         key_ints = struct.unpack("<4I", key[:16])
 
@@ -180,7 +180,7 @@ class VMProtectHandler:
         return schedule
 
     def _vmprotect_2x_key_schedule(self, key: bytes) -> list[int]:
-        """VMProtect 2.x key schedule (more complex)"""
+        """VMProtect 2.x key schedule (more complex)."""
         schedule = []
         key_ints = struct.unpack("<8I", key[:32])
 
@@ -200,7 +200,7 @@ class VMProtectHandler:
         return schedule
 
     def _vmprotect_3x_key_schedule(self, key: bytes) -> list[int]:
-        """VMProtect 3.x key schedule (most complex)"""
+        """VMProtect 3.x key schedule (most complex)."""
         schedule = []
         key_data = key[:64] if len(key) >= 64 else key.ljust(64, b"\x00")
 
@@ -218,7 +218,7 @@ class VMProtectHandler:
         return schedule
 
     def _complex_transform(self, value: int, round_num: int) -> int:
-        """Complex transformation for VMProtect 2.x"""
+        """Complex transformation for VMProtect 2.x."""
         # Rotate left by round_num bits
         value = ((value << (round_num % 32)) | (value >> (32 - (round_num % 32)))) & 0xFFFFFFFF
 
@@ -229,7 +229,7 @@ class VMProtectHandler:
         return value
 
     def _substitute_bytes(self, value: int) -> int:
-        """Byte substitution (simplified S-Box)"""
+        """Byte substitution (simplified S-Box)."""
         sbox = [
             0x63,
             0x7C,
@@ -258,19 +258,19 @@ class VMProtectHandler:
         return result
 
     def _sigma0(self, value: int) -> int:
-        """SHA-256 sigma0 function"""
+        """SHA-256 sigma0 function."""
         return (
             ((value >> 7) | (value << 25)) ^ ((value >> 18) | (value << 14)) ^ (value >> 3)
         ) & 0xFFFFFFFF
 
     def _sigma1(self, value: int) -> int:
-        """SHA-256 sigma1 function"""
+        """SHA-256 sigma1 function."""
         return (
             ((value >> 17) | (value << 15)) ^ ((value >> 19) | (value << 13)) ^ (value >> 10)
         ) & 0xFFFFFFFF
 
     def _decrypt_with_schedule(self, data: bytes, key_schedule: list[int]) -> bytes:
-        """Decrypt data using key schedule"""
+        """Decrypt data using key schedule."""
         result = bytearray()
 
         for i in range(0, len(data), 16):
@@ -306,12 +306,12 @@ class VMProtectHandler:
         return bytes(result)
 
     def _simple_decrypt(self, data: bytes, key: bytes) -> bytes:
-        """Simple XOR decryption for unknown versions"""
+        """Simple XOR decryption for unknown versions."""
         key_len = len(key)
         return bytes(data[i] ^ key[i % key_len] for i in range(len(data)))
 
     def _inverse_substitute_bytes_block(self, state: list[int]) -> list[int]:
-        """Inverse S-Box substitution for block"""
+        """Inverse S-Box substitution for block."""
         inv_sbox = [
             0x52,
             0x09,
@@ -343,12 +343,12 @@ class VMProtectHandler:
         return result
 
     def _inverse_shift_rows(self, state: list[int]) -> list[int]:
-        """Inverse shift rows transformation"""
+        """Inverse shift rows transformation."""
         # Simplified inverse shift rows
         return [state[0], state[3], state[2], state[1]]
 
     def _inverse_mix_columns(self, state: list[int]) -> list[int]:
-        """Inverse mix columns transformation"""
+        """Inverse mix columns transformation."""
         # Simplified inverse mix columns
         result = []
         for word in state:
@@ -360,14 +360,14 @@ class VMProtectHandler:
 
 
 class ThemidaHandler:
-    """Themida-specific handling"""
+    """Themida-specific handling."""
 
     def __init__(self):
         """Initialize Themida handler with logging and opcode mapping."""
         self.logger = logging.getLogger(f"{__name__}.Themida")
 
     def decrypt_themida_vm(self, vm_data: bytes, key: bytes) -> bytes:
-        """Decrypt Themida VM code"""
+        """Decrypt Themida VM code."""
         # Themida uses a rolling XOR with key rotation
         result = bytearray()
         key_pos = 0
@@ -382,13 +382,13 @@ class ThemidaHandler:
         return bytes(result)
 
     def _rotate_key(self, key: bytes, position: int) -> bytes:
-        """Rotate key based on position"""
+        """Rotate key based on position."""
         rotation = position % len(key)
         return key[rotation:] + key[:rotation]
 
 
 class VMEmulator:
-    """VM instruction emulator"""
+    """VM instruction emulator."""
 
     def __init__(self, protection_type: ProtectionType):
         """Initialize VM emulator with protection type and Unicorn engine."""
@@ -397,7 +397,7 @@ class VMEmulator:
         self.logger = logging.getLogger(f"{__name__}.VMEmulator")
 
     def _setup_unicorn(self):
-        """Setup Unicorn engine"""
+        """Setup Unicorn engine."""
         # Map memory
         self.uc.mem_map(0x400000, 2 * 1024 * 1024)  # 2MB for code
         self.uc.mem_map(0x600000, 1024 * 1024)  # 1MB for stack
@@ -406,7 +406,7 @@ class VMEmulator:
         self.uc.reg_write(x86_const.UC_X86_REG_ESP, 0x600000 + 1024 * 1024 - 0x1000)
 
     def parse_vm_instruction(self, vm_data: bytes, offset: int) -> VMInstruction:
-        """Parse VM instruction"""
+        """Parse VM instruction."""
         if offset >= len(vm_data):
             raise ValueError("Offset out of bounds")
 
@@ -447,7 +447,7 @@ class VMEmulator:
         )
 
     def execute_vm_instruction(self, instruction: VMInstruction) -> bool:
-        """Execute VM instruction"""
+        """Execute VM instruction."""
         try:
             if instruction.vm_type == VMInstructionType.STACK:
                 return self._execute_stack_op(instruction)
@@ -469,7 +469,7 @@ class VMEmulator:
             return False
 
     def _execute_stack_op(self, instruction: VMInstruction) -> bool:
-        """Execute stack operations"""
+        """Execute stack operations."""
         if "PUSH" in instruction.mnemonic:
             if instruction.operands:
                 self.context.stack.append(instruction.operands[0])
@@ -485,7 +485,7 @@ class VMEmulator:
         return True
 
     def _execute_arithmetic_op(self, instruction: VMInstruction) -> bool:
-        """Execute arithmetic operations"""
+        """Execute arithmetic operations."""
         if len(self.context.stack) < 2:
             return False
 
@@ -512,7 +512,7 @@ class VMEmulator:
         return True
 
     def _execute_logical_op(self, instruction: VMInstruction) -> bool:
-        """Execute logical operations"""
+        """Execute logical operations."""
         if "NOT" in instruction.mnemonic:
             if self.context.stack:
                 a = self.context.stack.pop()
@@ -543,7 +543,7 @@ class VMEmulator:
         return True
 
     def _execute_memory_op(self, instruction: VMInstruction) -> bool:
-        """Execute memory operations"""
+        """Execute memory operations."""
         if "LOAD" in instruction.mnemonic:
             if self.context.stack:
                 address = self.context.stack.pop()
@@ -560,7 +560,7 @@ class VMEmulator:
         return True
 
     def _execute_control_flow_op(self, instruction: VMInstruction) -> bool:
-        """Execute control flow operations"""
+        """Execute control flow operations."""
         if "JMP" in instruction.mnemonic:
             if instruction.operands:
                 self.context.registers["EIP"] = instruction.operands[0]
@@ -586,7 +586,7 @@ class VMEmulator:
         return True
 
     def _execute_register_op(self, instruction: VMInstruction) -> bool:
-        """Execute register operations"""
+        """Execute register operations."""
         if "MOV" in instruction.mnemonic:
             if len(self.context.stack) >= 2:
                 dest = self.context.stack.pop()
@@ -609,7 +609,7 @@ class VMEmulator:
 
 
 class VMAnalyzer:
-    """VM code analyzer and pattern detector"""
+    """VM code analyzer and pattern detector."""
 
     def __init__(self):
         """Initialize VM analyzer with logging and protection patterns."""
@@ -617,7 +617,7 @@ class VMAnalyzer:
         self.patterns = self._load_vm_patterns()
 
     def _load_vm_patterns(self) -> dict[ProtectionType, list[bytes]]:
-        """Load VM detection patterns"""
+        """Load VM detection patterns."""
         return {
             ProtectionType.VMPROTECT_1X: [
                 b"\x60\x8b\x04\x24",  # VM entry pattern
@@ -647,7 +647,7 @@ class VMAnalyzer:
         }
 
     def detect_vm_protection(self, binary_data: bytes) -> ProtectionType:
-        """Detect VM protection type"""
+        """Detect VM protection type."""
         for protection, patterns in self.patterns.items():
             for pattern in patterns:
                 if pattern in binary_data:
@@ -663,7 +663,7 @@ class VMAnalyzer:
         return ProtectionType.UNKNOWN_VM
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy"""
+        """Calculate Shannon entropy."""
         if not data:
             return 0.0
 
@@ -686,7 +686,7 @@ class VMAnalyzer:
     def find_vm_entry_points(
         self, binary_data: bytes, protection_type: ProtectionType
     ) -> list[int]:
-        """Find VM entry points"""
+        """Find VM entry points."""
         entry_points = []
         patterns = self.patterns.get(protection_type, [])
 
@@ -703,7 +703,7 @@ class VMAnalyzer:
         return entry_points
 
     def analyze_vm_structure(self, vm_data: bytes, entry_point: int) -> dict[str, Any]:
-        """Analyze VM structure"""
+        """Analyze VM structure."""
         analysis = {
             "entry_point": entry_point,
             "vm_code_sections": [],
@@ -732,7 +732,7 @@ class VMAnalyzer:
         return analysis
 
     def _find_handler_table(self, vm_data: bytes, entry_point: int) -> int | None:
-        """Find VM handler table"""
+        """Find VM handler table."""
         # Look for patterns indicating handler table
         # This is a simplified heuristic
 
@@ -753,7 +753,7 @@ class VMAnalyzer:
         return None
 
     def _extract_vm_sections(self, vm_data: bytes, entry_point: int) -> list[dict[str, Any]]:
-        """Extract VM code sections"""
+        """Extract VM code sections."""
         sections = []
 
         # Simple section extraction based on patterns
@@ -788,7 +788,7 @@ class VMAnalyzer:
         return sections
 
     def _find_section_end(self, vm_data: bytes, start_offset: int) -> int:
-        """Find end of VM section"""
+        """Find end of VM section."""
         # Look for section end markers or entropy changes
         max_section_size = 0x10000  # 64KB max
         end_offset = min(start_offset + max_section_size, len(vm_data))
@@ -810,7 +810,7 @@ class VMAnalyzer:
 
 
 class VMProtectionUnwrapper:
-    """Main VM protection unwrapper"""
+    """Main VM protection unwrapper."""
 
     def __init__(self):
         """Initialize VM protection unwrapper with analyzer, emulators, and statistics tracking."""
@@ -819,7 +819,7 @@ class VMProtectionUnwrapper:
         self.emulators = {}
 
     def unwrap_file(self, input_file: str, output_file: str) -> dict[str, Any]:
-        """Unwrap VM-protected file"""
+        """Unwrap VM-protected file."""
         self.logger.info(f"Starting unwrap of {input_file}")
 
         start_time = time.time()
@@ -882,7 +882,7 @@ class VMProtectionUnwrapper:
     def _unwrap_vm_sections(
         self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType
     ) -> list[bytes]:
-        """Unwrap VM sections"""
+        """Unwrap VM sections."""
         unwrapped_sections = []
 
         # Get appropriate handler
@@ -921,7 +921,7 @@ class VMProtectionUnwrapper:
     def _extract_encryption_key(
         self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType
     ) -> bytes:
-        """Extract encryption key from binary"""
+        """Extract encryption key from binary."""
         # This is a simplified key extraction
         # Real implementation would use more sophisticated techniques
 
@@ -953,7 +953,7 @@ class VMProtectionUnwrapper:
     def _reconstruct_original_code(
         self, unwrapped_sections: list[bytes], vm_analysis: dict[str, Any]
     ) -> bytes:
-        """Reconstruct original x86 code from VM sections"""
+        """Reconstruct original x86 code from VM sections."""
         reconstructed = bytearray()
 
         # Create emulator for the detected protection
@@ -971,7 +971,7 @@ class VMProtectionUnwrapper:
         return bytes(reconstructed)
 
     def _parse_vm_instructions(self, vm_data: bytes) -> list[VMInstruction]:
-        """Parse VM instructions from data"""
+        """Parse VM instructions from data."""
         instructions = []
         offset = 0
 
@@ -994,7 +994,7 @@ class VMProtectionUnwrapper:
         return instructions
 
     def _vm_to_x86(self, vm_instructions: list[VMInstruction]) -> bytes:
-        """Convert VM instructions to x86 machine code"""
+        """Convert VM instructions to x86 machine code."""
         x86_code = bytearray()
 
         # Initialize Keystone for assembly
@@ -1026,7 +1026,7 @@ class VMProtectionUnwrapper:
         return bytes(x86_code)
 
     def _vm_instruction_to_asm(self, instruction: VMInstruction) -> str | None:
-        """Convert VM instruction to x86 assembly"""
+        """Convert VM instruction to x86 assembly."""
         mnemonic = instruction.mnemonic
 
         # Stack operations
@@ -1091,7 +1091,7 @@ class VMProtectionUnwrapper:
         return None  # Unknown instruction
 
     def batch_unwrap(self, input_dir: str, output_dir: str) -> dict[str, Any]:
-        """Batch unwrap multiple files"""
+        """Batch unwrap multiple files."""
         input_path = Path(input_dir)
         output_path = Path(output_dir)
 
@@ -1133,7 +1133,7 @@ class VMProtectionUnwrapper:
         }
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get unwrapper statistics"""
+        """Get unwrapper statistics."""
         return {
             "stats": self.stats.copy(),
             "supported_protections": [pt.value for pt in ProtectionType],
@@ -1142,7 +1142,7 @@ class VMProtectionUnwrapper:
 
 
 def main():
-    """Example usage"""
+    """Example usage."""
     import argparse
 
     parser = argparse.ArgumentParser(description="VM Protection Unwrapper")

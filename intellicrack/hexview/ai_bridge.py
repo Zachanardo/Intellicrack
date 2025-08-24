@@ -391,7 +391,7 @@ class BinaryContextBuilder:
         return patterns
 
     def _interpret_common_types(self, data: bytes) -> dict[str, Any]:
-        """Interpret data as common types (integers, floats, etc.)
+        """Interpret data as common types (integers, floats, etc.).
 
         Args:
             data: Binary data

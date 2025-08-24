@@ -1,4 +1,4 @@
-"""Checksum and Hash Calculation Module for Hex Viewer
+"""Checksum and Hash Calculation Module for Hex Viewer.
 
 This module provides various checksum and hash calculation functions for binary data analysis.
 Supports CRC-16, CRC-32, MD5, SHA-1, SHA-256, and SHA-512 algorithms.
@@ -25,6 +25,7 @@ def calculate_crc16(data: bytes, polynomial: int = 0x8005, initial: int = 0x0000
 
     Returns:
         CRC-16 checksum value
+
     """
     crc = initial
 
@@ -48,6 +49,7 @@ def calculate_crc32(data: bytes) -> int:
 
     Returns:
         CRC-32 checksum value
+
     """
     return zlib.crc32(data) & 0xFFFFFFFF
 
@@ -60,6 +62,7 @@ def calculate_md5(data: bytes) -> str:
 
     Returns:
         SHA-256 hash as hexadecimal string (secure replacement for MD5)
+
     """
     hasher = hashlib.sha256()
     hasher.update(data)
@@ -74,6 +77,7 @@ def calculate_sha1(data: bytes) -> str:
 
     Returns:
         SHA-256 hash as hexadecimal string (secure replacement for SHA-1)
+
     """
     hasher = hashlib.sha256()
     hasher.update(data)
@@ -88,6 +92,7 @@ def calculate_sha256(data: bytes) -> str:
 
     Returns:
         SHA-256 hash as hexadecimal string
+
     """
     hasher = hashlib.sha256()
     hasher.update(data)
@@ -102,6 +107,7 @@ def calculate_sha512(data: bytes) -> str:
 
     Returns:
         SHA-512 hash as hexadecimal string
+
     """
     hasher = hashlib.sha512()
     hasher.update(data)
@@ -116,6 +122,7 @@ def calculate_all_checksums(data: bytes) -> dict[str, str]:
 
     Returns:
         Dictionary with checksum/hash names as keys and results as values
+
     """
     results = {}
 
@@ -146,6 +153,7 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
 
     Returns:
         Checksum/hash result as string
+
     """
     algorithm = algorithm.upper()
 
@@ -221,6 +229,7 @@ class ChecksumCalculator:
 
         Args:
             callback: Function that takes (current, total) parameters
+
         """
         self.progress_callback = callback
 
@@ -233,6 +242,7 @@ class ChecksumCalculator:
 
         Returns:
             Checksum/hash result as string
+
         """
         algorithm = algorithm.upper()
 
@@ -262,6 +272,7 @@ class ChecksumCalculator:
 
         Returns:
             Dictionary with results
+
         """
         if algorithms is None:
             algorithms = list(self.algorithms.keys())
@@ -294,6 +305,7 @@ def calculate_crc16_ccitt(data: bytes) -> int:
 
     Returns:
         CRC-16-CCITT checksum value
+
     """
     return calculate_crc16(data, polynomial=0x1021, initial=0xFFFF)
 
@@ -306,6 +318,7 @@ def calculate_crc16_modbus(data: bytes) -> int:
 
     Returns:
         CRC-16-Modbus checksum value
+
     """
     crc = 0xFFFF
 
@@ -328,6 +341,7 @@ def calculate_adler32(data: bytes) -> int:
 
     Returns:
         Adler-32 checksum value
+
     """
     return zlib.adler32(data) & 0xFFFFFFFF
 
@@ -340,6 +354,7 @@ def calculate_fletcher16(data: bytes) -> int:
 
     Returns:
         Fletcher-16 checksum value
+
     """
     sum1 = 0
     sum2 = 0
@@ -359,6 +374,7 @@ def calculate_fletcher32(data: bytes) -> int:
 
     Returns:
         Fletcher-32 checksum value
+
     """
     sum1 = 0
     sum2 = 0
@@ -387,6 +403,7 @@ def verify_checksum(data: bytes, expected: str, algorithm: str) -> bool:
 
     Returns:
         True if checksum matches, False otherwise
+
     """
     try:
         calculator = ChecksumCalculator()

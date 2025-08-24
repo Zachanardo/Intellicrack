@@ -1,4 +1,4 @@
-"""Model Fallback Chains for Intellicrack LLM System
+"""Model Fallback Chains for Intellicrack LLM System.
 
 Provides automatic failover between models and providers for improved reliability.
 

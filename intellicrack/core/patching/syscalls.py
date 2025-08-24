@@ -1,4 +1,4 @@
-"""Direct syscall implementations for bypassing API hooks
+"""Direct syscall implementations for bypassing API hooks.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -68,7 +68,7 @@ else:
 
 
 class DirectSyscalls:
-    """Direct syscall implementation to bypass usermode hooks"""
+    """Direct syscall implementation to bypass usermode hooks."""
 
     def __init__(self):
         """Initialize the syscall manager with syscall number mapping and NTDLL base detection."""
@@ -78,7 +78,7 @@ class DirectSyscalls:
         self._load_syscall_numbers()
 
     def _initialize(self):
-        """Initialize syscall numbers and addresses"""
+        """Initialize syscall numbers and addresses."""
         if not AVAILABLE:
             return
 
@@ -103,7 +103,7 @@ class DirectSyscalls:
             logger.error(f"Failed to initialize direct syscalls: {e}")
 
     def _extract_syscall_numbers(self):
-        """Extract syscall numbers from NTDLL exports"""
+        """Extract syscall numbers from NTDLL exports."""
         if not self.ntdll_base:
             return
 
@@ -135,7 +135,7 @@ class DirectSyscalls:
             logger.error(f"Failed to extract syscall numbers: {e}")
 
     def _get_syscall_number(self, func_addr: int) -> int | None:
-        """Extract syscall number from function prologue"""
+        """Extract syscall number from function prologue."""
         try:
             # Read first 8 bytes
             buffer = (ctypes.c_ubyte * 8)()
@@ -156,7 +156,7 @@ class DirectSyscalls:
         return None
 
     def _find_wow64_transition(self):
-        """Find Wow64Transition address for WOW64 processes"""
+        """Find Wow64Transition address for WOW64 processes."""
         try:
             # In WOW64, syscalls go through Wow64SystemServiceCall
             # This is stored in TEB->WOW64Reserved at offset 0xC0
@@ -271,7 +271,7 @@ class DirectSyscalls:
         allocation_type: int,
         protection: int,
     ) -> tuple[int, int]:
-        """Direct syscall for NtAllocateVirtualMemory"""
+        """Direct syscall for NtAllocateVirtualMemory."""
         if not AVAILABLE or "NtAllocateVirtualMemory" not in self.syscall_numbers:
             return -1, 0
 
@@ -308,7 +308,7 @@ class DirectSyscalls:
         return status, allocated_base
 
     def nt_write_virtual_memory(self, process_handle: int, base_address: int, buffer: bytes) -> int:
-        """Direct syscall for NtWriteVirtualMemory"""
+        """Direct syscall for NtWriteVirtualMemory."""
         if not AVAILABLE or "NtWriteVirtualMemory" not in self.syscall_numbers:
             return -1
 
@@ -340,7 +340,7 @@ class DirectSyscalls:
     def nt_create_thread_ex(
         self, process_handle: int, start_address: int, parameter: int = 0
     ) -> tuple[int, int]:
-        """Direct syscall for NtCreateThreadEx"""
+        """Direct syscall for NtCreateThreadEx."""
         if not AVAILABLE or "NtCreateThreadEx" not in self.syscall_numbers:
             return -1, 0
 
@@ -385,7 +385,7 @@ class DirectSyscalls:
         return status, thread_handle.value
 
     def _syscall_64(self, syscall_num: int, *args) -> int:
-        """Execute 64-bit syscall"""
+        """Execute 64-bit syscall."""
         try:
             if not AVAILABLE or sys.platform != "win32":
                 return self._fallback_syscall(syscall_num, *args)
@@ -477,7 +477,7 @@ class DirectSyscalls:
             return self._fallback_syscall(syscall_num, *args)
 
     def _syscall_32(self, syscall_num: int, *args) -> int:
-        """Execute 32-bit syscall"""
+        """Execute 32-bit syscall."""
         try:
             if not AVAILABLE or sys.platform != "win32":
                 return self._fallback_syscall(syscall_num, *args)
@@ -579,7 +579,7 @@ class DirectSyscalls:
             return self._fallback_syscall(syscall_num, *args)
 
     def _fallback_syscall(self, syscall_num: int, *args) -> int:
-        """Fallback to regular NTDLL calls"""
+        """Fallback to regular NTDLL calls."""
         # Map syscall numbers back to function names
         for name, num in self.syscall_numbers.items():
             if num == syscall_num:
@@ -596,7 +596,7 @@ _direct_syscalls = None
 
 
 def get_direct_syscalls() -> DirectSyscalls | None:
-    """Get global DirectSyscalls instance"""
+    """Get global DirectSyscalls instance."""
     global _direct_syscalls
     if _direct_syscalls is None and AVAILABLE:
         _direct_syscalls = DirectSyscalls()
@@ -604,7 +604,7 @@ def get_direct_syscalls() -> DirectSyscalls | None:
 
 
 def inject_using_syscalls(process_handle: int, dll_path: str) -> bool:
-    """Inject DLL using direct syscalls to bypass hooks
+    """Inject DLL using direct syscalls to bypass hooks.
 
     Args:
         process_handle: Handle to target process

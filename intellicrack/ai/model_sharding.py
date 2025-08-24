@@ -1,4 +1,4 @@
-"""Model Sharding and Distribution Manager
+"""Model Sharding and Distribution Manager.
 
 This module provides functionality for distributing large models across multiple GPUs.
 

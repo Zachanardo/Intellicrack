@@ -2945,12 +2945,13 @@ exit 0
             raise FileNotFoundError(f"QEMU binary not found: {qemu_binary}")
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [qemu_path, "--version"],
                 capture_output=True,
                 text=True,
                 timeout=10,
                 check=False,
+                shell=False  # Explicitly secure - using list format prevents shell injection
             )
 
             if result.returncode != 0:

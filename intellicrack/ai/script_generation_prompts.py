@@ -1,4 +1,4 @@
-"""Specialized Prompts for AI Script Generation
+"""Specialized Prompts for AI Script Generation.
 
 Copyright (C) 2025 Zachary Flint
 

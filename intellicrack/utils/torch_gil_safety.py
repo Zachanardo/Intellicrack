@@ -38,6 +38,7 @@ def torch_thread_safe(func: Callable) -> Callable:
 
     Returns:
         Thread-safe wrapped function
+
     """
 
     @functools.wraps(func)
@@ -53,6 +54,7 @@ def safe_torch_import():
 
     Returns:
         torch module or None if import fails
+
     """
     # Intel Arc detection - return None immediately without ANY torch import
     if os.environ.get("UR_L0_ENABLE_RELAXED_ALLOCATION_LIMITS") == "1":
@@ -94,6 +96,7 @@ def with_torch_gil_safety(torch_func: Callable) -> Callable:
 
     Returns:
         Thread-safe wrapped function
+
     """
 
     def safe_func(*args, **kwargs):

@@ -1,4 +1,4 @@
-"""Intellicrack Custom Exceptions
+"""Intellicrack Custom Exceptions.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -37,6 +37,7 @@ class ConfigurationError(IntellicrackError):
             message: Error message
             service_name: Name of the service with configuration issue
             config_key: Configuration key that caused the error
+
         """
         super().__init__(message)
         self.service_name = service_name
@@ -53,6 +54,7 @@ class ServiceUnavailableError(IntellicrackError):
             message: Error message
             service_name: Name of the unavailable service
             url: URL that was unreachable
+
         """
         super().__init__(message)
         self.service_name = service_name
@@ -69,6 +71,7 @@ class ToolNotFoundError(IntellicrackError):
             message: Error message
             tool_name: Name of the missing tool
             search_paths: Paths that were searched
+
         """
         super().__init__(message)
         self.tool_name = tool_name
@@ -85,6 +88,7 @@ class ValidationError(IntellicrackError):
             message: Error message
             field_name: Name of the field that failed validation
             value: Value that failed validation
+
         """
         super().__init__(message)
         self.field_name = field_name
@@ -109,6 +113,7 @@ class AnalysisError(IntellicrackError):
             message: Error message
             binary_path: Path to binary that failed analysis
             analysis_type: Type of analysis that failed
+
         """
         super().__init__(message)
         self.binary_path = binary_path
@@ -125,6 +130,7 @@ class ExploitationError(IntellicrackError):
             message: Error message
             target: Target that failed exploitation
             technique: Exploitation technique that failed
+
         """
         super().__init__(message)
         self.target = target
@@ -141,6 +147,7 @@ class NetworkError(IntellicrackError):
             message: Error message
             host: Host that failed connection
             port: Port that failed connection
+
         """
         super().__init__(message)
         self.host = host

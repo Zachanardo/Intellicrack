@@ -115,6 +115,7 @@ class BinaryAnalyzer:
 
         Returns:
             Comprehensive analysis results
+
         """
         file_path = Path(file_path)
 

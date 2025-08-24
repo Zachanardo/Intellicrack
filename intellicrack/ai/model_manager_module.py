@@ -634,6 +634,7 @@ class ModelManager:
 
             class VulnerabilityDetector(nn.Module):
                 """Neural network for detecting vulnerabilities in binary code patterns."""
+
                 def __init__(self, input_size=1024, hidden_size=512, num_classes=10):
                     super().__init__()
                     self.fc1 = nn.Linear(input_size, hidden_size)
@@ -714,6 +715,7 @@ class ModelManager:
 
             class ProtectionClassifier(nn.Module):
                 """Classifies protection mechanisms in binaries."""
+
                 def __init__(self, input_size=512, num_classes=15):
                     super().__init__()
                     self.conv1 = nn.Conv1d(1, 32, kernel_size=3, padding=1)
@@ -763,6 +765,7 @@ class ModelManager:
         # Fallback implementation
         class SimpleProtectionClassifier:
             """Simple rule-based protection classifier."""
+
             def __init__(self):
                 self.protection_patterns = {
                     "anti_debug": [b"IsDebuggerPresent", b"CheckRemoteDebuggerPresent"],
@@ -793,6 +796,7 @@ class ModelManager:
 
             class ScriptGeneratorModel(nn.Module):
                 """LSTM-based model for generating exploitation scripts."""
+
                 def __init__(self, vocab_size=10000, embedding_dim=256, hidden_dim=512):
                     super().__init__()
                     self.embedding = nn.Embedding(vocab_size, embedding_dim)
@@ -868,6 +872,7 @@ Memory.writeByteArray(patch_addr, {bytes});"""
 
             class BinaryAnalyzerModel(nn.Module):
                 """Comprehensive binary analysis using CNN + attention."""
+
                 def __init__(self, input_channels=1, num_features=128):
                     super().__init__()
                     # Convolutional layers for pattern extraction
@@ -1072,6 +1077,7 @@ Memory.writeByteArray(patch_addr, {bytes});"""
 
         Returns:
             Prediction results with confidence scores and recommendations
+
         """
         # Handle pretrained models with specialized prediction logic
         if model_id.startswith("pretrained/"):
@@ -1114,7 +1120,6 @@ Memory.writeByteArray(patch_addr, {bytes});"""
 
     def _predict_vulnerabilities(self, model: Any, input_data: Any) -> dict:
         """Predict vulnerabilities with scoring and recommendations."""
-
         # Prepare input data
         if isinstance(input_data, bytes):
             # Convert binary to feature vector
@@ -1341,7 +1346,6 @@ Interceptor.attach(IsDebuggerPresent, {
 
     def _extract_binary_features(self, binary_data: bytes) -> np.ndarray:
         """Extract feature vector from binary data."""
-
         # Simple feature extraction
         features = []
 

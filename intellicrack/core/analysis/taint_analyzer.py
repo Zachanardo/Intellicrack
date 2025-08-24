@@ -236,7 +236,7 @@ class TaintAnalysisEngine:
     """
 
     def __init__(self, config: dict[str, Any] | None = None):
-        """Initialize the taint analysis engine with configuration"""
+        """Initialize the taint analysis engine with configuration."""
         self.config = config or {}
         self.logger = logging.getLogger("IntellicrackLogger.TaintAnalysis")
         self.binary_path: str | None = None
@@ -246,7 +246,7 @@ class TaintAnalysisEngine:
         self.results: dict[str, Any] = {}
 
     def set_binary(self, binary_path: str) -> bool:
-        """Set the binary to analyze"""
+        """Set the binary to analyze."""
         from ...utils.binary.binary_utils import validate_binary_path
 
         if not validate_binary_path(binary_path, self.logger):
@@ -258,7 +258,7 @@ class TaintAnalysisEngine:
     def add_taint_source(
         self, source_type: str, source_location: str, source_description: str | None = None
     ) -> None:
-        """Add a taint source to track"""
+        """Add a taint source to track."""
         source = {
             "type": source_type,
             "location": source_location,
@@ -272,7 +272,7 @@ class TaintAnalysisEngine:
     def add_taint_sink(
         self, sink_type: str, sink_location: str, sink_description: str | None = None
     ) -> None:
-        """Add a taint sink to track"""
+        """Add a taint sink to track."""
         sink = {
             "type": sink_type,
             "location": sink_location,
@@ -283,7 +283,7 @@ class TaintAnalysisEngine:
         self.logger.info("Added taint sink: %s at %s", sink_type, sink_location)
 
     def run_analysis(self) -> bool:
-        """Run taint analysis on the binary"""
+        """Run taint analysis on the binary."""
         if not self.binary_path:
             self.logger.error("No binary set")
             return False
@@ -318,7 +318,7 @@ class TaintAnalysisEngine:
             return False
 
     def _add_default_taint_sources(self) -> None:
-        """Add default license-related taint sources"""
+        """Add default license-related taint sources."""
         # File I/O functions
         self.add_taint_source("file_read", "fopen", "File open function")
         self.add_taint_source("file_read", "fread", "File read function")
@@ -337,7 +337,7 @@ class TaintAnalysisEngine:
         self.add_taint_source("hardware_id", "GetAdaptersInfo", "Network adapter info function")
 
     def _add_default_taint_sinks(self) -> None:
-        """Add default license-related taint sinks"""
+        """Add default license-related taint sinks."""
         # Comparison functions
         self.add_taint_sink("comparison", "strcmp", "String comparison function")
         self.add_taint_sink("comparison", "memcmp", "Memory comparison function")
@@ -853,7 +853,7 @@ class TaintAnalysisEngine:
         }
 
     def get_results(self) -> dict[str, Any]:
-        """Get the taint analysis results"""
+        """Get the taint analysis results."""
         return {
             "sources": self.taint_sources,
             "sinks": self.taint_sinks,
@@ -862,7 +862,7 @@ class TaintAnalysisEngine:
         }
 
     def generate_report(self, filename: str | None = None) -> str | None:
-        """Generate a report of the taint analysis results"""
+        """Generate a report of the taint analysis results."""
         if not self.results:
             self.logger.error("No analysis results to report")
             return None
@@ -976,7 +976,7 @@ class TaintAnalysisEngine:
             return html
 
     def clear_analysis(self) -> None:
-        """Clear all analysis data"""
+        """Clear all analysis data."""
         self.taint_sources.clear()
         self.taint_sinks.clear()
         self.taint_propagation.clear()
@@ -984,7 +984,7 @@ class TaintAnalysisEngine:
         self.logger.info("Cleared all taint analysis data")
 
     def get_statistics(self) -> dict[str, Any]:
-        """Get analysis statistics"""
+        """Get analysis statistics."""
         if not self.results:
             return {}
 
@@ -996,7 +996,7 @@ class TaintAnalysisEngine:
         }
 
     def _count_by_type(self, items: list[dict[str, Any]]) -> dict[str, int]:
-        """Count items by type"""
+        """Count items by type."""
         counts = {}
         for _item in items:
             item_type = _item.get("type", "unknown")
@@ -1004,7 +1004,7 @@ class TaintAnalysisEngine:
         return counts
 
     def _calculate_average_path_length(self) -> float:
-        """Calculate average path length"""
+        """Calculate average path length."""
         if not self.taint_propagation:
             return 0.0
 
@@ -1759,7 +1759,7 @@ class TaintAnalysisEngine:
 
 
 def run_taint_analysis(app: Any) -> None:
-    """Initialize and run the taint analysis engine"""
+    """Initialize and run the taint analysis engine."""
     # Check if binary is loaded
     if not hasattr(app, "binary_path") or not app.binary_path:
         if hasattr(app, "update_output"):

@@ -851,7 +851,7 @@ class QilingEmulator:
         }
 
     def emulate_with_patches(self, patches: list[dict[str, Any]]) -> dict[str, Any]:
-        """Run emulation with runtime patches applied.
+        r"""Run emulation with runtime patches applied.
 
         Args:
             patches: List of patches to apply

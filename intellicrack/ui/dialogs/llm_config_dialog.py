@@ -1829,6 +1829,7 @@ class LLMConfigDialog(BaseDialog):
         Args:
             service: Service name (openai, anthropic, google, etc.)
             api_key_widget: The QLineEdit widget containing the API key
+
         """
         api_key = api_key_widget.text()
         if not api_key:

@@ -1,5 +1,4 @@
-"""
-VM Manager Dialog for Intellicrack.
+"""VM Manager Dialog for Intellicrack.
 
 Provides a user interface for managing QEMU virtual machines, including
 starting, stopping, deleting VMs and configuring base images.
@@ -49,6 +48,7 @@ class VMTableModel(QAbstractTableModel):
     """Table model for displaying VM information."""
 
     def __init__(self, vm_data: list[dict]):
+        """Initialize the VM table model with VM data for display in the table view."""
         super().__init__()
         self.vm_data = vm_data
         self.headers = [
@@ -124,6 +124,7 @@ class VMManagerDialog(QDialog):
     """Dialog for managing QEMU virtual machines."""
 
     def __init__(self, parent=None):
+        """Initialize the VM Manager dialog for QEMU virtual machine management."""
         super().__init__(parent)
         self.qemu_manager = QEMUManager()
         self._init_ui()

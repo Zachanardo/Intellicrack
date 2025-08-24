@@ -1,4 +1,4 @@
-"""Certificate Extraction and Analysis Utilities
+"""Certificate Extraction and Analysis Utilities.
 
 Extracts and analyzes digital certificates from PE files for protection analysis.
 Provides certificate validation, issuer information, and security insights.
@@ -40,7 +40,7 @@ except ImportError as e:
 
 @dataclass
 class CertificateInfo:
-    """Information about a digital certificate"""
+    """Information about a digital certificate."""
 
     subject: str
     issuer: str
@@ -61,14 +61,14 @@ class CertificateInfo:
 
     @property
     def is_valid(self) -> bool:
-        """Check if certificate is currently valid"""
+        """Check if certificate is currently valid."""
         now = datetime.utcnow()
         return self.not_before <= now <= self.not_after and not self.is_expired
 
 
 @dataclass
 class CodeSigningInfo:
-    """Information about code signing"""
+    """Information about code signing."""
 
     is_signed: bool
     certificates: list[CertificateInfo] = field(default_factory=list)
@@ -81,14 +81,14 @@ class CodeSigningInfo:
 
     @property
     def signing_certificate(self) -> CertificateInfo | None:
-        """Get the primary signing certificate"""
+        """Get the primary signing certificate."""
         if self.certificates:
             return self.certificates[0]
         return None
 
 
 class CertificateExtractor:
-    """Extract and analyze certificates from PE files"""
+    """Extract and analyze certificates from PE files."""
 
     def __init__(self):
         """Initialize certificate extractor with empty PE file and path state."""
@@ -96,7 +96,7 @@ class CertificateExtractor:
         self.file_path = None
 
     def extract_certificates(self, file_path: str) -> CodeSigningInfo:
-        """Extract certificate information from PE file"""
+        """Extract certificate information from PE file."""
         if not PEFILE_AVAILABLE:
             logger.warning("pefile not available - certificate extraction disabled")
             return CodeSigningInfo(is_signed=False)
@@ -139,7 +139,7 @@ class CertificateExtractor:
             return CodeSigningInfo(is_signed=False)
 
     def _has_certificate_table(self) -> bool:
-        """Check if PE has certificate table in data directories"""
+        """Check if PE has certificate table in data directories."""
         if not self.pe.OPTIONAL_HEADER.DATA_DIRECTORY:
             return False
 
@@ -151,7 +151,7 @@ class CertificateExtractor:
         return cert_entry.VirtualAddress != 0 and cert_entry.Size != 0
 
     def _extract_certificate_data(self) -> bytes | None:
-        """Extract raw certificate data from PE file"""
+        """Extract raw certificate data from PE file."""
         try:
             cert_entry = self.pe.OPTIONAL_HEADER.DATA_DIRECTORY[4]
 
@@ -168,7 +168,7 @@ class CertificateExtractor:
             return None
 
     def _parse_certificates(self, cert_data: bytes) -> list[CertificateInfo]:
-        """Parse certificates from raw data"""
+        """Parse certificates from raw data."""
         certificates = []
         offset = 0
 
@@ -201,7 +201,7 @@ class CertificateExtractor:
         return certificates
 
     def _parse_pkcs7_certificates(self, pkcs7_data: bytes) -> list[CertificateInfo]:
-        """Parse certificates from PKCS#7 data"""
+        """Parse certificates from PKCS#7 data."""
         certificates = []
 
         try:
@@ -243,7 +243,7 @@ class CertificateExtractor:
         return certificates
 
     def _parse_x509_certificate(self, cert_der: bytes) -> CertificateInfo | None:
-        """Parse X.509 certificate from DER data"""
+        """Parse X.509 certificate from DER data."""
         try:
             cert = x509.load_der_x509_certificate(cert_der)
 
@@ -414,7 +414,7 @@ class CertificateExtractor:
             return None
 
     def _format_name(self, name: x509.Name) -> str:
-        """Format X.509 name for display"""
+        """Format X.509 name for display."""
         parts = []
 
         # Common name
@@ -443,7 +443,7 @@ class CertificateExtractor:
     def _analyze_signing_info(
         self, cert_data: bytes, certificates: list[CertificateInfo]
     ) -> dict[str, Any]:
-        """Analyze signing information and trust status"""
+        """Analyze signing information and trust status."""
         info = {
             "chain_valid": False,
             "signature_valid": False,
@@ -482,7 +482,7 @@ class CertificateExtractor:
         return info
 
     def _validate_certificate_chain(self, certificates: list[CertificateInfo]) -> bool:
-        """Validate certificate chain (simplified check)"""
+        """Validate certificate chain (simplified check)."""
         if len(certificates) < 2:
             return False
 
@@ -590,13 +590,13 @@ class CertificateExtractor:
 
 
 def extract_pe_certificates(file_path: str) -> CodeSigningInfo:
-    """Convenience function to extract certificates from PE file"""
+    """Convenience function to extract certificates from PE file."""
     extractor = CertificateExtractor()
     return extractor.extract_certificates(file_path)
 
 
 def get_certificate_security_assessment(signing_info: CodeSigningInfo) -> dict[str, Any]:
-    """Assess security implications of certificate information"""
+    """Assess security implications of certificate information."""
     assessment = {
         "security_level": "Unknown",
         "concerns": [],

@@ -1,6 +1,5 @@
-"""
-Advanced Plugin Template for Intellicrack
-Comprehensive example showing all plugin capabilities and best practices
+"""Advanced Plugin Template for Intellicrack
+Comprehensive example showing all plugin capabilities and best practices.
 
 Author: Plugin Developer
 Version: 1.0.0
@@ -32,8 +31,7 @@ PLUGIN_OPTIONAL = ["pefile", "lief"]
 
 
 class AdvancedDemoPlugin(BasePlugin):
-    """
-    Advanced plugin template demonstrating comprehensive integration with Intellicrack.
+    """Advanced plugin template demonstrating comprehensive integration with Intellicrack.
 
     This plugin showcases:
     - Proper initialization and metadata
@@ -246,8 +244,7 @@ class AdvancedDemoPlugin(BasePlugin):
         return hashes
 
     def analyze(self, binary_path: str, progress_callback=None) -> List[str]:
-        """
-        Comprehensive binary analysis with progress reporting.
+        """Comprehensive binary analysis with progress reporting.
 
         Args:
             binary_path: Path to the binary to analyze
@@ -255,6 +252,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
         Returns:
             List of strings with detailed analysis results
+
         """
         results = []
         start_time = time.time()
@@ -365,8 +363,7 @@ class AdvancedDemoPlugin(BasePlugin):
         return results
 
     def patch(self, binary_path: str, patch_options: Optional[Dict] = None) -> List[str]:
-        """
-        Advanced binary patching with safety checks and backup.
+        """Advanced binary patching with safety checks and backup.
 
         Args:
             binary_path: Path to the binary to patch
@@ -374,6 +371,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
         Returns:
             List of strings with patching results
+
         """
         results = []
 
@@ -439,6 +437,7 @@ class AdvancedDemoPlugin(BasePlugin):
 
         Returns:
             Dictionary containing execution results
+
         """
         binary_path = kwargs.get("binary_path", args[0] if args else None)
 
@@ -513,11 +512,11 @@ class AdvancedDemoPlugin(BasePlugin):
 
 
 def register():
-    """
-    Required function to register the plugin with Intellicrack.
+    """Required function to register the plugin with Intellicrack.
 
     Returns:
         Instance of the plugin class
+
     """
     return AdvancedDemoPlugin()
 

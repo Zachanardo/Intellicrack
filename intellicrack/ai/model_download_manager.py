@@ -1,4 +1,4 @@
-"""Model Download Manager for Hugging Face Hub
+"""Model Download Manager for Hugging Face Hub.
 
 Copyright (C) 2025 Zachary Flint
 

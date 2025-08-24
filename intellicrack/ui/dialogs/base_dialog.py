@@ -72,6 +72,7 @@ class BaseDialog(QDialog):
             resizable: Whether dialog can be resized
             show_help: Whether to show help button
             help_text: Help text to display when help is clicked
+
         """
         super().__init__(parent)
 
@@ -371,6 +372,7 @@ class BaseDialog(QDialog):
 
         Args:
             layout: Layout to use for content area
+
         """
         # Clear existing layout
         while self.content_layout.count():
@@ -391,6 +393,7 @@ class BaseDialog(QDialog):
 
         Args:
             widget: Widget to add to content area
+
         """
         self.content_layout.addWidget(widget)
 
@@ -399,6 +402,7 @@ class BaseDialog(QDialog):
 
         Args:
             layout: Layout to add to content area
+
         """
         self.content_layout.addLayout(layout)
 
@@ -408,6 +412,7 @@ class BaseDialog(QDialog):
         Args:
             loading: Whether dialog is in loading state
             message: Loading message to display
+
         """
         self._is_loading = loading
         self.ok_button.setEnabled(not loading)
@@ -424,6 +429,7 @@ class BaseDialog(QDialog):
 
         Args:
             message: Error message to display
+
         """
         self._error_state = True
         self.show_status(message, "error")
@@ -434,6 +440,7 @@ class BaseDialog(QDialog):
 
         Args:
             message: Success message to display
+
         """
         self.show_status(message, "success")
 
@@ -443,6 +450,7 @@ class BaseDialog(QDialog):
         Args:
             message: Status message to display
             status_type: Type of status ('info', 'error', 'success')
+
         """
         self.status_label.setText(message)
         self.status_label.setObjectName(f"status_{status_type}")
@@ -461,6 +469,7 @@ class BaseDialog(QDialog):
 
         Args:
             enabled: Whether OK button should be enabled
+
         """
         self.ok_button.setEnabled(enabled)
 
@@ -469,6 +478,7 @@ class BaseDialog(QDialog):
 
         Args:
             text: Text to display on OK button
+
         """
         self.ok_button.setText(text)
 
@@ -477,6 +487,7 @@ class BaseDialog(QDialog):
 
         Args:
             text: Text to display on Cancel button
+
         """
         self.cancel_button.setText(text)
 
@@ -495,6 +506,7 @@ class BaseDialog(QDialog):
 
         Returns:
             The created button
+
         """
         button = QPushButton(text)
         button.clicked.connect(callback)
@@ -514,6 +526,7 @@ class BaseDialog(QDialog):
 
         Returns:
             True if input is valid, False otherwise
+
         """
         return True
 
@@ -550,6 +563,7 @@ class BaseDialog(QDialog):
 
         Returns:
             Dictionary containing dialog result data
+
         """
         return {}
 
@@ -558,6 +572,7 @@ class BaseDialog(QDialog):
 
         Args:
             event: Close event
+
         """
         # Restore cursor if it was changed
         if self._is_loading:
@@ -573,6 +588,7 @@ class BaseDialog(QDialog):
 
         Args:
             event: Show event
+
         """
         super().showEvent(event)
 

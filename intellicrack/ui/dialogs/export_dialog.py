@@ -1,4 +1,4 @@
-"""ICP Analysis Export Dialog
+"""ICP Analysis Export Dialog.
 
 Provides comprehensive export functionality for ICP analysis results.
 Supports multiple export formats including JSON, XML, CSV, and PDF reports.
@@ -44,7 +44,7 @@ logger = get_logger(__name__)
 
 
 class ExportWorker(QThread):
-    """Worker thread for export operations"""
+    """Worker thread for export operations."""
 
     #: success, message (type: bool, str)
     export_completed = pyqtSignal(bool, str)
@@ -57,7 +57,7 @@ class ExportWorker(QThread):
         self.export_config = export_config
 
     def run(self):
-        """Execute export operation"""
+        """Execute export operation."""
         try:
             export_format = self.export_config["format"]
             output_path = self.export_config["output_path"]
@@ -86,7 +86,7 @@ class ExportWorker(QThread):
             self.export_completed.emit(False, f"Export failed: {e!s}")
 
     def _export_json(self, output_path: str, results: dict[str, Any]):
-        """Export to JSON format"""
+        """Export to JSON format."""
         self.progress_update.emit(30, "Formatting JSON data...")
 
         export_data = {
@@ -105,7 +105,7 @@ class ExportWorker(QThread):
             json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
 
     def _export_xml(self, output_path: str, results: dict[str, Any]):
-        """Export to XML format"""
+        """Export to XML format."""
         self.progress_update.emit(30, "Building XML structure...")
 
         root = ET.Element("intellicrack_analysis")
@@ -159,7 +159,7 @@ class ExportWorker(QThread):
         tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
     def _dict_to_xml(self, parent: ET.Element, data: dict[str, Any]):
-        """Convert dictionary to XML elements"""
+        """Convert dictionary to XML elements."""
         for key, value in data.items():
             elem = ET.SubElement(parent, str(key))
 
@@ -177,7 +177,7 @@ class ExportWorker(QThread):
                 elem.text = str(value)
 
     def _export_csv(self, output_path: str, results: dict[str, Any]):
-        """Export to CSV format"""
+        """Export to CSV format."""
         import csv
 
         self.progress_update.emit(30, "Preparing CSV data...")
@@ -227,7 +227,7 @@ class ExportWorker(QThread):
             writer.writerows(rows)
 
     def _export_pdf(self, output_path: str, results: dict[str, Any]):
-        """Export to PDF format"""
+        """Export to PDF format."""
         try:
             from reportlab.lib import colors
             from reportlab.lib.pagesizes import A4, letter
@@ -355,7 +355,7 @@ class ExportWorker(QThread):
         doc.build(story)
 
     def _export_html(self, output_path: str, results: dict[str, Any]):
-        """Export to HTML format"""
+        """Export to HTML format."""
         self.progress_update.emit(30, "Building HTML report...")
 
         html_content = f"""
@@ -468,7 +468,7 @@ class ExportWorker(QThread):
 
 
 class ExportDialog(BaseDialog):
-    """Export dialog for ICP analysis results"""
+    """Export dialog for ICP analysis results."""
 
     def __init__(self, analysis_results: dict[str, Any] | None = None, parent=None):
         """Initialize the ExportDialog with default values."""
@@ -485,7 +485,7 @@ class ExportDialog(BaseDialog):
         self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
 
     def setup_content(self, layout):
-        """Setup the user interface content"""
+        """Setup the user interface content."""
         if layout is None:
             layout = QVBoxLayout(self.content_widget)
 
@@ -547,7 +547,7 @@ class ExportDialog(BaseDialog):
         # BaseDialog already provides OK/Cancel buttons with proper connections
 
     def _create_format_tab(self) -> QWidget:
-        """Create format selection tab"""
+        """Create format selection tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -601,7 +601,7 @@ class ExportDialog(BaseDialog):
         return widget
 
     def _create_options_tab(self) -> QWidget:
-        """Create export options tab"""
+        """Create export options tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -672,7 +672,7 @@ class ExportDialog(BaseDialog):
         return widget
 
     def _create_preview_tab(self) -> QWidget:
-        """Create export preview tab"""
+        """Create export preview tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -705,7 +705,7 @@ class ExportDialog(BaseDialog):
         return widget
 
     def browse_output_file(self):
-        """Browse for output file"""
+        """Browse for output file."""
         # Get selected format
         selected_format = "json"
         for button in self.format_group.buttons():
@@ -735,7 +735,7 @@ class ExportDialog(BaseDialog):
             self.output_path_edit.setText(file_path)
 
     def refresh_preview(self):
-        """Refresh export preview"""
+        """Refresh export preview."""
         if not self.analysis_results:
             self.preview_text.setPlainText("No analysis results available.")
             return
@@ -809,7 +809,7 @@ class ExportDialog(BaseDialog):
             self.preview_text.setPlainText(f"Preview error: {e!s}")
 
     def _filter_results(self) -> dict[str, Any]:
-        """Filter results based on export options"""
+        """Filter results based on export options."""
         if not self.analysis_results:
             return {}
 
@@ -848,7 +848,7 @@ class ExportDialog(BaseDialog):
         return filtered
 
     def start_export(self):
-        """Start the export process"""
+        """Start the export process."""
         # Validate inputs
         if not self.output_path_edit.text():
             QMessageBox.warning(self, "Invalid Output", "Please select an output file path.")
@@ -911,7 +911,7 @@ class ExportDialog(BaseDialog):
 
     @pyqtSlot(bool, str)
     def on_export_completed(self, success: bool, message: str):
-        """Handle export completion"""
+        """Handle export completion."""
         self.progress_bar.setVisible(False)
 
         # Re-enable buttons
@@ -928,15 +928,13 @@ class ExportDialog(BaseDialog):
 
     @pyqtSlot(int, str)
     def on_progress_update(self, progress: int, status: str):
-        """Handle progress updates"""
+        """Handle progress updates."""
         self.progress_bar.setValue(progress)
         self.status_label.setText(status)
 
 
 def main():
-    """Test the export dialog"""
-
-
+    """Test the export dialog."""
     app = QApplication([])
     app.setApplicationName("IntellicrackExportTest")
 

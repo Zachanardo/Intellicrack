@@ -220,11 +220,12 @@ class MemoryDumperWidget(QWidget):
                 if not tasklist_path:
                     return
 
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [tasklist_path, "/fo", "csv"],
                     check=False,
                     capture_output=True,
                     text=True,
+                    shell=False
                 )
                 lines = result.stdout.strip().split("\n")[1:]  # Skip header
                 for line in lines:

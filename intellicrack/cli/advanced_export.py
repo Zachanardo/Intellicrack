@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Advanced Export Options - Comprehensive reporting system for CLI
+"""Advanced Export Options - Comprehensive reporting system for CLI.
 
 Copyright (C) 2025 Zachary Flint
 

@@ -1,4 +1,4 @@
-"""Entropy Visualization Widget
+"""Entropy Visualization Widget.
 
 Provides graphical entropy visualization for protection analysis using PyQtGraph.
 Replaces text-only entropy display with interactive bar charts.
@@ -76,7 +76,7 @@ class EntropyGraphWidget(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        """Initialize the UI"""
+        """Initialize the UI."""
         layout = QVBoxLayout()
 
         # Header
@@ -166,7 +166,7 @@ class EntropyGraphWidget(QWidget):
         self.setLayout(layout)
 
     def _add_threshold_lines(self):
-        """Add threshold lines to indicate entropy levels"""
+        """Add threshold lines to indicate entropy levels."""
         if not PYQTGRAPH_AVAILABLE:
             return
 
@@ -251,7 +251,7 @@ class EntropyGraphWidget(QWidget):
         self.summary_label.setText(summary)
 
     def _update_pyqtgraph(self, sections: list[str], entropies: list[float], colors: list[str]):
-        """Update PyQtGraph visualization"""
+        """Update PyQtGraph visualization."""
         if not PYQTGRAPH_AVAILABLE:
             return
 
@@ -286,7 +286,7 @@ class EntropyGraphWidget(QWidget):
         self.plot_widget.setXRange(-0.5, len(sections) - 0.5)
 
     def _update_matplotlib(self, sections: list[str], entropies: list[float], colors: list[str]):
-        """Update matplotlib visualization (fallback)"""
+        """Update matplotlib visualization (fallback)."""
         self.ax.clear()
 
         x_pos = np.arange(len(sections))
@@ -326,7 +326,7 @@ class EntropyGraphWidget(QWidget):
         self.canvas.draw()
 
     def _on_bar_clicked(self, item, points):
-        """Handle bar click in PyQtGraph"""
+        """Handle bar click in PyQtGraph."""
         if points:
             point = points[0]
             index = int(point.pos().x())
@@ -338,7 +338,7 @@ class EntropyGraphWidget(QWidget):
                 )
 
     def get_entropy_summary(self) -> dict:
-        """Get summary statistics of entropy data"""
+        """Get summary statistics of entropy data."""
         if not self.entropy_data:
             return {
                 "total_sections": 0,
@@ -361,7 +361,7 @@ class EntropyGraphWidget(QWidget):
         }
 
     def export_graph(self, file_path: str):
-        """Export the graph to an image file"""
+        """Export the graph to an image file."""
         if PYQTGRAPH_AVAILABLE:
             # Export using PyQtGraph
             exporter = pg.exporters.ImageExporter(self.plot_widget.plotItem)

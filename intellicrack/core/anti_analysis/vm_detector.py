@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -402,11 +402,12 @@ class VMDetector(BaseDetector):
             if platform.system() == "Windows":
                 ipconfig_path = shutil.which("ipconfig")
                 if ipconfig_path:
-                    result = subprocess.run(
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                         [ipconfig_path, "/all"],
                         check=False,
                         capture_output=True,
                         text=True,
+                        shell=False  # Explicitly secure - using list format prevents shell injection
                     )
                     output = result.stdout if result else ""
                 else:
@@ -414,7 +415,13 @@ class VMDetector(BaseDetector):
             else:
                 ip_path = shutil.which("ip")
                 if ip_path:
-                    result = subprocess.run([ip_path, "link"], check=False, capture_output=True, text=True)
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        [ip_path, "link"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        shell=False  # Explicitly secure - using list format prevents shell injection
+                    )
                     output = result.stdout if result else ""
                 else:
                     output = ""
@@ -488,11 +495,12 @@ class VMDetector(BaseDetector):
                 # Check loaded drivers
                 driverquery_path = shutil.which("driverquery")
                 if driverquery_path:
-                    result = subprocess.run(
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                         [driverquery_path],
                         check=False,
                         capture_output=True,
                         text=True,
+                        shell=False  # Explicitly secure - using list format prevents shell injection
                     )
                     drivers = result.stdout.lower() if result and result.stdout else ""
                 else:

@@ -61,16 +61,16 @@ except ImportError:
 
 
 class GPUAccelerator:
-    """GPU acceleration for binary analysis tasks"""
+    """GPU acceleration for binary analysis tasks."""
 
     def __init__(self):
-        """Initialize GPU accelerator"""
+        """Initialize GPU accelerator."""
         self.framework = self._detect_best_framework()
         self.device_info = self._get_device_info()
         logger.info(f"GPU Accelerator initialized with {self.framework}")
 
     def _detect_best_framework(self) -> str:
-        """Detect the best available GPU framework"""
+        """Detect the best available GPU framework."""
         if CUPY_AVAILABLE:
             return "cupy"
         if NUMBA_CUDA_AVAILABLE:
@@ -80,7 +80,7 @@ class GPUAccelerator:
         return "cpu"
 
     def _get_device_info(self) -> dict[str, Any]:
-        """Get GPU device information"""
+        """Get GPU device information."""
         info = {}
 
         if self.framework == "cupy" and CUPY_AVAILABLE:
@@ -150,7 +150,7 @@ class GPUAccelerator:
         return result
 
     def _cupy_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
-        """CuPy implementation of pattern search"""
+        """CuPy implementation of pattern search."""
         try:
             # Convert to GPU arrays
             data_gpu = cp.asarray(np.frombuffer(data, dtype=np.uint8))
@@ -212,7 +212,7 @@ class GPUAccelerator:
             return self._cpu_pattern_search(data, pattern)
 
     def _numba_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
-        """Numba CUDA implementation of pattern search"""
+        """Numba CUDA implementation of pattern search."""
         try:
             data_np = np.frombuffer(data, dtype=np.uint8)
             pattern_np = np.frombuffer(pattern, dtype=np.uint8)
@@ -265,7 +265,7 @@ class GPUAccelerator:
             return self._cpu_pattern_search(data, pattern)
 
     def _pycuda_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
-        """PyCUDA implementation of pattern search"""
+        """PyCUDA implementation of pattern search."""
         try:
             # Convert to numpy arrays
             data_np = np.frombuffer(data, dtype=np.uint8)
@@ -335,7 +335,7 @@ class GPUAccelerator:
             return self._cpu_pattern_search(data, pattern)
 
     def _cpu_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
-        """CPU fallback for pattern search"""
+        """CPU fallback for pattern search."""
         positions = []
         start = 0
         while True:
@@ -378,7 +378,7 @@ class GPUAccelerator:
         return result
 
     def _cupy_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
-        """CuPy implementation of entropy calculation"""
+        """CuPy implementation of entropy calculation."""
         try:
             data_np = np.frombuffer(data, dtype=np.uint8)
             num_blocks = len(data_np) // block_size
@@ -410,7 +410,7 @@ class GPUAccelerator:
             return self._cpu_entropy(data, block_size)
 
     def _numba_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
-        """Numba CUDA implementation of entropy calculation"""
+        """Numba CUDA implementation of entropy calculation."""
         try:
 
             @numba_cuda.jit
@@ -465,7 +465,7 @@ class GPUAccelerator:
             return self._cpu_entropy(data, block_size)
 
     def _cpu_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
-        """CPU fallback for entropy calculation"""
+        """CPU fallback for entropy calculation."""
         data_np = np.frombuffer(data, dtype=np.uint8)
         num_blocks = len(data_np) // block_size
         entropies = []
@@ -526,7 +526,7 @@ class GPUAccelerator:
         }
 
     def _cupy_crc32(self, data: bytes) -> str:
-        """CuPy implementation of CRC32"""
+        """CuPy implementation of CRC32."""
         try:
             # Simple CRC32 implementation for demonstration
             data_gpu = cp.asarray(np.frombuffer(data, dtype=np.uint8))
@@ -565,7 +565,7 @@ gpu_accelerator = None
 
 
 def get_gpu_accelerator() -> GPUAccelerator:
-    """Get or create GPU accelerator instance"""
+    """Get or create GPU accelerator instance."""
     global gpu_accelerator
     if gpu_accelerator is None:
         gpu_accelerator = GPUAccelerator()

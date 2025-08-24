@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -61,20 +61,20 @@ try:
 
     # Utility functions for unused imports
     def create_icon(path_or_pixmap):
-        """Create a QIcon from a path or pixmap"""
+        """Create a QIcon from a path or pixmap."""
         if isinstance(path_or_pixmap, str) or isinstance(path_or_pixmap, QPixmap):
             return QIcon(path_or_pixmap)
         return QIcon()
 
     def create_pixmap_from_file(path, size=None):
-        """Create a QPixmap from a file"""
+        """Create a QPixmap from a file."""
         pixmap = QPixmap(path)
         if size and not pixmap.isNull():
             pixmap = pixmap.scaled(size[0], size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation)
         return pixmap
 
     def get_user_input(parent, title, label, default="", password=False):
-        """Get user input using QInputDialog"""
+        """Get user input using QInputDialog."""
         if password:
             text, ok = QInputDialog.getText(parent, title, label, QLineEdit.Password, default)
         else:
@@ -82,7 +82,7 @@ try:
         return text, ok
 
     def create_horizontal_slider(min_val=0, max_val=100, value=50, tick_interval=10):
-        """Create a configured horizontal slider"""
+        """Create a configured horizontal slider."""
         slider = QSlider(Qt.Horizontal)
         slider.setMinimum(min_val)
         slider.setMaximum(max_val)
@@ -100,6 +100,7 @@ except ImportError as e:
     QThread = None
     QTimer = None
     def pyqtSignal(*args, **kwargs):
+        """Fallback pyqtSignal implementation when PyQt6 is not available."""
         return lambda: None
     QFont = None
     QIcon = None

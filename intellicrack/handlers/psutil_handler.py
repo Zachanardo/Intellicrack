@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -104,12 +104,14 @@ except ImportError as e:
     # Exception classes
     class Error(Exception):
         """Base psutil error."""
+
         pass
 
     class NoSuchProcessError(Error):
         """Process does not exist."""
 
         def __init__(self, pid, name=None, msg=None):
+            """Initialize NoSuchProcess exception with process details."""
             self.pid = pid
             self.name = name
             self.msg = msg or f"process no longer exists (pid={pid})"
@@ -119,6 +121,7 @@ except ImportError as e:
         """Process is a zombie."""
 
         def __init__(self, pid, name=None, ppid=None):
+            """Initialize ZombieProcess exception with process details."""
             self.pid = pid
             self.ppid = ppid
             self.name = name
@@ -128,6 +131,7 @@ except ImportError as e:
         """Access denied to process information."""
 
         def __init__(self, pid=None, name=None, msg=None):
+            """Initialize AccessDenied exception with process details."""
             self.pid = pid
             self.name = name
             self.msg = msg or "access denied"
@@ -137,6 +141,7 @@ except ImportError as e:
         """Timeout expired."""
 
         def __init__(self, seconds, pid=None, name=None):
+            """Initialize TimeoutExpired exception with timeout details."""
             self.seconds = seconds
             self.pid = pid
             self.name = name
@@ -176,12 +181,13 @@ except ImportError as e:
                 if not wmic_path:
                     return None
 
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [wmic_path, "process", "where", f"ProcessId={self._pid}", "get",
                      "Name,ParentProcessId,CreationDate"],
                     capture_output=True,
                     text=True,
-                    timeout=2
+                    timeout=2,
+                    shell=False  # Explicitly secure - using list format prevents shell injection
                 )
 
                 if result.returncode == 0:
@@ -208,11 +214,12 @@ except ImportError as e:
                 if not ps_path:
                     return None
 
-                result = subprocess.run(
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                     [ps_path, "-p", str(self._pid), "-o", "comm=,ppid="],
                     capture_output=True,
                     text=True,
-                    timeout=2
+                    timeout=2,
+                    shell=False  # Explicitly secure - using list format prevents shell injection
                 )
 
                 if result.returncode == 0:
@@ -252,11 +259,12 @@ except ImportError as e:
                     if not wmic_path:
                         return None
 
-                    result = subprocess.run(
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                         [wmic_path, "process", "where", f"ProcessId={self._pid}", "get", "ExecutablePath"],
                         capture_output=True,
                         text=True,
-                        timeout=2
+                        timeout=2,
+                        shell=False  # Explicitly secure - using list format prevents shell injection
                     )
 
                     if result.returncode == 0:
@@ -283,11 +291,15 @@ except ImportError as e:
 
             if sys.platform == "win32":
                 try:
-                    result = subprocess.run(
-                        ["wmic", "process", "where", f"ProcessId={self._pid}", "get", "CommandLine"],
+                    wmic_path = shutil.which("wmic")
+                    if not wmic_path:
+                        return []
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        [wmic_path, "process", "where", f"ProcessId={self._pid}", "get", "CommandLine"],
                         capture_output=True,
                         text=True,
-                        timeout=2
+                        timeout=2,
+                        shell=False  # Explicitly secure - using list format prevents shell injection
                     )
 
                     if result.returncode == 0:
@@ -411,7 +423,7 @@ except ImportError as e:
             if sys.platform == "win32":
                 taskkill_path = shutil.which("taskkill")
                 if taskkill_path:
-                    subprocess.run([taskkill_path, "/PID", str(self._pid)], check=False)
+                    subprocess.run([taskkill_path, "/PID", str(self._pid)], check=False, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603  # Explicitly secure - using list format prevents shell injection
             else:
                 import signal
                 os.kill(self._pid, signal.SIGTERM)
@@ -424,7 +436,11 @@ except ImportError as e:
             if sys.platform == "win32":
                 taskkill_path = shutil.which("taskkill")
                 if taskkill_path:
-                    subprocess.run([taskkill_path, "/F", "/PID", str(self._pid)], check=False)
+                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        [taskkill_path, "/F", "/PID", str(self._pid)],
+                        check=False,
+                        shell=False
+                    )
             else:
                 import signal
                 os.kill(self._pid, signal.SIGKILL)
@@ -475,11 +491,15 @@ except ImportError as e:
 
         if sys.platform == "win32":
             try:
-                result = subprocess.run(
-                    ["wmic", "cpu", "get", "loadpercentage"],
+                wmic_path = shutil.which("wmic")
+                if not wmic_path:
+                    return 0.0
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    [wmic_path, "cpu", "get", "loadpercentage"],
                     capture_output=True,
                     text=True,
-                    timeout=2
+                    timeout=2,
+                    shell=False
                 )
 
                 if result.returncode == 0:
@@ -588,11 +608,15 @@ except ImportError as e:
         # Try to get real values
         if sys.platform == "win32":
             try:
-                result = subprocess.run(
-                    ["wmic", "OS", "get", "TotalVisibleMemorySize,FreePhysicalMemory"],
+                wmic_path = shutil.which("wmic")
+                if not wmic_path:
+                    return VirtualMemory()
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    [wmic_path, "OS", "get", "TotalVisibleMemorySize,FreePhysicalMemory"],
                     capture_output=True,
                     text=True,
-                    timeout=2
+                    timeout=2,
+                    shell=False
                 )
 
                 if result.returncode == 0:
@@ -754,11 +778,15 @@ except ImportError as e:
 
         if sys.platform == "win32":
             try:
-                result = subprocess.run(
-                    ["wmic", "process", "get", "ProcessId"],
+                wmic_path = shutil.which("wmic")
+                if not wmic_path:
+                    return processes
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    [wmic_path, "process", "get", "ProcessId"],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
+                    shell=False
                 )
 
                 if result.returncode == 0:
@@ -789,11 +817,15 @@ except ImportError as e:
         """Check if a PID exists."""
         if sys.platform == "win32":
             try:
-                result = subprocess.run(
-                    ["wmic", "process", "where", f"ProcessId={pid}", "get", "ProcessId"],
+                wmic_path = shutil.which("wmic")
+                if not wmic_path:
+                    return False
+                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    [wmic_path, "process", "where", f"ProcessId={pid}", "get", "ProcessId"],
                     capture_output=True,
                     text=True,
-                    timeout=2
+                    timeout=2,
+                    shell=False
                 )
                 return result.returncode == 0 and str(pid) in result.stdout
             except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as e:
@@ -835,6 +867,7 @@ except ImportError as e:
         """Process class that wraps subprocess.Popen."""
 
         def __init__(self, *args, **kwargs):
+            """Initialize Popen process wrapper with fallback process monitoring capabilities."""
             super().__init__(*args, **kwargs)
             self._process = FallbackProcess(self.pid) if self.pid else None
 

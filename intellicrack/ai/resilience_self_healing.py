@@ -1,4 +1,4 @@
-"""Resilience & Self-Healing System
+"""Resilience & Self-Healing System.
 
 Copyright (C) 2025 Zachary Flint
 

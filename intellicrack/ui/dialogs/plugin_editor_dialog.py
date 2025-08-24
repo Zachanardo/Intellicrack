@@ -48,7 +48,7 @@ from ..widgets.plugin_editor import PluginEditor
 
 
 class PluginEditorDialog(QDialog):
-    """Enhanced plugin editor dialog with testing capabilities"""
+    """Enhanced plugin editor dialog with testing capabilities."""
 
     #: Emitted when plugin is saved (type: str)
     plugin_saved = pyqtSignal(str)
@@ -67,7 +67,7 @@ class PluginEditorDialog(QDialog):
             self.load_plugin(plugin_path)
 
     def setup_ui(self):
-        """Set up the dialog UI"""
+        """Set up the dialog UI."""
         layout = QVBoxLayout(self)
 
         # Create tab widget
@@ -123,7 +123,7 @@ class PluginEditorDialog(QDialog):
         layout.addLayout(button_layout)
 
     def setup_test_tab(self):
-        """Set up the testing tab"""
+        """Set up the testing tab."""
         layout = QVBoxLayout(self.test_widget)
 
         # Test configuration
@@ -181,7 +181,7 @@ class PluginEditorDialog(QDialog):
         layout.addWidget(output_group)
 
     def setup_docs_tab(self):
-        """Set up the documentation tab"""
+        """Set up the documentation tab."""
         layout = QVBoxLayout(self.docs_widget)
 
         # Create splitter
@@ -220,7 +220,7 @@ class PluginEditorDialog(QDialog):
             self.api_list.setCurrentRow(0)
 
     def show_api_docs(self, current, previous):
-        """Show API documentation"""
+        """Show API documentation."""
         _ = previous
         if not current:
             return
@@ -230,7 +230,7 @@ class PluginEditorDialog(QDialog):
         self.docs_viewer.setHtml(docs)
 
     def get_api_documentation(self, topic):
-        """Get API documentation for topic"""
+        """Get API documentation for topic."""
         docs = {
             "Plugin Base Class": """
                 <h2>Plugin Base Class</h2>
@@ -323,7 +323,7 @@ Process.enumerateModules().forEach(function(module) {
         return docs.get(topic, f"<h2>{topic}</h2><p>Documentation not available yet.</p>")
 
     def load_plugin(self, path):
-        """Load a plugin file"""
+        """Load a plugin file."""
         self.plugin_path = path
         try:
             with open(path) as f:
@@ -336,16 +336,16 @@ Process.enumerateModules().forEach(function(module) {
             QMessageBox.critical(self, "Error", f"Failed to load plugin:\n{e!s}")
 
     def save_plugin(self):
-        """Save the plugin"""
+        """Save the plugin."""
         self.editor.save_file()
 
     def on_plugin_saved(self, path):
-        """Handle plugin saved"""
+        """Handle plugin saved."""
         self.plugin_saved.emit(path)
         QMessageBox.information(self, "Saved", "Plugin saved successfully!")
 
     def on_validation_complete(self, results):
-        """Handle validation results"""
+        """Handle validation results."""
         if results["valid"]:
             self.run_btn.setEnabled(True)
             self.run_btn.setToolTip("Plugin is valid and ready to run")
@@ -354,9 +354,7 @@ Process.enumerateModules().forEach(function(module) {
             self.run_btn.setToolTip("Fix validation errors before running")
 
     def browse_test_file(self):
-        """Browse for test file"""
-
-
+        """Browse for test file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Test Binary",
@@ -367,7 +365,7 @@ Process.enumerateModules().forEach(function(module) {
             self.test_file_edit.setText(file_path)
 
     def run_plugin(self):
-        """Run the plugin"""
+        """Run the plugin."""
         # Save first
         self.editor.save_file()
 
@@ -381,7 +379,7 @@ Process.enumerateModules().forEach(function(module) {
         self.run_test()
 
     def debug_plugin(self):
-        """Debug the plugin"""
+        """Debug the plugin."""
         if not self.editor.current_file:
             QMessageBox.warning(self, "No Plugin", "Please save the plugin first.")
             return
@@ -401,7 +399,7 @@ Process.enumerateModules().forEach(function(module) {
             )
 
     def run_test(self):
-        """Run plugin test"""
+        """Run plugin test."""
         if not self.editor.current_file:
             QMessageBox.warning(self, "No Plugin", "Please save the plugin first.")
             return
@@ -432,27 +430,27 @@ Process.enumerateModules().forEach(function(module) {
         self.stop_test_btn.setEnabled(True)
 
     def stop_test(self):
-        """Stop running test"""
+        """Stop running test."""
         if self.test_process:
             self.test_process.terminate()
             QTimer.singleShot(2000, self.test_process.kill)  # Force kill after 2s
 
     def handle_stdout(self):
-        """Handle stdout from test process"""
+        """Handle stdout from test process."""
         if self.test_process:
             data = self.test_process.readAllStandardOutput()
             text = data.data().decode("utf-8", errors="replace")
             self.test_output.append(text)
 
     def handle_stderr(self):
-        """Handle stderr from test process"""
+        """Handle stderr from test process."""
         if self.test_process:
             data = self.test_process.readAllStandardError()
             text = data.data().decode("utf-8", errors="replace")
             self.test_output.append(f"<span style='color: red;'>{text}</span>")
 
     def test_finished(self, exit_code, exit_status):
-        """Handle test process finished"""
+        """Handle test process finished."""
         _ = exit_status
         self.test_output.append(f"\nTest finished with exit code: {exit_code}")
 
@@ -464,7 +462,7 @@ Process.enumerateModules().forEach(function(module) {
         self.test_process = None
 
     def generate_tests(self):
-        """Open test generator for current plugin"""
+        """Open test generator for current plugin."""
         if not self.editor.current_file:
             QMessageBox.warning(self, "No Plugin", "Please save the plugin first.")
             return
@@ -484,7 +482,7 @@ Process.enumerateModules().forEach(function(module) {
             )
 
     def open_ci_cd(self):
-        """Open CI/CD pipeline dialog"""
+        """Open CI/CD pipeline dialog."""
         if not self.editor.current_file:
             QMessageBox.warning(self, "No Plugin", "Please save the plugin first.")
             return

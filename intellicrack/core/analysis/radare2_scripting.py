@@ -1,4 +1,4 @@
-"""Radare2 Scripting Integration Engine
+"""Radare2 Scripting Integration Engine.
 
 Copyright (C) 2025 Zachary Flint
 

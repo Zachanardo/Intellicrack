@@ -1,4 +1,4 @@
-"""Copyright (C) 2025 Zachary Flint
+"""Copyright (C) 2025 Zachary Flint.
 
 This file is part of Intellicrack.
 

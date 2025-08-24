@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ and analysis strategies for the ML system.
 
 
 class BypassDifficulty(Enum):
-    """Protection bypass difficulty levels"""
+    """Protection bypass difficulty levels."""
 
     TRIVIAL = "trivial"
     LOW = "low"
@@ -40,7 +40,7 @@ class BypassDifficulty(Enum):
 
 
 class ProtectionCategory(Enum):
-    """Protection scheme categories"""
+    """Protection scheme categories."""
 
     NONE = "none"
     HARDWARE_DONGLE = "hardware_dongle"
@@ -55,7 +55,7 @@ class ProtectionCategory(Enum):
 
 @dataclass
 class BypassTechnique:
-    """Bypass technique information"""
+    """Bypass technique information."""
 
     name: str
     description: str
@@ -69,7 +69,7 @@ class BypassTechnique:
 
 @dataclass
 class ProtectionSchemeInfo:
-    """Complete information about a protection scheme"""
+    """Complete information about a protection scheme."""
 
     name: str
     vendor: str
@@ -86,7 +86,7 @@ class ProtectionSchemeInfo:
 
 
 class ProtectionKnowledgeBase:
-    """Knowledge base for software protection schemes"""
+    """Knowledge base for software protection schemes."""
 
     def __init__(self):
         """Initialize the protection knowledge base with schemes, strategies, and workflows."""
@@ -95,7 +95,7 @@ class ProtectionKnowledgeBase:
         self.analysis_workflows = self._initialize_analysis_workflows()
 
     def _initialize_protection_schemes(self) -> dict[str, ProtectionSchemeInfo]:
-        """Initialize comprehensive protection scheme database"""
+        """Initialize comprehensive protection scheme database."""
         schemes = {}
 
         # Sentinel HASP
@@ -572,7 +572,7 @@ class ProtectionKnowledgeBase:
         return schemes
 
     def _initialize_bypass_strategies(self) -> dict[str, list[str]]:
-        """Initialize general bypass strategies by category"""
+        """Initialize general bypass strategies by category."""
         return {
             "hardware_dongle": [
                 "Dump dongle memory and emulate",
@@ -612,7 +612,7 @@ class ProtectionKnowledgeBase:
         }
 
     def _initialize_analysis_workflows(self) -> dict[str, list[str]]:
-        """Initialize standard analysis workflows"""
+        """Initialize standard analysis workflows."""
         return {
             "initial_analysis": [
                 "Identify file type and architecture",
@@ -652,7 +652,7 @@ class ProtectionKnowledgeBase:
         }
 
     def get_protection_info(self, protection_name: str) -> ProtectionSchemeInfo | None:
-        """Get detailed information about a protection scheme"""
+        """Get detailed information about a protection scheme."""
         # Normalize name
         normalized_name = protection_name.lower().replace(" ", "_").replace("/", "_")
 
@@ -670,18 +670,18 @@ class ProtectionKnowledgeBase:
         return None
 
     def get_bypass_techniques(self, protection_name: str) -> list[BypassTechnique]:
-        """Get bypass techniques for a specific protection"""
+        """Get bypass techniques for a specific protection."""
         info = self.get_protection_info(protection_name)
         if info:
             return info.bypass_techniques
         return []
 
     def get_analysis_workflow(self, workflow_type: str) -> list[str]:
-        """Get a standard analysis workflow"""
+        """Get a standard analysis workflow."""
         return self.analysis_workflows.get(workflow_type, [])
 
     def search_by_signature(self, signature: str) -> list[ProtectionSchemeInfo]:
-        """Search for protections containing a specific signature"""
+        """Search for protections containing a specific signature."""
         results = []
         signature_lower = signature.lower()
 
@@ -694,7 +694,7 @@ class ProtectionKnowledgeBase:
         return results
 
     def get_tools_for_protection(self, protection_name: str) -> list[str]:
-        """Get all tools needed for bypassing a protection"""
+        """Get all tools needed for bypassing a protection."""
         info = self.get_protection_info(protection_name)
         if not info:
             return []
@@ -706,7 +706,7 @@ class ProtectionKnowledgeBase:
         return sorted(list(tools))
 
     def estimate_bypass_time(self, protection_name: str, skill_level: str = "intermediate") -> str:
-        """Estimate time to bypass a protection based on skill level"""
+        """Estimate time to bypass a protection based on skill level."""
         info = self.get_protection_info(protection_name)
         if not info:
             return "Unknown"
@@ -756,7 +756,7 @@ class ProtectionKnowledgeBase:
         return "Variable"
 
     def export_knowledge_base(self, output_path: str):
-        """Export knowledge base to JSON"""
+        """Export knowledge base to JSON."""
         data = {
             "protection_schemes": {},
             "bypass_strategies": self.bypass_strategies,
@@ -804,7 +804,7 @@ _knowledge_base = None
 
 
 def get_protection_knowledge_base() -> ProtectionKnowledgeBase:
-    """Get or create the protection knowledge base singleton"""
+    """Get or create the protection knowledge base singleton."""
     global _knowledge_base
     if _knowledge_base is None:
         _knowledge_base = ProtectionKnowledgeBase()

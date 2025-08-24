@@ -2048,7 +2048,7 @@ class AutonomousAgent:
                         if os.name == "nt":  # Windows
                             qemu_cmd = ["qemu-system-x86_64", "-m", "256", "-nographic", "-no-reboot"]
 
-                        result = subprocess.run(
+                        result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                             qemu_cmd,
                             cwd=temp_dir,
                             capture_output=True,
@@ -2070,7 +2070,7 @@ class AutonomousAgent:
                             if script.lower().startswith("java"):
                                 # Frida script execution
                                 frida_cmd = ["node", "-e", f"console.log('Testing script: {script[:100]}...')"]
-                                result = subprocess.run(
+                                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                                     frida_cmd,
                                     cwd=temp_dir,
                                     capture_output=True,

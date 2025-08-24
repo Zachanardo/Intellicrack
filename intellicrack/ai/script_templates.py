@@ -1,4 +1,4 @@
-"""Script Templates for AI-Generated Frida and Ghidra Scripts
+"""Script Templates for AI-Generated Frida and Ghidra Scripts.
 
 Copyright (C) 2025 Zachary Flint
 

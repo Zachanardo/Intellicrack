@@ -28,6 +28,7 @@ class AIModelManager:
 
         Args:
             config_path: Path to model configuration file
+
         """
         self.config_path = config_path or self._get_default_config_path()
         self.models = {}
@@ -136,6 +137,7 @@ class AIModelManager:
         Args:
             name: Model name
             config: Model configuration
+
         """
         provider = config.get("provider", "local")
 
@@ -223,6 +225,7 @@ class AIModelManager:
 
         Returns:
             Model instance
+
         """
         model_name = name or self.active_model
         if not model_name:
@@ -248,6 +251,7 @@ class AIModelManager:
 
         Returns:
             Loaded model instance
+
         """
         provider = model_info["provider"]
         config = model_info["config"]
@@ -278,6 +282,7 @@ class AIModelManager:
 
         Returns:
             Loaded model
+
         """
         model_path = config.get("model_path")
 
@@ -316,6 +321,7 @@ class AIModelManager:
 
         Args:
             name: Model name
+
         """
         if name not in self.models:
             raise ValueError(f"Model {name} not found")
@@ -328,6 +334,7 @@ class AIModelManager:
 
         Returns:
             List of model names
+
         """
         return list(self.models.keys())
 
@@ -339,6 +346,7 @@ class AIModelManager:
 
         Returns:
             Model information dictionary
+
         """
         model_name = name or self.active_model
         if not model_name:
@@ -355,6 +363,7 @@ class AIModelManager:
         Args:
             name: Model name
             config: Model configuration
+
         """
         if name not in self.config["models"]:
             self.config["models"][name] = {}
@@ -372,6 +381,7 @@ class AIModelManager:
 
         Args:
             name: Model name
+
         """
         if name not in self.config["models"]:
             raise ValueError(f"Model {name} not found in configuration")
@@ -388,6 +398,7 @@ class AIModelManager:
 
         Args:
             name: Model name
+
         """
         if name not in self.config["models"]:
             raise ValueError(f"Model {name} not found in configuration")
@@ -413,6 +424,7 @@ class AIModelManager:
 
         Returns:
             Performance statistics
+
         """
         model_name = name or self.active_model
         if not model_name:
@@ -448,6 +460,7 @@ def get_model_manager(config_path: Optional[str] = None) -> AIModelManager:
 
     Returns:
         AIModelManager instance
+
     """
     global _model_manager
 

@@ -52,7 +52,7 @@ def capture_with_scapy(
     try:
 
         def packet_handler(packet):
-            """Process captured packets in real-time"""
+            """Process captured packets in real-time."""
             packet_info = {
                 "timestamp": time.time(),
                 "size": len(packet),

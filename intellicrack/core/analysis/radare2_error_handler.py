@@ -1,4 +1,4 @@
-"""Robust Error Handling and Recovery for Radare2 Integration
+"""Robust Error Handling and Recovery for Radare2 Integration.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -42,7 +42,7 @@ except ImportError as e:
 
 
 class ErrorSeverity(Enum):
-    """Error severity levels"""
+    """Error severity levels."""
 
     LOW = "low"
     MEDIUM = "medium"
@@ -51,7 +51,7 @@ class ErrorSeverity(Enum):
 
 
 class RecoveryStrategy(Enum):
-    """Available recovery strategies"""
+    """Available recovery strategies."""
 
     RETRY = "retry"
     FALLBACK = "fallback"
@@ -62,7 +62,7 @@ class RecoveryStrategy(Enum):
 
 @dataclass
 class ErrorEvent:
-    """Error event data structure"""
+    """Error event data structure."""
 
     timestamp: datetime
     error_type: str
@@ -77,7 +77,7 @@ class ErrorEvent:
 
 @dataclass
 class RecoveryAction:
-    """Recovery action definition"""
+    """Recovery action definition."""
 
     name: str
     description: str
@@ -133,7 +133,7 @@ class R2ErrorHandler:
         self.logger.info("R2ErrorHandler initialized")
 
     def _initialize_recovery_actions(self):
-        """Initialize built-in recovery actions"""
+        """Initialize built-in recovery actions."""
         # R2 session recovery
         self.recovery_actions["restart_r2_session"] = RecoveryAction(
             name="Restart R2 Session",
@@ -181,7 +181,7 @@ class R2ErrorHandler:
 
     @contextmanager
     def error_context(self, operation_name: str, **context):
-        """Context manager for error handling"""
+        """Context manager for error handling."""
         start_time = time.time()
         try:
             yield
@@ -246,7 +246,7 @@ class R2ErrorHandler:
     def _create_error_event(
         self, error: Exception, operation_name: str, context: dict[str, Any]
     ) -> ErrorEvent:
-        """Create error event from exception"""
+        """Create error event from exception."""
         error_type = type(error).__name__
         severity = self._classify_error_severity(error, operation_name)
 
@@ -264,7 +264,7 @@ class R2ErrorHandler:
         )
 
     def _classify_error_severity(self, error: Exception, operation_name: str) -> ErrorSeverity:
-        """Classify error severity based on type and context"""
+        """Classify error severity based on type and context."""
         # Critical errors that stop all operations
         if isinstance(error, (MemoryError, SystemExit, KeyboardInterrupt)):
             return ErrorSeverity.CRITICAL
@@ -290,7 +290,7 @@ class R2ErrorHandler:
         return ErrorSeverity.MEDIUM
 
     def _determine_recovery_strategy(self, error_event: ErrorEvent) -> RecoveryStrategy:
-        """Determine appropriate recovery strategy"""
+        """Determine appropriate recovery strategy."""
         # Critical errors require abort or user intervention
         if error_event.severity == ErrorSeverity.CRITICAL:
             return RecoveryStrategy.USER_INTERVENTION
@@ -315,7 +315,7 @@ class R2ErrorHandler:
         return RecoveryStrategy.RETRY
 
     def _execute_recovery(self, error_event: ErrorEvent) -> bool:
-        """Execute recovery strategy"""
+        """Execute recovery strategy."""
         strategy = error_event.recovery_strategy
 
         try:
@@ -334,7 +334,7 @@ class R2ErrorHandler:
             return False
 
     def _execute_retry_recovery(self, error_event: ErrorEvent) -> bool:
-        """Execute retry-based recovery"""
+        """Execute retry-based recovery."""
         # Determine which recovery action to use
         if "r2pipe" in error_event.message:
             action_name = "restart_r2_session"
@@ -346,21 +346,21 @@ class R2ErrorHandler:
         return self._execute_recovery_action(action_name, error_event)
 
     def _execute_fallback_recovery(self, error_event: ErrorEvent) -> bool:
-        """Execute fallback recovery"""
+        """Execute fallback recovery."""
         return self._execute_recovery_action("retry_with_fallback", error_event)
 
     def _execute_graceful_degradation(self, error_event: ErrorEvent) -> bool:
-        """Execute graceful degradation"""
+        """Execute graceful degradation."""
         return self._execute_recovery_action("graceful_degradation", error_event)
 
     def _execute_user_intervention(self, error_event: ErrorEvent) -> bool:
-        """Execute user intervention recovery"""
+        """Execute user intervention recovery."""
         self.logger.critical(f"User intervention required: {error_event.message}")
         # In a real implementation, this would notify the user
         return False
 
     def _execute_recovery_action(self, action_name: str, error_event: ErrorEvent) -> bool:
-        """Execute specific recovery action"""
+        """Execute specific recovery action."""
         if action_name not in self.recovery_actions:
             self.logger.error(f"Unknown recovery action: {action_name}")
             return False
@@ -403,7 +403,7 @@ class R2ErrorHandler:
     # Built-in recovery action implementations
 
     def _restart_r2_session(self, error_event: ErrorEvent) -> bool:
-        """Restart radare2 session"""
+        """Restart radare2 session."""
         try:
             # Get session from context if available
             r2_session = error_event.context.get("r2_session")
@@ -433,7 +433,7 @@ class R2ErrorHandler:
             return False
 
     def _re_analyze_binary(self, error_event: ErrorEvent) -> bool:
-        """Re-analyze binary with different parameters"""
+        """Re-analyze binary with different parameters."""
         try:
             r2_session = error_event.context.get("r2_session")
 
@@ -454,7 +454,7 @@ class R2ErrorHandler:
             return False
 
     def _retry_with_fallback(self, error_event: ErrorEvent) -> bool:
-        """Retry operation with fallback parameters"""
+        """Retry operation with fallback parameters."""
         try:
             # For demonstration, just return success after cleanup
             self._cleanup_memory(error_event)
@@ -467,7 +467,7 @@ class R2ErrorHandler:
             return False
 
     def _cleanup_memory(self, error_event: ErrorEvent) -> bool:
-        """Clean up radare2 memory and temporary files"""
+        """Clean up radare2 memory and temporary files."""
         try:
             r2_session = error_event.context.get("r2_session")
 
@@ -496,7 +496,7 @@ class R2ErrorHandler:
             return False
 
     def _graceful_degradation(self, error_event: ErrorEvent) -> bool:
-        """Implement graceful degradation"""
+        """Implement graceful degradation."""
         try:
             # Mark operation as degraded
             operation = error_event.context.get("operation", "unknown")
@@ -522,7 +522,7 @@ class R2ErrorHandler:
     # Circuit breaker pattern implementation
 
     def _is_circuit_broken(self, operation_name: str) -> bool:
-        """Check if circuit breaker is open for operation"""
+        """Check if circuit breaker is open for operation."""
         if operation_name not in self.circuit_breakers:
             return False
 
@@ -540,7 +540,7 @@ class R2ErrorHandler:
         return False
 
     def _update_circuit_breaker(self, operation_name: str, success: bool):
-        """Update circuit breaker state"""
+        """Update circuit breaker state."""
         if operation_name not in self.circuit_breakers:
             self.circuit_breakers[operation_name] = {
                 "failure_count": 0,
@@ -568,7 +568,7 @@ class R2ErrorHandler:
     # Performance monitoring
 
     def _record_performance(self, operation_name: str, duration: float, success: bool):
-        """Record performance metrics"""
+        """Record performance metrics."""
         if operation_name not in self.performance_monitor["operation_times"]:
             self.performance_monitor["operation_times"][operation_name] = []
             self.performance_monitor["failure_rates"][operation_name] = {
@@ -591,7 +591,7 @@ class R2ErrorHandler:
             self.performance_monitor["failure_rates"][operation_name]["failures"] += 1
 
     def _record_recovery_success(self, action_name: str):
-        """Record successful recovery"""
+        """Record successful recovery."""
         if action_name not in self.performance_monitor["recovery_success_rates"]:
             self.performance_monitor["recovery_success_rates"][action_name] = {
                 "successes": 0,
@@ -601,7 +601,7 @@ class R2ErrorHandler:
         self.performance_monitor["recovery_success_rates"][action_name]["successes"] += 1
 
     def _record_recovery_failure(self, action_name: str):
-        """Record failed recovery"""
+        """Record failed recovery."""
         if action_name not in self.performance_monitor["recovery_success_rates"]:
             self.performance_monitor["recovery_success_rates"][action_name] = {
                 "successes": 0,
@@ -611,7 +611,7 @@ class R2ErrorHandler:
         self.performance_monitor["recovery_success_rates"][action_name]["failures"] += 1
 
     def _record_error(self, error_event: ErrorEvent):
-        """Record error in history"""
+        """Record error in history."""
         self.error_history.append(error_event)
 
         # Keep only recent errors
@@ -628,12 +628,12 @@ class R2ErrorHandler:
     # Public API methods
 
     def add_recovery_action(self, name: str, action: RecoveryAction):
-        """Add custom recovery action"""
+        """Add custom recovery action."""
         self.recovery_actions[name] = action
         self.logger.info(f"Added custom recovery action: {name}")
 
     def get_error_statistics(self) -> dict[str, Any]:
-        """Get error statistics"""
+        """Get error statistics."""
         return {
             "session_stats": self.session_stats.copy(),
             "error_count_by_type": self._get_error_count_by_type(),
@@ -644,21 +644,21 @@ class R2ErrorHandler:
         }
 
     def _get_error_count_by_type(self) -> dict[str, int]:
-        """Get error counts grouped by type"""
+        """Get error counts grouped by type."""
         counts = {}
         for error in self.error_history:
             counts[error.error_type] = counts.get(error.error_type, 0) + 1
         return counts
 
     def _get_error_count_by_severity(self) -> dict[str, int]:
-        """Get error counts grouped by severity"""
+        """Get error counts grouped by severity."""
         counts = {severity.value: 0 for severity in ErrorSeverity}
         for error in self.error_history:
             counts[error.severity.value] += 1
         return counts
 
     def _get_performance_metrics(self) -> dict[str, Any]:
-        """Get performance metrics"""
+        """Get performance metrics."""
         metrics = {}
         for operation, times in self.performance_monitor["operation_times"].items():
             if times:
@@ -671,7 +671,7 @@ class R2ErrorHandler:
         return metrics
 
     def _get_recovery_rates(self) -> dict[str, float]:
-        """Get recovery success rates"""
+        """Get recovery success rates."""
         rates = {}
         for action, stats in self.performance_monitor["recovery_success_rates"].items():
             total = stats["successes"] + stats["failures"]
@@ -682,13 +682,13 @@ class R2ErrorHandler:
         return rates
 
     def is_operation_degraded(self, operation_name: str) -> bool:
-        """Check if operation is in degraded mode"""
+        """Check if operation is in degraded mode."""
         if operation_name in self.circuit_breakers:
             return self.circuit_breakers[operation_name].get("degraded", False)
         return False
 
     def reset_circuit_breaker(self, operation_name: str):
-        """Reset circuit breaker for operation"""
+        """Reset circuit breaker for operation."""
         if operation_name in self.circuit_breakers:
             self.circuit_breakers[operation_name] = {
                 "failure_count": 0,
@@ -700,7 +700,7 @@ class R2ErrorHandler:
             self.logger.info(f"Reset circuit breaker for {operation_name}")
 
     def clear_error_history(self):
-        """Clear error history"""
+        """Clear error history."""
         self.error_history.clear()
         self.session_stats["total_errors"] = 0
         self.session_stats["recovered_errors"] = 0
@@ -714,7 +714,7 @@ _GLOBAL_ERROR_HANDLER = None
 
 
 def get_error_handler() -> R2ErrorHandler:
-    """Get or create global error handler instance"""
+    """Get or create global error handler instance."""
     global _GLOBAL_ERROR_HANDLER
     if _GLOBAL_ERROR_HANDLER is None:
         _GLOBAL_ERROR_HANDLER = R2ErrorHandler()
@@ -739,7 +739,7 @@ def handle_r2_error(error: Exception, operation_name: str, **context) -> bool:
 
 @contextmanager
 def r2_error_context(operation_name: str, **context):
-    """Context manager for radare2 error handling"""
+    """Context manager for radare2 error handling."""
     handler = get_error_handler()
     with handler.error_context(operation_name, **context):
         yield

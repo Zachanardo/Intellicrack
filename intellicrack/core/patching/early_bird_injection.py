@@ -1,4 +1,4 @@
-"""Early Bird injection - inject before main thread starts
+"""Early Bird injection - inject before main thread starts.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -33,7 +33,7 @@ AVAILABLE = is_windows_available()
 
 
 class EarlyBirdInjector(BaseWindowsPatcher):
-    """Early Bird injection - inject code before main thread executes"""
+    """Early Bird injection - inject code before main thread executes."""
 
     def __init__(self):
         """Initialize the Early Bird injector with Windows platform validation and logging setup."""
@@ -48,7 +48,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
         return ["kernel32"]
 
     def inject_early_bird(self, target_exe: str, dll_path: str, command_line: str = None) -> bool:
-        """Perform Early Bird injection
+        """Perform Early Bird injection.
 
         Args:
             target_exe: Path to target executable
@@ -111,7 +111,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
     def inject_early_bird_shellcode(
         self, target_exe: str, shellcode: bytes, command_line: str = None
     ) -> bool:
-        """Inject shellcode using Early Bird technique
+        """Inject shellcode using Early Bird technique.
 
         Args:
             target_exe: Path to target executable
@@ -168,7 +168,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
     def inject_early_bird_with_context(
         self, target_exe: str, dll_path: str, modify_entry_point: bool = True
     ) -> bool:
-        """Advanced Early Bird with entry point modification
+        """Advanced Early Bird with entry point modification.
 
         Args:
             target_exe: Path to target executable
@@ -242,14 +242,14 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             return False
 
     def _create_suspended_process(self, exe_path: str, command_line: str = None) -> dict | None:
-        """Create a process in suspended state"""
+        """Create a process in suspended state."""
         from ...utils.system.windows_structures import WindowsProcessStructures
 
         structures = WindowsProcessStructures()
         return structures.create_suspended_process(exe_path, command_line)
 
     def _allocate_and_write_dll_path(self, process_handle: int, dll_path: str) -> int:
-        """Allocate memory and write DLL path"""
+        """Allocate memory and write DLL path."""
         try:
             dll_path_bytes = dll_path.encode("utf-8") + b"\x00"
             path_size = len(dll_path_bytes)
@@ -285,7 +285,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             return 0
 
     def _allocate_and_write_shellcode(self, process_handle: int, shellcode: bytes) -> int:
-        """Allocate memory and write shellcode"""
+        """Allocate memory and write shellcode."""
         try:
             # Allocate memory
             addr = self.kernel32.VirtualAllocEx(
@@ -318,7 +318,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             return 0
 
     def _get_load_library_address(self) -> int:
-        """Get address of LoadLibraryA"""
+        """Get address of LoadLibraryA."""
         try:
             kernel32_handle = self.kernel32.GetModuleHandleW("kernel32.dll")
             if not kernel32_handle:
@@ -332,7 +332,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             return 0
 
     def _queue_user_apc(self, thread_handle: int, function_addr: int, parameter: int) -> bool:
-        """Queue user APC to thread"""
+        """Queue user APC to thread."""
         try:
             # QueueUserAPC
             success = self.kernel32.QueueUserAPC(
@@ -354,35 +354,35 @@ class EarlyBirdInjector(BaseWindowsPatcher):
             return False
 
     def _get_thread_context(self, thread_handle: int) -> Any | None:
-        """Get thread context"""
+        """Get thread context."""
         from ...utils.system.windows_structures import WindowsContext
 
         context_helper = WindowsContext()
         return context_helper.get_thread_context(thread_handle)
 
     def _set_thread_context(self, thread_handle: int, context: Any) -> bool:
-        """Set thread context"""
+        """Set thread context."""
         from ...utils.system.windows_structures import WindowsContext
 
         context_helper = WindowsContext()
         return context_helper.set_thread_context(thread_handle, context)
 
     def _get_entry_point(self, context: Any) -> int:
-        """Get entry point from context"""
+        """Get entry point from context."""
         from ...utils.system.windows_structures import WindowsContext
 
         context_helper = WindowsContext()
         return context_helper.get_entry_point(context)
 
     def _set_entry_point(self, context: Any, new_entry: int):
-        """Set entry point in context"""
+        """Set entry point in context."""
         if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
             context.Rcx = new_entry
         else:  # 32-bit
             context.Eax = new_entry
 
     def _create_injection_stub(self, process_handle: int, dll_path: str, context: Any) -> int:
-        """Create injection stub that loads DLL then jumps to original entry"""
+        """Create injection stub that loads DLL then jumps to original entry."""
         try:
             # Get original entry point
             original_entry = self._get_entry_point(context)
@@ -452,7 +452,7 @@ class EarlyBirdInjector(BaseWindowsPatcher):
 
 
 def perform_early_bird_injection(target_exe: str, dll_path: str, command_line: str = None) -> bool:
-    """Convenience function to perform Early Bird injection
+    """Convenience function to perform Early Bird injection.
 
     Args:
         target_exe: Path to target executable

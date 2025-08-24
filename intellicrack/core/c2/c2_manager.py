@@ -1,4 +1,4 @@
-"""C2 Infrastructure Manager
+"""C2 Infrastructure Manager.
 
 Central manager for C2 infrastructure operations.
 

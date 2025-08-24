@@ -1,4 +1,4 @@
-"""Statistical Analysis Dialog for Hex Viewer
+"""Statistical Analysis Dialog for Hex Viewer.
 
 This dialog provides an interface for displaying statistical analysis
 of the current file or selected data.
@@ -39,6 +39,7 @@ class StatisticsWorker(QThread):
         Args:
             data: Binary data to process
             file_path: Path to file (if processing file instead of data)
+
         """
         super().__init__()
         self.data = data
@@ -52,6 +53,7 @@ class StatisticsWorker(QThread):
         Args:
             current: Current progress
             total: Total items
+
         """
         self.progress.emit(current, total)
 
@@ -84,6 +86,7 @@ class StatisticsDialog(QDialog):
         Args:
             parent: Parent widget
             hex_viewer: Reference to hex viewer widget
+
         """
         super().__init__(parent)
         self.hex_viewer = hex_viewer
@@ -234,6 +237,7 @@ class StatisticsDialog(QDialog):
         Args:
             current: Current progress
             total: Total items
+
         """
         self.progress_bar.setValue(current)
 
@@ -242,6 +246,7 @@ class StatisticsDialog(QDialog):
 
         Args:
             results: Dictionary of analysis results
+
         """
         # Format overview
         overview = "Statistical Analysis Results\n"
@@ -348,6 +353,7 @@ class StatisticsDialog(QDialog):
 
         Args:
             error: Error message
+
         """
         self.overview_text.setPlainText(f"Error: {error}")
         self.progress_bar.setVisible(False)

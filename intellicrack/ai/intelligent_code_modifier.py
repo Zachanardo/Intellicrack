@@ -1,4 +1,4 @@
-"""Intelligent Code Modification System
+"""Intelligent Code Modification System.
 
 Copyright (C) 2025 Zachary Flint
 

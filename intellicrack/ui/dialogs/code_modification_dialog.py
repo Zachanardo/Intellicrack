@@ -1,4 +1,4 @@
-"""Code Modification Dialog with Diff Viewer
+"""Code Modification Dialog with Diff Viewer.
 
 Copyright (C) 2025 Zachary Flint
 

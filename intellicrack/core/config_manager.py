@@ -1,4 +1,4 @@
-"""Dynamic Configuration Manager for Intellicrack
+"""Dynamic Configuration Manager for Intellicrack.
 
 Auto-configures itself with platform-aware directories and tool discovery.
 Creates configuration files dynamically without requiring manual setup.
@@ -126,7 +126,7 @@ class IntellicrackConfig:
         self._load_or_create_config()
 
     def _get_user_config_dir(self) -> Path:
-        """Get platform-appropriate user config directory.
+        r"""Get platform-appropriate user config directory.
 
         Uses unified configuration directory at C:\\Intellicrack\\config
         for all platforms to ensure consistency.
@@ -191,7 +191,7 @@ class IntellicrackConfig:
             self._create_default_config()
 
     def _create_default_config(self):
-        """Create or load unified configuration.
+        r"""Create or load unified configuration.
 
         Attempts to load the unified config.json from C:\\Intellicrack\\config.
         If not found, creates a comprehensive default configuration.
@@ -826,6 +826,7 @@ class IntellicrackConfig:
                     capture_output=True,
                     text=True,
                     timeout=10,  # Prevent hanging on broken tools
+                    shell=False
                 )
                 if result.returncode == 0:
                     # Limit version string length to prevent huge outputs
@@ -1148,46 +1149,54 @@ class IntellicrackConfig:
 
     def _migrate_specific_legacy_fields(self, legacy_data: dict, legacy_path: Path):
         """Migrate specific fields from legacy configuration."""
+        self._migrate_vm_framework_settings(legacy_data)
+        self._migrate_basic_legacy_flags(legacy_data)
+        self._migrate_cli_configuration(legacy_data)
+        self._migrate_runtime_settings(legacy_data)
+        self._migrate_model_repositories(legacy_data)
+        self._migrate_tool_paths(legacy_data)
+        self._migrate_directory_settings(legacy_data)
+        self._migrate_security_settings(legacy_data)
+        self._migrate_ui_preferences(legacy_data)
+        self._migrate_external_services(legacy_data)
 
-        # Migrate VM framework settings (unique to legacy configs)
+        logger.info(f"Completed migration of settings from {legacy_path.name}")
+
+    def _migrate_vm_framework_settings(self, legacy_data: dict):
+        """Migrate VM framework settings from legacy configuration."""
         if "vm_framework" in legacy_data:
             vm_config = legacy_data["vm_framework"]
-            # Add VM framework configuration if not present
             current_vm = self.get("vm_framework", {})
             if not current_vm:
                 self.set("vm_framework", vm_config)
                 logger.info("Migrated VM framework configuration")
             else:
-                # Merge VM settings
                 merged_vm = {**current_vm, **vm_config}
                 self.set("vm_framework", merged_vm)
                 logger.info("Merged VM framework configuration")
 
-        # Migrate emergency mode flag
-        if "emergency_mode" in legacy_data:
-            self.set("emergency_mode", legacy_data["emergency_mode"])
-            logger.debug("Migrated emergency_mode flag")
+    def _migrate_basic_legacy_flags(self, legacy_data: dict):
+        """Migrate basic flags and settings from legacy configuration."""
+        basic_migrations = {
+            "emergency_mode": "emergency_mode",
+            "initialized": "initialized",
+            "migration_timestamp": "migration_timestamp",
+            "ml_model_path": "ml_model_path",
+            "api_cache": "api_cache",
+            "plugin_timeout": "plugins.timeout",
+        }
 
-        # Migrate initialized flag
-        if "initialized" in legacy_data:
-            self.set("initialized", legacy_data["initialized"])
-            logger.debug("Migrated initialized flag")
+        for old_key, new_key in basic_migrations.items():
+            if old_key in legacy_data:
+                self.set(new_key, legacy_data[old_key])
+                logger.debug(f"Migrated {old_key}")
 
-        # Migrate migration timestamp
-        if "migration_timestamp" in legacy_data:
-            self.set("migration_timestamp", legacy_data["migration_timestamp"])
-            logger.debug("Migrated migration_timestamp")
-
-        # Migrate ML model path
-        if "ml_model_path" in legacy_data:
-            self.set("ml_model_path", legacy_data["ml_model_path"])
-            logger.debug("Migrated ML model path")
-
-        # Migrate CLI configuration if present
+    def _migrate_cli_configuration(self, legacy_data: dict):
+        """Migrate CLI configuration from legacy data."""
         if "cli" in legacy_data:
             cli_config = legacy_data["cli"]
             current_cli = self.get("cli_configuration", {})
-            # Merge CLI settings
+
             if "profiles" in cli_config:
                 current_cli["profiles"] = {
                     **current_cli.get("profiles", {}),
@@ -1201,10 +1210,12 @@ class IntellicrackConfig:
                 )
             if "default_profile" in cli_config:
                 current_cli["default_profile"] = cli_config["default_profile"]
+
             self.set("cli_configuration", current_cli)
             logger.info("Migrated CLI configuration")
 
-        # Migrate runtime settings with more details
+    def _migrate_runtime_settings(self, legacy_data: dict):
+        """Migrate runtime settings from legacy configuration."""
         if "runtime" in legacy_data:
             runtime = legacy_data["runtime"]
             current_runtime = self.get("runtime", {})
@@ -1212,15 +1223,14 @@ class IntellicrackConfig:
                 self.set("runtime", runtime)
                 logger.info("Migrated runtime configuration")
             else:
-                # Merge runtime settings
                 merged_runtime = {**current_runtime, **runtime}
                 self.set("runtime", merged_runtime)
                 logger.info("Merged runtime configuration")
 
-        # Migrate model repositories
+    def _migrate_model_repositories(self, legacy_data: dict):
+        """Migrate model repositories from legacy configuration."""
         if "model_repositories" in legacy_data:
             repos = legacy_data["model_repositories"]
-            # Map to AI models section
             current_ai = self.get("ai_models", {})
             if "repositories" not in current_ai:
                 current_ai["repositories"] = repos
@@ -1229,13 +1239,8 @@ class IntellicrackConfig:
             self.set("ai_models", current_ai)
             logger.info("Migrated model repositories")
 
-        # Migrate API cache settings
-        if "api_cache" in legacy_data:
-            cache_config = legacy_data["api_cache"]
-            self.set("api_cache", cache_config)
-            logger.debug("Migrated API cache configuration")
-
-        # Migrate tool paths that may be different
+    def _migrate_tool_paths(self, legacy_data: dict):
+        """Migrate tool paths from legacy configuration."""
         tool_paths = {
             "ghidra_path": "tools.ghidra.path",
             "radare2_path": "tools.radare2.path",
@@ -1248,26 +1253,23 @@ class IntellicrackConfig:
                 tool_name = old_key.replace("_path", "")
                 current_tool = self.get(f"tools.{tool_name}", {})
                 if not current_tool.get("path"):
-                    # Only update if not already set
                     current_tool["path"] = legacy_data[old_key]
                     current_tool["available"] = bool(legacy_data[old_key])
                     current_tool["auto_discovered"] = False
                     self.set(f"tools.{tool_name}", current_tool)
                     logger.debug(f"Migrated {tool_name} path")
 
-        # Migrate directory paths with user-specific values
+    def _migrate_directory_settings(self, legacy_data: dict):
+        """Migrate directory settings from legacy configuration."""
         if "directories" in legacy_data:
             dirs = legacy_data["directories"]
             current_dirs = self.get("directories", {})
-            # Only update if paths look like user directories
             for dir_key, dir_path in dirs.items():
                 if dir_path and ("Users" in dir_path or "home" in dir_path):
-                    # This is a user-specific path, preserve it
                     current_dirs[dir_key] = dir_path
             self.set("directories", current_dirs)
             logger.debug("Migrated user-specific directory paths")
 
-        # Migrate download and plugin directories
         if "download_directory" in legacy_data:
             self.set("directories.downloads", legacy_data["download_directory"])
             logger.debug("Migrated download directory")
@@ -1276,39 +1278,26 @@ class IntellicrackConfig:
             self.set("directories.plugins", legacy_data["plugin_directory"])
             logger.debug("Migrated plugin directory")
 
-        # Migrate verify_checksums flag
+    def _migrate_security_settings(self, legacy_data: dict):
+        """Migrate security settings from legacy configuration."""
         if "verify_checksums" in legacy_data:
             self.set("security.verify_checksums", legacy_data["verify_checksums"])
             logger.debug("Migrated verify_checksums flag")
 
-        # Migrate detailed security settings (from third config)
         if "security" in legacy_data:
             security = legacy_data["security"]
             current_security = self.get("security", {})
 
-            # Migrate hashing settings
-            if "hashing" in security:
-                current_security["hashing"] = security["hashing"]
-                logger.debug("Migrated security hashing settings")
-
-            # Migrate subprocess settings
-            if "subprocess" in security:
-                current_security["subprocess"] = security["subprocess"]
-                logger.debug("Migrated security subprocess settings")
-
-            # Migrate serialization settings
-            if "serialization" in security:
-                current_security["serialization"] = security["serialization"]
-                logger.debug("Migrated security serialization settings")
-
-            # Migrate input validation settings
-            if "input_validation" in security:
-                current_security["input_validation"] = security["input_validation"]
-                logger.debug("Migrated security input_validation settings")
+            security_sections = ["hashing", "subprocess", "serialization", "input_validation"]
+            for section in security_sections:
+                if section in security:
+                    current_security[section] = security[section]
+                    logger.debug(f"Migrated security {section} settings")
 
             self.set("security", current_security)
 
-        # Migrate UI theme/scale fields (separate from ui section)
+    def _migrate_ui_preferences(self, legacy_data: dict):
+        """Migrate UI preferences from legacy configuration."""
         if "ui_theme" in legacy_data:
             self.set("ui_preferences.theme", legacy_data["ui_theme"])
             logger.debug("Migrated ui_theme")
@@ -1318,34 +1307,18 @@ class IntellicrackConfig:
             logger.debug("Migrated ui_scale")
 
         if "font_size" in legacy_data and isinstance(legacy_data["font_size"], str):
-            # Map string font sizes to numeric values
             font_size_map = {"Small": 9, "Medium": 10, "Large": 12}
             numeric_size = font_size_map.get(legacy_data["font_size"], 10)
             self.set("ui_preferences.font_size", numeric_size)
             logger.debug("Migrated font_size string to numeric")
 
-        # Migrate plugin timeout
-        if "plugin_timeout" in legacy_data:
-            self.set("plugins.timeout", legacy_data["plugin_timeout"])
-            logger.debug("Migrated plugin_timeout")
-
-        # Migrate c2 settings if present
-        if "c2" in legacy_data and legacy_data["c2"]:
-            self.set("c2", legacy_data["c2"])
-            logger.debug("Migrated c2 configuration")
-
-        # Migrate external_services if present
-        if "external_services" in legacy_data and legacy_data["external_services"]:
-            self.set("external_services", legacy_data["external_services"])
-            logger.debug("Migrated external_services configuration")
-
-        # Migrate api section if present
-        if "api" in legacy_data and legacy_data["api"]:
-            self.set("api", legacy_data["api"])
-            logger.debug("Migrated api configuration")
-
-        # Log summary of migration from this file
-        logger.info(f"Completed migration of settings from {legacy_path.name}")
+    def _migrate_external_services(self, legacy_data: dict):
+        """Migrate external services from legacy configuration."""
+        external_services = ["c2", "external_services", "api"]
+        for service in external_services:
+            if service in legacy_data and legacy_data[service]:
+                self.set(service, legacy_data[service])
+                logger.debug(f"Migrated {service} configuration")
 
     def _migrate_font_configs(self):
         """Migrate font configuration from assets to central config."""
@@ -1410,6 +1383,7 @@ class IntellicrackConfig:
 
         Returns:
             Value with environment variables expanded
+
         """
         if not isinstance(value, str):
             return value

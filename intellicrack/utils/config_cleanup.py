@@ -1,5 +1,4 @@
-"""
-Configuration cleanup utilities.
+"""Configuration cleanup utilities.
 
 This module provides utilities for removing unused configuration code
 after migration to the central IntellicrackConfig system.
@@ -84,14 +83,14 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
 
 
 def analyze_file(file_path: Path) -> Tuple[Set, Set, List, List]:
-    """
-    Analyze a Python file for unused configuration code.
+    """Analyze a Python file for unused configuration code.
 
     Args:
         file_path: Path to the Python file
 
     Returns:
         Tuple of (unused_imports, unused_methods, qsettings_usage, legacy_patterns)
+
     """
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -112,14 +111,14 @@ def analyze_file(file_path: Path) -> Tuple[Set, Set, List, List]:
 
 
 def find_unused_config_code(root_dir: Path) -> dict:
-    """
-    Find all unused configuration code in the project.
+    """Find all unused configuration code in the project.
 
     Args:
         root_dir: Root directory to search
 
     Returns:
         Dictionary mapping file paths to unused code information
+
     """
     results = {}
 
@@ -142,14 +141,14 @@ def find_unused_config_code(root_dir: Path) -> dict:
 
 
 def generate_cleanup_report(results: dict) -> str:
-    """
-    Generate a cleanup report from analysis results.
+    """Generate a cleanup report from analysis results.
 
     Args:
         results: Analysis results from find_unused_config_code
 
     Returns:
         Formatted report string
+
     """
     report = []
     report.append("=" * 60)
@@ -198,8 +197,7 @@ def generate_cleanup_report(results: dict) -> str:
 
 
 def remove_unused_imports(file_path: Path, unused_imports: Set[Tuple[str, int]]) -> bool:
-    """
-    Remove unused imports from a file.
+    """Remove unused imports from a file.
 
     Args:
         file_path: Path to the file
@@ -207,6 +205,7 @@ def remove_unused_imports(file_path: Path, unused_imports: Set[Tuple[str, int]])
 
     Returns:
         True if successful, False otherwise
+
     """
     try:
         with open(file_path, "r", encoding="utf-8") as f:
@@ -228,8 +227,7 @@ def remove_unused_imports(file_path: Path, unused_imports: Set[Tuple[str, int]])
 
 
 def cleanup_file(file_path: Path, auto_fix: bool = False) -> int:
-    """
-    Clean up unused configuration code in a file.
+    """Clean up unused configuration code in a file.
 
     Args:
         file_path: Path to the file to clean
@@ -237,6 +235,7 @@ def cleanup_file(file_path: Path, auto_fix: bool = False) -> int:
 
     Returns:
         Number of issues fixed
+
     """
     imports, methods, qsettings, legacy = analyze_file(file_path)
 

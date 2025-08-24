@@ -492,9 +492,9 @@ def run_command(command: str, timeout: int = 30) -> dict[str, Any]:
     try:
         logger.info("Running command: %s", command)
 
-        process = subprocess.run(
+        process = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
             shlex.split(command) if isinstance(command, str) else command,
-            capture_output=True, text=True, timeout=timeout, check=False
+            capture_output=True, text=True, timeout=timeout, check=False, shell=False  # Explicitly secure - using list format prevents shell injection
         )
 
         result["success"] = process.returncode == 0

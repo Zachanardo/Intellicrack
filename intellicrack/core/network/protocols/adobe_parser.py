@@ -1,4 +1,4 @@
-"""Adobe Licensing Protocol Parser and Response Generator
+"""Adobe Licensing Protocol Parser and Response Generator.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -32,7 +32,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class AdobeRequest:
-    """Adobe licensing request structure"""
+    """Adobe licensing request structure."""
 
     request_type: str
     client_id: str
@@ -47,7 +47,7 @@ class AdobeRequest:
 
 @dataclass
 class AdobeResponse:
-    """Adobe licensing response structure"""
+    """Adobe licensing response structure."""
 
     status: str
     response_code: int
@@ -58,7 +58,7 @@ class AdobeResponse:
 
 
 class AdobeLicensingParser:
-    """Real Adobe licensing protocol parser and response generator"""
+    """Real Adobe licensing protocol parser and response generator."""
 
     # Adobe request types
     ADOBE_REQUEST_TYPES = {
@@ -147,13 +147,13 @@ class AdobeLicensingParser:
         self._initialize_server_keys()
 
     def _initialize_server_keys(self):
-        """Initialize server cryptographic keys"""
+        """Initialize server cryptographic keys."""
         self.server_private_key = hashlib.sha256(b"adobe_server_private_key_2024").hexdigest()
         self.server_public_key = hashlib.sha256(b"adobe_server_public_key_2024").hexdigest()
         self.activation_seed = hashlib.sha256(str(time.time()).encode()).hexdigest()
 
     def parse_request(self, http_data: str) -> AdobeRequest | None:
-        """Parse incoming Adobe licensing HTTP request
+        """Parse incoming Adobe licensing HTTP request.
 
         Args:
             http_data: Raw HTTP request data
@@ -245,7 +245,7 @@ class AdobeLicensingParser:
     def _determine_request_type(
         self, request_line: str, headers: dict[str, str], data: dict[str, Any]
     ) -> str:
-        """Determine Adobe request type from URL and data"""
+        """Determine Adobe request type from URL and data."""
         request_line_lower = request_line.lower()
 
         # Check headers for additional context
@@ -294,7 +294,7 @@ class AdobeLicensingParser:
     def _extract_field(
         self, data: dict[str, Any], headers: dict[str, str], field_names: list[str]
     ) -> str | None:
-        """Extract field from request data or headers"""
+        """Extract field from request data or headers."""
         # Check data first
         for field_name in field_names:
             if field_name in data:
@@ -308,7 +308,7 @@ class AdobeLicensingParser:
         return None
 
     def _parse_form_data(self, body: str) -> dict[str, Any]:
-        """Parse form-encoded data"""
+        """Parse form-encoded data."""
         data = {}
         try:
             pairs = body.split("&")
@@ -321,7 +321,7 @@ class AdobeLicensingParser:
         return data
 
     def generate_response(self, request: AdobeRequest) -> AdobeResponse:
-        """Generate appropriate Adobe response based on request
+        """Generate appropriate Adobe response based on request.
 
         Args:
             request: Parsed Adobe request
@@ -355,7 +355,7 @@ class AdobeLicensingParser:
         return self._handle_unknown_request(request)
 
     def _handle_activation(self, request: AdobeRequest) -> AdobeResponse:
-        """Handle Adobe product activation"""
+        """Handle Adobe product activation."""
         product_id = request.product_id or "UNKNOWN"
 
         # Validate product
@@ -428,7 +428,7 @@ class AdobeLicensingParser:
         )
 
     def _handle_verification(self, request: AdobeRequest) -> AdobeResponse:
-        """Handle license verification"""
+        """Handle license verification."""
         activation_id = request.activation_id
 
         if activation_id and activation_id in self.active_activations:
@@ -484,7 +484,7 @@ class AdobeLicensingParser:
         )
 
     def _handle_deactivation(self, request: AdobeRequest) -> AdobeResponse:
-        """Handle product deactivation"""
+        """Handle product deactivation."""
         activation_id = request.activation_id
 
         if activation_id in self.active_activations:
@@ -503,7 +503,7 @@ class AdobeLicensingParser:
         )
 
     def _handle_heartbeat(self, request: AdobeRequest) -> AdobeResponse:
-        """Handle license heartbeat"""
+        """Handle license heartbeat."""
         # Extract heartbeat-specific information from request
         app_version = request.license_data.get("app_version", "1.0")
         client_id = request.activation_data.get("client_id", "unknown")
@@ -538,7 +538,7 @@ class AdobeLicensingParser:
         )
 
     def _handle_feature_check(self, request: AdobeRequest) -> AdobeResponse:
-        """Handle feature availability check"""
+        """Handle feature availability check."""
         product_id = request.product_id or "UNKNOWN"
 
         if product_id in self.ADOBE_PRODUCTS:
@@ -560,7 +560,7 @@ class AdobeLicensingParser:
         )
 
     def _handle_trial_conversion(self, request: AdobeRequest) -> AdobeResponse:
-        """Handle trial to paid conversion"""
+        """Handle trial to paid conversion."""
         return AdobeResponse(
             status="success",
             response_code=200,
@@ -579,7 +579,7 @@ class AdobeLicensingParser:
         )
 
     def _handle_license_recovery(self, request: AdobeRequest) -> AdobeResponse:
-        """Handle license recovery"""
+        """Handle license recovery."""
         # Generate new activation for recovery
         activation_id = str(uuid.uuid4()).upper()
 
@@ -600,7 +600,7 @@ class AdobeLicensingParser:
         )
 
     def _handle_machine_binding(self, request: AdobeRequest) -> AdobeResponse:
-        """Handle machine binding request"""
+        """Handle machine binding request."""
         machine_signature = self._generate_machine_signature(request)
 
         return AdobeResponse(
@@ -619,7 +619,7 @@ class AdobeLicensingParser:
         )
 
     def _handle_subscription_check(self, request: AdobeRequest) -> AdobeResponse:
-        """Handle subscription status check"""
+        """Handle subscription status check."""
         # Extract subscription information from request
         user_id = request.activation_data.get("user_id", str(uuid.uuid4()))
         app_id = request.license_data.get("app_id", request.product_id)
@@ -660,7 +660,7 @@ class AdobeLicensingParser:
         )
 
     def _handle_usage_report(self, request: AdobeRequest) -> AdobeResponse:
-        """Handle usage reporting"""
+        """Handle usage reporting."""
         # Extract usage data from request
         app_usage = request.license_data.get("usage_data", {})
         feature_usage = request.activation_data.get("features_used", [])
@@ -695,7 +695,7 @@ class AdobeLicensingParser:
         )
 
     def _handle_unknown_request(self, request: AdobeRequest) -> AdobeResponse:
-        """Handle unknown request type"""
+        """Handle unknown request type."""
         self.logger.warning(f"Unknown Adobe request type: {request.request_type}")
         return AdobeResponse(
             status="error",
@@ -707,19 +707,19 @@ class AdobeLicensingParser:
         )
 
     def _generate_machine_signature(self, request: AdobeRequest) -> str:
-        """Generate machine signature from request data"""
+        """Generate machine signature from request data."""
         signature_data = f"{request.machine_id}:{request.client_id}:{request.product_id}"
         return hashlib.sha256(signature_data.encode()).hexdigest().upper()
 
     def _generate_verification_signature(self, request: AdobeRequest) -> str:
-        """Generate verification signature"""
+        """Generate verification signature."""
         verification_data = f"{request.activation_id}:{request.machine_id}:{time.time()}"
         return hashlib.sha256(
             (verification_data + self.server_private_key).encode(),
         ).hexdigest()
 
     def _calculate_expiry_date(self, product: dict[str, Any]) -> str:
-        """Calculate license expiry date"""
+        """Calculate license expiry date."""
         if product["subscription_required"]:
             # Subscription licenses expire in 1 year
             expiry_time = time.time() + (365 * 24 * 3600)
@@ -728,7 +728,7 @@ class AdobeLicensingParser:
         return "permanent"
 
     def serialize_response(self, response: AdobeResponse) -> str:
-        """Serialize Adobe response to HTTP response
+        """Serialize Adobe response to HTTP response.
 
         Args:
             response: Adobe response object

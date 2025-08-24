@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -92,16 +92,19 @@ except ImportError as e:
     # ELF constants
     class E_FLAGS:  # noqa: N801
         """ELF header flags."""
+
         pass
 
     class P_FLAGS:  # noqa: N801
         """Program header flags."""
+
         PF_X = 0x1  # Execute
         PF_W = 0x2  # Write
         PF_R = 0x4  # Read
 
     class SH_FLAGS:  # noqa: N801
         """Section header flags."""
+
         SHF_WRITE = 0x1
         SHF_ALLOC = 0x2
         SHF_EXECINSTR = 0x4
@@ -115,6 +118,7 @@ except ImportError as e:
 
     class SHN_INDICES:  # noqa: N801
         """Special section indices."""
+
         SHN_UNDEF = 0
         SHN_ABS = 0xFFF1
         SHN_COMMON = 0xFFF2
@@ -122,6 +126,7 @@ except ImportError as e:
 
     class ENUM_E_TYPE:  # noqa: N801
         """ELF file types."""
+
         ET_NONE = 0
         ET_REL = 1
         ET_EXEC = 2
@@ -130,6 +135,7 @@ except ImportError as e:
 
     class ENUM_SH_TYPE:  # noqa: N801
         """Section types."""
+
         SHT_NULL = 0
         SHT_PROGBITS = 1
         SHT_SYMTAB = 2
@@ -145,6 +151,7 @@ except ImportError as e:
 
     class ENUM_D_TAG:  # noqa: N801
         """Dynamic section tags."""
+
         DT_NULL = 0
         DT_NEEDED = 1
         DT_PLTRELSZ = 2
@@ -173,14 +180,17 @@ except ImportError as e:
     # Exception classes
     class ELFError(Exception):
         """Base ELF error."""
+
         pass
 
     class ELFParseError(ELFError):
         """ELF parsing error."""
+
         pass
 
     class DWARFError(Exception):
         """DWARF error."""
+
         pass
 
     # Utility functions
@@ -201,6 +211,7 @@ except ImportError as e:
         """Container for parsed structures."""
 
         def __init__(self, **kwargs):
+            """Initialize container with keyword arguments as both dict entries and attributes."""
             super().__init__(**kwargs)
             self.__dict__.update(kwargs)
 
@@ -208,6 +219,7 @@ except ImportError as e:
         """Structure parser."""
 
         def __init__(self, name, *fields):
+            """Initialize structure parser with name and field definitions."""
             self.name = name
             self.fields = fields
 
@@ -995,6 +1007,7 @@ except ImportError as e:
     # Create module references for compatibility
     class FallbackElftools:
         """Fallback elftools module."""
+
         pass
 
     elftools = FallbackElftools()

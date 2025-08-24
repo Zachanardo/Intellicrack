@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -64,7 +64,7 @@ except ImportError:
 
 
 class OptimizationType(Enum):
-    """Types of optimizations"""
+    """Types of optimizations."""
 
     MEMORY = "memory"
     CPU = "cpu"
@@ -77,7 +77,7 @@ class OptimizationType(Enum):
 
 
 class PerformanceLevel(Enum):
-    """Performance optimization levels"""
+    """Performance optimization levels."""
 
     MINIMAL = "minimal"
     BALANCED = "balanced"
@@ -86,7 +86,7 @@ class PerformanceLevel(Enum):
 
 
 class ResourceType(Enum):
-    """Resource types for monitoring"""
+    """Resource types for monitoring."""
 
     CPU_USAGE = "cpu_usage"
     MEMORY_USAGE = "memory_usage"
@@ -100,7 +100,7 @@ class ResourceType(Enum):
 
 @dataclass
 class PerformanceMetric:
-    """Performance metric data point"""
+    """Performance metric data point."""
 
     timestamp: float
     resource_type: ResourceType
@@ -111,7 +111,7 @@ class PerformanceMetric:
 
 @dataclass
 class OptimizationResult:
-    """Result of optimization operation"""
+    """Result of optimization operation."""
 
     optimization_type: OptimizationType
     success: bool
@@ -123,7 +123,7 @@ class OptimizationResult:
 
 @dataclass
 class ResourcePool:
-    """Resource pool configuration"""
+    """Resource pool configuration."""
 
     pool_type: str
     initial_size: int
@@ -137,7 +137,7 @@ class ResourcePool:
 
 
 class MemoryPool:
-    """Advanced memory pool for binary data processing"""
+    """Advanced memory pool for binary data processing."""
 
     def __init__(self, initial_buffers: int = 10, buffer_size: int = 1024 * 1024):
         """Initialize memory pool with pre-allocated buffers for reuse."""
@@ -153,7 +153,7 @@ class MemoryPool:
             self.available_buffers.append(buffer)
 
     def get_buffer(self, required_size: int = None) -> bytearray:
-        """Get buffer from pool"""
+        """Get buffer from pool."""
         with self.lock:
             if required_size and required_size > self.buffer_size:
                 # Create larger buffer for special cases
@@ -173,7 +173,7 @@ class MemoryPool:
             return buffer
 
     def return_buffer(self, buffer: bytearray):
-        """Return buffer to pool"""
+        """Return buffer to pool."""
         with self.lock:
             buffer_id = id(buffer)
             if buffer_id in self.in_use_buffers:
@@ -186,7 +186,7 @@ class MemoryPool:
                     self.available_buffers.append(buffer)
 
     def predict_required_buffers(self) -> int:
-        """Predict required buffer count based on history"""
+        """Predict required buffer count based on history."""
         if len(self.allocation_history) < 10:
             return 10
 
@@ -194,7 +194,7 @@ class MemoryPool:
         return int(np.percentile(recent_peaks, 90) * 1.2)
 
     def optimize_pool_size(self):
-        """Optimize pool size based on usage patterns"""
+        """Optimize pool size based on usage patterns."""
         required = self.predict_required_buffers()
         current_available = len(self.available_buffers)
 
@@ -212,7 +212,7 @@ class MemoryPool:
 
 
 class CacheManager:
-    """Intelligent caching system with LRU and popularity scoring"""
+    """Intelligent caching system with LRU and popularity scoring."""
 
     def __init__(self, max_size: int = 1000, max_memory: int = 512 * 1024 * 1024):
         """Initialize cache manager with size and memory limits."""
@@ -230,7 +230,7 @@ class CacheManager:
         self.evictions = 0
 
     def _calculate_size(self, obj: Any) -> int:
-        """Calculate object size in memory"""
+        """Calculate object size in memory."""
         try:
             if hasattr(obj, "__sizeof__"):
                 return obj.__sizeof__()
@@ -239,7 +239,7 @@ class CacheManager:
             return 1024  # Default estimate
 
     def _calculate_score(self, key: str) -> float:
-        """Calculate popularity score for cache item"""
+        """Calculate popularity score for cache item."""
         access_count = self.access_counts[key]
         last_access_time = 0
 
@@ -256,7 +256,7 @@ class CacheManager:
         return frequency_score * 0.7 + recency_score * 0.3
 
     def get(self, key: str, default=None) -> Any:
-        """Get item from cache"""
+        """Get item from cache."""
         with self.lock:
             if key in self.cache:
                 self.hits += 1
@@ -274,7 +274,7 @@ class CacheManager:
             return default
 
     def put(self, key: str, value: Any) -> bool:
-        """Put item in cache"""
+        """Put item in cache."""
         with self.lock:
             value_size = self._calculate_size(value)
 
@@ -294,7 +294,7 @@ class CacheManager:
             return True
 
     def _evict_least_valuable(self) -> bool:
-        """Evict least valuable cache item"""
+        """Evict least valuable cache item."""
         if not self.cache:
             return False
 
@@ -324,7 +324,7 @@ class CacheManager:
         return False
 
     def get_stats(self) -> dict[str, Any]:
-        """Get cache statistics"""
+        """Get cache statistics."""
         total_requests = self.hits + self.misses
         hit_rate = self.hits / total_requests if total_requests > 0 else 0.0
 
@@ -340,7 +340,7 @@ class CacheManager:
 
 
 class ThreadPoolOptimizer:
-    """Dynamic thread pool optimization using Little's Law"""
+    """Dynamic thread pool optimization using Little's Law."""
 
     def __init__(self, initial_workers: int = None):
         """Initialize thread pool optimizer with adaptive worker management."""
@@ -357,7 +357,7 @@ class ThreadPoolOptimizer:
         self.lock = threading.Lock()
 
     def submit(self, fn: Callable, *args, **kwargs):
-        """Submit task and collect metrics"""
+        """Submit task and collect metrics."""
         start_time = time.time()
         queue_depth = len(self.executor._threads) - len(
             [t for t in self.executor._threads if not t._tstate_lock.acquire(False)]
@@ -384,7 +384,7 @@ class ThreadPoolOptimizer:
         return future
 
     def _optimize_pool_size(self):
-        """Optimize thread pool size using Little's Law"""
+        """Optimize thread pool size using Little's Law."""
         if len(self.response_times) < 10 or len(self.queue_depths) < 10:
             return
 
@@ -415,7 +415,7 @@ class ThreadPoolOptimizer:
             threading.Thread(target=lambda: old_executor.shutdown(wait=True)).start()
 
     def get_stats(self) -> dict[str, Any]:
-        """Get thread pool statistics"""
+        """Get thread pool statistics."""
         with self.lock:
             return {
                 "current_workers": self.executor._max_workers,
@@ -429,7 +429,7 @@ class ThreadPoolOptimizer:
 
 
 class GPUOptimizer:
-    """GPU memory and computation optimizer"""
+    """GPU memory and computation optimizer."""
 
     def __init__(self):
         """Initialize GPU optimizer with device detection and memory tracking."""
@@ -439,7 +439,7 @@ class GPUOptimizer:
         self.optimal_batch_sizes = {}
 
     def get_optimal_batch_size(self, model_name: str, input_shape: tuple) -> int:
-        """Calculate optimal batch size for GPU processing"""
+        """Calculate optimal batch size for GPU processing."""
         if not self.gpu_available:
             return 1
 
@@ -465,7 +465,7 @@ class GPUOptimizer:
         return optimal_batch
 
     def optimize_memory(self):
-        """Optimize GPU memory usage"""
+        """Optimize GPU memory usage."""
         if not self.gpu_available:
             return
 
@@ -487,7 +487,7 @@ class GPUOptimizer:
                 }
 
     def get_stats(self) -> dict[str, Any]:
-        """Get GPU statistics"""
+        """Get GPU statistics."""
         if not self.gpu_available:
             return {"gpu_available": False}
 
@@ -501,7 +501,7 @@ class GPUOptimizer:
 
 
 class IOOptimizer:
-    """I/O operations optimizer with read-ahead and compression detection"""
+    """I/O operations optimizer with read-ahead and compression detection."""
 
     def __init__(self):
         """Initialize IO optimizer with read-ahead caching and pattern analysis."""
@@ -510,7 +510,7 @@ class IOOptimizer:
         self.file_access_patterns = defaultdict(list)
 
     def optimized_read(self, file_path: str, chunk_size: int = None) -> bytes:
-        """Optimized file reading with read-ahead"""
+        """Optimized file reading with read-ahead."""
         path_obj = Path(file_path)
 
         if not path_obj.exists():
@@ -540,7 +540,7 @@ class IOOptimizer:
                 return mm[:]
 
     def detect_compression(self, data: bytes) -> tuple[bool, str]:
-        """Detect if data is compressed and return format"""
+        """Detect if data is compressed and return format."""
         if len(data) < 4:
             return False, "unknown"
 
@@ -569,7 +569,7 @@ class IOOptimizer:
         return False, "none"
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data"""
+        """Calculate Shannon entropy of data."""
         if len(data) == 0:
             return 0
 
@@ -588,7 +588,7 @@ class IOOptimizer:
         return entropy
 
     def optimize_read_ahead(self, file_path: str):
-        """Optimize read-ahead size based on access patterns"""
+        """Optimize read-ahead size based on access patterns."""
         patterns = self.file_access_patterns.get(file_path, [])
 
         if len(patterns) < 3:
@@ -606,7 +606,7 @@ class IOOptimizer:
 
 
 class DatabaseOptimizer:
-    """Database performance optimizer for SQLite"""
+    """Database performance optimizer for SQLite."""
 
     def __init__(self, db_path: str):
         """Initialize database optimizer with connection pooling and query caching."""
@@ -617,7 +617,7 @@ class DatabaseOptimizer:
         self.query_stats = defaultdict(list)
 
     def get_connection(self) -> sqlite3.Connection:
-        """Get optimized database connection"""
+        """Get optimized database connection."""
         if self.connection_pool:
             return self.connection_pool.pop()
 
@@ -637,7 +637,7 @@ class DatabaseOptimizer:
         return conn
 
     def return_connection(self, conn: sqlite3.Connection):
-        """Return connection to pool"""
+        """Return connection to pool."""
         if len(self.connection_pool) < self.max_connections:
             self.connection_pool.append(conn)
         else:
@@ -645,7 +645,7 @@ class DatabaseOptimizer:
 
     @contextmanager
     def get_cursor(self):
-        """Context manager for database operations"""
+        """Context manager for database operations."""
         conn = self.get_connection()
         try:
             cursor = conn.cursor()
@@ -658,7 +658,7 @@ class DatabaseOptimizer:
             self.return_connection(conn)
 
     def execute_optimized(self, query: str, params=None) -> list[tuple]:
-        """Execute query with caching and statistics"""
+        """Execute query with caching and statistics."""
         query_hash = hashlib.sha256(f"{query}{params}".encode()).hexdigest()
 
         # Check cache for SELECT queries
@@ -699,7 +699,7 @@ class DatabaseOptimizer:
         return result
 
     def optimize_indices(self):
-        """Analyze and create optimal indices"""
+        """Analyze and create optimal indices."""
         with self.get_cursor() as cursor:
             # Get table information
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
@@ -734,7 +734,7 @@ class DatabaseOptimizer:
                         pass  # Index might already exist or column might not exist
 
     def get_stats(self) -> dict[str, Any]:
-        """Get database performance statistics"""
+        """Get database performance statistics."""
         total_queries = sum(len(stats) for stats in self.query_stats.values())
         avg_execution_time = 0
 
@@ -761,7 +761,7 @@ class DatabaseOptimizer:
 
 
 class PerformanceProfiler:
-    """Real-time performance profiler"""
+    """Real-time performance profiler."""
 
     def __init__(self):
         """Initialize performance profiler with metrics tracking and system monitoring."""
@@ -776,7 +776,7 @@ class PerformanceProfiler:
         self.last_io_counters = self.process.io_counters()
 
     def start_profiling(self):
-        """Start performance profiling"""
+        """Start performance profiling."""
         self.profiling_active = True
         tracemalloc.start()
 
@@ -784,7 +784,7 @@ class PerformanceProfiler:
         threading.Thread(target=self._monitor_system, daemon=True).start()
 
     def stop_profiling(self) -> dict[str, Any]:
-        """Stop profiling and return results"""
+        """Stop profiling and return results."""
         self.profiling_active = False
 
         # Get memory snapshot
@@ -807,7 +807,7 @@ class PerformanceProfiler:
         }
 
     def _monitor_system(self):
-        """Background system monitoring"""
+        """Background system monitoring."""
         while self.profiling_active:
             try:
                 # CPU metrics
@@ -875,7 +875,7 @@ class PerformanceProfiler:
                 time.sleep(5)
 
     def _get_metrics_summary(self) -> dict[str, Any]:
-        """Get summary of collected metrics"""
+        """Get summary of collected metrics."""
         summary = {}
 
         with self.lock:
@@ -915,7 +915,7 @@ class PerformanceProfiler:
         return summary
 
     def get_current_metrics(self) -> dict[str, float]:
-        """Get current system metrics"""
+        """Get current system metrics."""
         return {
             "cpu_percent": self.process.cpu_percent(),
             "memory_percent": self.process.memory_percent(),
@@ -927,7 +927,7 @@ class PerformanceProfiler:
 
 
 class AdaptiveOptimizer:
-    """Machine learning-based adaptive optimizer"""
+    """Machine learning-based adaptive optimizer."""
 
     def __init__(self):
         """Initialize adaptive optimizer with learning-based configuration tuning."""
@@ -941,7 +941,7 @@ class AdaptiveOptimizer:
         self.learning_rate = 0.1
 
     def learn_from_metrics(self, metrics: dict[str, float], performance_score: float):
-        """Learn optimal configuration from performance metrics"""
+        """Learn optimal configuration from performance metrics."""
         # Simple Q-learning approach for configuration optimization
 
         # Record experience
@@ -962,7 +962,7 @@ class AdaptiveOptimizer:
             self._update_configuration()
 
     def _update_configuration(self):
-        """Update configuration based on historical performance"""
+        """Update configuration based on historical performance."""
         if len(self.optimization_history) < 2:
             return
 
@@ -984,7 +984,7 @@ class AdaptiveOptimizer:
             self.current_config[key] = max(1, int(adjusted_value))
 
     def get_recommendations(self) -> dict[str, Any]:
-        """Get optimization recommendations"""
+        """Get optimization recommendations."""
         if not self.optimization_history:
             return {}
 
@@ -1030,7 +1030,7 @@ class AdaptiveOptimizer:
 
 
 class PerformanceOptimizer:
-    """Main performance optimization engine"""
+    """Main performance optimization engine."""
 
     def __init__(self, config: dict[str, Any] = None):
         """Initialize performance optimizer with all optimization components."""
@@ -1061,7 +1061,7 @@ class PerformanceOptimizer:
         self.start_monitoring()
 
     def start_monitoring(self):
-        """Start performance monitoring"""
+        """Start performance monitoring."""
         self.is_monitoring = True
         self.profiler.start_profiling()
 
@@ -1069,12 +1069,12 @@ class PerformanceOptimizer:
         threading.Thread(target=self._background_optimization, daemon=True).start()
 
     def stop_monitoring(self):
-        """Stop performance monitoring"""
+        """Stop performance monitoring."""
         self.is_monitoring = False
         return self.profiler.stop_profiling()
 
     def _background_optimization(self):
-        """Background optimization loop"""
+        """Background optimization loop."""
         while self.is_monitoring:
             try:
                 # Collect current metrics
@@ -1103,7 +1103,7 @@ class PerformanceOptimizer:
                 time.sleep(60)  # Wait longer on error
 
     def _calculate_performance_score(self, metrics: dict[str, float]) -> float:
-        """Calculate overall performance score (0-1)"""
+        """Calculate overall performance score (0-1)."""
         # Normalize metrics to 0-1 scale (higher is better)
         cpu_score = max(0, 1 - metrics.get("cpu_percent", 0) / 100)
         memory_score = max(0, 1 - metrics.get("memory_percent", 0) / 100)
@@ -1114,7 +1114,7 @@ class PerformanceOptimizer:
         return min(1.0, max(0.0, score))
 
     def _apply_automatic_optimizations(self, metrics: dict[str, float]):
-        """Apply automatic optimizations based on current metrics"""
+        """Apply automatic optimizations based on current metrics."""
         memory_percent = metrics.get("memory_percent", 0)
         cpu_percent = metrics.get("cpu_percent", 0)
 
@@ -1131,7 +1131,7 @@ class PerformanceOptimizer:
                 self.thread_optimizer.executor._max_workers = max(2, current_workers - 1)
 
     def optimize_component(self, component_type: OptimizationType) -> OptimizationResult:
-        """Optimize specific component"""
+        """Optimize specific component."""
         before_metrics = self.profiler.get_current_metrics()
         success = False
         improvement = 0.0
@@ -1198,7 +1198,7 @@ class PerformanceOptimizer:
         return result
 
     def get_performance_report(self) -> dict[str, Any]:
-        """Generate comprehensive performance report"""
+        """Generate comprehensive performance report."""
         current_metrics = self.profiler.get_current_metrics()
         cache_stats = self.cache_manager.get_stats()
         thread_stats = self.thread_optimizer.get_stats()
@@ -1231,7 +1231,7 @@ class PerformanceOptimizer:
         }
 
     def set_optimization_level(self, level: PerformanceLevel):
-        """Set optimization aggressiveness level"""
+        """Set optimization aggressiveness level."""
         self.optimization_level = level
 
         # Adjust component configurations based on level
@@ -1252,7 +1252,7 @@ class PerformanceOptimizer:
             self.memory_pool = MemoryPool(initial_buffers=50)
 
     def optimize_all(self) -> dict[OptimizationType, OptimizationResult]:
-        """Optimize all components"""
+        """Optimize all components."""
         results = {}
 
         optimization_types = [
@@ -1274,7 +1274,7 @@ class PerformanceOptimizer:
 
     @contextmanager
     def performance_context(self, component_name: str):
-        """Context manager for performance tracking"""
+        """Context manager for performance tracking."""
         start_time = time.time()
         start_metrics = self.profiler.get_current_metrics()
 
@@ -1302,7 +1302,7 @@ _global_optimizer = None
 
 
 def get_performance_optimizer(config: dict[str, Any] = None) -> PerformanceOptimizer:
-    """Get global performance optimizer instance"""
+    """Get global performance optimizer instance."""
     global _global_optimizer
 
     if _global_optimizer is None:
@@ -1312,7 +1312,7 @@ def get_performance_optimizer(config: dict[str, Any] = None) -> PerformanceOptim
 
 
 def performance_monitor(component_name: str = "default"):
-    """Decorator for automatic performance monitoring"""
+    """Decorator for automatic performance monitoring."""
 
     def decorator(func):
         @functools.wraps(func)
@@ -1329,19 +1329,19 @@ def performance_monitor(component_name: str = "default"):
 
 # Utility functions for common optimizations
 def optimize_memory():
-    """Quick memory optimization"""
+    """Quick memory optimization."""
     optimizer = get_performance_optimizer()
     return optimizer.optimize_component(OptimizationType.MEMORY)
 
 
 def optimize_cpu():
-    """Quick CPU optimization"""
+    """Quick CPU optimization."""
     optimizer = get_performance_optimizer()
     return optimizer.optimize_component(OptimizationType.CPU)
 
 
 def get_performance_stats() -> dict[str, Any]:
-    """Get current performance statistics"""
+    """Get current performance statistics."""
     optimizer = get_performance_optimizer()
     return optimizer.get_performance_report()
 

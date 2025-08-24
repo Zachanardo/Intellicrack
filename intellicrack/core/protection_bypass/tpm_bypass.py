@@ -1,4 +1,4 @@
-"""TPM Protection Bypass Module
+"""TPM Protection Bypass Module.
 
 Copyright (C) 2025 Zachary Flint
 

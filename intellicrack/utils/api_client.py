@@ -1,4 +1,4 @@
-"""API Client Utilities
+"""API Client Utilities.
 
 Provides async/await based API client functionality with proper error handling
 and environment-based configuration.

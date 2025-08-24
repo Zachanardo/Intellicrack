@@ -94,6 +94,7 @@ class ScriptTester:
     """Automated testing framework for generated scripts."""
 
     def __init__(self):
+        """Initialize script tester with LLM interface for validation."""
         self.llm_interface = LLMScriptInterface()
 
     def validate_script(
@@ -349,6 +350,7 @@ class ScriptVersionManager:
     """Manages script versions and evolution history."""
 
     def __init__(self, base_path: str):
+        """Initialize version manager with base path for version storage."""
         self.base_path = Path(base_path)
         self.versions_dir = self.base_path / "versions"
         self.versions_dir.mkdir(parents=True, exist_ok=True)
@@ -474,6 +476,7 @@ class AIScriptEditor:
     """Advanced AI-powered script editor with iterative improvement capabilities."""
 
     def __init__(self):
+        """Initialize AI script editor with all necessary components for advanced editing."""
         self.llm_interface = LLMScriptInterface()
         self.prompt_engineer = PromptEngineer()
         self.tester = ScriptTester()

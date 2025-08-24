@@ -44,7 +44,7 @@ from intellicrack.logger import logger
 
 
 class CPUMonitorWorker(QObject):
-    """Worker thread for collecting CPU metrics"""
+    """Worker thread for collecting CPU metrics."""
 
     cpu_data_ready = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
@@ -56,16 +56,16 @@ class CPUMonitorWorker(QObject):
         self.update_interval = 1000  # Default 1 second
 
     def start_monitoring(self):
-        """Start the monitoring process"""
+        """Start the monitoring process."""
         self.running = True
         self._monitor_loop()
 
     def stop_monitoring(self):
-        """Stop the monitoring process"""
+        """Stop the monitoring process."""
         self.running = False
 
     def _monitor_loop(self):
-        """Main monitoring loop"""
+        """Main monitoring loop."""
         while self.running:
             try:
                 cpu_data = self._collect_cpu_data()
@@ -78,7 +78,7 @@ class CPUMonitorWorker(QObject):
                 self.thread().msleep(self.update_interval)
 
     def _collect_cpu_data(self) -> dict[str, Any]:
-        """Collect comprehensive CPU data"""
+        """Collect comprehensive CPU data."""
         # Get CPU info
         cpu_info = {
             "cpu_count_physical": psutil.cpu_count(logical=False),
@@ -123,7 +123,7 @@ class CPUMonitorWorker(QObject):
         return cpu_info
 
     def _get_cpu_model(self) -> str:
-        """Get CPU model name"""
+        """Get CPU model name."""
         try:
             if platform.system() == "Windows":
                 import wmi
@@ -151,7 +151,7 @@ class CPUMonitorWorker(QObject):
 
 
 class CPUStatusWidget(QWidget):
-    """CPU status monitoring widget"""
+    """CPU status monitoring widget."""
 
     def __init__(self, parent=None):
         """Initialize CPU status widget with performance monitoring and CPU detection."""
@@ -164,7 +164,7 @@ class CPUStatusWidget(QWidget):
         self.customContextMenuRequested.connect(self._show_context_menu)
 
     def setup_ui(self):
-        """Setup the user interface"""
+        """Setup the user interface."""
         layout = QVBoxLayout(self)
 
         # CPU Info Group
@@ -241,7 +241,7 @@ class CPUStatusWidget(QWidget):
         layout.addStretch()
 
     def setup_monitoring(self):
-        """Setup CPU monitoring thread"""
+        """Setup CPU monitoring thread."""
         self.monitor_thread = QThread()
         self.monitor_worker = CPUMonitorWorker()
         self.monitor_worker.moveToThread(self.monitor_thread)
@@ -252,24 +252,24 @@ class CPUStatusWidget(QWidget):
         self.monitor_worker.error_occurred.connect(self.handle_error)
 
     def start_monitoring(self):
-        """Start CPU monitoring"""
+        """Start CPU monitoring."""
         if not self.monitor_thread.isRunning():
             self.monitor_thread.start()
 
     def stop_monitoring(self):
-        """Stop CPU monitoring"""
+        """Stop CPU monitoring."""
         if self.monitor_thread.isRunning():
             self.monitor_worker.stop_monitoring()
             self.monitor_thread.quit()
             self.monitor_thread.wait()
 
     def set_refresh_interval(self, interval_ms: int):
-        """Set the refresh interval for CPU monitoring"""
+        """Set the refresh interval for CPU monitoring."""
         if hasattr(self, 'monitor_worker'):
             self.monitor_worker.update_interval = interval_ms
 
     def update_cpu_data(self, data: dict[str, Any]):
-        """Update CPU data from monitor"""
+        """Update CPU data from monitor."""
         self.cpu_data = data
 
         # Update CPU info
@@ -305,7 +305,7 @@ class CPUStatusWidget(QWidget):
         self.update_processes_table(data.get("top_processes", []))
 
     def update_core_usage(self, core_percents: list[float]):
-        """Update per-core CPU usage display"""
+        """Update per-core CPU usage display."""
         # Create core bars if needed
         while len(self.core_bars) < len(core_percents):
             row = len(self.core_bars) // 2
@@ -331,7 +331,7 @@ class CPUStatusWidget(QWidget):
                 self._set_bar_color(bar, percent)
 
     def update_processes_table(self, processes: list[dict[str, Any]]):
-        """Update top processes table"""
+        """Update top processes table."""
         self.processes_table.setRowCount(len(processes))
 
         for i, proc in enumerate(processes):
@@ -348,7 +348,7 @@ class CPUStatusWidget(QWidget):
             self.processes_table.setItem(i, 3, QTableWidgetItem(f"{proc['memory_percent']:.1f}"))
 
     def _set_bar_color(self, bar: QProgressBar, value: float):
-        """Set progress bar color based on value"""
+        """Set progress bar color based on value."""
         if value >= 90:
             bar.setStyleSheet("QProgressBar::chunk { background-color: #dc3545; }")
         elif value >= 70:
@@ -357,5 +357,5 @@ class CPUStatusWidget(QWidget):
             bar.setStyleSheet("QProgressBar::chunk { background-color: #28a745; }")
 
     def handle_error(self, error_msg: str):
-        """Handle monitoring errors"""
+        """Handle monitoring errors."""
         print(f"CPU monitoring error: {error_msg}")

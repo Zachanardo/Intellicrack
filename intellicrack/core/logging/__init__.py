@@ -1,4 +1,4 @@
-"""Logging Package for Intellicrack
+"""Logging Package for Intellicrack.
 
 Provides audit logging and monitoring capabilities.
 

@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -665,7 +665,7 @@ class FallbackKerasLayers:
             # Apply dropout mask
             output_data = []
             for val in inputs.data:
-                if random.random() > self.rate:
+                if random.random() > self.rate:  # noqa: S311 - ML dropout layer mathematical randomization
                     output_data.append(val / (1 - self.rate))
                 else:
                     output_data.append(0)
@@ -857,7 +857,7 @@ def random_uniform(shape, minval=0, maxval=1, dtype="float32"):
     size = 1
     for dim in shape:
         size *= dim
-    data = [random.uniform(minval, maxval) for _ in range(size)]
+    data = [random.uniform(minval, maxval) for _ in range(size)]  # noqa: S311 - ML tensor mathematical data generation
     return FallbackTensor(data, shape=shape, dtype=dtype)
 
 

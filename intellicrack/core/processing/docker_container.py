@@ -107,7 +107,7 @@ class DockerContainer(BaseSnapshotHandler):
             if not docker_path:
                 raise RuntimeError("Docker command not found in PATH")
 
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [docker_path, "info"],
                 capture_output=True,
                 text=True,

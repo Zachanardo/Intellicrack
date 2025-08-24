@@ -1,4 +1,4 @@
-"""HASP/Sentinel License Protocol Parser and Response Generator
+"""HASP/Sentinel License Protocol Parser and Response Generator.
 
 Copyright (C) 2025 Zachary Flint
 
@@ -20,7 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import hashlib
 import json
-import random
+import secrets
 import struct
 import time
 from dataclasses import dataclass
@@ -33,7 +33,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class HASPRequest:
-    """HASP/Sentinel request structure"""
+    """HASP/Sentinel request structure."""
 
     command: int
     session_id: int
@@ -48,7 +48,7 @@ class HASPRequest:
 
 @dataclass
 class HASPResponse:
-    """HASP/Sentinel response structure"""
+    """HASP/Sentinel response structure."""
 
     status: int
     session_id: int
@@ -60,7 +60,7 @@ class HASPResponse:
 
 
 class HASPSentinelParser:
-    """Real HASP/Sentinel protocol parser and response generator"""
+    """Real HASP/Sentinel protocol parser and response generator."""
 
     # HASP command constants
     HASP_COMMANDS = {
@@ -133,7 +133,7 @@ class HASPSentinelParser:
         self._initialize_hasp_features()
 
     def _load_default_features(self):
-        """Load default HASP features for common applications"""
+        """Load default HASP features for common applications."""
         self.features = {
             # Autodesk features
             100: {
@@ -206,19 +206,19 @@ class HASPSentinelParser:
         }
 
     def _generate_hardware_fingerprint(self) -> dict[str, Any]:
-        """Generate realistic hardware fingerprint"""
+        """Generate realistic hardware fingerprint."""
         return {
-            "hasp_id": random.randint(100000, 999999),
+            "hasp_id": secrets.randbelow(900000) + 100000,
             "type": "HASP HL Max",
             "memory": 65536,
             "battery": True,
             "rtc": True,
-            "serial": f"H{random.randint(10000000, 99999999)}",
+            "serial": f"H{secrets.randbelow(90000000) + 10000000}",
             "firmware": "4.05",
         }
 
     def parse_request(self, data: bytes) -> HASPRequest | None:
-        """Parse incoming HASP request
+        """Parse incoming HASP request.
 
         Args:
             data: Raw HASP request data
@@ -322,7 +322,7 @@ class HASPSentinelParser:
             return None
 
     def _parse_additional_params(self, data: bytes) -> dict[str, Any]:
-        """Parse additional HASP parameters"""
+        """Parse additional HASP parameters."""
         params = {}
         try:
             offset = 0
@@ -355,7 +355,7 @@ class HASPSentinelParser:
         return params
 
     def generate_response(self, request: HASPRequest) -> HASPResponse:
-        """Generate appropriate HASP response based on request
+        """Generate appropriate HASP response based on request.
 
         Args:
             request: Parsed HASP request
@@ -398,7 +398,7 @@ class HASPSentinelParser:
         return self._handle_unknown_command(request)
 
     def _handle_login(self, request: HASPRequest) -> HASPResponse:
-        """Handle HASP login request"""
+        """Handle HASP login request."""
         # Validate vendor code
         if request.vendor_code not in self.VENDOR_CODES:
             return HASPResponse(
@@ -412,7 +412,7 @@ class HASPSentinelParser:
             )
 
         # Generate session ID
-        session_id = random.randint(1000, 9999)
+        session_id = secrets.randbelow(9000) + 1000
 
         # Store session
         self.active_sessions[session_id] = {
@@ -442,7 +442,7 @@ class HASPSentinelParser:
         )
 
     def _handle_logout(self, request: HASPRequest) -> HASPResponse:
-        """Handle HASP logout request"""
+        """Handle HASP logout request."""
         if request.session_id in self.active_sessions:
             del self.active_sessions[request.session_id]
             if request.session_id in self.encryption_keys:
@@ -462,7 +462,7 @@ class HASPSentinelParser:
         )
 
     def _handle_feature_login(self, request: HASPRequest) -> HASPResponse:
-        """Handle feature-specific login"""
+        """Handle feature-specific login."""
         if request.feature_id not in self.features:
             return HASPResponse(
                 status=0x00000005,  # FEATURE_NOT_FOUND
@@ -521,7 +521,7 @@ class HASPSentinelParser:
         )
 
     def _handle_encrypt(self, request: HASPRequest) -> HASPResponse:
-        """Handle encryption request"""
+        """Handle encryption request."""
         if request.session_id not in self.active_sessions:
             return HASPResponse(
                 status=0x00000010,  # NOT_LOGGED_IN
@@ -556,12 +556,12 @@ class HASPSentinelParser:
         )
 
     def _handle_decrypt(self, request: HASPRequest) -> HASPResponse:
-        """Handle decryption request"""
+        """Handle decryption request."""
         # Same as encrypt for XOR cipher
         return self._handle_encrypt(request)
 
     def _handle_get_size(self, request: HASPRequest) -> HASPResponse:
-        """Handle get memory size request"""
+        """Handle get memory size request."""
         if request.feature_id in self.features:
             memory_size = self.features[request.feature_id]["memory_size"]
         else:
@@ -578,7 +578,7 @@ class HASPSentinelParser:
         )
 
     def _handle_read(self, request: HASPRequest) -> HASPResponse:
-        """Handle memory read request"""
+        """Handle memory read request."""
         # Simulate reading from HASP memory
         # Generate deterministic data based on address
         address = request.additional_params.get("address", 0)
@@ -599,7 +599,7 @@ class HASPSentinelParser:
         )
 
     def _handle_write(self, request: HASPRequest) -> HASPResponse:
-        """Handle memory write request"""
+        """Handle memory write request."""
         # Simulate successful write
         return HASPResponse(
             status=0x00000000,  # STATUS_OK
@@ -612,7 +612,7 @@ class HASPSentinelParser:
         )
 
     def _handle_get_rtc(self, request: HASPRequest) -> HASPResponse:
-        """Handle real-time clock request"""
+        """Handle real-time clock request."""
         current_time = int(time.time())
 
         return HASPResponse(
@@ -629,7 +629,7 @@ class HASPSentinelParser:
         )
 
     def _handle_get_info(self, request: HASPRequest) -> HASPResponse:
-        """Handle get HASP info request"""
+        """Handle get HASP info request."""
         return HASPResponse(
             status=0x00000000,  # STATUS_OK
             session_id=request.session_id,
@@ -646,7 +646,7 @@ class HASPSentinelParser:
         )
 
     def _handle_get_feature_info(self, request: HASPRequest) -> HASPResponse:
-        """Handle get feature info request"""
+        """Handle get feature info request."""
         if request.feature_id in self.features:
             feature = self.features[request.feature_id]
             return HASPResponse(
@@ -672,7 +672,7 @@ class HASPSentinelParser:
         )
 
     def _handle_feature_logout(self, request: HASPRequest) -> HASPResponse:
-        """Handle feature logout request"""
+        """Handle feature logout request."""
         return HASPResponse(
             status=0x00000000,  # STATUS_OK
             session_id=request.session_id,
@@ -684,7 +684,7 @@ class HASPSentinelParser:
         )
 
     def _handle_heartbeat(self, request: HASPRequest) -> HASPResponse:
-        """Handle heartbeat request"""
+        """Handle heartbeat request."""
         if request.session_id in self.active_sessions:
             self.active_sessions[request.session_id]["last_heartbeat"] = time.time()
             status = 0x00000000  # STATUS_OK
@@ -702,7 +702,7 @@ class HASPSentinelParser:
         )
 
     def _handle_get_hardware_info(self, request: HASPRequest) -> HASPResponse:
-        """Handle hardware info request"""
+        """Handle hardware info request."""
         return HASPResponse(
             status=0x00000000,  # STATUS_OK
             session_id=request.session_id,
@@ -714,7 +714,7 @@ class HASPSentinelParser:
         )
 
     def _handle_unknown_command(self, request: HASPRequest) -> HASPResponse:
-        """Handle unknown command"""
+        """Handle unknown command."""
         self.logger.warning(f"Unknown HASP command: 0x{request.command:02X}")
         return HASPResponse(
             status=0x00000003,  # INV_SPEC
@@ -727,7 +727,7 @@ class HASPSentinelParser:
         )
 
     def serialize_response(self, response: HASPResponse) -> bytes:
-        """Serialize HASP response to bytes
+        """Serialize HASP response to bytes.
 
         Args:
             response: HASP response object

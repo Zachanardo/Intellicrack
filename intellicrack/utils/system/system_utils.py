@@ -397,11 +397,12 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
                 logger.error("PowerShell not found in PATH")
                 return False, "PowerShell not available"
 
-            result = subprocess.run(
+            result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
                 [powershell_path, "-Command", ps_command],
                 capture_output=True,
                 text=True,
                 check=False,
+                shell=False  # Explicitly secure - using list format prevents shell injection
             )
             return result.returncode == 0
         # On Unix-like systems, use sudo

@@ -34,6 +34,7 @@ def is_validation_available(validation_type):
 
     Returns:
         bool: True if validation is available, False otherwise
+
     """
     return validation_type in get_validation_capabilities()
 

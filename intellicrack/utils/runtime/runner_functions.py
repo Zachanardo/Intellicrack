@@ -1580,7 +1580,7 @@ def run_selected_patching(
 
         # Map patch types to functions/modules
         def run_memory_patching(app, **kw):
-            """Run memory patching with provided options"""
+            """Run memory patching with provided options."""
             patch_addr = kw.get("address", 0)
             patch_bytes = kw.get("bytes", b"")
             process_id = kw.get("pid")
@@ -1597,7 +1597,7 @@ def run_selected_patching(
             return result
 
         def run_import_patching(app, **kw):
-            """Run import table patching with provided options"""
+            """Run import table patching with provided options."""
             dll_name = kw.get("dll", "")
             func_name = kw.get("function", "")
             new_addr = kw.get("new_address", 0)
@@ -1614,7 +1614,7 @@ def run_selected_patching(
             return result
 
         def run_targeted_patching(app, **kw):
-            """Run targeted patching with provided options"""
+            """Run targeted patching with provided options."""
             target_pattern = kw.get("pattern", b"")
             replacement = kw.get("replacement", b"")
             max_patches = kw.get("max_patches", -1)
@@ -1633,7 +1633,7 @@ def run_selected_patching(
             return result
 
         def run_custom_patching(app, **kw):
-            """Run custom patching with provided options"""
+            """Run custom patching with provided options."""
             script_path = kw.get("script", "")
             patch_config = kw.get("config", {})
             dry_run = kw.get("dry_run", False)

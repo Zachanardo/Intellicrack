@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import json
 import os
+import shutil
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -88,7 +90,7 @@ except ImportError as e:
 
 
 class ProcessWorker(QThread):
-    """Worker thread for process operations"""
+    """Worker thread for process operations."""
 
     process_found = pyqtSignal(list)
     error = pyqtSignal(str)
@@ -123,7 +125,7 @@ class ProcessWorker(QThread):
 
 
 class FridaWorker(QThread):
-    """Worker thread for Frida operations"""
+    """Worker thread for Frida operations."""
 
     status_update = pyqtSignal(str)
     protection_detected = pyqtSignal(str, dict)
@@ -173,7 +175,7 @@ class FridaWorker(QThread):
 
 
 class FridaManagerDialog(QDialog):
-    """Advanced Frida Manager Dialog with comprehensive controls"""
+    """Advanced Frida Manager Dialog with comprehensive controls."""
 
     def __init__(self, parent=None):
         """Initialize Frida manager dialog with dynamic instrumentation and process management capabilities."""
@@ -213,7 +215,7 @@ class FridaManagerDialog(QDialog):
         self.check_frida_availability()
 
     def init_ui(self):
-        """Initialize the user interface"""
+        """Initialize the user interface."""
         self.setWindowTitle("Frida Manager - Advanced Controls")
         self.setGeometry(100, 100, 1400, 900)
 
@@ -332,7 +334,7 @@ class FridaManagerDialog(QDialog):
         )
 
     def create_process_tab(self) -> QWidget:
-        """Create process management tab"""
+        """Create process management tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -416,7 +418,7 @@ class FridaManagerDialog(QDialog):
         return widget
 
     def create_scripts_tab(self) -> QWidget:
-        """Create scripts and hooks management tab"""
+        """Create scripts and hooks management tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -546,7 +548,7 @@ class FridaManagerDialog(QDialog):
         return widget
 
     def create_ai_generation_tab(self) -> QWidget:
-        """Create AI script generation tab"""
+        """Create AI script generation tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -694,7 +696,7 @@ class FridaManagerDialog(QDialog):
         return widget
 
     def create_protection_tab(self) -> QWidget:
-        """Create protection detection and adaptation tab"""
+        """Create protection detection and adaptation tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -750,7 +752,7 @@ class FridaManagerDialog(QDialog):
         return widget
 
     def create_performance_tab(self) -> QWidget:
-        """Create performance monitoring and optimization tab"""
+        """Create performance monitoring and optimization tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -845,7 +847,7 @@ class FridaManagerDialog(QDialog):
         return widget
 
     def create_presets_tab(self) -> QWidget:
-        """Create presets and wizard tab"""
+        """Create presets and wizard tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -966,7 +968,7 @@ class FridaManagerDialog(QDialog):
         return widget
 
     def create_logs_tab(self) -> QWidget:
-        """Create logs and analysis tab"""
+        """Create logs and analysis tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -1044,11 +1046,11 @@ class FridaManagerDialog(QDialog):
         return widget
 
     def load_presets(self):
-        """Load preset configurations"""
+        """Load preset configurations."""
         # This will be loaded from frida_presets.py
 
     def start_monitoring(self):
-        """Start performance monitoring"""
+        """Start performance monitoring."""
         self.monitor_timer = QTimer()
         self.monitor_timer.timeout.connect(self.update_performance_stats)
         self.monitor_timer.start(1000)  # Update every second
@@ -1060,7 +1062,7 @@ class FridaManagerDialog(QDialog):
         self.reload_script_list()
 
     def refresh_processes(self):
-        """Refresh the process list"""
+        """Refresh the process list."""
         self.process_worker = ProcessWorker()
         self.process_worker.process_found.connect(self.update_process_table)
         self.process_worker.error.connect(self.show_error)
@@ -1069,7 +1071,7 @@ class FridaManagerDialog(QDialog):
         self.status_label.setText("Refreshing process list...")
 
     def update_process_table(self, processes: list[dict]):
-        """Update the process table with found processes"""
+        """Update the process table with found processes."""
         self.process_table.setRowCount(len(processes))
 
         for i, proc in enumerate(processes):
@@ -1080,7 +1082,7 @@ class FridaManagerDialog(QDialog):
         self.status_label.setText(f"Found {len(processes)} processes")
 
     def filter_processes(self, text: str):
-        """Filter processes based on search text"""
+        """Filter processes based on search text."""
         for i in range(self.process_table.rowCount()):
             match = False
             for j in range(self.process_table.columnCount()):
@@ -1091,7 +1093,7 @@ class FridaManagerDialog(QDialog):
             self.process_table.setRowHidden(i, not match)
 
     def on_process_selected(self):
-        """Handle process selection"""
+        """Handle process selection."""
         selected = self.process_table.selectedItems()
         if selected:
             row = selected[0].row()
@@ -1102,7 +1104,7 @@ class FridaManagerDialog(QDialog):
             self.status_label.setText(f"Selected: {name} (PID: {pid})")
 
     def attach_to_process(self):
-        """Attach Frida to selected process"""
+        """Attach Frida to selected process."""
         if not self.selected_process:
             return
 
@@ -1117,7 +1119,7 @@ class FridaManagerDialog(QDialog):
         self.attach_btn.setEnabled(False)
 
     def on_attach_complete(self, operation: str, success: bool):
-        """Handle attachment completion"""
+        """Handle attachment completion."""
         if operation == "attach" and success:
             self.current_session = f"{self.selected_process['name']}_{self.selected_process['pid']}"
             self.session_label.setText(f"Session: {self.current_session}")
@@ -1136,7 +1138,7 @@ class FridaManagerDialog(QDialog):
             self.attach_btn.setEnabled(True)
 
     def detach_from_process(self):
-        """Detach from current process"""
+        """Detach from current process."""
         if self.current_session:
             # Detach logic would go here
             self.current_session = None
@@ -1148,7 +1150,7 @@ class FridaManagerDialog(QDialog):
             self.status_label.setText("Detached from process")
 
     def spawn_process(self):
-        """Spawn a new process"""
+        """Spawn a new process."""
         # Get executable path from user
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -1241,21 +1243,21 @@ class FridaManagerDialog(QDialog):
             QMessageBox.critical(self, "Spawn Error", error_msg)
 
     def suspend_process(self):
-        """Suspend the attached process"""
+        """Suspend the attached process."""
         if self.current_session:
             self.suspend_btn.setEnabled(False)
             self.resume_btn.setEnabled(True)
             self.status_label.setText("Process suspended")
 
     def resume_process(self):
-        """Resume the attached process"""
+        """Resume the attached process."""
         if self.current_session:
             self.resume_btn.setEnabled(False)
             self.suspend_btn.setEnabled(True)
             self.status_label.setText("Process resumed")
 
     def reload_script_list(self):
-        """Reload the list of available scripts"""
+        """Reload the list of available scripts."""
         self.scripts_list.clear()
         # Use the same path as FridaManager
         scripts_dir = self.frida_manager.script_dir
@@ -1269,7 +1271,7 @@ class FridaManagerDialog(QDialog):
         self.status_label.setText(f"Found {self.scripts_list.count()} scripts")
 
     def add_custom_script(self):
-        """Add a custom Frida script from file"""
+        """Add a custom Frida script from file."""
         # Open file dialog
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -1330,7 +1332,7 @@ class FridaManagerDialog(QDialog):
             )
 
     def preview_script(self, script_path: Path):
-        """Show a preview of the script"""
+        """Show a preview of the script."""
         dialog = QDialog(self)
         dialog.setWindowTitle(f"Script Preview: {script_path.name}")
         dialog.resize(800, 600)
@@ -1373,15 +1375,26 @@ class FridaManagerDialog(QDialog):
         dialog.exec()
 
     def edit_script(self, script_path: Path):
-        """Open script in external editor"""
+        """Open script in external editor."""
         try:
             if sys.platform == "win32":
                 os.startfile(script_path)  # noqa: S606  # Legitimate script file opening for security research development
             elif sys.platform == "darwin":
-                import subprocess
-                subprocess.run(["open", script_path], shell=False)
+                open_path = shutil.which("open")
+                if open_path:
+                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        [open_path, script_path],
+                        shell=False,
+                        check=False
+                    )
             else:
-                subprocess.run(["xdg-open", script_path], shell=False)
+                xdg_open_path = shutil.which("xdg-open")
+                if xdg_open_path:
+                    subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        [xdg_open_path, script_path],
+                        shell=False,
+                        check=False
+                    )
         except Exception as e:
             self.logger.error("Exception in frida_manager_dialog: %s", e)
             QMessageBox.warning(
@@ -1391,7 +1404,7 @@ class FridaManagerDialog(QDialog):
             )
 
     def load_selected_script(self):
-        """Load the selected script"""
+        """Load the selected script."""
         if not self.current_session:
             QMessageBox.warning(self, "No Session", "Please attach to a process first")
             return
@@ -1425,7 +1438,7 @@ class FridaManagerDialog(QDialog):
         self.status_label.setText(f"Loading script: {script_name}")
 
     def on_script_loaded(self, operation: str, success: bool):
-        """Handle script loading completion"""
+        """Handle script loading completion."""
         if operation == "load_script" and success:
             script_name = self.frida_worker.params.get("script_name")
             self.loaded_scripts_list.addItem(script_name)
@@ -1437,7 +1450,7 @@ class FridaManagerDialog(QDialog):
             )
 
     def show_script_context_menu(self, position):
-        """Show context menu for available scripts"""
+        """Show context menu for available scripts."""
         item = self.scripts_list.itemAt(position)
         if not item:
             return
@@ -1484,7 +1497,7 @@ class FridaManagerDialog(QDialog):
         menu.exec_(self.scripts_list.mapToGlobal(position))
 
     def delete_script(self, item):
-        """Delete a script after confirmation"""
+        """Delete a script after confirmation."""
         script_path = Path(item.data(Qt.UserRole))
 
         reply = QMessageBox.question(
@@ -1511,7 +1524,7 @@ class FridaManagerDialog(QDialog):
                 )
 
     def duplicate_script(self, item):
-        """Duplicate a script with a new name"""
+        """Duplicate a script with a new name."""
         script_path = Path(item.data(Qt.UserRole))
 
         # Generate new name
@@ -1545,7 +1558,7 @@ class FridaManagerDialog(QDialog):
             )
 
     def show_loaded_script_menu(self, position):
-        """Show context menu for loaded scripts"""
+        """Show context menu for loaded scripts."""
         menu = QMenu()
         unload_action = QAction("Unload Script", self)
         unload_action.triggered.connect(self.unload_script)
@@ -1554,14 +1567,14 @@ class FridaManagerDialog(QDialog):
         menu.exec_(self.loaded_scripts_list.mapToGlobal(position))
 
     def unload_script(self):
-        """Unload selected script"""
+        """Unload selected script."""
         current_item = self.loaded_scripts_list.currentItem()
         if current_item:
             self.loaded_scripts_list.takeItem(self.loaded_scripts_list.row(current_item))
             self.status_label.setText(f"Unloaded script: {current_item.text()}")
 
     def update_performance_stats(self):
-        """Update performance statistics"""
+        """Update performance statistics."""
         if not self.current_session:
             return
 
@@ -1630,7 +1643,7 @@ class FridaManagerDialog(QDialog):
             # Silently handle stats update errors
 
     def bypass_protection(self, protection_type: ProtectionType):
-        """Bypass specific protection"""
+        """Bypass specific protection."""
         if not self.current_session:
             QMessageBox.warning(self, "No Session", "Please attach to a process first")
             return
@@ -1653,7 +1666,7 @@ class FridaManagerDialog(QDialog):
         )
 
     def on_preset_selected(self, preset_name: str):
-        """Handle preset selection"""
+        """Handle preset selection."""
         if preset_name in FRIDA_PRESETS:
             preset = FRIDA_PRESETS[preset_name]
 
@@ -1671,7 +1684,7 @@ class FridaManagerDialog(QDialog):
             self.apply_preset_btn.setEnabled(False)
 
     def apply_selected_preset(self):
-        """Apply the selected preset configuration"""
+        """Apply the selected preset configuration."""
         preset_name = self.preset_combo.currentText()
         if preset_name not in FRIDA_PRESETS:
             return
@@ -1697,7 +1710,7 @@ class FridaManagerDialog(QDialog):
         )
 
     def start_bypass_wizard(self):
-        """Start the automated bypass wizard"""
+        """Start the automated bypass wizard."""
         if not self.current_session:
             QMessageBox.warning(self, "No Session", "Please attach to a process first")
             return
@@ -1730,13 +1743,13 @@ class FridaManagerDialog(QDialog):
         self.start_wizard_btn.setEnabled(True)
 
     def stop_bypass_wizard(self):
-        """Stop the bypass wizard"""
+        """Stop the bypass wizard."""
         self.wizard_status.append("Wizard stopped by user")
         self.stop_wizard_btn.setEnabled(False)
         self.start_wizard_btn.setEnabled(True)
 
     def save_custom_config(self):
-        """Save custom configuration"""
+        """Save custom configuration."""
         config_text = self.custom_config_text.toPlainText()
         if not config_text:
             return
@@ -1764,7 +1777,7 @@ class FridaManagerDialog(QDialog):
             QMessageBox.error(self, "Invalid JSON", f"Invalid configuration format: {e}")
 
     def load_custom_config(self):
-        """Load custom configuration"""
+        """Load custom configuration."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Load Configuration",
@@ -1785,23 +1798,23 @@ class FridaManagerDialog(QDialog):
                 QMessageBox.error(self, "Load Error", f"Failed to load configuration: {e}")
 
     def filter_logs(self, filter_type: str):
-        """Filter logs by type"""
+        """Filter logs by type."""
         # Implementation would filter the log console
         self.log_console.append_output(f"[FILTER] Showing {filter_type} logs")
 
     def search_logs(self, search_text: str):
-        """Search in logs"""
+        """Search in logs."""
         # Implementation would search the log console
         if search_text:
             self.log_console.append_output(f"[SEARCH] Searching for: {search_text}")
 
     def clear_logs(self):
-        """Clear the log console"""
+        """Clear the log console."""
         self.log_console.clear()
         self.status_label.setText("Logs cleared")
 
     def export_logs(self):
-        """Export logs to file"""
+        """Export logs to file."""
         try:
             export_dir = self.frida_manager.logger.export_logs()
             QMessageBox.information(self, "Export Complete", f"Logs exported to: {export_dir}")
@@ -1810,7 +1823,7 @@ class FridaManagerDialog(QDialog):
             QMessageBox.error(self, "Export Error", f"Failed to export logs: {e}")
 
     def export_analysis(self):
-        """Export complete analysis"""
+        """Export complete analysis."""
         try:
             export_dir = self.frida_manager.export_analysis()
             QMessageBox.information(self, "Export Complete", f"Analysis exported to: {export_dir}")
@@ -1819,7 +1832,7 @@ class FridaManagerDialog(QDialog):
             QMessageBox.error(self, "Export Error", f"Failed to export analysis: {e}")
 
     def show_error(self, error_msg: str):
-        """Show error message"""
+        """Show error message."""
         QMessageBox.error(self, "Error", error_msg)
         self.status_label.setText(f"Error: {error_msg}")
         self.log_console.append_output(f"[ERROR] {error_msg}")
@@ -2298,7 +2311,7 @@ class FridaManagerDialog(QDialog):
             QMessageBox.critical(self, "Error", f"Failed to save scripts: {e!s}")
 
     def closeEvent(self, event):
-        """Handle dialog close"""
+        """Handle dialog close."""
         # Clean up Frida manager
         self.frida_manager.cleanup()
 
@@ -2309,7 +2322,7 @@ class FridaManagerDialog(QDialog):
         event.accept()
 
     def connect_structured_message_handlers(self):
-        """Connect to structured message handlers from FridaManager"""
+        """Connect to structured message handlers from FridaManager."""
         if hasattr(self.frida_manager, "_ui_message_callback"):
             return
 
@@ -2318,7 +2331,7 @@ class FridaManagerDialog(QDialog):
     def display_structured_message(
         self, message_type: str, session_id: str, script_name: str, payload: dict
     ):
-        """Display structured message in the UI with rich formatting"""
+        """Display structured message in the UI with rich formatting."""
         message = payload.get("message", "")
         target = payload.get("target", "")
         action = payload.get("action", "")
@@ -2345,7 +2358,7 @@ class FridaManagerDialog(QDialog):
     def _format_structured_message(
         self, msg_type: str, script_name: str, message: str, target: str, action: str, data: dict
     ) -> str:
-        """Format structured message for console display"""
+        """Format structured message for console display."""
         parts = [f"[{script_name}]" if script_name else "[FRIDA]"]
 
         if target:
@@ -2365,7 +2378,7 @@ class FridaManagerDialog(QDialog):
         return " | ".join(parts)
 
     def _update_protection_display(self, payload: dict):
-        """Update protection detection display when detection messages are received"""
+        """Update protection detection display when detection messages are received."""
         protection_name = payload.get("data", {}).get("protection", "")
         evidence = payload.get("data", {}).get("evidence", [])
 

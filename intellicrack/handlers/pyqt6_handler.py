@@ -1,5 +1,5 @@
 """This file is part of Intellicrack.
-Copyright (C) 2025 Zachary Flint
+Copyright (C) 2025 Zachary Flint.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -588,10 +588,13 @@ except ImportError as e:
         QWizardPage = MockWidget
         Qt = MockQt()
         def pyqtSignal(*args, **kwargs):
+            """Fallback pyqtSignal implementation when PyQt6 is not available."""
             return lambda *a, **kw: None
         def pyqtSlot(*args, **kwargs):
+            """Fallback pyqtSlot decorator implementation when PyQt6 is not available."""
             return lambda *a, **kw: None
         def qrgba(*args):
+            """Fallback RGBA color function when PyQt6 is not available."""
             return None
     else:
         QSyntaxHighlighter = None
@@ -622,8 +625,10 @@ except ImportError as e:
         QWizardPage = None
         Qt = None
         def pyqtSignal(*args, **kwargs):
+            """Fallback pyqtSignal implementation for minimal PyQt6 compatibility."""
             return lambda: None
         def pyqtSlot(*args, **kwargs):
+            """Fallback pyqtSlot decorator for minimal PyQt6 compatibility."""
             return lambda: None
         qrgba = None
 
