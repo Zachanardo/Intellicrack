@@ -28,9 +28,9 @@ This document summarizes the linting fixes applied to the Intellicrack codebase 
 ### 4. W0613: unused-argument (13 fixed)
 - Prefixed unused arguments with underscore (_) to indicate intentional non-use
 - Fixed in:
-  - `ai_assistant_enhanced.py`: _message, _intent, _target, _binary_path
-  - `ai_tools.py`: _code, _context, _assembly_code
-  - `concolic_executor.py`: _args, _kwargs
+  - `ai_assistant_enhanced.py`: _message,_intent, _target,_binary_path
+  - `ai_tools.py`: _code,_context, _assembly_code
+  - `concolic_executor.py`: _args,_kwargs
   - `dynamic_analyzer.py`: _data (in Frida callbacks)
   - `multi_format_analyzer.py`: _binary_path
   - `vulnerability_engine.py`: _binary_path

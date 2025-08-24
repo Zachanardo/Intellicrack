@@ -11,7 +11,6 @@ Scripts for radare2 setup and configuration:
 
 ### Python Scripts
 
-
 - `test_imports.py` - Test import functionality
 - `test_integration.py` - Integration testing
 

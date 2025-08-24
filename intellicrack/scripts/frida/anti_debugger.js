@@ -368,7 +368,7 @@ const antiDebugger = {
                         });
                     }
                 }
-            } catch (e) {
+            } catch {
                 send({
                     type: 'warning',
                     target: 'PEB',
@@ -2350,7 +2350,7 @@ const antiDebugger = {
 };
 
 // === INITIALIZATION CODE ===
-console.log('[*] Anti-Debugging Bypass Script v3.0.0 starting...');
+send('[*] Anti-Debugging Bypass Script v3.0.0 starting...');
 
 try {
     // Initialize the bypass system
@@ -2400,7 +2400,7 @@ try {
         timestamp: Date.now()
     });
 
-    console.log('[✓] Anti-debugging bypass v3.0.0 successfully deployed!');
+    send('[✓] Anti-debugging bypass v3.0.0 successfully deployed!');
 
 } catch (e) {
     send({
@@ -2411,5 +2411,5 @@ try {
         stack: e.stack,
         timestamp: Date.now()
     });
-    console.log('[-] Anti-debugging bypass initialization failed: ' + e.message);
+    send('[-] Anti-debugging bypass initialization failed: ' + e.message);
 };

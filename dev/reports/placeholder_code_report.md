@@ -192,8 +192,8 @@ DETAILED FINDINGS:
   🔸 Simulation Patterns (37 instances):
     Line  328: features.append(random.uniform(50000, 800000))  # 50KB - 800KB
     Line  331: features.append(random.uniform(6.5, 7.8))  # High entropy
-    Line  338: freq = base_freq * random.uniform(0.1, 0.3)
-    Line  340: freq = base_freq * random.uniform(0.8, 1.5)
+    Line  338: freq = base_freq *random.uniform(0.1, 0.3)
+    Line  340: freq = base_freq* random.uniform(0.8, 1.5)
     Line  342: freq = base_freq * random.uniform(0.3, 1.2)
     Line  347: random.randint(2, 6),          # NumberOfSections (fewer sections)
     Line  348: random.randint(0, 1000000),    # TimeDateStamp (potentially fake)
@@ -231,8 +231,8 @@ DETAILED FINDINGS:
     Line  605: This function simulates a realistic license database query, returning
     Line  920: This function simulates reading from different memory regions and returns
     Line 1843: _write_dummy_tensor_data(f, model_data.get('tensors', []))
-    Line 1889: def _write_dummy_tensor_data(file_handle: Any, tensors: List[Dict[str, Any]]) ->
-    Line 1961: dummy_data = b'\x00' * (size * 4)
+    Line 1889: def_write_dummy_tensor_data(file_handle: Any, tensors: List[Dict[str, Any]]) ->
+    Line 1961: dummy_data = b'\x00' *(size* 4)
     Line 1962: file_handle.write(dummy_data)
     Line 1976: base_val = (random.gauss(0, 0.05))  # Small Gaussian distribution
     Line 1989: val = random.gauss(0, 0.02)  # Smaller range for fp16
@@ -340,7 +340,7 @@ DETAILED FINDINGS:
 
   🔸 Simulation Patterns (15 instances):
     Line  241: self._create_dummy_model()
-    Line  253: def _create_dummy_model(self):
+    Line  253: def_create_dummy_model(self):
     Line 1016: loss += random.uniform(-0.1, 0.1)  # Add noise
     Line 1860: sample_text.setPlainText(self._get_sample_data(templates[0]))
     Line 1862: lambda t: sample_text.setPlainText(self._get_sample_data(t))
@@ -492,7 +492,7 @@ DETAILED FINDINGS:
     ... and 20 more instances
 
   🔸 Placeholder Strings (1 instances):
-    Line  359: if ('cmp' in disasm or 'test' in disasm) and _block.get('jump') and _block.get('
+    Line  359: if ('cmp' in disasm or 'test' in disasm) and _block.get('jump') and_block.get('
 
 📁 intellicrack/core/patching/process_hollowing.py (31 issues)
 -------------------------------------------------------------------
@@ -808,12 +808,12 @@ DETAILED FINDINGS:
     ... and 3 more instances
 
   🔸 Simulation Patterns (6 instances):
-    Line  404: return 2.0 * random.random()
-    Line  412: return 2.0 * random.random()
-    Line  416: return 2.0 * random.random()
+    Line  404: return 2.0 *random.random()
+    Line  412: return 2.0* random.random()
+    Line  416: return 2.0 *random.random()
     Line  657: 'message': f'Starting {"real" if real_training else "simulated"} training with {
     Line  662: current_loss = 2.5 + random.random() if not real_training else 0.0
-    Line  685: batch_loss = current_loss * (1 + (random.random() - 0.5) * 0.1)
+    Line  685: batch_loss = current_loss* (1 + (random.random() - 0.5) * 0.1)
 
 📁 scripts/cli/config_manager.py (19 issues)
 -------------------------------------------------
@@ -1063,8 +1063,8 @@ DETAILED FINDINGS:
     Line  179: noise = np.random.normal(0, 0.02) if 'numpy' in globals() else 0
     Line  179: noise = np.random.normal(0, 0.02) if 'numpy' in globals() else 0
     Line  419: class_count = 5  # Simulate
-    Line  634: performance = 0.9 - (distance_from_optimal * 0.3) + (np.random.random() * 0.05 i
-    Line  634: performance = 0.9 - (distance_from_optimal * 0.3) + (np.random.random() * 0.05 i
+    Line  634: performance = 0.9 - (distance_from_optimal *0.3) + (np.random.random()* 0.05 i
+    Line  634: performance = 0.9 - (distance_from_optimal *0.3) + (np.random.random()* 0.05 i
 
 📁 intellicrack/core/network/license_server_emulator.py (14 issues)
 ------------------------------------------------------------------------
@@ -1860,7 +1860,7 @@ DETAILED FINDINGS:
     Line  198: return
 
   🔸 Todo Comments (1 instances):
-    Line  220: _ = memory_info.rss / (1024 * 1024)  # Memory in MB not used in current implemen
+    Line  220: _= memory_info.rss / (1024 * 1024)  # Memory in MB not used in current implemen
 
 📁 intellicrack/hexview/performance_monitor.py (5 issues)
 ---------------------------------------------------------------
@@ -2259,7 +2259,7 @@ DETAILED FINDINGS:
 -------------------------------------------------------
 
   🔸 Todo Comments (1 instances):
-    Line  399: _ = parameters.get("function_address")  # Parameter not used in current implemen
+    Line  399: _= parameters.get("function_address")  # Parameter not used in current implemen
 
 📁 scripts/cli/ai_chat_interface.py (1 issues)
 ----------------------------------------------------

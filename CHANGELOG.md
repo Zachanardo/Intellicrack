@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Critical GUI Launch Issues**:
   - Fixed AttributeError: 'IntellicrackApp' object has no attribute 'parent'
   - Fixed missing QStackedWidget import causing PyQt6 failure
-  - Fixed ExploitationTab initialization method (setup_content vs _setup_ui)
+  - Fixed ExploitationTab initialization method (setup_content vs setup_ui)
   - Fixed AIAssistantTab constructor to accept shared_context parameter
   - Fixed Qt.Horizontal/Vertical constants for PyQt6 compatibility
 - **Import System Improvements**:
@@ -69,7 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2024-12-01
 
-### Added
+### Initial Release
 - **Core Framework**:
   - Binary analysis and security research platform
   - Multi-format support (PE, ELF, Mach-O)

@@ -110,31 +110,31 @@ The CLI provides access to every single Intellicrack feature through command-lin
 57. `--frida-script`: Frida Dynamic Instrumentation Integration
 
 #### **Plugin System (6 features)**
-58. `--plugin-list`: Self-Initializing Plugin Framework
-59. `--plugin-run`: Custom Python Module Support
-60. `--frida-script`: Frida Script Plugin Support
-61. `--ghidra-script`: Ghidra Script Plugin Support
-62. `--plugin-remote`: Remote Plugin Execution Framework
-63. `--plugin-sandbox`: Sandboxed Plugin Execution
+1. `--plugin-list`: Self-Initializing Plugin Framework
+2. `--plugin-run`: Custom Python Module Support
+3. `--frida-script`: Frida Script Plugin Support
+4. `--ghidra-script`: Ghidra Script Plugin Support
+5. `--plugin-remote`: Remote Plugin Execution Framework
+6. `--plugin-sandbox`: Sandboxed Plugin Execution
 
 #### **User Interface and Experience (9 features)**
-64. CLI interface: Comprehensive GUI alternative
-65. `--help`: Guided Workflow Wizard (command-line version)
-66. `--apply-patch`: Visual Patch Editor (JSON-based)
-67. `--format text`: Editable Hex Viewer Widget (text output)
-68. `--format pdf/html`: PDF and HTML Report Generation
-69. `--generate-license-key`: License Key Generator Utility
-70. `--format text`: Visual Network Traffic Analyzer (text output)
-71. `--cfg-output`: Visual CFG Explorer (export to DOT/JSON)
-72. Text-based themes: Theme Support (Light/Dark via colored output)
+1. CLI interface: Comprehensive GUI alternative
+2. `--help`: Guided Workflow Wizard (command-line version)
+3. `--apply-patch`: Visual Patch Editor (JSON-based)
+4. `--format text`: Editable Hex Viewer Widget (text output)
+5. `--format pdf/html`: PDF and HTML Report Generation
+6. `--generate-license-key`: License Key Generator Utility
+7. `--format text`: Visual Network Traffic Analyzer (text output)
+8. `--cfg-output`: Visual CFG Explorer (export to DOT/JSON)
+9. Text-based themes: Theme Support (Light/Dark via colored output)
 
 #### **System Features (6 features)**
-73. Built-in: Persistent Logging with Rotation
-74. Built-in: Automatic Dependency Management & Installation Checks
-75. `--threads`: Multi-Threading for Long-Running Operations
-76. `--train-model`: Custom AI Model Import & Fine-tuning Support
-77. `--extract-icon`: Executable Icon Extraction for UI
-78. Built-in: Memory Usage Optimization
+1. Built-in: Persistent Logging with Rotation
+2. Built-in: Automatic Dependency Management & Installation Checks
+3. `--threads`: Multi-Threading for Long-Running Operations
+4. `--train-model`: Custom AI Model Import & Fine-tuning Support
+5. `--extract-icon`: Executable Icon Extraction for UI
+6. Built-in: Memory Usage Optimization
 
 ## Command Categories
 

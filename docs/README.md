@@ -184,12 +184,14 @@ This documentation is regularly updated to reflect the latest features and best 
 ## 📋 Document Index
 
 ### Architecture Documentation
+
 | Document | Description |
 |----------|-------------|
 | [Comprehensive Architecture](architecture/COMPREHENSIVE_ARCHITECTURE.md) | Complete platform architecture |
 | [Plugin System](architecture/plugin_system.md) | Plugin architecture details |
 
 ### API Documentation
+
 | Document | Description |
 |----------|-------------|
 | [AI Script Generator API](api/ai_script_generator_api.md) | AI script generation API |
@@ -199,6 +201,7 @@ This documentation is regularly updated to reflect the latest features and best 
 | [Complete API Reference](reference/api_reference.md) | Full API documentation |
 
 ### User Guides
+
 | Document | Description |
 |----------|-------------|
 | [Comprehensive User Guide](guides/COMPREHENSIVE_USER_GUIDE.md) | Complete user guide |
@@ -207,6 +210,7 @@ This documentation is regularly updated to reflect the latest features and best 
 | [First Run Setup](usage/FIRST_RUN_SETUP.md) | Initial setup guide |
 
 ### Feature Guides
+
 | Document | Description |
 |----------|-------------|
 | [Frida Integration](guides/FRIDA_INTEGRATION_GUIDE.md) | Dynamic instrumentation |
@@ -217,18 +221,21 @@ This documentation is regularly updated to reflect the latest features and best 
 | [Protection Bypass](guides/PROTECTION_BYPASS_GUIDE.md) | Bypass techniques |
 
 ### Security Documentation
+
 | Document | Description |
 |----------|-------------|
 | [Security and Ethics Guide](security/SECURITY_AND_ETHICS_GUIDE.md) | Complete security guide |
 | [Security Enforcement](security/SECURITY_ENFORCEMENT.md) | Security controls |
 
 ### Development Documentation
+
 | Document | Description |
 |----------|-------------|
 | [Developer Guide](development/DEVELOPER_GUIDE.md) | Complete development guide |
 | [Plugin Development](development/PLUGIN_DEVELOPMENT_GUIDE.md) | Plugin creation |
 
 ### Reference Materials
+
 | Document | Description |
 |----------|-------------|
 | [Configuration Reference](reference/CONFIGURATION_REFERENCE.md) | Configuration guide |
@@ -237,6 +244,7 @@ This documentation is regularly updated to reflect the latest features and best 
 | [Project Structure](reference/PROJECT_STRUCTURE.md) | Codebase structure |
 
 ### Deployment Guides
+
 | Document | Description |
 |----------|-------------|
 | [Docker Deployment](deployment/docker.md) | Container deployment |
