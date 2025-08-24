@@ -178,7 +178,7 @@ class AutodeskLicensingParser:
         """Initialize server cryptographic keys"""
         self.server_private_key = hashlib.sha256(b"autodesk_server_private_key_2024").hexdigest()
         self.server_public_key = hashlib.sha256(b"autodesk_server_public_key_2024").hexdigest()
-        self.activation_seed = hashlib.md5(str(time.time()).encode()).hexdigest()
+        self.activation_seed = hashlib.sha256(str(time.time()).encode()).hexdigest()
         self.adsk_token_key = hashlib.sha256(b"autodesk_token_signing_key").hexdigest()
 
     def parse_request(self, http_data: str) -> AutodeskRequest | None:
@@ -824,7 +824,7 @@ class AutodeskLicensingParser:
     def _handle_offline_activation(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle offline activation"""
         offline_code = (
-            hashlib.md5(
+            hashlib.sha256(
                 f"{request.machine_id}:{request.product_key}:{time.time()}".encode(),
             )
             .hexdigest()
@@ -919,7 +919,7 @@ class AutodeskLicensingParser:
     def _generate_machine_signature(self, request: AutodeskRequest) -> str:
         """Generate machine signature from request data"""
         signature_data = f"{request.machine_id}:{request.installation_id}:{request.product_key}"
-        return hashlib.md5(signature_data.encode()).hexdigest().upper()
+        return hashlib.sha256(signature_data.encode()).hexdigest().upper()
 
     def _generate_validation_signature(self, request: AutodeskRequest) -> str:
         """Generate validation signature"""

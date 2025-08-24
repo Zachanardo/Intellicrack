@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import hashlib
 import logging
 import os
+import shlex
 import subprocess
 import sys
 from typing import Any
@@ -492,7 +493,8 @@ def run_command(command: str, timeout: int = 30) -> dict[str, Any]:
         logger.info("Running command: %s", command)
 
         process = subprocess.run(
-            command, shell=True, capture_output=True, text=True, timeout=timeout, check=False
+            shlex.split(command) if isinstance(command, str) else command,
+            capture_output=True, text=True, timeout=timeout, check=False
         )
 
         result["success"] = process.returncode == 0

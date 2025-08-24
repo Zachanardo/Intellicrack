@@ -99,7 +99,8 @@ except ImportError as e:
     Qt = None
     QThread = None
     QTimer = None
-    pyqtSignal = lambda *args, **kwargs: lambda: None
+    def pyqtSignal(*args, **kwargs):
+        return lambda: None
     QFont = None
     QIcon = None
     QPixmap = None
@@ -148,7 +149,8 @@ except ImportError as e:
                     try:
                         self._image = Image.open(source)
                         self._size = self._image.size
-                    except Exception:
+                    except Exception as e:
+                        logger.debug("Failed to load image from %s: %s", source, e)
                         self._image = None
                 elif hasattr(source, 'size') and hasattr(source, 'mode'):
                     # Already a PIL Image
@@ -203,7 +205,8 @@ except ImportError as e:
                             target_width = size[0] if isinstance(size, (list, tuple)) else size
                             target_height = size[1] if isinstance(size, (list, tuple)) else size
                             self._image = self._image.resize((target_width, target_height), Image.Resampling.LANCZOS)
-                    except Exception:
+                    except Exception as e:
+                        logger.debug("Failed to process image from %s: %s", path, e)
                         self._image = None
                         self.valid = False
 
@@ -389,8 +392,8 @@ except ImportError as e:
                 for callback in self.value_changed_callbacks:
                     try:
                         callback(self._value)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("Callback error: %s", e)
 
             def valueChanged(self):
                 class Signal:

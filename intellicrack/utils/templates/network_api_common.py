@@ -98,17 +98,17 @@ def get_scapy_layers(scapy_module) -> tuple | None:
     """
     try:
         # Try direct access first
-        ip_layer = scapy_module.IP
-        tcp_layer = scapy_module.TCP
-        return ip_layer, tcp_layer
+        IP_LAYER = scapy_module.IP
+        TCP_LAYER = scapy_module.TCP
+        return IP_LAYER, TCP_LAYER
     except AttributeError as e:
         logger.error("Attribute error in network_api_common: %s", e)
         # Fall back to scapy.layers if needed
         try:
-            from scapy.layers.inet import IP as ip_layer
-            from scapy.layers.inet import TCP as tcp_layer
+            from scapy.layers.inet import IP as IP_LAYER
+            from scapy.layers.inet import TCP as TCP_LAYER
 
-            return ip_layer, tcp_layer
+            return IP_LAYER, TCP_LAYER
         except ImportError as e:
             logger.error("Import error in network_api_common: %s", e)
             # Unable to access IP/TCP layers

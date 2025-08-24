@@ -656,5 +656,5 @@ class ICPReportGenerator:
             import intellicrack
 
             return getattr(intellicrack, "__version__", "1.0.0")
-        except:
+        except Exception:
             return "1.0.0"

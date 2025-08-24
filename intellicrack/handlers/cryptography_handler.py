@@ -291,7 +291,7 @@ except ImportError as e:
                     raise ValueError("Invalid token")
 
                 # Extract ciphertext
-                iv = payload[9:25]
+                payload[9:25]
                 ciphertext = payload[25:]
 
                 # Decrypt with AES
@@ -308,7 +308,7 @@ except ImportError as e:
                 return plaintext
 
             except Exception as e:
-                raise ValueError(f"Decryption failed: {e}")
+                raise ValueError(f"Decryption failed: {e}") from e
 
     class FallbackRSA:
         """RSA key generation and operations."""
@@ -644,25 +644,25 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
     Cipher = FallbackCipher
 
     # Hazmat modules
-    class hazmat:
-        class backends:
+    class Hazmat:
+        class Backends:
             default_backend = staticmethod(default_backend)
 
-        class primitives:
+        class Primitives:
             hashes = FallbackHashes
             padding = FallbackPadding
 
-            class ciphers:
+            class Ciphers:
                 Cipher = FallbackCipher
                 algorithms = FallbackAlgorithms
                 modes = FallbackModes
 
-            class asymmetric:
+            class Asymmetric:
                 rsa = type('rsa', (), {
                     'generate_private_key': FallbackRSA.generate_private_key
                 })()
 
-                class padding:
+                class Padding:
                     class OAEP:
                         def __init__(self, mgf, algorithm, label):
                             self.mgf = mgf
@@ -681,12 +681,12 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                     class PKCS1v15:
                         pass
 
-            class kdf:
-                class pbkdf2:
+            class Kdf:
+                class Pbkdf2:
                     PBKDF2HMAC = FallbackPBKDF2
                     PBKDF2 = FallbackPBKDF2  # Alias for compatibility
 
-            class serialization:
+            class Serialization:
                 class Encoding:
                     PEM = "PEM"
                     DER = "DER"
@@ -714,20 +714,32 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         STATE_OR_PROVINCE_NAME = 'ST'
         EMAIL_ADDRESS = 'emailAddress'
 
-    class x509:
+    class X509:
         load_pem_x509_certificate = staticmethod(load_pem_x509_certificate)
         NameOID = NameOID
 
     # Convenience imports
-    algorithms = hazmat.primitives.ciphers.algorithms
-    modes = hazmat.primitives.ciphers.modes
-    hashes = hazmat.primitives.hashes
-    padding = hazmat.primitives.padding
-    serialization = hazmat.primitives.serialization
-    asym_padding = hazmat.primitives.asymmetric.padding
-    rsa = hazmat.primitives.asymmetric.rsa
-    PBKDF2 = hazmat.primitives.kdf.pbkdf2.PBKDF2
-    PBKDF2HMAC = hazmat.primitives.kdf.pbkdf2.PBKDF2HMAC
+    algorithms = Hazmat.Primitives.Ciphers.algorithms
+    modes = Hazmat.Primitives.Ciphers.modes
+    hashes = Hazmat.Primitives.hashes
+    padding = Hazmat.Primitives.padding
+    serialization = Hazmat.Primitives.Serialization
+    asym_padding = Hazmat.Primitives.Asymmetric.Padding
+    rsa = Hazmat.Primitives.Asymmetric.rsa
+    PBKDF2 = Hazmat.Primitives.Kdf.Pbkdf2.PBKDF2
+    PBKDF2HMAC = Hazmat.Primitives.Kdf.Pbkdf2.PBKDF2HMAC
+
+    # Compatibility aliases
+    hazmat = Hazmat
+    hazmat.backends = Hazmat.Backends
+    hazmat.primitives = Hazmat.Primitives
+    hazmat.primitives.ciphers = Hazmat.Primitives.Ciphers
+    hazmat.primitives.asymmetric = Hazmat.Primitives.Asymmetric
+    hazmat.primitives.asymmetric.padding = Hazmat.Primitives.Asymmetric.Padding
+    hazmat.primitives.kdf = Hazmat.Primitives.Kdf
+    hazmat.primitives.kdf.pbkdf2 = Hazmat.Primitives.Kdf.Pbkdf2
+    hazmat.primitives.serialization = Hazmat.Primitives.Serialization
+    x509 = X509
 
 
 # Export all cryptography objects and availability flag

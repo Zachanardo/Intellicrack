@@ -16,10 +16,9 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-logger = logging.getLogger(__name__)
+from intellicrack.plugins.plugin_base import BasePlugin, PluginMetadata, create_plugin_info
 
-# Import plugin base class
-from intellicrack.plugins.plugin_base import BasePlugin, PluginMetadata
+logger = logging.getLogger(__name__)
 
 # Plugin metadata constants
 PLUGIN_NAME = "Advanced Demo Plugin"
@@ -235,9 +234,10 @@ class AdvancedDemoPlugin(BasePlugin):
             with open(binary_path, "rb") as f:
                 data = f.read()
 
-                hashes["md5"] = hashlib.md5(data).hexdigest()
-                hashes["sha1"] = hashlib.sha1(data).hexdigest()
                 hashes["sha256"] = hashlib.sha256(data).hexdigest()
+                hashes["sha512"] = hashlib.sha512(data).hexdigest()
+                hashes["sha3_256"] = hashlib.sha3_256(data).hexdigest()
+                hashes["blake2b"] = hashlib.blake2b(data).hexdigest()
 
         except Exception as e:
             self.logger.error("Exception in plugin_system: %s", e)
@@ -523,7 +523,6 @@ def register():
 
 
 # Plugin information (can be accessed without instantiating)
-from intellicrack.plugins.plugin_base import create_plugin_info
 
 _plugin_metadata = PluginMetadata(
     name=PLUGIN_NAME,

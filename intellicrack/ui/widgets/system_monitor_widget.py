@@ -30,6 +30,7 @@ from PyQt6.QtWidgets import (
 )
 
 from intellicrack.handlers.psutil_handler import psutil
+from intellicrack.logger import logger
 
 try:
     import pyqtgraph as pg
@@ -416,9 +417,8 @@ class SystemMonitorWidget(QWidget):
                         if item:
                             item.setBackground(QBrush(QColor(255, 200, 200)))
 
-        except Exception:
-            # Silently handle errors to avoid spam
-            pass
+        except Exception as e:
+            logger.debug("Error updating system monitor: %s", e)
 
     def _check_thresholds(self, metrics: SystemMetrics):
         """Check if any metrics exceed thresholds"""

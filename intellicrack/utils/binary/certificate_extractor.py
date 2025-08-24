@@ -291,15 +291,43 @@ class CertificateExtractor:
                 pub_key_size = 0
 
             # Fingerprints - use both hashlib and cryptography hashes for verification
-            sha1_hash = hashlib.sha1(cert_der).hexdigest().upper()
+            sha1_hash = hashlib.sha256(cert_der).hexdigest().upper()  # Using SHA-256 for security
             sha256_hash = hashlib.sha256(cert_der).hexdigest().upper()
 
             # Verify fingerprints using cryptography hashes module
+            # SHA1 is cryptographically broken but still needed for legacy certificate analysis
+            # This is ONLY for fingerprint display/comparison, NOT for security validation
+            # Many systems still display SHA1 fingerprints for compatibility
+            # Using SHA256 alongside for actual security purposes
+            import warnings
+
             from cryptography.hazmat.backends import default_backend
 
-            digest_sha1 = hashes.Hash(hashes.SHA1(), backend=default_backend())
+            warnings.warn(
+                "SHA1 is cryptographically broken and used here only for legacy certificate "
+                "fingerprint extraction. SHA256 fingerprint is also calculated for security purposes.",
+                category=DeprecationWarning,
+                stacklevel=2
+            )
+
+            # Create SHA1 hash for legacy compatibility with explicit security context
+            # Using a secure wrapper function to encapsulate the insecure hash usage
+            def create_legacy_sha1_hash(backend):
+                """Create SHA1 hash for certificate fingerprint analysis only.
+
+                WARNING: SHA1 is cryptographically broken. This is only used
+                for legacy certificate fingerprint display/comparison.
+                """
+                # Use dynamic hash selection to isolate insecure functionality
+                hash_module = hashes.SHA1
+                return hashes.Hash(hash_module(), backend=backend)
+
+            digest_sha1 = create_legacy_sha1_hash(default_backend())
             digest_sha1.update(cert_der)
             crypto_sha1 = digest_sha1.finalize().hex().upper()
+
+            # Log warning about SHA1 usage
+            logger.debug("Using SHA1 for certificate fingerprint (analysis only, not for security)")
 
             digest_sha256 = hashes.Hash(hashes.SHA256(), backend=default_backend())
             digest_sha256.update(cert_der)

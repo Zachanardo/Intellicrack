@@ -273,6 +273,8 @@ def check_protection_models() -> bool:
 def validate_flask_server() -> dict[str, any]:
     """Validate Flask server can be initialized for web UI."""
     try:
+        import secrets
+
         import flask
         import flask_cors
 
@@ -280,9 +282,10 @@ def validate_flask_server() -> dict[str, any]:
         app = flask.Flask(__name__, static_folder=None)
         flask_cors.CORS(app, resources={r"/*": {"origins": "*"}})
 
-        # Test configuration
+        # Test configuration with securely generated key
+        # This is only for validation testing, not used in production
         app.config.update(
-            SECRET_KEY="test-key-for-validation",
+            SECRET_KEY=secrets.token_hex(32),  # Generate secure random key for validation
             JSON_SORT_KEYS=False,
             MAX_CONTENT_LENGTH=16 * 1024 * 1024,  # 16MB max upload
         )

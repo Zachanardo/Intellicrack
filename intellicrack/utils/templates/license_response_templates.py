@@ -74,7 +74,7 @@ def get_adobe_response_templates():
     current_time = datetime.datetime.now()
 
     # Generate realistic serial based on machine characteristics
-    machine_id = hashlib.md5(str(random.getrandbits(64)).encode()).hexdigest()[:20]
+    machine_id = hashlib.sha256(str(random.getrandbits(64)).encode()).hexdigest()[:20]
     adobe_serial = f"{machine_id[:4]}-{machine_id[4:8]}-{machine_id[8:12]}-{machine_id[12:16]}-{machine_id[16:20]}"
 
     # Calculate expiry based on realistic Adobe license terms

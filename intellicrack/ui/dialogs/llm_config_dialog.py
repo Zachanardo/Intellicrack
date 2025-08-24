@@ -4,34 +4,6 @@ import logging
 import os
 import time
 
-from intellicrack.logger import logger
-
-from ...utils.env_file_manager import EnvFileManager
-from ...utils.secrets_manager import get_secret
-from .base_dialog import BaseDialog
-
-"""
-LLM Configuration Dialog for Intellicrack
-
-Copyright (C) 2025 Zachary Flint
-
-This file is part of Intellicrack.
-
-Intellicrack is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Intellicrack is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
-"""
-
-
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
     QCheckBox,
@@ -58,6 +30,32 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.logger import logger
+
+from ...utils.env_file_manager import EnvFileManager
+from ...utils.secrets_manager import get_secret
+from .base_dialog import BaseDialog
+
+"""
+LLM Configuration Dialog for Intellicrack
+
+Copyright (C) 2025 Zachary Flint
+
+This file is part of Intellicrack.
+
+Intellicrack is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Intellicrack is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
+"""
 
 # Local imports
 try:

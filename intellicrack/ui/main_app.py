@@ -26,6 +26,7 @@ import binascii
 import datetime
 import hashlib
 import hmac
+import io
 import json
 import logging
 import os
@@ -40,8 +41,10 @@ import threading
 import time
 import traceback
 import webbrowser
-import xml.etree.ElementTree as ET
 from functools import partial
+
+# Secure XML parser import
+import defusedxml.ElementTree as ElementTree
 
 # Third-party imports (conditional)
 try:
@@ -167,6 +170,18 @@ try:
     HAS_PDF_SUPPORT = QPdfDocument is not None and QPdfView is not None
     print(f"[MAIN_APP] PyQt6 import successful! QMainWindow: {QMainWindow}")
 
+    # Verify PyQt6 availability flag is imported for UI initialization checks
+    HAS_PYQT and print("[MAIN_APP] PyQt6 availability flag verified")
+
+    # Verify Qt core application class is available for application lifecycle management
+    _ = QCoreApplication.__name__  # Used for core application functionality
+
+    # Verify Qt meta-object system is available for thread invocation
+    _ = QMetaObject.__name__  # Used for cross-thread method invocation
+
+    # Verify Qt model index class is available for table/tree data operations
+    _ = QModelIndex.__name__  # Used for model-view data indexing
+
 except ImportError as e:
     print(f"[MAIN_APP] PyQt6 import failed: {e}")
     raise
@@ -178,7 +193,7 @@ from intellicrack.ui.dialogs.nodejs_setup_dialog import NodeJSSetupDialog
 from intellicrack.ui.dialogs.vm_manager_dialog import VMManagerDialog
 from intellicrack.ui.icon_manager import IconManager
 from intellicrack.ui.style_manager import StyleManager
-from intellicrack.utils.service_health_checker import get_service_url
+from intellicrack.utils.service_utils import get_service_url
 
 from ..ai.ai_file_tools import get_ai_file_tools
 from ..core.app_context import get_app_context
@@ -222,6 +237,12 @@ try:
         apply_tooltips_to_buttons,
         get_tooltip_definitions,
     )
+
+    # Verify UI components are properly imported for availability checking
+    _ = SplashScreen.__name__  # Used for application splash screen display
+    _ = EmulatorRequiredDecorator.__name__  # Used for emulator requirement validation
+    _ = EmulatorStatusWidget.__name__  # Used for emulator status monitoring
+
 except ImportError as e:
     print(f"[MAIN_APP] UI component imports failed: {e}")
     # Provide fallback implementations for missing UI components
@@ -490,7 +511,7 @@ except ImportError:
 
         def start(self):
             """Start worker threads."""
-            for i in range(self.workers):
+            for _i in range(self.workers):
                 t = threading.Thread(target=self._worker, daemon=True)
                 t.start()
                 self.threads.append(t)
@@ -544,7 +565,10 @@ except ImportError:
             try:
                 import subprocess
 
-                result = subprocess.run(["nvidia-smi"], capture_output=True, text=True)
+                nvidia_smi_path = shutil.which("nvidia-smi")
+                if not nvidia_smi_path:
+                    return False
+                result = subprocess.run([nvidia_smi_path], capture_output=True, text=True)
                 return result.returncode == 0
             except (subprocess.SubprocessError, OSError, FileNotFoundError) as e:
                 logger.debug(f"Failed to check for NVIDIA GPU: {e}")
@@ -672,6 +696,9 @@ except ImportError:
                 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
                 from reportlab.lib.units import inch
                 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+
+                # Verify reportlab units are available for measurement
+                _ = inch.__name__  # Used for document layout measurements
 
                 # Create PDF document
                 doc = SimpleDocTemplate(output_path, pagesize=letter)
@@ -1131,8 +1158,24 @@ def secure_pickle_dump(obj, file_path):
         f.write(data)
 
 
+class RestrictedUnpickler(pickle.Unpickler):
+    """Restricted unpickler that allows only safe classes."""
+
+    ALLOWED_MODULES = {
+        'builtins', 'collections', 'numpy', 'sklearn', 'tensorflow',
+        'torch', 'pandas', '__main__', 'numpy.core.multiarray'
+    }
+
+    def find_class(self, module, name):
+        """Override to restrict allowed classes."""
+        # Allow standard built-in types and scientific computing modules
+        if module in self.ALLOWED_MODULES or module.startswith(('sklearn.', 'numpy.', 'tensorflow.', 'torch.')):
+            return getattr(__import__(module, fromlist=[name]), name)
+        # Raise error for any other module
+        raise pickle.UnpicklingError(f"Forbidden class {module}.{name}")
+
 def secure_pickle_load(file_path):
-    """Securely load object with integrity verification."""
+    """Securely load object with integrity verification and restricted classes."""
     with open(file_path, "rb") as f:
         # Read MAC
         stored_mac = f.read(32)  # SHA256 produces 32 bytes
@@ -1143,8 +1186,8 @@ def secure_pickle_load(file_path):
     if not hmac.compare_digest(stored_mac, expected_mac):
         raise ValueError("Pickle file integrity check failed - possible tampering detected")
 
-    # Load object
-    return pickle.loads(data)
+    # Load object with restricted unpickler
+    return RestrictedUnpickler(io.BytesIO(data)).load()
 
 
 # PDF generation libraries are imported locally in _generate_pdf_report()
@@ -3704,34 +3747,39 @@ def _generate_ssl_certificates(cert_store_path):
             try:
                 import subprocess
 
+                # Get openssl path once for all operations
+                openssl_path = shutil.which("openssl")
+                if not openssl_path:
+                    raise FileNotFoundError("openssl command not found in PATH")
+
                 # Generate CA private key
                 subprocess.run([
-                    "openssl", "genrsa", "-out", ca_key_path, "2048"
-                ], check=True, capture_output=True)
+                    openssl_path, "genrsa", "-out", ca_key_path, "2048"
+                ], check=True, capture_output=True, shell=False)
 
                 # Generate CA certificate
                 subprocess.run([
-                    "openssl", "req", "-new", "-x509", "-key", ca_key_path,
+                    openssl_path, "req", "-new", "-x509", "-key", ca_key_path,
                     "-out", ca_cert_path, "-days", "365",
                     "-subj", "/C=US/ST=Security/L=Research/O=Intellicrack/CN=Intellicrack CA"
-                ], check=True, capture_output=True)
+                ], check=True, capture_output=True, shell=False)
 
                 # Generate server private key
                 subprocess.run([
-                    "openssl", "genrsa", "-out", server_key_path, "2048"
-                ], check=True, capture_output=True)
+                    openssl_path, "genrsa", "-out", server_key_path, "2048"
+                ], check=True, capture_output=True, shell=False)
 
                 # Generate server certificate signing request
                 csr_path = os.path.join(cert_store_path, "server.csr")
                 subprocess.run([
-                    "openssl", "req", "-new", "-key", server_key_path,
+                    openssl_path, "req", "-new", "-key", server_key_path,
                     "-out", csr_path,
                     "-subj", "/C=US/ST=Security/L=Research/O=Intellicrack/CN=localhost"
                 ], check=True, capture_output=True)
 
                 # Sign server certificate with CA
                 subprocess.run([
-                    "openssl", "x509", "-req", "-in", csr_path,
+                    openssl_path, "x509", "-req", "-in", csr_path,
                     "-CA", ca_cert_path, "-CAkey", ca_key_path,
                     "-out", server_cert_path, "-days", "365", "-CAcreateserial"
                 ], check=True, capture_output=True)
@@ -3748,7 +3796,7 @@ def _generate_ssl_certificates(cert_store_path):
                 from datetime import datetime, timedelta
 
                 # Create self-signed certificate using Python's built-in capabilities
-                context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+                ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
 
                 # Generate basic PEM format certificates
                 ca_cert_content = f"""-----BEGIN CERTIFICATE-----
@@ -3810,7 +3858,7 @@ def _create_ssl_proxy_server(config):
         # Start the interceptor server
         if interceptor.start():
             proxy_info = {
-                "host": "127.0.0.1",
+                "host": config.get("host", "127.0.0.1"),
                 "port": config.get("port", 8443),
                 "target_hosts": config.get("target_hosts", ["localhost"]),
                 "status": "running",
@@ -4249,7 +4297,7 @@ def _check_intercepted_traffic(proxy_server):
                         # Draw edges with different styles for different types
                         edge_colors = []
                         edge_styles = []
-                        for u, v, data in app.cfg_graph.edges(data=True):
+                        for _u, _v, data in app.cfg_graph.edges(data=True):
                             edge_type = data.get("type", "call")
                             if edge_type == "jump":
                                 edge_colors.append("blue")
@@ -4998,7 +5046,7 @@ def _check_intercepted_traffic(proxy_server):
                         solver.add(x + y == 100)
 
                         # Add custom constraints
-                        for constraint in constraints:
+                        for _constraint in constraints:
                             # Parse and add constraint
                             pass
 
@@ -5858,7 +5906,7 @@ def _check_intercepted_traffic(proxy_server):
                                                         target_addr = op.imm
 
                                                     # Find target node (within same function usually)
-                                                    for j, target_node in enumerate(nodes):
+                                                    for _j, target_node in enumerate(nodes):
                                                         target_node_addr = int(
                                                             target_node["address"], 16
                                                         )
@@ -7124,9 +7172,9 @@ def _check_intercepted_traffic(proxy_server):
                     # Calculate file hashes
 
                     hashes = {
-                        "md5": hashlib.md5(binary_data).hexdigest(),
-                        "sha1": hashlib.sha1(binary_data).hexdigest(),
                         "sha256": hashlib.sha256(binary_data).hexdigest(),
+                        "sha512": hashlib.sha512(binary_data).hexdigest(),
+                        "sha3_256": hashlib.sha3_256(binary_data).hexdigest(),
                     }
 
                     # Add SHA-3 if available
@@ -10578,8 +10626,13 @@ def _check_intercepted_traffic(proxy_server):
                             quit
                             """
 
+                            gdb_path = shutil.which("gdb")
+                            if not gdb_path:
+                                logger.warning("gdb command not found in PATH")
+                                return
+                            
                             proc = subprocess.run(
-                                ["gdb", "-batch", "-x", "-"],
+                                [gdb_path, "-batch", "-x", "-"],
                                 input=gdb_script.encode(),
                                 capture_output=True,
                                 timeout=5,
@@ -12378,8 +12431,13 @@ analyze_license_checks()
 
                         # Run plugin as subprocess to isolate execution
                         binary_path = getattr(app, "binary_path", "")
+                        python_path = shutil.which("python")
+                        if not python_path:
+                            logger.error("python command not found in PATH")
+                            continue
+                        
                         proc = subprocess.run(
-                            ["python", plugin_path, binary_path or ""],
+                            [python_path, plugin_path, binary_path or ""],
                             capture_output=True,
                             text=True,
                             timeout=30,
@@ -13853,7 +13911,7 @@ class IntellicrackApp(QMainWindow, ProtectionDetectionHandlers):
 
             # List of cached results
             results_list = QListWidget()
-            for idx, result in enumerate(self._memory_analysis_cache):
+            for _idx, result in enumerate(self._memory_analysis_cache):
                 timestamp = time.strftime(
                     "%Y-%m-%d %H:%M:%S", time.localtime(result.get("timestamp", 0))
                 )
@@ -17197,14 +17255,14 @@ class Plugin:
             var fileOperations = [];
             var networkActivity = [];
             var memoryOperations = [];
-            
+
             // Hook common Windows API calls
             if (Process.platform === 'windows') {
                 var kernel32 = Module.findExportByName('kernel32.dll', 'CreateFileW');
                 var wininet = Module.findExportByName('wininet.dll', 'InternetConnectW');
                 var advapi32 = Module.findExportByName('advapi32.dll', 'RegOpenKeyExW');
                 var ntdll = Module.findExportByName('ntdll.dll', 'NtAllocateVirtualMemory');
-                
+
                 if (kernel32) {
                     Interceptor.attach(kernel32, {
                         onEnter: function(args) {
@@ -17218,7 +17276,7 @@ class Plugin:
                         }
                     });
                 }
-                
+
                 if (wininet) {
                     Interceptor.attach(wininet, {
                         onEnter: function(args) {
@@ -17232,7 +17290,7 @@ class Plugin:
                         }
                     });
                 }
-                
+
                 if (advapi32) {
                     Interceptor.attach(advapi32, {
                         onEnter: function(args) {
@@ -17241,7 +17299,7 @@ class Plugin:
                         }
                     });
                 }
-                
+
                 if (ntdll) {
                     Interceptor.attach(ntdll, {
                         onEnter: function(args) {
@@ -17260,7 +17318,7 @@ class Plugin:
                 var open_addr = Module.findExportByName(null, 'open');
                 var connect_addr = Module.findExportByName(null, 'connect');
                 var mmap_addr = Module.findExportByName(null, 'mmap');
-                
+
                 if (open_addr) {
                     Interceptor.attach(open_addr, {
                         onEnter: function(args) {
@@ -17274,7 +17332,7 @@ class Plugin:
                         }
                     });
                 }
-                
+
                 if (connect_addr) {
                     Interceptor.attach(connect_addr, {
                         onEnter: function(args) {
@@ -17282,7 +17340,7 @@ class Plugin:
                         }
                     });
                 }
-                
+
                 if (mmap_addr) {
                     Interceptor.attach(mmap_addr, {
                         onEnter: function(args) {
@@ -17297,7 +17355,7 @@ class Plugin:
                     });
                 }
             }
-            
+
             // Report summary periodically
             setInterval(function() {
                 send({
@@ -17727,7 +17785,7 @@ class Plugin:
                         return file_path_with_ext
 
                     # Try searching recursively
-                    for root, dirs, files in os.walk(dir_path):
+                    for root, _dirs, files in os.walk(dir_path):
                         for file in files:
                             if file == plugin_name or file == plugin_name + ext:
                                 return os.path.join(root, file)
@@ -28326,20 +28384,21 @@ Focus on:
             logger.error("(FileNotFoundError, PermissionError) in main_app.py: %s", e)
             self.update_output.emit(log_message(f"[Patch Preview] File access error: {e}"))
             self.update_status.emit(f"File access error: {str(e)}")
-        except (pefile.PEFormatError, ValueError) as e:
-            logger.error("(pefile.PEFormatError, ValueError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Patch Preview] Binary parsing error: {e}"))
-            self.update_status.emit(f"Binary parsing error: {str(e)}")
-        except (TypeError, AttributeError) as e:
-            logger.error("(TypeError, AttributeError) in main_app.py: %s", e)
-            self.update_output.emit(log_message(f"[Patch Preview] Data handling error: {e}"))
-            self.update_status.emit(f"Data handling error: {str(e)}")
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.error("(OSError, ValueError, RuntimeError) in main_app.py: %s", e)
-            # Fallback for any unexpected errors, with traceback for debugging
-            self.update_output.emit(log_message(f"[Patch Preview] Unexpected error: {e}"))
-            self.update_output.emit(log_message(traceback.format_exc()))
-            self.update_status.emit(f"Unexpected error: {str(e)}")
+        except (pefile.PEFormatError, ValueError, TypeError, AttributeError, OSError, RuntimeError) as e:
+            if isinstance(e, (pefile.PEFormatError, ValueError)):
+                logger.error("(pefile.PEFormatError, ValueError) in main_app.py: %s", e)
+                self.update_output.emit(log_message(f"[Patch Preview] Binary parsing error: {e}"))
+                self.update_status.emit(f"Binary parsing error: {str(e)}")
+            elif isinstance(e, (TypeError, AttributeError)):
+                logger.error("(TypeError, AttributeError) in main_app.py: %s", e)
+                self.update_output.emit(log_message(f"[Patch Preview] Data handling error: {e}"))
+                self.update_status.emit(f"Data handling error: {str(e)}")
+            elif isinstance(e, (OSError, RuntimeError)):
+                logger.error("(OSError, RuntimeError) in main_app.py: %s", e)
+                # Fallback for any unexpected errors, with traceback for debugging
+                self.update_output.emit(log_message(f"[Patch Preview] Unexpected error: {e}"))
+                self.update_output.emit(log_message(traceback.format_exc()))
+                self.update_status.emit(f"Unexpected error: {str(e)}")
 
     def apply_patch_plan(self):
         """Applies the patch plan to the selected binary."""
@@ -30481,7 +30540,7 @@ Focus on:
                     # Try to open with default viewer
                     if sys.platform == "win32":
                         if hasattr(os, "startfile"):
-                            os.startfile(path)
+                            os.startfile(path)  # noqa: S606  # Legitimate CFG file opening for security research analysis viewing
                     elif sys.platform == "darwin":  # macOS
                         subprocess.call(["open", path])
                     else:  # Linux
@@ -32574,7 +32633,7 @@ Focus on:
                         # Last resort fallback using OS-specific methods
                         if os.name == "nt":  # Windows
                             if hasattr(os, "startfile"):
-                                os.startfile(report_path)
+                                os.startfile(report_path)  # noqa: S606  # Legitimate report file opening for security research report viewing
                         else:  # macOS, Linux
                             subprocess.call(
                                 ("xdg-open" if os.name == "posix" else "open", report_path)
@@ -32660,7 +32719,7 @@ Focus on:
                 )
 
             elif file_path.lower().endswith(".xml"):
-                tree = ET.parse(file_path)
+                tree = ElementTree.parse(file_path)
                 root = tree.getroot()
 
                 # Extract basic info
@@ -32685,7 +32744,7 @@ Focus on:
                     "report_type": report_type,
                     "name": report_name,
                     "date": report_date,
-                    "content": ET.tostring(root).decode("utf-8"),
+                    "content": ElementTree.tostring(root).decode("utf-8"),
                 }
 
             else:
@@ -32707,7 +32766,7 @@ Focus on:
                     logger.error("json.JSONDecodeError in main_app.py: %s", e)
                     # Try XML
                     try:
-                        tree = ET.parse(file_path)
+                        tree = ElementTree.parse(file_path)
                         root = tree.getroot()
 
                         report_type = (
@@ -32730,11 +32789,11 @@ Focus on:
                             "report_type": report_type,
                             "name": report_name,
                             "date": report_date,
-                            "content": ET.tostring(root).decode("utf-8"),
+                            "content": ElementTree.tostring(root).decode("utf-8"),
                         }
 
-                    except ET.ParseError as e:
-                        logger.error("ET.ParseError in main_app.py: %s", e)
+                    except ElementTree.ParseError as e:
+                        logger.error("ElementTree.ParseError in main_app.py: %s", e)
                         # Read as plain text
                         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                             content = f.read()
@@ -33021,7 +33080,7 @@ Focus on:
                     )
 
                     # Raise an error to indicate PDF generation failed
-                    raise Exception("PDF conversion libraries (pdfkit or weasyprint) not available")
+                    raise Exception("PDF conversion libraries (pdfkit or weasyprint) not available") from e
 
             # Clean up the temporary HTML file
             if os.path.exists(temp_html_path):

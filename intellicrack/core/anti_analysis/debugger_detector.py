@@ -20,6 +20,7 @@ import ctypes.util
 import logging
 import os
 import platform
+import shutil
 import time
 from typing import Any
 
@@ -199,7 +200,7 @@ class DebuggerDetector(BaseDetector):
             current_process = kernel32.GetCurrentProcess()
 
             # Structure definitions for PEB access
-            class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+            class PROCESS_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
                 _fields_ = [
                     ("Reserved1", ctypes.c_void_p),
                     ("PebBaseAddress", ctypes.c_void_p),
@@ -305,14 +306,16 @@ class DebuggerDetector(BaseDetector):
                     # Check for common debugger processes
                     import subprocess
                     try:
-                        ps_output = subprocess.check_output(['ps', 'aux'], text=True)
-                        debugger_patterns = ['gdb', 'lldb', 'strace', 'ltrace', 'x64dbg']
-                        for pattern in debugger_patterns:
-                            if pattern in ps_output:
-                                debug_detected = True
-                                confidence = max(confidence, 0.6)
-                                details["debugger_process"] = pattern
-                                break
+                        ps_path = shutil.which("ps")
+                        if ps_path:
+                            ps_output = subprocess.check_output([ps_path, 'aux'], text=True)
+                            debugger_patterns = ['gdb', 'lldb', 'strace', 'ltrace', 'x64dbg']
+                            for pattern in debugger_patterns:
+                                if pattern in ps_output:
+                                    debug_detected = True
+                                    confidence = max(confidence, 0.6)
+                                    details["debugger_process"] = pattern
+                                    break
                     except subprocess.SubprocessError:
                         pass
 
@@ -343,7 +346,7 @@ class DebuggerDetector(BaseDetector):
             current_process = kernel32.GetCurrentProcess()
 
             # Use same PEB access method as _check_peb_flags
-            class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+            class PROCESS_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
                 _fields_ = [
                     ("Reserved1", ctypes.c_void_p),
                     ("PebBaseAddress", ctypes.c_void_p),
@@ -631,8 +634,6 @@ class DebuggerDetector(BaseDetector):
 
                     # Define ptrace constants
                     PTRACE_PEEKUSER = 3
-                    PTRACE_ATTACH = 16
-                    PTRACE_DETACH = 17
 
                     # Debug register offsets (x86_64)
                     DR_OFFSETS = {
@@ -651,7 +652,7 @@ class DebuggerDetector(BaseDetector):
                             # This will fail without proper permissions, but attempt shows capability
                             result = libc.ptrace(PTRACE_PEEKUSER, pid, offset, 0)
                             debug_regs[reg_name] = hex(result) if result else "0x0"
-                        except:
+                        except Exception:
                             debug_regs[reg_name] = "inaccessible"
 
                     details["dr_registers"] = debug_regs
@@ -733,7 +734,7 @@ class DebuggerDetector(BaseDetector):
             current_process = kernel32.GetCurrentProcess()
 
             # Structure for MEMORY_BASIC_INFORMATION
-            class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+            class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
                 _fields_ = [
                     ("BaseAddress", ctypes.c_void_p),
                     ("AllocationBase", ctypes.c_void_p),
@@ -1004,7 +1005,7 @@ class DebuggerDetector(BaseDetector):
                 try:
                     # Trigger access violation
                     ctypes.c_int.from_address(0)
-                except:
+                except Exception:
                     # If we catch it, no debugger interfered
                     return False
                 # If we get here, debugger handled it

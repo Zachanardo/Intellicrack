@@ -33,7 +33,7 @@ class AnalysisSource(Enum):
     HEURISTIC = "heuristic"
     SIGNATURE = "signature"
     HYBRID = "hybrid"
-    DIE = "die"
+    ICP = "icp"
     ML_MODEL = "ml_model"
     UNIFIED_ENGINE = "unified_engine"
 

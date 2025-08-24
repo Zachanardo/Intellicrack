@@ -18,6 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 # Standard library imports
 import json
+import logging
 import struct
 import sys
 from collections import defaultdict
@@ -160,6 +161,7 @@ class R2LicenseAnalyzer:
         self.string_refs: dict[int, list[str]] = defaultdict(list)
         self.api_refs: dict[int, list[str]] = defaultdict(list)
         self.crypto_locations: dict[str, list[int]] = defaultdict(list)
+        self.logger = logging.getLogger(f"{__name__}.R2LicenseAnalyzer")
 
         # Initialize analysis
         self._init_analysis()
@@ -252,8 +254,8 @@ class R2LicenseAnalyzer:
                 for line in lines:
                     if line.startswith("offset:"):
                         return int(line.split()[1], 16)
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug("Error finding license check offset: %s", e)
         return None
 
     def analyze(self) -> list[LicenseFunction]:

@@ -1000,7 +1000,7 @@ class VMProtectionUnwrapper:
         # Initialize Keystone for assembly
         try:
             ks = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_32)
-        except:
+        except Exception:
             # Fallback: return NOP instructions
             return b"\x90" * len(vm_instructions)
 

@@ -966,7 +966,7 @@ def process_ghidra_analysis_results(app, json_path):
             logger.error("json.JSONDecodeError in runner_functions: %s", e)
             app.update_output.emit(log_message(f"[Ghidra Analysis] Invalid JSON: {e}"))
             app.update_output.emit(log_message(traceback.format_exc()))
-            raise ValueError(f"Invalid JSON file: {e}")
+            raise ValueError(f"Invalid JSON file: {e}") from e
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in runner_functions: %s", e)
             app.update_output.emit(log_message(f"[Ghidra Analysis] Error reading file: {e}"))

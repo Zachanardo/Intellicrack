@@ -120,8 +120,8 @@ def capture_with_scapy(
                         for keyword in license_keywords:
                             if keyword in payload.lower():
                                 packet_info["license_indicators"].append(keyword.decode())
-                except:
-                    pass
+                except (AttributeError, UnicodeDecodeError, TypeError) as e:
+                    logger.debug(f"Failed to extract license indicators from packet: {e}")
 
             captured_packets.append(packet_info)
 
@@ -444,14 +444,15 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
                                                 logger.debug(
                                                     f"DNS query detected: {queried_domain}"
                                                 )
-                                except:
-                                    pass
+                                except (dpkt.dpkt.NeedData, dpkt.dpkt.UnpackError, AttributeError) as e:
+                                    logger.debug(f"Failed to parse DNS packet: {e}")
 
                         elif isinstance(ip.data, dpkt.icmp.ICMP):
                             packet_stats["icmp_packets"] += 1
 
-                except Exception:
+                except Exception as e:
                     # Skip malformed packets
+                    logger.debug(f"Skipping malformed packet: {e}")
                     continue
 
         # Calculate statistics

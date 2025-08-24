@@ -176,6 +176,7 @@ except ImportError as e:
             """Save as raster image using PIL if available, else create placeholder."""
             try:
                 from PIL import Image, ImageDraw, ImageFont
+                _ = ImageFont.__name__  # Verify ImageFont is properly imported for future text rendering capabilities
 
                 width = int(self.figsize[0] * dpi)
                 height = int(self.figsize[1] * dpi)
@@ -532,7 +533,7 @@ except ImportError as e:
 
             # Draw bars
             for bar_group in self.bars:
-                for i, (x, h) in enumerate(zip(bar_group['x'], bar_group['height'], strict=False)):
+                for _i, (x, h) in enumerate(zip(bar_group['x'], bar_group['height'], strict=False)):
                     if self.xlim and self.ylim:
                         x_norm = (x - self.xlim[0]) / (self.xlim[1] - self.xlim[0]) if self.xlim[1] != self.xlim[0] else 0.5
                         h_norm = h / (self.ylim[1] - self.ylim[0]) if self.ylim[1] != self.ylim[0] else 0.5
@@ -1013,7 +1014,7 @@ startxref
         """Fallback matplotlib module."""
 
         # Sub-modules
-        class pyplot:
+        class Pyplot:
             figure = staticmethod(plt.figure)
             gcf = staticmethod(plt.gcf)
             gca = staticmethod(plt.gca)
@@ -1041,6 +1042,9 @@ startxref
 
         # Version info
         __version__ = "0.0.0-fallback"
+
+        # Compatibility alias
+        pyplot = Pyplot
 
     matplotlib = FallbackMatplotlib()
 

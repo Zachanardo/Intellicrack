@@ -870,8 +870,8 @@ class DistributedProcessingManager:
                                             "description": "Stack pointer potentially corrupted",
                                         }
                                     )
-                            except (AttributeError, Exception):
-                                pass  # Skip states that can't be analyzed
+                            except (AttributeError, Exception) as e:
+                                logger.debug("Skipping state analysis due to error: %s", e)
 
                 chunk_end_time = time.time()
                 chunk_duration = chunk_end_time - chunk_start_time

@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 import re
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -182,11 +183,6 @@ Provide only the JSON response, no explanations."""
                 return ValidationResult.SUCCESS, results
 
         except Exception as e:
-            logger.error(f"Validation failed: {e}")
-            results["warnings"].append(f"Validation error: {str(e)}")
-            return ValidationResult.SUCCESS, results
-
-        except Exception as e:
             logger.error(f"Script validation failed: {e}")
             results["error"] = str(e)
             return ValidationResult.RUNTIME_ERROR, results
@@ -204,7 +200,7 @@ Provide only the JSON response, no explanations."""
 
             # Handle None binary_path - QEMU requires a binary path
             if not binary_path:
-                binary_path = "/tmp/test_binary"  # Default test binary path
+                binary_path = f"{tempfile.gettempdir()}/test_binary"  # Default test binary path
 
             result = qemu_manager.test_script_in_vm(
                 script_content=script_content,
@@ -332,7 +328,7 @@ Provide only the JSON response, no explanations."""
         }
 
         total_complexity = sum(complexity_factors.values())
-        line_count = len([l for l in lines if l.strip()])
+        line_count = len([line for line in lines if line.strip()])
 
         if line_count > 0:
             metrics["complexity_score"] = min(total_complexity / line_count, 1.0)

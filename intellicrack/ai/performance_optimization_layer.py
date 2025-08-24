@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import concurrent.futures
 import hashlib
+import os
 import threading
 import time
 from collections import defaultdict, deque
@@ -946,6 +947,10 @@ class PerformanceOptimizationLayer:
 
     def _start_background_optimization(self):
         """Start background optimization tasks."""
+        # Skip thread creation during testing
+        if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
+            logger.info("Skipping background optimization worker (testing mode)")
+            return
 
         def background_worker():
             while True:

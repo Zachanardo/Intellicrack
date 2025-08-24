@@ -52,7 +52,7 @@ THREAD_BASIC_INFORMATION = 0
 # Windows structures
 if sys.platform == "win32" and AVAILABLE:
 
-    class THREAD_BASIC_INFORMATION_32(ctypes.Structure):
+    class THREAD_BASIC_INFORMATION_32(ctypes.Structure):  # noqa: N801
         """Thread basic information structure for 32-bit processes."""
 
         _fields_ = [

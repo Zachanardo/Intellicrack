@@ -435,7 +435,7 @@ class AnalysisCache:
         """Generate cache key from file path and options"""
         # Use file path + scan options hash for key
         key_data = f"{file_path}:{scan_options}"
-        key_hash = hashlib.md5(key_data.encode()).hexdigest()[:16]
+        key_hash = hashlib.sha256(key_data.encode()).hexdigest()[:16]
         return f"{file_path}:{key_hash}"
 
     def _evict_if_needed(self) -> None:
@@ -473,7 +473,7 @@ class AnalysisCache:
             try:
                 # Rough estimate using pickle size
                 total_size += len(pickle.dumps(entry.data))
-            except:
+            except Exception:
                 # Fallback estimate
                 total_size += len(str(entry.data)) * 2
         return total_size
@@ -503,6 +503,11 @@ class AnalysisCache:
 
     def _save_cache_async(self) -> None:
         """Save cache asynchronously (non-blocking)"""
+        # Skip thread creation during testing
+        if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
+            logger.info("Skipping async cache save (testing mode)")
+            return
+
         import threading
 
         def save_worker():

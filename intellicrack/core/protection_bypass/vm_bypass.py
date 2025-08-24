@@ -2,6 +2,7 @@
 
 import logging
 import platform
+import shutil
 from typing import Any
 
 from intellicrack.logger import logger
@@ -770,14 +771,18 @@ class VMDetector:
             import subprocess
 
             if platform.system() == "Windows":
-                result = subprocess.run(
-                    ["wmic", "cpu", "get", "name"],
-                    capture_output=True,
-                    text=True,
-                    check=False,  # noqa: S607
-                )
-                if "virtual" in result.stdout.lower():
-                    indicators.append("CPU name contains 'virtual'")
+                wmic_path = shutil.which("wmic")
+                if wmic_path:
+                    result = subprocess.run(
+                        [wmic_path, "cpu", "get", "name"],
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+                    if "virtual" in result.stdout.lower():
+                        indicators.append("CPU name contains 'virtual'")
+                else:
+                    logger.debug("wmic not found in PATH")
             elif platform.system() == "Linux":
                 with open("/proc/cpuinfo", encoding="utf-8") as f:
                     cpuinfo = f.read().lower()

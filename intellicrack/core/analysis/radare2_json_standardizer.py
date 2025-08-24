@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import hashlib
 import json
 import os
+import shutil
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -743,15 +744,19 @@ class R2JSONStandardizer:
         try:
             import subprocess
 
-            result = subprocess.run(
-                ["radare2", "-v"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=5,  # noqa: S607
-            )
-            if result.returncode == 0:
-                return result.stdout.split("\n")[0].strip()
+            radare2_path = shutil.which("radare2")
+            if radare2_path:
+                result = subprocess.run(
+                    [radare2_path, "-v"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                if result.returncode == 0:
+                    return result.stdout.split("\n")[0].strip()
+            else:
+                logger.warning("radare2 command not found in PATH")
         except Exception as e:
             self.logger.debug(f"Failed to get radare2 version: {e}")
         return "unknown"
@@ -2354,7 +2359,7 @@ class R2JSONStandardizer:
         # Verify architectural consistency
         if len(binary_info) > 1:
             architectures = set()
-            for comp_name, info in binary_info.items():
+            for _comp_name, info in binary_info.items():
                 if isinstance(info, dict):
                     arch = info.get("architecture", info.get("arch"))
                     if arch:

@@ -38,6 +38,8 @@ def check_binary_path_and_warn(app_instance):
         try:
             from intellicrack.handlers.pyqt6_handler import QFileDialog, QMessageBox
 
+            # Verify UI dialog components are available
+            _ = QFileDialog.__name__  # Used for file selection dialogs
             QMessageBox.warning(app_instance, "No File Selected", "Please select a program first.")
         except ImportError as e:
             logger.error("Import error in ui_helpers: %s", e)

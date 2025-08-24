@@ -42,7 +42,7 @@ class ComparisonWorker(QThread):
 
     def __init__(self, comparer, file1_path: str, file2_path: str):
         """Initialize the worker.
-        
+
         Args:
             comparer: BinaryComparer instance
             file1_path: Path to first file
@@ -74,7 +74,7 @@ class CompareDialog(QDialog):
 
     def __init__(self, parent=None, initial_file: Optional[str] = None):
         """Initialize the compare dialog.
-        
+
         Args:
             parent: Parent widget
             initial_file: Path to pre-populate as first file
@@ -219,7 +219,7 @@ class CompareDialog(QDialog):
 
     def browse_file(self, file_num: int):
         """Browse for a file to compare.
-        
+
         Args:
             file_num: 1 or 2 for first or second file
         """
@@ -242,7 +242,7 @@ class CompareDialog(QDialog):
 
     def update_file_info(self, file_num: int):
         """Update file information display.
-        
+
         Args:
             file_num: 1 or 2 for first or second file
         """
@@ -283,7 +283,7 @@ class CompareDialog(QDialog):
 
     def set_mode(self, mode: str):
         """Set comparison mode.
-        
+
         Args:
             mode: Comparison mode (visual, byte, or structural)
         """
@@ -291,7 +291,7 @@ class CompareDialog(QDialog):
 
     def toggle_sync_scrolling(self, checked: bool):
         """Toggle synchronized scrolling.
-        
+
         Args:
             checked: Whether sync scrolling is enabled
         """
@@ -299,7 +299,7 @@ class CompareDialog(QDialog):
 
     def toggle_highlight(self, checked: bool):
         """Toggle difference highlighting.
-        
+
         Args:
             checked: Whether highlighting is enabled
         """
@@ -307,7 +307,7 @@ class CompareDialog(QDialog):
 
     def validate_selection(self) -> bool:
         """Validate that two valid files are selected.
-        
+
         Returns:
             True if selection is valid
         """
@@ -352,7 +352,7 @@ class CompareDialog(QDialog):
 
     def get_settings(self) -> dict:
         """Get the comparison settings.
-        
+
         Returns:
             Dictionary with comparison settings
         """
@@ -367,7 +367,7 @@ class CompareDialog(QDialog):
 
     def show_quick_stats(self, differences: list):
         """Show quick statistics about the comparison.
-        
+
         Args:
             differences: List of DifferenceBlock objects
         """

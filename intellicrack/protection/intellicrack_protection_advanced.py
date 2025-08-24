@@ -10,11 +10,13 @@ import concurrent.futures
 import hashlib
 import json
 import subprocess
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+# Secure XML parser import
+import defusedxml.ElementTree as ElementTree
 
 from ..utils.logger import get_logger
 from .intellicrack_protection_core import (
@@ -195,10 +197,16 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
     def _find_custom_db(self) -> str | None:
         """Find custom database directory"""
-        base_path = Path(self.engine_path).parent
-        custom_db = base_path / "db_custom"
-        if custom_db.exists():
-            return str(custom_db)
+        if not self.engine_path:
+            # No engine path, no custom db
+            return None
+        try:
+            base_path = Path(self.engine_path).parent
+            custom_db = base_path / "db_custom"
+            if custom_db.exists():
+                return str(custom_db)
+        except (TypeError, ValueError):
+            pass
         return None
 
     def detect_protections_advanced(
@@ -350,11 +358,11 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         )
 
         # Parse additional information
-        die_data = json.loads(json_output)
+        icp_data = json.loads(json_output)
 
         # Extract entropy information
-        if "sections" in die_data:
-            for section in die_data["sections"]:
+        if "sections" in icp_data:
+            for section in icp_data["sections"]:
                 entropy_info = EntropyInfo(
                     section_name=section.get("name", ""),
                     offset=section.get("offset", 0),
@@ -366,8 +374,8 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 analysis.entropy_info.append(entropy_info)
 
         # Extract certificate information
-        if "certificates" in die_data:
-            for cert in die_data["certificates"]:
+        if "certificates" in icp_data:
+            for cert in icp_data["certificates"]:
                 cert_info = CertificateInfo(
                     subject=cert.get("subject", ""),
                     issuer=cert.get("issuer", ""),
@@ -381,8 +389,8 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 analysis.certificates.append(cert_info)
 
         # Extract resource information
-        if "resources" in die_data:
-            for resource in die_data["resources"]:
+        if "resources" in icp_data:
+            for resource in icp_data["resources"]:
                 resource_info = ResourceInfo(
                     type=resource.get("type", ""),
                     name=resource.get("name", ""),
@@ -394,8 +402,8 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 analysis.resources.append(resource_info)
 
         # Extract heuristic detections
-        if "heuristic" in die_data:
-            for heur in die_data["heuristic"]:
+        if "heuristic" in icp_data:
+            for heur in icp_data["heuristic"]:
                 det_result = DetectionResult(
                     name=heur.get("name", "Unknown"),
                     version=heur.get("version"),
@@ -416,7 +424,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         )
 
         try:
-            root = ET.fromstring(xml_output)
+            root = ElementTree.fromstring(xml_output)
 
             # Parse file information
             file_elem = root.find("file")
@@ -444,7 +452,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 )
                 analysis.entropy_info.append(entropy_info)
 
-        except ET.ParseError as e:
+        except ElementTree.ParseError as e:
             logger.error(f"XML parsing error: {e}")
 
         return analysis
@@ -613,7 +621,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             # Create sorted imphash
             sorted_imports = sorted(import_list)
             sorted_string = ",".join(sorted_imports)
-            import_hash_sorted = hashlib.md5(sorted_string.encode()).hexdigest()
+            import_hash_sorted = hashlib.sha256(sorted_string.encode()).hexdigest()
 
             # Calculate Rich header hash if present
             rich_header_hash = None
@@ -650,7 +658,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 return None
 
             # Parse PE header to find import directory
-            machine = int.from_bytes(data[pe_offset + 4 : pe_offset + 6], "little")
+            int.from_bytes(data[pe_offset + 4 : pe_offset + 6], "little")
             optional_header_offset = pe_offset + 24
 
             # Determine if PE32 or PE32+
@@ -703,10 +711,10 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             # Generate hash from whatever imports we found
             if import_strings:
                 import_string = ",".join(import_strings)
-                imphash = hashlib.md5(import_string.encode()).hexdigest()
+                imphash = hashlib.sha256(import_string.encode()).hexdigest()
             else:
                 # Fallback to hashing first 4KB of file if no imports found
-                imphash = hashlib.md5(data[:4096]).hexdigest()
+                imphash = hashlib.sha256(data[:4096]).hexdigest()
 
             return ImportHash(
                 imphash=imphash,
@@ -884,7 +892,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         try:
             with open(file_path, "rb") as f:
                 return hashlib.sha256(f.read()).hexdigest()
-        except:
+        except Exception:
             return ""
 
     def batch_analyze(
@@ -1006,7 +1014,7 @@ function detect(bShowType, bShowVersion, bShowOptions)
             conditions_list.append("$elf at 0")
 
         # Add protection-specific patterns based on detections
-        for idx, detection in enumerate(analysis.detections):
+        for _idx, detection in enumerate(analysis.detections):
             detection_strings = self._generate_detection_patterns(detection)
             for pattern in detection_strings:
                 strings_section.append(f"        {pattern}")
@@ -1248,6 +1256,3 @@ def advanced_analyze(
         enable_heuristic=enable_heuristic,
     )
 
-
-# Backward compatibility alias
-DIEAdvancedDetector = IntellicrackAdvancedProtection

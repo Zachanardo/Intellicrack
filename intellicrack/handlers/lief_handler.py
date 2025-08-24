@@ -250,7 +250,7 @@ except ImportError as e:
                     f.seek(pe_offset + 24 + opt_header_size)
 
                 # Read section headers
-                for i in range(num_sections):
+                for _i in range(num_sections):
                     section_data = f.read(40)
                     if len(section_data) < 40:
                         break
@@ -291,10 +291,8 @@ except ImportError as e:
 
                 if ei_class == 1:  # ELFCLASS32
                     self.mode = MODES.MODE_32
-                    header_size = 52
                 elif ei_class == 2:  # ELFCLASS64
                     self.mode = MODES.MODE_64
-                    header_size = 64
                 else:
                     return
 
@@ -309,21 +307,21 @@ except ImportError as e:
 
                 # Parse rest of header based on architecture
                 if self.mode == MODES.MODE_32:
-                    e_type = struct.unpack(endian + 'H', elf_header[16:18])[0]
+                    struct.unpack(endian + 'H', elf_header[16:18])[0]
                     e_machine = struct.unpack(endian + 'H', elf_header[18:20])[0]
                     self.entrypoint = struct.unpack(endian + 'I', elf_header[24:28])[0]
-                    e_phoff = struct.unpack(endian + 'I', elf_header[28:32])[0]
+                    struct.unpack(endian + 'I', elf_header[28:32])[0]
                     e_shoff = struct.unpack(endian + 'I', elf_header[32:36])[0]
-                    e_phnum = struct.unpack(endian + 'H', elf_header[44:46])[0]
+                    struct.unpack(endian + 'H', elf_header[44:46])[0]
                     e_shnum = struct.unpack(endian + 'H', elf_header[48:50])[0]
                     e_shstrndx = struct.unpack(endian + 'H', elf_header[50:52])[0]
                 else:  # 64-bit
-                    e_type = struct.unpack(endian + 'H', elf_header[16:18])[0]
+                    struct.unpack(endian + 'H', elf_header[16:18])[0]
                     e_machine = struct.unpack(endian + 'H', elf_header[18:20])[0]
                     self.entrypoint = struct.unpack(endian + 'Q', elf_header[24:32])[0]
-                    e_phoff = struct.unpack(endian + 'Q', elf_header[32:40])[0]
+                    struct.unpack(endian + 'Q', elf_header[32:40])[0]
                     e_shoff = struct.unpack(endian + 'Q', elf_header[40:48])[0]
-                    e_phnum = struct.unpack(endian + 'H', elf_header[56:58])[0]
+                    struct.unpack(endian + 'H', elf_header[56:58])[0]
                     e_shnum = struct.unpack(endian + 'H', elf_header[60:62])[0]
                     e_shstrndx = struct.unpack(endian + 'H', elf_header[62:64])[0]
 
@@ -376,15 +374,15 @@ except ImportError as e:
 
                         if self.mode == MODES.MODE_32:
                             sh_name = struct.unpack(endian + 'I', section_header[0:4])[0]
-                            sh_type = struct.unpack(endian + 'I', section_header[4:8])[0]
-                            sh_flags = struct.unpack(endian + 'I', section_header[8:12])[0]
+                            struct.unpack(endian + 'I', section_header[4:8])[0]
+                            struct.unpack(endian + 'I', section_header[8:12])[0]
                             sh_addr = struct.unpack(endian + 'I', section_header[12:16])[0]
                             sh_offset = struct.unpack(endian + 'I', section_header[16:20])[0]
                             sh_size = struct.unpack(endian + 'I', section_header[20:24])[0]
                         else:
                             sh_name = struct.unpack(endian + 'I', section_header[0:4])[0]
-                            sh_type = struct.unpack(endian + 'I', section_header[4:8])[0]
-                            sh_flags = struct.unpack(endian + 'Q', section_header[8:16])[0]
+                            struct.unpack(endian + 'I', section_header[4:8])[0]
+                            struct.unpack(endian + 'Q', section_header[8:16])[0]
                             sh_addr = struct.unpack(endian + 'Q', section_header[16:24])[0]
                             sh_offset = struct.unpack(endian + 'Q', section_header[24:32])[0]
                             sh_size = struct.unpack(endian + 'Q', section_header[32:40])[0]
@@ -441,14 +439,14 @@ except ImportError as e:
 
                 # Read header
                 cputype = struct.unpack(endian + 'I', f.read(4))[0]
-                cpusubtype = struct.unpack(endian + 'I', f.read(4))[0]
-                filetype = struct.unpack(endian + 'I', f.read(4))[0]
+                struct.unpack(endian + 'I', f.read(4))[0]
+                struct.unpack(endian + 'I', f.read(4))[0]
                 ncmds = struct.unpack(endian + 'I', f.read(4))[0]
-                sizeofcmds = struct.unpack(endian + 'I', f.read(4))[0]
-                flags = struct.unpack(endian + 'I', f.read(4))[0]
+                struct.unpack(endian + 'I', f.read(4))[0]
+                struct.unpack(endian + 'I', f.read(4))[0]
 
                 if self.mode == MODES.MODE_64:
-                    reserved = struct.unpack(endian + 'I', f.read(4))[0]
+                    struct.unpack(endian + 'I', f.read(4))[0]
 
                 # Determine architecture
                 if cputype == 0x7:  # CPU_TYPE_X86
@@ -463,7 +461,7 @@ except ImportError as e:
                     self.architecture = ARCHITECTURES.PPC
 
                 # Read load commands to find segments
-                for i in range(min(ncmds, 100)):  # Limit commands
+                for _i in range(min(ncmds, 100)):  # Limit commands
                     cmd_pos = f.tell()
                     cmd = struct.unpack(endian + 'I', f.read(4))[0]
                     cmdsize = struct.unpack(endian + 'I', f.read(4))[0]
@@ -587,7 +585,7 @@ except ImportError as e:
             with open(filepath, 'rb') as f:
                 magic = f.read(2)
                 return magic == b'MZ'
-        except:
+        except Exception:
             return False
 
     def is_elf(filepath):
@@ -596,7 +594,7 @@ except ImportError as e:
             with open(filepath, 'rb') as f:
                 magic = f.read(4)
                 return magic == b'\x7fELF'
-        except:
+        except Exception:
             return False
 
     def is_macho(filepath):
@@ -606,7 +604,7 @@ except ImportError as e:
                 magic = f.read(4)
                 return magic in (b'\xfe\xed\xfa\xce', b'\xce\xfa\xed\xfe',
                                 b'\xfe\xed\xfa\xcf', b'\xcf\xfa\xed\xfe')
-        except:
+        except Exception:
             return False
 
     # Assign classes

@@ -175,10 +175,10 @@ class BinaryAnalyzer:
                 data = f.read()
 
             return {
-                "md5": hashlib.md5(data).hexdigest(),
-                "sha1": hashlib.sha1(data).hexdigest(),
                 "sha256": hashlib.sha256(data).hexdigest(),
                 "sha512": hashlib.sha512(data).hexdigest(),
+                "sha3_256": hashlib.sha3_256(data).hexdigest(),
+                "blake2b": hashlib.blake2b(data).hexdigest(),
             }
         except Exception as e:
             return {"error": str(e)}

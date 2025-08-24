@@ -798,7 +798,7 @@ except ImportError as e:
         uint16 = uint16
         uint32 = uint32
 
-        class linalg:
+        class Linalg:
             """Linear algebra fallback."""
 
             @staticmethod
@@ -838,7 +838,7 @@ except ImportError as e:
 
                 raise ValueError("Input must be a 2x2 FallbackArray")
 
-        class fft:
+        class Fft:
             """FFT fallback (basic DFT implementation)."""
 
             @staticmethod
@@ -889,7 +889,7 @@ except ImportError as e:
 
                 return FallbackArray(result)
 
-        class random:
+        class Random:
             """Random number generation fallback."""
 
             @staticmethod
@@ -974,14 +974,19 @@ except ImportError as e:
                 """Set random seed."""
                 _random.seed(s)
 
+        # Compatibility aliases
+        linalg = Linalg
+        fft = Fft
+        random = Random
+
     # Create module instances
     np = FallbackNumPy()
     numpy = FallbackNumPy()
 
     # Also assign submodules
-    linalg = FallbackNumPy.linalg
-    fft = FallbackNumPy.fft
-    random = FallbackNumPy.random
+    linalg = FallbackNumPy.Linalg
+    fft = FallbackNumPy.Fft
+    random = FallbackNumPy.Random
 
 
 # Export all NumPy objects and availability flag

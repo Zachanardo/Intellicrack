@@ -88,10 +88,10 @@ testing/
 ```python
 def test_die_python_integration():
     """Validate basic die-python functionality"""
-    import die
+    import icp_backend_module as native_engine
 
     # Version validation
-    assert hasattr(die, '__version__')
+        assert native_engine.__version__ >= "0.4.0"
     assert hasattr(die, 'die_version')
 
     # Scan flags validation
@@ -173,7 +173,7 @@ class TestICPBackend(unittest.TestCase):
         deep_flag = self.backend._get_die_scan_flags(ScanMode.DEEP)
 
         assert normal_flag == 0
-        assert deep_flag == self.backend.die.ScanFlags.DEEP_SCAN
+        assert deep_flag == self.backend.icp_module.ScanFlags.DEEP_SCAN
 
     def test_engine_version(self):
         """Test version string format"""
@@ -181,7 +181,7 @@ class TestICPBackend(unittest.TestCase):
         assert "die-python" in version
         assert "DIE" in version
 
-    @patch('die.scan_file')
+    @patch('icp_backend_module.scan_file')
     def test_error_handling(self, mock_scan):
         """Test error propagation"""
         mock_scan.side_effect = Exception("Mock error")
@@ -628,8 +628,8 @@ def validate_test_environment():
     assert sys.version_info >= (3, 11)
 
     # Check die-python availability
-    import die
-    assert die.__version__ >= "0.4.0"
+    import icp_backend_module as native_engine
+    assert native_engine.__version__ >= "0.4.0"
 
     # Check test data availability
     assert os.path.exists("testing/fixtures/sample_binaries/")
@@ -657,6 +657,6 @@ def validate_test_environment():
 ### Integration Expansion
 
 1. **Cross-Platform Testing**: Windows, Linux, macOS validation
-2. **Version Compatibility Matrix**: Multiple die-python versions
+2. **Version Compatibility Matrix**: Multiple native engine versions
 3. **Load Testing**: Realistic production workload simulation
 4. **End-User Acceptance Testing**: Real-world usage scenarios

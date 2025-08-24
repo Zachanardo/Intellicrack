@@ -1899,7 +1899,7 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
         # Make sure file is executable
         if platform.system() != "Windows":
             try:
-                os.chmod(binary_path, 0o755)
+                os.chmod(binary_path, 0o700)  # Owner-only executable permissions
             except (OSError, ValueError, RuntimeError) as e:
                 logger.debug("Could not set executable permissions: %s", e)
 
@@ -1920,13 +1920,14 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
             else:
                 result["tests"].append(f"Binary execution failed with code: {proc.returncode}")
 
-        except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in additional_runners: %s", e)
-            result["tests"].append("Binary execution timed out (may be waiting for input)")
-            result["confidence"] += 0.1
-        except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
-            logger.error("Error in additional_runners: %s", e)
-            result["tests"].append(f"Execution test error: {e}")
+        except (subprocess.TimeoutExpired, OSError, ValueError, RuntimeError) as e:
+            if isinstance(e, subprocess.TimeoutExpired):
+                logger.error("Subprocess timeout in additional_runners: %s", e)
+                result["tests"].append("Binary execution timed out (may be waiting for input)")
+                result["confidence"] += 0.1
+            else:
+                logger.error("Error in additional_runners: %s", e)
+                result["tests"].append(f"Execution test error: {e}")
 
         # Test 2: Check for license-related error messages
         try:
@@ -1964,12 +1965,13 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
             else:
                 result["tests"].append("No output captured from execution")
 
-        except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in additional_runners: %s", e)
-            result["tests"].append("Binary execution hangs (possible input wait)")
-        except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
-            logger.error("Error in additional_runners: %s", e)
-            result["tests"].append(f"License test error: {e}")
+        except (subprocess.TimeoutExpired, OSError, ValueError, RuntimeError) as e:
+            if isinstance(e, subprocess.TimeoutExpired):
+                logger.error("Subprocess timeout in additional_runners: %s", e)
+                result["tests"].append("Binary execution hangs (possible input wait)")
+            else:
+                logger.error("Error in additional_runners: %s", e)
+                result["tests"].append(f"License test error: {e}")
 
         # Test 3: File system access test
         try:

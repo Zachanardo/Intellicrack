@@ -193,7 +193,7 @@ except ImportError as e:
                     body = data if isinstance(data, bytes) else str(data).encode('utf-8')
 
             # Create request
-            req = urllib.request.Request(url, data=body, headers=req_headers, method=method)
+            req = urllib.request.Request(url, data=body, headers=req_headers, method=method)  # noqa: S310  # Legitimate HTTP request for security research tool
 
             # Send request using asyncio
             loop = asyncio.get_event_loop()
@@ -202,7 +202,7 @@ except ImportError as e:
                 # Run urllib request in thread pool
                 response = await loop.run_in_executor(
                     None,
-                    lambda: urllib.request.urlopen(req, timeout=timeout.total if hasattr(timeout, 'total') else timeout)
+                    lambda: urllib.request.urlopen(req, timeout=timeout.total if hasattr(timeout, 'total') else timeout)  # noqa: S310  # Legitimate HTTP request for security research tool
                 )
 
                 content = response.read()
@@ -228,12 +228,12 @@ except ImportError as e:
 
             except urllib.error.URLError as e:
                 if isinstance(e.reason, socket.timeout):
-                    raise ServerTimeoutError(f"Request timed out: {url}")
+                    raise ServerTimeoutError(f"Request timed out: {url}") from e
                 else:
-                    raise ClientConnectorError(f"Connection error: {e.reason}")
+                    raise ClientConnectorError(f"Connection error: {e.reason}") from e
 
             except Exception as e:
-                raise ClientError(f"Request failed: {e}")
+                raise ClientError(f"Request failed: {e}") from e
 
         async def get(self, url, **kwargs):
             """Send GET request."""

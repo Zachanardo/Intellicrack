@@ -140,7 +140,7 @@ if sys.platform == "win32":
                 ("szExePath", ctypes.c_char * 260),
             ]
 
-        class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+        class PROCESS_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
             """Windows PROCESS_BASIC_INFORMATION structure for process information."""
 
             _fields_ = [

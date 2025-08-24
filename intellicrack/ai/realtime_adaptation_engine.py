@@ -840,9 +840,36 @@ class LiveDebuggingSystem:
 
         for watch in session["watches"]:
             if watch["alert_condition"] and watch["last_value"] is not None:
-                # Simple condition checking (could be more sophisticated)
+                # Safe condition checking with restricted operations
                 try:
-                    if eval(f"{watch['last_value']} {watch['alert_condition']}"):
+                    # Parse and validate the condition
+                    condition = watch['alert_condition'].strip()
+                    value = watch['last_value']
+
+                    # Only allow safe comparison operators
+                    safe_operators = {
+                        '==': lambda x, y: x == y,
+                        '!=': lambda x, y: x != y,
+                        '<': lambda x, y: x < y,
+                        '<=': lambda x, y: x <= y,
+                        '>': lambda x, y: x > y,
+                        '>=': lambda x, y: x >= y,
+                    }
+
+                    result = False
+                    for op in safe_operators:
+                        if condition.startswith(op):
+                            try:
+                                threshold_str = condition[len(op):].strip()
+                                # Use ast.literal_eval for safe parsing of the threshold value
+                                import ast
+                                threshold = ast.literal_eval(threshold_str)
+                                result = safe_operators[op](value, threshold)
+                                break
+                            except (ValueError, SyntaxError):
+                                continue
+
+                    if result:
                         alerts.append(
                             {
                                 "watch_id": watch["id"],

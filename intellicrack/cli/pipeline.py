@@ -529,7 +529,7 @@ def parse_pipeline_command(command: str) -> Pipeline:
                                 f"Cannot write to sensitive directory: {sensitive_dir}"
                             )
                 except Exception as e:
-                    raise ValueError(f"Invalid output path: {e}")
+                    raise ValueError(f"Invalid output path: {e}") from e
                 pipeline.add_stage(OutputStage(output_path))
             else:
                 pipeline.add_stage(OutputStage(None))

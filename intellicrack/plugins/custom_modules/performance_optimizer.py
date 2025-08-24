@@ -39,6 +39,7 @@ from typing import Any
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.psutil_handler import psutil
 from intellicrack.handlers.sqlite3_handler import sqlite3
+from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
 
 """
 Performance Optimizer for Intellicrack Framework
@@ -53,7 +54,6 @@ License: GPL v3
 """
 
 # GPU acceleration support
-from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
 
 try:
     import cupy
@@ -235,7 +235,7 @@ class CacheManager:
             if hasattr(obj, "__sizeof__"):
                 return obj.__sizeof__()
             return len(pickle.dumps(obj))
-        except:
+        except Exception:
             return 1024  # Default estimate
 
     def _calculate_score(self, key: str) -> float:

@@ -263,13 +263,13 @@ class DistributedAnalysisManager:
                         binary_name = os.path.basename(self.binary_path)
                         copy_result = _container["instance"].copy_file_to_container(
                             self.binary_path,
-                            f"/tmp/{binary_name}",
+                            f"/tmp/{binary_name}",  # noqa: S108
                         )
 
                         if copy_result:
                             # Run the binary in container
                             output = _container["instance"].execute_command(
-                                f"chmod +x /tmp/{binary_name} && /tmp/{binary_name}",
+                                f"chmod +x /tmp/{binary_name} && /tmp/{binary_name}",  # noqa: S108
                             )
                         else:
                             output = "Failed to copy binary to container"

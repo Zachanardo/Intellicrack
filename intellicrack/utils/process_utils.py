@@ -23,6 +23,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 import os
 import platform
+import shutil
 import signal
 import subprocess
 import sys
@@ -540,12 +541,16 @@ def detect_hardware_dongles() -> list[dict[str, Any]]:
         elif platform.system() == "Linux":
             try:
                 # Use lsusb to list USB devices
+                lsusb_path = shutil.which("lsusb")
+                if not lsusb_path:
+                    return []
+
                 result = subprocess.run(
-                    ["lsusb"],
+                    [lsusb_path],
                     check=False,
                     capture_output=True,
                     text=True,
-                    timeout=10,  # noqa: S607
+                    timeout=10,
                 )
 
                 if result.returncode == 0:
@@ -651,16 +656,18 @@ def detect_tpm_protection() -> dict[str, Any]:
                         tpm_info["details"].append(f"TPM device found: {device}")
 
                 # Check dmesg for TPM messages
-                result = subprocess.run(
-                    ["dmesg"],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    timeout=5,  # noqa: S607
-                )
-                if result.returncode == 0:
-                    tpm_lines = [
-                        line for line in result.stdout.split("\n") if "tpm" in line.lower()
+                dmesg_path = shutil.which("dmesg")
+                if dmesg_path:
+                    result = subprocess.run(
+                        [dmesg_path],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
+                    )
+                    if result.returncode == 0:
+                        tpm_lines = [
+                            line for line in result.stdout.split("\n") if "tpm" in line.lower()
                     ]
                     if tpm_lines:
                         tpm_info["present"] = True

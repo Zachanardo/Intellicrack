@@ -22,6 +22,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+import os
 import queue
 import threading
 import time
@@ -198,15 +199,17 @@ class BackgroundModelLoader:
         self.shutdown_event = threading.Event()
         self.lock = threading.RLock()
 
-        # Start worker threads
-        for i in range(max_concurrent_loads):
-            thread = threading.Thread(
-                target=self._worker_thread, name=f"ModelLoader-{i}", daemon=True
-            )
-            thread.start()
-            self.worker_threads.append(thread)
-
-        logger.info(f"Background model loader started with {max_concurrent_loads} workers")
+        # Start worker threads (skip during testing)
+        if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
+            for i in range(max_concurrent_loads):
+                thread = threading.Thread(
+                    target=self._worker_thread, name=f"ModelLoader-{i}", daemon=True
+                )
+                thread.start()
+                self.worker_threads.append(thread)
+            logger.info(f"Background model loader started with {max_concurrent_loads} workers")
+        else:
+            logger.info("Skipping background model loader worker threads (testing mode)")
 
     def submit_loading_task(
         self,
@@ -496,6 +499,11 @@ def get_background_loader(llm_manager=None) -> IntegratedBackgroundLoader:
     """Get the global integrated background loader."""
     global _integrated_loader
     if _integrated_loader is None:
+        # Skip background loader creation during testing
+        if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
+            logger.info("Skipping background loader creation (testing mode)")
+            return None
+
         if llm_manager is None:
             from .llm_backends import get_llm_manager
 
@@ -513,6 +521,13 @@ def load_model_with_progress(
 ) -> LoadingTask:
     """Convenience function to load a model with progress."""
     loader = get_background_loader()
+    if loader is None:
+        # Return a dummy task during testing
+        logger.info(f"Skipping background loading for {model_id} (testing mode)")
+        task = LoadingTask(model_id, backend_class, config, priority, callback)
+        task.mark_completed(True, None, "Skipped during testing")
+        return task
+
     if callback:
         loader.add_progress_callback(callback)
     return loader.load_model_in_background(model_id, backend_class, config, priority)

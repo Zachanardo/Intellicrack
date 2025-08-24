@@ -746,8 +746,8 @@ class FileExplorerPanel:
                     try:
                         if item["path"].exists():
                             total_size += item["path"].stat().st_size
-                    except (OSError, PermissionError):
-                        pass
+                    except (OSError, PermissionError) as e:
+                        self.logger.debug("Error updating status bar: %s", e)
 
             # Store analysis for tooltips and future reference
             self._directory_analysis = {
@@ -875,7 +875,7 @@ class FileExplorerPanel:
             item_path = Path(self.tree.set(selection[0], "path"))
 
             if sys.platform == "win32":
-                os.startfile(str(item_path.parent))
+                os.startfile(str(item_path.parent))  # noqa: S606  # Legitimate folder opening for security research file navigation
             elif sys.platform == "darwin":
                 subprocess.run(["open", str(item_path.parent)], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
             else:
@@ -2443,8 +2443,8 @@ class UIEnhancementModule:
                 self.state_label.configure(
                     foreground=state_colors.get(self.analysis_state, "#ffffff")
                 )
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug("Error updating status bar: %s", e)
 
         # Update target
         if self.current_target:

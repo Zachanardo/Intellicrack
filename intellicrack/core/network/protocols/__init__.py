@@ -35,10 +35,10 @@ def get_available_parsers():
 
 def get_parser(parser_name):
     """Get a specific protocol parser if available.
-    
+
     Args:
         parser_name (str): Name of the parser module
-        
+
     Returns:
         module: The parser module, or None if not available
     """
@@ -46,10 +46,10 @@ def get_parser(parser_name):
 
 def is_parser_available(parser_name):
     """Check if a specific protocol parser is available.
-    
+
     Args:
         parser_name (str): Name of the parser to check
-        
+
     Returns:
         bool: True if parser is available, False otherwise
     """

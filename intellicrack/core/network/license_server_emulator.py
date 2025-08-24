@@ -191,7 +191,7 @@ class NetworkLicenseServerEmulator:
                     protocol_type=protocol,
                     request_data=data,
                     parsed_request=None,
-                    client_fingerprint=hashlib.md5(data).hexdigest() if data else "",
+                    client_fingerprint=hashlib.sha256(data).hexdigest() if data else "",
                     timestamp=time.time(),
                 )
                 response = self.response_generator.generate_response(context)

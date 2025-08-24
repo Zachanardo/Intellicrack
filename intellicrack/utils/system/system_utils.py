@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 import os
 import platform
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -391,11 +392,16 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
             ps_command = (
                 f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
             )
-            result = subprocess.run(  # nosec B603 B607 - controlled elevated execution for admin tasks  # noqa: S603
-                ["powershell", "-Command", ps_command],
+            powershell_path = shutil.which("powershell")
+            if not powershell_path:
+                logger.error("PowerShell not found in PATH")
+                return False, "PowerShell not available"
+
+            result = subprocess.run(
+                [powershell_path, "-Command", ps_command],
                 capture_output=True,
                 text=True,
-                check=False,  # noqa: S607
+                check=False,
             )
             return result.returncode == 0
         # On Unix-like systems, use sudo

@@ -118,8 +118,9 @@ class ToolDiscovery:
         try:
             import frida
 
+            _ = frida.__version__  # Verify frida is properly imported
             return True
-        except ImportError:
+        except (ImportError, AttributeError):
             return False
 
     def _check_ghidra(self):
@@ -142,8 +143,9 @@ class ToolDiscovery:
         try:
             import capstone
 
+            _ = capstone.__version__  # Verify capstone is properly imported
             return True
-        except ImportError:
+        except (ImportError, AttributeError):
             return False
 
     def _check_pefile(self):
@@ -151,8 +153,9 @@ class ToolDiscovery:
         try:
             from intellicrack.handlers.pefile_handler import pefile
 
+            _ = pefile.__version__  # Verify pefile is properly imported
             return True
-        except ImportError:
+        except (ImportError, AttributeError):
             return False
 
     def _check_lief(self):
@@ -160,8 +163,9 @@ class ToolDiscovery:
         try:
             import lief
 
+            _ = lief.__version__  # Verify lief is properly imported
             return True
-        except ImportError:
+        except (ImportError, AttributeError):
             return False
 
     def _check_qemu(self):
@@ -618,7 +622,7 @@ class LLMScriptInterface:
     ) -> str:
         """Call a dynamically discovered provider using reflection."""
         client = self.llm_backend["client"]
-        module = self.llm_backend.get("module")
+        self.llm_backend.get("module")
         provider = self.llm_backend["provider"]
 
         # Try common generation patterns
@@ -835,7 +839,7 @@ class ScriptStorageManager:
     def save_script(self, script: GeneratedScript) -> str:
         """Save generated script to appropriate directory."""
         # Create unique filename based on prompt hash and timestamp
-        prompt_hash = hashlib.md5(script.natural_language_prompt.encode()).hexdigest()[:8]
+        prompt_hash = hashlib.sha256(script.natural_language_prompt.encode()).hexdigest()[:8]
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Use AI-specified extension if provided, otherwise default to .txt

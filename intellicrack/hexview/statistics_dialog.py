@@ -35,7 +35,7 @@ class StatisticsWorker(QThread):
 
     def __init__(self, data: bytes | None = None, file_path: str | None = None):
         """Initialize worker.
-        
+
         Args:
             data: Binary data to process
             file_path: Path to file (if processing file instead of data)
@@ -48,7 +48,7 @@ class StatisticsWorker(QThread):
 
     def _progress_callback(self, current: int, total: int):
         """Progress callback for calculator.
-        
+
         Args:
             current: Current progress
             total: Total items
@@ -80,7 +80,7 @@ class StatisticsDialog(QDialog):
 
     def __init__(self, parent=None, hex_viewer=None):
         """Initialize statistics dialog.
-        
+
         Args:
             parent: Parent widget
             hex_viewer: Reference to hex viewer widget
@@ -230,7 +230,7 @@ class StatisticsDialog(QDialog):
 
     def update_progress(self, current: int, total: int):
         """Update progress bar.
-        
+
         Args:
             current: Current progress
             total: Total items
@@ -239,7 +239,7 @@ class StatisticsDialog(QDialog):
 
     def display_results(self, results: dict):
         """Display analysis results.
-        
+
         Args:
             results: Dictionary of analysis results
         """
@@ -345,7 +345,7 @@ class StatisticsDialog(QDialog):
 
     def display_error(self, error: str):
         """Display error message.
-        
+
         Args:
             error: Error message
         """

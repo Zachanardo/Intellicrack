@@ -238,7 +238,7 @@ class ExportWorker(QThread):
             self.logger.error("Import error in export_dialog: %s", e)
             raise ImportError(
                 "ReportLab is required for PDF export. Install with: pip install reportlab"
-            )
+            ) from None
 
         self.progress_update.emit(30, "Building PDF report...")
 
@@ -962,7 +962,7 @@ def main():
     # Calculate real hashes
     with open(test_file_path, 'rb') as f:
         file_content = f.read()
-        md5_hash = hashlib.md5(file_content).hexdigest()
+        md5_hash = hashlib.md5(file_content).hexdigest()  # noqa: S324 - MD5 for file fingerprinting in security analysis
         sha256_hash = hashlib.sha256(file_content).hexdigest()
 
     analysis_results = {

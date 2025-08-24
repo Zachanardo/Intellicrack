@@ -147,9 +147,9 @@ class NodeJSSetupDialog(BaseDialog):
 
     def validate_input(self) -> bool:
         """Validate input before accepting the dialog.
-        
+
         This is called when the OK/Proceed button is clicked.
-        
+
         Returns:
             True if input is valid and dialog should close, False otherwise
         """

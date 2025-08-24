@@ -577,7 +577,7 @@ class TestFixtures:
                 'data': response.json() if response.headers.get('content-type', '').startswith('application/json') else response.text,
                 'headers': dict(response.headers)
             }
-        except requests.RequestException as e:
+        except requests.RequestError as e:
             return {'status': 'error', 'error': str(e)}
 
     @contextmanager

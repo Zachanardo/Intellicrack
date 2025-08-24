@@ -109,7 +109,7 @@ class YaraPatternEngine:
 
     Provides comprehensive detection of protections, packers, licensing schemes,
     and other patterns relevant to security analysis. Integrates with ICP backend
-    to provide supplemental pattern-based detection alongside die-python analysis.
+    to provide supplemental pattern-based detection alongside ICP analysis.
     """
 
     def __init__(self, custom_rules_path: str | None = None):
@@ -799,7 +799,7 @@ rule Basic_PE_Detection
             return {"error": "No rules loaded"}
 
         categories = {}
-        for rule_id, metadata in self.rule_metadata.items():
+        for _rule_id, metadata in self.rule_metadata.items():
             category = metadata.get("category", "unknown")
             if category not in categories:
                 categories[category] = 0

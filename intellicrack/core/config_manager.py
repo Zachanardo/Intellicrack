@@ -1243,7 +1243,7 @@ class IntellicrackConfig:
             "frida_path": "tools.frida.path",
         }
 
-        for old_key, new_key in tool_paths.items():
+        for old_key, _new_key in tool_paths.items():
             if old_key in legacy_data:
                 tool_name = old_key.replace("_path", "")
                 current_tool = self.get(f"tools.{tool_name}", {})
@@ -1768,3 +1768,6 @@ def get_config() -> IntellicrackConfig:
     if _global_config is None:
         _global_config = IntellicrackConfig()
     return _global_config
+
+# Backward compatibility alias
+ConfigManager = IntellicrackConfig

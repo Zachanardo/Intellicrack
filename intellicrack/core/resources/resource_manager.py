@@ -9,6 +9,8 @@ Licensed under GNU General Public License v3.0
 
 import atexit
 import contextlib
+import os
+import shutil
 import socket
 import subprocess
 import threading
@@ -135,8 +137,8 @@ class ManagedResource:
         if self.state not in (ResourceState.CLEANED, ResourceState.CLEANING):
             try:
                 self.cleanup()
-            except:
-                pass
+            except Exception as e:
+                logger.debug("Error during resource cleanup: %s", e)
 
 
 class ProcessResource(ManagedResource):
@@ -260,17 +262,22 @@ class ContainerResource(ManagedResource):
         """Clean up the Docker container."""
         try:
             # Stop container
-            subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                ["docker", "stop", self.container_id],
-                check=False,
-                capture_output=True,
-                timeout=30,  # noqa: S607
-            )
+            docker_path = shutil.which("docker")
+            if docker_path:
+                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    [docker_path, "stop", self.container_id],
+                    check=False,
+                    capture_output=True,
+                    timeout=30,
+                )
+            else:
+                logger.warning("docker not found in PATH")
 
             # Remove container
-            subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                ["docker", "rm", self.container_id],
-                check=False,
+            if docker_path:
+                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    [docker_path, "rm", self.container_id],
+                    check=False,
                 capture_output=True,
                 timeout=10,  # noqa: S607
             )
@@ -278,11 +285,12 @@ class ContainerResource(ManagedResource):
             logger.info(f"Cleaned up container {self.container_name}")
         except subprocess.TimeoutExpired:
             # Force remove
-            subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                ["docker", "rm", "-f", self.container_id],
-                check=False,
-                capture_output=True,  # noqa: S607
-            )
+            if docker_path:
+                subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                    [docker_path, "rm", "-f", self.container_id],
+                    check=False,
+                    capture_output=True,
+                )
         except Exception as e:
             logger.error(f"Failed to cleanup container {self.container_id}: {e}")
 
@@ -319,9 +327,14 @@ class ResourceManager:
         self._resources_by_type: dict[ResourceType, set[str]] = defaultdict(set)
         self._lock = threading.RLock()
 
-        # Cleanup thread
-        self._cleanup_thread = threading.Thread(target=self._cleanup_loop, daemon=True)
-        self._cleanup_thread.start()
+        # Cleanup thread (skip during testing)
+        if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
+            self._cleanup_thread = threading.Thread(target=self._cleanup_loop, daemon=True)
+            self._cleanup_thread.start()
+            logger.info("Resource cleanup thread started")
+        else:
+            logger.info("Skipping resource cleanup thread (testing mode)")
+            self._cleanup_thread = None
 
         # Register cleanup on exit
         atexit.register(self.cleanup_all)
@@ -741,8 +754,8 @@ class ResourceManager:
                     f"Memory usage exceeds limit: {memory_stats['rss_mb']}MB > {self.max_memory_mb}MB",
                 )
 
-            # Check cleanup thread
-            if not self._cleanup_thread.is_alive():
+            # Check cleanup thread (skip during testing)
+            if self._cleanup_thread is not None and not self._cleanup_thread.is_alive():
                 health["issues"].append("Cleanup thread is not running")
 
         if health["issues"]:
@@ -1183,7 +1196,7 @@ class FallbackHandler:
                         sock.settimeout(1)
                         result = sock.connect_ex((host, port))
                         return port, result == 0
-                except:
+                except Exception:
                     return port, False
 
             # Parse target
@@ -1420,7 +1433,7 @@ def setup_resource_monitoring():
         except Exception as e:
             logger.error(f"Failed to log resource stats: {e}")
 
-    # Start monitoring thread
+    # Start monitoring thread (skip during testing)
     import threading
 
     def monitoring_loop():
@@ -1432,9 +1445,12 @@ def setup_resource_monitoring():
                 logger.error(f"Resource monitoring error: {e}")
                 time.sleep(60)  # Wait before retrying
 
-    monitoring_thread = threading.Thread(target=monitoring_loop, daemon=True)
-    monitoring_thread.start()
-    logger.info("Resource monitoring started")
+    if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
+        monitoring_thread = threading.Thread(target=monitoring_loop, daemon=True)
+        monitoring_thread.start()
+        logger.info("Resource monitoring started")
+    else:
+        logger.info("Skipping resource monitoring thread (testing mode)")
 
 
 # Initialize monitoring on module import

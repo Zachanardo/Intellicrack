@@ -213,7 +213,11 @@ class BasePlugin(ABC):
         """Cleanup method called when plugin is unloaded.
 
         Override in subclasses if cleanup is needed.
+        Default implementation performs no cleanup.
         """
+        # Default implementation - no cleanup needed
+        # Subclasses can override if they need cleanup
+        logger.debug(f"Plugin {self.metadata.name} cleanup completed (no custom cleanup required)")
 
 
 def create_plugin_info(metadata: PluginMetadata, entry_point: str = "register") -> dict[str, Any]:

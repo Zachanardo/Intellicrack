@@ -17,9 +17,9 @@ except ImportError:
     LLMManager = None
 
 try:
-    from ...llm.tools.intellicrack_protection_analysis_tool import DIEAnalysisTool
+    from ...llm.tools.intellicrack_protection_analysis_tool import ICPAnalysisTool
 except ImportError:
-    DIEAnalysisTool = None
+    ICPAnalysisTool = None
 
 try:
     from ...protection.unified_protection_engine import UnifiedProtectionResult
@@ -218,19 +218,19 @@ class LLMHandler(QObject):
         super().__init__(parent)
         self.thread_pool = QThreadPool.globalInstance()
         self.current_result: UnifiedProtectionResult | None = None
-        self.die_tool = DIEAnalysisTool()
+        self.icp_tool = ICPAnalysisTool()
 
         # Register the tool with LLM manager
         self._register_llm_tool()
 
     def _register_llm_tool(self):
-        """Register the DIE analysis tool with LLM manager"""
+        """Register the ICP analysis tool with LLM manager"""
         try:
             llm_manager = LLMManager.get_instance()
             # Store reference to this handler in the tool
-            self.die_tool._llm_handler = self
+            self.icp_tool._llm_handler = self
             logger.info("Retrieved LLM manager instance: %s", llm_manager)
-            logger.info("Registered DIE analysis tool with LLM manager")
+            logger.info("Registered ICP analysis tool with LLM manager")
         except Exception as e:
             logger.error(f"Failed to register LLM tool: {e}")
 

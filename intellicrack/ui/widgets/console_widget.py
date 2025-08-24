@@ -143,7 +143,7 @@ class ConsoleWidget(QWidget):
     """Professional console widget with filtering and search"""
 
     # Signals
-    commandEntered = pyqtSignal(str)
+    command_entered = pyqtSignal(str)
 
     def __init__(self, parent=None, enable_input=False):
         """Initialize console widget with input capability, command history, and UI setup."""
@@ -379,7 +379,7 @@ class ConsoleWidget(QWidget):
         self.command_input.clear()
 
         # Emit signal
-        self.commandEntered.emit(command)
+        self.command_entered.emit(command)
 
     def eventFilter(self, obj, event):
         """Handle key events for command history"""

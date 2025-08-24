@@ -983,7 +983,7 @@ class AdobeEmulator:
         }
 
         # Sign with secret key
-        secret = "adobe_ngl_secret_2024"
+        secret = "adobe_ngl_secret_2024"  # noqa: S105
         token = jwt.encode(token_data, secret, algorithm="HS256")
 
         return token
@@ -1163,7 +1163,7 @@ class HardwareFingerprintGenerator:
                             break
                     if not fingerprint.cpu_id:
                         # Fallback to CPUID using platform info
-                        fingerprint.cpu_id = hashlib.md5(platform.processor().encode()).hexdigest()[
+                        fingerprint.cpu_id = hashlib.sha256(platform.processor().encode()).hexdigest()[
                             :16
                         ]
                 elif platform.system() == "Linux":
@@ -1176,7 +1176,7 @@ class HardwareFingerprintGenerator:
                             if "model name" in line:
                                 # Fallback to hashed model name
                                 model = line.split(":")[1].strip()
-                                fingerprint.cpu_id = hashlib.md5(model.encode()).hexdigest()[:16]
+                                fingerprint.cpu_id = hashlib.sha256(model.encode()).hexdigest()[:16]
                                 break
                 elif platform.system() == "Darwin":
                     # macOS - use sysctl
@@ -1186,17 +1186,17 @@ class HardwareFingerprintGenerator:
                         capture_output=True,
                         text=True,
                     )
-                    fingerprint.cpu_id = hashlib.md5(result.stdout.strip().encode()).hexdigest()[
+                    fingerprint.cpu_id = hashlib.sha256(result.stdout.strip().encode()).hexdigest()[
                         :16
                     ]
                 else:
                     # Other systems - generate from platform info
-                    fingerprint.cpu_id = hashlib.md5(
+                    fingerprint.cpu_id = hashlib.sha256(
                         f"{platform.processor()}{platform.machine()}".encode(),
                     ).hexdigest()[:16]
             except Exception:
                 # Generate deterministic CPU ID from available info
-                fingerprint.cpu_id = hashlib.md5(
+                fingerprint.cpu_id = hashlib.sha256(
                     f"{platform.processor()}{platform.machine()}{platform.node()}".encode(),
                 ).hexdigest()[:16]
 
@@ -1222,7 +1222,7 @@ class HardwareFingerprintGenerator:
                             text=True,
                         )
                         board_info = result.stdout.strip()
-                        fingerprint.motherboard_id = hashlib.md5(board_info.encode()).hexdigest()[
+                        fingerprint.motherboard_id = hashlib.sha256(board_info.encode()).hexdigest()[
                             :16
                         ]
                 elif platform.system() == "Linux":
@@ -1230,7 +1230,7 @@ class HardwareFingerprintGenerator:
                     try:
                         with open("/sys/class/dmi/id/board_serial") as f:
                             fingerprint.motherboard_id = f.read().strip()
-                    except:
+                    except Exception:
                         # Fallback to board name + vendor
                         board_info = ""
                         try:
@@ -1238,9 +1238,9 @@ class HardwareFingerprintGenerator:
                                 board_info += f.read().strip()
                             with open("/sys/class/dmi/id/board_name") as f:
                                 board_info += f.read().strip()
-                        except:
-                            pass
-                        fingerprint.motherboard_id = hashlib.md5(board_info.encode()).hexdigest()[
+                        except OSError as e:
+                            self.logger.debug("Could not read motherboard info: %s", e)
+                        fingerprint.motherboard_id = hashlib.sha256(board_info.encode()).hexdigest()[
                             :16
                         ]
                 elif platform.system() == "Darwin":
@@ -1257,17 +1257,17 @@ class HardwareFingerprintGenerator:
                             fingerprint.motherboard_id = line.split(":")[1].strip()
                             break
                     if not fingerprint.motherboard_id:
-                        fingerprint.motherboard_id = hashlib.md5(
+                        fingerprint.motherboard_id = hashlib.sha256(
                             result.stdout.encode()
                         ).hexdigest()[:16]
                 else:
                     # Generate from platform info
-                    fingerprint.motherboard_id = hashlib.md5(
+                    fingerprint.motherboard_id = hashlib.sha256(
                         f"{platform.node()}{platform.version()}".encode(),
                     ).hexdigest()[:16]
             except Exception:
                 # Generate deterministic board ID
-                fingerprint.motherboard_id = hashlib.md5(
+                fingerprint.motherboard_id = hashlib.sha256(
                     f"{platform.node()}{platform.platform()}".encode(),
                 ).hexdigest()[:16]
 
@@ -1317,7 +1317,7 @@ class HardwareFingerprintGenerator:
                         for line in lines:
                             if "ata-" in line and "part" not in line:
                                 parts = line.split("ata-")[1].split()[0]
-                                fingerprint.disk_serial = hashlib.md5(parts.encode()).hexdigest()[
+                                fingerprint.disk_serial = hashlib.sha256(parts.encode()).hexdigest()[
                                     :16
                                 ]
                                 break
@@ -1339,12 +1339,12 @@ class HardwareFingerprintGenerator:
                     import os
 
                     stat_info = os.statvfs("/" if platform.system() != "Windows" else "C:\\")
-                    fingerprint.disk_serial = hashlib.md5(
+                    fingerprint.disk_serial = hashlib.sha256(
                         f"{stat_info.f_blocks}{stat_info.f_bsize}".encode(),
                     ).hexdigest()[:16]
             except Exception:
                 # Generate deterministic disk ID
-                fingerprint.disk_serial = hashlib.md5(
+                fingerprint.disk_serial = hashlib.sha256(
                     f"{platform.node()}{platform.system()}disk".encode(),
                 ).hexdigest()[:16]
 
@@ -1431,7 +1431,7 @@ class HardwareFingerprintGenerator:
                         )
                         mem_bytes = int(result.stdout.strip())
                         fingerprint.ram_size = int(mem_bytes / (1024**3))
-                except:
+                except Exception:
                     # Default to common size
                     fingerprint.ram_size = 8
 
@@ -1648,7 +1648,7 @@ class LicenseServerEmulator:
 
         except Exception as e:
             self.logger.error(f"License validation error: {e}")
-            raise HTTPException(status_code=500, detail="Internal server error")
+            raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_license_activation(
         self, request: ActivationRequest, client_request: Request
@@ -1693,7 +1693,7 @@ class LicenseServerEmulator:
 
         except Exception as e:
             self.logger.error(f"License activation error: {e}")
-            raise HTTPException(status_code=500, detail="Internal server error")
+            raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_license_status(self, license_key: str) -> dict[str, Any]:
         """Handle license status request"""
@@ -1725,7 +1725,7 @@ class LicenseServerEmulator:
 
         except Exception as e:
             self.logger.error(f"License status error: {e}")
-            raise HTTPException(status_code=500, detail="Internal server error")
+            raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_flexlm_request(
         self, request: dict[str, Any], client_request: Request
@@ -1751,7 +1751,7 @@ class LicenseServerEmulator:
 
         except Exception as e:
             self.logger.error(f"FlexLM request error: {e}")
-            raise HTTPException(status_code=500, detail="Internal server error")
+            raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_hasp_request(self, request: dict[str, Any]) -> dict[str, Any]:
         """Handle HASP dongle request"""
@@ -1774,7 +1774,7 @@ class LicenseServerEmulator:
 
         except Exception as e:
             self.logger.error(f"HASP request error: {e}")
-            raise HTTPException(status_code=500, detail="Internal server error")
+            raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_kms_request(
         self, request: dict[str, Any], client_request: Request
@@ -1793,7 +1793,7 @@ class LicenseServerEmulator:
 
         except Exception as e:
             self.logger.error(f"KMS request error: {e}")
-            raise HTTPException(status_code=500, detail="Internal server error")
+            raise HTTPException(status_code=500, detail="Internal server error") from None
 
     async def _handle_adobe_request(
         self, request: dict[str, Any], client_request: Request
@@ -1814,7 +1814,7 @@ class LicenseServerEmulator:
 
         except Exception as e:
             self.logger.error(f"Adobe request error: {e}")
-            raise HTTPException(status_code=500, detail="Internal server error")
+            raise HTTPException(status_code=500, detail="Internal server error") from None
 
     def start_servers(self):
         """Start all license servers"""

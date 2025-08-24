@@ -202,7 +202,7 @@ class ProjectManager:
 
             # Find project.json
             project_json = None
-            for root, dirs, files in os.walk(temp_dir):
+            for root, _dirs, files in os.walk(temp_dir):
                 if "project.json" in files:
                     project_json = Path(root) / "project.json"
                     break

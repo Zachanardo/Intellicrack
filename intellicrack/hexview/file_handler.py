@@ -368,7 +368,7 @@ class VirtualFileAccess:
                     except Exception as cleanup_error:
                         logger.warning("Could not clean up temp file: %s", cleanup_error)
 
-                raise ValueError(f"Could not create temporary copy of {file_path}: {copy_error}")
+                raise ValueError(f"Could not create temporary copy of {file_path}: {copy_error}") from copy_error
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error loading file: %s", e)
             raise

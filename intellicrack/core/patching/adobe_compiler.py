@@ -88,7 +88,7 @@ class AdobeLicenseCompiler:
         try:
             timeout = nodejs_config.get("verification_timeout", 30)
             result = subprocess.run(
-                [node_cmd, "--version"], capture_output=True, text=True, shell=True, timeout=timeout
+                [node_cmd, "--version"], capture_output=True, text=True, timeout=timeout, shell=False
             )
             if result.returncode == 0:
                 version = result.stdout.strip()
@@ -135,28 +135,40 @@ class AdobeLicenseCompiler:
             logger.info("Trying winget installation...")
 
             # Check if winget is available
-            winget_check = subprocess.run(
-                ["winget", "--version"], capture_output=True, text=True, shell=True
-            )
+            winget_path = shutil.which("winget")
+            if winget_path:
+                winget_check = subprocess.run(
+                    [winget_path, "--version"], capture_output=True, text=True
+                )
+            else:
+                # Fallback if winget is not found
+                winget_check = subprocess.CompletedProcess(
+                    args=["winget", "--version"], returncode=1, stdout="", stderr="winget not found in PATH"
+                )
 
             if winget_check.returncode != 0:
                 logger.warning("winget not available")
                 return False
 
             # Install Node.js using winget
-            install_result = subprocess.run(
-                [
-                    "winget",
-                    "install",
-                    "OpenJS.NodeJS",
-                    "--accept-package-agreements",
-                    "--accept-source-agreements",
-                ],
-                capture_output=True,
-                text=True,
-                shell=True,
-                timeout=300,
-            )
+            if winget_path:
+                install_result = subprocess.run(
+                    [
+                        winget_path,
+                        "install",
+                        "OpenJS.NodeJS",
+                        "--accept-package-agreements",
+                        "--accept-source-agreements",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                )
+            else:
+                # Fallback if winget is not found
+                install_result = subprocess.CompletedProcess(
+                    args=["winget", "install", "OpenJS.NodeJS"], returncode=1, stdout="", stderr="winget not found in PATH"
+                )
 
             if install_result.returncode == 0:
                 logger.info("Node.js installed via winget")
@@ -175,22 +187,34 @@ class AdobeLicenseCompiler:
             logger.info("Trying chocolatey installation...")
 
             # Check if choco is available
-            choco_check = subprocess.run(
-                ["choco", "--version"], capture_output=True, text=True, shell=True
-            )
+            choco_path = shutil.which("choco")
+            if choco_path:
+                choco_check = subprocess.run(
+                    [choco_path, "--version"], capture_output=True, text=True
+                )
+            else:
+                # Fallback if choco is not found
+                choco_check = subprocess.CompletedProcess(
+                    args=["choco", "--version"], returncode=1, stdout="", stderr="choco not found in PATH"
+                )
 
             if choco_check.returncode != 0:
                 logger.warning("chocolatey not available")
                 return False
 
             # Install Node.js using chocolatey
-            install_result = subprocess.run(
-                ["choco", "install", "nodejs", "-y"],
-                capture_output=True,
-                text=True,
-                shell=True,
-                timeout=300,
-            )
+            if choco_path:
+                install_result = subprocess.run(
+                    [choco_path, "install", "nodejs", "-y"],
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                )
+            else:
+                # Fallback if choco is not found
+                install_result = subprocess.CompletedProcess(
+                    args=["choco", "install", "nodejs", "-y"], returncode=1, stdout="", stderr="choco not found in PATH"
+                )
 
             if install_result.returncode == 0:
                 logger.info("Node.js installed via chocolatey")
@@ -232,7 +256,7 @@ class AdobeLicenseCompiler:
 
             try:
                 logger.info(f"Downloading Node.js installer from: {nodejs_url}")
-                urllib.request.urlretrieve(nodejs_url, installer_path)
+                urllib.request.urlretrieve(nodejs_url, installer_path)  # noqa: S310  # Legitimate Node.js installer download for security research tool
 
                 # Verify SHA256 hash if configured
                 if expected_hash and nodejs_config.get("verify_signatures", True):
@@ -254,13 +278,19 @@ class AdobeLicenseCompiler:
                 # Run the installer silently
                 logger.info("Running Node.js installer...")
                 timeout = nodejs_config.get("installation_timeout", 600)
-                install_result = subprocess.run(
-                    ["msiexec", "/i", installer_path, "/quiet", "/norestart"],
-                    capture_output=True,
-                    text=True,
-                    shell=True,
-                    timeout=timeout,
-                )
+                msiexec_path = shutil.which("msiexec")
+                if msiexec_path:
+                    install_result = subprocess.run(
+                        [msiexec_path, "/i", installer_path, "/quiet", "/norestart"],
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout,
+                    )
+                else:
+                    # Fallback if msiexec is not found
+                    install_result = subprocess.CompletedProcess(
+                        args=["msiexec", "/i", installer_path], returncode=1, stdout="", stderr="msiexec not found in PATH"
+                    )
 
                 if install_result.returncode == 0:
                     logger.info("Node.js installed via direct download")
@@ -290,15 +320,26 @@ class AdobeLicenseCompiler:
         """Verify Node.js installation after install attempt."""
         try:
             # Refresh environment variables
-            subprocess.run(["refreshenv"], shell=True, capture_output=True)
+            refreshenv_path = shutil.which("refreshenv")
+            if refreshenv_path:
+                subprocess.run([refreshenv_path], capture_output=True)
+            else:
+                # Fallback if refreshenv is not found - just continue without refresh
+                pass
 
             # Wait a moment for installation to complete
             time.sleep(2)
 
             # Verify installation
-            verify_result = subprocess.run(
-                ["node", "--version"], capture_output=True, text=True, shell=True
-            )
+            node_path = shutil.which("node")
+            if node_path:
+                verify_result = subprocess.run(
+                    [node_path, "--version"], capture_output=True, text=True
+                )
+            else:
+                # Node.js not found in PATH
+                logger.warning("Node.js not found in PATH")
+                return False
 
             if verify_result.returncode == 0:
                 version = verify_result.stdout.strip()
@@ -321,12 +362,12 @@ class AdobeLicenseCompiler:
             try:
                 # Check if already installed
                 check_cmd = ["npm", "list", "-g", package, "--depth=0"]
-                result = subprocess.run(check_cmd, capture_output=True, text=True, shell=True)
+                result = subprocess.run(check_cmd, capture_output=True, text=True)
 
                 if result.returncode != 0:
                     # Install globally
                     install_cmd = ["npm", "install", "-g", package]
-                    result = subprocess.run(install_cmd, capture_output=True, text=True, shell=True)
+                    result = subprocess.run(install_cmd, capture_output=True, text=True)
 
                     if result.returncode != 0:
                         logger.error(f"Failed to install {package}: {result.stderr}")
@@ -536,13 +577,17 @@ process.stdin.resume();
 
             # Install local dependencies
             logger.info("Installing local dependencies...")
-            npm_install = subprocess.run(
-                ["npm", "install"],
-                cwd=str(self.temp_dir),
-                capture_output=True,
-                text=True,
-                shell=True,
-            )
+            npm_path = shutil.which("npm")
+            if npm_path:
+                npm_install = subprocess.run(
+                    [npm_path, "install"],
+                    cwd=str(self.temp_dir),
+                    capture_output=True,
+                    text=True,
+                )
+            else:
+                logger.error("npm not found in PATH")
+                return None
 
             if npm_install.returncode != 0:
                 logger.error(f"npm install failed: {npm_install.stderr}")
@@ -583,7 +628,6 @@ process.stdin.resume();
                 cwd=str(self.temp_dir),
                 capture_output=True,
                 text=True,
-                shell=True,
                 timeout=timeout,
             )
 
@@ -683,7 +727,7 @@ process.stdin.resume();
 
             # Start the EXE
             logger.info("Starting AdobeLicenseX...")
-            subprocess.Popen([str(deployed_path)], shell=True)
+            subprocess.Popen([str(deployed_path)])
 
             return True, f"Successfully deployed to {deployed_path}"
 
@@ -700,10 +744,14 @@ process.stdin.resume();
 
             # Try to terminate the process first
             try:
-                subprocess.run(
-                    ["taskkill", "/F", "/IM", self.exe_name], capture_output=True, shell=True
-                )
-                time.sleep(1)  # Give it time to terminate
+                taskkill_path = shutil.which("taskkill")
+                if taskkill_path:
+                    subprocess.run(
+                        [taskkill_path, "/F", "/IM", self.exe_name], capture_output=True
+                    )
+                    time.sleep(1)  # Give it time to terminate
+                else:
+                    logger.debug("taskkill not found in PATH")
             except (subprocess.SubprocessError, OSError) as e:
                 logger.debug(f"Failed to terminate process {self.exe_name}: {e}")
 
@@ -748,14 +796,18 @@ process.stdin.resume();
     def is_running(self):
         """Check if AdobeLicenseX process is running."""
         try:
-            result = subprocess.run(
-                ["tasklist", "/FI", f"IMAGENAME eq {self.exe_name}"],
-                capture_output=True,
-                text=True,
-                shell=True,
-                timeout=10,
-            )
-            return self.exe_name.lower() in result.stdout.lower()
+            tasklist_path = shutil.which("tasklist")
+            if tasklist_path:
+                result = subprocess.run(
+                    [tasklist_path, "/FI", f"IMAGENAME eq {self.exe_name}"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                return self.exe_name.lower() in result.stdout.lower()
+            else:
+                logger.debug("tasklist not found in PATH")
+                return False
         except (subprocess.SubprocessError, subprocess.TimeoutExpired, OSError) as e:
             logger.debug(f"Failed to check if {self.exe_name} is running: {e}")
             return False

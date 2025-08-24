@@ -18,6 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import logging
 import os
 import platform
+import shutil
 import subprocess
 from typing import Any
 
@@ -238,7 +239,7 @@ class VMDetector(BaseDetector):
                     for system in c.Win32_ComputerSystem():
                         if hasattr(system, "Model"):
                             model = system.Model.lower()
-                            for vm_type, sigs in self.vm_signatures.items():
+                            for _vm_type, sigs in self.vm_signatures.items():
                                 if any(sig.lower() in model for sig in sigs.get("hardware", [])):
                                     details["detected_hardware"].append(model)
 
@@ -246,7 +247,7 @@ class VMDetector(BaseDetector):
                     for disk in c.Win32_DiskDrive():
                         if hasattr(disk, "Model"):
                             model = disk.Model.lower()
-                            for vm_type, sigs in self.vm_signatures.items():
+                            for _vm_type, sigs in self.vm_signatures.items():
                                 if any(sig.lower() in model for sig in sigs.get("hardware", [])):
                                     details["detected_hardware"].append(model)
 
@@ -265,7 +266,7 @@ class VMDetector(BaseDetector):
                     if os.path.exists(dmi_file):
                         with open(dmi_file) as f:
                             content = f.read().strip().lower()
-                            for vm_type, sigs in self.vm_signatures.items():
+                            for vm_type, _sigs in self.vm_signatures.items():
                                 if vm_type in content:
                                     details["detected_hardware"].append(content)
 
@@ -399,16 +400,24 @@ class VMDetector(BaseDetector):
         try:
             # Get network interfaces
             if platform.system() == "Windows":
-                result = subprocess.run(
-                    ["ipconfig", "/all"],
-                    check=False,
-                    capture_output=True,
-                    text=True,  # noqa: S607
-                )
-                output = result.stdout
+                ipconfig_path = shutil.which("ipconfig")
+                if ipconfig_path:
+                    result = subprocess.run(
+                        [ipconfig_path, "/all"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
+                    output = result.stdout if result else ""
+                else:
+                    output = ""
             else:
-                result = subprocess.run(["ip", "link"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
-                output = result.stdout
+                ip_path = shutil.which("ip")
+                if ip_path:
+                    result = subprocess.run([ip_path, "link"], check=False, capture_output=True, text=True)
+                    output = result.stdout if result else ""
+                else:
+                    output = ""
 
             # Extract MAC addresses
             import re
@@ -477,13 +486,17 @@ class VMDetector(BaseDetector):
         try:
             if platform.system() == "Windows":
                 # Check loaded drivers
-                result = subprocess.run(
-                    ["driverquery"],
-                    check=False,
-                    capture_output=True,
-                    text=True,  # noqa: S607
-                )
-                drivers = result.stdout.lower()
+                driverquery_path = shutil.which("driverquery")
+                if driverquery_path:
+                    result = subprocess.run(
+                        [driverquery_path],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
+                    drivers = result.stdout.lower() if result and result.stdout else ""
+                else:
+                    drivers = ""
 
                 vm_drivers = [
                     "vmci",

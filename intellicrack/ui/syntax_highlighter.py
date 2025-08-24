@@ -38,7 +38,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
 
     def __init__(self, document: QTextDocument, language: str = "python"):
         """Initialize the syntax highlighter.
-        
+
         Args:
             document: The text document to highlight
             language: Programming language to highlight
@@ -75,12 +75,12 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         italic: bool = False
     ) -> QTextCharFormat:
         """Create a text format with specified properties.
-        
+
         Args:
             color: Color in hex format
             bold: Whether text should be bold
             italic: Whether text should be italic
-            
+
         Returns:
             Configured text format
         """
@@ -416,7 +416,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
 
     def highlightBlock(self, text: str) -> None:
         """Apply syntax highlighting to a block of text.
-        
+
         Args:
             text: Text block to highlight
         """
@@ -431,7 +431,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
 
     def set_language(self, language: str) -> None:
         """Change the highlighting language.
-        
+
         Args:
             language: New language to use for highlighting
         """
@@ -446,11 +446,11 @@ def create_highlighter(
     language: str = "python"
 ) -> SyntaxHighlighter:
     """Factory function to create a syntax highlighter.
-    
+
     Args:
         document: Text document to highlight
         language: Programming language
-        
+
     Returns:
         Configured syntax highlighter
     """
@@ -459,7 +459,7 @@ def create_highlighter(
 
 def get_supported_languages() -> List[str]:
     """Get list of supported programming languages.
-    
+
     Returns:
         List of supported language names
     """
@@ -481,10 +481,10 @@ def get_supported_languages() -> List[str]:
 
 def detect_language(code: str) -> str:
     """Attempt to detect the programming language from code content.
-    
+
     Args:
         code: Code content to analyze
-        
+
     Returns:
         Detected language name or 'python' as default
     """

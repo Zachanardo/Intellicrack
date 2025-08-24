@@ -4,6 +4,7 @@ Specialized template for network traffic analysis
 """
 
 import logging
+import shlex
 import sys
 
 logger = logging.getLogger(__name__)
@@ -145,21 +146,23 @@ class NetworkAnalysisPlugin:
                     # Get connections for specific process
                     cmd = f"lsof -i -n -P -p {pid}"
                     try:
-                        output = subprocess.check_output(cmd, shell=True, text=True)
+                        output = subprocess.check_output(shlex.split(cmd), text=True)
                         results.append(f"Network connections for PID {pid}:")
                         results.extend(output.strip().split("\n")[1:])  # Skip header
-                    except:
-                        pass
+                    except subprocess.CalledProcessError as e:
+                        results.append(f"Failed to get network connections for PID {pid}: {e}")
+                    except (OSError, FileNotFoundError):
+                        results.append("lsof command not available on this system")
 
             # Try to capture some traffic
             try:
                 cmd = "tcpdump -c 10 -n -i any"
-                output = subprocess.check_output(cmd, shell=True, text=True, timeout=5)
+                output = subprocess.check_output(shlex.split(cmd), text=True, timeout=5)
                 results.append("Captured traffic:")
                 results.extend(output.strip().split("\n"))
             except subprocess.TimeoutExpired:
                 results.append("Packet capture timed out")
-            except:
+            except Exception:
                 # Fallback to netstat
                 results.extend(self._get_netstat_connections(target_process))
 
@@ -176,11 +179,14 @@ class NetworkAnalysisPlugin:
             import subprocess
 
             if sys.platform == "win32":
-                cmd = "netstat -ano"
+                cmd = ["netstat", "-ano"]
+                output = subprocess.check_output(cmd, text=True)
             else:
-                cmd = "ss -tunap 2>/dev/null || netstat -tunap 2>/dev/null"
-
-            output = subprocess.check_output(cmd, shell=True, text=True)
+                # Try ss first, then netstat as fallback
+                try:
+                    output = subprocess.check_output(["ss", "-tunap"], text=True, stderr=subprocess.DEVNULL)
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    output = subprocess.check_output(["netstat", "-tunap"], text=True, stderr=subprocess.DEVNULL)
             lines = output.strip().split("\n")
 
             if target_process:
@@ -209,23 +215,25 @@ class NetworkAnalysisPlugin:
             for proc in psutil.process_iter(["pid", "name"]):
                 if process_name.lower() in proc.info["name"].lower():
                     return proc.info["pid"]
-        except:
+        except Exception:
             # Fallback method
             try:
                 import subprocess
 
                 if sys.platform == "win32":
-                    cmd = 'wmic process where "name like ' % {process_name} % '" get processid'
-                    output = subprocess.check_output(cmd, shell=True, text=True)
+                    cmd = ["wmic", "process", "where", f"name like '%{process_name}%'", "get", "processid"]
+                    output = subprocess.check_output(cmd, text=True)
                     lines = output.strip().split("\n")
                     if len(lines) > 1:
                         return int(lines[1].strip())
                 else:
-                    cmd = f"pgrep -f {process_name}"
-                    output = subprocess.check_output(cmd, shell=True, text=True)
+                    cmd = ["pgrep", "-f", process_name]
+                    output = subprocess.check_output(cmd, text=True)
                     return int(output.strip().split("\n")[0])
-            except:
-                pass
+            except (subprocess.CalledProcessError, ValueError, IndexError) as e:
+                logger.debug(f"Failed to get PID for process '{process_name}': {e}")
+            except (OSError, FileNotFoundError):
+                logger.debug("Process enumeration command not available on this system")
         return None
 
     def _get_process_connections(self, pid):
@@ -283,8 +291,17 @@ class NetworkAnalysisPlugin:
         try:
             import subprocess
 
-            cmd = "netstat -tunap 2>/dev/null | grep -E 'tcp|udp'"
-            output = subprocess.check_output(cmd, shell=True, text=True)
+            # Get netstat output, then filter for tcp/udp
+            netstat_proc = subprocess.run(
+                ["netstat", "-tunap"], capture_output=True, text=True, stderr=subprocess.DEVNULL
+            )
+            if netstat_proc.returncode == 0:
+                grep_proc = subprocess.run(
+                    ["grep", "-E", "tcp|udp"], input=netstat_proc.stdout, capture_output=True, text=True
+                )
+                output = grep_proc.stdout if grep_proc.returncode == 0 else ""
+            else:
+                output = ""
 
             lines = output.strip().split("\n")
             results.append("Active connections:")

@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import json
 import os
-import pickle
 import re
 
 from intellicrack.logger import logger
@@ -92,7 +92,7 @@ except ImportError as e:
             self.constraints = []
 
             # Parse columns for constraints
-            for col_name, col_type, constraints in columns:
+            for col_name, _col_type, constraints in columns:
                 if 'PRIMARY KEY' in constraints:
                     self.primary_key = col_name
                 if 'UNIQUE' in constraints:
@@ -104,7 +104,7 @@ except ImportError as e:
             """Insert row into table."""
             # Validate constraints
             row = {}
-            for i, (col_name, col_type, constraints) in enumerate(self.columns):
+            for i, (col_name, col_type, _constraints) in enumerate(self.columns):
                 if i < len(values):
                     value = values[i]
                 else:
@@ -348,7 +348,7 @@ except ImportError as e:
                 raise ProgrammingError(f"Invalid INSERT syntax: {sql}")
 
             table_name = match.group(1)
-            columns = match.group(2)
+            match.group(2)
             values_str = match.group(3)
 
             if table_name not in self.tables:
@@ -516,17 +516,44 @@ except ImportError as e:
             """Save database to file."""
             if self.path != ':memory:':
                 try:
-                    with open(self.path, 'wb') as f:
-                        pickle.dump({'tables': self.tables, 'views': self.views}, f)
+                    # Serialize tables and views to JSON-safe format
+                    tables_data = {}
+                    for name, table in self.tables.items():
+                        tables_data[name] = {
+                            'name': table.name,
+                            'columns': table.columns,
+                            'rows': table.rows,
+                            'primary_key': table.primary_key,
+                            'indexes': table.indexes,
+                            'constraints': table.constraints
+                        }
+
+                    serialized_data = {
+                        'tables': tables_data,
+                        'views': self.views
+                    }
+
+                    with open(self.path, 'w', encoding='utf-8') as f:
+                        json.dump(serialized_data, f, indent=2)
                 except Exception as e:
                     logger.error("Failed to save database: %s", e)
 
         def _load_from_file(self):
             """Load database from file."""
             try:
-                with open(self.path, 'rb') as f:
-                    data = pickle.load(f)
-                    self.tables = data.get('tables', {})
+                with open(self.path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+
+                    # Reconstruct tables
+                    self.tables = {}
+                    for name, table_data in data.get('tables', {}).items():
+                        table = FallbackTable(name, table_data['columns'])
+                        table.rows = table_data.get('rows', [])
+                        table.primary_key = table_data.get('primary_key')
+                        table.indexes = table_data.get('indexes', {})
+                        table.constraints = table_data.get('constraints', [])
+                        self.tables[name] = table
+
                     self.views = data.get('views', {})
             except Exception as e:
                 logger.error("Failed to load database: %s", e)
@@ -564,7 +591,7 @@ except ImportError as e:
                 return self
 
             except Exception as e:
-                raise DatabaseError(str(e))
+                raise DatabaseError(str(e)) from e
 
         def executemany(self, sql, params_list):
             """Execute SQL with multiple parameter sets."""

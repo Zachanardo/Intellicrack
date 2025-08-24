@@ -3,6 +3,7 @@
 import base64
 import os
 import subprocess
+import tempfile
 import time
 from typing import Any
 
@@ -224,7 +225,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
         except subprocess.TimeoutExpired as e:
             logger.error("Subprocess timeout in qemu_emulator: %s", e)
-            raise RuntimeError(f"QEMU binary check timed out: {qemu_path}")
+            raise RuntimeError(f"QEMU binary check timed out: {qemu_path}") from e
 
         # Check if rootfs exists (optional for some use cases)
         if not os.path.exists(self.rootfs_path):
@@ -338,7 +339,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             )
 
         # Monitor socket for management
-        self.monitor_socket = f"/tmp/qemu_monitor_{os.getpid()}.sock"
+        self.monitor_socket = os.path.join(tempfile.gettempdir(), f"qemu_monitor_{os.getpid()}.sock")
         cmd.extend(["-monitor", f"unix:{self.monitor_socket},server,nowait"])
 
         # Shared folder for file transfer
@@ -1938,7 +1939,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         """Copy binary to Linux guest using SSH or guest agent."""
         try:
             binary_name = os.path.basename(binary_path)
-            guest_path = f"/tmp/{binary_name}"
+            guest_path = f"/tmp/{binary_name}"  # noqa: S108
 
             if app:
                 app.update_output.emit(f"[QEMU] Copying {binary_name} to Linux guest...")
@@ -2219,7 +2220,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             processes_created = []
 
             # Check if the binary file exists and monitor its execution directory
-            binary_dir = os.path.dirname(guest_path) if guest_path else "/tmp"
+            binary_dir = os.path.dirname(guest_path) if guest_path else "/tmp"  # noqa: S108
 
             if hasattr(self, "ssh_client") and self.ssh_client:
                 # Monitor file changes in the execution directory

@@ -229,7 +229,7 @@ PE64
 ```python
 def from_die_text(cls, file_path: str, die_text: str) -> 'ICPScanResult':
     # Stage 1: Input validation and preprocessing
-    lines = die_text.strip().split('\n') if die_text else []
+    lines = native_engine_text.strip().split('\n') if native_engine_text else []
 
     # Stage 2: File type extraction
     filetype = lines[0].strip() if lines else "Binary"

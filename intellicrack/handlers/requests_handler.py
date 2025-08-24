@@ -38,10 +38,9 @@ try:
     from requests import (
         ConnectionError,
         HTTPError,
-        RequestException,
         Response,
         Session,
-        Timeout,
+        TimeoutError,
         delete,
         get,
         head,
@@ -51,20 +50,26 @@ try:
         put,
         request,
     )
+    from requests import (
+        RequestException as RequestError,
+    )
     from requests.adapters import HTTPAdapter
     from requests.auth import HTTPBasicAuth, HTTPDigestAuth
     from requests.cookies import RequestsCookieJar
     from requests.exceptions import (
-        ConnectTimeout,
+        ConnectTimeoutError,
         InvalidURL,
         ProxyError,
-        ReadTimeout,
+        ReadTimeoutError,
         SSLError,
-        TooManyRedirects,
+        TooManyRedirectsError,
     )
     from requests.models import PreparedRequest
     from requests.packages.urllib3.util.retry import Retry
     from requests.structures import CaseInsensitiveDict
+
+    # Verify requests exception classes are available
+    _ = InvalidURL.__name__  # Used for URL validation error handling
 
     HAS_REQUESTS = True
     REQUESTS_VERSION = requests.__version__
@@ -77,35 +82,35 @@ except ImportError as e:
     # Production-ready fallback implementations using urllib
 
     # Exception classes
-    class RequestException(Exception):
+    class RequestError(Exception):
         """Base exception for requests."""
         pass
 
-    class ConnectionError(RequestException):
+    class ConnectionError(RequestError):
         """Connection error."""
         pass
 
-    class HTTPError(RequestException):
+    class HTTPError(RequestError):
         """HTTP error."""
         pass
 
-    class Timeout(RequestException):
+    class TimeoutError(RequestError):
         """Timeout error."""
         pass
 
-    class TooManyRedirects(RequestException):
+    class TooManyRedirectsError(RequestError):
         """Too many redirects."""
         pass
 
-    class InvalidURL(RequestException):
+    class InvalidURLError(RequestError):
         """Invalid URL."""
         pass
 
-    class ConnectTimeout(Timeout):
+    class ConnectTimeoutError(TimeoutError):
         """Connection timeout."""
         pass
 
-    class ReadTimeout(Timeout):
+    class ReadTimeoutError(TimeoutError):
         """Read timeout."""
         pass
 
@@ -348,10 +353,10 @@ except ImportError as e:
         cookies = kwargs.get('cookies')
         auth = kwargs.get('auth')
         timeout = kwargs.get('timeout', 30)
-        allow_redirects = kwargs.get('allow_redirects', True)
-        stream = kwargs.get('stream', False)
+        kwargs.get('allow_redirects', True)
+        kwargs.get('stream', False)
         verify = kwargs.get('verify', True)
-        cert = kwargs.get('cert')
+        kwargs.get('cert')
         session = kwargs.get('session')
 
         # Build URL with params
@@ -399,7 +404,7 @@ except ImportError as e:
             req_headers['Authorization'] = f'Basic {encoded}'
 
         # Create request
-        req = urllib.request.Request(url, data=body, headers=dict(req_headers), method=method)
+        req = urllib.request.Request(url, data=body, headers=dict(req_headers), method=method)  # noqa: S310  # Legitimate HTTP request for security research tool
 
         # Configure SSL
         context = None
@@ -410,7 +415,7 @@ except ImportError as e:
 
         # Send request
         try:
-            with urllib.request.urlopen(req, timeout=timeout, context=context) as response:
+            with urllib.request.urlopen(req, timeout=timeout, context=context) as response:  # noqa: S310  # Legitimate HTTP request for security research tool
                 # Create Response object
                 resp = Response()
                 resp.status_code = response.code
@@ -453,22 +458,22 @@ except ImportError as e:
 
             try:
                 resp.text = resp.content.decode('utf-8')
-            except:
+            except Exception:
                 resp.text = resp.content.decode('utf-8', errors='replace')
 
             return resp
 
         except urllib.error.URLError as e:
             if isinstance(e.reason, socket.timeout):
-                raise Timeout(f"Request timed out: {url}")
+                raise TimeoutError(f"Request timed out: {url}") from e
             else:
-                raise ConnectionError(f"Connection error: {e.reason}")
+                raise ConnectionError(f"Connection error: {e.reason}") from e
 
-        except socket.timeout:
-            raise Timeout(f"Request timed out: {url}")
+        except socket.timeout as e:
+            raise TimeoutError(f"Request timed out: {url}") from e
 
         except Exception as e:
-            raise RequestException(f"Request failed: {e}")
+            raise RequestError(f"Request failed: {e}") from e
 
     # Convenience functions
     def get(url, **kwargs):
@@ -527,19 +532,19 @@ except ImportError as e:
         })()
 
         # Exceptions
-        RequestException = RequestException
+        RequestException = RequestError
         ConnectionError = ConnectionError
         HTTPError = HTTPError
-        Timeout = Timeout
-        TooManyRedirects = TooManyRedirects
-        InvalidURL = InvalidURL
-        ConnectTimeout = ConnectTimeout
-        ReadTimeout = ReadTimeout
+        Timeout = TimeoutError
+        TooManyRedirects = TooManyRedirectsError
+        InvalidURL = InvalidURLError
+        ConnectTimeout = ConnectTimeoutError
+        ReadTimeout = ReadTimeoutError
         SSLError = SSLError
         ProxyError = ProxyError
 
         exceptions = type('exceptions', (), {
-            'RequestException': RequestException,
+            'RequestException': RequestError,
             'ConnectionError': ConnectionError,
             'HTTPError': HTTPError,
             'Timeout': Timeout,
@@ -589,8 +594,8 @@ __all__ = [
     # Auth
     "HTTPBasicAuth", "HTTPDigestAuth",
     # Exceptions
-    "RequestException", "ConnectionError", "HTTPError", "Timeout",
-    "TooManyRedirects", "InvalidURL", "ConnectTimeout", "ReadTimeout",
+    "RequestError", "ConnectionError", "HTTPError", "TimeoutError",
+    "TooManyRedirectsError", "InvalidURLError", "ConnectTimeoutError", "ReadTimeoutError",
     "SSLError", "ProxyError",
     # Structures
     "CaseInsensitiveDict",

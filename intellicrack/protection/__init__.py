@@ -18,7 +18,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 # Local imports
 from .intellicrack_protection_core import (
     DetectionResult,
-    DIEProtectionDetector,  # Backward compatibility alias
     IntellicrackProtectionCore,
     ProtectionAnalysis,
     ProtectionType,
@@ -43,7 +42,6 @@ a unified engine that seamlessly combines multiple detection methods.
 """
 
 __all__ = [
-    "DIEProtectionDetector",  # Backward compatibility
     "DetectionResult",
     "IntellicrackProtectionCore",
     "ProtectionAnalysis",

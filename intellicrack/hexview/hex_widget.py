@@ -66,7 +66,7 @@ class FoldedRegion:
 
     def __init__(self, start: int, end: int, name: str = ""):
         """Initialize a folded region.
-        
+
         Args:
             start: Start offset of the region
             end: End offset of the region
@@ -79,10 +79,10 @@ class FoldedRegion:
 
     def contains(self, offset: int) -> bool:
         """Check if an offset is within this folded region.
-        
+
         Args:
             offset: Offset to check
-            
+
         Returns:
             True if offset is within the region
         """
@@ -90,11 +90,11 @@ class FoldedRegion:
 
     def overlaps(self, start: int, end: int) -> bool:
         """Check if a range overlaps with this folded region.
-        
+
         Args:
             start: Start of range
             end: End of range
-            
+
         Returns:
             True if there's an overlap
         """
@@ -1000,7 +1000,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
     def fold_region(self, start: int, end: int, name: str = ""):
         """Fold a region of data.
-        
+
         Args:
             start: Start offset of region to fold
             end: End offset of region to fold
@@ -1025,7 +1025,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
     def unfold_region(self, offset: int):
         """Unfold a region containing the given offset.
-        
+
         Args:
             offset: Offset within the region to unfold
         """
@@ -1056,10 +1056,10 @@ class HexViewerWidget(QAbstractScrollArea):
 
     def is_offset_folded(self, offset: int) -> bool:
         """Check if an offset is within a folded region.
-        
+
         Args:
             offset: Offset to check
-            
+
         Returns:
             True if offset is folded
         """
@@ -1070,10 +1070,10 @@ class HexViewerWidget(QAbstractScrollArea):
 
     def get_visible_offset(self, file_offset: int) -> int:
         """Convert file offset to visible offset accounting for folded regions.
-        
+
         Args:
             file_offset: Actual file offset
-            
+
         Returns:
             Visible offset after accounting for folded regions
         """
@@ -1090,10 +1090,10 @@ class HexViewerWidget(QAbstractScrollArea):
 
     def get_file_offset(self, visible_offset: int) -> int:
         """Convert visible offset to file offset accounting for folded regions.
-        
+
         Args:
             visible_offset: Visible offset in the display
-            
+
         Returns:
             Actual file offset
         """

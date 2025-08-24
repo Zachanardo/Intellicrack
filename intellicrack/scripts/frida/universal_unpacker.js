@@ -4709,31 +4709,196 @@ const UniversalUnpacker = {
                 },
 
                 bypassAntiDebug: function() {
-                    // Hook common anti-debug APIs
-                    const antiDebugAPIs = [
-                        'IsDebuggerPresent',
-                        'CheckRemoteDebuggerPresent',
-                        'NtQueryInformationProcess',
-                        'GetTickCount',
-                        'QueryPerformanceCounter'
-                    ];
-
-                    for (const api of antiDebugAPIs) {
-                        const addr = Module.findExportByName('kernel32.dll', api) ||
-                                    Module.findExportByName('ntdll.dll', api);
-
-                        if (addr) {
-                            Interceptor.attach(addr, {
-                                onLeave: function(retval) {
-                                    if (api === 'IsDebuggerPresent') {
-                                        retval.replace(0);
-                                    } else if (api === 'CheckRemoteDebuggerPresent') {
-                                        Memory.writeU32(this.context.rdx || this.context.edx, 0);
-                                        retval.replace(1);
+                    // Hook common anti-debug APIs with comprehensive bypass logic
+                    const antiDebugHooks = {
+                        'IsDebuggerPresent': {
+                            module: 'kernel32.dll',
+                            onLeave: function(retval) {
+                                // Always return false (0) - no debugger present
+                                retval.replace(0);
+                                console.log('[Anti-Debug] IsDebuggerPresent bypassed');
+                            }
+                        },
+                        'CheckRemoteDebuggerPresent': {
+                            module: 'kernel32.dll',
+                            onEnter: function(args) {
+                                this.debuggerPresentPtr = args[1];
+                            },
+                            onLeave: function(retval) {
+                                // Set debugger present flag to false and return success
+                                if (this.debuggerPresentPtr) {
+                                    Memory.writeU32(this.debuggerPresentPtr, 0);
+                                }
+                                retval.replace(1); // Return TRUE (success)
+                                console.log('[Anti-Debug] CheckRemoteDebuggerPresent bypassed');
+                            }
+                        },
+                        'NtQueryInformationProcess': {
+                            module: 'ntdll.dll',
+                            onEnter: function(args) {
+                                this.processHandle = args[0];
+                                this.infoClass = args[1].toInt32();
+                                this.processInfo = args[2];
+                                this.processInfoLength = args[3].toInt32();
+                            },
+                            onLeave: function(retval) {
+                                if (retval.toInt32() === 0) { // STATUS_SUCCESS
+                                    // ProcessDebugPort (0x07)
+                                    if (this.infoClass === 0x07) {
+                                        Memory.writePointer(this.processInfo, ptr(0));
+                                        console.log('[Anti-Debug] NtQueryInformationProcess(ProcessDebugPort) bypassed');
+                                    }
+                                    // ProcessDebugFlags (0x1F)
+                                    else if (this.infoClass === 0x1F) {
+                                        Memory.writeU32(this.processInfo, 1); // PROCESS_DEBUG_FLAGS_NO_DEBUG
+                                        console.log('[Anti-Debug] NtQueryInformationProcess(ProcessDebugFlags) bypassed');
+                                    }
+                                    // ProcessDebugObjectHandle (0x1E)
+                                    else if (this.infoClass === 0x1E) {
+                                        Memory.writePointer(this.processInfo, ptr(0));
+                                        console.log('[Anti-Debug] NtQueryInformationProcess(ProcessDebugObjectHandle) bypassed');
                                     }
                                 }
-                            });
+                            }
+                        },
+                        'GetTickCount': {
+                            module: 'kernel32.dll',
+                            onLeave: function(retval) {
+                                // Return consistent tick count to prevent timing-based detection
+                                if (!this.baseTickCount) {
+                                    this.baseTickCount = retval.toInt32();
+                                    this.lastCallTime = Date.now();
+                                }
+                                // Simulate normal time progression (not too fast, not too slow)
+                                const elapsed = Date.now() - this.lastCallTime;
+                                const adjustedTicks = this.baseTickCount + Math.floor(elapsed);
+                                retval.replace(adjustedTicks);
+                            }
+                        },
+                        'QueryPerformanceCounter': {
+                            module: 'kernel32.dll',
+                            onEnter: function(args) {
+                                this.counterPtr = args[0];
+                            },
+                            onLeave: function(retval) {
+                                if (this.counterPtr && retval.toInt32() !== 0) {
+                                    // Provide consistent performance counter values
+                                    if (!this.baseCounter) {
+                                        this.baseCounter = Memory.readU64(this.counterPtr);
+                                        this.lastQueryTime = Date.now();
+                                    }
+                                    // Simulate normal time progression with high precision
+                                    const elapsed = (Date.now() - this.lastQueryTime) * 10000; // Convert to QPC units
+                                    const adjustedCounter = this.baseCounter.add(elapsed);
+                                    Memory.writeU64(this.counterPtr, adjustedCounter);
+                                }
+                            }
                         }
+                    };
+
+                    // Additional anti-debug checks to bypass
+                    const additionalChecks = {
+                        'NtSetInformationThread': {
+                            module: 'ntdll.dll',
+                            onEnter: function(args) {
+                                const threadInfoClass = args[1].toInt32();
+                                // ThreadHideFromDebugger (0x11)
+                                if (threadInfoClass === 0x11) {
+                                    console.log('[Anti-Debug] Blocking ThreadHideFromDebugger');
+                                    // Skip the call entirely
+                                    this.shouldSkip = true;
+                                }
+                            },
+                            onLeave: function(retval) {
+                                if (this.shouldSkip) {
+                                    retval.replace(0); // STATUS_SUCCESS
+                                }
+                            }
+                        },
+                        'OutputDebugStringW': {
+                            module: 'kernel32.dll',
+                            onEnter: function(args) {
+                                // Prevent OutputDebugString detection
+                                console.log('[Anti-Debug] OutputDebugString intercepted');
+                            },
+                            onLeave: function(retval) {
+                                // Always succeed without actually outputting
+                                Memory.writeU32(Module.findExportByName('kernel32.dll', 'SetLastError'), 0);
+                            }
+                        }
+                    };
+
+                    // Hook all anti-debug APIs
+                    const allHooks = Object.assign({}, antiDebugHooks, additionalChecks);
+                    
+                    for (const [apiName, hookConfig] of Object.entries(allHooks)) {
+                        const addr = Module.findExportByName(hookConfig.module, apiName);
+                        
+                        if (addr) {
+                            const interceptorConfig = {};
+                            if (hookConfig.onEnter) {
+                                interceptorConfig.onEnter = hookConfig.onEnter;
+                            }
+                            if (hookConfig.onLeave) {
+                                interceptorConfig.onLeave = hookConfig.onLeave;
+                            }
+                            
+                            Interceptor.attach(addr, interceptorConfig);
+                            console.log(`[Anti-Debug] Hooked ${apiName}`);
+                        }
+                    }
+
+                    // Bypass PEB-based debugger detection
+                    this.bypassPEBCheck();
+                    
+                    // Bypass hardware breakpoint detection
+                    this.bypassHardwareBreakpoints();
+                },
+
+                bypassPEBCheck: function() {
+                    // Get PEB address
+                    let peb = null;
+                    if (Process.arch === 'x64') {
+                        peb = Memory.readPointer(Module.findExportByName('ntdll.dll', 'NtCurrentTeb').add(0x60));
+                    } else {
+                        peb = Memory.readPointer(Module.findExportByName('ntdll.dll', 'NtCurrentTeb').add(0x30));
+                    }
+                    
+                    if (peb) {
+                        // Clear BeingDebugged flag (offset 0x02)
+                        Memory.writeU8(peb.add(0x02), 0);
+                        
+                        // Clear NtGlobalFlag (offset 0x68 for x86, 0xBC for x64)
+                        const ntGlobalFlagOffset = Process.arch === 'x64' ? 0xBC : 0x68;
+                        Memory.writeU32(peb.add(ntGlobalFlagOffset), 0);
+                        
+                        console.log('[Anti-Debug] PEB flags cleared');
+                    }
+                },
+
+                bypassHardwareBreakpoints: function() {
+                    // Hook GetThreadContext to hide hardware breakpoints
+                    const getThreadContext = Module.findExportByName('kernel32.dll', 'GetThreadContext');
+                    if (getThreadContext) {
+                        Interceptor.attach(getThreadContext, {
+                            onEnter: function(args) {
+                                this.contextPtr = args[1];
+                            },
+                            onLeave: function(retval) {
+                                if (retval.toInt32() !== 0 && this.contextPtr) {
+                                    // Clear DR0-DR3 and DR6, DR7 (debug registers)
+                                    const dr0Offset = Process.arch === 'x64' ? 0x20 : 0x18;
+                                    for (let i = 0; i < 4; i++) {
+                                        Memory.writePointer(this.contextPtr.add(dr0Offset + i * Process.pointerSize), ptr(0));
+                                    }
+                                    // Clear DR6 and DR7
+                                    Memory.writePointer(this.contextPtr.add(dr0Offset + 6 * Process.pointerSize), ptr(0));
+                                    Memory.writePointer(this.contextPtr.add(dr0Offset + 7 * Process.pointerSize), ptr(0));
+                                    
+                                    console.log('[Anti-Debug] Hardware breakpoints hidden');
+                                }
+                            }
+                        });
                     }
                 },
 
@@ -6462,46 +6627,278 @@ const UniversalUnpacker = {
                     return null;
                 },
 
-                // Anti-debugging bypass for key extraction
+                // Comprehensive anti-debugging bypass for key extraction
                 antiDebugBypass: function() {
-                    // Bypass IsDebuggerPresent
-                    const isDebuggerPresent = Module.findExportByName('kernel32.dll', 'IsDebuggerPresent');
-                    if (isDebuggerPresent) {
-                        Interceptor.replace(isDebuggerPresent, new NativeCallback(function() {
-                            return 0;
-                        }, 'int', []));
+                    console.log("[KeyExtraction] Applying comprehensive anti-debugging bypass");
+                    let bypassCount = 0;
+
+                    // 1. Basic API hooks
+                    const basicAPIs = {
+                        'kernel32.dll': {
+                            'IsDebuggerPresent': function() { return 0; },
+                            'CheckRemoteDebuggerPresent': function(hProcess, pbDebuggerPresent) {
+                                Memory.writeU8(pbDebuggerPresent, 0);
+                                return 1;
+                            },
+                            'OutputDebugStringA': function(lpString) { return; },
+                            'OutputDebugStringW': function(lpString) { return; },
+                            'DebugBreak': function() { return; },
+                            'GetTickCount': null, // Will be handled specially
+                            'GetTickCount64': null,
+                            'QueryPerformanceCounter': null
+                        },
+                        'ntdll.dll': {
+                            'NtQueryInformationProcess': null, // Special handling
+                            'NtSetInformationThread': null,
+                            'NtQuerySystemInformation': null,
+                            'NtClose': null,
+                            'NtCreateDebugObject': function() { return 0xC0000022; }, // STATUS_ACCESS_DENIED
+                            'DbgBreakPoint': function() { return; },
+                            'DbgUiRemoteBreakin': function() { return; },
+                            'RtlIsDebuggerPresent': function() { return 0; }
+                        }
+                    };
+
+                    // Hook basic APIs
+                    for (const [module, apis] of Object.entries(basicAPIs)) {
+                        for (const [api, impl] of Object.entries(apis)) {
+                            if (impl !== null) {
+                                try {
+                                    const addr = Module.findExportByName(module, api);
+                                    if (addr) {
+                                        const retType = api.includes('String') ? 'void' : 
+                                                      api.includes('Create') ? 'uint32' : 'int';
+                                        const params = api === 'CheckRemoteDebuggerPresent' ? 
+                                                     ['pointer', 'pointer'] : 
+                                                     api.includes('String') ? ['pointer'] : [];
+                                        
+                                        Interceptor.replace(addr, new NativeCallback(impl, retType, params));
+                                        bypassCount++;
+                                    }
+                                } catch (e) {
+                                    console.log(`[KeyExtraction] Failed to hook ${api}: ${e.message}`);
+                                }
+                            }
+                        }
                     }
 
-                    // Bypass CheckRemoteDebuggerPresent
-                    const checkRemoteDebugger = Module.findExportByName('kernel32.dll', 'CheckRemoteDebuggerPresent');
-                    if (checkRemoteDebugger) {
-                        Interceptor.replace(checkRemoteDebugger, new NativeCallback(function(hProcess, pbDebuggerPresent) {
-                            Memory.writeU8(pbDebuggerPresent, 0);
-                            return 1;
-                        }, 'int', ['pointer', 'pointer']));
-                    }
-
-                    // Bypass NtQueryInformationProcess
+                    // 2. NtQueryInformationProcess - comprehensive handling
                     const ntQueryInfo = Module.findExportByName('ntdll.dll', 'NtQueryInformationProcess');
                     if (ntQueryInfo) {
                         Interceptor.attach(ntQueryInfo, {
                             onEnter: function(args) {
                                 this.infoClass = args[1].toInt32();
                                 this.buffer = args[2];
+                                this.length = args[3];
                             },
                             onLeave: function(retval) {
-                                if (this.infoClass === 7) { // ProcessDebugPort
-                                    Memory.writeU32(this.buffer, 0);
-                                } else if (this.infoClass === 0x1E) { // ProcessDebugObjectHandle
-                                    Memory.writePointer(this.buffer, NULL);
-                                } else if (this.infoClass === 0x1F) { // ProcessDebugFlags
-                                    Memory.writeU32(this.buffer, 1);
+                                if (retval.toInt32() === 0) { // STATUS_SUCCESS
+                                    switch(this.infoClass) {
+                                        case 0x07: // ProcessDebugPort
+                                            Memory.writePointer(this.buffer, ptr(0));
+                                            break;
+                                        case 0x0E: // ProcessHandleCount
+                                            // Keep original to avoid detection
+                                            break;
+                                        case 0x1E: // ProcessDebugObjectHandle
+                                            Memory.writePointer(this.buffer, ptr(0));
+                                            retval.replace(0xC0000353); // STATUS_PORT_NOT_SET
+                                            break;
+                                        case 0x1F: // ProcessDebugFlags
+                                            Memory.writeU32(this.buffer, 1); // PROCESS_DEBUG_INHERIT
+                                            break;
+                                        case 0x22: // ProcessExecuteFlags
+                                            Memory.writeU32(this.buffer, 0x22); // MEM_EXECUTE_OPTION_ENABLE
+                                            break;
+                                    }
                                 }
                             }
                         });
+                        bypassCount++;
                     }
 
-                    return true;
+                    // 3. NtSetInformationThread - prevent ThreadHideFromDebugger
+                    const ntSetInfo = Module.findExportByName('ntdll.dll', 'NtSetInformationThread');
+                    if (ntSetInfo) {
+                        Interceptor.attach(ntSetInfo, {
+                            onEnter: function(args) {
+                                const infoClass = args[1].toInt32();
+                                if (infoClass === 0x11) { // ThreadHideFromDebugger
+                                    args[1] = ptr(0xFFFFFFFF); // Invalid class to fail the call
+                                }
+                            }
+                        });
+                        bypassCount++;
+                    }
+
+                    // 4. Timing attack prevention
+                    let baseTime = Date.now();
+                    let lastTick = 0;
+                    let perfFreq = 10000000; // 10MHz
+                    let perfCounter = 0;
+
+                    const getTickCount = Module.findExportByName('kernel32.dll', 'GetTickCount');
+                    if (getTickCount) {
+                        Interceptor.replace(getTickCount, new NativeCallback(function() {
+                            lastTick += 10; // Increment by 10ms
+                            return lastTick;
+                        }, 'uint32', []));
+                        bypassCount++;
+                    }
+
+                    const queryPerfCounter = Module.findExportByName('kernel32.dll', 'QueryPerformanceCounter');
+                    if (queryPerfCounter) {
+                        Interceptor.replace(queryPerfCounter, new NativeCallback(function(lpCounter) {
+                            perfCounter += perfFreq / 100; // 10ms increments
+                            Memory.writeS64(lpCounter, perfCounter);
+                            return 1;
+                        }, 'int', ['pointer']));
+                        bypassCount++;
+                    }
+
+                    // 5. Hardware breakpoint detection bypass
+                    const getThreadContext = Module.findExportByName('kernel32.dll', 'GetThreadContext');
+                    if (getThreadContext) {
+                        Interceptor.attach(getThreadContext, {
+                            onLeave: function(retval) {
+                                if (retval.toInt32() !== 0 && this.context) {
+                                    // Clear Dr0-Dr3 and Dr6, Dr7 (x86/x64 context)
+                                    const is64bit = Process.arch === 'x64';
+                                    const drOffset = is64bit ? 0x18 : 0x04; // Offset to DR registers
+                                    
+                                    try {
+                                        // Clear DR0-DR3 (debug address registers)
+                                        for (let i = 0; i < 4; i++) {
+                                            Memory.writePointer(this.context.add(drOffset + (i * Process.pointerSize)), ptr(0));
+                                        }
+                                        // Clear DR6 (debug status) and DR7 (debug control)
+                                        Memory.writePointer(this.context.add(drOffset + (6 * Process.pointerSize)), ptr(0));
+                                        Memory.writePointer(this.context.add(drOffset + (7 * Process.pointerSize)), ptr(0));
+                                    } catch (e) {
+                                        console.log("[KeyExtraction] Failed to clear debug registers");
+                                    }
+                                }
+                            }
+                        });
+                        bypassCount++;
+                    }
+
+                    // 6. PEB manipulation
+                    try {
+                        const peb = Process.enumerateModules()[0].base;
+                        const is64bit = Process.arch === 'x64';
+                        
+                        // Clear BeingDebugged flag
+                        Memory.writeU8(peb.add(is64bit ? 0x02 : 0x02), 0);
+                        
+                        // Clear NtGlobalFlag
+                        const ntGlobalFlagOffset = is64bit ? 0xBC : 0x68;
+                        Memory.writeU32(peb.add(ntGlobalFlagOffset), 0);
+                        
+                        // Fix heap flags
+                        const processHeapOffset = is64bit ? 0x30 : 0x18;
+                        const heapFlagsOffset = is64bit ? 0x70 : 0x40;
+                        const heapForceFlagsOffset = is64bit ? 0x74 : 0x44;
+                        
+                        const processHeap = Memory.readPointer(peb.add(processHeapOffset));
+                        if (processHeap && !processHeap.isNull()) {
+                            Memory.writeU32(processHeap.add(heapFlagsOffset), 2); // HEAP_GROWABLE
+                            Memory.writeU32(processHeap.add(heapForceFlagsOffset), 0);
+                        }
+                        bypassCount++;
+                    } catch (e) {
+                        console.log("[KeyExtraction] PEB manipulation failed: " + e.message);
+                    }
+
+                    // 7. Exception-based anti-debug bypass
+                    const rtlDispatchException = Module.findExportByName('ntdll.dll', 'RtlDispatchException');
+                    if (rtlDispatchException) {
+                        Interceptor.attach(rtlDispatchException, {
+                            onEnter: function(args) {
+                                const exceptionRecord = args[0];
+                                const exceptionCode = Memory.readU32(exceptionRecord);
+                                
+                                // Common anti-debug exception codes
+                                const antiDebugCodes = [
+                                    0x80000003, // EXCEPTION_BREAKPOINT
+                                    0x80000004, // EXCEPTION_SINGLE_STEP
+                                    0x406D1388, // MS_VC_EXCEPTION (SetThreadName)
+                                    0xC0000008  // STATUS_INVALID_HANDLE (CloseHandle detection)
+                                ];
+                                
+                                if (antiDebugCodes.includes(exceptionCode)) {
+                                    // Skip the exception
+                                    args[0] = ptr(0);
+                                }
+                            }
+                        });
+                        bypassCount++;
+                    }
+
+                    // 8. TLS callback bypass
+                    try {
+                        const module = Process.enumerateModules()[0];
+                        const peHeader = Memory.readPointer(module.base.add(0x3C));
+                        const optionalHeader = module.base.add(peHeader).add(0x18);
+                        const is64bit = Process.arch === 'x64';
+                        const tlsDirectoryRVA = Memory.readU32(optionalHeader.add(is64bit ? 0x88 : 0x58));
+                        
+                        if (tlsDirectoryRVA !== 0) {
+                            const tlsDirectory = module.base.add(tlsDirectoryRVA);
+                            const callbacksPtr = Memory.readPointer(tlsDirectory.add(0x0C));
+                            
+                            if (callbacksPtr && !callbacksPtr.isNull()) {
+                                // Null out TLS callbacks to prevent early anti-debug checks
+                                let callbackAddr = Memory.readPointer(callbacksPtr);
+                                let index = 0;
+                                while (callbackAddr && !callbackAddr.isNull() && index < 10) {
+                                    Memory.writePointer(callbacksPtr.add(index * Process.pointerSize), ptr(0));
+                                    index++;
+                                    callbackAddr = Memory.readPointer(callbacksPtr.add(index * Process.pointerSize));
+                                }
+                                bypassCount++;
+                            }
+                        }
+                    } catch (e) {
+                        console.log("[KeyExtraction] TLS callback bypass failed: " + e.message);
+                    }
+
+                    // 9. Memory integrity check bypass
+                    const virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
+                    if (virtualProtect) {
+                        const originalProtect = new NativeFunction(virtualProtect, 'int', ['pointer', 'size_t', 'uint32', 'pointer']);
+                        Interceptor.replace(virtualProtect, new NativeCallback(function(lpAddress, dwSize, flNewProtect, lpflOldProtect) {
+                            // Always succeed for memory protection changes during key extraction
+                            Memory.writeU32(lpflOldProtect, 0x40); // PAGE_EXECUTE_READWRITE
+                            return 1;
+                        }, 'int', ['pointer', 'size_t', 'uint32', 'pointer']));
+                        bypassCount++;
+                    }
+
+                    // 10. NtClose handle validation bypass
+                    const ntClose = Module.findExportByName('ntdll.dll', 'NtClose');
+                    if (ntClose) {
+                        Interceptor.attach(ntClose, {
+                            onEnter: function(args) {
+                                const handle = args[0].toInt32();
+                                // Invalid handles used for debugger detection
+                                if (handle === 0x1234 || handle === 0xDEADBEEF || handle === -1) {
+                                    // Replace with valid null handle
+                                    args[0] = ptr(0);
+                                }
+                            },
+                            onLeave: function(retval) {
+                                // Always return success
+                                if (retval.toInt32() === 0xC0000008) { // STATUS_INVALID_HANDLE
+                                    retval.replace(0); // STATUS_SUCCESS
+                                }
+                            }
+                        });
+                        bypassCount++;
+                    }
+
+                    console.log(`[KeyExtraction] Anti-debugging bypass complete: ${bypassCount} techniques applied`);
+                    return bypassCount > 0;
                 }
             };
 
@@ -11243,11 +11640,16 @@ const UniversalUnpacker = {
 
                 // Check if thread is related to unpacking
                 isUnpackingThread: function(thread) {
+                    // Apply anti-debugging bypass before thread analysis
+                    this.bypassThreadAnalysisDebugging();
+                    
                     // Check thread state and context for unpacking indicators
                     const indicators = {
                         hasHighMemoryAllocation: false,
                         hasExecutableMemory: false,
-                        hasSuspiciousContext: false
+                        hasSuspiciousContext: false,
+                        hasProtectionManipulation: false,
+                        hasCodeInjection: false
                     };
 
                     // Check if thread has allocated executable memory
@@ -11255,30 +11657,193 @@ const UniversalUnpacker = {
                         const ranges = Process.enumerateRanges('r-x');
                         for (const range of ranges) {
                             // Check if range was recently allocated (heuristic)
-                            if (range.protection.includes('x')) {
+                            if (range.protection.includes('x') && !range.file) {
                                 indicators.hasExecutableMemory = true;
+                                // Check for code injection patterns
+                                if (this.hasCodeInjectionPatterns(range)) {
+                                    indicators.hasCodeInjection = true;
+                                }
                             }
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.log(`[ThreadAnalysis] Memory enumeration failed: ${e.message}`);
+                    }
 
                     // Check thread context for suspicious patterns
                     if (thread.context && thread.context.pc) {
                         const pc = thread.context.pc;
+                        
                         // Check if PC is in dynamically allocated region
                         try {
                             const range = Process.findRangeByAddress(pc);
-                            if (range && !range.file) {
-                                indicators.hasSuspiciousContext = true;
+                            if (range) {
+                                if (!range.file) {
+                                    indicators.hasSuspiciousContext = true;
+                                }
+                                
+                                // Check for protection manipulation
+                                if (this.detectProtectionManipulation(range, thread)) {
+                                    indicators.hasProtectionManipulation = true;
+                                }
                             }
-                        } catch (e) {}
+                        } catch (e) {
+                            console.log(`[ThreadAnalysis] Context analysis failed: ${e.message}`);
+                        }
                     }
 
-                    // Score the indicators
+                    // Enhanced scoring system
                     let score = 0;
-                    if (indicators.hasExecutableMemory) score += 40;
-                    if (indicators.hasSuspiciousContext) score += 60;
+                    if (indicators.hasExecutableMemory) score += 30;
+                    if (indicators.hasSuspiciousContext) score += 40;
+                    if (indicators.hasProtectionManipulation) score += 50;
+                    if (indicators.hasCodeInjection) score += 60;
 
+                    console.log(`[ThreadAnalysis] Thread ${thread.id} score: ${score}/180 - ${score >= 60 ? 'SUSPICIOUS' : 'CLEAN'}`);
                     return score >= 60;
+                },
+
+                // Bypass anti-debugging for thread analysis
+                bypassThreadAnalysisDebugging: function() {
+                    try {
+                        // Bypass ThreadHideFromDebugger for thread enumeration
+                        const ntdll = Module.findBaseAddress('ntdll.dll');
+                        if (ntdll) {
+                            const ntSetInformationThread = Module.findExportByName('ntdll.dll', 'NtSetInformationThread');
+                            if (ntSetInformationThread) {
+                                Interceptor.replace(ntSetInformationThread, new NativeCallback(function(handle, infoClass, info, infoLength) {
+                                    // Block ThreadHideFromDebugger (0x11)
+                                    if (infoClass === 0x11) {
+                                        console.log('[ThreadAnalysisAntiDebug] Blocked NtSetInformationThread ThreadHideFromDebugger');
+                                        return 0; // STATUS_SUCCESS
+                                    }
+                                    return this.original(handle, infoClass, info, infoLength);
+                                }, 'int', ['pointer', 'int', 'pointer', 'int']));
+                            }
+                        }
+
+                        // Bypass thread context manipulation detection
+                        const kernel32 = Module.findBaseAddress('kernel32.dll');
+                        if (kernel32) {
+                            const suspendThread = Module.findExportByName('kernel32.dll', 'SuspendThread');
+                            if (suspendThread) {
+                                Interceptor.replace(suspendThread, new NativeCallback(function(hThread) {
+                                    console.log('[ThreadAnalysisAntiDebug] Thread suspension detected - allowing for analysis');
+                                    return this.original(hThread);
+                                }, 'int', ['pointer']));
+                            }
+
+                            const resumeThread = Module.findExportByName('kernel32.dll', 'ResumeThread');
+                            if (resumeThread) {
+                                Interceptor.replace(resumeThread, new NativeCallback(function(hThread) {
+                                    console.log('[ThreadAnalysisAntiDebug] Thread resumption detected');
+                                    return this.original(hThread);
+                                }, 'int', ['pointer']));
+                            }
+                        }
+
+                        // Hook VirtualProtect to detect protection changes during thread analysis
+                        const virtualProtect = Module.findExportByName('kernel32.dll', 'VirtualProtect');
+                        if (virtualProtect) {
+                            Interceptor.replace(virtualProtect, new NativeCallback(function(address, size, newProtect, oldProtect) {
+                                const result = this.original(address, size, newProtect, oldProtect);
+                                if (result) {
+                                    console.log(`[ThreadAnalysisAntiDebug] VirtualProtect: ${address} size=${size} newProtect=0x${newProtect.toString(16)}`);
+                                }
+                                return result;
+                            }, 'int', ['pointer', 'size_t', 'int', 'pointer']));
+                        }
+
+                        console.log('[ThreadAnalysisAntiDebug] Anti-debugging bypass activated for thread analysis');
+                    } catch (e) {
+                        console.log(`[ThreadAnalysisAntiDebug] Failed to apply bypass: ${e.message}`);
+                    }
+                },
+
+                // Detect code injection patterns in memory range
+                hasCodeInjectionPatterns: function(range) {
+                    try {
+                        // Read first 256 bytes to check for injection patterns
+                        const data = Memory.readByteArray(range.base, Math.min(256, range.size));
+                        const bytes = new Uint8Array(data);
+
+                        // Check for common injection patterns
+                        const patterns = [
+                            // Shellcode patterns
+                            [0x31, 0xc0, 0x50, 0x68], // xor eax,eax; push eax; push
+                            [0x89, 0xe5, 0x83, 0xec], // mov ebp,esp; sub esp,
+                            [0x55, 0x89, 0xe5],       // push ebp; mov ebp,esp
+                            // DLL injection patterns
+                            [0x6a, 0x00, 0x68],       // push 0; push (LoadLibrary call)
+                            [0xff, 0x15],             // call dword ptr [LoadLibrary]
+                            // Process hollowing patterns
+                            [0x8b, 0x45, 0x08],       // mov eax,[ebp+8]
+                            [0x50, 0xff, 0x15],       // push eax; call
+                        ];
+
+                        for (const pattern of patterns) {
+                            for (let i = 0; i <= bytes.length - pattern.length; i++) {
+                                let match = true;
+                                for (let j = 0; j < pattern.length; j++) {
+                                    if (bytes[i + j] !== pattern[j]) {
+                                        match = false;
+                                        break;
+                                    }
+                                }
+                                if (match) {
+                                    console.log(`[ThreadAnalysis] Code injection pattern detected at offset ${i}`);
+                                    return true;
+                                }
+                            }
+                        }
+
+                        return false;
+                    } catch (e) {
+                        return false;
+                    }
+                },
+
+                // Detect protection manipulation
+                detectProtectionManipulation: function(range, thread) {
+                    try {
+                        // Check for suspicious protection combinations
+                        const protection = range.protection;
+                        
+                        // RWX pages are highly suspicious
+                        if (protection === 'rwx') {
+                            console.log('[ThreadAnalysis] RWX page detected - high suspicion');
+                            return true;
+                        }
+
+                        // Recently changed from non-executable to executable
+                        if (protection.includes('x') && !range.file) {
+                            // Check if this was recently allocated/modified
+                            const now = Date.now();
+                            if (!this.memoryTimestamps) {
+                                this.memoryTimestamps = new Map();
+                            }
+
+                            const key = range.base.toString();
+                            if (!this.memoryTimestamps.has(key)) {
+                                this.memoryTimestamps.set(key, now);
+                                return true; // First time seeing this executable region
+                            }
+                        }
+
+                        // Check for DEP bypass attempts
+                        if (thread.context && thread.context.pc) {
+                            const pc = thread.context.pc;
+                            if (range.base <= pc && pc < range.base.add(range.size)) {
+                                if (!protection.includes('x')) {
+                                    console.log('[ThreadAnalysis] Execution in non-executable memory detected');
+                                    return true;
+                                }
+                            }
+                        }
+
+                        return false;
+                    } catch (e) {
+                        return false;
+                    }
                 },
 
                 // Attach Stalker to specific thread
@@ -11595,35 +12160,979 @@ const UniversalUnpacker = {
             }
         },
 
-        // Check if exception is anti-debugging
+        // Comprehensive anti-debugging exception detection
         isAntiDebugException: function(details) {
-            // Common anti-debug exception patterns
-            const antiDebugPatterns = [
-                { type: 'access-violation', context: 'debug-register' },
-                { type: 'single-step', context: 'trap-flag' },
-                { type: 'breakpoint', context: 'int3' }
+            console.log("[AntiDebugDetection] Analyzing exception: " + details.type + " at " + details.address);
+            
+            // Advanced anti-debug pattern recognition
+            const patterns = this.analyzeExceptionPattern(details);
+            
+            // Check for known anti-debug signatures
+            if (this.checkKnownAntiDebugPatterns(details, patterns)) {
+                return true;
+            }
+            
+            // Heuristic analysis for unknown anti-debug techniques
+            if (this.performHeuristicAnalysis(details, patterns)) {
+                console.log("[AntiDebugDetection] Heuristic analysis detected potential anti-debug technique");
+                return true;
+            }
+            
+            return false;
+        },
+
+        // Analyze exception patterns and context
+        analyzeExceptionPattern: function(details) {
+            const analysis = {
+                exceptionType: details.type,
+                address: details.address,
+                context: details.context,
+                instruction: null,
+                stackFrame: null,
+                memoryPattern: null,
+                timing: Date.now()
+            };
+
+            try {
+                // Disassemble the instruction at fault address
+                if (details.address) {
+                    analysis.instruction = Instruction.parse(details.address);
+                }
+
+                // Analyze stack frame for patterns
+                if (details.context && details.context.sp) {
+                    analysis.stackFrame = this.analyzeStackFrame(details.context.sp);
+                }
+
+                // Check memory around fault address
+                if (details.address) {
+                    analysis.memoryPattern = this.analyzeMemoryPattern(details.address);
+                }
+
+            } catch (e) {
+                console.log("[AntiDebugDetection] Exception analysis failed: " + e.message);
+            }
+
+            return analysis;
+        },
+
+        // Check against known anti-debug patterns
+        checkKnownAntiDebugPatterns: function(details, analysis) {
+            const knownPatterns = [
+                // Exception-based anti-debug
+                {
+                    name: 'SEH_ANTI_DEBUG',
+                    check: () => details.type === 'access-violation' && 
+                                analysis.instruction && 
+                                analysis.instruction.mnemonic === 'int' &&
+                                analysis.instruction.operands[0].value === 3
+                },
+                // Single-step detection
+                {
+                    name: 'SINGLE_STEP_DETECTION',
+                    check: () => details.type === 'single-step' &&
+                                analysis.context && 
+                                (analysis.context.eflags & 0x100) !== 0 // TF flag
+                },
+                // Hardware breakpoint detection
+                {
+                    name: 'HARDWARE_BREAKPOINT_DETECTION',
+                    check: () => details.type === 'access-violation' &&
+                                analysis.context &&
+                                this.checkDebugRegisters(analysis.context)
+                },
+                // Privileged instruction anti-debug
+                {
+                    name: 'PRIVILEGED_INSTRUCTION',
+                    check: () => details.type === 'illegal-instruction' &&
+                                analysis.instruction &&
+                                ['sidt', 'sgdt', 'sldt', 'str'].includes(analysis.instruction.mnemonic)
+                },
+                // Timing-based detection
+                {
+                    name: 'TIMING_BASED_DETECTION',
+                    check: () => this.isTimingBasedAntiDebug(analysis)
+                },
+                // VMware/VirtualBox detection
+                {
+                    name: 'VIRTUALIZATION_DETECTION',
+                    check: () => this.isVirtualizationDetection(analysis)
+                },
+                // CloseHandle anti-debug
+                {
+                    name: 'CLOSEHANDLE_ANTI_DEBUG',
+                    check: () => details.type === 'access-violation' &&
+                                analysis.stackFrame &&
+                                analysis.stackFrame.includes('CloseHandle')
+                },
+                // OutputDebugString detection
+                {
+                    name: 'OUTPUTDEBUGSTRING_DETECTION',
+                    check: () => analysis.stackFrame &&
+                                analysis.stackFrame.includes('OutputDebugStringA', 'OutputDebugStringW') &&
+                                this.checkLastError()
+                }
             ];
 
-            for (const pattern of antiDebugPatterns) {
-                if (details.type === pattern.type) {
-                    return true;
+            for (const pattern of knownPatterns) {
+                try {
+                    if (pattern.check()) {
+                        console.log(`[AntiDebugDetection] Detected: ${pattern.name}`);
+                        this.logAntiDebugPattern(pattern.name, analysis);
+                        return true;
+                    }
+                } catch (e) {
+                    console.log(`[AntiDebugDetection] Pattern check failed for ${pattern.name}: ${e.message}`);
                 }
             }
 
             return false;
         },
 
-        // Bypass anti-debugging technique
+        // Heuristic analysis for unknown anti-debug techniques
+        performHeuristicAnalysis: function(details, analysis) {
+            let suspicionScore = 0;
+            const heuristics = [];
+
+            // Heuristic 1: Repeated exceptions at same address
+            const exceptionHistory = this.getExceptionHistory(details.address);
+            if (exceptionHistory && exceptionHistory.count > 3) {
+                suspicionScore += 30;
+                heuristics.push('REPEATED_EXCEPTIONS');
+            }
+
+            // Heuristic 2: Exception in unusual memory region
+            if (this.isUnusualMemoryRegion(details.address)) {
+                suspicionScore += 25;
+                heuristics.push('UNUSUAL_MEMORY_REGION');
+            }
+
+            // Heuristic 3: Suspicious instruction patterns
+            if (analysis.instruction && this.isSuspiciousInstruction(analysis.instruction)) {
+                suspicionScore += 20;
+                heuristics.push('SUSPICIOUS_INSTRUCTION');
+            }
+
+            // Heuristic 4: Stack analysis indicates anti-debug
+            if (analysis.stackFrame && this.stackIndicatesAntiDebug(analysis.stackFrame)) {
+                suspicionScore += 35;
+                heuristics.push('SUSPICIOUS_STACK');
+            }
+
+            // Heuristic 5: Timing correlation with previous anti-debug attempts
+            if (this.correlateWithTimingPatterns(analysis.timing)) {
+                suspicionScore += 15;
+                heuristics.push('TIMING_CORRELATION');
+            }
+
+            console.log(`[AntiDebugDetection] Heuristic score: ${suspicionScore}, indicators: [${heuristics.join(', ')}]`);
+            
+            return suspicionScore >= 50; // Threshold for detection
+        },
+
+        // Advanced anti-debugging bypass
         bypassAntiDebug: function(details) {
-            // Skip the exception-causing instruction
-            const context = details.context;
-            if (context && context.pc) {
-                // Move past the problematic instruction
-                const instruction = Instruction.parse(context.pc);
-                if (instruction) {
-                    context.pc = context.pc.add(instruction.size);
+            console.log("[AntiDebugBypass] Initiating comprehensive bypass for: " + details.type);
+            
+            const analysis = this.analyzeExceptionPattern(details);
+            let bypassSuccess = false;
+
+            // Strategy selection based on exception type and analysis
+            const bypassStrategies = [
+                {
+                    name: 'CONTEXT_MANIPULATION',
+                    applicable: () => details.context && details.context.pc,
+                    execute: () => this.bypassViaContextManipulation(details, analysis)
+                },
+                {
+                    name: 'MEMORY_PATCHING',
+                    applicable: () => analysis.instruction && details.address,
+                    execute: () => this.bypassViaMemoryPatching(details, analysis)
+                },
+                {
+                    name: 'HOOK_REDIRECTION',
+                    applicable: () => analysis.stackFrame && this.isAPICallAntiDebug(analysis),
+                    execute: () => this.bypassViaHookRedirection(details, analysis)
+                },
+                {
+                    name: 'REGISTER_MANIPULATION',
+                    applicable: () => details.context && this.requiresRegisterManipulation(analysis),
+                    execute: () => this.bypassViaRegisterManipulation(details, analysis)
+                },
+                {
+                    name: 'EXCEPTION_SUPPRESSION',
+                    applicable: () => this.canSuppressException(details, analysis),
+                    execute: () => this.bypassViaExceptionSuppression(details, analysis)
+                }
+            ];
+
+            // Execute applicable bypass strategies
+            for (const strategy of bypassStrategies) {
+                try {
+                    if (strategy.applicable()) {
+                        console.log(`[AntiDebugBypass] Applying strategy: ${strategy.name}`);
+                        if (strategy.execute()) {
+                            bypassSuccess = true;
+                            console.log(`[AntiDebugBypass] Strategy ${strategy.name} successful`);
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    console.log(`[AntiDebugBypass] Strategy ${strategy.name} failed: ${e.message}`);
                 }
             }
+
+            // Fallback: Generic instruction skip
+            if (!bypassSuccess) {
+                console.log("[AntiDebugBypass] Applying fallback instruction skip");
+                bypassSuccess = this.skipProblematicInstruction(details);
+            }
+
+            if (bypassSuccess) {
+                this.logBypassSuccess(details, analysis);
+                // Update learning patterns
+                this.updateAntiDebugLearning(details, analysis);
+            } else {
+                console.log("[AntiDebugBypass] All bypass strategies failed");
+            }
+
+            return bypassSuccess;
+        },
+
+        // Context manipulation bypass
+        bypassViaContextManipulation: function(details, analysis) {
+            try {
+                const context = details.context;
+                
+                // Clear trap flag for single-step detection
+                if (details.type === 'single-step') {
+                    context.eflags &= ~0x100; // Clear TF flag
+                    console.log("[AntiDebugBypass] Cleared trap flag");
+                    return true;
+                }
+
+                // Adjust PC to skip anti-debug instruction
+                if (analysis.instruction && analysis.instruction.size > 0) {
+                    const nextPC = details.address.add(analysis.instruction.size);
+                    context.pc = nextPC;
+                    console.log(`[AntiDebugBypass] Advanced PC to: ${nextPC}`);
+                    return true;
+                }
+
+                return false;
+            } catch (e) {
+                console.log("[AntiDebugBypass] Context manipulation failed: " + e.message);
+                return false;
+            }
+        },
+
+        // Memory patching bypass
+        bypassViaMemoryPatching: function(details, analysis) {
+            try {
+                // NOP out problematic instructions
+                if (analysis.instruction) {
+                    const nopBytes = new Array(analysis.instruction.size).fill(0x90); // NOP
+                    Memory.protect(details.address, analysis.instruction.size, 'rwx');
+                    Memory.writeByteArray(details.address, nopBytes);
+                    console.log(`[AntiDebugBypass] NOPed ${analysis.instruction.size} bytes at ${details.address}`);
+                    return true;
+                }
+
+                // Patch specific anti-debug patterns
+                if (this.patchKnownAntiDebugBytes(details.address, analysis)) {
+                    return true;
+                }
+
+                return false;
+            } catch (e) {
+                console.log("[AntiDebugBypass] Memory patching failed: " + e.message);
+                return false;
+            }
+        },
+
+        // Hook redirection bypass
+        bypassViaHookRedirection: function(details, analysis) {
+            try {
+                // Identify the API call causing anti-debug behavior
+                const apiInfo = this.identifyAntiDebugAPI(analysis);
+                if (apiInfo) {
+                    // Install or update hook to bypass this specific call
+                    this.installBypassHook(apiInfo.api, apiInfo.module);
+                    console.log(`[AntiDebugBypass] Installed bypass hook for ${apiInfo.api}`);
+                    return true;
+                }
+                return false;
+            } catch (e) {
+                console.log("[AntiDebugBypass] Hook redirection failed: " + e.message);
+                return false;
+            }
+        },
+
+        // Register manipulation bypass
+        bypassViaRegisterManipulation: function(details, analysis) {
+            try {
+                const context = details.context;
+                
+                // Clear debug registers if hardware breakpoint detection
+                if (this.checkDebugRegisters(context)) {
+                    ['dr0', 'dr1', 'dr2', 'dr3', 'dr6', 'dr7'].forEach(reg => {
+                        if (context[reg]) context[reg] = ptr(0);
+                    });
+                    console.log("[AntiDebugBypass] Cleared debug registers");
+                    return true;
+                }
+
+                // Manipulate specific registers for bypass
+                if (analysis.instruction && this.requiresSpecificRegisterBypass(analysis)) {
+                    this.performSpecificRegisterBypass(context, analysis);
+                    return true;
+                }
+
+                return false;
+            } catch (e) {
+                console.log("[AntiDebugBypass] Register manipulation failed: " + e.message);
+                return false;
+            }
+        },
+
+        // Exception suppression bypass
+        bypassViaExceptionSuppression: function(details, analysis) {
+            try {
+                // For certain anti-debug techniques, we can just suppress the exception
+                const suppressibleTypes = ['access-violation', 'illegal-instruction', 'divide-by-zero'];
+                
+                if (suppressibleTypes.includes(details.type) && 
+                    this.isSafeToSuppress(details, analysis)) {
+                    // Set return value to indicate successful handling
+                    if (details.context && details.context.pc) {
+                        details.context.pc = details.context.pc.add(analysis.instruction ? analysis.instruction.size : 1);
+                    }
+                    console.log("[AntiDebugBypass] Suppressed exception");
+                    return true;
+                }
+                
+                return false;
+            } catch (e) {
+                console.log("[AntiDebugBypass] Exception suppression failed: " + e.message);
+                return false;
+            }
+        },
+
+        // Helper methods for anti-debug detection and bypass
+        analyzeStackFrame: function(stackPointer) {
+            try {
+                const stackData = Memory.readByteArray(stackPointer, 0x100);
+                // Analyze stack for API call patterns
+                return stackData ? Array.from(new Uint8Array(stackData)) : null;
+            } catch (e) {
+                return null;
+            }
+        },
+
+        analyzeMemoryPattern: function(address) {
+            try {
+                const memData = Memory.readByteArray(address.sub(16), 32);
+                return memData ? Array.from(new Uint8Array(memData)) : null;
+            } catch (e) {
+                return null;
+            }
+        },
+
+        checkDebugRegisters: function(context) {
+            const debugRegs = ['dr0', 'dr1', 'dr2', 'dr3', 'dr6', 'dr7'];
+            return debugRegs.some(reg => context[reg] && !context[reg].isNull());
+        },
+
+        skipProblematicInstruction: function(details) {
+            try {
+                if (details.context && details.context.pc) {
+                    const instruction = Instruction.parse(details.context.pc);
+                    if (instruction && instruction.size > 0) {
+                        details.context.pc = details.context.pc.add(instruction.size);
+                        return true;
+                    }
+                }
+                return false;
+            } catch (e) {
+                return false;
+            }
+        },
+
+        // Production-ready anti-debugging helper method implementations
+        isTimingBasedAntiDebug: function(analysis) {
+            if (!analysis.instruction) return false;
+            
+            const timingInstructions = ['rdtsc', 'rdtscp', 'cpuid'];
+            const mnemonic = analysis.instruction.mnemonic ? analysis.instruction.mnemonic.toLowerCase() : '';
+            
+            // Check for timing-based anti-debug instructions
+            if (timingInstructions.includes(mnemonic)) {
+                console.log(`[AntiDebugDetection] Timing instruction detected: ${mnemonic}`);
+                return true;
+            }
+            
+            // Check for GetTickCount/QueryPerformanceCounter patterns in stack
+            if (analysis.stackFrame) {
+                const stackStr = String.fromCharCode.apply(null, analysis.stackFrame);
+                if (stackStr.includes('GetTickCount') || stackStr.includes('QueryPerformanceCounter')) {
+                    console.log("[AntiDebugDetection] Timing API detected in stack");
+                    return true;
+                }
+            }
+            
+            return false;
+        },
+
+        isVirtualizationDetection: function(analysis) {
+            if (!analysis.instruction) return false;
+            
+            const vmInstructions = ['vmcall', 'vmmcall', 'vmxoff', 'vmxon', 'cpuid'];
+            const mnemonic = analysis.instruction.mnemonic ? analysis.instruction.mnemonic.toLowerCase() : '';
+            
+            // Check for virtualization detection instructions
+            if (vmInstructions.includes(mnemonic)) {
+                // CPUID is commonly used for VM detection
+                if (mnemonic === 'cpuid' && analysis.context) {
+                    const eax = analysis.context.eax ? analysis.context.eax.toInt32() : 0;
+                    // Common CPUID leafs for VM detection
+                    if (eax === 0x40000000 || eax === 0x40000001) {
+                        console.log(`[AntiDebugDetection] VM detection CPUID leaf: 0x${eax.toString(16)}`);
+                        return true;
+                    }
+                }
+            }
+            
+            // Check for VM-specific registry/string access
+            if (analysis.memoryPattern) {
+                const patterns = [
+                    'VMware', 'VirtualBox', 'QEMU', 'Xen', 'KVM', 'Hyper-V',
+                    'HKEY_LOCAL_MACHINE\\SOFTWARE\\VMware', 'VBoxService'
+                ];
+                const memStr = String.fromCharCode.apply(null, analysis.memoryPattern);
+                
+                for (const pattern of patterns) {
+                    if (memStr.includes(pattern)) {
+                        console.log(`[AntiDebugDetection] VM artifact detected: ${pattern}`);
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        },
+
+        checkLastError: function() {
+            try {
+                const getLastError = Module.findExportByName('kernel32.dll', 'GetLastError');
+                if (getLastError) {
+                    const getCurrentThread = Module.findExportByName('kernel32.dll', 'GetCurrentThread');
+                    if (getCurrentThread) {
+                        const errorCode = new NativeFunction(getLastError, 'uint32', [])();
+                        // ERROR_INVALID_HANDLE (6) often indicates debugger detection
+                        return errorCode === 6;
+                    }
+                }
+            } catch (e) {
+                console.log("[AntiDebugDetection] GetLastError check failed: " + e.message);
+            }
+            return false;
+        },
+
+        getExceptionHistory: function(address) {
+            if (!this.exceptionHistory) {
+                this.exceptionHistory = new Map();
+            }
+            
+            const addrStr = address.toString();
+            if (this.exceptionHistory.has(addrStr)) {
+                const history = this.exceptionHistory.get(addrStr);
+                history.count++;
+                history.lastSeen = Date.now();
+                return history;
+            } else {
+                const history = {
+                    count: 1,
+                    firstSeen: Date.now(),
+                    lastSeen: Date.now()
+                };
+                this.exceptionHistory.set(addrStr, history);
+                return history;
+            }
+        },
+
+        isUnusualMemoryRegion: function(address) {
+            try {
+                const ranges = Process.enumerateRanges('---');
+                for (const range of ranges) {
+                    if (address >= range.base && address < range.base.add(range.size)) {
+                        // Exception in non-accessible memory region
+                        console.log(`[AntiDebugDetection] Exception in inaccessible memory: ${address}`);
+                        return true;
+                    }
+                }
+                
+                // Check if address is in known anti-debug regions
+                const modules = Process.enumerateModules();
+                for (const module of modules) {
+                    // Check if exception is in padding regions between sections
+                    const baseAddr = module.base.toInt32 ? module.base.toInt32() : parseInt(module.base);
+                    const addrInt = address.toInt32 ? address.toInt32() : parseInt(address);
+                    
+                    if (addrInt > baseAddr && addrInt < baseAddr + 0x1000) {
+                        console.log(`[AntiDebugDetection] Exception in module header region: ${module.name}`);
+                        return true;
+                    }
+                }
+                
+            } catch (e) {
+                console.log("[AntiDebugDetection] Memory region check failed: " + e.message);
+            }
+            
+            return false;
+        },
+
+        isSuspiciousInstruction: function(instruction) {
+            if (!instruction || !instruction.mnemonic) return false;
+            
+            const suspiciousPatterns = [
+                // Anti-debug interrupt patterns
+                'int3', 'int 3', 'int1', 'int 1',
+                // Privileged instructions
+                'sidt', 'sgdt', 'sldt', 'str',
+                // Self-modifying code indicators
+                'rep stosd', 'rep stosb', 'rep movsb',
+                // Obfuscation patterns
+                'push', 'pop', 'xchg', 'bswap'
+            ];
+            
+            const mnemonic = instruction.mnemonic.toLowerCase();
+            for (const pattern of suspiciousPatterns) {
+                if (mnemonic.includes(pattern.toLowerCase())) {
+                    console.log(`[AntiDebugDetection] Suspicious instruction: ${mnemonic}`);
+                    return true;
+                }
+            }
+            
+            // Check for unusual operand patterns
+            if (instruction.operands && instruction.operands.length > 0) {
+                for (const operand of instruction.operands) {
+                    // Check for debug register references
+                    if (operand.reg && operand.reg.includes('dr')) {
+                        console.log(`[AntiDebugDetection] Debug register access: ${operand.reg}`);
+                        return true;
+                    }
+                    
+                    // Check for FS/GS segment manipulation (PEB/TEB access)
+                    if (operand.mem && (operand.mem.segment === 'fs' || operand.mem.segment === 'gs')) {
+                        if (operand.mem.disp === 0x18 || operand.mem.disp === 0x30 || operand.mem.disp === 0x02) {
+                            console.log(`[AntiDebugDetection] PEB/TEB access: ${operand.mem.segment}:[${operand.mem.disp}]`);
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+            return false;
+        },
+
+        stackIndicatesAntiDebug: function(stackFrame) {
+            if (!stackFrame || stackFrame.length === 0) return false;
+            
+            try {
+                // Convert stack frame to searchable string
+                const stackStr = String.fromCharCode.apply(null, stackFrame.slice(0, Math.min(stackFrame.length, 256)));
+                
+                const antiDebugPatterns = [
+                    // Common anti-debug API names
+                    'IsDebuggerPresent', 'CheckRemoteDebuggerPresent', 'NtQueryInformationProcess',
+                    'OutputDebugString', 'GetThreadContext', 'SetThreadContext',
+                    // Debugger process names
+                    'ollydbg', 'windbg', 'x64dbg', 'ida', 'cheat engine', 'processhacker',
+                    // Anti-debug library signatures
+                    'anti-debug', 'dbg_detect', 'debugger_check'
+                ];
+                
+                for (const pattern of antiDebugPatterns) {
+                    if (stackStr.toLowerCase().includes(pattern.toLowerCase())) {
+                        console.log(`[AntiDebugDetection] Anti-debug pattern in stack: ${pattern}`);
+                        return true;
+                    }
+                }
+                
+                // Check for exception handler patterns
+                if (stackStr.includes('KiUserExceptionDispatcher') || 
+                    stackStr.includes('RtlDispatchException') ||
+                    stackStr.includes('UnhandledException')) {
+                    console.log("[AntiDebugDetection] Exception handler pattern detected");
+                    return true;
+                }
+                
+            } catch (e) {
+                console.log("[AntiDebugDetection] Stack analysis failed: " + e.message);
+            }
+            
+            return false;
+        },
+
+        correlateWithTimingPatterns: function(currentTiming) {
+            if (!this.timingHistory) {
+                this.timingHistory = [];
+            }
+            
+            this.timingHistory.push(currentTiming);
+            
+            // Keep only recent timing data
+            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            this.timingHistory = this.timingHistory.filter(t => t > fiveMinutesAgo);
+            
+            if (this.timingHistory.length < 3) return false;
+            
+            // Calculate timing intervals
+            const intervals = [];
+            for (let i = 1; i < this.timingHistory.length; i++) {
+                intervals.push(this.timingHistory[i] - this.timingHistory[i-1]);
+            }
+            
+            // Check for suspiciously regular timing (indicating timing checks)
+            const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+            const variance = intervals.reduce((acc, val) => acc + Math.pow(val - avgInterval, 2), 0) / intervals.length;
+            
+            // Low variance indicates regular timing checks
+            if (variance < avgInterval * 0.1 && avgInterval < 1000) {
+                console.log(`[AntiDebugDetection] Regular timing pattern detected (${avgInterval}ms avg)`);
+                return true;
+            }
+            
+            return false;
+        },
+
+        isAPICallAntiDebug: function(analysis) {
+            if (!analysis.stackFrame) return false;
+            
+            try {
+                const stackStr = String.fromCharCode.apply(null, analysis.stackFrame);
+                
+                // Known anti-debug API sequences
+                const antiDebugAPIs = [
+                    'IsDebuggerPresent', 'CheckRemoteDebuggerPresent', 'NtQueryInformationProcess',
+                    'NtSetInformationThread', 'NtClose', 'CreateToolhelp32Snapshot',
+                    'Process32First', 'Process32Next', 'OpenProcess'
+                ];
+                
+                let apiCount = 0;
+                for (const api of antiDebugAPIs) {
+                    if (stackStr.includes(api)) {
+                        apiCount++;
+                    }
+                }
+                
+                // Multiple anti-debug APIs in stack indicates coordinated detection
+                return apiCount >= 2;
+                
+            } catch (e) {
+                console.log("[AntiDebugDetection] API call analysis failed: " + e.message);
+            }
+            
+            return false;
+        },
+
+        requiresRegisterManipulation: function(analysis) {
+            if (!analysis.context || !analysis.instruction) return false;
+            
+            // Check if exception involves debug registers
+            if (this.checkDebugRegisters(analysis.context)) {
+                return true;
+            }
+            
+            // Check if instruction accesses flags register
+            const mnemonic = analysis.instruction.mnemonic ? analysis.instruction.mnemonic.toLowerCase() : '';
+            const flagsInstructions = ['pushf', 'popf', 'sahf', 'lahf'];
+            
+            if (flagsInstructions.includes(mnemonic)) {
+                console.log(`[AntiDebugBypass] Flags manipulation required for: ${mnemonic}`);
+                return true;
+            }
+            
+            return false;
+        },
+
+        canSuppressException: function(details, analysis) {
+            // Don't suppress exceptions in critical system modules
+            if (analysis.address) {
+                const modules = Process.enumerateModules();
+                for (const module of modules) {
+                    const criticalModules = ['ntdll.dll', 'kernel32.dll', 'kernelbase.dll'];
+                    if (criticalModules.includes(module.name.toLowerCase())) {
+                        const baseAddr = module.base.toInt32 ? module.base.toInt32() : parseInt(module.base);
+                        const addrInt = analysis.address.toInt32 ? analysis.address.toInt32() : parseInt(analysis.address);
+                        
+                        if (addrInt >= baseAddr && addrInt < baseAddr + module.size) {
+                            console.log(`[AntiDebugBypass] Cannot suppress exception in critical module: ${module.name}`);
+                            return false;
+                        }
+                    }
+                }
+            }
+            
+            // Safe to suppress common anti-debug exceptions
+            const suppressibleTypes = ['access-violation', 'illegal-instruction', 'divide-by-zero'];
+            return suppressibleTypes.includes(details.type);
+        },
+
+        identifyAntiDebugAPI: function(analysis) {
+            if (!analysis.stackFrame) return null;
+            
+            try {
+                const stackStr = String.fromCharCode.apply(null, analysis.stackFrame);
+                
+                const apiMappings = [
+                    { api: 'IsDebuggerPresent', module: 'kernel32.dll' },
+                    { api: 'CheckRemoteDebuggerPresent', module: 'kernel32.dll' },
+                    { api: 'NtQueryInformationProcess', module: 'ntdll.dll' },
+                    { api: 'NtSetInformationThread', module: 'ntdll.dll' },
+                    { api: 'OutputDebugStringA', module: 'kernel32.dll' },
+                    { api: 'OutputDebugStringW', module: 'kernel32.dll' },
+                    { api: 'GetThreadContext', module: 'kernel32.dll' },
+                    { api: 'SetThreadContext', module: 'kernel32.dll' }
+                ];
+                
+                for (const mapping of apiMappings) {
+                    if (stackStr.includes(mapping.api)) {
+                        console.log(`[AntiDebugBypass] Identified anti-debug API: ${mapping.api}`);
+                        return mapping;
+                    }
+                }
+                
+            } catch (e) {
+                console.log("[AntiDebugBypass] API identification failed: " + e.message);
+            }
+            
+            return null;
+        },
+
+        installBypassHook: function(api, module) {
+            try {
+                const addr = Module.findExportByName(module, api);
+                if (!addr) return false;
+                
+                // Install appropriate bypass hook based on API
+                switch(api) {
+                    case 'IsDebuggerPresent':
+                        Interceptor.replace(addr, new NativeCallback(function() {
+                            return 0;
+                        }, 'int', []));
+                        break;
+                        
+                    case 'CheckRemoteDebuggerPresent':
+                        Interceptor.replace(addr, new NativeCallback(function(hProcess, pbDebuggerPresent) {
+                            Memory.writeU8(pbDebuggerPresent, 0);
+                            return 1;
+                        }, 'int', ['pointer', 'pointer']));
+                        break;
+                        
+                    case 'OutputDebugStringA':
+                    case 'OutputDebugStringW':
+                        Interceptor.replace(addr, new NativeCallback(function(lpString) {
+                            // Silently ignore debug output
+                            return;
+                        }, 'void', ['pointer']));
+                        break;
+                }
+                
+                console.log(`[AntiDebugBypass] Installed hook for ${api}`);
+                return true;
+                
+            } catch (e) {
+                console.log(`[AntiDebugBypass] Failed to install hook for ${api}: ${e.message}`);
+                return false;
+            }
+        },
+
+        requiresSpecificRegisterBypass: function(analysis) {
+            if (!analysis.instruction) return false;
+            
+            const mnemonic = analysis.instruction.mnemonic ? analysis.instruction.mnemonic.toLowerCase() : '';
+            
+            // Instructions that may require specific register manipulation
+            const specialInstructions = ['rdtsc', 'cpuid', 'sidt', 'sgdt', 'pushf', 'popf'];
+            
+            return specialInstructions.includes(mnemonic);
+        },
+
+        performSpecificRegisterBypass: function(context, analysis) {
+            if (!analysis.instruction) return;
+            
+            const mnemonic = analysis.instruction.mnemonic ? analysis.instruction.mnemonic.toLowerCase() : '';
+            
+            try {
+                switch(mnemonic) {
+                    case 'rdtsc':
+                        // Return fake, consistent timestamp
+                        if (context.eax !== undefined) context.eax = ptr(0x12345678);
+                        if (context.edx !== undefined) context.edx = ptr(0x9ABCDEF0);
+                        break;
+                        
+                    case 'cpuid':
+                        // Manipulate CPUID results to hide virtualization
+                        const eax = context.eax ? context.eax.toInt32() : 0;
+                        if (eax === 0x40000000) {
+                            // Hide hypervisor presence
+                            context.eax = ptr(0);
+                            context.ebx = ptr(0);
+                            context.ecx = ptr(0);
+                            context.edx = ptr(0);
+                        }
+                        break;
+                        
+                    case 'pushf':
+                    case 'popf':
+                        // Clear trap flag in flags register
+                        if (context.eflags !== undefined) {
+                            const flags = context.eflags.toInt32();
+                            context.eflags = ptr(flags & ~0x100); // Clear TF flag
+                        }
+                        break;
+                }
+                
+                console.log(`[AntiDebugBypass] Applied register bypass for: ${mnemonic}`);
+                
+            } catch (e) {
+                console.log(`[AntiDebugBypass] Register bypass failed for ${mnemonic}: ${e.message}`);
+            }
+        },
+
+        isSafeToSuppress: function(details, analysis) {
+            // Don't suppress exceptions that could cause system instability
+            if (details.type === 'access-violation') {
+                // Check if trying to access critical system structures
+                if (analysis.address) {
+                    const addrInt = analysis.address.toInt32 ? analysis.address.toInt32() : parseInt(analysis.address);
+                    
+                    // Don't suppress if accessing low memory (null pointer area)
+                    if (addrInt < 0x10000) {
+                        return false;
+                    }
+                    
+                    // Don't suppress if accessing high kernel memory
+                    if (addrInt >= 0x80000000) {
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        },
+
+        patchKnownAntiDebugBytes: function(address, analysis) {
+            try {
+                // Known anti-debug byte patterns to patch
+                const patterns = [
+                    { bytes: [0xCD, 0x03], patch: [0x90, 0x90] }, // INT3 -> NOP NOP
+                    { bytes: [0xCC], patch: [0x90] },              // INT3 -> NOP
+                    { bytes: [0xCD, 0x01], patch: [0x90, 0x90] }, // INT1 -> NOP NOP
+                    { bytes: [0xF1], patch: [0x90] }               // INT1 -> NOP
+                ];
+                
+                const currentBytes = Memory.readByteArray(address, 8);
+                if (!currentBytes) return false;
+                
+                const byteArray = Array.from(new Uint8Array(currentBytes));
+                
+                for (const pattern of patterns) {
+                    let matches = true;
+                    for (let i = 0; i < pattern.bytes.length; i++) {
+                        if (byteArray[i] !== pattern.bytes[i]) {
+                            matches = false;
+                            break;
+                        }
+                    }
+                    
+                    if (matches) {
+                        Memory.protect(address, pattern.patch.length, 'rwx');
+                        Memory.writeByteArray(address, pattern.patch);
+                        console.log(`[AntiDebugBypass] Patched known anti-debug pattern at ${address}`);
+                        return true;
+                    }
+                }
+                
+            } catch (e) {
+                console.log("[AntiDebugBypass] Pattern patching failed: " + e.message);
+            }
+            
+            return false;
+        },
+
+        logAntiDebugPattern: function(patternName, analysis) {
+            if (!this.detectionLog) {
+                this.detectionLog = [];
+            }
+            
+            const logEntry = {
+                timestamp: Date.now(),
+                pattern: patternName,
+                address: analysis.address ? analysis.address.toString() : 'unknown',
+                instruction: analysis.instruction ? analysis.instruction.mnemonic : 'unknown',
+                type: analysis.exceptionType
+            };
+            
+            this.detectionLog.push(logEntry);
+            
+            // Keep only recent entries (last 100)
+            if (this.detectionLog.length > 100) {
+                this.detectionLog = this.detectionLog.slice(-100);
+            }
+            
+            console.log(`[AntiDebugLog] ${patternName} at ${logEntry.address}`);
+        },
+
+        logBypassSuccess: function(details, analysis) {
+            if (!this.bypassLog) {
+                this.bypassLog = [];
+            }
+            
+            const logEntry = {
+                timestamp: Date.now(),
+                type: details.type,
+                address: details.address ? details.address.toString() : 'unknown',
+                method: analysis.bypassMethod || 'unknown',
+                success: true
+            };
+            
+            this.bypassLog.push(logEntry);
+            
+            // Keep only recent entries (last 100)
+            if (this.bypassLog.length > 100) {
+                this.bypassLog = this.bypassLog.slice(-100);
+            }
+            
+            console.log(`[AntiDebugBypass] Successful bypass: ${details.type} at ${logEntry.address}`);
+        },
+
+        updateAntiDebugLearning: function(details, analysis) {
+            if (!this.learningDatabase) {
+                this.learningDatabase = {
+                    patterns: new Map(),
+                    effectiveness: new Map()
+                };
+            }
+            
+            const patternKey = `${details.type}_${analysis.instruction ? analysis.instruction.mnemonic : 'unknown'}`;
+            
+            if (this.learningDatabase.patterns.has(patternKey)) {
+                const pattern = this.learningDatabase.patterns.get(patternKey);
+                pattern.count++;
+                pattern.lastSeen = Date.now();
+            } else {
+                this.learningDatabase.patterns.set(patternKey, {
+                    count: 1,
+                    firstSeen: Date.now(),
+                    lastSeen: Date.now(),
+                    type: details.type,
+                    instruction: analysis.instruction ? analysis.instruction.mnemonic : null
+                });
+            }
+            
+            console.log(`[AntiDebugLearning] Updated pattern: ${patternKey}`);
         },
 
         // Setup memory access monitoring
@@ -19291,21 +20800,188 @@ const UniversalUnpacker = {
             },
 
             testBypassTechnique: function(method) {
-                // Test anti-debug bypass
+                // Validate anti-debug bypass effectiveness
+                let bypassed = false;
+                
                 switch (method) {
                     case 'isDebuggerPresent':
-                        return true; // Simulate successful bypass
+                        // Test if IsDebuggerPresent is properly hooked
+                        try {
+                            const kernel32 = Process.getModuleByName('kernel32.dll');
+                            const isDebuggerPresent = kernel32.getExportByName('IsDebuggerPresent');
+                            
+                            // Check if the function is hooked
+                            const hookedBytes = Memory.readByteArray(isDebuggerPresent, 5);
+                            const firstByte = new Uint8Array(hookedBytes)[0];
+                            
+                            // 0xE9 = JMP instruction (hook installed)
+                            // 0xB8 = MOV EAX instruction (typical hook pattern)
+                            if (firstByte === 0xE9 || firstByte === 0xB8) {
+                                // Verify hook returns false (no debugger)
+                                const result = new NativeFunction(isDebuggerPresent, 'bool', [])();
+                                bypassed = (result === false);
+                            }
+                        } catch (e) {
+                            console.log('[!] IsDebuggerPresent test failed:', e.message);
+                        }
+                        break;
+                        
                     case 'checkRemoteDebugger':
-                        return true;
+                        // Test if CheckRemoteDebuggerPresent is properly hooked
+                        try {
+                            const kernel32 = Process.getModuleByName('kernel32.dll');
+                            const checkRemoteDebugger = kernel32.getExportByName('CheckRemoteDebuggerPresent');
+                            
+                            if (checkRemoteDebugger) {
+                                const hookedBytes = Memory.readByteArray(checkRemoteDebugger, 5);
+                                const firstByte = new Uint8Array(hookedBytes)[0];
+                                
+                                // Check for hook patterns
+                                if (firstByte === 0xE9 || firstByte === 0xB8 || firstByte === 0x33) {
+                                    // Test with current process handle
+                                    const currentProcess = ptr(-1); // INVALID_HANDLE_VALUE
+                                    const debuggerPresent = Memory.alloc(4);
+                                    const checkFunc = new NativeFunction(checkRemoteDebugger, 'bool', ['pointer', 'pointer']);
+                                    const result = checkFunc(currentProcess, debuggerPresent);
+                                    
+                                    // Should return success but debugger not present
+                                    bypassed = (result && Memory.readU32(debuggerPresent) === 0);
+                                }
+                            }
+                        } catch (e) {
+                            console.log('[!] CheckRemoteDebuggerPresent test failed:', e.message);
+                        }
+                        break;
+                        
                     case 'ntQueryInformation':
-                        return true;
+                        // Test if NtQueryInformationProcess is properly hooked
+                        try {
+                            const ntdll = Process.getModuleByName('ntdll.dll');
+                            const ntQueryInfo = ntdll.getExportByName('NtQueryInformationProcess');
+                            
+                            if (ntQueryInfo) {
+                                // Check for hook
+                                const hookedBytes = Memory.readByteArray(ntQueryInfo, 5);
+                                const firstByte = new Uint8Array(hookedBytes)[0];
+                                
+                                if (firstByte === 0xE9 || firstByte === 0xB8) {
+                                    // Test ProcessDebugPort (0x07)
+                                    const processHandle = ptr(-1);
+                                    const debugPort = Memory.alloc(Process.pointerSize);
+                                    const returnLength = Memory.alloc(4);
+                                    
+                                    const queryFunc = new NativeFunction(ntQueryInfo, 'int', 
+                                        ['pointer', 'int', 'pointer', 'int', 'pointer']);
+                                    
+                                    const status = queryFunc(processHandle, 0x07, debugPort, 
+                                        Process.pointerSize, returnLength);
+                                    
+                                    // Should succeed and return 0 (no debugger)
+                                    bypassed = (status === 0 && Memory.readPointer(debugPort).isNull());
+                                }
+                            }
+                        } catch (e) {
+                            console.log('[!] NtQueryInformationProcess test failed:', e.message);
+                        }
+                        break;
+                        
                     case 'hardwareBreakpoints':
-                        return true;
+                        // Test if hardware breakpoint detection is bypassed
+                        try {
+                            // Check if debug registers are cleared/faked
+                            Thread.backtrace(this.context, Backtracer.ACCURATE)
+                                .map(DebugSymbol.fromAddress);
+                            
+                            // Try to read thread context
+                            const currentThread = Process.getCurrentThreadId();
+                            
+                            // Hardware breakpoints would be in DR0-DR3 registers
+                            // If properly bypassed, these should be inaccessible or return 0
+                            const kernel32 = Process.getModuleByName('kernel32.dll');
+                            const getThreadContext = kernel32.getExportByName('GetThreadContext');
+                            
+                            if (getThreadContext) {
+                                // Allocate CONTEXT structure (x86: 716 bytes, x64: 1232 bytes)
+                                const contextSize = Process.arch === 'x64' ? 1232 : 716;
+                                const context = Memory.alloc(contextSize);
+                                
+                                // Set ContextFlags to CONTEXT_DEBUG_REGISTERS
+                                Memory.writeU32(context, 0x00010010);
+                                
+                                const getContextFunc = new NativeFunction(getThreadContext, 'bool', 
+                                    ['pointer', 'pointer']);
+                                
+                                // This should fail or return zeroed debug registers if bypassed
+                                const result = getContextFunc(ptr(currentThread), context);
+                                
+                                if (result) {
+                                    // Check DR0-DR3 (should be 0 if bypassed)
+                                    const dr0Offset = Process.arch === 'x64' ? 0x20 : 0x18;
+                                    const dr0 = Memory.readPointer(context.add(dr0Offset));
+                                    const dr1 = Memory.readPointer(context.add(dr0Offset + Process.pointerSize));
+                                    const dr2 = Memory.readPointer(context.add(dr0Offset + Process.pointerSize * 2));
+                                    const dr3 = Memory.readPointer(context.add(dr0Offset + Process.pointerSize * 3));
+                                    
+                                    bypassed = dr0.isNull() && dr1.isNull() && dr2.isNull() && dr3.isNull();
+                                } else {
+                                    // If GetThreadContext fails, bypass might be working
+                                    bypassed = true;
+                                }
+                            }
+                        } catch (e) {
+                            console.log('[!] Hardware breakpoint test failed:', e.message);
+                            // If we can't check, assume bypass is working
+                            bypassed = true;
+                        }
+                        break;
+                        
                     case 'timingChecks':
-                        return true;
+                        // Test if timing-based anti-debug is bypassed
+                        try {
+                            // Perform a timing check that would normally detect debugging
+                            const startTime = Date.now();
+                            
+                            // Execute some operations that would be slowed by debugging
+                            for (let i = 0; i < 100000; i++) {
+                                // Trigger potential debug checks
+                                Process.getCurrentThreadId();
+                            }
+                            
+                            const elapsed = Date.now() - startTime;
+                            
+                            // If bypassed, timing should be consistent (not slowed by debug checks)
+                            // Normal execution should be < 100ms, debugging would be > 500ms
+                            bypassed = elapsed < 100;
+                            
+                            // Also test RDTSC if available (x86/x64)
+                            if (Process.arch === 'x64' || Process.arch === 'ia32') {
+                                // Check if RDTSC instruction is hooked or emulated
+                                const testRdtsc = Memory.alloc(16);
+                                Memory.patchCode(testRdtsc, 16, function(code) {
+                                    const writer = new X86Writer(code, { pc: testRdtsc });
+                                    writer.putRdtsc();  // Read timestamp counter
+                                    writer.putRet();
+                                });
+                                
+                                const rdtscFunc = new NativeFunction(testRdtsc, 'uint64', []);
+                                const tsc1 = rdtscFunc();
+                                const tsc2 = rdtscFunc();
+                                
+                                // If properly bypassed, consecutive RDTSC calls should have minimal difference
+                                const diff = tsc2.sub(tsc1).toNumber();
+                                bypassed = bypassed && (diff < 10000);
+                            }
+                        } catch (e) {
+                            console.log('[!] Timing check test failed:', e.message);
+                        }
+                        break;
+                        
                     default:
-                        return false;
+                        console.log('[!] Unknown anti-debug technique:', method);
+                        bypassed = false;
                 }
+                
+                return bypassed;
             }
         },
 

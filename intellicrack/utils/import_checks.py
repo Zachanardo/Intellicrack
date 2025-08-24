@@ -330,7 +330,7 @@ def get_fallback_implementations() -> dict[str, Any]:
             # Define ndarray as the list type for compatibility
             ndarray = list
 
-            class random:
+            class Random:
                 """Random number generation fallback."""
 
                 @staticmethod
@@ -392,7 +392,7 @@ def get_fallback_implementations() -> dict[str, Any]:
                     f"Fallback HTTP GET to {url} with {len(kwargs)} kwargs: {list(kwargs.keys())}"
                 )
                 try:
-                    response = urllib.request.urlopen(url)
+                    response = urllib.request.urlopen(url)  # noqa: S310  # Legitimate HTTP request fallback for security research tool
                     return type(
                         "Response",
                         (),

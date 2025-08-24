@@ -1143,12 +1143,12 @@ class R2RealtimeAnalyzer:
     def _calculate_file_hash(self, file_path: str) -> str:
         """Calculate file hash for change detection"""
         try:
-            hash_md5 = hashlib.md5()
+            hash_sha256 = hashlib.sha256()
             with open(file_path, "rb") as f:
                 # Read file in chunks to handle large files
                 for chunk in iter(lambda: f.read(4096), b""):
-                    hash_md5.update(chunk)
-            return hash_md5.hexdigest()
+                    hash_sha256.update(chunk)
+            return hash_sha256.hexdigest()
         except Exception as e:
             self.logger.error(f"Failed to calculate hash for {file_path}: {e}")
             return str(time.time())  # Fallback to timestamp

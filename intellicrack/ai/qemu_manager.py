@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Any
 
 import paramiko
-from paramiko import AutoAddPolicy, RSAKey, SSHClient
+from paramiko import HostKeys, MissingHostKeyPolicy, RSAKey, SSHClient
 
 from intellicrack.config import get_config
 from intellicrack.core.logging.audit_logger import (
@@ -77,6 +77,50 @@ class QEMUSnapshot:
     disk_usage: int = 0
     network_isolated: bool = True
     performance_metrics: dict[str, Any] = field(default_factory=dict)
+
+
+class SecureHostKeyPolicy(MissingHostKeyPolicy):
+    """Secure host key policy that maintains a known_hosts file for QEMU VMs."""
+
+    def __init__(self, known_hosts_path: Path):
+        """Initialize with path to known_hosts file."""
+        self.known_hosts_path = known_hosts_path
+        self.host_keys = HostKeys()
+
+        # Load existing known hosts if file exists
+        if self.known_hosts_path.exists():
+            try:
+                self.host_keys.load(str(self.known_hosts_path))
+            except Exception as e:
+                logger.warning(f"Could not load known_hosts file: {e}")
+
+    def missing_host_key(self, client, hostname, key):
+        """Handle missing host key by checking and storing it securely."""
+        # For QEMU VMs on localhost with dynamic ports, we store by port
+        # This is acceptable for local VMs in controlled environments
+        key_identifier = f"[{hostname}]:{client.get_transport().getpeername()[1]}"
+
+        # Check if we already have this key
+        existing_keys = self.host_keys.lookup(key_identifier)
+        if existing_keys and key.get_name() in existing_keys:
+            # Key exists but doesn't match - potential security issue
+            stored_key = existing_keys[key.get_name()]
+            if stored_key != key:
+                raise paramiko.SSHException(
+                    f"Host key verification failed for {key_identifier}. "
+                    "Key fingerprint has changed!"
+                )
+
+        # Store the new key
+        self.host_keys.add(key_identifier, key.get_name(), key)
+
+        # Save to file
+        try:
+            self.known_hosts_path.parent.mkdir(parents=True, exist_ok=True)
+            self.host_keys.save(str(self.known_hosts_path))
+            logger.info(f"Added host key for {key_identifier}")
+        except Exception as e:
+            logger.warning(f"Could not save host key: {e}")
 
 
 class QEMUManager:
@@ -295,7 +339,9 @@ class QEMUManager:
             for attempt in range(retries):
                 try:
                     client = SSHClient()
-                    client.set_missing_host_key_policy(AutoAddPolicy())
+                    # Use secure host key policy with known_hosts file
+                    known_hosts_path = self.working_dir / "ssh" / "known_hosts"
+                    client.set_missing_host_key_policy(SecureHostKeyPolicy(known_hosts_path))
 
                     # Connect using our SSH key
                     client.connect(
@@ -1641,7 +1687,7 @@ fi
         # Use a more secure remote path with timestamp
         import uuid
 
-        remote_script = f"/tmp/test_script_{uuid.uuid4().hex[:8]}.sh"
+        remote_script = f"{tempfile.gettempdir()}/test_script_{uuid.uuid4().hex[:8]}.sh"
 
         try:
             # Upload script to VM
@@ -2154,7 +2200,7 @@ fi
             # Upload binary to VM with secure temp path
             import uuid
 
-            remote_binary = f"/tmp/{uuid.uuid4().hex[:8]}_{Path(binary_path).name}"
+            remote_binary = f"{tempfile.gettempdir()}/{uuid.uuid4().hex[:8]}_{Path(binary_path).name}"
             self._upload_binary_to_vm(snapshot, binary_path, remote_binary)
 
             # Create wrapper script

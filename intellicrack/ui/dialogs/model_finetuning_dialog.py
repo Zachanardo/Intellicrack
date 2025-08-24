@@ -28,6 +28,40 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from intellicrack.handlers.pyqt6_handler import (
+    HAS_PYQT as PYQT6_AVAILABLE,
+)
+from intellicrack.handlers.pyqt6_handler import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDoubleSpinBox,
+    QFileDialog,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QProgressBar,
+    QProgressDialog,
+    QPushButton,
+    QScrollArea,
+    QSlider,
+    QSpinBox,
+    Qt,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QTextEdit,
+    QThread,
+    QVBoxLayout,
+    QWidget,
+    pyqtSignal,
+)
+from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, nn, torch
 from intellicrack.logger import logger
 
 # Try to import enhanced training interface components
@@ -62,43 +96,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-
-from intellicrack.handlers.pyqt6_handler import (
-    HAS_PYQT as PYQT6_AVAILABLE,
-)
-from intellicrack.handlers.pyqt6_handler import (
-    QApplication,
-    QCheckBox,
-    QComboBox,
-    QDialog,
-    QDoubleSpinBox,
-    QFileDialog,
-    QFormLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QHeaderView,
-    QLabel,
-    QLineEdit,
-    QMessageBox,
-    QProgressBar,
-    QProgressDialog,
-    QPushButton,
-    QScrollArea,
-    QSlider,
-    QSpinBox,
-    Qt,
-    QTableWidget,
-    QTableWidgetItem,
-    QTabWidget,
-    QTextEdit,
-    QThread,
-    QVBoxLayout,
-    QWidget,
-    pyqtSignal,
-)
-
 # Optional ML dependencies
-from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, nn, torch
 
 # Import unified GPU system
 try:
@@ -867,11 +865,11 @@ class TrainingThread(QThread):
                 self.id_to_token = {idx: token for idx, token in enumerate(self.vocab)}
 
                 # Special tokens
-                self.pad_token = "[PAD]"
-                self.unk_token = "[UNK]"
-                self.bos_token = "[BOS]"
-                self.eos_token = "[EOS]"
-                self.mask_token = "[MASK]"
+                self.pad_token = "[PAD]"  # noqa: S105
+                self.unk_token = "[UNK]"  # noqa: S105
+                self.bos_token = "[BOS]"  # noqa: S105
+                self.eos_token = "[EOS]"  # noqa: S105
+                self.mask_token = "[MASK]"  # noqa: S105
 
                 self.pad_token_id = self.token_to_id.get(self.pad_token, 0)
                 self.unk_token_id = self.token_to_id.get(self.unk_token, 1)

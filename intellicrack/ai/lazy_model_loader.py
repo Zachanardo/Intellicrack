@@ -165,8 +165,11 @@ class LazyModelWrapper:
         self.access_count = 0
 
         if preload:
-            # Start loading in background
-            threading.Thread(target=self._initialize_backend, daemon=True).start()
+            # Start loading in background (skip during testing)
+            if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
+                threading.Thread(target=self._initialize_backend, daemon=True).start()
+            else:
+                logger.info("Skipping preload background initialization (testing mode)")
 
     @property
     def is_loaded(self) -> bool:
@@ -324,9 +327,14 @@ class LazyModelManager:
         self.memory_cleanup_threshold = 0.8  # Start cleanup at 80% usage
         self.idle_unload_time = 1800  # Unload after 30 minutes of inactivity
 
-        # Start background cleanup thread
-        self._cleanup_thread = threading.Thread(target=self._background_cleanup, daemon=True)
-        self._cleanup_thread.start()
+        # Start background cleanup thread (skip during testing)
+        if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
+            self._cleanup_thread = threading.Thread(target=self._background_cleanup, daemon=True)
+            self._cleanup_thread.start()
+            logger.info("Started background cleanup thread")
+        else:
+            logger.info("Skipping background cleanup thread (testing mode)")
+            self._cleanup_thread = None
 
     def add_load_callback(self, callback: Callable[[str, bool], None]):
         """Add a callback for loading progress updates."""

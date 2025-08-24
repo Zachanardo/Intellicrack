@@ -58,7 +58,7 @@ except ImportError as e:
     # Production-ready fallback implementations for PE analysis
 
     # PE Constants
-    class DIRECTORY_ENTRY:
+    class DIRECTORY_ENTRY:  # noqa: N801
         """PE directory entry indices."""
         EXPORT = 0
         IMPORT = 1
@@ -77,7 +77,7 @@ except ImportError as e:
         COM_DESCRIPTOR = 14
         RESERVED = 15
 
-    class SECTION_CHARACTERISTICS:
+    class SECTION_CHARACTERISTICS:  # noqa: N801
         """Section characteristics flags."""
         IMAGE_SCN_CNT_CODE = 0x00000020
         IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040
@@ -88,7 +88,7 @@ except ImportError as e:
         IMAGE_SCN_MEM_SHARED = 0x10000000
         IMAGE_SCN_MEM_DISCARDABLE = 0x02000000
 
-    class DLL_CHARACTERISTICS:
+    class DLL_CHARACTERISTICS:  # noqa: N801
         """DLL characteristics flags."""
         IMAGE_DLLCHARACTERISTICS_HIGH_ENTROPY_VA = 0x0020
         IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE = 0x0040
@@ -102,7 +102,7 @@ except ImportError as e:
         IMAGE_DLLCHARACTERISTICS_GUARD_CF = 0x4000
         IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE = 0x8000
 
-    class MACHINE_TYPE:
+    class MACHINE_TYPE:  # noqa: N801
         """Machine types."""
         IMAGE_FILE_MACHINE_UNKNOWN = 0x0
         IMAGE_FILE_MACHINE_I386 = 0x14c
@@ -135,7 +135,7 @@ except ImportError as e:
         IMAGE_FILE_MACHINE_ARM64 = 0xaa64
         IMAGE_FILE_MACHINE_CEE = 0xc0ee
 
-    class SUBSYSTEM_TYPE:
+    class SUBSYSTEM_TYPE:  # noqa: N801
         """Subsystem types."""
         IMAGE_SUBSYSTEM_UNKNOWN = 0
         IMAGE_SUBSYSTEM_NATIVE = 1
@@ -151,7 +151,7 @@ except ImportError as e:
         IMAGE_SUBSYSTEM_XBOX = 14
         IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION = 16
 
-    class IMAGE_CHARACTERISTICS:
+    class IMAGE_CHARACTERISTICS:  # noqa: N801
         """Image characteristics."""
         IMAGE_FILE_RELOCS_STRIPPED = 0x0001
         IMAGE_FILE_EXECUTABLE_IMAGE = 0x0002
@@ -169,7 +169,7 @@ except ImportError as e:
         IMAGE_FILE_UP_SYSTEM_ONLY = 0x4000
         IMAGE_FILE_BYTES_REVERSED_HI = 0x8000
 
-    class DEBUG_TYPE:
+    class DEBUG_TYPE:  # noqa: N801
         """Debug types."""
         IMAGE_DEBUG_TYPE_UNKNOWN = 0
         IMAGE_DEBUG_TYPE_COFF = 1
@@ -184,7 +184,7 @@ except ImportError as e:
         IMAGE_DEBUG_TYPE_RESERVED10 = 10
         IMAGE_DEBUG_TYPE_CLSID = 11
 
-    class RESOURCE_TYPE:
+    class RESOURCE_TYPE:  # noqa: N801
         """Resource types."""
         RT_CURSOR = 1
         RT_BITMAP = 2
@@ -749,7 +749,7 @@ except ImportError as e:
                         imp_str += f"{dll_name}.ord{imp.ordinal},"
 
             imp_str = imp_str.rstrip(',')
-            return hashlib.md5(imp_str.encode()).hexdigest() if imp_str else ""
+            return hashlib.sha256(imp_str.encode()).hexdigest() if imp_str else ""
 
         def get_rich_header_hash(self):
             """Calculate Rich header hash."""
@@ -765,7 +765,7 @@ except ImportError as e:
 
             # Get Rich header data
             rich_data = self.__data__[dans_index:rich_index+8]
-            return hashlib.md5(rich_data).hexdigest()
+            return hashlib.sha256(rich_data).hexdigest()
 
         def generate_checksum(self):
             """Generate PE checksum."""

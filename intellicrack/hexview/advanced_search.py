@@ -555,24 +555,24 @@ class SearchEngine:
 
     def _is_whole_word_match(self, data: bytes, pos: int, length: int) -> bool:
         """Check if a match is a whole word (for text searches).
-        
+
         A word boundary is defined as:
         - Start/end of data
         - Transition between word and non-word characters
         - Word characters: alphanumeric (a-z, A-Z, 0-9) and underscore (_)
         - Non-word characters: everything else (whitespace, punctuation, control chars, etc.)
-        
+
         Args:
             data: The data being searched
             pos: Position of the match
             length: Length of the match
-            
+
         Returns:
             True if the match is a whole word, False otherwise
         """
         def is_word_char(byte_val: int) -> bool:
             """Check if a byte value is a word character.
-            
+
             Word characters are:
             - a-z (97-122)
             - A-Z (65-90)

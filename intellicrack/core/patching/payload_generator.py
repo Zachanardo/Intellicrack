@@ -328,7 +328,7 @@ class PayloadGenerator:
                 pop_esi_ret = gadgets.get("pop_esi_ret", base_addr)
                 pop_edi_ret = gadgets.get("pop_edi_ret", base_addr)
                 pushad_ret = gadgets.get("pushad_ret", base_addr)
-                xchg_eax_esp = gadgets.get("xchg_eax_esp", base_addr)
+                gadgets.get("xchg_eax_esp", base_addr)
                 virtualprotect = gadgets.get("VirtualProtect", base_addr)
             except ImportError:
                 # Cannot generate ROP chain without gadget scanner
@@ -609,7 +609,7 @@ class PayloadGenerator:
                     import psutil
                     # Get real network interfaces
                     interfaces = psutil.net_if_addrs()
-                    for interface_name, addresses in interfaces.items():
+                    for _interface_name, addresses in interfaces.items():
                         for addr in addresses:
                             if addr.family.name == 'AF_LINK' and addr.address:
                                 system_info.append(addr.address)

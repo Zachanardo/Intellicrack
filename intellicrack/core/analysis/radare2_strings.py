@@ -253,7 +253,7 @@ class R2StringAnalyzer:
             sections[section_name]["strings"].append(string_data)
 
         # Calculate section statistics
-        for section_name, section_data in sections.items():
+        for _section_name, section_data in sections.items():
             section_strings = section_data["strings"]
             section_data["string_count"] = len(section_strings)
             section_data["total_string_length"] = sum(s.get("length", 0) for s in section_strings)

@@ -52,7 +52,7 @@ try:
         from sklearn.preprocessing import StandardScaler
 
         SKLEARN_AVAILABLE = True
-    except:
+    except ImportError:
         # Use fallback implementations
         DBSCAN = sklearn.cluster.DBSCAN
         IsolationForest = None

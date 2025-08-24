@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import hashlib
 import json
 import logging
+import os
 import re
 import threading
 from collections import Counter, defaultdict
@@ -1251,8 +1252,8 @@ class AILearningEngine:
             return ""
 
         # Create hashes for input/output
-        input_hash = hashlib.md5(str(input_data).encode()).hexdigest()
-        output_hash = hashlib.md5(str(output_data).encode()).hexdigest()
+        input_hash = hashlib.sha256(str(input_data).encode()).hexdigest()
+        output_hash = hashlib.sha256(str(output_data).encode()).hexdigest()
 
         record_id = f"{task_type}_{int(datetime.now().timestamp())}_{input_hash[:8]}"
 
@@ -1287,6 +1288,10 @@ class AILearningEngine:
 
     def _trigger_background_evolution(self):
         """Trigger background evolution process."""
+        # Skip thread creation during testing
+        if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
+            logger.info("Skipping background evolution (testing mode)")
+            return
 
         def evolution_worker():
             try:

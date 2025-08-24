@@ -36,6 +36,19 @@ class ProtectionType(Enum):
     UNKNOWN = "unknown"
 
 
+class LicenseType(Enum):
+    """Types of licensing schemes that can be detected"""
+
+    FLEXLM = "flexlm"
+    HASP = "hasp"
+    DONGLE = "dongle"
+    TRIAL = "trial"
+    SUBSCRIPTION = "subscription"
+    PERPETUAL = "perpetual"
+    CUSTOM = "custom"
+    UNKNOWN = "unknown"
+
+
 @dataclass
 class DetectionResult:
     """Result of a single detection"""
@@ -73,7 +86,7 @@ class IntellicrackProtectionCore:
     """Main class for detecting protections using native ICP Engine integration.
 
     This class provides comprehensive protection detection capabilities by integrating
-    with the native die-python library instead of relying on external executables.
+    with the native ICP Engine library instead of relying on external executables.
     It can detect packers, protectors, compilers, licensing schemes, and other
     binary protection mechanisms.
 
@@ -82,7 +95,7 @@ class IntellicrackProtectionCore:
     recommendations for detected protections.
 
     Key Features:
-    - Native die-python integration (no external processes)
+    - Native ICP Engine integration (no external processes)
     - Comprehensive protection database with bypass strategies
     - Support for PE, ELF, and other binary formats
     - Entropy analysis and section-level detection
@@ -194,25 +207,30 @@ class IntellicrackProtectionCore:
     }
 
     def __init__(self, engine_path: str | None = None):
-        """Initialize protection detector using native die-python integration
+        """Initialize protection detector using native ICP Engine integration
 
         Args:
             engine_path: Legacy parameter for compatibility, ignored in favor of native integration
 
         """
         self.engine_path = engine_path  # Keep for compatibility
-        self.icp_backend = ICPBackend()
-        self._validate_engine_installation()
+        try:
+            self.icp_backend = ICPBackend()
+            self._validate_engine_installation()
+        except Exception as e:
+            logger.warning(f"ICP Backend initialization failed: {e}")
+            logger.info("Protection detection will use fallback methods")
+            self.icp_backend = None
 
     def _validate_engine_installation(self):
-        """Validate that native die-python integration is working"""
+        """Validate that native ICP Engine integration is working"""
         try:
             version = self.icp_backend.get_engine_version()
             logger.info(f"ICP Engine: {version}")
 
-            if not self.icp_backend.is_die_python_available():
-                logger.error("die-python library not available or not working")
-                logger.info("Please install die-python: pip install die-python")
+            if not self.icp_backend.is_icp_available():
+                logger.error("ICP Engine library not available or not working")
+                logger.info("Please install ICP Engine backend: pip install die-python")
                 return False
 
             logger.info("Native ICP Engine integration validated successfully")
@@ -222,7 +240,7 @@ class IntellicrackProtectionCore:
             return False
 
     def detect_protections(self, file_path: str) -> ProtectionAnalysis:
-        """Analyze a binary file for protections, packers, and licensing schemes using native die-python
+        """Analyze a binary file for protections, packers, and licensing schemes using native ICP Engine
 
         Args:
             file_path: Path to the binary file to analyze
@@ -234,20 +252,17 @@ class IntellicrackProtectionCore:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
 
-        if not self.icp_backend.is_die_python_available():
-            logger.error("Native ICP Engine not available. Cannot perform analysis.")
-            return ProtectionAnalysis(
-                file_path=file_path,
-                file_type="Unknown",
-                architecture="Unknown",
-            )
+        if not self.icp_backend or not self.icp_backend.is_icp_available():
+            logger.warning("Native ICP Engine not available. Using fallback analysis methods.")
+            # Return basic analysis with fallback methods
+            return self._fallback_analysis(file_path)
 
         try:
             # Use asyncio to run the async analysis method
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
-                # Run native die-python analysis
+                # Run native ICP Engine analysis
                 icp_result = loop.run_until_complete(
                     self.icp_backend.analyze_file(file_path, ScanMode.DEEP, timeout=30.0),
                 )
@@ -276,13 +291,13 @@ class IntellicrackProtectionCore:
     def _convert_icp_result(self, icp_result: ICPScanResult) -> ProtectionAnalysis:
         """Convert native ICPScanResult to ProtectionAnalysis format.
 
-        This method bridges the gap between the native die-python ICP backend
+        This method bridges the gap between the native ICP Engine backend
         and the existing ProtectionAnalysis data structure used throughout
         Intellicrack. It preserves all detection information while converting
         to the expected format.
 
         Args:
-            icp_result: ICPScanResult from native die-python analysis
+            icp_result: ICPScanResult from native ICP Engine analysis
 
         Returns:
             ProtectionAnalysis: Converted analysis in standard format
@@ -496,6 +511,46 @@ class IntellicrackProtectionCore:
 
         return analysis
 
+    def _fallback_analysis(self, file_path: str) -> ProtectionAnalysis:
+        """Fallback analysis when ICP Engine is not available."""
+        import struct
+
+        file_type = "Unknown"
+        architecture = "Unknown"
+
+        # Basic file type detection
+        with open(file_path, "rb") as f:
+            magic = f.read(4)
+            if magic[:2] == b"MZ":
+                file_type = "PE"
+                # Read PE architecture
+                f.seek(0x3C)
+                pe_offset = struct.unpack("<I", f.read(4))[0]
+                f.seek(pe_offset + 4)
+                machine = struct.unpack("<H", f.read(2))[0]
+                if machine == 0x014C:
+                    architecture = "x86"
+                elif machine == 0x8664:
+                    architecture = "x64"
+            elif magic == b"\x7fELF":
+                file_type = "ELF"
+                f.seek(4)
+                ei_class = f.read(1)[0]
+                architecture = "x64" if ei_class == 2 else "x86"
+
+        return ProtectionAnalysis(
+            file_path=file_path,
+            file_type=file_type,
+            architecture=architecture,
+            detections=[],
+            has_protections=False,
+            license_type=LicenseType.UNKNOWN,
+            metadata={
+                "fallback_mode": True,
+                "reason": "ICP Engine not available"
+            }
+        )
+
     def _categorize_detection(self, detection_type: str) -> ProtectionType:
         """Categorize detection type string into enum"""
         type_lower = detection_type.lower()
@@ -670,8 +725,6 @@ def quick_analyze(file_path: str) -> ProtectionAnalysis:
     return detector.detect_protections(file_path)
 
 
-# Backward compatibility alias
-DIEProtectionDetector = IntellicrackProtectionCore
 
 
 if __name__ == "__main__":

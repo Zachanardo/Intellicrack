@@ -991,7 +991,7 @@ class BinarySimilaritySearch:
                     hash_val = 0
                     for feature in features:
                         feature_hash = int(
-                            hashlib.md5(f"{feature}_{i}".encode()).hexdigest()[:8], 16
+                            hashlib.sha256(f"{feature}_{i}".encode()).hexdigest()[:8], 16
                         )
                         hash_val = min(hash_val, feature_hash) if hash_val > 0 else feature_hash
                     signature.append(hash_val)
@@ -1092,7 +1092,7 @@ class BinarySimilaritySearch:
 
             # Combine strings and create rolling hash
             combined = " ".join(strings[:20])  # Use first 20 strings
-            hash_bytes = hashlib.md5(combined.encode()).digest()
+            hash_bytes = hashlib.sha256(combined.encode()).digest()
 
             # Convert to hex string for comparison
             return hash_bytes.hex()

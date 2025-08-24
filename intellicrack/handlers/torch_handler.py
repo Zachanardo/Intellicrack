@@ -15,6 +15,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import os
+from typing import Optional
+
 from intellicrack.logger import logger
 
 """
@@ -26,8 +29,6 @@ tensor operations used in Intellicrack's ML components.
 """
 
 # PyTorch availability detection and import handling with Intel Arc B580 compatibility
-import os
-from typing import Optional
 
 # Initialize variables
 HAS_TORCH = False

@@ -105,7 +105,7 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
                 f"Skipped line {lines_processed}: Error parsing hex values: "
                 f"Address='{address_hex}', Bytes='{new_bytes_hex_raw}'. Error: {e}",
             )
-        except (OSError, ValueError, RuntimeError) as e:
+        except (OSError, RuntimeError) as e:
             logger.error("Unexpected error parsing line %s: %s", lines_processed, e)
 
     # Log summary
@@ -197,7 +197,7 @@ def apply_patch(
         try:
             shutil.copy2(file_path, backup_path)
             logger.info("Created backup: %s", backup_path)
-        except (OSError, ValueError, RuntimeError) as e:
+        except OSError as e:
             logger.error("Failed to create backup: %s", e)
             return False, None
 

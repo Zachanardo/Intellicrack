@@ -19,7 +19,7 @@ import logging
 import time
 from typing import Any
 
-from intellicrack.utils.service_health_checker import get_service_url
+from intellicrack.utils.service_utils import get_service_url
 
 """
 Base C2 Module

@@ -306,7 +306,7 @@ class AnalysisPage(QWizardPage):
             file_path = item.data(0, Qt.UserRole)
             if file_path and os.path.exists(file_path):
                 if sys.platform.startswith('win'):
-                    os.startfile(file_path)
+                    os.startfile(file_path)  # noqa: S606  # Legitimate program file opening for security research target selection
                 elif sys.platform.startswith('darwin'):
                     subprocess.run(['open', file_path])
                 else:

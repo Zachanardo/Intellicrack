@@ -42,8 +42,11 @@ try:
     tkinter = tk
 
     # Create scrolledtext module alias
-    class scrolledtext:
+    class ScrolledTextModule:
         ScrolledText = ScrolledText
+
+    # Alias for compatibility
+    scrolledtext = ScrolledTextModule
 
 except ImportError as e:
     logger.error("Tkinter not available, using fallback implementations: %s", e)
@@ -352,7 +355,7 @@ except ImportError as e:
                 while not self.destroyed:
                     # Process any pending protocol callbacks
                     if hasattr(self, '_pending_protocols'):
-                        for protocol, func in self._pending_protocols:
+                        for _protocol, func in self._pending_protocols:
                             if callable(func):
                                 try:
                                     func()
@@ -1008,8 +1011,11 @@ except ImportError as e:
     ScrolledText = FallbackScrolledText
 
     # Create scrolledtext module fallback
-    class scrolledtext:
+    class ScrolledTextModuleFallback:
         ScrolledText = FallbackScrolledText
+
+    # Alias for compatibility
+    scrolledtext = ScrolledTextModuleFallback
 
     # Convenient assignments
     Tk = FallbackTk

@@ -1326,8 +1326,10 @@ class NetworkAnalysisPlugin:
                         output = subprocess.check_output(cmd, shell=True, text=True)
                         results.append(f"Network connections for PID {pid}:")
                         results.extend(output.strip().split('\n')[1:])  # Skip header
-                    except:
-                        pass
+                    except subprocess.CalledProcessError as e:
+                        results.append(f"Failed to get network connections for PID {pid}: {e}")
+                    except (OSError, FileNotFoundError):
+                        results.append("lsof command not available on this system")
 
             # Try to capture some traffic
             try:
@@ -1400,8 +1402,10 @@ class NetworkAnalysisPlugin:
                     cmd = f"pgrep -f {process_name}"
                     output = subprocess.check_output(cmd, shell=True, text=True)
                     return int(output.strip().split('\n')[0])
-            except:
-                pass
+            except (subprocess.CalledProcessError, ValueError, IndexError) as e:
+                self.logger.debug(f"Failed to get PID for process '{process_name}': {e}")
+            except (OSError, FileNotFoundError):
+                self.logger.debug(f"Process enumeration command not available on this system")
         return None
 
     def _get_process_connections(self, pid):
@@ -1915,7 +1919,7 @@ class PluginSystem:
 
                 # Download the plugin
                 dest_path = os.path.join(dest_dir, filename)
-                urllib.request.urlretrieve(plugin_name, dest_path)
+                urllib.request.urlretrieve(plugin_name, dest_path)  # noqa: S310  # Legitimate plugin download for security research tool
 
                 # Verify the downloaded file
                 if os.path.exists(dest_path) and os.path.getsize(dest_path) > 0:
@@ -2172,7 +2176,7 @@ class PluginSystem:
             os.makedirs(temp_plugin_dir, exist_ok=True)
 
             # Generate unique filename based on URL hash
-            url_hash = hashlib.md5(plugin_url.encode()).hexdigest()[:8]
+            url_hash = hashlib.sha256(plugin_url.encode()).hexdigest()[:8]
             parsed_url = urllib.parse.urlparse(plugin_url)
             original_filename = os.path.basename(parsed_url.path)
 
@@ -2190,14 +2194,14 @@ class PluginSystem:
             # Download the plugin with security checks
             try:
                 # Set up request with timeout and size limit
-                req = urllib.request.Request(
+                req = urllib.request.Request(  # noqa: S310  # Legitimate plugin download request for security research tool
                     plugin_url,
                     headers={
                         "User-Agent": "Intellicrack Plugin System/1.0",
                     },
                 )
 
-                with urllib.request.urlopen(req, timeout=30) as response:
+                with urllib.request.urlopen(req, timeout=30) as response:  # noqa: S310  # Legitimate plugin download for security research tool
                     # Check content size (limit to 10MB)
                     content_length = response.headers.get("Content-Length")
                     if content_length and int(content_length) > 10 * 1024 * 1024:
@@ -2219,7 +2223,7 @@ class PluginSystem:
                         content_text = content.decode("utf-8")
                     except UnicodeDecodeError as e:
                         logger.error("UnicodeDecodeError in plugin_system: %s", e)
-                        raise ValueError("Remote plugin contains binary data")
+                        raise ValueError("Remote plugin contains binary data") from e
 
                     # Basic security scan
                     dangerous_patterns = [
@@ -2443,9 +2447,10 @@ finally:
                     if result.get("success"):
                         # Try to deserialize the actual result
                         try:
-                            actual_result = eval(result["result"])
+                            import ast
+                            actual_result = ast.literal_eval(result["result"])
                             return actual_result
-                        except:
+                        except Exception:
                             # Return as string if can't deserialize
                             return result["result"]
                     else:

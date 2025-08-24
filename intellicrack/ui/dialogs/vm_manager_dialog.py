@@ -25,8 +25,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
+    QAbstractItemView,
     QAbstractTableModel,
-    QAbstractTableView,
     QDialog,
     QHBoxLayout,
     QHeaderView,
@@ -140,8 +140,8 @@ class VMManagerDialog(QDialog):
 
         # Create table view for VM list
         self.vm_table = QTableView()
-        self.vm_table.setSelectionBehavior(QAbstractTableView.SelectionBehavior.SelectRows)
-        self.vm_table.setSelectionMode(QAbstractTableView.SelectionMode.SingleSelection)
+        self.vm_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.vm_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
 
         # Set horizontal header resize mode
         header = self.vm_table.horizontalHeader()

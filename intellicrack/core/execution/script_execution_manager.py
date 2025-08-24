@@ -274,7 +274,7 @@ class ScriptExecutionManager(QObject):
             return None
         try:
             # Generate unique snapshot ID
-            snapshot_id = f"test_{hashlib.md5(target_binary.encode()).hexdigest()[:8]}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+            snapshot_id = f"test_{hashlib.sha256(target_binary.encode()).hexdigest()[:8]}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
 
             # Create snapshot with binary
             success = self.qemu_manager.create_snapshot(

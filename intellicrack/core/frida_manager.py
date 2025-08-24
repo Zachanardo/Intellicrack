@@ -1180,7 +1180,7 @@ class FridaManager:
                         (p.name for p in processes if p.pid == process_identifier),
                         f"pid_{process_identifier}",
                     )
-                except:
+                except Exception:
                     process_name = f"pid_{process_identifier}"
             else:
                 session = self.device.attach(process_identifier)

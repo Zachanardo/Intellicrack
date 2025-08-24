@@ -185,7 +185,7 @@ def _get_wintypes():
                 def __repr__(self):
                     return f"LPVOID({self.value})"
 
-            class SIZE_T(ctypes.c_size_t):
+            class SIZE_T(ctypes.c_size_t):  # noqa: N801
                 """Real Windows SIZE_T type implementation."""
 
                 def __str__(self):
@@ -194,7 +194,7 @@ def _get_wintypes():
                 def __repr__(self):
                     return f"SIZE_T({self.value})"
 
-            class ULONG_PTR(ctypes.c_void_p):
+            class ULONG_PTR(ctypes.c_void_p):  # noqa: N801
                 """Real Windows ULONG_PTR type implementation."""
 
                 def __str__(self):
@@ -457,7 +457,7 @@ if __name__ == "__main__":
 
         # Make executable on Unix-like systems
         if sys.platform != "win32":
-            os.chmod(launcher_path, 0o755)
+            os.chmod(launcher_path, 0o700)  # Owner-only executable launcher
 
         app.update_output.emit(
             log_message(f"[Launcher] Successfully created launcher script: {launcher_path}")
@@ -959,7 +959,7 @@ def _handle_guard_pages_windows(address: int, size: int, process_handle: int = N
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
         # MEMORY_BASIC_INFORMATION structure
-        class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+        class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
             """Windows MEMORY_BASIC_INFORMATION structure for memory queries."""
 
             _fields_ = [
@@ -1179,7 +1179,7 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int, size: int) 
             kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
             # Check if memory is committed
-            class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+            class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
                 """Memory basic information structure for allocation checking."""
 
                 _fields_ = [

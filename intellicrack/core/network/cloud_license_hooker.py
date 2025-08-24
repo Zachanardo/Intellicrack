@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from intellicrack.logger import logger
-from intellicrack.utils.service_health_checker import get_service_url
+from intellicrack.utils.service_utils import get_service_url
 
 """
 Cloud License Response Generator Module
@@ -501,7 +501,7 @@ class CloudLicenseResponseGenerator:
 
             # Add machine ID hash if present
             if "machine_id" in request:
-                machine_hash = hashlib.md5(request["machine_id"].encode()).digest()[:4]
+                machine_hash = hashlib.sha256(request["machine_id"].encode()).digest()[:4]
                 response_body = response_body + machine_hash
 
             # Add success/failure indicator based on request validity
@@ -925,7 +925,7 @@ class CloudLicenseResponseGenerator:
                 self._setup_alternative_hooks()
                 self.api_hooks_enabled = True
                 return True
-            except:
+            except Exception:
                 return False
 
     def _install_api_hook(self, dll_name: str, function_name: str, hook_handler) -> bool:

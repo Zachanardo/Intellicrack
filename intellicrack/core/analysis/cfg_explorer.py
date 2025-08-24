@@ -254,7 +254,7 @@ except ImportError as e:
                 return {}
 
             n = len(nodes)
-            node_to_index = {node: i for i, node in enumerate(nodes)}
+            {node: i for i, node in enumerate(nodes)}
 
             # Initialize PageRank values
             pr = {node: 1.0 / n for node in nodes}
@@ -374,7 +374,7 @@ except ImportError as e:
 
             # Initialize positions
             if pos is None:
-                pos = {node: (random.random(), random.random()) for node in nodes}
+                pos = {node: (random.random(), random.random()) for node in nodes}  # noqa: S311
             else:
                 pos = pos.copy()
 
@@ -443,10 +443,10 @@ except ImportError as e:
             logger.info(f"Drawing graph with {graph.number_of_nodes()} nodes and {graph.number_of_edges()} edges")
             return None
 
-        class drawing:
+        class Drawing:
             """Drawing submodule."""
 
-            class nx_pydot:
+            class NxPydot:
                 """PyDot interface for NetworkX compatibility."""
 
                 @staticmethod
@@ -471,6 +471,12 @@ except ImportError as e:
                     """Graphviz layout (fallback to spring layout)."""
                     logger.warning("Graphviz not available, using spring layout")
                     return _IntellicrackNetworkX.spring_layout(graph)
+
+            # Alias for compatibility
+            nx_pydot = NxPydot
+
+        # Alias for compatibility
+        drawing = Drawing
 
         NetworkXError = NetworkXError
 
@@ -513,6 +519,7 @@ except ImportError as e:
 
 
 try:
+    import shutil
     import subprocess
 
     SUBPROCESS_AVAILABLE = True
@@ -2212,11 +2219,15 @@ def run_deep_cfg_analysis(app):
             # Try to generate PDF or SVG if graphviz is available
             try:
                 if SUBPROCESS_AVAILABLE:
-                    subprocess.run(
-                        ["dot", "-Tsvg", "-o", "license_cfg.svg", "license_cfg.dot"],
-                        check=False,  # noqa: S607
-                    )
-                    app.update_output.emit(log_message("[CFG Analysis] Generated license_cfg.svg"))
+                    dot_path = shutil.which("dot")
+                    if dot_path:
+                        subprocess.run(
+                            [dot_path, "-Tsvg", "-o", "license_cfg.svg", "license_cfg.dot"],
+                            check=False,
+                        )
+                        app.update_output.emit(log_message("[CFG Analysis] Generated license_cfg.svg"))
+                    else:
+                        app.update_output.emit(log_message("[CFG Analysis] GraphViz 'dot' command not found in PATH"))
             except (OSError, ValueError, RuntimeError) as e:
                 logger.error("Error in cfg_explorer: %s", e)
                 app.update_output.emit(log_message(f"[CFG Analysis] Could not generate SVG: {e}"))

@@ -251,9 +251,9 @@ class EnhancedCLIRunner:
                         with open(binary_path, "rb") as f:
                             data = f.read(8192)  # Read 8KB sample
                             if len(set(data)) > 200:  # High entropy indicator
-                                logger.debug("Detected high entropy - potentially packed/encrypted")
+                                self.logger.debug("Detected high entropy - potentially packed/encrypted")
                     except Exception as e:
-                        logger.debug(f"Error analyzing entropy patterns: {e}")
+                        self.logger.debug(f"Error analyzing entropy patterns: {e}")
 
                 self.progress_manager.update_progress(
                     "Protection Detection",
@@ -430,7 +430,7 @@ class EnhancedCLIRunner:
                                 if pattern in data:
                                     suspicious_indicators.append(pattern.decode())
                     except Exception as e:
-                        logger.debug(f"Error checking suspicious patterns: {e}")
+                        self.logger.debug(f"Error checking suspicious patterns: {e}")
 
                     results["suspicious"] = len(suspicious_indicators) > 0
                     results["network_indicators"] = suspicious_indicators

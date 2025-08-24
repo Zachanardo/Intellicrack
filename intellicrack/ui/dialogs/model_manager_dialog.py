@@ -116,7 +116,7 @@ class ModelDownloadThread(QThread):
 
             self.log_message.emit(f"Starting download: {self.model_name}")
 
-            response = requests.get(self.model_url, stream=True)
+            response = requests.get(self.model_url, stream=True, timeout=60)
             response.raise_for_status()
 
             total_size = int(response.headers.get("content-length", 0))

@@ -282,8 +282,16 @@ class ConfigAsCodeManager:
 
             return config
 
-        except (yaml.YAMLError if HAS_YAML else Exception, json.JSONDecodeError) as e:
+        except json.JSONDecodeError as e:
             raise ConfigValidationError(f"Failed to parse configuration file: {e}") from e
+        except Exception as e:
+            # Handle YAML errors if YAML is available, otherwise generic Exception
+            if HAS_YAML and isinstance(e, yaml.YAMLError):
+                raise ConfigValidationError(f"Failed to parse configuration file: {e}") from e
+            elif not HAS_YAML:
+                raise ConfigValidationError(f"Failed to parse configuration file: {e}") from e
+            else:
+                raise
 
     def save_config(
         self,

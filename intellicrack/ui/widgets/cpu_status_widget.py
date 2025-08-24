@@ -40,6 +40,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.logger import logger
 
 
 class CPUMonitorWorker(QObject):

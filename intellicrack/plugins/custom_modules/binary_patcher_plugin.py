@@ -170,7 +170,7 @@ class BinaryPatcherPlugin:
             try:
                 shutil.copy2(backup_path, binary_path)
                 results.append("Restored original file from backup")
-            except:
+            except Exception:
                 results.append("Failed to restore backup - manual restoration required")
 
         return results

@@ -8,10 +8,13 @@ Licensed under GNU General Public License v3.0
 """
 
 import functools
+import logging
 import os
 import sys
 import threading
 from typing import Any, Callable
+
+logger = logging.getLogger(__name__)
 
 _torch_lock = threading.RLock()
 
@@ -131,9 +134,9 @@ def configure_pybind11_environment():
         # Try to access and modify pybind11 internal settings if possible
         import warnings
 
-        warnings.filterwarnings("ignore", category=RuntimeError, message=".*pybind11.*GIL.*")
-    except:
-        pass
+        warnings.filterwarnings("ignore", category=UserWarning, message=".*pybind11.*GIL.*")
+    except Exception as e:
+        logger.debug("Could not configure GIL warnings: %s", e)
 
 
 def initialize_gil_safety():

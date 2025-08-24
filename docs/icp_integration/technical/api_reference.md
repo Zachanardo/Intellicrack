@@ -201,7 +201,7 @@ PE64
 ```python
 # die-python output parsing
 die_output = "PE64\n    Packer: UPX\n    Protector: VMProtect"
-result = ICPScanResult.from_die_text("sample.exe", die_output)
+result = ICPScanResult.from_native_engine_text("sample.exe", icp_output_text)
 
 print(f"File type: {result.file_infos[0].filetype}")  # "PE64"
 print(f"Detections: {len(result.all_detections)}")   # 2
@@ -366,7 +366,7 @@ From Phase 5 testing with die-python v0.4.0:
 ## Version Compatibility
 
 **Supported die-python versions:** 0.4.0+
-**DIE engine compatibility:** 3.09+
+**Underlying engine compatibility:** 3.09+ (This refers to the internal dependency, not the user-facing ICP Engine)
 **Python requirements:** 3.11+
 
 ## Migration from Legacy DIE

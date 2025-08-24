@@ -90,17 +90,17 @@ except ImportError as e:
     # Production-ready fallback ELF parsing implementations
 
     # ELF constants
-    class E_FLAGS:
+    class E_FLAGS:  # noqa: N801
         """ELF header flags."""
         pass
 
-    class P_FLAGS:
+    class P_FLAGS:  # noqa: N801
         """Program header flags."""
         PF_X = 0x1  # Execute
         PF_W = 0x2  # Write
         PF_R = 0x4  # Read
 
-    class SH_FLAGS:
+    class SH_FLAGS:  # noqa: N801
         """Section header flags."""
         SHF_WRITE = 0x1
         SHF_ALLOC = 0x2
@@ -113,14 +113,14 @@ except ImportError as e:
         SHF_GROUP = 0x200
         SHF_TLS = 0x400
 
-    class SHN_INDICES:
+    class SHN_INDICES:  # noqa: N801
         """Special section indices."""
         SHN_UNDEF = 0
         SHN_ABS = 0xFFF1
         SHN_COMMON = 0xFFF2
         SHN_XINDEX = 0xFFFF
 
-    class ENUM_E_TYPE:
+    class ENUM_E_TYPE:  # noqa: N801
         """ELF file types."""
         ET_NONE = 0
         ET_REL = 1
@@ -128,7 +128,7 @@ except ImportError as e:
         ET_DYN = 3
         ET_CORE = 4
 
-    class ENUM_SH_TYPE:
+    class ENUM_SH_TYPE:  # noqa: N801
         """Section types."""
         SHT_NULL = 0
         SHT_PROGBITS = 1
@@ -143,7 +143,7 @@ except ImportError as e:
         SHT_SHLIB = 10
         SHT_DYNSYM = 11
 
-    class ENUM_D_TAG:
+    class ENUM_D_TAG:  # noqa: N801
         """Dynamic section tags."""
         DT_NULL = 0
         DT_NEEDED = 1
@@ -307,7 +307,7 @@ except ImportError as e:
             self.stream.seek(self.header.e_phoff)
             endian = '<' if self.little_endian else '>'
 
-            for i in range(self.header.e_phnum):
+            for _i in range(self.header.e_phnum):
                 if self.elfclass == 32:
                     # 32-bit program header
                     ph_data = self.stream.read(32)
@@ -351,7 +351,7 @@ except ImportError as e:
             self.stream.seek(self.header.e_shoff)
             endian = '<' if self.little_endian else '>'
 
-            for i in range(self.header.e_shnum):
+            for _i in range(self.header.e_shnum):
                 if self.elfclass == 32:
                     # 32-bit section header
                     sh_data = self.stream.read(40)

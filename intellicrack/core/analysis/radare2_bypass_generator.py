@@ -642,7 +642,7 @@ class R2BypassGenerator:
 
                 # Analyze function for crypto constants
                 r2.cmd(f"s {hex(func_addr)}")
-                func_data = r2.cmdj("axtj")
+                r2.cmdj("axtj")
 
                 # Look for common crypto constants
                 # MD5 initialization values
@@ -650,7 +650,6 @@ class R2BypassGenerator:
                 # SHA1 initialization values
                 sha1_constants = [0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476, 0xC3D2E1F0]
                 # AES S-box values (first few)
-                aes_sbox_start = [0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5]
 
                 # Search for these constants in the function
                 func_bytes = r2.cmd(f"p8 {crypto_op.get('size', 1024)} @ {hex(func_addr)}")
@@ -864,7 +863,7 @@ if __name__ == "__main__":
                 # Analyze function calls and string references
                 r2.cmd(f"s {hex(func_addr)}")
                 strings = r2.cmdj("izj")
-                xrefs = r2.cmdj("axtj")
+                r2.cmdj("axtj")
 
                 # Look for common patterns
                 for s in strings:
@@ -994,7 +993,7 @@ if __name__ == "__main__":
             # Read 256 bytes for full S-box
             sbox_data = r2.cmdj(f"pxj 256 @ {hex(func_addr)}")
             return sbox_data if sbox_data else []
-        except:
+        except Exception:
             return []
 
     def _analyze_loop_iterations(self, r2, loop_addr: int) -> int:
@@ -1006,7 +1005,7 @@ if __name__ == "__main__":
                 # Look for common iteration counts (16 for AES, 64 for SHA)
                 return loop_info[0].get("ninstr", 0)
             return 0
-        except:
+        except Exception:
             return 0
 
     def _find_key_expansion(self, r2, func_addr: int) -> dict[str, Any] | None:
@@ -1021,7 +1020,7 @@ if __name__ == "__main__":
                     "rounds": 10 if "aes128" in disasm.lower() else 14,
                 }
             return None
-        except:
+        except Exception:
             return None
 
     def _find_ivs(self, r2, func_addr: int) -> list[str]:

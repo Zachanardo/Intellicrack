@@ -437,8 +437,8 @@ def validate_file_input(file_path: str | Path, operation: str = "read") -> bool:
             logger.warning(f"Potential path traversal detected: {file_path}")
             if validation_config.get("strict_mode", True):
                 raise SecurityError("Path traversal not allowed in strict mode")
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Security validation exception: %s", e)
 
     logger.debug(f"File validation passed for {operation}: {file_path}")
     return True

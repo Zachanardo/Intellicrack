@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import json
 import math
+import os
 import time
 import uuid
 from collections import defaultdict, deque
@@ -154,6 +155,11 @@ class DataCollector:
 
     def _start_data_collection(self):
         """Start background data collection."""
+        # Skip thread creation during testing
+        if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
+            logger.info("Skipping data collection worker (testing mode)")
+            return
+
         import threading
 
         def collection_worker():
@@ -344,7 +350,7 @@ class DataCollector:
             total_operations = 0
             error_count = 0
 
-            for record_id, record in self.learning_records.items():
+            for _record_id, record in self.learning_records.items():
                 record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
 
                 if record_time >= lookback_time:
@@ -476,12 +482,13 @@ class DataCollector:
                 if total_tasks == 0:
                     # Estimate based on recent activity
                     recent_hour = current_time - timedelta(hours=1)
-                    for record_id, record in self.learning_records.items():
+                    for _record_id, record in self.learning_records.items():
                         try:
                             record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
                             if record_time >= recent_hour:
                                 total_tasks += 1
-                        except Exception:
+                        except Exception as e:
+                            logger.debug(f"Skipping task record due to error: {e}")
                             continue
 
                     # Scale down to represent current activity level
@@ -509,7 +516,7 @@ class DataCollector:
             frequency = 0
 
             # Search learning records for exploit usage
-            for record_id, record in self.learning_records.items():
+            for _record_id, record in self.learning_records.items():
                 try:
                     record_time = datetime.fromisoformat(record.get("timestamp", current_time.isoformat()))
 

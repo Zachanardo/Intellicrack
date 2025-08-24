@@ -283,7 +283,7 @@ class HexViewerDialog(QDialog):
 
     def create_menus(self) -> QMenuBar:
         """Create the menu bar with menus.
-        
+
         Returns:
             Configured menu bar
         """
@@ -382,7 +382,7 @@ class HexViewerDialog(QDialog):
 
     def split_view(self, orientation: Qt.Orientation):
         """Split the current view.
-        
+
         Args:
             orientation: Split orientation (Vertical or Horizontal)
         """
@@ -505,7 +505,7 @@ class HexViewerDialog(QDialog):
 
     def toggle_sync_scrolling(self, checked: bool):
         """Toggle synchronized scrolling between views.
-        
+
         Args:
             checked: Whether sync is enabled
         """
@@ -519,12 +519,12 @@ class HexViewerDialog(QDialog):
                 try:
                     viewer.vertical_scroll_bar.valueChanged.disconnect()
                     viewer.horizontal_scroll_bar.valueChanged.disconnect()
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug("Error disconnecting scroll signals: %s", e)
 
     def setup_viewer_sync(self, viewer: HexViewerWidget):
         """Set up scrolling synchronization for a viewer.
-        
+
         Args:
             viewer: Viewer to set up sync for
         """
@@ -551,7 +551,7 @@ class HexViewerDialog(QDialog):
 
     def set_active_viewer(self, viewer: HexViewerWidget):
         """Set the active viewer.
-        
+
         Args:
             viewer: Viewer to make active
         """
@@ -830,7 +830,7 @@ class HexViewerDialog(QDialog):
 
     def perform_comparison(self, settings: dict):
         """Perform file comparison and display results.
-        
+
         Args:
             settings: Dictionary with comparison settings
         """
@@ -881,7 +881,7 @@ class HexViewerDialog(QDialog):
 
     def show_visual_comparison(self, file1: str, file2: str, differences: list, settings: dict):
         """Show visual side-by-side comparison.
-        
+
         Args:
             file1: Path to first file
             file2: Path to second file
@@ -919,7 +919,7 @@ class HexViewerDialog(QDialog):
 
     def highlight_comparison_differences(self, differences: list):
         """Highlight differences in both viewers.
-        
+
         Args:
             differences: List of DifferenceBlock objects
         """
@@ -978,7 +978,7 @@ class HexViewerDialog(QDialog):
 
     def show_comparison_stats(self, differences: list):
         """Show comparison statistics in status bar.
-        
+
         Args:
             differences: List of DifferenceBlock objects
         """
@@ -1005,7 +1005,7 @@ class HexViewerDialog(QDialog):
 
     def show_byte_comparison(self, differences: list, settings: dict):
         """Show detailed byte-by-byte comparison results.
-        
+
         Args:
             differences: List of DifferenceBlock objects
             settings: Comparison settings
@@ -1063,7 +1063,7 @@ class HexViewerDialog(QDialog):
 
     def show_structural_comparison(self, differences: list, settings: dict):
         """Show structural block-level comparison.
-        
+
         Args:
             differences: List of DifferenceBlock objects
             settings: Comparison settings

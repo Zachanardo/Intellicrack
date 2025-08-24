@@ -101,7 +101,7 @@ except ImportError:
                     if Path(target_binary).exists():
                         import shutil
                         shutil.copy2(target_binary, target_file)
-                        os.chmod(target_file, 0o755)  # Make executable
+                        os.chmod(target_file, 0o700)  # Owner-only executable for security analysis
                     else:
                         # Create test binary stub for validation
                         self._create_test_binary(target_file)
@@ -289,7 +289,8 @@ Script Analysis:
                     capture_output=True,
                     text=True,
                     timeout=vm_config.get("timeout", 30),
-                    cwd=script_file.parent
+                    cwd=script_file.parent,
+                    shell=False  # Explicitly secure - using list format prevents shell injection
                 )
 
                 return {
@@ -301,7 +302,7 @@ Script Analysis:
                 }
 
             except (FileNotFoundError, subprocess.TimeoutExpired) as qemu_error:
-                raise Exception(f"QEMU not available: {qemu_error}")
+                raise Exception(f"QEMU not available: {qemu_error}") from qemu_error
 
         def _try_native_execution(self, script, script_file, target_file, test_dir):
             """Attempt native script execution in sandbox."""
@@ -323,7 +324,8 @@ Script Analysis:
                     capture_output=True,
                     text=True,
                     timeout=15,
-                    cwd=test_dir
+                    cwd=test_dir,
+                    shell=False  # Explicitly secure - using list format prevents shell injection
                 )
 
                 return {
@@ -335,7 +337,7 @@ Script Analysis:
                 }
 
             except Exception as native_error:
-                raise Exception(f"Native execution failed: {native_error}")
+                raise Exception(f"Native execution failed: {native_error}") from native_error
 
         def _perform_script_validation(self, script, script_file, target_file):
             """Perform script validation and static analysis."""

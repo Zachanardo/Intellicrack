@@ -573,7 +573,8 @@ Memory: {'🟢' if self.system_metrics.memory_percent < 80 else '🟡' if self.s
 
         try:
             while True:
-                os.system("cls" if os.name == "nt" else "clear")
+                import subprocess
+                subprocess.run(["cls"] if os.name == "nt" else ["clear"], shell=False)
 
                 print("=" * 60)
                 print("           INTELLICRACK TERMINAL DASHBOARD")

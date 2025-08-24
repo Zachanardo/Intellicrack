@@ -158,7 +158,7 @@ class MigrationBackup:
             return backup_file
         except Exception as e:
             logger.error(f"Failed to create backup: {e}")
-            raise MigrationError(f"Backup creation failed: {e}")
+            raise MigrationError(f"Backup creation failed: {e}") from e
 
     def restore_backup(self, backup_file: Path) -> Dict[str, Any]:
         """
@@ -177,7 +177,7 @@ class MigrationBackup:
             return config_data
         except Exception as e:
             logger.error(f"Failed to restore backup: {e}")
-            raise MigrationRollbackError(f"Backup restoration failed: {e}")
+            raise MigrationRollbackError(f"Backup restoration failed: {e}") from e
 
     def get_latest_backup(self) -> Optional[Path]:
         """

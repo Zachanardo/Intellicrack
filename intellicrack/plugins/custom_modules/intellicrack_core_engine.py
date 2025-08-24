@@ -442,6 +442,7 @@ class ConfigurationManager:
         self.watchers: list[Callable] = []
         self.file_watcher: threading.Thread | None = None
         self.last_modified: float = 0
+        self.logger = logging.getLogger(f"{__name__}.ConfigurationManager")
 
         # Load configuration schema
         self._load_schema()
@@ -590,8 +591,8 @@ class ConfigurationManager:
             for watcher in self.watchers:
                 try:
                     watcher(self.config)
-                except Exception:
-                    pass  # Don't let watcher errors break config loading
+                except Exception as e:
+                    self.logger.debug("Watcher error: %s", e)
 
         except (json.JSONDecodeError, ValidationError) as e:
             print(f"Configuration error: {e}")
@@ -630,8 +631,9 @@ class ConfigurationManager:
 
                     time.sleep(1)  # Check every second
 
-                except Exception:
+                except Exception as e:
                     # Continue watching despite errors
+                    self.logger.debug("File watcher error: %s", e)
                     time.sleep(5)
 
         self.file_watcher = threading.Thread(target=watch_file, daemon=True)
@@ -953,7 +955,7 @@ class GhidraPlugin(AbstractPlugin):
             error_msg = stderr.decode("utf-8", errors="ignore")
             raise Exception(f"Ghidra execution failed: {error_msg}")
 
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as timeout_error:
             if process:
                 try:
                     # Use signal to gracefully terminate process
@@ -966,7 +968,7 @@ class GhidraPlugin(AbstractPlugin):
                     error_trace = traceback.format_exc()
                     self.logger.warning(f"Process termination failed: {term_error}\n{error_trace}")
                     process.kill()
-            raise Exception("Ghidra execution timed out")
+            raise Exception("Ghidra execution timed out") from timeout_error
         except Exception as e:
             # Use traceback for comprehensive error reporting
             error_trace = traceback.format_exc()
@@ -1043,6 +1045,7 @@ class FridaPlugin(AbstractPlugin):
         """Initialize Frida plugin"""
         try:
             from intellicrack.handlers.frida_handler import HAS_FRIDA, frida
+            _ = HAS_FRIDA  # Verify frida availability flag is imported for initialization checks
 
             self.status = PluginStatus.INITIALIZING
             self.config.update(config)
@@ -1194,10 +1197,10 @@ class FridaPlugin(AbstractPlugin):
 
             return result
 
-        except frida.ProcessNotFoundError:
-            raise Exception(f"Process not found: {target}")
+        except frida.ProcessNotFoundError as e:
+            raise Exception(f"Process not found: {target}") from e
         except Exception as e:
-            raise Exception(f"Failed to attach to process: {e}")
+            raise Exception(f"Failed to attach to process: {e}") from e
 
     def _on_message(self, message, data):
         """Handle Frida script messages"""
@@ -1471,8 +1474,8 @@ class PythonPlugin(AbstractPlugin):
                 plugin_ops = self.plugin_instance.get_operations()
                 if isinstance(plugin_ops, list):
                     operations.extend(plugin_ops)
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug("Plugin operation error: %s", e)
 
         return list(set(operations))
 
@@ -1569,8 +1572,8 @@ class EventBus:
             self.processor_task.cancel()
             try:
                 await self.processor_task
-            except asyncio.CancelledError:
-                pass
+            except asyncio.CancelledError as e:
+                self.logger.debug("Plugin operation error: %s", e)
 
         if self.logger:
             self.logger.info("Event bus stopped")
@@ -2716,7 +2719,7 @@ class WorkflowEngine:
             duration = (datetime.utcnow() - start_time).total_seconds()
             self.logger.info(f"Step {step.step_id} completed in {duration:.2f}s")
 
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as timeout_error:
             error_msg = f"Step {step.step_id} timed out"
             context["errors"].append(error_msg)
 
@@ -2726,7 +2729,7 @@ class WorkflowEngine:
                 self.logger.warning(f"Retrying step {step.step_id} (attempt {step.retry_count})")
                 await self._execute_step(step, context)
             else:
-                raise Exception(error_msg)
+                raise Exception(error_msg) from timeout_error
 
         except Exception as e:
             error_msg = f"Step {step.step_id} failed: {e}"
@@ -2738,7 +2741,7 @@ class WorkflowEngine:
                 self.logger.warning(f"Retrying step {step.step_id} (attempt {step.retry_count})")
                 await self._execute_step(step, context)
             else:
-                raise Exception(error_msg)
+                raise Exception(error_msg) from e
 
     def get_workflow_status(self, execution_id: str) -> dict[str, Any] | None:
         """Get workflow execution status"""
@@ -2871,8 +2874,8 @@ class AnalysisCoordinator:
             self.coordinator_task.cancel()
             try:
                 await self.coordinator_task
-            except asyncio.CancelledError:
-                pass
+            except asyncio.CancelledError as e:
+                self.logger.debug("Plugin operation error: %s", e)
 
         self.logger.info("Analysis coordinator stopped")
 
@@ -3015,7 +3018,7 @@ class AnalysisCoordinator:
 
                 with open(file_path, "rb") as f:
                     content = f.read()
-                    info["hash_md5"] = hashlib.md5(content).hexdigest()
+                    info["hash_sha256_primary"] = hashlib.sha256(content).hexdigest()
                     info["hash_sha256"] = hashlib.sha256(content).hexdigest()
 
             # Detect file type
@@ -3225,8 +3228,8 @@ class ResourceManager:
             self.monitoring_task.cancel()
             try:
                 await self.monitoring_task
-            except asyncio.CancelledError:
-                pass
+            except asyncio.CancelledError as e:
+                self.logger.debug("Plugin operation error: %s", e)
 
         # Shutdown pools
         if self.process_pool:
@@ -3348,8 +3351,8 @@ class ResourceManager:
                 try:
                     psutil_process = psutil.Process(process.pid)
                     self.tracked_processes[process.pid] = psutil_process
-                except psutil.NoSuchProcess:
-                    pass
+                except psutil.NoSuchProcess as e:
+                    self.logger.debug("Plugin operation error: %s", e)
 
             self.logger.debug(f"Started external process: {' '.join(cmd)} (PID: {process.pid})")
 

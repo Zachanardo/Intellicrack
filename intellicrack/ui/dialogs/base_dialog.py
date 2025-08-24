@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 class BaseDialog(QDialog):
     """Production-ready base dialog class for consistent UI patterns across Intellicrack.
-    
+
     Features:
     - Consistent dark theme styling
     - Standardized button placement and behavior
@@ -162,12 +162,12 @@ class BaseDialog(QDialog):
                 font-family: 'Segoe UI', Arial, sans-serif;
                 font-size: 10pt;
             }
-            
+
             QLabel {
                 color: #ffffff;
                 padding: 2px;
             }
-            
+
             QLabel#status_error {
                 color: #ff4444;
                 background-color: #3a1515;
@@ -175,7 +175,7 @@ class BaseDialog(QDialog):
                 border-radius: 4px;
                 padding: 8px;
             }
-            
+
             QLabel#status_success {
                 color: #44ff44;
                 background-color: #153a15;
@@ -183,7 +183,7 @@ class BaseDialog(QDialog):
                 border-radius: 4px;
                 padding: 8px;
             }
-            
+
             QLabel#status_info {
                 color: #4488ff;
                 background-color: #15253a;
@@ -191,7 +191,7 @@ class BaseDialog(QDialog):
                 border-radius: 4px;
                 padding: 8px;
             }
-            
+
             QPushButton {
                 background-color: #2d2d2d;
                 color: #ffffff;
@@ -201,40 +201,40 @@ class BaseDialog(QDialog):
                 font-weight: 500;
                 min-width: 80px;
             }
-            
+
             QPushButton:hover {
                 background-color: #3d3d3d;
                 border-color: #00ff00;
             }
-            
+
             QPushButton:pressed {
                 background-color: #1d1d1d;
             }
-            
+
             QPushButton:disabled {
                 background-color: #1a1a1a;
                 color: #666666;
                 border-color: #2d2d2d;
             }
-            
+
             QPushButton#primary_button {
                 background-color: #00802b;
                 border-color: #00ff00;
             }
-            
+
             QPushButton#primary_button:hover {
                 background-color: #00a038;
             }
-            
+
             QPushButton#danger_button {
                 background-color: #801515;
                 border-color: #ff4444;
             }
-            
+
             QPushButton#danger_button:hover {
                 background-color: #a01818;
             }
-            
+
             QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
                 background-color: #252525;
                 color: #ffffff;
@@ -242,19 +242,19 @@ class BaseDialog(QDialog):
                 padding: 6px;
                 border-radius: 4px;
             }
-            
-            QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus, 
+
+            QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus,
             QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {
                 border-color: #00ff00;
                 outline: none;
             }
-            
+
             QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled,
             QSpinBox:disabled, QDoubleSpinBox:disabled, QComboBox:disabled {
                 background-color: #1a1a1a;
                 color: #666666;
             }
-            
+
             QGroupBox {
                 color: #ffffff;
                 border: 1px solid #3d3d3d;
@@ -263,19 +263,19 @@ class BaseDialog(QDialog):
                 padding-top: 12px;
                 font-weight: bold;
             }
-            
+
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 10px;
                 padding: 0 5px;
                 background-color: #1e1e1e;
             }
-            
+
             QCheckBox, QRadioButton {
                 color: #ffffff;
                 spacing: 8px;
             }
-            
+
             QCheckBox::indicator, QRadioButton::indicator {
                 width: 16px;
                 height: 16px;
@@ -283,25 +283,25 @@ class BaseDialog(QDialog):
                 border: 1px solid #3d3d3d;
                 border-radius: 3px;
             }
-            
+
             QRadioButton::indicator {
                 border-radius: 8px;
             }
-            
+
             QCheckBox::indicator:checked, QRadioButton::indicator:checked {
                 background-color: #00ff00;
                 border-color: #00ff00;
             }
-            
+
             QCheckBox::indicator:hover, QRadioButton::indicator:hover {
                 border-color: #00ff00;
             }
-            
+
             QTabWidget::pane {
                 background-color: #1e1e1e;
                 border: 1px solid #3d3d3d;
             }
-            
+
             QTabBar::tab {
                 background-color: #2d2d2d;
                 color: #ffffff;
@@ -310,48 +310,48 @@ class BaseDialog(QDialog):
                 border-top-left-radius: 4px;
                 border-top-right-radius: 4px;
             }
-            
+
             QTabBar::tab:selected {
                 background-color: #1e1e1e;
                 border-bottom: 2px solid #00ff00;
             }
-            
+
             QTabBar::tab:hover {
                 background-color: #3d3d3d;
             }
-            
+
             QScrollBar:vertical {
                 background-color: #1e1e1e;
                 width: 12px;
                 border-radius: 6px;
             }
-            
+
             QScrollBar::handle:vertical {
                 background-color: #3d3d3d;
                 border-radius: 6px;
                 min-height: 20px;
             }
-            
+
             QScrollBar::handle:vertical:hover {
                 background-color: #4d4d4d;
             }
-            
+
             QScrollBar:horizontal {
                 background-color: #1e1e1e;
                 height: 12px;
                 border-radius: 6px;
             }
-            
+
             QScrollBar::handle:horizontal {
                 background-color: #3d3d3d;
                 border-radius: 6px;
                 min-width: 20px;
             }
-            
+
             QScrollBar::handle:horizontal:hover {
                 background-color: #4d4d4d;
             }
-            
+
             QProgressBar {
                 background-color: #252525;
                 border: 1px solid #3d3d3d;
@@ -359,7 +359,7 @@ class BaseDialog(QDialog):
                 text-align: center;
                 color: #ffffff;
             }
-            
+
             QProgressBar::chunk {
                 background-color: #00ff00;
                 border-radius: 3px;
@@ -368,7 +368,7 @@ class BaseDialog(QDialog):
 
     def set_content_layout(self, layout: QVBoxLayout) -> None:
         """Set a custom layout for the content area.
-        
+
         Args:
             layout: Layout to use for content area
         """
@@ -388,7 +388,7 @@ class BaseDialog(QDialog):
 
     def add_content_widget(self, widget: QWidget) -> None:
         """Add a widget to the content area.
-        
+
         Args:
             widget: Widget to add to content area
         """
@@ -396,7 +396,7 @@ class BaseDialog(QDialog):
 
     def add_content_layout(self, layout) -> None:
         """Add a layout to the content area.
-        
+
         Args:
             layout: Layout to add to content area
         """
@@ -404,7 +404,7 @@ class BaseDialog(QDialog):
 
     def set_loading(self, loading: bool, message: str = "Loading...") -> None:
         """Set the dialog loading state.
-        
+
         Args:
             loading: Whether dialog is in loading state
             message: Loading message to display
@@ -421,7 +421,7 @@ class BaseDialog(QDialog):
 
     def show_error(self, message: str) -> None:
         """Show an error message in the dialog.
-        
+
         Args:
             message: Error message to display
         """
@@ -431,7 +431,7 @@ class BaseDialog(QDialog):
 
     def show_success(self, message: str) -> None:
         """Show a success message in the dialog.
-        
+
         Args:
             message: Success message to display
         """
@@ -439,7 +439,7 @@ class BaseDialog(QDialog):
 
     def show_status(self, message: str, status_type: str = "info") -> None:
         """Show a status message in the dialog.
-        
+
         Args:
             message: Status message to display
             status_type: Type of status ('info', 'error', 'success')
@@ -458,7 +458,7 @@ class BaseDialog(QDialog):
 
     def set_ok_enabled(self, enabled: bool) -> None:
         """Enable or disable the OK button.
-        
+
         Args:
             enabled: Whether OK button should be enabled
         """
@@ -466,7 +466,7 @@ class BaseDialog(QDialog):
 
     def set_ok_text(self, text: str) -> None:
         """Set custom text for the OK button.
-        
+
         Args:
             text: Text to display on OK button
         """
@@ -474,7 +474,7 @@ class BaseDialog(QDialog):
 
     def set_cancel_text(self, text: str) -> None:
         """Set custom text for the Cancel button.
-        
+
         Args:
             text: Text to display on Cancel button
         """
@@ -487,12 +487,12 @@ class BaseDialog(QDialog):
         button_type: str = "default"
     ) -> QPushButton:
         """Add a custom button to the button box.
-        
+
         Args:
             text: Button text
             callback: Function to call when button is clicked
             button_type: Button style ('default', 'primary', 'danger')
-            
+
         Returns:
             The created button
         """
@@ -509,9 +509,9 @@ class BaseDialog(QDialog):
 
     def validate_input(self) -> bool:
         """Validate dialog input before accepting.
-        
+
         Override this method in subclasses to provide custom validation.
-        
+
         Returns:
             True if input is valid, False otherwise
         """
@@ -545,9 +545,9 @@ class BaseDialog(QDialog):
 
     def get_result(self) -> dict:
         """Get the dialog result data.
-        
+
         Override this method in subclasses to return dialog data.
-        
+
         Returns:
             Dictionary containing dialog result data
         """
@@ -555,7 +555,7 @@ class BaseDialog(QDialog):
 
     def closeEvent(self, event) -> None:
         """Handle dialog close event for cleanup.
-        
+
         Args:
             event: Close event
         """
@@ -570,7 +570,7 @@ class BaseDialog(QDialog):
 
     def showEvent(self, event) -> None:
         """Handle dialog show event for focus management.
-        
+
         Args:
             event: Show event
         """

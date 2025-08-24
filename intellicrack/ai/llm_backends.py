@@ -539,7 +539,7 @@ class OllamaBackend(LLMBackend):
             self.logger.error(f"Failed to get Ollama API URL: {e}")
             raise ConfigurationError(
                 "Ollama API URL not configured. Please set 'service_urls.ollama_api' in configuration or OLLAMA_API_BASE environment variable."
-            )
+            ) from e
 
     def initialize(self) -> bool:
         """Initialize Ollama connection."""
@@ -643,7 +643,7 @@ class LocalGGUFBackend(LLMBackend):
             self.logger.error(f"Failed to get Local LLM server URL: {e}")
             raise ConfigurationError(
                 "Local LLM server URL not configured. Please set 'service_urls.local_llm_server' in configuration."
-            )
+            ) from e
         self.gguf_manager = None
 
     def initialize(self) -> bool:
@@ -2765,3 +2765,8 @@ def shutdown_llm_manager():
     if _LLM_MANAGER:
         _LLM_MANAGER.shutdown()
         _LLM_MANAGER = None
+
+
+# Aliases for backward compatibility
+LocalModelBackend = HuggingFaceLocalBackend
+ModelManager = LLMManager

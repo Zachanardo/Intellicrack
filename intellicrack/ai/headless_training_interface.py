@@ -365,13 +365,13 @@ class HeadlessTrainingInterface:
     def _execute_training_epoch(self, epoch: int, dataset_path: str, model_config: Dict[str, Any],
                                training_config: Dict[str, Any]) -> tuple[float, float, float, float]:
         """Execute a real training epoch with actual data processing.
-        
+
         Args:
             epoch: Current epoch number
             dataset_path: Path to training dataset
             model_config: Model architecture configuration
             training_config: Training parameters configuration
-            
+
         Returns:
             Tuple of (train_loss, train_acc, val_loss, val_acc)
         """
@@ -454,11 +454,11 @@ class HeadlessTrainingInterface:
 
     def _load_training_data(self, dataset_path: str, validation_split: float = 0.2):
         """Load training data from dataset path.
-        
+
         Args:
             dataset_path: Path to dataset file
             validation_split: Fraction of data to use for validation
-            
+
         Returns:
             Tuple of (train_data, val_data)
         """
@@ -499,11 +499,11 @@ class HeadlessTrainingInterface:
 
     def _generate_training_data(self, num_samples: int, model_config: Dict[str, Any]) -> list:
         """Generate synthetic training data for testing and fallback scenarios.
-        
+
         Args:
             num_samples: Number of samples to generate
             model_config: Model configuration for data generation
-            
+
         Returns:
             List of training samples
         """
@@ -539,13 +539,13 @@ class HeadlessTrainingInterface:
     def _process_training_batch(self, batch_data: list, model_config: Dict[str, Any],
                                learning_rate: float, epoch: int) -> tuple[float, int, int]:
         """Process a training batch with forward and backward passes.
-        
+
         Args:
             batch_data: Batch of training samples
             model_config: Model configuration
             learning_rate: Learning rate for this epoch
             epoch: Current epoch number
-            
+
         Returns:
             Tuple of (batch_loss, correct_predictions, total_samples)
         """
@@ -588,12 +588,12 @@ class HeadlessTrainingInterface:
     def _process_validation_batch(self, batch_data: list, model_config: Dict[str, Any],
                                  epoch: int) -> tuple[float, int, int]:
         """Process a validation batch (inference only, no gradient updates).
-        
+
         Args:
             batch_data: Batch of validation samples
             model_config: Model configuration
             epoch: Current epoch number
-            
+
         Returns:
             Tuple of (batch_loss, correct_predictions, total_samples)
         """
@@ -634,13 +634,13 @@ class HeadlessTrainingInterface:
     def _forward_pass(self, features: list, model_config: Dict[str, Any],
                      epoch: int, validation: bool = False) -> float:
         """Perform forward pass through the neural network model.
-        
+
         Args:
             features: Input features
             model_config: Model architecture configuration
             epoch: Current epoch (affects learning progression)
             validation: Whether this is validation (affects dropout etc.)
-            
+
         Returns:
             Model prediction (probability between 0 and 1)
         """

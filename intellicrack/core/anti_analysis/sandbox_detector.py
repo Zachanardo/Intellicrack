@@ -19,6 +19,7 @@ import ctypes
 import logging
 import os
 import platform
+import shutil
 import socket
 import subprocess
 import time
@@ -61,7 +62,7 @@ class SandboxDetector(BaseDetector):
                 "files": [
                     os.path.join(os.environ.get("SystemDrive", "C:"), "analyzer"),
                     os.path.join(os.environ.get("SystemDrive", "C:"), "sandbox"),
-                    "/tmp/.cuckoo-*",
+                    "/tmp/.cuckoo-*",  # noqa: S108 - Hardcoded path required for sandbox signature detection
                 ],
                 "processes": ["python.exe", "analyzer.py"],
                 "network": ["192.168.56.0/24"],  # Common Cuckoo network
@@ -341,17 +342,28 @@ class SandboxDetector(BaseDetector):
         try:
             # Check network connections
             if platform.system() == "Windows":
-                result = subprocess.run(
-                    ["netstat", "-an"],
-                    check=False,
-                    capture_output=True,
-                    text=True,  # noqa: S607
-                )
+                netstat_path = shutil.which("netstat")
+                if netstat_path:
+                    result = subprocess.run(
+                        [netstat_path, "-an"],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                    )
+                else:
+                    result = None
             else:
-                result = subprocess.run(["ss", "-an"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis  # noqa: S607
+                ss_path = shutil.which("ss")
+                if ss_path:
+                    result = subprocess.run([ss_path, "-an"], check=False, capture_output=True, text=True)
+                else:
+                    result = None
 
-            connections = len([l for l in result.stdout.split("\n") if "ESTABLISHED" in l])
-            details["connections"] = connections
+            if result and result.stdout:
+                connections = len([line for line in result.stdout.split("\n") if "ESTABLISHED" in line])
+                details["connections"] = connections
+            else:
+                details["connections"] = 0
 
             if connections < self.behavioral_patterns["limited_network"]["min_connections"]:
                 details["network_anomalies"].append(f"Few connections: {connections}")
@@ -481,8 +493,8 @@ class SandboxDetector(BaseDetector):
                 os.path.join(os.environ.get("SystemDrive", "C:"), "analyzer"),
                 os.path.join(os.environ.get("SystemDrive", "C:"), "sandbox"),
                 os.path.join(os.environ.get("SystemDrive", "C:"), "analysis"),
-                "/tmp/analysis/",
-                "/tmp/cuckoo/",
+                "/tmp/analysis/",  # noqa: S108 - Hardcoded path required for sandbox signature detection
+                "/tmp/cuckoo/",  # noqa: S108 - Hardcoded path required for sandbox signature detection
                 "/opt/sandbox/",
             ]
 
@@ -827,7 +839,7 @@ class SandboxDetector(BaseDetector):
             with open("/proc/uptime") as f:
                 uptime = float(f.readline().split()[0])
                 return int(uptime)
-        except:
+        except Exception:
             return None
 
     def _ip_in_network(self, ip: str, network: str) -> bool:
@@ -836,7 +848,7 @@ class SandboxDetector(BaseDetector):
             import ipaddress
 
             return ipaddress.ip_address(ip) in ipaddress.ip_network(network)
-        except:
+        except Exception:
             # Simple check for common cases
             network_parts = network.split("/")[0].split(".")
             ip_parts = ip.split(".")

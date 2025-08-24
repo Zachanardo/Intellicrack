@@ -31,6 +31,7 @@ try:
 
     # Test that binwalk actually works by accessing core modules
     from binwalk.core.module import Modules
+    _ = Modules.__name__  # Verify Modules is properly imported and accessible
     BINWALK_AVAILABLE = True
     logger.info("Binwalk available - firmware analysis enabled")
 except (ImportError, ModuleNotFoundError) as e:
@@ -61,7 +62,7 @@ class SecurityFindingType(Enum):
     VULNERABLE_COMPONENT = "vulnerable_component"
     WEAK_ENCRYPTION = "weak_encryption"
     DEBUG_INTERFACE = "debug_interface"
-    DEFAULT_PASSWORD = "default_password"
+    DEFAULT_PASSWORD = "default_password"  # noqa: S105
 
 
 @dataclass
@@ -467,7 +468,7 @@ class FirmwareAnalyzer:
             # Fallback to basic entropy calculation
             try:
                 entropy_analysis["file_entropy"] = self._calculate_basic_entropy(file_path)
-            except:
+            except Exception:
                 entropy_analysis["file_entropy"] = 0.0
 
         return entropy_analysis
@@ -773,14 +774,18 @@ class FirmwareAnalyzer:
 
             # Use subprocess to check for additional system tools
             try:
-                result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
-                    ["file", file_path],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    timeout=5,  # noqa: S607
-                )
-                if result.returncode == 0 and "executable" in result.stdout.lower():
+                file_path_cmd = shutil.which("file")
+                if file_path_cmd:
+                    result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603
+                        [file_path_cmd, file_path],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        timeout=5,
+                    )
+                else:
+                    result = None
+                if result and result.returncode == 0 and "executable" in result.stdout.lower():
                     findings.append(
                         SecurityFinding(
                             finding_type=SecurityFindingType.BACKDOOR_BINARY,

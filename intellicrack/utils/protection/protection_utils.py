@@ -488,7 +488,10 @@ def inject_comprehensive_api_hooks(app, script: str = None) -> None:
                         if (filename && !filename.includes("\\\\Device\\\\")) {
                             console.log("[File] Opening: " + filename);
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        // Failed to read filename - might be null or invalid pointer
+                        console.log("[File] Unable to read filename: " + e.message);
+                    }
                 }
             });
         }
@@ -503,7 +506,10 @@ def inject_comprehensive_api_hooks(app, script: str = None) -> None:
                         if (keyPath && (keyPath.includes("License") || keyPath.includes("Serial"))) {
                             console.log("[Registry] License-related key access: " + keyPath);
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        // Failed to read registry key path - might be null or invalid pointer
+                        console.log("[Registry] Unable to read key path: " + e.message);
+                    }
                 }
             });
         }

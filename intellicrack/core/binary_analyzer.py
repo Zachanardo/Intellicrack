@@ -273,10 +273,10 @@ class BinaryAnalyzer:
         """Calculate various hash values for the file."""
         try:
             hash_algos = {
-                'md5': hashlib.md5(),
-                'sha1': hashlib.sha1(),
                 'sha256': hashlib.sha256(),
-                'sha512': hashlib.sha512()
+                'sha512': hashlib.sha512(),
+                'sha3_256': hashlib.sha3_256(),
+                'blake2b': hashlib.blake2b()
             }
 
             with open(file_path, 'rb') as f:
@@ -577,7 +577,7 @@ class BinaryAnalyzer:
         # Format-specific recommendations
         if file_type == "PE":
             recommendations.extend([
-                "Use PE analysis tools like PEview, CFF Explorer, or Detect It Easy",
+                "Use PE analysis tools like PEview, CFF Explorer, or ICP Analysis",
                 "Check for digital signatures and certificate validity",
                 "Analyze imports and exports for suspicious API usage"
             ])

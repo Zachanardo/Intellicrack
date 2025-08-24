@@ -692,8 +692,8 @@ class PatternMatcher:
         if pattern.type == PatternType.STRING_PATTERN:
             try:
                 self.compiled_patterns[pattern.id] = re.compile(pattern.pattern_data)
-            except:
-                pass  # Invalid regex
+            except re.error as e:
+                self.logger.debug("Invalid regex pattern %s: %s", pattern.id, e)
 
     def match(self, data: bytes, pattern_type: PatternType) -> list[tuple[str, float]]:
         """Match data against patterns, return (``pattern_id``, confidence) tuples"""
@@ -760,8 +760,10 @@ class PatternMatcher:
             if matches:
                 # Confidence based on number of matches
                 return min(1.0, len(matches) / 10.0)
-        except:
-            pass
+        except (re.error, KeyError, AttributeError) as e:
+            self.logger.debug(f"Failed to match string pattern {pattern.id}: {e}")
+        except UnicodeDecodeError as e:
+            self.logger.debug(f"Unicode decode error in pattern matching: {e}")
 
         return 0.0
 
@@ -1284,7 +1286,8 @@ class PatternEvolutionTracker:
                 if pattern_type == PatternType.BYTE_SEQUENCE:
                     pattern_data_parsed = bytes.fromhex(pattern_data["pattern_data"])
                 elif pattern_type in [PatternType.API_SEQUENCE, PatternType.OPCODE_SEQUENCE]:
-                    pattern_data_parsed = eval(pattern_data["pattern_data"])  # List
+                    import ast
+                    pattern_data_parsed = ast.literal_eval(pattern_data["pattern_data"])  # List
                 else:
                     pattern_data_parsed = pattern_data["pattern_data"]  # String
 

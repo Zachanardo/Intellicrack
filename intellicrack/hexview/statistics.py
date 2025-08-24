@@ -18,10 +18,10 @@ logger = get_logger(__name__)
 
 def calculate_byte_distribution(data: bytes) -> Dict[int, int]:
     """Calculate the distribution of byte values in the data.
-    
+
     Args:
         data: Binary data to analyze
-        
+
     Returns:
         Dictionary mapping byte values (0-255) to their occurrence counts
     """
@@ -35,12 +35,12 @@ def calculate_byte_distribution(data: bytes) -> Dict[int, int]:
 
 def calculate_entropy(data: bytes) -> float:
     """Calculate the Shannon entropy of the data.
-    
+
     Higher entropy indicates more randomness/encryption.
-    
+
     Args:
         data: Binary data to analyze
-        
+
     Returns:
         Entropy value (0-8 bits)
     """
@@ -63,10 +63,10 @@ def calculate_entropy(data: bytes) -> float:
 
 def calculate_statistics(data: bytes) -> Dict[str, Any]:
     """Calculate comprehensive statistics for binary data.
-    
+
     Args:
         data: Binary data to analyze
-        
+
     Returns:
         Dictionary containing various statistics
     """
@@ -123,11 +123,11 @@ def calculate_statistics(data: bytes) -> Dict[str, Any]:
 
 def detect_file_type_hints(data: bytes, distribution: Dict[int, int]) -> List[str]:
     """Detect hints about the file type based on byte patterns.
-    
+
     Args:
         data: Binary data to analyze
         distribution: Byte distribution dictionary
-        
+
     Returns:
         List of file type hints
     """
@@ -200,11 +200,11 @@ def detect_file_type_hints(data: bytes, distribution: Dict[int, int]) -> List[st
 
 def calculate_histogram(data: bytes, bins: int = 16) -> List[Tuple[str, int]]:
     """Calculate a histogram of byte values.
-    
+
     Args:
         data: Binary data to analyze
         bins: Number of bins for the histogram
-        
+
     Returns:
         List of (range_label, count) tuples
     """
@@ -236,12 +236,12 @@ def calculate_histogram(data: bytes, bins: int = 16) -> List[Tuple[str, int]]:
 
 def find_patterns(data: bytes, min_length: int = 4, max_patterns: int = 10) -> List[Tuple[bytes, int]]:
     """Find repeating patterns in the data.
-    
+
     Args:
         data: Binary data to analyze
         min_length: Minimum pattern length to detect
         max_patterns: Maximum number of patterns to return
-        
+
     Returns:
         List of (pattern, count) tuples sorted by frequency
     """
@@ -265,12 +265,12 @@ def find_patterns(data: bytes, min_length: int = 4, max_patterns: int = 10) -> L
 
 def calculate_chi_square(data: bytes) -> float:
     """Calculate chi-square test statistic for randomness.
-    
+
     Lower values indicate more uniform distribution (randomness).
-    
+
     Args:
         data: Binary data to analyze
-        
+
     Returns:
         Chi-square test statistic
     """
@@ -294,12 +294,12 @@ def calculate_chi_square(data: bytes) -> float:
 
 def analyze_compression_ratio(data: bytes) -> float:
     """Estimate the compression ratio of the data.
-    
+
     Uses entropy to estimate how compressible the data is.
-    
+
     Args:
         data: Binary data to analyze
-        
+
     Returns:
         Estimated compression ratio (0-1, lower is more compressible)
     """
@@ -320,7 +320,7 @@ class StatisticsCalculator:
 
     def set_progress_callback(self, callback):
         """Set callback for progress updates.
-        
+
         Args:
             callback: Function that takes (current, total) parameters
         """
@@ -328,10 +328,10 @@ class StatisticsCalculator:
 
     def calculate_all(self, data: bytes) -> Dict[str, Any]:
         """Calculate all statistics with progress tracking.
-        
+
         Args:
             data: Binary data to analyze
-            
+
         Returns:
             Dictionary containing all statistics
         """

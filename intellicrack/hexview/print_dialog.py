@@ -41,7 +41,7 @@ class PrintOptionsDialog(QDialog):
 
     def __init__(self, parent=None, hex_viewer=None):
         """Initialize print options dialog.
-        
+
         Args:
             parent: Parent widget
             hex_viewer: Reference to hex viewer widget
@@ -254,7 +254,7 @@ class PrintOptionsDialog(QDialog):
 
     def get_print_data(self):
         """Get the data to print based on selected range.
-        
+
         Returns:
             Tuple of (data, start_offset)
         """
@@ -278,12 +278,12 @@ class PrintOptionsDialog(QDialog):
 
     def format_hex_line(self, offset, data_chunk, bytes_per_row):
         """Format a single line of hex output.
-        
+
         Args:
             offset: Starting offset of this line
             data_chunk: Bytes for this line
             bytes_per_row: Number of bytes per row
-            
+
         Returns:
             Formatted line string
         """
@@ -329,7 +329,7 @@ class PrintOptionsDialog(QDialog):
 
     def render_page(self, painter, page_rect, data, start_offset, page_num, total_pages):
         """Render a page of hex data.
-        
+
         Args:
             painter: QPainter to draw with
             page_rect: Rectangle for the page content
@@ -400,12 +400,12 @@ class PrintOptionsDialog(QDialog):
 
     def replace_variables(self, text, page_num, total_pages):
         """Replace variables in header/footer text.
-        
+
         Args:
             text: Text with variables
             page_num: Current page number
             total_pages: Total pages
-            
+
         Returns:
             Text with variables replaced
         """
@@ -426,10 +426,10 @@ class PrintOptionsDialog(QDialog):
 
     def calculate_total_pages(self, data):
         """Calculate total number of pages.
-        
+
         Args:
             data: Data to print
-            
+
         Returns:
             Total number of pages
         """
@@ -470,7 +470,7 @@ class PrintOptionsDialog(QDialog):
 
     def on_print_preview(self, printer):
         """Handle print preview paint request.
-        
+
         Args:
             printer: QPrinter to render to
         """
@@ -486,7 +486,7 @@ class PrintOptionsDialog(QDialog):
 
     def render_to_printer(self, printer):
         """Render the hex data to a printer.
-        
+
         Args:
             printer: QPrinter to render to
         """

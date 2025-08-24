@@ -22,6 +22,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -585,29 +586,33 @@ class ProgramDiscoveryEngine:
         # Try different package managers
         try:
             # Debian/Ubuntu - dpkg
-            result = subprocess.run(
-                ["dpkg", "-l"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=30,  # noqa: S607
-            )
-            if result.returncode == 0:
-                programs.extend(self._parse_dpkg_output(result.stdout))
+            dpkg_path = shutil.which("dpkg")
+            if dpkg_path:
+                result = subprocess.run(
+                    [dpkg_path, "-l"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                if result.returncode == 0:
+                    programs.extend(self._parse_dpkg_output(result.stdout))
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
             self.logger.error("Error in program_discovery: %s", e)
 
         try:
             # Red Hat/CentOS - rpm
-            result = subprocess.run(
-                ["rpm", "-qa"],
-                check=False,
-                capture_output=True,
-                text=True,
-                timeout=30,  # noqa: S607
-            )
-            if result.returncode == 0:
-                programs.extend(self._parse_rpm_output(result.stdout))
+            rpm_path = shutil.which("rpm")
+            if rpm_path:
+                result = subprocess.run(
+                    [rpm_path, "-qa"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                if result.returncode == 0:
+                    programs.extend(self._parse_rpm_output(result.stdout))
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
             self.logger.error("Error in program_discovery: %s", e)
 

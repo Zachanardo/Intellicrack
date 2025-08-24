@@ -87,7 +87,7 @@ class AuthenticationType(Enum):
     JWT = "jwt"
     API_KEY = "api_key"
     SAML = "saml"
-    BEARER_TOKEN = "bearer_token"
+    BEARER_TOKEN = "bearer_token"  # noqa: S105
     BASIC_AUTH = "basic_auth"
     CUSTOM = "custom"
 
@@ -96,7 +96,7 @@ class RequestType(Enum):
     """Request classification types"""
 
     LICENSE_VALIDATION = "license_validation"
-    TOKEN_REFRESH = "token_refresh"
+    TOKEN_REFRESH = "token_refresh"  # noqa: S105
     FEATURE_CHECK = "feature_check"
     USAGE_REPORTING = "usage_reporting"
     HEARTBEAT = "heartbeat"
@@ -541,8 +541,8 @@ class RequestClassifier:
                     for pattern in patterns:
                         if re.search(pattern, body_str):
                             return auth_type
-            except:
-                pass
+            except Exception as e:
+                self.logger.debug("Error detecting auth type: %s", e)
 
         return AuthenticationType.CUSTOM
 
@@ -570,8 +570,8 @@ class RequestClassifier:
                 if "heartbeat" in body_str or "ping" in body_str or "status" in body_str:
                     body_hints.add("heartbeat")
 
-            except UnicodeDecodeError:
-                pass  # Body is binary, continue with URL/header analysis
+            except UnicodeDecodeError as e:
+                self.logger.debug("Error detecting auth type: %s", e)  # Body is binary, continue with URL/header analysis
 
         # Check URL patterns with body content validation
         for pattern in self.license_patterns:

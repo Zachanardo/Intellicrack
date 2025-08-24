@@ -209,8 +209,8 @@ def create_image_from_icon_data(icon_data: bytes) -> Image.Image | None:
         try:
             icon_io = io.BytesIO(icon_data)
             return Image.open(icon_io)
-        except:
-            pass
+        except Exception as e:
+            logger.debug("Error parsing icon as image: %s", e)
 
         # If that fails, try parsing as DIB (BMP without header)
         if len(icon_data) >= 40:
@@ -246,7 +246,8 @@ def create_image_from_icon_data(icon_data: bytes) -> Image.Image | None:
                 icon_io = io.BytesIO(icon_data)
                 img = Image.open(icon_io)
                 return img
-            except:
+            except Exception as e:
+                logger.debug(f"Failed to parse icon data as image format: {e}")
                 continue
 
         logger.debug("Could not parse icon data as any known format")

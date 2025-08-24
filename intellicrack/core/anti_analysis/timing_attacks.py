@@ -148,7 +148,7 @@ class TimingAttackDefense:
 
         """
         try:
-            target_duration = random.uniform(min_duration, max_duration)
+            target_duration = random.uniform(min_duration, max_duration)  # noqa: S311 - Timing variation for anti-analysis
             self.logger.debug(f"Starting stalling code for ~{target_duration:.1f}s")
 
             start_time = time.perf_counter()
@@ -222,7 +222,7 @@ class TimingAttackDefense:
             self.logger.info("Starting execution delay")
 
             # Random delay between 30-120 seconds
-            delay = random.uniform(30, 120)
+            delay = random.uniform(30, 120)  # noqa: S311 - Timing variation for anti-analysis
 
             if check_environment:
                 # Perform checks during delay
@@ -332,7 +332,7 @@ class TimingAttackDefense:
             import platform
 
             return platform.machine().lower() in ["x86", "x86_64", "amd64", "i386", "i686"]
-        except:
+        except Exception:
             return False
 
     def _get_tick_count(self) -> int | None:

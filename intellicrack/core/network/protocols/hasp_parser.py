@@ -424,7 +424,7 @@ class HASPSentinelParser:
 
         # Generate encryption key for session
         if session_id not in self.encryption_keys:
-            self.encryption_keys[session_id] = hashlib.md5(
+            self.encryption_keys[session_id] = hashlib.sha256(
                 f"{session_id}:{request.vendor_code}:{time.time()}".encode(),
             ).digest()
 

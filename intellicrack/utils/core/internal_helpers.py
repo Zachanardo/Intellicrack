@@ -191,7 +191,7 @@ def _handle_check_license(request_data: dict[str, Any]) -> dict[str, Any]:
     hardware_id = request_data.get("hardware_id", "DEFAULT_HW_ID")
 
     # Generate deterministic license validation based on input
-    license_hash = hashlib.md5(f"{user}:{product}:{hardware_id}".encode()).hexdigest()
+    license_hash = hashlib.sha256(f"{user}:{product}:{hardware_id}".encode()).hexdigest()
 
     # Determine license status based on product and user patterns
     if any(pattern in product.lower() for pattern in ["trial", "demo", "eval"]):
@@ -496,7 +496,7 @@ def _handle_get_key(key_id: str) -> str | None:
 
     if any(pattern in key_id_lower for pattern in ["flexlm", "flex", "license"]):
         # FlexLM style license
-        feature_hash = hashlib.md5(f"feature_{key_id}".encode()).hexdigest()[:8]
+        feature_hash = hashlib.sha256(f"feature_{key_id}".encode()).hexdigest()[:8]
         return f"FEATURE {key_id.upper()} {feature_hash} 1.0 permanent 999 HOSTID=ANY"
 
     if any(pattern in key_id_lower for pattern in ["hasp", "sentinel", "dongle"]):
@@ -2472,12 +2472,12 @@ def _generate_embedding_data(dims: list[int], data_type: str, total_elements: in
 
     if data_type == "float32":
         # Embedding values typically in range [-0.1, 0.1] with some structure
-        for i in range(total_elements):
+        for _i in range(total_elements):
             # Add some patterns to make embeddings more realistic
             base_val = random.gauss(0, 0.05)  # Small Gaussian distribution
             # Add positional encoding-like patterns for some dimensions
-            if len(dims) >= 2 and i % dims[-1] < 64:  # First 64 dimensions get positional patterns
-                pos_component = 0.01 * math.sin(i * 0.01) * math.cos(i * 0.001)
+            if len(dims) >= 2 and _i % dims[-1] < 64:  # First 64 dimensions get positional patterns
+                pos_component = 0.01 * math.sin(_i * 0.01) * math.cos(_i * 0.001)
                 base_val += pos_component
 
             # Clamp to reasonable range
@@ -2486,7 +2486,7 @@ def _generate_embedding_data(dims: list[int], data_type: str, total_elements: in
 
     elif data_type == "float16":
         # Half precision embeddings
-        for i in range(total_elements):
+        for _i in range(total_elements):
             val = random.gauss(0, 0.02)  # Smaller range for fp16
             val = max(-0.1, min(0.1, val))
             # Pack as half precision (approximated with struct)
@@ -2532,24 +2532,24 @@ def _generate_weight_data(dims: list[int], data_type: str, total_elements: int) 
         std_dev = 0.02
 
     if data_type == "float32":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             # Generate weight with proper initialization
             weight = random.gauss(0, std_dev)
 
             # Add small amount of structured initialization for some weights
-            if i % 1000 == 0:  # Every 1000th weight gets a small boost
+            if _i % 1000 == 0:  # Every 1000th weight gets a small boost
                 weight *= 1.1
 
             data.extend(struct.pack("f", weight))
 
     elif data_type == "float16":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             weight = random.gauss(0, std_dev * 0.8)  # Slightly smaller for fp16
             data.extend(struct.pack("e", weight))
 
     # Integer weights (quantized models)
     elif data_type == "int8":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             # Quantized weights typically in range [-128, 127]
             weight = random.gauss(0, 20)  # Scale for int8 range
             weight = max(-128, min(127, int(weight)))
@@ -2578,7 +2578,7 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
     data = bytearray()
 
     if data_type == "float32":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             # Bias typically starts small or zero, with occasional non-zero values
             if random.random() < 0.1:  # 10% chance of non-zero bias
                 bias = random.gauss(0, 0.01)
@@ -2586,13 +2586,13 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
                 bias = 0.0
 
             # Some biases get special initialization (e.g., forget gate bias)
-            if i % 128 == 0:  # Every 128th bias (forget gate pattern)
+            if _i % 128 == 0:  # Every 128th bias (forget gate pattern)
                 bias = 1.0  # Forget gate bias typically initialized to 1
 
             data.extend(struct.pack("f", bias))
 
     elif data_type == "float16":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             bias = random.gauss(0, 0.005) if random.random() < 0.1 else 0.0
             data.extend(struct.pack("e", bias))
 
@@ -2617,10 +2617,10 @@ def _generate_norm_data(dims: list[int], data_type: str, total_elements: int) ->
     data = bytearray()
 
     if data_type == "float32":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             # Layer norm weights typically initialized to 1.0
             # Layer norm biases typically initialized to 0.0
-            if "weight" in str(dims) or i % 2 == 0:  # Assume alternating weight/bias
+            if "weight" in str(dims) or _i % 2 == 0:  # Assume alternating weight/bias
                 val = 1.0  # Weight parameter
             else:
                 val = 0.0  # Bias parameter
@@ -2628,8 +2628,8 @@ def _generate_norm_data(dims: list[int], data_type: str, total_elements: int) ->
             data.extend(struct.pack("f", val))
 
     elif data_type == "float16":
-        for i in range(total_elements):
-            val = 1.0 if i % 2 == 0 else 0.0
+        for _i in range(total_elements):
+            val = 1.0 if _i % 2 == 0 else 0.0
             data.extend(struct.pack("e", val))
 
     else:
@@ -2663,18 +2663,18 @@ def _generate_attention_data(dims: list[int], data_type: str, total_elements: in
         scale_factor = 0.02
 
     if data_type == "float32":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             # Query/Key/Value projection weights
             weight = random.gauss(0, scale_factor)
 
             # Add some structure for positional patterns
-            if i % 64 < 8:  # First few dimensions get slightly different initialization
+            if _i % 64 < 8:  # First few dimensions get slightly different initialization
                 weight *= 0.9
 
             data.extend(struct.pack("f", weight))
 
     elif data_type == "float16":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             weight = random.gauss(0, scale_factor * 0.9)
             data.extend(struct.pack("e", weight))
 
@@ -2702,28 +2702,28 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
     data = bytearray()
 
     if data_type == "float32":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             # Generic small random values
             val = random.gauss(0, 0.01)
 
             # Add some deterministic patterns based on position
-            pattern_val = 0.001 * math.sin(i * 0.01)
+            pattern_val = 0.001 * math.sin(_i * 0.01)
             val += pattern_val
 
             data.extend(struct.pack("f", val))
 
     elif data_type == "float16":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             val = random.gauss(0, 0.008)
             data.extend(struct.pack("e", val))
 
     elif data_type == "int32":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             val = random.randint(-1000, 1000)
             data.extend(struct.pack("i", val))
 
     elif data_type == "int8":
-        for i in range(total_elements):
+        for _i in range(total_elements):
             val = random.randint(-100, 100)
             data.extend(struct.pack("b", val))
 

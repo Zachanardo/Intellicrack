@@ -27,6 +27,7 @@ from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from typing import Any
 
+from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
 from intellicrack.utils.service_health_checker import get_service_url
 
 from ..analysis.entropy_utils import calculate_byte_entropy
@@ -66,10 +67,6 @@ try:
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     pass
-
-from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
-
-logger = logging.getLogger(__name__)
 
 
 def process_binary_chunks(

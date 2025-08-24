@@ -18,9 +18,13 @@ Operating System Detection Utilities
 
 Shared OS detection functions to eliminate code duplication across the codebase.
 """
+import logging
 import os
 import platform
+import tempfile
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 def detect_operating_system() -> str:
@@ -107,7 +111,7 @@ def get_platform_specific_paths() -> dict[str, str]:
             "documents": os.path.join(os.path.expanduser("~"), "Documents"),
         }
     return {
-        "temp": "/tmp",
+        "temp": tempfile.gettempdir(),
         "home": os.path.expanduser("~"),
         "etc": "/etc",
         "var": "/var",
@@ -145,8 +149,8 @@ def detect_file_type(file_path: str) -> str:
                          b'\xfe\xed\xfa\xcf', b'\xcf\xfa\xed\xfe']:
                 return "macho"
 
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Error detecting binary format: %s", e)
 
     return "unknown"
 

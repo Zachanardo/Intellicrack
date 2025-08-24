@@ -202,8 +202,8 @@ class ProtectionAnalyzer:
             "filename": file_path.name,
             "filepath": str(file_path),
             "size": len(file_data),
-            "md5": hashlib.md5(file_data).hexdigest(),
-            "sha1": hashlib.sha1(file_data).hexdigest(),
+            "sha256_primary": hashlib.sha256(file_data).hexdigest(),
+            "sha3_256": hashlib.sha3_256(file_data).hexdigest(),
             "sha256": hashlib.sha256(file_data).hexdigest(),
             "file_type": self._detect_file_type(file_data)
         }
@@ -227,7 +227,7 @@ class ProtectionAnalyzer:
         """Detect protection systems using signatures and heuristics."""
         detections = []
 
-        for protection_id, protection_info in self.protection_signatures.items():
+        for _protection_id, protection_info in self.protection_signatures.items():
             detected = False
             detection_details = {
                 "name": protection_info["name"],
@@ -639,7 +639,6 @@ class ProtectionAnalyzer:
     def _calculate_risk_score(self, protections: List[Dict[str, Any]],
                               entropy: Dict[str, Any], anti_analysis: Dict[str, Any]) -> Dict[str, Any]:
         """Calculate overall risk score."""
-        score = 0
         max_score = 100
 
         # Protection score (0-40 points)

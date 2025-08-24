@@ -75,7 +75,7 @@ class STARTUPINFO(ctypes.Structure):
     ]
 
 
-class PROCESS_INFORMATION(ctypes.Structure):
+class PROCESS_INFORMATION(ctypes.Structure):  # noqa: N801
     """Windows ``PROCESS_INFORMATION`` structure."""
 
     _fields_ = [
@@ -340,7 +340,7 @@ class ProcessHollowing:
                     if len(image_size_bytes) == 4
                     else 0x10000
                 )
-            except:
+            except Exception:
                 image_size = 0x10000  # Default size
 
             new_image_base = kernel32.VirtualAllocEx(

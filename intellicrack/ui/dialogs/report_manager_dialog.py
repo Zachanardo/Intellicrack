@@ -49,7 +49,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QThread,
     QVBoxLayout,
     QWidget,
-    logger,
     pyqtSignal,
 )
 
@@ -630,7 +629,7 @@ class ReportManagerDialog(BaseDialog):
         # Try to open with system default application
         try:
             if sys.platform == "win32":
-                os.startfile(report_path)
+                os.startfile(report_path)  # noqa: S606  # Legitimate report file opening for security research viewing
             elif sys.platform == "darwin":
                 subprocess.run(["open", report_path], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
             else:
@@ -797,7 +796,7 @@ class ReportManagerDialog(BaseDialog):
             if self.open_after_generation.isChecked() and output_path:
                 try:
                     if sys.platform == "win32":
-                        os.startfile(output_path)
+                        os.startfile(output_path)  # noqa: S606  # Legitimate report file opening for security research viewing
                     elif sys.platform == "darwin":
                         subprocess.run(["open", output_path], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
                     else:

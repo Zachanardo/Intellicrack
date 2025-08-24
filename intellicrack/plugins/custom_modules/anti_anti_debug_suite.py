@@ -334,7 +334,7 @@ class PEBManipulator:
             process_handle = self.kernel32.GetCurrentProcess()
 
             # Process basic information structure
-            class PROCESS_BASIC_INFORMATION(ctypes.Structure):
+            class PROCESS_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
                 _fields_ = [
                     ("Reserved1", ctypes.c_void_p),
                     ("PebBaseAddress", ctypes.c_void_p),
@@ -1289,8 +1289,8 @@ class TargetAnalyzer:
                     try:
                         winreg.OpenKey(indicator[0], indicator[1])
                         return True
-                    except FileNotFoundError:
-                        pass
+                    except FileNotFoundError as e:
+                        self.logger.debug("Error removing bypasses: %s", e)
                 # File check
                 elif os.path.exists(indicator):
                     return True
@@ -1799,8 +1799,8 @@ def main():
         # Cleanup
         try:
             suite.remove_bypasses()
-        except:
-            pass
+        except Exception as e:
+            suite.logger.debug("Error removing bypasses: %s", e)
 
 
 if __name__ == "__main__":

@@ -90,7 +90,7 @@ except ImportError as e:
 class ProcessWorker(QThread):
     """Worker thread for process operations"""
 
-    processFound = pyqtSignal(list)
+    process_found = pyqtSignal(list)
     error = pyqtSignal(str)
 
     def run(self):
@@ -116,7 +116,7 @@ class ProcessWorker(QThread):
                 except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                     self.logger.error("Error in frida_manager_dialog: %s", e)
                     continue
-            self.processFound.emit(processes)
+            self.process_found.emit(processes)
         except Exception as e:
             self.logger.error("Exception in frida_manager_dialog: %s", e)
             self.error.emit(str(e))
@@ -125,11 +125,11 @@ class ProcessWorker(QThread):
 class FridaWorker(QThread):
     """Worker thread for Frida operations"""
 
-    statusUpdate = pyqtSignal(str)
-    protectionDetected = pyqtSignal(str, dict)
-    performanceUpdate = pyqtSignal(dict)
+    status_update = pyqtSignal(str)
+    protection_detected = pyqtSignal(str, dict)
+    performance_update = pyqtSignal(dict)
     error = pyqtSignal(str)
-    operationComplete = pyqtSignal(str, bool)
+    operation_complete = pyqtSignal(str, bool)
 
     def __init__(self, frida_manager):
         super().__init__()
@@ -147,7 +147,7 @@ class FridaWorker(QThread):
             if self.operation == "attach":
                 pid = self.params.get("pid")
                 success = self.frida_manager.attach_to_process(pid)
-                self.operationComplete.emit("attach", success)
+                self.operation_complete.emit("attach", success)
 
             elif self.operation == "load_script":
                 session_id = self.params.get("session_id")
@@ -158,13 +158,13 @@ class FridaWorker(QThread):
                     script_name,
                     options,
                 )
-                self.operationComplete.emit("load_script", success)
+                self.operation_complete.emit("load_script", success)
 
             elif self.operation == "monitor":
                 # Continuous monitoring
                 while not self.isInterruptionRequested():
                     stats = self.frida_manager.get_statistics()
-                    self.performanceUpdate.emit(stats)
+                    self.performance_update.emit(stats)
                     self.msleep(1000)  # Update every second
 
         except Exception as e:
@@ -1062,7 +1062,7 @@ class FridaManagerDialog(QDialog):
     def refresh_processes(self):
         """Refresh the process list"""
         self.process_worker = ProcessWorker()
-        self.process_worker.processFound.connect(self.update_process_table)
+        self.process_worker.process_found.connect(self.update_process_table)
         self.process_worker.error.connect(self.show_error)
         self.process_worker.start()
 
@@ -1109,7 +1109,7 @@ class FridaManagerDialog(QDialog):
         self.frida_worker = FridaWorker(self.frida_manager)
         self.frida_worker.operation = "attach"
         self.frida_worker.params = {"pid": self.selected_process["pid"]}
-        self.frida_worker.operationComplete.connect(self.on_attach_complete)
+        self.frida_worker.operation_complete.connect(self.on_attach_complete)
         self.frida_worker.error.connect(self.show_error)
         self.frida_worker.start()
 
@@ -1376,11 +1376,12 @@ class FridaManagerDialog(QDialog):
         """Open script in external editor"""
         try:
             if sys.platform == "win32":
-                os.startfile(script_path)
+                os.startfile(script_path)  # noqa: S606  # Legitimate script file opening for security research development
             elif sys.platform == "darwin":
-                os.system(f"open '{script_path}'")
+                import subprocess
+                subprocess.run(["open", script_path], shell=False)
             else:
-                os.system(f"xdg-open '{script_path}'")
+                subprocess.run(["xdg-open", script_path], shell=False)
         except Exception as e:
             self.logger.error("Exception in frida_manager_dialog: %s", e)
             QMessageBox.warning(
@@ -1417,7 +1418,7 @@ class FridaManagerDialog(QDialog):
             "script_name": script_name,
             "options": options,
         }
-        self.frida_worker.operationComplete.connect(self.on_script_loaded)
+        self.frida_worker.operation_complete.connect(self.on_script_loaded)
         self.frida_worker.error.connect(self.show_error)
         self.frida_worker.start()
 

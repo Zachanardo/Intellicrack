@@ -11,6 +11,7 @@ Licensed under GNU General Public License v3.0
 import json
 import logging
 import os
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass, field
@@ -320,16 +321,20 @@ class MemoryForensicsEngine:
 
             # Try using subprocess to gather system information about the dump
             try:
-                file_result = subprocess.run(  # nosec S603 - Using file command for file type detection  # noqa: S603
-                    ["file", dump_path],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    timeout=10,  # noqa: S607
-                )
-                if file_result.returncode == 0:
-                    result.analysis_profile = file_result.stdout.strip()
-                    logger.debug(f"File command output: {file_result.stdout}")
+                file_cmd_path = shutil.which("file")
+                if file_cmd_path:
+                    file_result = subprocess.run(
+                        [file_cmd_path, dump_path],
+                        check=False,
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
+                    if file_result.returncode == 0:
+                        result.analysis_profile = file_result.stdout.strip()
+                        logger.debug(f"File command output: {file_result.stdout}")
+                else:
+                    logger.warning("'file' command not found in PATH")
             except (subprocess.TimeoutExpired, FileNotFoundError):
                 logger.debug("File command not available or timed out")
 
@@ -1110,7 +1115,7 @@ class MemoryForensicsEngine:
             address = 0
 
             # Define MEMORY_BASIC_INFORMATION structure
-            class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+            class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
                 _fields_ = [
                     ("BaseAddress", ctypes.c_void_p),
                     ("AllocationBase", ctypes.c_void_p),

@@ -259,6 +259,10 @@ class HealthMonitor:
 
     def _start_monitoring(self):
         """Start background health monitoring."""
+        # Skip thread creation during testing
+        if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
+            logger.info("Skipping health monitoring worker (testing mode)")
+            return
 
         def monitoring_worker():
             while self.monitoring_enabled:
@@ -1043,6 +1047,10 @@ class StateManager:
 
     def _start_state_persistence(self):
         """Start background state persistence."""
+        # Skip thread creation during testing
+        if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
+            logger.info("Skipping state persistence worker (testing mode)")
+            return
 
         def persistence_worker():
             while True:

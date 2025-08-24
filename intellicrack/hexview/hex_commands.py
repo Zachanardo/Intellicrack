@@ -239,14 +239,14 @@ class InsertCommand(HexCommand):
 
     def can_merge_with(self, other: "HexCommand") -> bool:
         """Check if this command can be merged with another insert command.
-        
+
         Two InsertCommands can be merged if:
         - They are both InsertCommands
         - The second command's offset is at the end of the first command's insertion
-        
+
         Args:
             other: Another command
-            
+
         Returns:
             True if commands can be merged
         """
@@ -259,13 +259,13 @@ class InsertCommand(HexCommand):
 
     def merge_with(self, other: "HexCommand") -> "HexCommand":
         """Merge with another insert command.
-        
+
         Args:
             other: Another InsertCommand to merge with
-            
+
         Returns:
             New merged InsertCommand
-            
+
         Raises:
             ValueError: If commands cannot be merged
         """
@@ -326,14 +326,14 @@ class DeleteCommand(HexCommand):
 
     def can_merge_with(self, other: "HexCommand") -> bool:
         """Check if this command can be merged with another delete command.
-        
+
         Two DeleteCommands can be merged if:
         - They are both DeleteCommands
         - They are adjacent (either consecutive or overlapping)
-        
+
         Args:
             other: Another command
-            
+
         Returns:
             True if commands can be merged
         """
@@ -358,13 +358,13 @@ class DeleteCommand(HexCommand):
 
     def merge_with(self, other: "HexCommand") -> "HexCommand":
         """Merge with another delete command.
-        
+
         Args:
             other: Another DeleteCommand to merge with
-            
+
         Returns:
             New merged DeleteCommand
-            
+
         Raises:
             ValueError: If commands cannot be merged
         """
@@ -545,7 +545,7 @@ class CommandManager:
 
     def __init__(self, max_history: int = sys.maxsize):
         """Initialize the CommandManager with maximum history size.
-        
+
         Args:
             max_history: Maximum number of commands to keep in history.
                         Defaults to sys.maxsize for virtually unlimited undo/redo.

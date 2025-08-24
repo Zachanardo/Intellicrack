@@ -48,7 +48,7 @@ class ProtectionDetector:
     def detect_protections(self, file_path: str, deep_scan: bool = True) -> ProtectionAnalysis:
         """Analyze a binary file for protections
 
-        This method maintains backward compatibility with the original DIE detector
+        This method maintains backward compatibility with the original ICP detector
         interface while using the unified engine underneath.
 
         Args:
@@ -175,15 +175,15 @@ class ProtectionDetector:
             )
             analysis.detections.append(det_result)
 
-        # Copy DIE-specific data if available
-        if unified_result.die_analysis:
-            die = unified_result.die_analysis
-            analysis.has_overlay = die.has_overlay
-            analysis.has_resources = die.has_resources
-            analysis.entry_point = die.entry_point
-            analysis.sections = die.sections
-            analysis.imports = die.imports
-            analysis.strings = die.strings
+        # Copy ICP-specific data if available
+        if unified_result.icp_analysis:
+            icp_data = unified_result.icp_analysis
+            analysis.has_overlay = icp_data.has_overlay
+            analysis.has_resources = icp_data.has_resources
+            analysis.entry_point = icp_data.entry_point
+            analysis.sections = icp_data.sections
+            analysis.imports = icp_data.imports
+            analysis.strings = icp_data.strings
 
         # Add metadata
         analysis.metadata = {

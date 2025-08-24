@@ -93,7 +93,7 @@ class CacheManager:
     def _get_cache_file_path(self, key: str) -> str:
         """Get the file path for a cache key."""
         # Create a hash of the key to use as filename
-        key_hash = hashlib.md5(key.encode()).hexdigest()
+        key_hash = hashlib.sha256(key.encode()).hexdigest()
         return os.path.join(self.cache_dir, f"{key_hash}.cache")
 
     def get_cached_item(self, key: str) -> Any | None:
@@ -442,7 +442,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
                 str(params) if params else "",
                 str(headers) if headers else "",
             ]
-            cache_key = hashlib.md5(":".join(cache_key_parts).encode()).hexdigest()
+            cache_key = hashlib.sha256(":".join(cache_key_parts).encode()).hexdigest()
 
             # Check the cache
             cached_data = self.cache_manager.get_cached_item(cache_key)
@@ -503,7 +503,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
             return True, response_data, ""
 
-        except requests.RequestException as e:
+        except requests.RequestError as e:
             logger.error(f"Request error: {e!s}")
             return False, None, f"Request error: {e!s}"
 
@@ -586,8 +586,8 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
                 return True, "Download complete"
 
-        except requests.RequestException as e:
-            logger.error("requests.RequestException in base: %s", e)
+        except requests.RequestError as e:
+            logger.error("requests.RequestError in base: %s", e)
             if progress_callback:
                 progress_callback.on_complete(False, f"Download failed: {e!s}")
             return False, f"Download failed: {e!s}"

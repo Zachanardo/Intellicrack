@@ -756,7 +756,7 @@ class QilingEmulator:
                     "syscall_convention": "sysv",
                     "executable_format": "ELF",
                     "path_separator": "/",
-                    "common_dirs": ["/usr", "/etc", "/var", "/tmp", "/home"],
+                    "common_dirs": ["/usr", "/etc", "/var", "/tmp", "/home"],  # noqa: S108
                 },
             )
         elif self.ql_os == QL_OS.MACOS:
@@ -776,7 +776,7 @@ class QilingEmulator:
                     "syscall_convention": "sysv",
                     "executable_format": "ELF",
                     "path_separator": "/",
-                    "common_dirs": ["/usr", "/etc", "/var", "/tmp"],
+                    "common_dirs": ["/usr", "/etc", "/var", "/tmp"],  # noqa: S108
                 },
             )
 

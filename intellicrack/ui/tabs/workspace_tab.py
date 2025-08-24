@@ -742,7 +742,7 @@ class WorkspaceTab(QWidget):
 
     def apply_theme(self):
         """Apply theme configuration to workspace widgets."""
-        theme = self.config_manager.get_theme_config()
+        self.config_manager.get_theme_config()
 
         # Theme styling is now handled centrally by theme manager
         # Widget-specific styles use StyleManager with object names
@@ -790,7 +790,7 @@ class WorkspaceTab(QWidget):
             try:
                 with open(self.loaded_binary_path, 'rb') as f:
                     # Read first 1KB for header analysis
-                    header_data = f.read(1024)
+                    f.read(1024)
 
                 # Provide context to AI Assistant
                 self.ai_assistant.set_current_context(

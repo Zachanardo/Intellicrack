@@ -188,7 +188,7 @@ def create_numpy_fallback():
             """Return indices where condition is true."""
             return [i for i, val in enumerate(condition) if val]
 
-        class random:
+        class Random:
             """Random number generation fallback."""
 
             @staticmethod

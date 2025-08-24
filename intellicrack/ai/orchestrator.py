@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import json
 import logging
+import os
 import queue
 import threading
 from collections.abc import Callable
@@ -402,6 +403,11 @@ class AIOrchestrator:
     def start_processing(self):
         """Start the task processing thread."""
         if not self.is_running:
+            # Skip thread creation during testing
+            if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
+                logger.info("Skipping task processing thread (testing mode)")
+                return
+
             self.is_running = True
             self.processing_thread = threading.Thread(target=self._process_tasks, daemon=True)
             self.processing_thread.start()
@@ -570,7 +576,12 @@ class AIOrchestrator:
             time.sleep(5)  # Keep progress visible for 5 seconds
             self.clear_task_progress(task.task_id)
 
-        threading.Thread(target=clear_progress, daemon=True).start()
+        # Skip thread creation during testing
+        if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
+            threading.Thread(target=clear_progress, daemon=True).start()
+        else:
+            # Execute directly during testing (without delay)
+            self.clear_task_progress(task.task_id)
 
         return result
 

@@ -233,7 +233,7 @@ Process.enumerateModules().forEach(module => {{{{
 
             # Read the detailed data file
             try:
-                with open("/tmp/qemu_test_data.json") as f:
+                with open(f"{tempfile.gettempdir()}/qemu_test_data.json") as f:
                     detailed_data = json.load(f)
                     logger.info(
                         f"Loaded execution data: {len(detailed_data.get('api_calls', []))} API calls captured"

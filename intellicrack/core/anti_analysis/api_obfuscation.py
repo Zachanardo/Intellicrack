@@ -17,7 +17,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import ctypes
 import logging
-import random
+import secrets
 import struct
 import zlib
 from typing import Any
@@ -339,7 +339,7 @@ class APIObfuscator:
                 try:
                     address = kernel32.GetProcAddress(h_module, ordinal)
                     return address if address else None
-                except:
+                except Exception:
                     return None
 
         except Exception as e:
@@ -409,7 +409,7 @@ class APIObfuscator:
 
     def _obfuscated_string(self, string: str) -> bytes:
         """Obfuscate string using XOR encryption."""
-        key = random.randint(1, 255)
+        key = secrets.randbelow(255) + 1
         obfuscated = bytes((ord(c) ^ key) for c in string)
         return struct.pack("B", key) + obfuscated
 
@@ -957,12 +957,12 @@ if (p{api_name}) {{
 
     def _generate_decryption_stub(self, offset: int, size: int, key: int) -> bytearray:
         """Generate x86/x64 assembly decryption stub for runtime decryption.
-        
+
         Args:
             offset: Offset of encrypted section
-            size: Size of encrypted section  
+            size: Size of encrypted section
             key: XOR encryption key
-            
+
         Returns:
             Assembly stub bytes for runtime decryption
         """
@@ -1008,7 +1008,7 @@ if (p{api_name}) {{
         ])
 
         # Decryption loop label
-        loop_start = len(stub)
+        len(stub)
 
         # XOR byte at [ESI] with key
         stub.extend([
@@ -1050,7 +1050,7 @@ if (p{api_name}) {{
         """
         try:
             # Use XOR encryption for API call payloads
-            key = params.get("key", random.randint(1, 255))
+            key = params.get("key", secrets.randbelow(255) + 1)
             modified_code = bytearray(code)
             encrypted_sections = []
 
@@ -1118,7 +1118,7 @@ if (p{api_name}) {{
             ]
 
             # Select random variant
-            variant = random.choice(polymorphic_variants)
+            variant = secrets.choice(polymorphic_variants)
 
             # Look for API calls to wrap
             for i in range(len(code) - 10):
@@ -1127,13 +1127,13 @@ if (p{api_name}) {{
                     wrapper = bytearray()
 
                     # Add junk instructions
-                    wrapper.extend(random.choice(variant))
+                    wrapper.extend(secrets.choice(variant))
 
                     # Add the actual call
                     wrapper.extend(code[i:i+5])
 
                     # Add cleanup junk
-                    wrapper.extend(b'\x90' * random.randint(1, 3))  # Random NOPs
+                    wrapper.extend(b'\x90' * (secrets.randbelow(3) + 1))  # Random NOPs
 
                     wrappers.append({
                         "offset": i,

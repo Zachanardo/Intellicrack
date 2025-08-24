@@ -20,6 +20,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
+import shutil
 from datetime import datetime
 
 from intellicrack.handlers.pyqt6_handler import (
@@ -720,11 +721,15 @@ class AnalysisTab(BaseTab):
 
                     # Try to run strings command for basic analysis
                     try:
-                        result = subprocess.run(['strings', self.current_file_path],
-                                              capture_output=True, text=True, timeout=10)
-                        if result.stdout:
-                            strings_count = len(result.stdout.split('\n'))
-                            self.results_display.append(f"  • Found {strings_count} strings\n")
+                        strings_path = shutil.which('strings')
+                        if not strings_path:
+                            self.results_display.append("  • strings command not available\n")
+                        else:
+                            result = subprocess.run([strings_path, self.current_file_path],
+                                                  capture_output=True, text=True, timeout=10)
+                            if result.stdout:
+                                strings_count = len(result.stdout.split('\n'))
+                                self.results_display.append(f"  • Found {strings_count} strings\n")
                     except (subprocess.TimeoutExpired, FileNotFoundError):
                         self.results_display.append("  • String analysis not available\n")
 

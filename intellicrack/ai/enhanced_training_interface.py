@@ -175,6 +175,7 @@ try:
     # These will be used in widget classes that support matplotlib visualization
     # Store at module level to prevent F401
     _matplotlib_imports = {"FigureCanvas": FigureCanvas, "Figure": Figure}
+    _numpy_module = np  # Keep reference to prevent F401
 except ImportError as e:
     logger.error("Import error in enhanced_training_interface: %s", e)
     MATPLOTLIB_AVAILABLE = False
@@ -633,7 +634,8 @@ class TrainingThread(QThread):
                     if self._is_correct_prediction(prediction, label):
                         correct_predictions += 1
 
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Skipping validation sample due to error: {e}")
                     continue
 
             val_loss = total_loss / total_samples
@@ -1296,10 +1298,10 @@ class HyperparameterOptimizationWidget(QWidget):
 
     def _evaluate_hyperparameters(self, params):
         """Evaluate hyperparameters by performing actual training with the parameters.
-        
+
         Args:
             params: Dictionary containing hyperparameters to evaluate
-            
+
         Returns:
             Tuple of (accuracy, loss) from training evaluation
         """
@@ -1379,7 +1381,7 @@ class HyperparameterOptimizationWidget(QWidget):
             correct_predictions = 0
 
             learning_rate = params.get("learning_rate", 0.001)
-            hidden_layers = params.get("hidden_layers", 2)
+            params.get("hidden_layers", 2)
 
             for sample in batch:
                 # Extract features and labels
@@ -1434,7 +1436,7 @@ class HyperparameterOptimizationWidget(QWidget):
                 next_values = []
 
                 # Process current layer
-                for i in range(min(3, len(current_values))):  # 3 neurons per layer
+                for _i in range(min(3, len(current_values))):  # 3 neurons per layer
                     neuron_sum = sum(val * layer_factor for val in current_values[:3])
                     activation = max(0, neuron_sum)  # ReLU activation
                     next_values.append(activation)

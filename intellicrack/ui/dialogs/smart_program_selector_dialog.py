@@ -18,19 +18,6 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import os
 import sys
 
-from intellicrack.logger import logger
-
-"""Smart program selector dialog for choosing target applications."""
-
-"""
-Smart Program Selector Dialog
-
-Provides an intelligent interface for selecting programs for analysis
-via desktop shortcuts, file resolution, and program discovery.
-"""
-
-
-# Qt imports with fallback handling
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT as HAS_QT,
 )
@@ -47,6 +34,16 @@ from intellicrack.handlers.pyqt6_handler import (
     QVBoxLayout,
     pyqtSignal,
 )
+from intellicrack.logger import logger
+
+"""Smart program selector dialog for choosing target applications."""
+
+"""
+Smart Program Selector Dialog
+
+Provides an intelligent interface for selecting programs for analysis
+via desktop shortcuts, file resolution, and program discovery.
+"""
 
 # Import program discovery components
 try:

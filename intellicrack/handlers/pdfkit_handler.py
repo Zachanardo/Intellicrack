@@ -73,13 +73,13 @@ except ImportError as e:
             self.object_count = 0
 
             # Create catalog and pages
-            catalog_obj = self._add_object({
+            self._add_object({
                 'Type': '/Catalog',
                 'Pages': '2 0 R'
             })
 
             # Create pages object
-            pages_obj = self._add_object({
+            self._add_object({
                 'Type': '/Pages',
                 'Kids': [],
                 'Count': 0
@@ -112,7 +112,7 @@ except ImportError as e:
             pdf_data = self._generate_pdf()
 
             if output_path:
-                if output_path == False:
+                if not output_path:
                     # Return bytes
                     return pdf_data
                 else:
@@ -342,11 +342,11 @@ except ImportError as e:
             return _pdf_generator.create_pdf(input, output_path, options)
         except Exception as e:
             logger.error("PDF generation failed: %s", e)
-            if output_path and output_path != False:
+            if output_path and output_path:
                 # Create minimal PDF file
                 minimal_pdf = b'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<</Font<</F1<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>>>>>Contents 4 0 R>>endobj 4 0 obj<</Length 44>>stream\nBT /F1 12 Tf 50 750 Td (Error) Tj ET\nendstream endobj xref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\n0000000274 00000 n\ntrailer<</Size 5/Root 1 0 R>>startxref\n344\n%%EOF'
 
-                if output_path == False:
+                if not output_path:
                     return minimal_pdf
                 else:
                     with open(output_path, 'wb') as f:
@@ -360,7 +360,7 @@ except ImportError as e:
         # Try to fetch content from URL
         try:
             import urllib.request
-            with urllib.request.urlopen(url) as response:
+            with urllib.request.urlopen(url) as response:  # noqa: S310  # Legitimate URL content fetching for PDF generation in security research tool
                 html = response.read().decode('utf-8')
             return from_string(html, output_path, options, toc, cover, configuration, cover_first)
         except Exception as e:
@@ -626,7 +626,7 @@ except ImportError as e:
                     img_data = base64.b64encode(f.read()).decode()
                 ext = os.path.splitext(self.filename)[1][1:]
                 return f"<img src='data:image/{ext};base64,{img_data}' style='{style}'>"
-            except:
+            except Exception:
                 return f"<img src='{self.filename}' style='{style}'>"
 
     class PageBreak:

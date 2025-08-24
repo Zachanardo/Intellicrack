@@ -21,6 +21,7 @@ import time
 
 from intellicrack.ai.ai_tools import AIAssistant
 from intellicrack.handlers.pyqt6_handler import (
+    QApplication,
     QCheckBox,
     QColor,
     QComboBox,
@@ -33,12 +34,16 @@ from intellicrack.handlers.pyqt6_handler import (
     QLineEdit,
     QMessageBox,
     QPlainTextEdit,
+    QProgressBar,
     QPushButton,
     QSplitter,
+    QSyntaxHighlighter,
     Qt,
     QTabWidget,
+    QTextCharFormat,
     QTextEdit,
     QThread,
+    QTimer,
     QVBoxLayout,
     QWidget,
     pyqtSignal,
@@ -67,15 +72,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
-
-
-from intellicrack.handlers.pyqt6_handler import (
-    QApplication,
-    QProgressBar,
-    QSyntaxHighlighter,
-    QTextCharFormat,
-    QTimer,
-)
 
 
 class TestScriptDialog(BaseDialog):

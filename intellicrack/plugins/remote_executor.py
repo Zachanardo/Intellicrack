@@ -126,8 +126,8 @@ class RemotePluginExecutor:
                 try:
                     json_str = json.dumps(data.__dict__)
                     return base64.b64encode(json_str.encode("utf-8")).decode("ascii")
-                except:
-                    pass
+                except (TypeError, ValueError, AttributeError) as e:
+                    self.logger.debug(f"Failed to serialize object dict for {type(data)}: {e}")
             # Last resort: convert to string
             json_str = json.dumps(str(data))
             return base64.b64encode(json_str.encode("utf-8")).decode("ascii")
@@ -154,7 +154,7 @@ class RemotePluginExecutor:
             return json.loads(decoded.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
             self.logger.error(f"Failed to deserialize as JSON: {e}")
-            raise ValueError("Invalid JSON data")
+            raise ValueError("Invalid JSON data") from e
 
     def execute_plugin(self, plugin_path: str, method_name: str, *args, **kwargs) -> list[str]:
         """Execute a plugin on a remote system.

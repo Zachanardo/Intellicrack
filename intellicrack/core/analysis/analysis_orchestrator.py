@@ -9,6 +9,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
+import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -280,7 +281,7 @@ class AnalysisOrchestrator(QObject):
                 result["script_used"] = selected_script.name
 
                 # Copy binary to VM
-                vm_binary_path = f"/tmp/analysis_{os.path.basename(binary_path)}"
+                vm_binary_path = f"{tempfile.gettempdir()}/analysis_{os.path.basename(binary_path)}"
                 copy_success = self.qemu_manager.copy_file_to_vm(binary_path, vm_binary_path)
 
                 if copy_success:
@@ -384,7 +385,7 @@ class AnalysisOrchestrator(QObject):
         with the selected script and binary.
         """
         ghidra_home = "/opt/ghidra"  # Standard Ghidra installation path in VM
-        project_location = "/tmp/ghidra_projects"
+        project_location = f"{tempfile.gettempdir()}/ghidra_projects"
         project_name = f"analysis_{os.path.basename(binary_path)}"
 
         # Build headless analyzer command

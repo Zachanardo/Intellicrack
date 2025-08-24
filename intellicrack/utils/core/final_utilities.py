@@ -22,6 +22,7 @@ import os
 import platform
 import socket
 import subprocess
+import tempfile
 import threading
 import time
 from collections.abc import Callable
@@ -31,7 +32,7 @@ from typing import Any
 from intellicrack.handlers.numpy_handler import HAS_NUMPY
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT, QFileDialog
 from intellicrack.logger import logger
-from intellicrack.utils.service_health_checker import get_service_url
+from intellicrack.utils.service_utils import get_service_url
 
 from ..utils.logger import setup_logger
 
@@ -674,7 +675,7 @@ def _get_cached_capture_requests(limit: int) -> list[dict[str, Any]]:
                 os.path.expanduser("~"), ".intellicrack", "cache", "network_captures.json"
             ),
             str(data_dir / "captures" / "network_log.json"),
-            os.path.join("/tmp", "intellicrack_network.json"),
+            os.path.join(tempfile.gettempdir(), "intellicrack_network.json"),
         ]
 
         for cache_file in cache_locations:
@@ -1100,10 +1101,10 @@ def sandbox_process(command: list[str], timeout: int = 60) -> dict[str, Any]:
             capture_output=True,
             text=True,
             timeout=timeout,
-            cwd="/tmp",  # Run in temp directory
+            cwd=tempfile.gettempdir(),  # Run in temp directory
             env={
                 "PATH": "/usr/bin:/bin",  # Restricted PATH
-                "HOME": "/tmp",
+                "HOME": tempfile.gettempdir(),
             },
             check=False,
         )
@@ -2174,7 +2175,7 @@ def _save_report_as_csv(report_data: dict[str, Any], csv_path: str) -> bool:
 
         # Look for list/array data that can be converted to CSV
         content = report_data.get("content", {})
-        for key, value in content.items():
+        for _key, value in content.items():
             if isinstance(value, list) and value:
                 if isinstance(value[0], dict):
                     # List of dictionaries - perfect for CSV

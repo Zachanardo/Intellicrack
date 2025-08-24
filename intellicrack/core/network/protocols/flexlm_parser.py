@@ -178,7 +178,7 @@ class FlexLMProtocolParser:
 
     def _generate_encryption_seed(self) -> bytes:
         """Generate encryption seed for FlexLM communication"""
-        return hashlib.md5(str(time.time()).encode()).digest()
+        return hashlib.sha256(str(time.time()).encode()).digest()
 
     def parse_request(self, data: bytes) -> FlexLMRequest | None:
         """Parse incoming FlexLM request
@@ -518,7 +518,7 @@ class FlexLMProtocolParser:
     def _handle_hostid_request(self, request: FlexLMRequest) -> FlexLMResponse:
         """Handle host ID request"""
         # Generate deterministic host ID
-        hostid = hashlib.md5(request.hostname.encode()).hexdigest()[:12].upper()
+        hostid = hashlib.sha256(request.hostname.encode()).hexdigest()[:12].upper()
 
         return FlexLMResponse(
             status=0x00,  # SUCCESS

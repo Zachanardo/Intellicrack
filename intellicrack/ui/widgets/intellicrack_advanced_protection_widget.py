@@ -168,7 +168,7 @@ class EntropyGraphWidget(FigureCanvas):
 
 
 class IntellicrackAdvancedProtectionWidget(QWidget):
-    """Advanced widget for DIE protection detection with full feature access"""
+    """Advanced widget for ICP protection detection with full feature access"""
 
     # Signals
     #: protection_name, bypass_recommendations (type: str, list)
@@ -218,7 +218,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
 
         # Title row
         title_layout = QHBoxLayout()
-        title_label = QLabel("Advanced Protection Detection (DIE)")
+        title_label = QLabel("Advanced Protection Detection (ICP)")
         title_font = QFont()
         title_font.setPointSize(14)
         title_font.setBold(True)
@@ -984,7 +984,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Export Analysis Results",
-            f"die_analysis.{ext}",
+            f"icp_analysis.{ext}",
             f"{format_text} Files (*.{ext});;All Files (*.*)",
         )
 
@@ -1029,5 +1029,3 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 self.on_analyze_clicked()
 
 
-# Backward compatibility alias
-DIEAdvancedProtectionWidget = IntellicrackAdvancedProtectionWidget

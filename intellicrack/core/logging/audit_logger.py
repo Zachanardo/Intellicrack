@@ -855,6 +855,11 @@ class TelemetryCollector:
         if self._running:
             return
 
+        # Skip during testing
+        if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
+            logger.info("Skipping telemetry collection (testing mode)")
+            return
+
         self._running = True
         self._export_thread = threading.Thread(target=self._export_loop, daemon=True)
         self._export_thread.start()

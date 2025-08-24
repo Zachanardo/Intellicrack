@@ -49,7 +49,7 @@ class ExportDialog(QDialog):
 
     def __init__(self, parent=None, hex_viewer=None):
         """Initialize export dialog.
-        
+
         Args:
             parent: Parent widget
             hex_viewer: Reference to hex viewer widget
@@ -168,15 +168,13 @@ class ExportDialog(QDialog):
 
     def on_format_changed(self, format_name: str):
         """Handle format selection change.
-        
+
         Args:
             format_name: Selected format name
         """
         # Show/hide relevant options based on format
         is_hex_text = format_name == "Hex Text"
         is_array = format_name in ["C Array", "C++ Array", "Java Array", "Python Bytes"]
-        is_intel_hex = format_name == "Intel Hex"
-        is_srec = format_name == "Motorola S-Record"
 
         self.hex_uppercase_check.setVisible(is_hex_text or is_array)
         self.items_per_line_spin.parent().setVisible(is_array)
@@ -282,7 +280,7 @@ class ExportDialog(QDialog):
 
     def get_export_data(self) -> Optional[bytes]:
         """Get the data to export based on selection.
-        
+
         Returns:
             Bytes to export or None if unavailable
         """
@@ -314,10 +312,10 @@ class ExportDialog(QDialog):
 
     def format_hex_text(self, data: bytes) -> str:
         """Format data as hex text.
-        
+
         Args:
             data: Binary data
-            
+
         Returns:
             Formatted hex string
         """
@@ -326,10 +324,10 @@ class ExportDialog(QDialog):
 
     def format_c_array(self, data: bytes) -> str:
         """Format data as C array.
-        
+
         Args:
             data: Binary data
-            
+
         Returns:
             C array source code
         """
@@ -359,10 +357,10 @@ class ExportDialog(QDialog):
 
     def format_cpp_array(self, data: bytes) -> str:
         """Format data as C++ array.
-        
+
         Args:
             data: Binary data
-            
+
         Returns:
             C++ array source code
         """
@@ -392,10 +390,10 @@ class ExportDialog(QDialog):
 
     def format_java_array(self, data: bytes) -> str:
         """Format data as Java array.
-        
+
         Args:
             data: Binary data
-            
+
         Returns:
             Java array source code
         """
@@ -430,10 +428,10 @@ class ExportDialog(QDialog):
 
     def format_python_bytes(self, data: bytes) -> str:
         """Format data as Python bytes.
-        
+
         Args:
             data: Binary data
-            
+
         Returns:
             Python bytes literal
         """
@@ -459,11 +457,11 @@ class ExportDialog(QDialog):
 
     def format_intel_hex(self, data: bytes, base_address: int = 0) -> str:
         """Format data as Intel Hex.
-        
+
         Args:
             data: Binary data
             base_address: Starting address
-            
+
         Returns:
             Intel Hex format string
         """
@@ -495,11 +493,11 @@ class ExportDialog(QDialog):
 
     def format_srec(self, data: bytes, base_address: int = 0) -> str:
         """Format data as Motorola S-Record.
-        
+
         Args:
             data: Binary data
             base_address: Starting address
-            
+
         Returns:
             S-Record format string
         """
@@ -539,10 +537,10 @@ class ExportDialog(QDialog):
 
     def format_base64(self, data: bytes) -> str:
         """Format data as Base64.
-        
+
         Args:
             data: Binary data
-            
+
         Returns:
             Base64 encoded string
         """
@@ -558,10 +556,10 @@ class ExportDialog(QDialog):
 
     def format_data_uri(self, data: bytes) -> str:
         """Format data as Data URI.
-        
+
         Args:
             data: Binary data
-            
+
         Returns:
             Data URI string
         """

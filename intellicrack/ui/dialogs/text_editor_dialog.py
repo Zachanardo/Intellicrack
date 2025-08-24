@@ -51,7 +51,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QTextDocument,
     QToolBar,
     QVBoxLayout,
-    logger,
     pyqtSignal,
 )
 
@@ -171,77 +170,77 @@ if HAS_PYQT and QDialog:
     class FindReplaceDialog(QDialog):
         """Find and replace dialog."""
 
-    def __init__(self, parent=None):
-        """Initialize the find and replace dialog for text search and replacement functionality."""
-        if not HAS_PYQT:
-            return
+        def __init__(self, parent=None):
+            """Initialize the find and replace dialog for text search and replacement functionality."""
+            if not HAS_PYQT:
+                return
 
-        super().__init__(parent)
-        self.text_editor = parent
-        self.setup_ui()
+            super().__init__(parent)
+            self.text_editor = parent
+            self.setup_ui()
 
-    def setup_ui(self):
-        """Set up the find/replace UI."""
-        self.setWindowTitle("Find and Replace")
-        self.setModal(False)
-        self.resize(400, 200)
+        def setup_ui(self):
+            """Set up the find/replace UI."""
+            self.setWindowTitle("Find and Replace")
+            self.setModal(False)
+            self.resize(400, 200)
 
-        layout = QVBoxLayout()
+            layout = QVBoxLayout()
 
-        # Find section
-        find_layout = QHBoxLayout()
-        find_layout.addWidget(QLabel("Find:"))
-        self.find_edit = QLineEdit()
-        find_layout.addWidget(self.find_edit)
-        layout.addLayout(find_layout)
+            # Find section
+            find_layout = QHBoxLayout()
+            find_layout.addWidget(QLabel("Find:"))
+            self.find_edit = QLineEdit()
+            find_layout.addWidget(self.find_edit)
+            layout.addLayout(find_layout)
 
-        # Replace section
-        replace_layout = QHBoxLayout()
-        replace_layout.addWidget(QLabel("Replace:"))
-        self.replace_edit = QLineEdit()
-        replace_layout.addWidget(self.replace_edit)
-        layout.addLayout(replace_layout)
+            # Replace section
+            replace_layout = QHBoxLayout()
+            replace_layout.addWidget(QLabel("Replace:"))
+            self.replace_edit = QLineEdit()
+            replace_layout.addWidget(self.replace_edit)
+            layout.addLayout(replace_layout)
 
-        # Options
-        options_layout = QHBoxLayout()
-        self.case_sensitive = QCheckBox("Case sensitive")
-        self.whole_words = QCheckBox("Whole words")
-        self.regex_mode = QCheckBox("Regular expressions")
+            # Options
+            options_layout = QHBoxLayout()
+            self.case_sensitive = QCheckBox("Case sensitive")
+            self.whole_words = QCheckBox("Whole words")
+            self.regex_mode = QCheckBox("Regular expressions")
 
-        options_layout.addWidget(self.case_sensitive)
-        options_layout.addWidget(self.whole_words)
-        options_layout.addWidget(self.regex_mode)
-        layout.addLayout(options_layout)
+            options_layout.addWidget(self.case_sensitive)
+            options_layout.addWidget(self.whole_words)
+            options_layout.addWidget(self.regex_mode)
+            layout.addLayout(options_layout)
 
-        # Buttons
-        button_layout = QHBoxLayout()
+            # Buttons
+            button_layout = QHBoxLayout()
 
-        self.find_next_btn = QPushButton("Find Next")
-        self.find_next_btn.clicked.connect(self.find_next)
+            self.find_next_btn = QPushButton("Find Next")
+            self.find_next_btn.clicked.connect(self.find_next)
 
-        self.find_prev_btn = QPushButton("Find Previous")
-        self.find_prev_btn.clicked.connect(self.find_previous)
+            self.find_prev_btn = QPushButton("Find Previous")
+            self.find_prev_btn.clicked.connect(self.find_previous)
 
-        self.replace_btn = QPushButton("Replace")
-        self.replace_btn.clicked.connect(self.replace_current)
+            self.replace_btn = QPushButton("Replace")
+            self.replace_btn.clicked.connect(self.replace_current)
 
-        self.replace_all_btn = QPushButton("Replace All")
-        self.replace_all_btn.clicked.connect(self.replace_all)
+            self.replace_all_btn = QPushButton("Replace All")
+            self.replace_all_btn.clicked.connect(self.replace_all)
 
-        self.close_btn = QPushButton("Close")
-        self.close_btn.clicked.connect(self.close)
+            self.close_btn = QPushButton("Close")
+            self.close_btn.clicked.connect(self.close)
 
-        button_layout.addWidget(self.find_next_btn)
-        button_layout.addWidget(self.find_prev_btn)
-        button_layout.addWidget(self.replace_btn)
-        button_layout.addWidget(self.replace_all_btn)
-        button_layout.addWidget(self.close_btn)
+            button_layout.addWidget(self.find_next_btn)
+            button_layout.addWidget(self.find_prev_btn)
+            button_layout.addWidget(self.replace_btn)
+            button_layout.addWidget(self.replace_all_btn)
+            button_layout.addWidget(self.close_btn)
 
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
+            layout.addLayout(button_layout)
+            self.setLayout(layout)
 
-        # Connect enter key to find next
-        self.find_edit.returnPressed.connect(self.find_next)
+            # Connect enter key to find next
+            self.find_edit.returnPressed.connect(self.find_next)
 
     def find_next(self):
         """Find next occurrence."""
@@ -292,41 +291,41 @@ if HAS_PYQT and QDialog:
         #: Emitted when content changes (type: bool)
         content_changed = pyqtSignal(bool)
 
-    def __init__(self, title="Text Editor", content="", syntax="python", parent=None):
-        """Initialize text editor dialog with syntax highlighting and advanced editing features."""
-        super().__init__(parent)
-        self.setWindowTitle(title)
-        self.setMinimumSize(800, 600)
+        def __init__(self, title="Text Editor", content="", syntax="python", parent=None):
+            """Initialize text editor dialog with syntax highlighting and advanced editing features."""
+            super().__init__(parent)
+            self.setWindowTitle(title)
+            self.setMinimumSize(800, 600)
 
-        # Editor state
-        self.current_file = None
-        self.is_modified = False
-        self.syntax_mode = syntax
-        self.find_replace_dialog = None
+            # Editor state
+            self.current_file = None
+            self.is_modified = False
+            self.syntax_mode = syntax
+            self.find_replace_dialog = None
 
-        # File watcher for external changes
-        self.file_watcher = QFileSystemWatcher()
-        self.file_watcher.fileChanged.connect(self.on_file_changed_externally)
+            # File watcher for external changes
+            self.file_watcher = QFileSystemWatcher()
+            self.file_watcher.fileChanged.connect(self.on_file_changed_externally)
 
-        # Setup UI
-        self.setup_ui()
-        self.setup_connections()
-        self.setup_shortcuts()
+            # Setup UI
+            self.setup_ui()
+            self.setup_connections()
+            self.setup_shortcuts()
 
-        # Set content and syntax highlighting
-        self.set_content(content)
-        self.set_syntax_highlighting(syntax)
+            # Set content and syntax highlighting
+            self.set_content(content)
+            self.set_syntax_highlighting(syntax)
 
-        # Configure editor
-        self.configure_editor()
+            # Configure editor
+            self.configure_editor()
 
-        # Load settings
-        self.load_settings()
+            # Load settings
+            self.load_settings()
 
-        # Track modifications
-        self.text_edit.textChanged.connect(self.on_text_changed)
+            # Track modifications
+            self.text_edit.textChanged.connect(self.on_text_changed)
 
-        logger.info(f"Text Editor Dialog initialized with syntax: {syntax}")
+            logger.info(f"Text Editor Dialog initialized with syntax: {syntax}")
 
     def setup_ui(self):
         """Set up the user interface."""

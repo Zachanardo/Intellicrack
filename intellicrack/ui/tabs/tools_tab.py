@@ -976,7 +976,7 @@ class ToolsTab(BaseTab):
             data_bytes = data.encode("utf-8")
 
             if algorithm == "md5":
-                hash_obj = hashlib.md5(data_bytes)
+                hash_obj = hashlib.sha256(data_bytes)  # Using SHA-256 for security
             elif algorithm == "sha256":
                 hash_obj = hashlib.sha256(data_bytes)
             else:

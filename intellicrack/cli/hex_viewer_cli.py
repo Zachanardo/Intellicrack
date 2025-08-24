@@ -106,7 +106,7 @@ class TerminalHexViewer:
                     self.data = f.read()
                 self.file_handle = None
             except OSError:
-                raise OSError(f"Cannot open file: {e}")
+                raise OSError(f"Cannot open file: {e}") from e
 
     def _setup_colors(self):
         """Setup color pairs for the interface."""

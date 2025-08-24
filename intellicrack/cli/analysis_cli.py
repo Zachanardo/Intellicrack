@@ -267,7 +267,7 @@ class AnalysisCLI:
         ]
 
         found = []
-        for dll, funcs in imports.items():
+        for _dll, funcs in imports.items():
             for func in funcs:
                 if func in suspicious_apis:
                     found.append(func)

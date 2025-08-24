@@ -392,7 +392,7 @@ class HASPEmulator(BaseDongleEmulator):
         try:
             memory_data = self.read_memory(address, length)
             return struct.pack("<I", 0) + memory_data  # Success + data
-        except:
+        except Exception:
             return b"\x00\x00\x00\x01"  # Error
 
     def _hasp_write_memory(self, data: bytes) -> bytes:
@@ -406,7 +406,7 @@ class HASPEmulator(BaseDongleEmulator):
         try:
             success = self.write_memory(address, write_data)
             return struct.pack("<I", 0 if success else 1)
-        except:
+        except Exception:
             return b"\x00\x00\x00\x01"  # Error
 
     def _hasp_get_size(self, data: bytes) -> bytes:
@@ -1454,7 +1454,7 @@ class HardwareDongleEmulator:
                 "write_success": write_success,
                 "read_success": read_data == test_pattern,
                 "data_integrity": read_data == test_pattern,
-                "pattern_hash": hashlib.md5(test_pattern).hexdigest(),
+                "pattern_hash": hashlib.sha256(test_pattern).hexdigest(),
             }
 
             # Test encryption with real cryptographic validation

@@ -36,7 +36,7 @@ class ChecksumWorker(QThread):
 
     def __init__(self, data: bytes | None = None, file_path: str | None = None):
         """Initialize worker.
-        
+
         Args:
             data: Binary data to process
             file_path: Path to file (if processing file instead of data)
@@ -50,7 +50,7 @@ class ChecksumWorker(QThread):
 
     def set_algorithms(self, algorithms: list[str]):
         """Set algorithms to calculate.
-        
+
         Args:
             algorithms: List of algorithm names
         """
@@ -58,7 +58,7 @@ class ChecksumWorker(QThread):
 
     def _progress_callback(self, current: int, total: int):
         """Progress callback for calculator.
-        
+
         Args:
             current: Current progress
             total: Total items
@@ -97,7 +97,7 @@ class ChecksumDialog(QDialog):
 
     def __init__(self, parent=None, hex_viewer=None):
         """Initialize checksum dialog.
-        
+
         Args:
             parent: Parent widget
             hex_viewer: Reference to hex viewer widget
@@ -230,7 +230,7 @@ class ChecksumDialog(QDialog):
 
     def get_selected_algorithms(self) -> list[str]:
         """Get list of selected algorithms.
-        
+
         Returns:
             List of algorithm names
         """
@@ -303,7 +303,7 @@ class ChecksumDialog(QDialog):
 
     def update_progress(self, current: int, total: int):
         """Update progress bar.
-        
+
         Args:
             current: Current progress
             total: Total items
@@ -312,7 +312,7 @@ class ChecksumDialog(QDialog):
 
     def display_results(self, results: dict[str, str]):
         """Display calculation results.
-        
+
         Args:
             results: Dictionary of algorithm names and results
         """
@@ -347,7 +347,7 @@ class ChecksumDialog(QDialog):
 
     def display_error(self, error: str):
         """Display error message.
-        
+
         Args:
             error: Error message
         """

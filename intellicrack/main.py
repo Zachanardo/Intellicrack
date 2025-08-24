@@ -52,8 +52,8 @@ if "DISPLAY" not in os.environ and "QT_QPA_PLATFORM" not in os.environ:
             with open("/proc/version", encoding="utf-8") as f:
                 if "microsoft" in f.read().lower():
                     os.environ["QT_QPA_PLATFORM"] = "offscreen"
-        except:
-            pass
+        except (IOError, OSError) as e:
+            print(f"Warning: Could not read /proc/version to detect WSL: {e}")
     # Don't set offscreen mode on Windows - use native rendering
     elif os.name != "nt":
         os.environ["QT_QPA_PLATFORM"] = "offscreen"

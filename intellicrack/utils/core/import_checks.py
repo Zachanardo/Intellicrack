@@ -132,6 +132,7 @@ except ImportError as e:
 # GUI framework availability check only - imports handled by common_imports
 try:
     import PyQt6
+    _ = PyQt6.__name__  # Verify PyQt6 is properly imported and available
     HAS_PYQT = True
 except ImportError as e:
     logger.error("Import error in import_checks: %s", e)

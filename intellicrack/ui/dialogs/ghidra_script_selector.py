@@ -531,7 +531,7 @@ class GhidraScriptSelector(QDialog):
         system = platform.system()
         try:
             if system == "Windows" and hasattr(os, "startfile"):
-                os.startfile(user_scripts_dir)  # pylint: disable=no-member
+                os.startfile(user_scripts_dir)  # noqa: S606  # Legitimate directory opening for security research script access  # pylint: disable=no-member
             elif system == "Darwin":  # macOS
                 subprocess.run(["open", user_scripts_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis  # noqa: S603, S607
             else:  # Linux and others

@@ -550,8 +550,8 @@ class SecretsManager:
                         keychain_value = keyring.get_password(self.SERVICE_NAME, key)
                         if keychain_value:
                             key_info["in_keychain"] = True
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("Error checking keychain: %s", e)
 
                 metadata["encrypted_keys"].append(key_info)
 

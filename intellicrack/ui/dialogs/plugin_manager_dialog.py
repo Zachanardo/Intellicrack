@@ -488,7 +488,7 @@ else:
 
                 return None
 
-            except requests.RequestException as req_error:
+            except requests.RequestError as req_error:
                 logger.debug(f"Network error fetching version for {plugin_name}: {req_error}")
                 return None
             except Exception as e:
@@ -943,7 +943,7 @@ Path: {plugin_info.get('path', 'Unknown')}"""
                 # Reset to defaults button
                 reset_btn = QPushButton("Reset to Defaults")
                 def reset_defaults():
-                    for key, label, widget_type, default_value in config_options:
+                    for key, _label, widget_type, default_value in config_options:
                         widget = config_widgets[key]
                         if widget_type == "checkbox":
                             widget.setChecked(bool(default_value))
@@ -1026,26 +1026,37 @@ Path: {plugin_info.get('path', 'Unknown')}"""
                     # Try to import the dependency
                     if dep == 'numpy':
                         import numpy
+                        _ = numpy.__name__  # Verify numpy scientific computing library is available
                     elif dep == 'scipy':
                         import scipy
+                        _ = scipy.__name__  # Verify scipy scientific computing library is available
                     elif dep == 'pefile':
                         import pefile
+                        _ = pefile.__name__  # Verify pefile PE analysis library is available
                     elif dep == 'yara-python':
                         import yara
+                        _ = yara.__name__  # Verify yara pattern matching engine is available
                     elif dep == 'frida':
                         import frida
+                        _ = frida.__name__  # Verify frida dynamic instrumentation toolkit is available
                     elif dep == 'psutil':
                         import psutil
+                        _ = psutil.__name__  # Verify psutil system monitoring library is available
                     elif dep == 'capstone':
                         import capstone
+                        _ = capstone.__name__  # Verify capstone disassembly engine is available
                     elif dep == 'unicorn':
                         import unicorn
+                        _ = unicorn.__name__  # Verify unicorn CPU emulator engine is available
                     elif dep == 'scapy':
                         import scapy
+                        _ = scapy.__name__  # Verify scapy network packet manipulation library is available
                     elif dep == 'pyshark':
                         import pyshark
+                        _ = pyshark.__name__  # Verify pyshark Wireshark packet capture library is available
                     elif dep == 'regex':
                         import regex
+                        _ = regex.__name__  # Verify regex enhanced regular expression library is available
                     # Add more dependency checks as needed
                 except ImportError:
                     missing.append(dep)
@@ -1205,7 +1216,7 @@ Path: {plugin_info.get('path', 'Unknown')}"""
 {name} - Analysis Plugin for Intellicrack
 
 Author: {author}
-Version: {version}  
+Version: {version}
 Description: {description}
 """
 
@@ -1226,7 +1237,7 @@ class {class_name}Plugin:
         self.description = "{description}"
         self.author = "{author}"
         self.category = "Analysis"
-        
+
         # Analysis state
         self.app = None
         self.analysis_results = {{}}
@@ -1251,12 +1262,12 @@ class {class_name}Plugin:
         """Calculate Shannon entropy of binary data."""
         if not data:
             return 0.0
-            
+
         # Count byte frequencies
         freq = [0] * 256
         for byte in data:
             freq[byte] += 1
-            
+
         # Calculate entropy
         entropy = 0.0
         data_len = len(data)
@@ -1264,22 +1275,22 @@ class {class_name}Plugin:
             if count > 0:
                 p = count / data_len
                 entropy -= p * (p.bit_length() - 1) if p > 0 else 0
-                
+
         return entropy
 
     def detect_packers(self, data: bytes) -> List[str]:
         """Detect known packers and protectors."""
         detected = []
-        
+
         # Check first 2KB for packer signatures
         header = data[:2048]
-        
+
         for packer, signatures in self.signature_db.items():
             for sig in signatures:
                 if sig in header:
                     detected.append(packer.upper())
                     break
-                    
+
         return detected
 
     def analyze_sections(self, file_path: str) -> Dict[str, Any]:
@@ -1289,11 +1300,11 @@ class {class_name}Plugin:
             'suspicious_sections': [],
             'entry_point': None
         }}
-        
+
         try:
             with open(file_path, 'rb') as f:
                 data = f.read()
-                
+
             # Basic PE header check
             if data.startswith(b'MZ'):
                 # Look for PE signature
@@ -1304,50 +1315,50 @@ class {class_name}Plugin:
                         pe_sig = data[pe_offset:pe_offset+4]
                         if pe_sig == b'PE\\x00\\x00':
                             results['pe_detected'] = True
-                            
+
                             # Extract basic section info (simplified)
                             sections_data = self._extract_pe_sections(data, pe_offset)
                             results.update(sections_data)
-                        
+
         except Exception as e:
             logger.debug(f"Section analysis failed: {{e}}")
-            
+
         return results
 
     def _extract_pe_sections(self, data: bytes, pe_offset: int) -> Dict[str, Any]:
         """Extract PE section information."""
         sections = []
         suspicious = []
-        
+
         try:
             # PE header starts after signature
             pe_header = pe_offset + 4
-            
+
             # Machine type and section count (simplified extraction)
             if len(data) > pe_header + 6:
                 num_sections = int.from_bytes(data[pe_header+2:pe_header+4], 'little')
-                
+
                 # Optional header size
                 opt_header_size = int.from_bytes(data[pe_header+16:pe_header+18], 'little')
-                
+
                 # Section table starts after optional header
                 section_table = pe_header + 20 + opt_header_size
-                
+
                 for i in range(min(num_sections, 10)):  # Limit to 10 sections
                     section_offset = section_table + (i * 40)
                     if section_offset + 40 > len(data):
                         break
-                        
+
                     # Extract section name (8 bytes)
                     name_bytes = data[section_offset:section_offset+8]
                     name = name_bytes.rstrip(b'\\x00').decode('ascii', errors='ignore')
-                    
+
                     # Virtual size and address
                     virtual_size = int.from_bytes(data[section_offset+8:section_offset+12], 'little')
                     virtual_addr = int.from_bytes(data[section_offset+12:section_offset+16], 'little')
                     raw_size = int.from_bytes(data[section_offset+16:section_offset+20], 'little')
                     raw_addr = int.from_bytes(data[section_offset+20:section_offset+24], 'little')
-                    
+
                     section_info = {{
                         'name': name,
                         'virtual_size': virtual_size,
@@ -1355,19 +1366,19 @@ class {class_name}Plugin:
                         'raw_size': raw_size,
                         'raw_address': raw_addr
                     }}
-                    
+
                     sections.append(section_info)
-                    
+
                     # Check for suspicious characteristics
                     if name in ['.upx0', '.upx1', '.aspack', '.themida']:
                         suspicious.append(f"Suspicious section name: {{name}}")
-                    
+
                     if virtual_size > 0 and raw_size == 0:
                         suspicious.append(f"Virtual section detected: {{name}}")
-                        
+
         except Exception as e:
             logger.debug(f"PE section extraction failed: {{e}}")
-            
+
         return {{
             'sections': sections,
             'suspicious_sections': suspicious
@@ -1376,52 +1387,52 @@ class {class_name}Plugin:
     def execute(self, binary_path: str, *args, **kwargs) -> Dict[str, Any]:
         """Execute main analysis functionality."""
         logger.info(f"Starting {{self.name}} analysis on: {{binary_path}}")
-        
+
         if not os.path.exists(binary_path):
             return {{
                 'status': 'error',
                 'message': f'File not found: {{binary_path}}',
                 'data': {{}}
             }}
-            
+
         try:
             start_time = time.time()
-            
+
             # Read file data
             with open(binary_path, 'rb') as f:
                 file_data = f.read()
-                
+
             # Basic file info
             file_info = {{
                 'size': len(file_data),
                 'md5': hashlib.md5(file_data).hexdigest(),
                 'sha256': hashlib.sha256(file_data).hexdigest()
             }}
-            
+
             # Entropy analysis
             entropy = self.analyze_entropy(file_data)
-            
+
             # Packer detection
             packers = self.detect_packers(file_data)
-            
+
             # Section analysis
             sections = self.analyze_sections(binary_path)
-            
+
             # String extraction (sample first 10KB)
             strings = self._extract_strings(file_data[:10240])
-            
+
             results = {{
                 'file_info': file_info,
                 'entropy': entropy,
                 'packers_detected': packers,
                 'sections': sections,
                 'strings_found': len(strings),
-                'suspicious_strings': [s for s in strings if any(sus in s.lower() 
+                'suspicious_strings': [s for s in strings if any(sus in s.lower()
                                      for sus in ['password', 'license', 'trial', 'crack'])],
                 'execution_time': time.time() - start_time,
                 'findings': []
             }}
-            
+
             # Generate findings
             findings = []
             if entropy > 7.5:
@@ -1430,15 +1441,15 @@ class {class_name}Plugin:
                 findings.append(f"Packers detected: {{', '.join(packers)}}")
             if sections.get('suspicious_sections'):
                 findings.extend(sections['suspicious_sections'])
-                
+
             results['findings'] = findings
-            
+
             return {{
                 'status': 'success',
                 'message': f'Analysis completed for {{os.path.basename(binary_path)}}',
                 'data': results
             }}
-            
+
         except Exception as e:
             logger.error(f"Analysis failed: {{e}}")
             return {{
@@ -1451,7 +1462,7 @@ class {class_name}Plugin:
         """Extract printable strings from binary data."""
         strings = []
         current_string = ""
-        
+
         for byte in data:
             if 32 <= byte <= 126:  # Printable ASCII
                 current_string += chr(byte)
@@ -1459,11 +1470,11 @@ class {class_name}Plugin:
                 if len(current_string) >= min_length:
                     strings.append(current_string)
                 current_string = ""
-                
+
         # Don't forget the last string
         if len(current_string) >= min_length:
             strings.append(current_string)
-            
+
         return strings
 
     def cleanup(self) -> bool:
@@ -1523,7 +1534,7 @@ class {class_name}Plugin:
         self.description = "{description}"
         self.author = "{author}"
         self.category = "Exploitation"
-        
+
         # Exploitation patterns
         self.license_patterns = [
             b'Trial expired', b'Invalid license', b'License not found',
@@ -1535,12 +1546,12 @@ class {class_name}Plugin:
         try:
             with open(binary_path, 'rb') as f:
                 data = f.read()
-            
+
             findings = []
             for pattern in self.license_patterns:
                 if pattern in data:
                     findings.append(f"License check pattern found: {{pattern.decode('ascii', errors='ignore')}}")
-            
+
             return {{
                 'status': 'success',
                 'message': 'Exploitation analysis completed',
@@ -1594,14 +1605,14 @@ class {class_name}Plugin:
         try:
             with open(binary_path, 'rb') as f:
                 data = f.read()
-            
+
             # Look for network indicators
             network_strings = []
             for line in data.split(b'\\x00'):
                 line_str = line.decode('ascii', errors='ignore')
                 if any(indicator in line_str.lower() for indicator in ['http', 'tcp', 'udp', 'socket']):
                     network_strings.append(line_str.strip())
-            
+
             return {{
                 'status': 'success',
                 'message': 'Network analysis completed',
@@ -1693,26 +1704,26 @@ import logging
 class Plugin:
     def __init__(self):
         self.name = "{plugin_name}"
-        
+
     def analyze_entropy(self, data):
         """Calculate Shannon entropy"""
         if not data:
             return 0.0
         # Entropy calculation logic...
-        
+
     def detect_packers(self, data):
         """Detect known packers"""
         signatures = {{
-            'upx': [b'UPX!', b'UPX0'], 
+            'upx': [b'UPX!', b'UPX0'],
             'aspack': [b'ASPack']
         }}
         # Detection logic...
-        
+
     def execute(self, binary_path):
         """Main analysis function"""
         with open(binary_path, 'rb') as f:
             data = f.read()
-            
+
         return {{
             'entropy': self.analyze_entropy(data),
             'packers': self.detect_packers(data),
@@ -1732,10 +1743,10 @@ class Plugin:
         self.name = "{plugin_name}"
         self.license_patterns = [
             b'Trial expired',
-            b'Invalid license', 
+            b'Invalid license',
             b'Registration required'
         ]
-        
+
     def find_license_checks(self, data):
         """Locate license validation routines"""
         findings = []
@@ -1743,19 +1754,19 @@ class Plugin:
             if pattern in data:
                 findings.append(pattern)
         return findings
-        
+
     def generate_bypass_strategy(self, binary_path):
         """Generate bypass recommendations"""
         with open(binary_path, 'rb') as f:
             data = f.read()
-            
+
         license_checks = self.find_license_checks(data)
-        
+
         strategies = []
         if license_checks:
             strategies.append("NOP out license validation calls")
             strategies.append("Patch return values")
-            
+
         return strategies
 
 # ... (bypass implementation)'''
@@ -1770,25 +1781,25 @@ import logging
 class Plugin:
     def __init__(self):
         self.name = "{plugin_name}"
-        
+
     def scan_network_strings(self, data):
         """Extract network-related strings"""
         network_indicators = ['http', 'tcp', 'udp', 'socket']
         found = []
-        
+
         for line in data.split(b'\\x00'):
             line_str = line.decode('ascii', errors='ignore')
-            if any(indicator in line_str.lower() 
+            if any(indicator in line_str.lower()
                    for indicator in network_indicators):
                 found.append(line_str.strip())
-                
+
         return found[:20]  # Limit results
-        
+
     def analyze_communication_patterns(self, binary_path):
         """Analyze potential network communication"""
         with open(binary_path, 'rb') as f:
             data = f.read()
-            
+
         return {{
             'network_strings': self.scan_network_strings(data),
             'potential_urls': self.extract_urls(data),
@@ -1808,7 +1819,7 @@ class Plugin:
     def __init__(self):
         self.name = "{plugin_name}"
         self.version = "1.0.0"
-        
+
     def get_file_info(self, file_path):
         """Get basic file information"""
         stat = os.stat(file_path)
@@ -1817,11 +1828,11 @@ class Plugin:
             'modified': stat.st_mtime,
             'is_executable': os.access(file_path, os.X_OK)
         }}
-        
+
     def execute(self, binary_path, *args, **kwargs):
         """Main plugin execution"""
         file_info = self.get_file_info(binary_path)
-        
+
         return {{
             'status': 'success',
             'message': f'Analysis of {{os.path.basename(binary_path)}} completed',
@@ -2195,26 +2206,26 @@ class {plugin_name.replace(' ', '')}Plugin:
         \"\"\"Analyze potential network behavior.\"\"\"
         import subprocess
         import os
-        
+
         findings = []
-        
+
         try:
             # Check for network-related strings in binary
             if os.path.exists(binary_path):
                 with open(binary_path, 'rb') as f:
                     content = f.read()
-                    
+
                 # Look for common network indicators
-                network_indicators = [b'connect', b'socket', b'recv', b'send', b'WSAStartup', 
+                network_indicators = [b'connect', b'socket', b'recv', b'send', b'WSAStartup',
                                     b'internetopen', b'wininet', b'urlmon']
-                                    
+
                 for indicator in network_indicators:
                     if indicator in content:
                         findings.append(f"Found network function: {{indicator.decode('ascii', errors='ignore')}}")
-                        
+
         except Exception as e:
             findings.append(f"Analysis error: {{str(e)}}")
-            
+
         return {{
             'type': 'network_analysis',
             'status': 'completed',
@@ -2225,21 +2236,21 @@ class {plugin_name.replace(' ', '')}Plugin:
         \"\"\"Scan for potential vulnerabilities.\"\"\"
         import os
         vulnerabilities = []
-        
+
         try:
             if os.path.exists(binary_path):
                 with open(binary_path, 'rb') as f:
                     content = f.read()
-                
+
                 # Check for common vulnerability patterns
                 vuln_patterns = {{
                     b'strcpy': 'Buffer overflow risk - strcpy function',
-                    b'gets': 'Buffer overflow risk - gets function', 
+                    b'gets': 'Buffer overflow risk - gets function',
                     b'sprintf': 'Format string vulnerability risk',
                     b'system': 'Command injection risk - system call',
                     b'/bin/sh': 'Shell execution detected'
                 }}
-                
+
                 for pattern, description in vuln_patterns.items():
                     if pattern in content:
                         vulnerabilities.append({{
@@ -2247,17 +2258,17 @@ class {plugin_name.replace(' ', '')}Plugin:
                             'severity': 'medium',
                             'description': description
                         }})
-                        
+
         except Exception as e:
             vulnerabilities.append({{
                 'type': 'scan_error',
                 'severity': 'low',
                 'description': f'Scan error: {{str(e)}}'
             }})
-            
+
         return vulnerabilities if vulnerabilities else [{{
             'type': 'scan_complete',
-            'severity': 'info', 
+            'severity': 'info',
             'description': 'No obvious vulnerabilities detected'
         }}]
 

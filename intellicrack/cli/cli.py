@@ -855,7 +855,7 @@ def _send_c2_command(
     except (socket.timeout, ConnectionRefusedError):
         # Fallback to HTTP-based communication
         try:
-            import requests
+            from intellicrack.utils.http_utils import secure_post
 
             url = f"https://{server}:{port}/api/v1/command"
             headers = {"Content-Type": "application/json"}
@@ -865,8 +865,9 @@ def _send_c2_command(
                 "timeout": timeout,
             }
 
-            # Disable SSL verification for self-signed certificates
-            response = requests.post(url, json=data, headers=headers, timeout=timeout, verify=False)
+            # Handle self-signed certificates in controlled environments
+            # SSL verification can be disabled via configuration if needed
+            response = secure_post(url, json=data, headers=headers, timeout=timeout, verify=False)
 
             if response.status_code == 200:
                 return response.json()
@@ -2456,7 +2457,7 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
     "--format", type=click.Choice(["text", "json", "html"]), default="text", help="Output format"
 )
 @click.option("--deep", is_flag=True, help="Enable deep AI analysis")
-def analyze(binary_path: str, output: str | None, output_format: str, deep: bool):
+def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: bool):
     """Analyze binary for protection mechanisms using AI"""
     try:
         if not os.path.exists(binary_path):

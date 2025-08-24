@@ -19,13 +19,13 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
-class IntellicrackException(Exception):
+class IntellicrackError(Exception):
     """Base exception for all Intellicrack-specific errors."""
 
     pass
 
 
-class ConfigurationError(IntellicrackException):
+class ConfigurationError(IntellicrackError):
     """Raised when configuration is missing, invalid, or incomplete."""
 
     def __init__(
@@ -43,7 +43,7 @@ class ConfigurationError(IntellicrackException):
         self.config_key = config_key
 
 
-class ServiceUnavailableError(IntellicrackException):
+class ServiceUnavailableError(IntellicrackError):
     """Raised when a required service is unavailable."""
 
     def __init__(self, message: str, service_name: str, url: str | None = None):
@@ -59,7 +59,7 @@ class ServiceUnavailableError(IntellicrackException):
         self.url = url
 
 
-class ToolNotFoundError(IntellicrackException):
+class ToolNotFoundError(IntellicrackError):
     """Raised when a required tool is not found or configured."""
 
     def __init__(self, message: str, tool_name: str, search_paths: list[str] | None = None):
@@ -75,7 +75,7 @@ class ToolNotFoundError(IntellicrackException):
         self.search_paths = search_paths or []
 
 
-class ValidationError(IntellicrackException):
+class ValidationError(IntellicrackError):
     """Raised when data validation fails."""
 
     def __init__(self, message: str, field_name: str | None = None, value: str | None = None):
@@ -91,13 +91,13 @@ class ValidationError(IntellicrackException):
         self.value = value
 
 
-class SecurityError(IntellicrackException):
+class SecurityError(IntellicrackError):
     """Raised when security validation fails."""
 
     pass
 
 
-class AnalysisError(IntellicrackException):
+class AnalysisError(IntellicrackError):
     """Raised when binary analysis fails."""
 
     def __init__(
@@ -115,7 +115,7 @@ class AnalysisError(IntellicrackException):
         self.analysis_type = analysis_type
 
 
-class ExploitationError(IntellicrackException):
+class ExploitationError(IntellicrackError):
     """Raised when exploitation operations fail."""
 
     def __init__(self, message: str, target: str | None = None, technique: str | None = None):
@@ -131,7 +131,7 @@ class ExploitationError(IntellicrackException):
         self.technique = technique
 
 
-class NetworkError(IntellicrackException):
+class NetworkError(IntellicrackError):
     """Raised when network operations fail."""
 
     def __init__(self, message: str, host: str | None = None, port: int | None = None):

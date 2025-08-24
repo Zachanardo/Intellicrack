@@ -116,7 +116,7 @@ class IconManager:
 
     def __init__(self, icon_path: Optional[Path] = None):
         """Initialize the icon manager.
-        
+
         Args:
             icon_path: Optional path to icon resources directory
         """
@@ -125,11 +125,11 @@ class IconManager:
 
     def get_icon(self, icon_name: str, fallback: bool = True) -> QIcon:
         """Get an icon by name with fallback support.
-        
+
         Args:
             icon_name: Name of the icon to retrieve
             fallback: Whether to use text fallback if icon file not found
-            
+
         Returns:
             QIcon instance
         """
@@ -150,10 +150,10 @@ class IconManager:
 
     def _load_icon_from_file(self, icon_name: str) -> QIcon:
         """Try to load an icon from file.
-        
+
         Args:
             icon_name: Name of the icon
-            
+
         Returns:
             QIcon instance (may be null if not found)
         """
@@ -167,15 +167,15 @@ class IconManager:
 
     def _create_text_icon(self, icon_name: str) -> QIcon:
         """Create a text-based fallback icon.
-        
+
         Args:
             icon_name: Name of the icon
-            
+
         Returns:
             QIcon with text or emoji
         """
         # Get the text/emoji for this icon
-        text = self.ICON_MAP.get(icon_name, "?")
+        self.ICON_MAP.get(icon_name, "?")
 
         # For now, return an empty icon (can be enhanced to render text)
         # In a real implementation, we'd create a pixmap and draw the text
@@ -183,10 +183,10 @@ class IconManager:
 
     def get_icon_text(self, icon_name: str) -> str:
         """Get the text/emoji representation of an icon.
-        
+
         Args:
             icon_name: Name of the icon
-            
+
         Returns:
             Text or emoji string
         """
@@ -194,7 +194,7 @@ class IconManager:
 
     def register_icon(self, icon_name: str, icon_path: str) -> None:
         """Register a custom icon.
-        
+
         Args:
             icon_name: Name to register the icon under
             icon_path: Path to the icon file
@@ -214,7 +214,7 @@ _icon_manager = None
 
 def get_icon_manager() -> IconManager:
     """Get the singleton icon manager instance.
-    
+
     Returns:
         IconManager instance
     """
@@ -226,10 +226,10 @@ def get_icon_manager() -> IconManager:
 
 def get_icon(icon_name: str) -> QIcon:
     """Convenience function to get an icon.
-    
+
     Args:
         icon_name: Name of the icon
-        
+
     Returns:
         QIcon instance
     """
@@ -238,10 +238,10 @@ def get_icon(icon_name: str) -> QIcon:
 
 def get_icon_text(icon_name: str) -> str:
     """Convenience function to get icon text/emoji.
-    
+
     Args:
         icon_name: Name of the icon
-        
+
     Returns:
         Text or emoji string
     """
@@ -250,7 +250,7 @@ def get_icon_text(icon_name: str) -> str:
 
 def set_button_icon(button, icon_name: str, add_text_prefix: bool = True) -> None:
     """Set an icon on a button with optional text prefix.
-    
+
     Args:
         button: QPushButton instance
         icon_name: Name of the icon

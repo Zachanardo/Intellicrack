@@ -309,7 +309,7 @@ class AIModelManager:
                 return {"model": model, "tokenizer": None}
             except ImportError:
                 logger.error("No local model backend available")
-                raise RuntimeError("No local model backend available (install transformers or llama-cpp-python)")
+                raise RuntimeError("No local model backend available (install transformers or llama-cpp-python)") from None
 
     def set_active_model(self, name: str):
         """Set the active model.

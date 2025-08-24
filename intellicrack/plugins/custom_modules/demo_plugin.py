@@ -444,7 +444,7 @@ class DemoPlugin(BasePlugin):
 
                         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
                             # Copy original file to temp
-                            shutil.copy2(file_path, temp_file.name)
+                            shutil.copy2(binary_path, temp_file.name)
 
                             # Apply patch to temp file
                             with open(temp_file.name, "rb+") as f:

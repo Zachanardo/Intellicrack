@@ -146,7 +146,7 @@ class Plugin:
 
             process = psutil.Process()
             return process.memory_info().rss / 1024 / 1024  # Convert to MB
-        except:
+        except Exception:
             return 0
 
 

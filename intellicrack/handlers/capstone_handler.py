@@ -464,7 +464,7 @@ except ImportError as e:
                 insn_word = struct.unpack("<I", code[:4])[0]
 
             # Decode common ARM instructions
-            cond = (insn_word >> 28) & 0x0F
+            (insn_word >> 28) & 0x0F
 
             # Branch instructions
             if (insn_word & 0x0E000000) == 0x0A000000:  # B/BL

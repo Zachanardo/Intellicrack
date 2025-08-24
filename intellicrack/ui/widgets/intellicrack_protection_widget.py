@@ -138,7 +138,7 @@ class IntellicrackProtectionWidget(QWidget):
         # Header
         header_layout = QHBoxLayout()
 
-        title_label = QLabel("Protection Detection (DIE)")
+        title_label = QLabel("Protection Detection (ICP)")
         title_font = QFont()
         title_font.setPointSize(12)
         title_font.setBold(True)
@@ -258,7 +258,7 @@ class IntellicrackProtectionWidget(QWidget):
             self.analyze_file(file_path)
 
     def analyze_file(self, file_path: str):
-        """Analyze a file with DIE"""
+        """Analyze a file with ICP"""
         if not os.path.exists(file_path):
             QMessageBox.warning(self, "Error", f"File not found: {file_path}")
             return
@@ -865,6 +865,3 @@ class IntellicrackProtectionWidget(QWidget):
         dialog.exec()
 
 
-# Backward compatibility aliases
-DIEProtectionWidget = IntellicrackProtectionWidget
-DIEAnalysisThread = ProtectionAnalysisThread

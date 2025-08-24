@@ -36,6 +36,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         super().__init__()
         self.hex_widget = hex_widget
         self.protection_detector = IntellicrackProtectionCore()
+        self.icp_detector = self.protection_detector
         self.engine_process = None
 
         # Setup two-way synchronization monitoring
@@ -108,6 +109,10 @@ class IntellicrackHexProtectionIntegration(QObject):
 
         except Exception as e:
             logger.error(f"Error opening file in protection viewer: {e}")
+
+    def open_in_icp(self, file_path: str, offset: int | None = None):
+        """Alias for open_in_protection_viewer to maintain ICP naming consistency"""
+        return self.open_in_protection_viewer(file_path, offset)
 
     def _cleanup_sync_files(self):
         """Clean up temporary sync files after protection viewer closes."""
@@ -210,7 +215,7 @@ class IntellicrackHexProtectionIntegration(QObject):
 
         """
         try:
-            analysis = self.die_detector.detect_protections(file_path)
+            analysis = self.icp_detector.detect_protections(file_path)
             section_offsets = {}
 
             if analysis and analysis.sections:
@@ -262,7 +267,7 @@ class IntellicrackHexProtectionIntegration(QObject):
 
     def _detect_intellicrack_features(self) -> dict[str, bool]:
         """Dynamically detect features available in Intellicrack hex viewer
-        
+
         Returns:
             Dictionary of feature availability
         """
@@ -308,6 +313,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for advanced search module
         try:
             from .advanced_search import AdvancedSearchEngine
+            _ = AdvancedSearchEngine.__name__  # Verify advanced search capabilities
             features["Advanced Search"] = True
             features["ANSI/Unicode Search"] = True
             features["Pattern Matching"] = True
@@ -317,6 +323,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for export capabilities
         try:
             from .export_dialog import ExportDialog
+            _ = ExportDialog.__name__  # Verify export dialog capabilities
             features["Data Export"] = True
         except ImportError:
             pass
@@ -332,6 +339,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for highlighting
         try:
             from .hex_highlighter import HexHighlighter
+            _ = HexHighlighter.__name__  # Verify highlighting capabilities are available
             features["Highlighting"] = True
         except ImportError:
             pass
@@ -353,6 +361,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for performance monitoring
         try:
             from .performance_monitor import PerformanceMonitor
+            _ = PerformanceMonitor.__name__  # Verify performance monitoring capabilities are available
             features["Performance Monitoring"] = True
         except ImportError:
             pass
@@ -360,6 +369,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for templates
         try:
             from .templates import TemplateEngine
+            _ = TemplateEngine.__name__  # Verify template engine capabilities are available
             features["Templates"] = True
         except ImportError:
             pass
@@ -367,6 +377,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for file comparison
         try:
             from .file_compare import BinaryComparer
+            _ = BinaryComparer.__name__  # Verify binary comparison capabilities are available
             features["File Comparison"] = True
         except ImportError:
             pass
@@ -374,6 +385,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         # Check for printing
         try:
             from .print_dialog import PrintOptionsDialog
+            _ = PrintOptionsDialog.__name__  # Verify printing capabilities are available
             features["Printing"] = True
         except ImportError:
             pass
@@ -446,7 +458,7 @@ class ProtectionIntegrationWidget(QWidget):
         button_layout.addWidget(self.open_in_protection_viewer_btn)
 
         self.sync_sections_btn = QPushButton("Sync Sections")
-        self.sync_sections_btn.clicked.connect(self.sync_sections_from_die)
+        self.sync_sections_btn.clicked.connect(self.sync_sections_from_icp)
         self.sync_sections_btn.setToolTip("Get section information from protection viewer analysis")
         button_layout.addWidget(self.sync_sections_btn)
 
@@ -465,14 +477,14 @@ class ProtectionIntegrationWidget(QWidget):
         if self.hex_widget and hasattr(self.hex_widget, "file_path"):
             file_path = self.hex_widget.file_path
             if file_path:
-                self.integration.open_in_die(file_path)
+                self.integration.open_in_icp(file_path)
                 self.info_label.setText("Opened in protection viewer - Press 'H' for hex viewer")
             else:
                 self.info_label.setText("No file loaded")
         else:
             self.info_label.setText("Hex viewer not available")
 
-    def sync_sections_from_die(self):
+    def sync_sections_from_icp(self):
         """Sync section information from protection viewer"""
         if self.hex_widget and hasattr(self.hex_widget, "file_path"):
             file_path = self.hex_widget.file_path

@@ -208,7 +208,7 @@ class ProtectionAwareScriptGenerator:
             "tools_needed": self.kb.get_tools_for_protection(primary_protection)
             if primary_protection
             else [],
-            "die_analysis": result.icp_analysis,
+            "icp_analysis": result.icp_analysis,
         }
 
     def _generate_ai_prompt(

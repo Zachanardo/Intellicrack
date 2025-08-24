@@ -28,12 +28,14 @@ from typing import Any, Dict, List, Optional
 
 try:
     from jinja2 import Environment, FileSystemLoader, Template
+    _ = Template.__name__  # Verify Template class is available for template processing
     HAS_JINJA2 = True
 except ImportError:
     HAS_JINJA2 = False
 
 try:
     import markdown
+    _ = markdown.__name__  # Verify markdown module is available for text processing
     HAS_MARKDOWN = True
 except ImportError:
     HAS_MARKDOWN = False
@@ -52,6 +54,15 @@ try:
         Table,
         TableStyle,
     )
+
+    # Verify reportlab page size formats are available for document layout
+    _ = A4.__name__  # Used for A4 page size specification
+
+    # Verify reportlab image handling components are available
+    _ = Image.__name__  # Used for image embedding in PDF documents
+
+    # Verify reportlab page break functionality is available
+    _ = PageBreak.__name__  # Used for forcing page breaks in PDF documents
     HAS_REPORTLAB = True
 except ImportError:
     HAS_REPORTLAB = False

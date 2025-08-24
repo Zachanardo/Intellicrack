@@ -150,7 +150,7 @@ class AdobeLicensingParser:
         """Initialize server cryptographic keys"""
         self.server_private_key = hashlib.sha256(b"adobe_server_private_key_2024").hexdigest()
         self.server_public_key = hashlib.sha256(b"adobe_server_public_key_2024").hexdigest()
-        self.activation_seed = hashlib.md5(str(time.time()).encode()).hexdigest()
+        self.activation_seed = hashlib.sha256(str(time.time()).encode()).hexdigest()
 
     def parse_request(self, http_data: str) -> AdobeRequest | None:
         """Parse incoming Adobe licensing HTTP request
@@ -709,7 +709,7 @@ class AdobeLicensingParser:
     def _generate_machine_signature(self, request: AdobeRequest) -> str:
         """Generate machine signature from request data"""
         signature_data = f"{request.machine_id}:{request.client_id}:{request.product_id}"
-        return hashlib.md5(signature_data.encode()).hexdigest().upper()
+        return hashlib.sha256(signature_data.encode()).hexdigest().upper()
 
     def _generate_verification_signature(self, request: AdobeRequest) -> str:
         """Generate verification signature"""

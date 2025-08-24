@@ -1,7 +1,7 @@
 """Unified Protection Analysis Widget
 
 Provides a seamless, integrated protection analysis experience that combines
-DIE, ML models, and heuristics without exposing the underlying tools.
+ICP, ML models, and heuristics without exposing the underlying tools.
 
 Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
@@ -154,7 +154,7 @@ class ProtectionCard(QFrame):
         layout.addLayout(info_layout)
 
         # Source indicator
-        source = self.protection_data.get("source", AnalysisSource.DIE)
+        source = self.protection_data.get("source", AnalysisSource.ICP)
         source_text = self._get_source_text(source)
         source_label = QLabel(source_text)
         source_label.setStyleSheet("color: #999; font-size: 9px;")
@@ -488,8 +488,8 @@ class UnifiedProtectionWidget(QWidget):
             self.string_extractor.load_file(self._current_file_path)
 
             # Highlight protection-related regions if available
-            if result.die_analysis and result.die_analysis.entropy_info:
-                for entropy in result.die_analysis.entropy_info:
+            if result.icp_analysis and result.icp_analysis.entropy_info:
+                for entropy in result.icp_analysis.entropy_info:
                     if entropy.packed or entropy.encrypted:
                         # Highlight suspicious sections
                         self.hex_viewer.add_protection_highlight(
@@ -617,7 +617,7 @@ Overall Confidence: {result.confidence_score:.0f}%</p>
 
 Type: {protection['type']}
 Confidence: {protection.get('confidence', 0):.0f}%
-Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
+Source: {self._format_source(protection.get('source', AnalysisSource.ICP))}
 
 """
 
@@ -736,23 +736,23 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         tech_info += f"  Anti-VM: {result.has_anti_vm}\n"
         tech_info += f"  Licensing: {result.has_licensing}\n\n"
 
-        if result.die_analysis:
-            tech_info += "DIE Analysis Results:\n"
-            die = result.die_analysis
+        if result.icp_analysis:
+            tech_info += "ICP Analysis Results:\n"
+            icp = result.icp_analysis
 
-            if die.entry_point:
-                tech_info += f"  Entry Point: {die.entry_point}\n"
+            if icp.entry_point:
+                tech_info += f"  Entry Point: {icp.entry_point}\n"
 
-            if die.sections:
-                tech_info += f"  Sections: {len(die.sections)}\n"
-                for section in die.sections[:5]:
+            if icp.sections:
+                tech_info += f"  Sections: {len(icp.sections)}\n"
+                for section in icp.sections[:5]:
                     name = section.get("name", "Unknown")
                     size = section.get("size", 0)
                     tech_info += f"    - {name}: {size} bytes\n"
 
-            if die.entropy_info:
+            if icp.entropy_info:
                 tech_info += "\n  Entropy Analysis:\n"
-                for entropy in die.entropy_info:
+                for entropy in icp.entropy_info:
                     tech_info += f"    - {entropy.section_name}: {entropy.entropy:.3f}"
                     if entropy.packed:
                         tech_info += " [PACKED]"
@@ -764,9 +764,9 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
     def update_entropy_graph(self, result: UnifiedProtectionResult):
         """Update entropy visualization with analysis data"""
-        if result.die_analysis and hasattr(result.die_analysis, "entropy_analysis"):
-            # Update the entropy graph with DIE entropy data
-            self.entropy_graph.update_entropy_data(result.die_analysis.entropy_analysis)
+        if result.icp_analysis and hasattr(result.icp_analysis, "entropy_analysis"):
+            # Update the entropy graph with ICP entropy data
+            self.entropy_graph.update_entropy_data(result.icp_analysis.entropy_analysis)
         else:
             # No entropy data available
             self.entropy_graph.update_entropy_data([])
@@ -794,7 +794,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
         perf_info += "Detection Sources:\n"
         source_counts = {}
         for protection in result.protections:
-            source = protection.get("source", AnalysisSource.DIE)
+            source = protection.get("source", AnalysisSource.ICP)
             source_counts[source] = source_counts.get(source, 0) + 1
 
         for source, count in source_counts.items():
@@ -1089,7 +1089,7 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
 
             if strings:
                 string_content += "Sample Strings (first 50):\n\n"
-                for i, string_info in enumerate(strings[:50]):
+                for _i, string_info in enumerate(strings[:50]):
                     offset = string_info.get("offset", 0)
                     string_val = string_info.get("string", "")
                     string_type = string_info.get("type", "ASCII")
@@ -1151,10 +1151,10 @@ Source: {self._format_source(protection.get('source', AnalysisSource.DIE))}
     def _on_hex_offset_selected(self, offset: int):
         """Handle hex viewer offset selection"""
         # Update technical info with offset details
-        if self.current_result and self.current_result.die_analysis:
+        if self.current_result and self.current_result.icp_analysis:
             # Find which section contains this offset
-            if self.current_result.die_analysis.sections:
-                for section in self.current_result.die_analysis.sections:
+            if self.current_result.icp_analysis.sections:
+                for section in self.current_result.icp_analysis.sections:
                     section_start = section.get("virtual_address", 0)
                     section_size = section.get("virtual_size", 0)
                     if section_start <= offset < section_start + section_size:

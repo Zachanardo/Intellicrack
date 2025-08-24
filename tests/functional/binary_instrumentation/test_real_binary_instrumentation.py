@@ -867,7 +867,10 @@ class TestRealBinaryInstrumentation:
                                                     string: str
                                                 });
                                             }
-                                        } catch (e) {}
+                                        } catch (e) {
+                                            // Memory might be inaccessible or not a valid string pointer
+                                            console.log("[!] Failed to read string at " + this.strPtr + ": " + e.message);
+                                        }
                                     }
                                 }
                             });

@@ -16,7 +16,10 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import math
+import os
 import random
+import threading
+from typing import Optional
 
 from intellicrack.logger import logger
 
@@ -29,8 +32,6 @@ implementations for essential ML operations used in Intellicrack.
 """
 
 # TensorFlow availability detection and import handling with universal GPU compatibility
-import threading
-from typing import Optional
 
 # Initialize variables
 HAS_TENSORFLOW = False
@@ -73,12 +74,18 @@ def _safe_tensorflow_import(
         except Exception as e:
             import_error = e
 
-    # Use daemon thread to prevent hanging main process
-    import_thread = threading.Thread(target=_import_tensorflow, daemon=True)
-    import_thread.start()
-    import_thread.join(timeout=timeout)
+    # Skip thread creation during testing
+    import_thread = None
+    if os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS"):
+        logger.info("Skipping tensorflow import thread (testing mode)")
+        _import_tensorflow()  # Run directly
+    else:
+        # Use daemon thread to prevent hanging main process
+        import_thread = threading.Thread(target=_import_tensorflow, daemon=True)
+        import_thread.start()
+        import_thread.join(timeout=timeout)
 
-    if import_thread.is_alive():
+    if import_thread and import_thread.is_alive():
         # Import is hanging (GPU compatibility issue)
         logger.warning("TensorFlow import timeout - using fallback (universal GPU compatibility)")
         return False, None, TimeoutError("TensorFlow import timed out")
@@ -480,7 +487,7 @@ class FallbackModel:
                     pred_data = predictions.data if hasattr(predictions, 'data') else [predictions]
                     target_data = batch_y if hasattr(batch_y, '__iter__') else [batch_y]
 
-                    for i, (pred, target) in enumerate(zip(pred_data[:len(target_data)], target_data, strict=False)):
+                    for _i, (pred, target) in enumerate(zip(pred_data[:len(target_data)], target_data, strict=False)):
                         diff = abs(float(pred) - float(target))
                         batch_loss += diff * diff
 
@@ -495,7 +502,7 @@ class FallbackModel:
             # Validation step
             if validation_data:
                 val_x, val_y = validation_data[:2]
-                val_predictions = self.predict(val_x, batch_size=batch_size, verbose=0)
+                self.predict(val_x, batch_size=batch_size, verbose=0)
                 val_loss = final_loss * 1.1  # Basic validation approximation
                 history["val_loss"].append(val_loss)
 
@@ -718,10 +725,10 @@ class FallbackKerasLayers:
                 # Data is flattened, reshape it
                 reshaped = []
                 idx = 0
-                for b in range(batch):
-                    for h in range(height):
-                        for w in range(width):
-                            for c in range(channels):
+                for _b in range(batch):
+                    for _h in range(height):
+                        for _w in range(width):
+                            for _c in range(channels):
                                 if idx < len(input_data):
                                     reshaped.append(input_data[idx])
                                     idx += 1
@@ -867,7 +874,7 @@ class FallbackConfig:
         logger.info("Listing physical devices for %s (fallback mode)", device_type)
         return []
 
-    class experimental:
+    class Experimental:
         @staticmethod
         def set_memory_growth(device, enable):
             logger.info("Memory growth set to %s (fallback mode)", enable)
@@ -877,7 +884,10 @@ class FallbackConfig:
             logger.info("Listing physical devices for %s (fallback mode)", device_type)
             return []
 
-    class threading:
+    # Alias for compatibility
+    experimental = Experimental
+
+    class Threading:
         @staticmethod
         def set_inter_op_parallelism_threads(num):
             logger.info("Inter-op threads set to %d (fallback mode)", num)
@@ -885,6 +895,9 @@ class FallbackConfig:
         @staticmethod
         def set_intra_op_parallelism_threads(num):
             logger.info("Intra-op threads set to %d (fallback mode)", num)
+
+    # Alias for compatibility
+    threading = Threading
 
 
 # Create module-like object

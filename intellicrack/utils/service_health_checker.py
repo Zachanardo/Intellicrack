@@ -393,17 +393,3 @@ async def check_all_services_health() -> dict[str, dict[str, Any]]:
     return await checker.check_all_services()
 
 
-def get_service_url(service_name: str) -> str:
-    """Get URL for a service from configuration.
-
-    Args:
-        service_name: Name of the service
-
-    Returns:
-        Service URL from configuration
-
-    Raises:
-        ConfigurationError: If service URL is not configured
-    """
-    checker = get_health_checker()
-    return checker.get_service_endpoint(service_name)

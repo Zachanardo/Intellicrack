@@ -209,7 +209,7 @@ class NetworkAnalysisPlugin:
                     service_name = "unknown"
                     try:
                         service_name = socket.getservbyport(port)
-                    except:
+                    except Exception:
                         # Common port services
                         common_ports = {
                             21: "ftp",
@@ -424,8 +424,8 @@ class NetworkAnalysisPlugin:
             try:
                 sock.close()
                 logger.info(f"Closed socket: {socket_name}")
-            except:
-                pass
+            except OSError as e:
+                logger.debug("Error closing socket %s: %s", socket_name, e)
         self.active_sockets.clear()
 
         if self.monitoring:
@@ -543,7 +543,7 @@ class NetworkAnalysisPlugin:
                 info["local_address"] = f"{local_addr[0]}:{local_addr[1]}"
             else:
                 info["local_address"] = str(local_addr)
-        except:
+        except Exception:
             info["local_address"] = "Not bound"
 
         try:
@@ -553,7 +553,7 @@ class NetworkAnalysisPlugin:
                 info["remote_address"] = f"{peer_addr[0]}:{peer_addr[1]}"
             else:
                 info["remote_address"] = str(peer_addr)
-        except:
+        except Exception:
             info["remote_address"] = "Not connected"
 
         # Get socket options
@@ -564,8 +564,8 @@ class NetworkAnalysisPlugin:
                 info["recv_buffer"] = sock.getsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF)
             if hasattr(socket, "SO_SNDBUF"):
                 info["send_buffer"] = sock.getsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF)
-        except:
-            pass
+        except OSError as e:
+            logger.debug("Could not get socket buffer info: %s", e)
 
         return info
 

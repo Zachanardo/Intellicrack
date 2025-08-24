@@ -18,6 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 import platform
+import shutil
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -36,6 +37,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+from intellicrack.logger import logger
 
 
 class MemoryDumperWidget(QWidget):
@@ -214,11 +216,15 @@ class MemoryDumperWidget(QWidget):
             try:
                 import subprocess
 
+                tasklist_path = shutil.which("tasklist")
+                if not tasklist_path:
+                    return
+
                 result = subprocess.run(
-                    ["tasklist", "/fo", "csv"],
+                    [tasklist_path, "/fo", "csv"],
                     check=False,
                     capture_output=True,
-                    text=True,  # noqa: S607
+                    text=True,
                 )
                 lines = result.stdout.strip().split("\n")[1:]  # Skip header
                 for line in lines:
@@ -297,7 +303,7 @@ class MemoryDumperWidget(QWidget):
             from ctypes import wintypes
 
             # Windows API structures
-            class MEMORY_BASIC_INFORMATION(ctypes.Structure):
+            class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
                 _fields_ = [
                     ("BaseAddress", ctypes.c_void_p),
                     ("AllocationBase", ctypes.c_void_p),

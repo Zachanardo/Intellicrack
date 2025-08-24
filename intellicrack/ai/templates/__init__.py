@@ -20,10 +20,10 @@ TEMPLATE_FILES = {
 
 def get_template_path(template_name):
     """Get path to a specific template file.
-    
+
     Args:
         template_name (str): Name of the template
-        
+
     Returns:
         Path: Path to the template file, or None if not found
     """
@@ -35,10 +35,10 @@ def get_available_templates():
 
 def load_template(template_name):
     """Load contents of a template file.
-    
+
     Args:
         template_name (str): Name of the template to load
-        
+
     Returns:
         str: Template contents, or None if template not found
     """
@@ -55,10 +55,10 @@ def load_template(template_name):
 
 def template_exists(template_name):
     """Check if a template file exists.
-    
+
     Args:
         template_name (str): Name of the template to check
-        
+
     Returns:
         bool: True if template exists, False otherwise
     """

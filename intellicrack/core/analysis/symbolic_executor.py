@@ -2689,7 +2689,7 @@ int main() {{
             try:
                 start_addr = int(start_node, 16) if start_node.startswith("0x") else start_address
                 paths = [[start_addr], [start_addr, start_addr + 16]]
-            except:
+            except Exception:
                 paths = [[start_address], [start_address, start_address + 16]]
 
         self.logger.info(

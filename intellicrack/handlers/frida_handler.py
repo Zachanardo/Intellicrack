@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import shutil
 import subprocess
 import sys
 import time
@@ -52,7 +53,7 @@ try:
         try:
             DeviceManager = frida.DeviceManager if hasattr(frida, 'DeviceManager') else None
             ScriptMessage = frida.ScriptMessage if hasattr(frida, 'ScriptMessage') else None
-        except:
+        except Exception:
             DeviceManager = None
             ScriptMessage = None
 
@@ -84,14 +85,18 @@ except ImportError as e:
             try:
                 # Windows: Use WMIC
                 if sys.platform == "win32":
-                    result = subprocess.run(
-                        ["wmic", "process", "get", "ProcessId,Name,ExecutablePath"],
-                        capture_output=True,
-                        text=True,
-                        timeout=5
-                    )
+                    wmic_path = shutil.which("wmic")
+                    if wmic_path:
+                        result = subprocess.run(
+                            [wmic_path, "process", "get", "ProcessId,Name,ExecutablePath"],
+                            capture_output=True,
+                            text=True,
+                            timeout=5
+                        )
+                    else:
+                        result = None
 
-                    if result.returncode == 0:
+                    if result and result.returncode == 0:
                         lines = result.stdout.strip().split('\n')[1:]  # Skip header
                         for line in lines:
                             parts = line.strip().split()
@@ -106,14 +111,18 @@ except ImportError as e:
 
                 # Linux/Mac: Use ps command
                 else:
-                    result = subprocess.run(
-                        ["ps", "aux"],
-                        capture_output=True,
-                        text=True,
-                        timeout=5
-                    )
+                    ps_path = shutil.which("ps")
+                    if ps_path:
+                        result = subprocess.run(
+                            [ps_path, "aux"],
+                            capture_output=True,
+                            text=True,
+                            timeout=5
+                        )
+                    else:
+                        result = None
 
-                    if result.returncode == 0:
+                    if result and result.returncode == 0:
                         lines = result.stdout.strip().split('\n')[1:]  # Skip header
                         for line in lines:
                             parts = line.split(None, 10)
@@ -185,7 +194,7 @@ except ImportError as e:
                 # Create process object
                 pid = proc.pid
                 name = program if isinstance(program, str) else program[0]
-                process = FallbackProcess(pid, name, proc)
+                FallbackProcess(pid, name, proc)
 
                 return pid
 
@@ -206,7 +215,9 @@ except ImportError as e:
             """Kill a process."""
             try:
                 if sys.platform == "win32":
-                    subprocess.run(["taskkill", "/F", "/PID", str(pid)], check=False)
+                    taskkill_path = shutil.which("taskkill")
+                    if taskkill_path:
+                        subprocess.run([taskkill_path, "/F", "/PID", str(pid)], check=False)
                 else:
                     import os
                     import signal
@@ -397,7 +408,7 @@ except ImportError as e:
             interceptor_pattern = r'Interceptor\.attach\s*\(\s*([^,]+),\s*{([^}]+)}'
             matches = re.findall(interceptor_pattern, self.source)
 
-            for target, implementation in matches:
+            for target, _implementation in matches:
                 logger.debug("Found interceptor for: %s", target.strip())
 
             # Extract RPC exports

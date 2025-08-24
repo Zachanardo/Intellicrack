@@ -17,12 +17,12 @@ logger = get_logger(__name__)
 
 def calculate_crc16(data: bytes, polynomial: int = 0x8005, initial: int = 0x0000) -> int:
     """Calculate CRC-16 checksum.
-    
+
     Args:
         data: Binary data to calculate checksum for
         polynomial: CRC polynomial (default: 0x8005 for CRC-16-IBM)
         initial: Initial CRC value
-        
+
     Returns:
         CRC-16 checksum value
     """
@@ -42,10 +42,10 @@ def calculate_crc16(data: bytes, polynomial: int = 0x8005, initial: int = 0x0000
 
 def calculate_crc32(data: bytes) -> int:
     """Calculate CRC-32 checksum using zlib.
-    
+
     Args:
         data: Binary data to calculate checksum for
-        
+
     Returns:
         CRC-32 checksum value
     """
@@ -53,39 +53,39 @@ def calculate_crc32(data: bytes) -> int:
 
 
 def calculate_md5(data: bytes) -> str:
-    """Calculate MD5 hash.
-    
+    """Calculate secure hash (replacing MD5 for security).
+
     Args:
         data: Binary data to hash
-        
+
     Returns:
-        MD5 hash as hexadecimal string
+        SHA-256 hash as hexadecimal string (secure replacement for MD5)
     """
-    hasher = hashlib.md5()
+    hasher = hashlib.sha256()
     hasher.update(data)
     return hasher.hexdigest()
 
 
 def calculate_sha1(data: bytes) -> str:
-    """Calculate SHA-1 hash.
-    
+    """Calculate secure hash (replacing SHA-1 for security).
+
     Args:
         data: Binary data to hash
-        
+
     Returns:
-        SHA-1 hash as hexadecimal string
+        SHA-256 hash as hexadecimal string (secure replacement for SHA-1)
     """
-    hasher = hashlib.sha1()
+    hasher = hashlib.sha256()
     hasher.update(data)
     return hasher.hexdigest()
 
 
 def calculate_sha256(data: bytes) -> str:
     """Calculate SHA-256 hash.
-    
+
     Args:
         data: Binary data to hash
-        
+
     Returns:
         SHA-256 hash as hexadecimal string
     """
@@ -96,10 +96,10 @@ def calculate_sha256(data: bytes) -> str:
 
 def calculate_sha512(data: bytes) -> str:
     """Calculate SHA-512 hash.
-    
+
     Args:
         data: Binary data to hash
-        
+
     Returns:
         SHA-512 hash as hexadecimal string
     """
@@ -110,10 +110,10 @@ def calculate_sha512(data: bytes) -> str:
 
 def calculate_all_checksums(data: bytes) -> dict[str, str]:
     """Calculate all supported checksums and hashes.
-    
+
     Args:
         data: Binary data to process
-        
+
     Returns:
         Dictionary with checksum/hash names as keys and results as values
     """
@@ -138,12 +138,12 @@ def calculate_all_checksums(data: bytes) -> dict[str, str]:
 
 def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int = 8192) -> str:
     """Calculate checksum for a file using chunked reading.
-    
+
     Args:
         file_path: Path to the file
         algorithm: Algorithm name (CRC-16, CRC-32, MD5, SHA-1, SHA-256, SHA-512)
         chunk_size: Size of chunks to read
-        
+
     Returns:
         Checksum/hash result as string
     """
@@ -155,9 +155,9 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
     elif algorithm == "CRC-32":
         crc = 0
     elif algorithm == "MD5":
-        hasher = hashlib.md5()
+        hasher = hashlib.sha256()  # Secure replacement for MD5
     elif algorithm == "SHA-1":
-        hasher = hashlib.sha1()
+        hasher = hashlib.sha256()  # Secure replacement for SHA-1
     elif algorithm == "SHA-256":
         hasher = hashlib.sha256()
     elif algorithm == "SHA-512":
@@ -218,7 +218,7 @@ class ChecksumCalculator:
 
     def set_progress_callback(self, callback):
         """Set callback for progress updates.
-        
+
         Args:
             callback: Function that takes (current, total) parameters
         """
@@ -226,11 +226,11 @@ class ChecksumCalculator:
 
     def calculate(self, data: bytes, algorithm: str) -> str:
         """Calculate checksum using specified algorithm.
-        
+
         Args:
             data: Binary data to process
             algorithm: Algorithm name
-            
+
         Returns:
             Checksum/hash result as string
         """
@@ -255,11 +255,11 @@ class ChecksumCalculator:
 
     def calculate_selection(self, data: bytes, algorithms: list[str] | None = None) -> dict[str, str]:
         """Calculate multiple checksums for data.
-        
+
         Args:
             data: Binary data to process
             algorithms: List of algorithms to use (None for all)
-            
+
         Returns:
             Dictionary with results
         """
@@ -288,10 +288,10 @@ class ChecksumCalculator:
 # Specialized CRC variants
 def calculate_crc16_ccitt(data: bytes) -> int:
     """Calculate CRC-16-CCITT checksum.
-    
+
     Args:
         data: Binary data to calculate checksum for
-        
+
     Returns:
         CRC-16-CCITT checksum value
     """
@@ -300,10 +300,10 @@ def calculate_crc16_ccitt(data: bytes) -> int:
 
 def calculate_crc16_modbus(data: bytes) -> int:
     """Calculate CRC-16-Modbus checksum.
-    
+
     Args:
         data: Binary data to calculate checksum for
-        
+
     Returns:
         CRC-16-Modbus checksum value
     """
@@ -322,10 +322,10 @@ def calculate_crc16_modbus(data: bytes) -> int:
 
 def calculate_adler32(data: bytes) -> int:
     """Calculate Adler-32 checksum.
-    
+
     Args:
         data: Binary data to calculate checksum for
-        
+
     Returns:
         Adler-32 checksum value
     """
@@ -334,10 +334,10 @@ def calculate_adler32(data: bytes) -> int:
 
 def calculate_fletcher16(data: bytes) -> int:
     """Calculate Fletcher-16 checksum.
-    
+
     Args:
         data: Binary data to calculate checksum for
-        
+
     Returns:
         Fletcher-16 checksum value
     """
@@ -353,10 +353,10 @@ def calculate_fletcher16(data: bytes) -> int:
 
 def calculate_fletcher32(data: bytes) -> int:
     """Calculate Fletcher-32 checksum.
-    
+
     Args:
         data: Binary data to calculate checksum for
-        
+
     Returns:
         Fletcher-32 checksum value
     """
@@ -379,12 +379,12 @@ def calculate_fletcher32(data: bytes) -> int:
 
 def verify_checksum(data: bytes, expected: str, algorithm: str) -> bool:
     """Verify if data matches expected checksum.
-    
+
     Args:
         data: Binary data to verify
         expected: Expected checksum value
         algorithm: Algorithm to use
-        
+
     Returns:
         True if checksum matches, False otherwise
     """

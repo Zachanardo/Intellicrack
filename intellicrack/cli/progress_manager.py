@@ -29,8 +29,6 @@ import sys
 import threading
 import time
 from dataclasses import dataclass
-
-logger = logging.getLogger(__name__)
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -55,6 +53,8 @@ from rich.text import Text
 
 # Third-party imports
 from intellicrack.handlers.psutil_handler import psutil
+
+logger = logging.getLogger(__name__)
 
 """
 Progress Manager for Intellicrack CLI
@@ -383,7 +383,7 @@ def demo_progress():
                     if step_name == "Computing hashes":
                         with open(binary_path, "rb") as f:
                             data = f.read(1024 * 1024)  # Read first MB
-                            hashlib.md5(data).hexdigest()
+                            hashlib.sha256(data).hexdigest()
                             hashlib.sha256(data).hexdigest()
 
                     elif step_name == "Extracting strings":

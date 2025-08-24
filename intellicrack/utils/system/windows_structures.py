@@ -236,7 +236,7 @@ class WindowsProcessStructures:
         if not STRUCTURES_AVAILABLE:
             return None
 
-        class PROCESS_INFORMATION(ctypes.Structure):
+        class PROCESS_INFORMATION(ctypes.Structure):  # noqa: N801
             """Windows process information structure containing process and thread handles."""
 
             _fields_ = [

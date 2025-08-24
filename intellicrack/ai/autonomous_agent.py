@@ -2053,7 +2053,8 @@ class AutonomousAgent:
                             cwd=temp_dir,
                             capture_output=True,
                             text=True,
-                            timeout=30
+                            timeout=30,
+                            shell=False  # Explicitly secure - using list format prevents shell injection
                         )
 
                         if result.returncode == 0 or "executed" in result.stdout.lower():
@@ -2074,7 +2075,8 @@ class AutonomousAgent:
                                     cwd=temp_dir,
                                     capture_output=True,
                                     text=True,
-                                    timeout=15
+                                    timeout=15,
+                                    shell=False  # Explicitly secure - using list format prevents shell injection
                                 )
                                 success = True
                                 output_lines.append("✅ Frida script validation successful")
@@ -3144,7 +3146,19 @@ class AutonomousAgent:
             tar_stream.seek(0)
 
             with tarfile.open(fileobj=tar_stream, mode="r") as tar:
-                tar.extractall(Path(dst_path).parent)
+                # Safe extraction with path validation to prevent path traversal
+                extract_path = Path(dst_path).parent
+                for member in tar.getmembers():
+                    # Validate member path
+                    member_path = Path(extract_path) / member.name
+                    try:
+                        # Ensure the resolved path is within the target directory
+                        member_path.resolve().relative_to(extract_path.resolve())
+                        tar.extract(member, path=extract_path, set_attrs=False)
+                    except (ValueError, OSError):
+                        # Skip files that would extract outside target directory
+                        logger.warning(f"Skipping potentially unsafe path: {member.name}")
+                        continue
 
             logger.info(f"Copied {src_path} from container {container_id[:12]} to {dst_path}")
             return True
@@ -3239,18 +3253,16 @@ class AutonomousAgent:
         try:
             # Refresh container status
             container.reload()
-        except Exception:
-            logger.warning(f"Container {container_id} no longer exists")
-            # Clean up from tracking
-            if container_id in self._active_containers:
-                del self._active_containers[container_id]
-            return None
         except Exception as e:
-            logger.error(f"Docker API error refreshing container {container_id}: {e}")
-            # Return cached info without refresh
-        except Exception as e:
-            logger.error(f"Unexpected error refreshing container {container_id}: {e}")
-            # Continue with cached data
+            if "not found" in str(e).lower():
+                logger.warning(f"Container {container_id} no longer exists")
+                # Clean up from tracking
+                if container_id in self._active_containers:
+                    del self._active_containers[container_id]
+                return None
+            else:
+                logger.error(f"Docker API error refreshing container {container_id}: {e}")
+                # Continue with cached data
 
         # Get runtime if running
         runtime = None

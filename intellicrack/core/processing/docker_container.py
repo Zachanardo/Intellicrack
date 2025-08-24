@@ -1,6 +1,7 @@
 """Docker container management for isolated analysis environments."""
 
 import os
+import shutil
 import subprocess
 import time
 from typing import Any
@@ -102,12 +103,16 @@ class DockerContainer(BaseSnapshotHandler):
             self.logger.info(f"Docker available: {result.stdout.strip()}")
 
             # Check if Docker daemon is running
+            docker_path = shutil.which("docker")
+            if not docker_path:
+                raise RuntimeError("Docker command not found in PATH")
+
             result = subprocess.run(
-                ["docker", "info"],
+                [docker_path, "info"],
                 capture_output=True,
                 text=True,
                 timeout=10,
-                check=False,  # noqa: S607
+                check=False,
             )
 
             if result.returncode != 0:
@@ -115,13 +120,13 @@ class DockerContainer(BaseSnapshotHandler):
 
         except subprocess.TimeoutExpired as e:
             logger.error("Subprocess timeout in docker_container: %s", e)
-            raise RuntimeError("Docker command timed out - daemon may not be running")
+            raise RuntimeError("Docker command timed out - daemon may not be running") from e
         except FileNotFoundError as e:
             logger.error("File not found in docker_container: %s", e)
-            raise RuntimeError("Docker command not found - Docker is not installed")
+            raise RuntimeError("Docker command not found - Docker is not installed") from e
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.error(f"Docker initialization error: {e!s}")
-            raise RuntimeError(f"Docker initialization failed: {e!s}")
+            raise RuntimeError(f"Docker initialization failed: {e!s}") from e
 
     def start_container(self, privileged: bool = True, network_mode: str = "bridge") -> bool:
         """Start a Docker container with the specified image.

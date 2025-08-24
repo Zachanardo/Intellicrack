@@ -87,10 +87,10 @@ class PluginValidator:
 class PluginEditor(QWidget):
     """Enhanced plugin editor with syntax highlighting and validation"""
 
-    textChanged = pyqtSignal()
-    validationComplete = pyqtSignal(dict)
+    text_changed = pyqtSignal()
+    validation_complete = pyqtSignal(dict)
     #: Emits file path (type: str)
-    saveRequested = pyqtSignal(str)
+    save_requested = pyqtSignal(str)
 
     def __init__(self, parent=None):
         """Initialize plugin editor with validation and UI setup."""
@@ -280,7 +280,7 @@ class PluginEditor(QWidget):
             self.file_label.setText(os.path.basename(self.current_file))
             self.status_bar.showMessage(f"Saved {self.current_file}")
             self.editor.document().setModified(False)
-            self.saveRequested.emit(self.current_file)
+            self.save_requested.emit(self.current_file)
 
         except Exception as e:
             logger.error("Exception in plugin_editor: %s", e)
@@ -288,7 +288,7 @@ class PluginEditor(QWidget):
 
     def on_text_changed(self):
         """Handle text changes"""
-        self.textChanged.emit()
+        self.text_changed.emit()
 
         # Start validation timer
         self.validation_timer.stop()
@@ -354,7 +354,7 @@ class PluginEditor(QWidget):
             "errors": syntax_errors + (structure_errors if syntax_valid else []),
             "warnings": import_warnings if syntax_valid else [],
         }
-        self.validationComplete.emit(results)
+        self.validation_complete.emit(results)
 
     def update_code_outline(self):
         """Update the code outline"""

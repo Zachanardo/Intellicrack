@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from intellicrack.logger import logger
-from intellicrack.utils.service_health_checker import get_service_url
+from intellicrack.utils.service_utils import get_service_url
 
 from .base_network_analyzer import BaseNetworkAnalyzer
 

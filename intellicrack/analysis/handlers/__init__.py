@@ -35,10 +35,10 @@ def get_available_handlers():
 
 def get_handler(handler_name):
     """Get a specific handler module if available.
-    
+
     Args:
         handler_name (str): Name of the handler module
-        
+
     Returns:
         module: The handler module, or None if not available
     """
@@ -46,10 +46,10 @@ def get_handler(handler_name):
 
 def is_handler_available(handler_name):
     """Check if a specific handler is available.
-    
+
     Args:
         handler_name (str): Name of the handler to check
-        
+
     Returns:
         bool: True if handler is available, False otherwise
     """

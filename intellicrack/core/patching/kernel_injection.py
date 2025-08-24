@@ -47,7 +47,7 @@ FILE_ANY_ACCESS = 0
 
 
 # Injection structure for driver communication
-class INJECTION_INFO(ctypes.Structure):
+class InjectionInfo(ctypes.Structure):
     """Structure for passing injection information to kernel driver."""
 
     _fields_ = [
@@ -79,7 +79,7 @@ class KernelInjector:
             self.advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
         except Exception as e:
             logger.error(f"Failed to load advapi32: {e}")
-            raise RuntimeError("Failed to load advapi32")
+            raise RuntimeError("Failed to load advapi32") from e
 
         # Custom IOCTL codes
         self.IOCTL_INJECT_DLL = self._ctl_code(
@@ -598,7 +598,7 @@ class KernelInjector:
                 return False
 
             # Prepare injection structure
-            info = INJECTION_INFO()
+            info = InjectionInfo()
             info.ProcessId = target_pid
             info.DllPath = dll_path
 

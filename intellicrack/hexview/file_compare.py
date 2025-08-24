@@ -50,7 +50,7 @@ class BinaryComparer:
 
     def __init__(self, block_size: int = 4096):
         """Initialize the comparer.
-        
+
         Args:
             block_size: Size of blocks to read for comparison
         """
@@ -60,7 +60,7 @@ class BinaryComparer:
 
     def set_progress_callback(self, callback):
         """Set callback for progress updates.
-        
+
         Args:
             callback: Function that takes (current, total) parameters
         """
@@ -68,11 +68,11 @@ class BinaryComparer:
 
     def compare_files(self, file1_path: str, file2_path: str) -> List[DifferenceBlock]:
         """Compare two files and return list of differences.
-        
+
         Args:
             file1_path: Path to first file
             file2_path: Path to second file
-            
+
         Returns:
             List of DifferenceBlock objects
         """
@@ -93,11 +93,11 @@ class BinaryComparer:
 
     def compare_data(self, data1: bytes, data2: bytes) -> List[DifferenceBlock]:
         """Compare two byte arrays and return list of differences.
-        
+
         Args:
             data1: First byte array
             data2: Second byte array
-            
+
         Returns:
             List of DifferenceBlock objects
         """
@@ -110,7 +110,7 @@ class BinaryComparer:
 
     def _compare_streams(self, f1, f2, size1: int, size2: int):
         """Compare two file streams block by block.
-        
+
         Args:
             f1: First file stream
             f2: Second file stream
@@ -167,11 +167,11 @@ class BinaryComparer:
 
     def _determine_diff_type(self, block1: bytes, block2: bytes) -> DifferenceType:
         """Determine the type of difference between two blocks.
-        
+
         Args:
             block1: First block
             block2: Second block
-            
+
         Returns:
             Type of difference
         """
@@ -184,7 +184,7 @@ class BinaryComparer:
 
     def _find_differences_lcs(self, data1: bytes, data2: bytes):
         """Find differences using LCS algorithm for smaller data.
-        
+
         Args:
             data1: First data
             data2: Second data
@@ -210,7 +210,7 @@ class BinaryComparer:
 
     def _find_differences_simple(self, data1: bytes, data2: bytes):
         """Simple byte-by-byte comparison for finding differences.
-        
+
         Args:
             data1: First data
             data2: Second data
@@ -283,7 +283,7 @@ class BinaryComparer:
 
     def _trace_lcs(self, data1: bytes, data2: bytes, lcs):
         """Trace LCS table to find differences.
-        
+
         Args:
             data1: First data
             data2: Second data
@@ -378,7 +378,7 @@ class BinaryComparer:
 
     def get_statistics(self) -> dict:
         """Get statistics about the comparison.
-        
+
         Returns:
             Dictionary with comparison statistics
         """
@@ -411,7 +411,7 @@ class ComparisonNavigator:
 
     def __init__(self, differences: List[DifferenceBlock]):
         """Initialize the navigator.
-        
+
         Args:
             differences: List of difference blocks
         """
@@ -420,7 +420,7 @@ class ComparisonNavigator:
 
     def has_differences(self) -> bool:
         """Check if there are any differences.
-        
+
         Returns:
             True if differences exist
         """
@@ -428,7 +428,7 @@ class ComparisonNavigator:
 
     def go_to_first(self) -> Optional[DifferenceBlock]:
         """Go to the first difference.
-        
+
         Returns:
             First difference block or None
         """
@@ -439,7 +439,7 @@ class ComparisonNavigator:
 
     def go_to_last(self) -> Optional[DifferenceBlock]:
         """Go to the last difference.
-        
+
         Returns:
             Last difference block or None
         """
@@ -450,7 +450,7 @@ class ComparisonNavigator:
 
     def go_to_next(self) -> Optional[DifferenceBlock]:
         """Go to the next difference.
-        
+
         Returns:
             Next difference block or None
         """
@@ -461,7 +461,7 @@ class ComparisonNavigator:
 
     def go_to_previous(self) -> Optional[DifferenceBlock]:
         """Go to the previous difference.
-        
+
         Returns:
             Previous difference block or None
         """
@@ -472,11 +472,11 @@ class ComparisonNavigator:
 
     def go_to_offset(self, offset: int, file_num: int = 1) -> Optional[DifferenceBlock]:
         """Go to the difference containing the specified offset.
-        
+
         Args:
             offset: Offset to find
             file_num: Which file's offset to use (1 or 2)
-            
+
         Returns:
             Difference block containing offset or None
         """
@@ -493,7 +493,7 @@ class ComparisonNavigator:
 
     def get_current(self) -> Optional[DifferenceBlock]:
         """Get the current difference.
-        
+
         Returns:
             Current difference block or None
         """
@@ -503,7 +503,7 @@ class ComparisonNavigator:
 
     def get_position(self) -> Tuple[int, int]:
         """Get current position in difference list.
-        
+
         Returns:
             Tuple of (current_index + 1, total_differences)
         """

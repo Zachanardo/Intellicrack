@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Test utils import after disabling tool_wrappers."""
 
+import pytest
 import sys
 import os
 from pathlib import Path
@@ -9,30 +10,26 @@ from pathlib import Path
 project_root = Path(__file__).parent.absolute()
 sys.path.insert(0, str(project_root))
 
-print("Testing utils import after disabling tool_wrappers...")
 
-try:
-    print("1. Setting up environment...")
-    os.environ.setdefault("OMP_NUM_THREADS", "1")
-    os.environ.setdefault("MKL_NUM_THREADS", "1")
-    os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+class TestUtilsImport:
+    """Test utils import functionality."""
 
-    print("2. Importing utils...")
-    import intellicrack.utils
+    def setup_method(self):
+        """Set up environment variables before each test."""
+        os.environ.setdefault("OMP_NUM_THREADS", "1")
+        os.environ.setdefault("MKL_NUM_THREADS", "1")
+        os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
-    print("✅ Utils imported successfully!")
-    print(f"Utils version: {intellicrack.utils.__version__}")
+    def test_utils_import(self):
+        """Test that utils module can be imported successfully."""
+        import intellicrack.utils
+        assert intellicrack.utils is not None
+        assert hasattr(intellicrack.utils, '__version__')
 
-    # Test basic functionality
-    print("3. Testing basic utils functions...")
-    print(f"Logger available: {hasattr(intellicrack.utils, 'logger')}")
-    print(f"Get logger available: {hasattr(intellicrack.utils, 'get_logger')}")
-
-    print("✅ All tests passed!")
-
-except Exception as e:
-    import traceback
-    print(f"\n❌ Error: {e}")
-    print("\nFull traceback:")
-    traceback.print_exc()
-    sys.exit(1)
+    def test_utils_basic_functionality(self):
+        """Test basic utils functions are available."""
+        import intellicrack.utils
+        
+        # Test basic functionality
+        assert hasattr(intellicrack.utils, 'logger') or hasattr(intellicrack.utils, 'get_logger')
+        # At least one logging method should be available

@@ -434,7 +434,7 @@ class CodeMeterProtocolParser:
 
         # Generate session
         session_id = f"{request.client_id}:{request.firm_code}:{request.product_code}:{time.time()}"
-        session_hash = hashlib.md5(session_id.encode()).hexdigest()
+        session_hash = hashlib.sha256(session_id.encode()).hexdigest()
 
         self.active_sessions[session_hash] = {
             "request": request,
@@ -693,7 +693,7 @@ class CodeMeterProtocolParser:
 
     def _handle_transfer_receipt(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """Handle transfer receipt request"""
-        receipt_id = hashlib.md5(
+        receipt_id = hashlib.sha256(
             f"{request.firm_code}:{request.product_code}:{time.time()}".encode(),
         ).hexdigest()
 

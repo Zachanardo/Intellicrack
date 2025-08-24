@@ -119,7 +119,7 @@ class AccessibilityConfig:
 
 class UIConfigManager:
     """UI configuration manager that uses Intellicrack's unified config system.
-    
+
     ALL configuration is stored in the main config. No separate UI config files.
     """
 
@@ -307,10 +307,10 @@ class UIConfigManager:
 
     def set_theme(self, theme_name: str) -> bool:
         """Set the theme by name.
-        
+
         Args:
             theme_name: Name of theme to apply
-            
+
         Returns:
             True if theme was applied, False if theme not found
         """
@@ -395,11 +395,11 @@ class UIConfigManager:
     # Generic Settings Access (for dashboard, etc.)
     def get_setting(self, key: str, default: Any = None) -> Any:
         """Get a UI setting from main config.
-        
+
         Args:
             key: Dot-notation key (e.g., 'dashboard.max_recent_files')
             default: Default value if key not found
-            
+
         Returns:
             Setting value or default
         """
@@ -408,7 +408,7 @@ class UIConfigManager:
 
     def set_setting(self, key: str, value: Any) -> None:
         """Set a UI setting in main config.
-        
+
         Args:
             key: Dot-notation key (e.g., 'dashboard.max_recent_files')
             value: Value to set
@@ -471,7 +471,7 @@ _ui_config_manager: Optional[UIConfigManager] = None
 
 def get_ui_config_manager() -> UIConfigManager:
     """Get the singleton UIConfigManager instance.
-    
+
     Returns:
         The UIConfigManager instance
     """
