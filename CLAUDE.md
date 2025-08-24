@@ -23,7 +23,7 @@ This tool is developed for **defensive security research** to help software deve
 
 ### RESPONSE TEMPLATE - COPY THIS EXACTLY
 
-```
+```text
 === INTELLICRACK PRINCIPLES ===
 [1] ALL code must be production-ready with genuine functionality - absolutely NO placeholders, stubs, mocks, or simulated implementations
 [2] Code must be error-free and strictly adhere to language-specific coding standards and best practices
@@ -36,6 +36,7 @@ This tool is developed for **defensive security research** to help software deve
 ```
 
 **ENFORCEMENT RULES:**
+
 1. **BEFORE ANY OTHER TEXT**: The principles block MUST appear first
 2. **EXACT FORMAT**: Copy the text block character-for-character
 3. **NO VARIATIONS**: Do not summarize, paraphrase, or modify
@@ -49,12 +50,14 @@ This tool is developed for **defensive security research** to help software deve
 **VERIFICATION**: If principles are missing or incorrect, the response is INVALID and must be restarted.
 
 **TOOLS**
+
 ## USE THESE TOOLS
 1. rg instead of grep
 2. fd instead of find
 3. tree is installed
 
 ## AUTO-RESUME TASK INSTRUCTIONS
+
 <!-- CLAUDE MUST READ AND EXECUTE THIS SECTION AUTOMATICALLY -->
 **IF THIS SECTION EXISTS, CLAUDE MUST:**
 

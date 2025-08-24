@@ -906,7 +906,7 @@ def _check_patch_safety_and_create(
         )
 
         # Add suggestions for manual review
-        _add_manual_review_suggestions(app, instructions, start_addr, code_data, code_offset, candidates)
+        _add_manual_review_suggestions(app, instructions, start_addr, code_data, code_offset, candidates, patch_bytes)
         return None
 
 
@@ -936,7 +936,7 @@ def _calculate_safe_prologue_size(instructions: list) -> int:
 
 
 def _add_manual_review_suggestions(
-    app: Any, instructions: list, start_addr: int, code_data: bytes, code_offset: int, candidates: list
+    app: Any, instructions: list, start_addr: int, code_data: bytes, code_offset: int, candidates: list, patch_bytes: bytes
 ) -> None:
     """Add suggestions for manual review."""
     # Check first 3 instructions for conditional jumps
@@ -968,7 +968,7 @@ def _add_manual_review_suggestions(
             break
 
     # Add to candidates for review
-    bytes_to_disassemble = max(len(patch_bytes) if 'patch_bytes' in locals() else 6, 15)
+    bytes_to_disassemble = max(len(patch_bytes), 15)
     bytes_at_addr = code_data[code_offset : code_offset + bytes_to_disassemble]
     disasm_at_addr = "; ".join([f"{i.mnemonic} {i.op_str}" for i in instructions])
 
@@ -976,7 +976,7 @@ def _add_manual_review_suggestions(
         candidates.append(
             {
                 "address": start_addr,
-                "size": len(patch_bytes) if 'patch_bytes' in locals() else 6,
+                "size": len(patch_bytes),
                 "original_bytes": bytes_at_addr.hex().upper() if bytes_at_addr else "",
                 "disassembly": disasm_at_addr or "Unknown",
                 "reason": "Failed automatic patch generation",

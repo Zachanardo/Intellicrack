@@ -50,18 +50,21 @@ A comprehensive binary analysis and security research platform designed to help 
 ### Manual Installation
 
 1. **Install Python 3.11 or 3.12**
+
    ```bash
    # Verify Python version
    python --version  # Should be 3.11.x or 3.12.x
    ```
 
 2. **Clone the repository**
+
    ```bash
    git clone https://github.com/Zachanardo/Intellicrack.git
    cd Intellicrack
    ```
 
 3. **Create and activate virtual environment**
+
    ```bash
    # Windows
    python -m venv mamba_env
@@ -73,6 +76,7 @@ A comprehensive binary analysis and security research platform designed to help 
    ```
 
 4. **Install dependencies**
+
    ```bash
    # Install from requirements lock file
    pip install -r requirements/requirements.lock
@@ -100,7 +104,9 @@ Intellicrack automatically manages platform-specific dependencies:
 ## 🎯 Usage
 
 ### GUI Mode
+
 Launch the graphical interface:
+
 ```bash
 # Using the launcher script
 python launch_intellicrack.py
@@ -110,6 +116,7 @@ python -m intellicrack --gui
 ```
 
 ### Command Line
+
 ```bash
 # Analyze a binary
 python -m intellicrack analyze target.exe
@@ -122,6 +129,7 @@ python -m intellicrack strings target.exe
 ```
 
 ### Python API
+
 ```python
 from intellicrack.core.analysis import BinaryAnalyzer
 
@@ -189,6 +197,7 @@ See the [Plugin Development Guide](docs/development/plugins.md) for more informa
 ## 🔍 Examples
 
 ### Basic Binary Analysis
+
 ```python
 from intellicrack.core.analysis import BinaryAnalyzer
 
@@ -200,6 +209,7 @@ print(f"Entropy: {result.entropy}")
 ```
 
 ### Protection Detection
+
 ```python
 from intellicrack.protection import ProtectionDetector
 
@@ -211,6 +221,7 @@ for protection in protections:
 ```
 
 ### Network Analysis
+
 ```python
 from intellicrack.core.network import NetworkTrafficAnalyzer
 
@@ -225,33 +236,40 @@ packets = analyzer.stop_capture()
 ### Common Issues
 
 1. **Import Errors**
-   ```
+
+```text
    Solution: Ensure all dependencies are installed from requirements.lock
-   ```
+```
 
-2. **GPU Not Detected**
-   ```
+1. **GPU Not Detected**
+
+```text
    Normal in WSL/VMs - CPU fallback will be used automatically
-   ```
+```
 
-3. **Qt Warnings**
-   ```
+1. **Qt Warnings**
+
+```text
    PyQt6 warnings can be ignored - application functions normally
-   ```
+```
 
-4. **Intel Arc Graphics Issues**
-   ```
+1. **Intel Arc Graphics Issues**
+
+```text
    Intel Arc B580 GPU issues are automatically detected and handled
    GIL crash prevention is built-in
-   ```
+```
 
-5. **Slow Analysis**
-   ```
+1. **Slow Analysis**
+
+```text
    Enable GPU acceleration or increase parallel_threads in config
-   ```
+```
 
 ### Debug Mode
+
 Enable detailed logging for troubleshooting:
+
 ```json
 {
     "logging": {

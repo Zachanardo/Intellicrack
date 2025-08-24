@@ -21,11 +21,14 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a wel
 
 1. Fork the repository on GitHub
 2. Clone your fork locally:
+
    ```bash
    git clone https://github.com/Zachanardo/Intellicrack.git
    cd Intellicrack
    ```
+
 3. Add the upstream repository as a remote:
+
    ```bash
    git remote add upstream https://github.com/Zachanardo/Intellicrack.git
    ```
@@ -40,6 +43,7 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a wel
 ### Virtual Environment Setup
 
 1. Create and activate virtual environment:
+
    ```bash
    # Windows (using actual project structure)
    python -m venv mamba_env
@@ -51,6 +55,7 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a wel
    ```
 
 2. Install dependencies:
+
    ```bash
    # Install from requirements lock file (actual file location)
    pip install -r requirements/requirements.lock
@@ -60,13 +65,14 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a wel
    ```
 
 3. Install pre-commit hooks:
+
    ```bash
    pre-commit install
    ```
 
 ## Project Structure
 
-```
+```text
 intellicrack/
 ├── intellicrack/          # Main package source code
 │   ├── ai/               # AI and ML components
@@ -85,6 +91,7 @@ intellicrack/
 ## Making Changes
 
 1. Create a new branch for your feature or fix:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -96,6 +103,7 @@ intellicrack/
 4. Update documentation if you've changed functionality
 
 5. Commit your changes with clear, descriptive messages:
+
    ```bash
    git commit -m "Add feature: description of what you added"
    ```
@@ -117,6 +125,7 @@ intellicrack/
 3. Local application imports
 
 Example:
+
 ```python
 import os
 import sys
@@ -133,6 +142,7 @@ from intellicrack.utils import logger
 
 - Classes: `PascalCase`
 - Functions/variables: `snake_case`
+
 - Constants: `UPPER_SNAKE_CASE`
 - Private methods/attributes: `_leading_underscore`
 
@@ -158,11 +168,13 @@ pytest -v
 
 - Place tests in the `tests/` directory
 - Mirror the source code structure
+
 - Use descriptive test names that explain what is being tested
 - Include both positive and negative test cases
 - Mock external dependencies
 
 Example:
+
 ```python
 def test_binary_analyzer_detects_pe_format():
     """Test that BinaryAnalyzer correctly identifies PE files."""
@@ -174,6 +186,7 @@ def test_binary_analyzer_detects_pe_format():
 ## Submitting Changes
 
 1. Push your changes to your fork:
+
    ```bash
    git push origin feature/your-feature-name
    ```
